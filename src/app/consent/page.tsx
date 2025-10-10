@@ -12,7 +12,7 @@ export default function ConsentPage() {
     try {
       localStorage.setItem("everleap.consentAccepted", "1");
     } catch {}
-    router.push("/welcome");
+    router.push("/login");
   }
 
   function decline() {
