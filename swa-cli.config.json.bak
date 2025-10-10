@@ -1,0 +1,8 @@
+{
+  "configurations": {
+    "production": {
+      "appLocation": ".",
+      "appBuildCommand": "npm run build"
+    }
+  }
+}
