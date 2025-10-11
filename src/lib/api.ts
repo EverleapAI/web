@@ -1,5 +1,3 @@
-// apps/web/src/lib/api.ts
-
 export class ApiError extends Error {
   status: number;
   info: unknown;
@@ -10,19 +8,17 @@ export class ApiError extends Error {
   }
 }
 
-// Normalize and expose the base (empty string means “same-origin”)
-export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/+$/, "");
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
 
-/**
- * Build the final URL for an API request.
- * - Absolute http(s) URLs are passed through
- * - If API_BASE is set, ALL relative paths are prefixed with it (including `/api/...`)
- * - If API_BASE is empty, relative paths are left as-is (same-origin)
+/** Build absolute URL from path
+ *  - Absolute http(s) URLs are passed through
+ *  - Paths that start with `/api/` are treated as same-origin (Next route handlers)
+ *  - All other relative paths are prefixed with API_BASE (Azure Functions)
  */
 function toUrl(path: string) {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  if (API_BASE) return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-  return path; // same-origin (local dev / route handlers)
+  if (path.startsWith("/api/")) return path; // same-origin calls to Next route handlers
+  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 /** Safe JSON parse (falls back to raw text) */
@@ -85,7 +81,7 @@ async function apiFetch<T>(
   try {
     const res = await fetch(url, {
       cache: "no-store",
-      credentials: "include", // allow cookies (Set-Cookie & session)
+      credentials: "include", // allow cookies / session if used
       ...init,
       headers: baseHeaders,
       signal: controller.signal,
