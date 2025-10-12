@@ -3,6 +3,14 @@ name: Deploy to Azure Static Web Apps
 on:
   push:
     branches: [ main ]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.*"
+      - "tsconfig.json"
+      - ".github/workflows/azure-static-web-apps.yml"
   workflow_dispatch:
 
 jobs:
@@ -21,10 +29,10 @@ jobs:
         run: npm ci
 
       - name: Build (Next.js)
-        run: npm run build
         env:
-          NEXT_TELEMETRY_DISABLED: 1`n          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}`n          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}`n          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_TELEMETRY_DISABLED: 1
           NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+        run: npm run build
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -34,5 +42,5 @@ jobs:
           action: upload
           app_location: "/"
           output_location: ""
-          skip_api_build: true
           api_location: ""
+          skip_api_build: true
