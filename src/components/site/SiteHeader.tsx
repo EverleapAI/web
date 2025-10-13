@@ -57,7 +57,8 @@ export default function SiteHeader({ translucent = false }: Props) {
       setAuthed((prev) => prev || isVerifiedNow());
 
       try {
-        const data = await api.get<MeResponse>("/session/me");
+        // Call the Functions endpoint (api client base URL handles domain + /api prefix)
+        const data = await api.get<MeResponse>("/session-me");
         setAuthed(Boolean(data?.verified));
       } catch {
         // ignore network/cancel

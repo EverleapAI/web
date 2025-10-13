@@ -43,7 +43,8 @@ export default function RequireAuth({ children, redirectTo }: Props) {
 
     (async () => {
       try {
-        const data = await api.get<MeResponse>("/session/me");
+        // Call the Functions endpoint (api client base URL handles domain + /api prefix)
+        const data = await api.get<MeResponse>("/session-me");
         if (!cancelled) {
           setAuthed(Boolean(data?.verified));
         }
