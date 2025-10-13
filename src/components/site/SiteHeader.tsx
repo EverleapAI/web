@@ -50,15 +50,13 @@ export default function SiteHeader({ translucent = false }: Props) {
   }, [pathname]);
 
   useEffect(() => {
-    const ctrl = new AbortController();
-
     const checkAuthoritative = async () => {
       // fast-path UI hint
       setAuthed((prev) => prev || isVerifiedNow());
 
       try {
-        // Call the Functions endpoint (api client base URL handles domain + /api prefix)
-        const data = await api.get<MeResponse>("/session-me");
+        // IMPORTANT: hit our Next.js route handler (same-origin)
+        const data = await api.get<MeResponse>("/api/session/me");
         setAuthed(Boolean(data?.verified));
       } catch {
         // ignore network/cancel
@@ -82,7 +80,6 @@ export default function SiteHeader({ translucent = false }: Props) {
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      ctrl.abort();
       window.removeEventListener("storage", onStorage);
       document.removeEventListener("visibilitychange", onVisibility);
     };

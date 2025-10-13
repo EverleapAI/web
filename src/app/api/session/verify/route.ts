@@ -13,8 +13,10 @@ import { z } from "zod";
  * and sets HttpOnly cookies on your site when verification succeeds.
  */
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7071/api").replace(/\/+$/, "");
-const AUTH_VERIFY = `${API_BASE}/auth/verify-otp`;
+// Handle NEXT_PUBLIC_API_BASE_URL that may or may not already end with /api
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7071/api").replace(/\/+$/, "");
+const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const AUTH_VERIFY = `${BASE_WITH_API}/auth/verify-otp`;
 
 // Extend the base schema to include pre-auth profile fields
 const VerifyOtpWithProfileSchema = VerifyOtpRequestSchema.extend({

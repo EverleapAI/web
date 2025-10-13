@@ -1,3 +1,5 @@
+// apps/web/src/lib/api.ts
+
 export class ApiError extends Error {
   status: number;
   info: unknown;
@@ -8,17 +10,41 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+// Base URL for the Azure Functions app (e.g. https://<func>.azurewebsites.net or .../api)
+const API_BASE_RAW = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+const API_BASE_HAS_API = /\/api$/i.test(API_BASE_RAW);
+const API_BASE = API_BASE_RAW; // keep as-is (may or may not include /api)
 
-/** Build absolute URL from path
- *  - Absolute http(s) URLs are passed through
- *  - Paths that start with `/api/` are treated as same-origin (Next route handlers)
- *  - All other relative paths are prefixed with API_BASE (Azure Functions)
+// API routes that should be proxied to Azure Functions
+const PROXY_PREFIXES = ["/session", "/webauthn", "/auth"] as const;
+
+/**
+ * Build an absolute URL from a path.
+ * - Absolute http(s) URLs pass through.
+ * - Paths that start with `/api/` are same-origin (Next.js route handlers).
+ * - Paths that start with one of PROXY_PREFIXES are sent to Functions:
+ *     API_BASE + (ensure /api once) + normalized path
+ * - Everything else stays same-origin.
  */
 function toUrl(path: string) {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  if (path.startsWith("/api/")) return path; // same-origin calls to Next route handlers
-  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+
+  if (path.startsWith("/api/")) return path; // Next.js route handler (same-origin)
+
+  // If calling one of our backend endpoints, send to Functions
+  if (PROXY_PREFIXES.some((p) => path.startsWith(p))) {
+    if (!API_BASE) {
+      throw new Error(
+        "NEXT_PUBLIC_API_BASE_URL is not set but a backend call was attempted."
+      );
+    }
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    const baseWithApi = API_BASE_HAS_API ? API_BASE : `${API_BASE}/api`;
+    return `${baseWithApi}${normalized}`;
+  }
+
+  // Anything else stays same-origin
+  return path;
 }
 
 /** Safe JSON parse (falls back to raw text) */
@@ -26,7 +52,7 @@ function safeJson(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
-    return text; // non-JSON responses come back as text
+    return text;
   }
 }
 
@@ -71,7 +97,6 @@ async function apiFetch<T>(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  // Base headers; avoid forcing JSON if sending FormData
   const bodyCandidate = getBody(init);
   const isFD = isFormData(bodyCandidate);
   const baseHeaders: HeadersInit = isFD
@@ -81,7 +106,7 @@ async function apiFetch<T>(
   try {
     const res = await fetch(url, {
       cache: "no-store",
-      credentials: "include", // allow cookies / session if used
+      credentials: "include", // keep cookies/session
       ...init,
       headers: baseHeaders,
       signal: controller.signal,
@@ -104,7 +129,11 @@ async function apiFetch<T>(
       throw new ApiError("Request timed out", 0, null);
     }
     if (err instanceof ApiError) throw err;
-    throw new ApiError((err as { message?: string })?.message || "Network error", -1, null);
+    throw new ApiError(
+      (err as { message?: string })?.message || "Network error",
+      -1,
+      null
+    );
   } finally {
     clearTimeout(timer);
   }
@@ -128,7 +157,12 @@ export const api = {
     ),
 
   /** POST JSON or FormData body (optional query params) */
-  post: <T>(path: string, body: unknown, params?: Record<string, unknown>, timeout?: number) =>
+  post: <T>(
+    path: string,
+    body: unknown,
+    params?: Record<string, unknown>,
+    timeout?: number
+  ) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
       { method: "POST", body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body) },
@@ -136,7 +170,12 @@ export const api = {
     ),
 
   /** PUT JSON or FormData body (optional query params) */
-  put: <T>(path: string, body: unknown, params?: Record<string, unknown>, timeout?: number) =>
+  put: <T>(
+    path: string,
+    body: unknown,
+    params?: Record<string, unknown>,
+    timeout?: number
+  ) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
       { method: "PUT", body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body) },
@@ -144,7 +183,11 @@ export const api = {
     ),
 
   /** DELETE with optional query params */
-  del: <T = { ok: true }>(path: string, params?: Record<string, unknown>, timeout?: number) =>
+  del: <T = { ok: true }>(
+    path: string,
+    params?: Record<string, unknown>,
+    timeout?: number
+  ) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
       { method: "DELETE" },

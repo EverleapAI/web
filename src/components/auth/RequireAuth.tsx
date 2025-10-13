@@ -43,8 +43,8 @@ export default function RequireAuth({ children, redirectTo }: Props) {
 
     (async () => {
       try {
-        // Call the Functions endpoint (api client base URL handles domain + /api prefix)
-        const data = await api.get<MeResponse>("/session-me");
+        // IMPORTANT: hit our Next.js route handler (same-origin)
+        const data = await api.get<MeResponse>("/api/session/me");
         if (!cancelled) {
           setAuthed(Boolean(data?.verified));
         }

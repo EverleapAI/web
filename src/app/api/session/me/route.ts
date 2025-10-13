@@ -1,46 +1,54 @@
 // apps/web/src/app/api/session/me/route.ts
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
-import { COOKIE, setNoStore } from "@/lib/security";
-import { SessionMeResponseSchema } from "@/lib/validation";
+import { setNoStore } from "@/lib/security";
 
-function parseJsonCookie<T = unknown>(raw?: string): T | null {
-  if (!raw) return null;
-  const attempts = [raw, (() => { try { return decodeURIComponent(raw); } catch { return raw; } })()];
-  for (const s of attempts) {
-    try {
-      return JSON.parse(s as string) as T;
-    } catch {
-      /* try next */
-    }
-  }
-  return null;
-}
+// Resolve your Functions base from env; handle cases where it already ends with /api
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${BASE_WITH_API}/session-me`;
 
 export async function GET(req: NextRequest) {
-  const verifiedFlag = req.cookies.get(COOKIE.VERIFIED)?.value === "1";
-  const session = parseJsonCookie<{ verified?: boolean; verifiedAtUtc?: string; userId?: string }>(
-    req.cookies.get(COOKIE.SESSION)?.value
-  );
+  try {
+    // Forward the cookies so the Functions app sees the same session
+    const cookieHeader = req.headers.get("cookie") ?? "";
 
-  const verified =
-    verifiedFlag || Boolean(session?.verified === true || typeof session?.verifiedAtUtc === "string");
+    const upstream = await fetch(TARGET_URL, {
+      method: "GET",
+      headers: {
+        // pass through cookies; add anything else you need here
+        cookie: cookieHeader,
+        // force fresh data
+        "cache-control": "no-cache",
+      },
+      // Next.js server runtime; we don't use credentials here
+      redirect: "follow",
+      cache: "no-store",
+    });
 
-  // Build response body and validate (defense-in-depth)
-  const body = {
-    ok: true, // request itself succeeded; 'verified' communicates auth state
-    verified,
-    userId: session?.userId ?? null,
-    verifiedAtUtc: session?.verifiedAtUtc ?? null,
-  };
+    const text = await upstream.text();
+    // Try to preserve JSON if possible
+    let body: unknown = null;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = text;
+    }
 
-  const parsed = SessionMeResponseSchema.safeParse(body);
-  const safe = parsed.success
-    ? parsed.data
-    : { ok: true, verified: false, userId: null, verifiedAtUtc: null };
-
-  const res = NextResponse.json(safe, { status: 200 });
-  return setNoStore(res);
+    const res = NextResponse.json(body, { status: upstream.status });
+    return setNoStore(res);
+  } catch (err) {
+    const res = NextResponse.json(
+      {
+        ok: false,
+        message:
+          (err as { message?: string })?.message ||
+          "Failed to reach session endpoint",
+      },
+      { status: 502 }
+    );
+    return setNoStore(res);
+  }
 }

@@ -1,15 +1,36 @@
+// apps/web/src/app/health/HealthClient.tsx
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
 type Goal = { id: number; name: string };
 
+// Normalize base (may or may not already include /api)
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+
+async function fetchGoals(): Promise<unknown> {
+  if (!RAW_BASE) throw new Error("NEXT_PUBLIC_API_BASE_URL not set");
+  const url = `${BASE_WITH_API}/everleap-characteristics`;
+  const res = await fetch(url, { credentials: "include", cache: "no-store" });
+  const text = await res.text().catch(() => "");
+  let data: unknown = text;
+  try { data = text ? JSON.parse(text) : null; } catch {}
+  if (!res.ok) {
+    const msg =
+      (typeof data === "string" ? data : (data as { message?: string })?.message) ||
+      res.statusText ||
+      `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
 export default function HealthClient() {
   const { data, error, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["health-goals"],
-    queryFn: () => api.get<unknown>("/everleap-characteristics"),
+    queryFn: fetchGoals,
   });
 
   const okArray =
@@ -22,7 +43,7 @@ export default function HealthClient() {
 
         <div className="rounded-lg border p-4">
           <p className="text-sm text-slate-700">
-            API base: <code className="text-xs">{process.env.NEXT_PUBLIC_API_BASE_URL}</code>
+            API base: <code className="text-xs">{RAW_BASE || "(not set)"}</code>
           </p>
           <div className="mt-3">
             <Button onClick={() => refetch()} disabled={isFetching}>
@@ -39,10 +60,14 @@ export default function HealthClient() {
             <p className="mt-2 text-red-700">Error: {error.message}</p>
           ) : okArray ? (
             <>
-              <p className="mt-2 text-emerald-700">OK: received {((data as Goal[]) || []).length} goals.</p>
+              <p className="mt-2 text-emerald-700">
+                OK: received {((data as Goal[]) || []).length} goals.
+              </p>
               <ul className="mt-2 list-disc pl-5 text-sm">
                 {(data as Goal[]).slice(0, 3).map((g) => (
-                  <li key={g.id}>#{g.id} — {g.name}</li>
+                  <li key={g.id}>
+                    #{g.id} — {g.name}
+                  </li>
                 ))}
               </ul>
             </>

@@ -13,29 +13,31 @@ export default function MagicCatcherPage() {
   const token = sp.get("token") || "";
   const [error, setError] = useState<string | null>(null);
 
-  // Compose API consume URL
-  const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+  // Compose API consume URL, handling bases that may already include /api
+  const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+  const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+
   const consumeUrl = useMemo(() => {
-    if (!token || !apiBase) return null;
-    return `${apiBase}/auth/magic/consume?token=${encodeURIComponent(token)}`;
-  }, [apiBase, token]);
+    if (!token || !RAW_BASE) return null;
+    return `${BASE_WITH_API}/auth/magic/consume?token=${encodeURIComponent(token)}`;
+  }, [BASE_WITH_API, RAW_BASE, token]);
 
   useEffect(() => {
     if (!token) {
       setError("This link is missing its token. Try sending yourself a new link.");
       return;
     }
-    if (!apiBase || !consumeUrl) {
+    if (!RAW_BASE || !consumeUrl) {
       setError("We’re missing our API base URL. Please try again in a moment.");
       return;
     }
-    // Hard redirect so the API can set the cookie & 302 to /dashboard
+    // Hard redirect so the API can set cookies & 302 to /dashboard
     try {
       window.location.replace(consumeUrl);
     } catch {
       setError("We couldn’t open your sign-in link. You can try again.");
     }
-  }, [apiBase, token, consumeUrl]);
+  }, [RAW_BASE, token, consumeUrl]);
 
   const headline = error ? "We couldn’t complete your sign-in" : "Validating your link…";
 

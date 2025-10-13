@@ -1,3 +1,4 @@
+// apps/web/src/components/site/RequireConsent.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -131,7 +132,10 @@ export default function RequireConsent({ children }: { children: React.ReactNode
                 version: serverVersion,
                 accepted: true,
                 scopes: Array.isArray(data?.scopes) ? data.scopes : undefined,
-                acceptedAtUtc: typeof data?.acceptedAtUtc === "string" ? data.acceptedAtUtc : new Date().toISOString(),
+                acceptedAtUtc:
+                  typeof data?.acceptedAtUtc === "string"
+                    ? data.acceptedAtUtc
+                    : new Date().toISOString(),
               });
               if (!canceled) {
                 setState("ready");

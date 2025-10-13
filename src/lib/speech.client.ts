@@ -1,6 +1,8 @@
+// apps/web/src/lib/speech.client.ts
 'use client';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '');
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '');
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 
 export type ExpectHint = 'free' | 'email' | 'phone' | 'contact';
 export interface SpeechOptions {
@@ -18,7 +20,12 @@ async function loadSpeechSdk(): Promise<SpeechSDKModule> {
 }
 
 export async function fetchSpeechToken(): Promise<{ token: string; region: string }> {
-  const res = await fetch(`${API_BASE}/speech/token`, { method: 'POST' });
+  if (!RAW_BASE) throw new Error('NEXT_PUBLIC_API_BASE_URL not set');
+  const res = await fetch(`${API_BASE}/speech/token`, {
+    method: 'POST',
+    credentials: 'include',
+    cache: 'no-store',
+  });
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
     throw new Error(`Speech token fetch failed (${res.status}): ${txt}`);

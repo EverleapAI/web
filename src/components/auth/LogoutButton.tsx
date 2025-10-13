@@ -18,24 +18,23 @@ export default function LogoutButton({ className, label = "Sign out" }: Props) {
     if (busy) return;
     setBusy(true);
     try {
-      // Call our Function endpoint (clears HttpOnly session cookie)
+      // Ask backend to clear the HttpOnly session
       await api.post<{ ok: boolean }>("/auth/logout", {});
-
-      // Clear local UI hints
+    } catch {
+      // Even if the network call fails, fall through and clear local hints
+    } finally {
+      // Clear any local/UI hints
       try {
         localStorage.removeItem("everleap.verified");
         localStorage.removeItem("everleap.userId");
         localStorage.removeItem("everleap.session");
         localStorage.removeItem("everleap.otp.requestId");
-        // Best-effort clear of any non-HttpOnly hint cookie if you set one
         document.cookie = "everleap_verified=; Max-Age=0; path=/; SameSite=Lax";
       } catch {
         /* ignore */
       }
-
-      router.replace("/");
-    } finally {
       setBusy(false);
+      router.replace("/");
     }
   }
 
