@@ -93,9 +93,7 @@ async function verifyOtpBff(args: {
   }
 
   if (!res.ok || data.ok === false) {
-    const err = new Error(
-      (data as VerifyErr)?.error || (txt || `HTTP ${res.status}`)
-    ) as Error & { code?: string };
+    const err = new Error((data as VerifyErr)?.error || (txt || `HTTP ${res.status}`)) as Error & { code?: string };
     if ((data as VerifyErr)?.code) err.code = (data as VerifyErr).code;
     throw err;
   }
@@ -462,7 +460,7 @@ export default function VerifyPage() {
                     <button
                       type="button"
                       onClick={useDifferentContact}
-                      className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold bg-white ring-1 ring-black/10 hover:bg_white/90"
+                      className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold bg-white ring-1 ring-black/10 hover:bg-white/90"
                     >
                       Use a different contact
                     </button>
@@ -475,7 +473,7 @@ export default function VerifyPage() {
                   type="button"
                   onClick={onVerify}
                   disabled={submitting || code.length < 6}
-                  className="flex-1 rounded-xl bg-tint/90 px-4 py-3 text-sm font-semibold text-white shadow_sm ring-1 ring-black/5 hover:bg-tint disabled:opacity-60"
+                  className="flex-1 rounded-xl bg-tint/90 px-4 py-3 text-sm font-semibold text-white shadow-sm ring-1 ring-black/5 hover:bg-tint disabled:opacity-60"
                 >
                   {submitting ? "Verifying…" : "Verify"}
                 </button>

@@ -115,7 +115,8 @@ export default function LoginPage() {
     setBridgeId(null);
     setDebugUrl(null);
     try {
-      const res = await api.post<MagicRequestRes>("/api/auth/magic/request", {
+      // ⬇️ drop /api — goes to Functions via api.ts
+      const res = await api.post<MagicRequestRes>("/auth/magic/request", {
         firstName: firstName.trim(),
         lastName: null,
         contact: { method: parsed.method, value: parsed.value },
@@ -150,7 +151,8 @@ export default function LoginPage() {
     // Poll every 2s for readiness
     const iv = setInterval(async () => {
       try {
-        const r = await api.post<{ ok: boolean; ready?: boolean }>("/api/auth/magic/bridge/poll", { bridgeId: id });
+        // ⬇️ drop /api — goes to Functions via api.ts
+        const r = await api.post<{ ok: boolean; ready?: boolean }>("/auth/magic/bridge/poll", { bridgeId: id });
         if (r?.ok && r.ready) {
           clearInterval(iv);
           setPolling(false);
@@ -174,13 +176,15 @@ export default function LoginPage() {
     setBusy(true);
     try {
       // 1) Try authentication first (best path)
-      const authOpts = await api.post<AuthnOptionsResponse>("/api/webauthn/authentication/options", {
+      // ⬇️ drop /api — goes to Functions via api.ts
+      const authOpts = await api.post<AuthnOptionsResponse>("/webauthn/authentication/options", {
         contact: { method: parsed.method, value: parsed.value },
       });
 
       if (authOpts.ok) {
         const assertionJSON = await performAuthentication(authOpts.options);
-        await fetch(api.url("/api/webauthn/authentication/verify"), {
+        // ⬇️ drop /api — goes to Functions via api.ts
+        await fetch(api.url("/webauthn/authentication/verify"), {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -193,7 +197,8 @@ export default function LoginPage() {
 
       // 2) If unknown contact → fall back to registration
       if (!authOpts.ok && authOpts.error === "UNKNOWN_CONTACT") {
-        const regOpts = await api.post<RegOptionsResponse>("/api/webauthn/registration/options", {
+        // ⬇️ drop /api — goes to Functions via api.ts
+        const regOpts = await api.post<RegOptionsResponse>("/webauthn/registration/options", {
           firstName: firstName.trim(),
           contact: { method: parsed.method, value: parsed.value },
         });
@@ -204,7 +209,8 @@ export default function LoginPage() {
         }
 
         const attJSON = await performRegistration(regOpts.options);
-        await fetch(api.url("/api/webauthn/registration/verify"), {
+        // ⬇️ drop /api — goes to Functions via api.ts
+        await fetch(api.url("/webauthn/registration/verify"), {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
