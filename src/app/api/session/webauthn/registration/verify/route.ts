@@ -14,13 +14,14 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-// Remove any Domain= attribute so the cookie is set for this host (the web app)
+/** Strip any `Domain=` attribute so the cookie lands on this host (the web app). */
 function rewriteSetCookieForHost(raw: string | null): string | null {
   if (!raw) return null;
-  // Handle multiple cookies in a single header value too
+  // Split multiple cookies in a single header on true cookie boundaries,
+  // not commas inside an Expires attribute.
   return raw
-    .split(/,(?=[^ ;]+=)/) // split on cookie boundaries, not commas inside Expires
-    .map(c => c.replace(/; *Domain=[^;]+/gi, "")) // strip Domain=...
+    .split(/,(?=[^ ;]+=)/)
+    .map((c) => c.replace(/; *Domain=[^;]+/gi, "")) // drop Domain=...
     .join(", ");
 }
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
         "cache-control": "no-cache",
       },
       body,
-      redirect: "manual", // we want to relay the Location ourselves
+      redirect: "manual", // mirror redirects so Next can append Set-Cookie
       cache: "no-store",
     });
 
@@ -46,15 +47,21 @@ export async function POST(req: NextRequest) {
     const rawSetCookie = upstream.headers.get("set-cookie");
     const setCookie = rewriteSetCookieForHost(rawSetCookie);
 
+    // Mirror redirect (e.g., 302 → /dashboard) and forward cookie(s)
     if (status >= 300 && status < 400 && location) {
       const res = NextResponse.redirect(location, { status });
       if (setCookie) res.headers.append("set-cookie", setCookie);
       return setNoStore(res);
     }
 
+    // Otherwise, relay JSON (or text) with same status
     const text = await upstream.text();
-    let payload: unknown = text;
-    try { payload = text ? JSON.parse(text) : null; } catch { /* leave as text */ }
+    let payload: unknown;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = text;
+    }
 
     const res = NextResponse.json(payload, { status });
     if (setCookie) res.headers.append("set-cookie", setCookie);

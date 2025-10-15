@@ -15,13 +15,13 @@ const API_BASE_RAW = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/
 const API_BASE_HAS_API = /\/api$/i.test(API_BASE_RAW);
 const API_BASE = API_BASE_RAW; // keep as-is (may or may not include /api)
 
-// API routes that should be proxied to Azure Functions
+// API routes that should be proxied directly to Azure Functions (from the browser)
 const PROXY_PREFIXES = ["/session", "/webauthn", "/auth"] as const;
 
 /**
  * Build an absolute URL from a path.
  * - Absolute http(s) URLs pass through.
- * - Paths that start with `/api/` are same-origin (Next.js route handlers).
+ * - Paths that start with `/api/` are same-origin (Next.js BFF route handlers).
  * - Paths that start with one of PROXY_PREFIXES are sent to Functions:
  *     API_BASE + (ensure /api once) + normalized path
  * - Everything else stays same-origin.
@@ -45,6 +45,13 @@ function toUrl(path: string) {
 
   // Anything else stays same-origin
   return path;
+}
+
+/** Decide whether to include cookies based on the final URL */
+function credentialsFor(url: string): RequestCredentials {
+  // Only include cookies for same-origin BFF calls (`/api/...`).
+  // For absolute URLs (Functions), omit credentials — cookies there won’t help anyway.
+  return url.startsWith("/api/") ? "include" : "omit";
 }
 
 /** Safe JSON parse (falls back to raw text) */
@@ -106,7 +113,7 @@ async function apiFetch<T>(
   try {
     const res = await fetch(url, {
       cache: "no-store",
-      credentials: "include", // keep cookies/session
+      credentials: credentialsFor(url),
       ...init,
       headers: baseHeaders,
       signal: controller.signal,

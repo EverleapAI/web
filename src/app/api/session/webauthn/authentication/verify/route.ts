@@ -14,12 +14,13 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-// Remove any Domain= attribute so the cookie is set for this host (the web app)
+/** Strip any `Domain=` attribute so the cookie lands on this host (the web app). */
 function rewriteSetCookieForHost(raw: string | null): string | null {
   if (!raw) return null;
+  // If Azure returns multiple Set-Cookie in a single header, split on cookie boundaries.
   return raw
     .split(/,(?=[^ ;]+=)/)
-    .map(c => c.replace(/; *Domain=[^;]+/gi, ""))
+    .map((c) => c.replace(/; *Domain=[^;]+/gi, "")) // drop Domain=...
     .join(", ");
 }
 
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
         "cache-control": "no-cache",
       },
       body,
-      redirect: "manual",
+      redirect: "manual", // mirror redirects ourselves so Next can add Set-Cookie
       cache: "no-store",
     });
 
@@ -45,15 +46,21 @@ export async function POST(req: NextRequest) {
     const rawSetCookie = upstream.headers.get("set-cookie");
     const setCookie = rewriteSetCookieForHost(rawSetCookie);
 
+    // Mirror redirect (e.g., 302 → /dashboard) and forward cookie(s)
     if (status >= 300 && status < 400 && location) {
       const res = NextResponse.redirect(location, { status });
       if (setCookie) res.headers.append("set-cookie", setCookie);
       return setNoStore(res);
     }
 
+    // Otherwise relay JSON (or plain text) with same status
     const text = await upstream.text();
-    let payload: unknown = text;
-    try { payload = text ? JSON.parse(text) : null; } catch { /* leave as text */ }
+    let payload: unknown;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = text;
+    }
 
     const res = NextResponse.json(payload, { status });
     if (setCookie) res.headers.append("set-cookie", setCookie);

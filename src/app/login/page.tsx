@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent } from "react";
-// ❌ remove: import { useRouter } from "next/navigation";
+// ❌ keep router removed
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import VoiceField from "@/components/site/VoiceField";
@@ -45,7 +45,7 @@ type AuthnOptionsResponse = WebAuthnOptionsOK<PublicKeyCredentialRequestOptionsJ
 type RegOptionsResponse = WebAuthnOptionsOK<PublicKeyCredentialCreationOptionsJSON> | WebAuthnOptionsErr;
 
 export default function LoginPage() {
-  // ❌ remove: const router = useRouter();
+  // router removed
 
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState("");
@@ -97,7 +97,6 @@ export default function LoginPage() {
     if (firstName.trim()) setStep(2);
   }
 
-  function isEmail(input: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.trim()); }
   function parseContact(rawInput: string): { method: "email" | "phone"; value: string } | null {
     const raw = rawInput.trim();
     if (isEmail(raw)) return { method: "email", value: raw.toLowerCase() };
@@ -165,7 +164,7 @@ export default function LoginPage() {
   // finalize after verify so cookies are in place
   async function finalizeAfterVerify() {
     try { localStorage.setItem("everleap.verified", "1"); } catch {}
-    try { await api.get("/session/me"); } catch {}
+    try { await api.get("/api/session/me"); } catch {}
     window.location.assign("/dashboard");
   }
 
@@ -183,7 +182,8 @@ export default function LoginPage() {
 
       if (authOpts.ok) {
         const assertionJSON = await performAuthentication(authOpts.options);
-        const v = await fetch(api.url("/webauthn/authentication/verify"), {
+        // ✅ use BFF verify endpoint (same-origin) so Set-Cookie lands correctly
+        const v = await fetch("/api/session/webauthn/authentication/verify", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -207,7 +207,8 @@ export default function LoginPage() {
         }
 
         const attJSON = await performRegistration(regOpts.options);
-        const v = await fetch(api.url("/webauthn/registration/verify"), {
+        // ✅ use BFF verify endpoint (same-origin)
+        const v = await fetch("/api/session/webauthn/registration/verify", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
