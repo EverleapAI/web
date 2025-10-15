@@ -7,6 +7,7 @@ import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import LogoutButton from "@/components/auth/LogoutButton";
 import RequireAuth from "@/components/auth/RequireAuth";
+import { api } from "@/lib/api";
 
 type MeState = {
   role?: "student" | "supporter";
@@ -14,13 +15,55 @@ type MeState = {
   lastName?: string;
 };
 
+type MeResponse = {
+  ok: boolean;
+  verified: boolean;
+  userId?: string | null;
+  issuedAtUtc?: string | null;
+};
+
 export default function DashboardPage() {
   const [me, setMe] = useState<MeState>({});
   const [userId, setUserId] = useState<string>("");
 
+  // Authoritative session → userId + set local hints
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const sess = await api.get<MeResponse>("/api/session/me");
+        if (cancelled) return;
+
+        if (sess?.ok && sess.verified && sess.userId) {
+          setUserId(String(sess.userId));
+          // ensure client hints are in sync
+          try {
+            localStorage.setItem("everleap.verified", "1");
+            localStorage.setItem("everleap.userId", String(sess.userId));
+          } catch {}
+        } else {
+          // fallback (should rarely happen because RequireAuth guards this page)
+          try {
+            const localId = localStorage.getItem("everleap.userId") || "";
+            if (localId) setUserId(localId);
+          } catch {}
+        }
+      } catch {
+        // fallback to any local hints
+        try {
+          const localId = localStorage.getItem("everleap.userId") || "";
+          if (localId) setUserId(localId);
+        } catch {}
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Profile-ish display values (from Welcome flow hints for now)
   useEffect(() => {
     try {
-      setUserId(localStorage.getItem("everleap.userId") || "");
       // Primary: values saved by Welcome flow
       const primary = JSON.parse(localStorage.getItem("everleap.user") || "{}");
       // Fallback (older sessions): previous key
@@ -34,8 +77,7 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
-  const fullName =
-    [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
+  const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
 
   return (
     <RequireAuth>

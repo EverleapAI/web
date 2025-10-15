@@ -57,7 +57,15 @@ export default function SiteHeader({ translucent = false }: Props) {
       try {
         // IMPORTANT: hit our Next.js route handler (same-origin)
         const data = await api.get<MeResponse>("/api/session/me");
-        setAuthed(Boolean(data?.verified));
+        const v = Boolean(data?.verified);
+        setAuthed(v);
+        // keep the lightweight hint in sync for other tabs/components
+        try {
+          if (v) localStorage.setItem("everleap.verified", "1");
+          else localStorage.removeItem("everleap.verified");
+        } catch {
+          /* ignore */
+        }
       } catch {
         // ignore network/cancel
       }

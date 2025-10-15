@@ -10,7 +10,9 @@ import ConversationChrome from "@/components/conversation/ConversationChrome";
 export default function MagicCatcherPage() {
   const sp = useSearchParams();
   const router = useRouter();
+
   const token = sp.get("token") || "";
+  const nextParam = sp.get("next") || ""; // preserve desired post-login destination
   const [error, setError] = useState<string | null>(null);
 
   // Compose API consume URL, handling bases that may already include /api
@@ -19,8 +21,13 @@ export default function MagicCatcherPage() {
 
   const consumeUrl = useMemo(() => {
     if (!token || !RAW_BASE) return null;
-    return `${BASE_WITH_API}/auth/magic/consume?token=${encodeURIComponent(token)}`;
-  }, [BASE_WITH_API, RAW_BASE, token]);
+    const url = new URL(`${BASE_WITH_API}/auth/magic/consume`);
+    url.searchParams.set("token", token);
+    if (nextParam && nextParam.startsWith("/")) {
+      url.searchParams.set("next", nextParam);
+    }
+    return url.toString();
+  }, [BASE_WITH_API, RAW_BASE, token, nextParam]);
 
   useEffect(() => {
     if (!token) {
@@ -31,9 +38,17 @@ export default function MagicCatcherPage() {
       setError("We’re missing our API base URL. Please try again in a moment.");
       return;
     }
-    // Hard redirect so the API can set cookies & 302 to /dashboard
+
+    // Hard redirect so the API can set cookies & 302 to /dashboard (or ?next=…)
     try {
       window.location.replace(consumeUrl);
+      // As a safety net, attempt a second nudge shortly after
+      const t = setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          try { window.location.href = consumeUrl; } catch {}
+        }
+      }, 1200);
+      return () => clearTimeout(t);
     } catch {
       setError("We couldn’t open your sign-in link. You can try again.");
     }
@@ -68,10 +83,18 @@ export default function MagicCatcherPage() {
                 <div className="rounded-2xl card-surface p-4 text-sm">
                   <p className="text-red-700">{error}</p>
                 </div>
-                <div>
+                <div className="flex gap-2">
+                  {consumeUrl && (
+                    <a
+                      className="btn-primary flex-1 text-center"
+                      href={consumeUrl}
+                    >
+                      Try again
+                    </a>
+                  )}
                   <button
                     type="button"
-                    className="btn-primary w-full"
+                    className="btn-secondary flex-1"
                     onClick={() => router.replace("/login")}
                   >
                     Back to login

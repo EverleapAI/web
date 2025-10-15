@@ -43,10 +43,24 @@ export default function RequireAuth({ children, redirectTo }: Props) {
 
     (async () => {
       try {
-        // IMPORTANT: hit our Next.js route handler (same-origin)
+        // Same-origin BFF so cookies are honored server-side
         const data = await api.get<MeResponse>("/api/session/me");
         if (!cancelled) {
-          setAuthed(Boolean(data?.verified));
+          const v = Boolean(data?.verified);
+          setAuthed(v);
+
+          // Set/clear lightweight local hints for fast client UI
+          try {
+            if (v) {
+              localStorage.setItem("everleap.verified", "1");
+              if (data?.userId) localStorage.setItem("everleap.userId", String(data.userId));
+            } else {
+              localStorage.removeItem("everleap.verified");
+              localStorage.removeItem("everleap.userId");
+            }
+          } catch {
+            /* ignore storage failures */
+          }
         }
       } catch {
         if (!cancelled) setAuthed(false);

@@ -167,6 +167,16 @@ export default function LoginPage() {
     }, 2000);
   }
 
+  // 👉 helper: finalize after verify so cookies are definitely in place
+  async function finalizeAfterVerify() {
+    try { localStorage.setItem("everleap.verified", "1"); } catch {}
+    try {
+      // Hit the BFF so we confirm the HttpOnly cookie is live
+      await fetch("/api/session/me", { credentials: "include", cache: "no-store" });
+    } catch {}
+    window.location.assign("/dashboard");
+  }
+
   async function doPasskey() {
     setError(null);
     const parsed = parseContact(contact);
@@ -183,15 +193,16 @@ export default function LoginPage() {
 
       if (authOpts.ok) {
         const assertionJSON = await performAuthentication(authOpts.options);
-        // ⬇️ drop /api — goes to Functions via api.ts
-        await fetch(api.url("/webauthn/authentication/verify"), {
+        // ✅ Send to BFF route (same-origin) so it can call Functions and set cookies
+        const v = await fetch("/api/session/webauthn/authentication/verify", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ assertionResponse: assertionJSON }),
           redirect: "follow",
         });
-        router.replace("/dashboard");
+        if (!v.ok) throw new Error("Verification failed");
+        await finalizeAfterVerify();
         return;
       }
 
@@ -209,15 +220,16 @@ export default function LoginPage() {
         }
 
         const attJSON = await performRegistration(regOpts.options);
-        // ⬇️ drop /api — goes to Functions via api.ts
-        await fetch(api.url("/webauthn/registration/verify"), {
+        // ✅ Send to BFF route (same-origin) for verify + cookie set
+        const v = await fetch("/api/session/webauthn/registration/verify", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ attestationResponse: attJSON }),
           redirect: "follow",
         });
-        router.replace("/dashboard");
+        if (!v.ok) throw new Error("Verification failed");
+        await finalizeAfterVerify();
         return;
       }
 

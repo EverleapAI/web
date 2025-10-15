@@ -17,24 +17,39 @@ export default function LogoutButton({ className, label = "Sign out" }: Props) {
   async function onClick() {
     if (busy) return;
     setBusy(true);
+
     try {
-      // Ask backend to clear the HttpOnly session
-      await api.post<{ ok: boolean }>("/auth/logout", {});
+      // Clear the server-side (HttpOnly) session.
+      // NOTE: no `/api` prefix — api.ts proxies this to Functions.
+      await api.post<{ ok: boolean }>("/api/session/logout", {});
     } catch {
-      // Even if the network call fails, fall through and clear local hints
+      // Even if the network fails, proceed to clear local hints.
     } finally {
-      // Clear any local/UI hints
+      // Clear local/UI hints so the header & guards don't think we're still signed in.
       try {
         localStorage.removeItem("everleap.verified");
         localStorage.removeItem("everleap.userId");
         localStorage.removeItem("everleap.session");
         localStorage.removeItem("everleap.otp.requestId");
+
+        // Nudge other tabs via storage event
+        localStorage.setItem("everleap.logout.ts", String(Date.now()));
+        // (optional) tidy up the nudge key
+        setTimeout(() => {
+          try { localStorage.removeItem("everleap.logout.ts"); } catch {}
+        }, 0);
+
+        // Best-effort clear of any non-HttpOnly hint cookie
         document.cookie = "everleap_verified=; Max-Age=0; path=/; SameSite=Lax";
       } catch {
         /* ignore */
       }
+
       setBusy(false);
+
+      // Navigate home and refresh to ensure a clean tree.
       router.replace("/");
+      router.refresh();
     }
   }
 

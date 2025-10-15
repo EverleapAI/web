@@ -5,21 +5,37 @@
 */
 
 export function isWebAuthnAvailable(): boolean {
-  return typeof window !== "undefined" && !!(window as Window & typeof globalThis).PublicKeyCredential;
+  return (
+    typeof window !== "undefined" &&
+    !!(window as Window & typeof globalThis).PublicKeyCredential
+  );
 }
 
 /* ---------- Minimal JSON types ---------- */
 type Base64URLString = string;
 
-export type PublicKeyCredentialCreationOptionsJSON = Omit<PublicKeyCredentialCreationOptions, "challenge" | "user" | "excludeCredentials"> & {
-  challenge: Base64URLString;
-  user: Omit<PublicKeyCredentialUserEntity, "id"> & { id: Base64URLString };
-  excludeCredentials?: Array<Omit<PublicKeyCredentialDescriptor, "id"> & { id: Base64URLString }>;
-};
+export type PublicKeyCredentialCreationOptionsJSON =
+  Omit<
+    PublicKeyCredentialCreationOptions,
+    "challenge" | "user" | "excludeCredentials"
+  > & {
+    challenge: Base64URLString;
+    user: Omit<PublicKeyCredentialUserEntity, "id"> & {
+      id: Base64URLString;
+    };
+    excludeCredentials?: Array<
+      Omit<PublicKeyCredentialDescriptor, "id"> & { id: Base64URLString }
+    >;
+  };
 
-export type PublicKeyCredentialRequestOptionsJSON = Omit<PublicKeyCredentialRequestOptions, "challenge" | "allowCredentials"> & {
+export type PublicKeyCredentialRequestOptionsJSON = Omit<
+  PublicKeyCredentialRequestOptions,
+  "challenge" | "allowCredentials"
+> & {
   challenge: Base64URLString;
-  allowCredentials?: Array<Omit<PublicKeyCredentialDescriptor, "id"> & { id: Base64URLString }>;
+  allowCredentials?: Array<
+    Omit<PublicKeyCredentialDescriptor, "id"> & { id: Base64URLString }
+  >;
 };
 
 export type PublicKeyCredentialJSON =
@@ -48,39 +64,65 @@ export function base64urlToBuf(b64url: string): ArrayBuffer {
   return buf;
 }
 
+/** Accept either base64url string or ArrayBuffer and return ArrayBuffer */
+function toArrayBuffer(x: unknown): ArrayBuffer {
+  if (x instanceof ArrayBuffer) return x;
+  if (typeof x === "string") return base64urlToBuf(x);
+  // Defensive: treat falsy or unexpected as empty buffer
+  return new ArrayBuffer(0);
+}
+
 /* -------- map server → WebAuthn (binary fields) -------- */
-function toCreationOpts(publicKeyJSON: PublicKeyCredentialCreationOptionsJSON): PublicKeyCredentialCreationOptions {
-  const { challenge, user, excludeCredentials, ...rest } = publicKeyJSON || ({} as PublicKeyCredentialCreationOptionsJSON);
+function toCreationOpts(
+  publicKeyJSON: PublicKeyCredentialCreationOptionsJSON
+): PublicKeyCredentialCreationOptions {
+  const {
+    challenge,
+    user,
+    excludeCredentials,
+    ...rest
+  } = (publicKeyJSON || {}) as PublicKeyCredentialCreationOptionsJSON;
+
   const out: PublicKeyCredentialCreationOptions = {
-    ...(rest as Omit<PublicKeyCredentialCreationOptions, "challenge" | "user" | "excludeCredentials">),
-    challenge: base64urlToBuf(challenge),
+    ...(rest as Omit<
+      PublicKeyCredentialCreationOptions,
+      "challenge" | "user" | "excludeCredentials"
+    >),
+    challenge: toArrayBuffer(challenge),
     user: {
       ...user,
-      id: base64urlToBuf(user.id),
+      id: toArrayBuffer(user.id), // server sends base64url; convert → ArrayBuffer
     },
   };
 
   if (Array.isArray(excludeCredentials)) {
     out.excludeCredentials = excludeCredentials.map((cred) => ({
       ...cred,
-      id: base64urlToBuf(cred.id),
+      id: toArrayBuffer(cred.id),
     }));
   }
 
   return out;
 }
 
-function toRequestOpts(publicKeyJSON: PublicKeyCredentialRequestOptionsJSON): PublicKeyCredentialRequestOptions {
-  const { challenge, allowCredentials, ...rest } = publicKeyJSON || ({} as PublicKeyCredentialRequestOptionsJSON);
+function toRequestOpts(
+  publicKeyJSON: PublicKeyCredentialRequestOptionsJSON
+): PublicKeyCredentialRequestOptions {
+  const { challenge, allowCredentials, ...rest } =
+    (publicKeyJSON || {}) as PublicKeyCredentialRequestOptionsJSON;
+
   const out: PublicKeyCredentialRequestOptions = {
-    ...(rest as Omit<PublicKeyCredentialRequestOptions, "challenge" | "allowCredentials">),
-    challenge: base64urlToBuf(challenge),
+    ...(rest as Omit<
+      PublicKeyCredentialRequestOptions,
+      "challenge" | "allowCredentials"
+    >),
+    challenge: toArrayBuffer(challenge),
   };
 
   if (Array.isArray(allowCredentials)) {
     out.allowCredentials = allowCredentials.map((cred) => ({
       ...cred,
-      id: base64urlToBuf(cred.id),
+      id: toArrayBuffer(cred.id),
     }));
   }
 
@@ -99,8 +141,7 @@ export function publicKeyCredentialToJSON(input: unknown): PublicKeyCredentialJS
     const obj: Record<string, PublicKeyCredentialJSON> = {};
     for (const k of Object.keys(input as Record<string, unknown>)) {
       const v = (input as Record<string, unknown>)[k];
-      // Skip functions
-      if (typeof v === "function") continue;
+      if (typeof v === "function") continue; // skip methods
       obj[k] = publicKeyCredentialToJSON(v as unknown);
     }
     return obj;
@@ -117,25 +158,31 @@ export async function performRegistration(
   }
 
   const publicKey = toCreationOpts(optionsJSON);
-  const cred = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential | null;
+  const cred = (await navigator.credentials.create({ publicKey })) as
+    | PublicKeyCredential
+    | null;
 
   if (!cred) throw new Error("Creation was not allowed or cancelled");
 
-  const json = publicKeyCredentialToJSON(cred) as Record<string, PublicKeyCredentialJSON>;
+  const json = publicKeyCredentialToJSON(cred) as Record<
+    string,
+    PublicKeyCredentialJSON
+  >;
 
-  // Some browsers expose transports on the attestation response
+  // Transports (optional)
   try {
     const resp = cred.response as unknown as { getTransports?: () => string[] };
-    const transports = typeof resp?.getTransports === "function" ? resp.getTransports() : undefined;
-    if (transports && Array.isArray(transports) && transports.length) {
-      (json.response as Record<string, unknown>) = (json.response as Record<string, unknown>) || {};
+    const transports =
+      typeof resp?.getTransports === "function" ? resp.getTransports() : undefined;
+    if (transports && transports.length) {
+      (json.response as Record<string, unknown>) ||= {};
       (json.response as Record<string, unknown>)["transports"] = transports;
     }
   } catch {
     /* ignore */
   }
 
-  // Include client extension results if present
+  // Client extension results (optional)
   try {
     const exts = (cred as PublicKeyCredential).getClientExtensionResults?.();
     if (exts && Object.keys(exts).length > 0) {
@@ -157,13 +204,18 @@ export async function performAuthentication(
   }
 
   const publicKey = toRequestOpts(optionsJSON);
-  const cred = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential | null;
+  const cred = (await navigator.credentials.get({ publicKey })) as
+    | PublicKeyCredential
+    | null;
 
   if (!cred) throw new Error("Authentication was not allowed or cancelled");
 
-  const json = publicKeyCredentialToJSON(cred) as Record<string, PublicKeyCredentialJSON>;
+  const json = publicKeyCredentialToJSON(cred) as Record<
+    string,
+    PublicKeyCredentialJSON
+  >;
 
-  // Include client extension results if present
+  // Client extension results (optional)
   try {
     const exts = (cred as PublicKeyCredential).getClientExtensionResults?.();
     if (exts && Object.keys(exts).length > 0) {
