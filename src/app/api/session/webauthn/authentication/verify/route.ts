@@ -43,14 +43,15 @@ export async function POST(req: NextRequest) {
 
     const text = await upstream.text();
     let payload: unknown = text;
-    try { payload = text ? JSON.parse(text) : null; } catch {}
+    try { payload = text ? JSON.parse(text) : null; } catch { /* leave as text */ }
 
     const res = NextResponse.json(payload, { status });
     if (setCookie) res.headers.append("set-cookie", setCookie);
     return setNoStore(res);
-  } catch (err) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Proxy failed";
     const res = NextResponse.json(
-      { ok: false, error: "BFF_ERROR", message: (err as any)?.message ?? "Proxy failed" },
+      { ok: false, error: "BFF_ERROR", message },
       { status: 502 }
     );
     return setNoStore(res);

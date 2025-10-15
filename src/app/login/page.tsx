@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
+// ❌ remove: import { useRouter } from "next/navigation";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import VoiceField from "@/components/site/VoiceField";
@@ -45,7 +45,7 @@ type AuthnOptionsResponse = WebAuthnOptionsOK<PublicKeyCredentialRequestOptionsJ
 type RegOptionsResponse = WebAuthnOptionsOK<PublicKeyCredentialCreationOptionsJSON> | WebAuthnOptionsErr;
 
 export default function LoginPage() {
-  const router = useRouter();
+  // ❌ remove: const router = useRouter();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState("");
@@ -97,6 +97,7 @@ export default function LoginPage() {
     if (firstName.trim()) setStep(2);
   }
 
+  function isEmail(input: string) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.trim()); }
   function parseContact(rawInput: string): { method: "email" | "phone"; value: string } | null {
     const raw = rawInput.trim();
     if (isEmail(raw)) return { method: "email", value: raw.toLowerCase() };
@@ -115,7 +116,6 @@ export default function LoginPage() {
     setBridgeId(null);
     setDebugUrl(null);
     try {
-      // ⬇️ drop /api — goes to Functions via api.ts
       const res = await api.post<MagicRequestRes>("/auth/magic/request", {
         firstName: firstName.trim(),
         lastName: null,
@@ -129,13 +129,11 @@ export default function LoginPage() {
         return;
       }
 
-      // show bridge wait UI if phone on desktop
       if (parsed.method === "phone" && (res.bridgeId || res.debugUrl)) {
         if (res.bridgeId) setBridgeId(res.bridgeId);
         if (res.debugUrl) setDebugUrl(res.debugUrl);
         startBridgePolling(res.bridgeId || null);
       } else {
-        // email flow: show hint (and dev debug URL if present)
         if (res.debugUrl) setDebugUrl(res.debugUrl);
         setBusy(false);
       }
@@ -148,15 +146,12 @@ export default function LoginPage() {
   function startBridgePolling(id: string | null) {
     if (!id) { setBusy(false); return; }
     setPolling(true);
-    // Poll every 2s for readiness
     const iv = setInterval(async () => {
       try {
-        // ⬇️ drop /api — goes to Functions via api.ts
         const r = await api.post<{ ok: boolean; ready?: boolean }>("/auth/magic/bridge/poll", { bridgeId: id });
         if (r?.ok && r.ready) {
           clearInterval(iv);
           setPolling(false);
-          // Server mints session on poll → just reload
           window.location.reload();
         }
       } catch {
@@ -167,13 +162,10 @@ export default function LoginPage() {
     }, 2000);
   }
 
-  // 👉 helper: finalize after verify so cookies are definitely in place
+  // finalize after verify so cookies are in place
   async function finalizeAfterVerify() {
     try { localStorage.setItem("everleap.verified", "1"); } catch {}
-    try {
-      // Hit the BFF so we confirm the HttpOnly cookie is live
-      await fetch("/api/session/me", { credentials: "include", cache: "no-store" });
-    } catch {}
+    try { await api.get("/session/me"); } catch {}
     window.location.assign("/dashboard");
   }
 
@@ -185,16 +177,13 @@ export default function LoginPage() {
 
     setBusy(true);
     try {
-      // 1) Try authentication first (best path)
-      // ⬇️ drop /api — goes to Functions via api.ts
       const authOpts = await api.post<AuthnOptionsResponse>("/webauthn/authentication/options", {
         contact: { method: parsed.method, value: parsed.value },
       });
 
       if (authOpts.ok) {
         const assertionJSON = await performAuthentication(authOpts.options);
-        // ✅ Send to BFF route (same-origin) so it can call Functions and set cookies
-        const v = await fetch("/api/session/webauthn/authentication/verify", {
+        const v = await fetch(api.url("/webauthn/authentication/verify"), {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -206,9 +195,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2) If unknown contact → fall back to registration
       if (!authOpts.ok && authOpts.error === "UNKNOWN_CONTACT") {
-        // ⬇️ drop /api — goes to Functions via api.ts
         const regOpts = await api.post<RegOptionsResponse>("/webauthn/registration/options", {
           firstName: firstName.trim(),
           contact: { method: parsed.method, value: parsed.value },
@@ -220,8 +207,7 @@ export default function LoginPage() {
         }
 
         const attJSON = await performRegistration(regOpts.options);
-        // ✅ Send to BFF route (same-origin) for verify + cookie set
-        const v = await fetch("/api/session/webauthn/registration/verify", {
+        const v = await fetch(api.url("/webauthn/registration/verify"), {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -233,7 +219,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Other errors from auth options
       setError(authOpts.error || "Passkey sign-in isn’t available right now.");
       setBusy(false);
     } catch (e: unknown) {
@@ -260,7 +245,6 @@ export default function LoginPage() {
           />
         </div>
       </div>
-      {/* fixed tailwind class name */}
       <p className="text-[11px] opacity-70 pl-1">You can type or tap the mic and speak.</p>
     </div>
   );
@@ -286,7 +270,6 @@ export default function LoginPage() {
     </div>
   );
 
-  /* ---------- Layout + actions ---------- */
   const promptClass =
     "transition-all duration-300 " + (showPrompt ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1");
   const contentClass =
@@ -331,7 +314,6 @@ export default function LoginPage() {
                     </button>
                   </div>
 
-                  {/* Bridge / debug hints */}
                   {(bridgeId || debugUrl) && (
                     <div className="rounded-2xl card-surface p-3 space-y-2">
                       {bridgeId && (
