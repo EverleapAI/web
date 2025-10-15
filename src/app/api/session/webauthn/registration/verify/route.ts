@@ -14,9 +14,18 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
+// Remove any Domain= attribute so the cookie is set for this host (the web app)
+function rewriteSetCookieForHost(raw: string | null): string | null {
+  if (!raw) return null;
+  // Handle multiple cookies in a single header value too
+  return raw
+    .split(/,(?=[^ ;]+=)/) // split on cookie boundaries, not commas inside Expires
+    .map(c => c.replace(/; *Domain=[^;]+/gi, "")) // strip Domain=...
+    .join(", ");
+}
+
 export async function POST(req: NextRequest) {
   try {
-    // Pass through cookies + body to Functions
     const cookieHeader = req.headers.get("cookie") ?? "";
     const body = await req.text();
 
@@ -32,26 +41,20 @@ export async function POST(req: NextRequest) {
       cache: "no-store",
     });
 
-    // Relay Set-Cookie(s) from Functions to the browser
-    const setCookie = upstream.headers.get("set-cookie");
-    const location = upstream.headers.get("location");
     const status = upstream.status;
+    const location = upstream.headers.get("location");
+    const rawSetCookie = upstream.headers.get("set-cookie");
+    const setCookie = rewriteSetCookieForHost(rawSetCookie);
 
-    // If Functions issued a redirect (e.g., 302 → /dashboard), mirror it
     if (status >= 300 && status < 400 && location) {
       const res = NextResponse.redirect(location, { status });
       if (setCookie) res.headers.append("set-cookie", setCookie);
       return setNoStore(res);
     }
 
-    // Otherwise, stream JSON (or text) back with the same status
     const text = await upstream.text();
     let payload: unknown = text;
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      /* non-JSON; leave as text */
-    }
+    try { payload = text ? JSON.parse(text) : null; } catch { /* leave as text */ }
 
     const res = NextResponse.json(payload, { status });
     if (setCookie) res.headers.append("set-cookie", setCookie);

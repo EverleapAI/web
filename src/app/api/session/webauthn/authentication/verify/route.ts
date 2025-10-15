@@ -14,6 +14,15 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
+// Remove any Domain= attribute so the cookie is set for this host (the web app)
+function rewriteSetCookieForHost(raw: string | null): string | null {
+  if (!raw) return null;
+  return raw
+    .split(/,(?=[^ ;]+=)/)
+    .map(c => c.replace(/; *Domain=[^;]+/gi, ""))
+    .join(", ");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get("cookie") ?? "";
@@ -31,9 +40,10 @@ export async function POST(req: NextRequest) {
       cache: "no-store",
     });
 
-    const setCookie = upstream.headers.get("set-cookie");
-    const location = upstream.headers.get("location");
     const status = upstream.status;
+    const location = upstream.headers.get("location");
+    const rawSetCookie = upstream.headers.get("set-cookie");
+    const setCookie = rewriteSetCookieForHost(rawSetCookie);
 
     if (status >= 300 && status < 400 && location) {
       const res = NextResponse.redirect(location, { status });
