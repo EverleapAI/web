@@ -14,15 +14,41 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Strip any `Domain=` attribute so the cookie lands on this host (the web app). */
-function rewriteSetCookieForHost(raw: string | null): string | null {
+/**
+ * Normalize Set-Cookie to this web origin:
+ * - remove any Domain attribute (bind to current host)
+ * - ensure Path=/ (so every route sees it)
+ * - ensure Secure and SameSite=Lax for SPA redirects
+ * Handles multiple cookies in one header safely (splits on cookie boundaries).
+ */
+function normalizeSetCookieForHost(raw: string | null): string | null {
   if (!raw) return null;
-  // Split multiple cookies in a single header on true cookie boundaries,
-  // not commas inside an Expires attribute.
-  return raw
-    .split(/,(?=[^ ;]+=)/)
-    .map((c) => c.replace(/; *Domain=[^;]+/gi, "")) // drop Domain=...
-    .join(", ");
+
+  // Split on cookie boundaries (commas that start a new k=v)
+  const parts = raw.split(/,(?=[^ ;]+=)/);
+
+  const fixed = parts.map((cookie) => {
+    let c = cookie;
+
+    // strip Domain
+    c = c.replace(/; *Domain=[^;]+/gi, "");
+
+    // ensure Path=/
+    if (!/; *Path=/i.test(c)) c += "; Path=/";
+
+    // ensure SameSite=Lax (don’t overwrite if already set)
+    if (!/; *SameSite=/i.test(c)) c += "; SameSite=Lax";
+
+    // ensure Secure
+    if (!/; *Secure/i.test(c)) c += "; Secure";
+
+    // always HttpOnly for session cookies; if your Functions already set it that’s fine
+    if (!/; *HttpOnly/i.test(c)) c += "; HttpOnly";
+
+    return c;
+  });
+
+  return fixed.join(", ");
 }
 
 export async function POST(req: NextRequest) {
@@ -38,29 +64,29 @@ export async function POST(req: NextRequest) {
         "cache-control": "no-cache",
       },
       body,
-      redirect: "manual", // mirror redirects so Next can append Set-Cookie
+      redirect: "manual", // we’ll forward Location ourselves
       cache: "no-store",
     });
 
     const status = upstream.status;
     const location = upstream.headers.get("location");
     const rawSetCookie = upstream.headers.get("set-cookie");
-    const setCookie = rewriteSetCookieForHost(rawSetCookie);
+    const setCookie = normalizeSetCookieForHost(rawSetCookie);
 
-    // Mirror redirect (e.g., 302 → /dashboard) and forward cookie(s)
+    // Mirror redirects (e.g., to /dashboard)
     if (status >= 300 && status < 400 && location) {
       const res = NextResponse.redirect(location, { status });
       if (setCookie) res.headers.append("set-cookie", setCookie);
       return setNoStore(res);
     }
 
-    // Otherwise, relay JSON (or text) with same status
+    // Otherwise forward JSON/text body
     const text = await upstream.text();
-    let payload: unknown;
+    let payload: unknown = text;
     try {
       payload = text ? JSON.parse(text) : null;
     } catch {
-      payload = text;
+      /* keep as text */
     }
 
     const res = NextResponse.json(payload, { status });
