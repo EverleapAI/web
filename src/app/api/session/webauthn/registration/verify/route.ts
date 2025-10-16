@@ -1,10 +1,15 @@
+// apps/web/src/app/api/session/webauthn/registration/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 
 // Normalize Functions base; ensure exactly one /api
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+if (!RAW_BASE) {
+  throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for WebAuthn registration/verify proxy.");
+}
 const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${BASE_WITH_API}/webauthn/registration/verify`;
 
@@ -14,19 +19,10 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/**
- * Normalize Set-Cookie to this web origin:
- * - remove any Domain attribute (bind to current host)
- * - ensure Path=/ (so every route sees it)
- * - ensure Secure and SameSite=Lax for SPA redirects
- * Handles multiple cookies in one header safely (splits on cookie boundaries).
- */
-function normalizeSetCookieForHost(raw: string | null): string | null {
+/** Normalize Set-Cookie for this origin; optionally skip Secure on localhost */
+function normalizeSetCookieForHost(raw: string | null, { isLocal }: { isLocal: boolean }): string | null {
   if (!raw) return null;
-
-  // Split on cookie boundaries (commas that start a new k=v)
-  const parts = raw.split(/,(?=[^ ;]+=)/);
-
+  const parts = raw.split(/,(?=[^ ;]+=)/); // split on cookie boundaries
   const fixed = parts.map((cookie) => {
     let c = cookie;
 
@@ -36,24 +32,28 @@ function normalizeSetCookieForHost(raw: string | null): string | null {
     // ensure Path=/
     if (!/; *Path=/i.test(c)) c += "; Path=/";
 
-    // ensure SameSite=Lax (don’t overwrite if already set)
+    // ensure SameSite=Lax
     if (!/; *SameSite=/i.test(c)) c += "; SameSite=Lax";
 
-    // ensure Secure
-    if (!/; *Secure/i.test(c)) c += "; Secure";
+    // ensure Secure (but not on localhost)
+    if (!/; *Secure/i.test(c) && !isLocal) c += "; Secure";
 
-    // always HttpOnly for session cookies; if your Functions already set it that’s fine
+    // ensure HttpOnly
     if (!/; *HttpOnly/i.test(c)) c += "; HttpOnly";
 
     return c;
   });
-
   return fixed.join(", ");
+}
+
+export async function GET() {
+  return setNoStore(NextResponse.json({ ok: false, error: "METHOD_NOT_ALLOWED" }, { status: 405 }));
 }
 
 export async function POST(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get("cookie") ?? "";
+    const isLocal = (req.headers.get("host") || "").startsWith("localhost");
     const body = await req.text();
 
     const upstream = await fetch(TARGET_URL, {
@@ -62,16 +62,18 @@ export async function POST(req: NextRequest) {
         "content-type": "application/json",
         cookie: cookieHeader,
         "cache-control": "no-cache",
+        "x-forwarded-host": req.headers.get("host") ?? "",
+        "x-forwarded-proto": "https",
       },
       body,
-      redirect: "manual", // we’ll forward Location ourselves
+      redirect: "manual",
       cache: "no-store",
     });
 
     const status = upstream.status;
     const location = upstream.headers.get("location");
     const rawSetCookie = upstream.headers.get("set-cookie");
-    const setCookie = normalizeSetCookieForHost(rawSetCookie);
+    const setCookie = normalizeSetCookieForHost(rawSetCookie, { isLocal });
 
     // Mirror redirects (e.g., to /dashboard)
     if (status >= 300 && status < 400 && location) {
@@ -80,24 +82,21 @@ export async function POST(req: NextRequest) {
       return setNoStore(res);
     }
 
-    // Otherwise forward JSON/text body
+    // Otherwise forward body, preserving upstream content-type when possible
+    const upstreamCt = upstream.headers.get("content-type") || "application/json";
     const text = await upstream.text();
     let payload: unknown = text;
-    try {
-      payload = text ? JSON.parse(text) : null;
-    } catch {
-      /* keep as text */
-    }
+    try { payload = text ? JSON.parse(text) : null; } catch { /* keep as text */ }
 
-    const res = NextResponse.json(payload, { status });
+    const res =
+      upstreamCt.includes("application/json")
+        ? NextResponse.json(payload, { status })
+        : new NextResponse(text, { status, headers: { "content-type": upstreamCt } });
+
     if (setCookie) res.headers.append("set-cookie", setCookie);
     return setNoStore(res);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Proxy failed";
-    const res = NextResponse.json(
-      { ok: false, error: "BFF_ERROR", message },
-      { status: 502 }
-    );
-    return setNoStore(res);
+    return setNoStore(NextResponse.json({ ok: false, error: "BFF_ERROR", message }, { status: 502 }));
   }
 }

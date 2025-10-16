@@ -176,13 +176,18 @@ export default function LoginPage() {
 
     setBusy(true);
     try {
-      const authOpts = await api.post<AuthnOptionsResponse>("/webauthn/authentication/options", {
-        contact: { method: parsed.method, value: parsed.value },
+      // 1) AUTHENTICATION options via BFF (same-origin)
+      const authRes = await fetch("/api/session/webauthn/authentication/options", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", "cache-control": "no-cache" },
+        body: JSON.stringify({ contact: { method: parsed.method, value: parsed.value } }),
       });
+      const authOpts = (await authRes.json()) as AuthnOptionsResponse;
 
       if (authOpts.ok) {
         const assertionJSON = await performAuthentication(authOpts.options);
-        // ✅ use BFF verify endpoint (same-origin) so Set-Cookie lands correctly
+        // 2) Verify assertion via BFF
         const v = await fetch("/api/session/webauthn/authentication/verify", {
           method: "POST",
           credentials: "include",
@@ -195,11 +200,19 @@ export default function LoginPage() {
         return;
       }
 
+      // If user unknown → start REGISTRATION via BFF
       if (!authOpts.ok && authOpts.error === "UNKNOWN_CONTACT") {
-        const regOpts = await api.post<RegOptionsResponse>("/webauthn/registration/options", {
-          firstName: firstName.trim(),
-          contact: { method: parsed.method, value: parsed.value },
+        const regRes = await fetch("/api/session/webauthn/registration/options", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", "cache-control": "no-cache" },
+          body: JSON.stringify({
+            firstName: firstName.trim(),
+            contact: { method: parsed.method, value: parsed.value },
+          }),
         });
+        const regOpts = (await regRes.json()) as RegOptionsResponse;
+
         if (!regOpts.ok) {
           setError(regOpts.error || "Couldn’t start passkey.");
           setBusy(false);
@@ -207,7 +220,6 @@ export default function LoginPage() {
         }
 
         const attJSON = await performRegistration(regOpts.options);
-        // ✅ use BFF verify endpoint (same-origin)
         const v = await fetch("/api/session/webauthn/registration/verify", {
           method: "POST",
           credentials: "include",
