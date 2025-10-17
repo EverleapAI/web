@@ -53,13 +53,23 @@ function parseNameValue(sc: string): { name: string; value: string } | null {
 export async function POST(req: NextRequest) {
   const body = await req.text();
 
+  // Reconstruct site origin for CSRF-sensitive backends
+  const host = req.headers.get("host") || "";
+  const origin = `https://${host}`;
+  const referer = `${origin}/login`;
+
   const upstream = await fetch(TARGET_URL, {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
       // Forward browser cookies so Functions can read challenge/state
       cookie: req.headers.get("cookie") || "",
-      "x-forwarded-host": req.headers.get("host") || "",
+      // These help some backends decide whether to set cookies
+      origin,
+      referer,
+      "user-agent": req.headers.get("user-agent") || "",
+      // Forwarded info for logging/upstream logic
+      "x-forwarded-host": host,
       "x-forwarded-proto": "https",
       "cache-control": "no-cache",
     },
