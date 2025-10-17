@@ -15,18 +15,28 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Return an array of rewritten Set-Cookie headers (NOT a single comma-joined string) */
-function rewriteSetCookieArray(raw: string | null): string[] {
+/** Split multiple Set-Cookie values safely */
+function splitSetCookie(raw: string): string[] {
+  return raw.split(/,(?=[^ ;]+=)/);
+}
+
+/** Rewrite Domain away and ensure sensible defaults, returning an array */
+function rewriteSetCookieArray(raw: string[] | string | null): string[] {
   if (!raw) return [];
-  // split multiple cookies in a single header safely
-  const parts = raw.split(/,(?=[^ ;]+=)/);
-  return parts.map((cookie) => {
+  const arr = Array.isArray(raw) ? raw : splitSetCookie(raw);
+  return arr.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
     if (!/;\s*Path=/i.test(c)) c += "; Path=/";
     if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
     if (!/;\s*Secure/i.test(c)) c += "; Secure";
     return c;
   });
+}
+
+/** Extract cookie value by name from a Set-Cookie string */
+function extractCookieValue(sc: string, name: string): string | null {
+  const m = sc.match(new RegExp(`^\\s*${name}=([^;]+)`));
+  return m ? m[1] : null;
 }
 
 export async function POST(req: NextRequest) {
@@ -46,18 +56,42 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
 
+  // Payload passthrough
   const contentType = upstream.headers.get("content-type") || "application/json";
-  const payload = contentType.includes("application/json") ? await upstream.json() : await upstream.text();
+  const payload = contentType.includes("application/json")
+    ? await upstream.json()
+    : await upstream.text();
 
   const res = new NextResponse(
     typeof payload === "string" ? payload : JSON.stringify(payload),
     { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // Rewrite and APPEND each Set-Cookie individually
-  const rawSetCookie = upstream.headers.get("set-cookie");
-  const cookies = rewriteSetCookieArray(rawSetCookie);
-  for (const c of cookies) res.headers.append("set-cookie", c);
+  // ---- Handle Set-Cookie(s) robustly ----
+  // Prefer non-standard undici API when available (Next on Node exposes this)
+  // @ts-ignore
+  const getSetCookie: undefined | (() => string[]) = upstream.headers.getSetCookie?.bind(upstream.headers);
+  const rawCookies = getSetCookie ? getSetCookie() : (upstream.headers.get("set-cookie") || "");
+  const rewritten = rewriteSetCookieArray(rawCookies);
+
+  // TEMP: if an everleap_session cookie is present, mirror it to a debug cookie (non-HttpOnly) so you can see it
+  let sessionValue: string | null = null;
+
+  for (const c of rewritten) {
+    res.headers.append("set-cookie", c);
+    if (sessionValue === null) {
+      const maybe = extractCookieValue(c, "everleap_session");
+      if (maybe) sessionValue = maybe;
+    }
+  }
+
+  if (sessionValue) {
+    // Non-HttpOnly debug cookie to confirm it reached the browser
+    res.headers.append(
+      "set-cookie",
+      `everleap_session_debug=${sessionValue}; Path=/; SameSite=Lax; Secure; Max-Age=600`
+    );
+  }
 
   return setNoStore(res);
 }
