@@ -1,14 +1,12 @@
-// apps/web/app/dashboard/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import LogoutButton from "@/components/auth/LogoutButton";
-// TEMP: remove RequireAuth during diagnosis
 // import RequireAuth from "@/components/auth/RequireAuth";
-import { api } from "@/lib/api";
+// import { api } from "@/lib/api"; // ⛳ bypass helper for now
 
 type MeState = {
   role?: "student" | "supporter";
@@ -24,6 +22,13 @@ type MeResponse = {
   [k: string]: unknown;
 };
 
+/** Resolve the Functions API base, ensuring it ends with /api */
+function resolveApiBase(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_BASE_URL || "").trim().replace(/\/+$/, "");
+  if (!raw) return ""; // will show clearly in diagnostics
+  return /\/api$/i.test(raw) ? raw : `${raw}/api`;
+}
+
 export default function DashboardPage() {
   const [me, setMe] = useState<MeState>({});
   const [userId, setUserId] = useState<string>("");
@@ -31,29 +36,49 @@ export default function DashboardPage() {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [docCookies, setDocCookies] = useState<string>("");
 
+  const API_BASE = useMemo(resolveApiBase, []);
+  const endpointUrl = useMemo(() => (API_BASE ? `${API_BASE}/session-me` : "(unset API base)"), [API_BASE]);
+
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        // IMPORTANT: backend route is hyphenated ("session-me")
-        const sess = await api.get<MeResponse>("session-me");
-        if (cancelled) return;
-
-        setSessionResp(sess);
         setDocCookies(document.cookie || "(no document.cookie)");
 
-        if (sess?.ok && sess.verified && sess.userId) {
-          setUserId(String(sess.userId));
-          try {
-            localStorage.setItem("everleap.verified", "1");
-            localStorage.setItem("everleap.userId", String(sess.userId));
-          } catch {}
+        if (!API_BASE) {
+          setSessionError("NEXT_PUBLIC_API_BASE_URL is empty or not set; request would hit the web app, not Functions.");
+          return;
+        }
+
+        const res = await fetch(`${API_BASE}/session-me`, {
+          method: "GET",
+          credentials: "include",
+          mode: "cors",
+        });
+
+        let payload: unknown = null;
+        try { payload = await res.json(); } catch {}
+
+        if (cancelled) return;
+
+        if (res.ok && payload && typeof payload === "object") {
+          setSessionResp(payload as MeResponse);
+          const p = payload as MeResponse;
+          if (p.ok && p.verified && p.userId) {
+            setUserId(String(p.userId));
+            try {
+              localStorage.setItem("everleap.verified", "1");
+              localStorage.setItem("everleap.userId", String(p.userId));
+            } catch {}
+          } else {
+            try {
+              const localId = localStorage.getItem("everleap.userId") || "";
+              if (localId) setUserId(localId);
+            } catch {}
+          }
         } else {
-          try {
-            const localId = localStorage.getItem("everleap.userId") || "";
-            if (localId) setUserId(localId);
-          } catch {}
+          setSessionError(`HTTP ${res.status} from ${API_BASE}/session-me`);
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -65,16 +90,13 @@ export default function DashboardPage() {
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [API_BASE]);
 
   useEffect(() => {
     try {
       const primary = JSON.parse(localStorage.getItem("everleap.user") || "{}");
       const fallback = JSON.parse(localStorage.getItem("everleap.welcome") || "{}");
-
       setMe({
         role: (primary.role || fallback.role) as MeState["role"],
         firstName: (primary.firstName || fallback.firstName) as string | undefined,
@@ -83,13 +105,11 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
-  const fullName =
-    [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
+  const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
 
   return (
     <div className="min-h-dvh bg-app">
       <SiteHeader />
-
       <main className="spotlight-white">
         <div className="relative z-10 mx-auto w-full max-w-lg px-4 pb-10 pt-6">
           <section className="space-y-4" role="region" aria-labelledby="dash-title">
@@ -100,64 +120,43 @@ export default function DashboardPage() {
               <LogoutButton className="btn-link text-sm shrink-0" />
             </div>
 
-            <p className="text-sm opacity-80">
-              {me.role === "supporter"
-                ? "Thanks for supporting a student’s journey. When they’re ready, you’ll see their progress here."
-                : "Ready to begin? We’ll take this one small step at a time."}
-            </p>
-
             <div className="card-surface rounded-2xl p-4 space-y-3">
               <div className="text-sm opacity-80">
                 Next up: we’ll start with a few short questions to understand what drives you.
               </div>
               <div className="flex gap-3">
-                <Link href="/questions" className="btn-primary flex-1">
-                  Start questions
-                </Link>
-                <Link href="/profile" className="btn-muted flex-1">
-                  View profile
-                </Link>
+                <Link href="/questions" className="btn-primary flex-1">Start questions</Link>
+                <Link href="/profile" className="btn-muted flex-1">View profile</Link>
               </div>
-              <p className="text-[11px] opacity-70">
-                You can return and change answers anytime.
-              </p>
               {userId && (
-                <p className="text-[11px] opacity-60">
-                  Signed in as <span className="font-mono">{userId}</span>
-                </p>
+                <p className="text-[11px] opacity-60">Signed in as <span className="font-mono">{userId}</span></p>
               )}
             </div>
 
             {/* Diagnostics */}
             <div className="rounded-2xl border p-4 space-y-2">
               <div className="text-sm font-medium opacity-70">Diagnostics</div>
-              <div className="text-xs opacity-70">document.cookie</div>
-              <pre className="whitespace-pre-wrap break-words text-xs">
-                {docCookies}
-              </pre>
+              <div className="text-xs opacity-70">API_BASE</div>
+              <pre className="whitespace-pre-wrap break-words text-xs">{API_BASE || "(empty)"}</pre>
 
-              <div className="text-xs opacity-70">GET session-me response</div>
+              <div className="text-xs opacity-70">Endpoint</div>
+              <pre className="whitespace-pre-wrap break-words text-xs">{endpointUrl}</pre>
+
+              <div className="text-xs opacity-70">document.cookie</div>
+              <pre className="whitespace-pre-wrap break-words text-xs">{docCookies}</pre>
+
+              <div className="text-xs opacity-70">GET session-me</div>
               {sessionResp ? (
-                <pre className="overflow-auto text-xs">
-                  {JSON.stringify(sessionResp, null, 2)}
-                </pre>
+                <pre className="overflow-auto text-xs">{JSON.stringify(sessionResp, null, 2)}</pre>
               ) : sessionError ? (
-                <pre className="overflow-auto text-xs text-red-700">
-                  {sessionError}
-                </pre>
+                <pre className="overflow-auto text-xs text-red-700">{sessionError}</pre>
               ) : (
                 <div className="text-xs">Loading…</div>
               )}
-
-              <p className="text-[11px] opacity-60">
-                This page performs no client-side redirects. If you still get bounced,
-                something upstream (middleware/layout/hosting) did it.
-              </p>
             </div>
           </section>
         </div>
       </main>
-
       <SiteFooter />
     </div>
   );
