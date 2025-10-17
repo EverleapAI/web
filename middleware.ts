@@ -26,6 +26,11 @@ function isProtectedPath(pathname: string) {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ⛳ TEMP: bypass auth for /dashboard to isolate redirect source
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
+    return NextResponse.next();
+  }
+
   // --- 1) Normalize entry: "/" and "/welcome" → "/login" ---
   if (pathname === "/" || pathname === "/welcome") {
     const url = req.nextUrl.clone();
