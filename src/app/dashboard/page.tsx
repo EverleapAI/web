@@ -1,3 +1,4 @@
+// apps/web/src/app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,7 +7,6 @@ import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import LogoutButton from "@/components/auth/LogoutButton";
 // import RequireAuth from "@/components/auth/RequireAuth";
-// import { api } from "@/lib/api"; // ⛳ bypass helper for now
 
 type MeState = {
   role?: "student" | "supporter";
@@ -22,10 +22,10 @@ type MeResponse = {
   [k: string]: unknown;
 };
 
-/** Resolve the Functions API base, ensuring it ends with /api */
+/** Resolve the Functions API base, ensuring it ends with /api (diagnostic only) */
 function resolveApiBase(): string {
   const raw = (process.env.NEXT_PUBLIC_API_BASE_URL || "").trim().replace(/\/+$/, "");
-  if (!raw) return ""; // will show clearly in diagnostics
+  if (!raw) return "";
   return /\/api$/i.test(raw) ? raw : `${raw}/api`;
 }
 
@@ -36,8 +36,9 @@ export default function DashboardPage() {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [docCookies, setDocCookies] = useState<string>("");
 
+  // Diagnostics only
   const API_BASE = useMemo(resolveApiBase, []);
-  const endpointUrl = useMemo(() => (API_BASE ? `${API_BASE}/session-me` : "(unset API base)"), [API_BASE]);
+  const endpointUrl = "/api/session/me (proxied)";
 
   useEffect(() => {
     let cancelled = false;
@@ -46,39 +47,29 @@ export default function DashboardPage() {
       try {
         setDocCookies(document.cookie || "(no document.cookie)");
 
-        if (!API_BASE) {
-          setSessionError("NEXT_PUBLIC_API_BASE_URL is empty or not set; request would hit the web app, not Functions.");
-          return;
-        }
-
-        const res = await fetch(`${API_BASE}/session-me`, {
+        // ✅ Call the Next proxy so site cookies are forwarded to Functions
+        const res = await fetch("/api/session/me", {
           method: "GET",
           credentials: "include",
-          mode: "cors",
+          cache: "no-store",
         });
 
-        let payload: unknown = null;
-        try { payload = await res.json(); } catch {}
-
+        const payload = (await res.json()) as MeResponse;
         if (cancelled) return;
 
-        if (res.ok && payload && typeof payload === "object") {
-          setSessionResp(payload as MeResponse);
-          const p = payload as MeResponse;
-          if (p.ok && p.verified && p.userId) {
-            setUserId(String(p.userId));
-            try {
-              localStorage.setItem("everleap.verified", "1");
-              localStorage.setItem("everleap.userId", String(p.userId));
-            } catch {}
-          } else {
-            try {
-              const localId = localStorage.getItem("everleap.userId") || "";
-              if (localId) setUserId(localId);
-            } catch {}
-          }
+        setSessionResp(payload);
+
+        if (payload?.ok && payload.verified && payload.userId) {
+          setUserId(String(payload.userId));
+          try {
+            localStorage.setItem("everleap.verified", "1");
+            localStorage.setItem("everleap.userId", String(payload.userId));
+          } catch {}
         } else {
-          setSessionError(`HTTP ${res.status} from ${API_BASE}/session-me`);
+          try {
+            const localId = localStorage.getItem("everleap.userId") || "";
+            if (localId) setUserId(localId);
+          } catch {}
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -90,8 +81,10 @@ export default function DashboardPage() {
       }
     })();
 
-    return () => { cancelled = true; };
-  }, [API_BASE]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -129,30 +122,48 @@ export default function DashboardPage() {
                 <Link href="/profile" className="btn-muted flex-1">View profile</Link>
               </div>
               {userId && (
-                <p className="text-[11px] opacity-60">Signed in as <span className="font-mono">{userId}</span></p>
+                <p className="text-[11px] opacity-60">
+                  Signed in as <span className="font-mono">{userId}</span>
+                </p>
               )}
             </div>
 
             {/* Diagnostics */}
             <div className="rounded-2xl border p-4 space-y-2">
               <div className="text-sm font-medium opacity-70">Diagnostics</div>
-              <div className="text-xs opacity-70">API_BASE</div>
-              <pre className="whitespace-pre-wrap break-words text-xs">{API_BASE || "(empty)"}</pre>
+
+              <div className="text-xs opacity-70">API_BASE (env)</div>
+              <pre className="whitespace-pre-wrap break-words text-xs">
+                {API_BASE || "(empty)"}
+              </pre>
 
               <div className="text-xs opacity-70">Endpoint</div>
-              <pre className="whitespace-pre-wrap break-words text-xs">{endpointUrl}</pre>
+              <pre className="whitespace-pre-wrap break-words text-xs">
+                {endpointUrl}
+              </pre>
 
               <div className="text-xs opacity-70">document.cookie</div>
-              <pre className="whitespace-pre-wrap break-words text-xs">{docCookies}</pre>
+              <pre className="whitespace-pre-wrap break-words text-xs">
+                {docCookies}
+              </pre>
 
-              <div className="text-xs opacity-70">GET session-me</div>
+              <div className="text-xs opacity-70">GET /api/session/me</div>
               {sessionResp ? (
-                <pre className="overflow-auto text-xs">{JSON.stringify(sessionResp, null, 2)}</pre>
+                <pre className="overflow-auto text-xs">
+                  {JSON.stringify(sessionResp, null, 2)}
+                </pre>
               ) : sessionError ? (
-                <pre className="overflow-auto text-xs text-red-700">{sessionError}</pre>
+                <pre className="overflow-auto text-xs text-red-700">
+                  {sessionError}
+                </pre>
               ) : (
                 <div className="text-xs">Loading…</div>
               )}
+
+              <p className="text-[11px] opacity-60">
+                This page performs no client-side redirects. If you still get bounced,
+                something upstream (middleware/layout/hosting) did it.
+              </p>
             </div>
           </section>
         </div>
