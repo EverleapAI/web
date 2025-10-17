@@ -6,7 +6,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import LogoutButton from "@/components/auth/LogoutButton";
-// ⛳ TEMP: remove RequireAuth to prevent client-side redirect during diagnosis
+// TEMP: remove RequireAuth during diagnosis
 // import RequireAuth from "@/components/auth/RequireAuth";
 import { api } from "@/lib/api";
 
@@ -21,7 +21,6 @@ type MeResponse = {
   verified: boolean;
   userId?: string | null;
   issuedAtUtc?: string | null;
-  // allow unknown extra props so we can print them
   [k: string]: unknown;
 };
 
@@ -32,15 +31,13 @@ export default function DashboardPage() {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [docCookies, setDocCookies] = useState<string>("");
 
-  // Authoritative session → userId + set local hints
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        // ⛳ IMPORTANT: backend route is hyphenated ("session-me"), and
-        // your api helper should already prepend the correct base + /api
-        const sess = await api.get<MeResponse>("session-me"); // not "/api/session/me"
+        // IMPORTANT: backend route is hyphenated ("session-me")
+        const sess = await api.get<MeResponse>("session-me");
         if (cancelled) return;
 
         setSessionResp(sess);
@@ -58,8 +55,9 @@ export default function DashboardPage() {
             if (localId) setUserId(localId);
           } catch {}
         }
-      } catch (e: any) {
-        setSessionError(String(e?.message ?? e));
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setSessionError(msg);
         try {
           const localId = localStorage.getItem("everleap.userId") || "";
           if (localId) setUserId(localId);
@@ -72,16 +70,15 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Profile-ish display values (from Welcome flow hints for now)
   useEffect(() => {
     try {
       const primary = JSON.parse(localStorage.getItem("everleap.user") || "{}");
       const fallback = JSON.parse(localStorage.getItem("everleap.welcome") || "{}");
 
       setMe({
-        role: primary.role || fallback.role,
-        firstName: primary.firstName || fallback.firstName,
-        lastName: primary.lastName || fallback.lastName,
+        role: (primary.role || fallback.role) as MeState["role"],
+        firstName: (primary.firstName || fallback.firstName) as string | undefined,
+        lastName: (primary.lastName || fallback.lastName) as string | undefined,
       });
     } catch {}
   }, []);
@@ -90,11 +87,9 @@ export default function DashboardPage() {
     [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
 
   return (
-    // ⛳ TEMP: no <RequireAuth> wrapper so nothing redirects
     <div className="min-h-dvh bg-app">
       <SiteHeader />
 
-      {/* Centered content on a soft spotlight */}
       <main className="spotlight-white">
         <div className="relative z-10 mx-auto w-full max-w-lg px-4 pb-10 pt-6">
           <section className="space-y-4" role="region" aria-labelledby="dash-title">
@@ -133,7 +128,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* --- Diagnostics --- */}
+            {/* Diagnostics */}
             <div className="rounded-2xl border p-4 space-y-2">
               <div className="text-sm font-medium opacity-70">Diagnostics</div>
               <div className="text-xs opacity-70">document.cookie</div>
