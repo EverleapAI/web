@@ -6,7 +6,8 @@ import Link from "next/link";
 import SiteHeader from "@/components/site/SiteHeader";
 import SiteFooter from "@/components/site/SiteFooter";
 import LogoutButton from "@/components/auth/LogoutButton";
-import RequireAuth from "@/components/auth/RequireAuth";
+// ⛳ TEMP: remove RequireAuth to prevent client-side redirect during diagnosis
+// import RequireAuth from "@/components/auth/RequireAuth";
 import { api } from "@/lib/api";
 
 type MeState = {
@@ -20,11 +21,16 @@ type MeResponse = {
   verified: boolean;
   userId?: string | null;
   issuedAtUtc?: string | null;
+  // allow unknown extra props so we can print them
+  [k: string]: unknown;
 };
 
 export default function DashboardPage() {
   const [me, setMe] = useState<MeState>({});
   const [userId, setUserId] = useState<string>("");
+  const [sessionResp, setSessionResp] = useState<MeResponse | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [docCookies, setDocCookies] = useState<string>("");
 
   // Authoritative session → userId + set local hints
   useEffect(() => {
@@ -32,25 +38,28 @@ export default function DashboardPage() {
 
     (async () => {
       try {
-        const sess = await api.get<MeResponse>("/api/session/me");
+        // ⛳ IMPORTANT: backend route is hyphenated ("session-me"), and
+        // your api helper should already prepend the correct base + /api
+        const sess = await api.get<MeResponse>("session-me"); // not "/api/session/me"
         if (cancelled) return;
+
+        setSessionResp(sess);
+        setDocCookies(document.cookie || "(no document.cookie)");
 
         if (sess?.ok && sess.verified && sess.userId) {
           setUserId(String(sess.userId));
-          // ensure client hints are in sync
           try {
             localStorage.setItem("everleap.verified", "1");
             localStorage.setItem("everleap.userId", String(sess.userId));
           } catch {}
         } else {
-          // fallback (should rarely happen because RequireAuth guards this page)
           try {
             const localId = localStorage.getItem("everleap.userId") || "";
             if (localId) setUserId(localId);
           } catch {}
         }
-      } catch {
-        // fallback to any local hints
+      } catch (e: any) {
+        setSessionError(String(e?.message ?? e));
         try {
           const localId = localStorage.getItem("everleap.userId") || "";
           if (localId) setUserId(localId);
@@ -58,15 +67,15 @@ export default function DashboardPage() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Profile-ish display values (from Welcome flow hints for now)
   useEffect(() => {
     try {
-      // Primary: values saved by Welcome flow
       const primary = JSON.parse(localStorage.getItem("everleap.user") || "{}");
-      // Fallback (older sessions): previous key
       const fallback = JSON.parse(localStorage.getItem("everleap.welcome") || "{}");
 
       setMe({
@@ -77,58 +86,84 @@ export default function DashboardPage() {
     } catch {}
   }, []);
 
-  const fullName = [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
+  const fullName =
+    [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "there";
 
   return (
-    <RequireAuth>
-      <div className="min-h-dvh bg-app">
-        <SiteHeader />
+    // ⛳ TEMP: no <RequireAuth> wrapper so nothing redirects
+    <div className="min-h-dvh bg-app">
+      <SiteHeader />
 
-        {/* Centered content on a soft spotlight */}
-        <main className="spotlight-white">
-          <div className="relative z-10 mx-auto w-full max-w-lg px-4 pb-10 pt-6">
-            <section className="space-y-4" role="region" aria-labelledby="dash-title">
-              <div className="flex items-start justify-between gap-3">
-                <h1 id="dash-title" className="text-2xl font-semibold tracking-tight">
-                  Welcome, {fullName}.
-                </h1>
-                <LogoutButton className="btn-link text-sm shrink-0" />
+      {/* Centered content on a soft spotlight */}
+      <main className="spotlight-white">
+        <div className="relative z-10 mx-auto w-full max-w-lg px-4 pb-10 pt-6">
+          <section className="space-y-4" role="region" aria-labelledby="dash-title">
+            <div className="flex items-start justify-between gap-3">
+              <h1 id="dash-title" className="text-2xl font-semibold tracking-tight">
+                Welcome, {fullName}.
+              </h1>
+              <LogoutButton className="btn-link text-sm shrink-0" />
+            </div>
+
+            <p className="text-sm opacity-80">
+              {me.role === "supporter"
+                ? "Thanks for supporting a student’s journey. When they’re ready, you’ll see their progress here."
+                : "Ready to begin? We’ll take this one small step at a time."}
+            </p>
+
+            <div className="card-surface rounded-2xl p-4 space-y-3">
+              <div className="text-sm opacity-80">
+                Next up: we’ll start with a few short questions to understand what drives you.
               </div>
-
-              <p className="text-sm opacity-80">
-                {me.role === "supporter"
-                  ? "Thanks for supporting a student’s journey. When they’re ready, you’ll see their progress here."
-                  : "Ready to begin? We’ll take this one small step at a time."}
+              <div className="flex gap-3">
+                <Link href="/questions" className="btn-primary flex-1">
+                  Start questions
+                </Link>
+                <Link href="/profile" className="btn-muted flex-1">
+                  View profile
+                </Link>
+              </div>
+              <p className="text-[11px] opacity-70">
+                You can return and change answers anytime.
               </p>
-
-              <div className="card-surface rounded-2xl p-4 space-y-3">
-                <div className="text-sm opacity-80">
-                  Next up: we’ll start with a few short questions to understand what drives you.
-                </div>
-                <div className="flex gap-3">
-                  {/* Route to questions entry page */}
-                  <Link href="/questions" className="btn-primary flex-1">
-                    Start questions
-                  </Link>
-                  <Link href="/profile" className="btn-muted flex-1">
-                    View profile
-                  </Link>
-                </div>
-                <p className="text-[11px] opacity-70">
-                  You can return and change answers anytime.
+              {userId && (
+                <p className="text-[11px] opacity-60">
+                  Signed in as <span className="font-mono">{userId}</span>
                 </p>
-                {userId && (
-                  <p className="text-[11px] opacity-60">
-                    Signed in as <span className="font-mono">{userId}</span>
-                  </p>
-                )}
-              </div>
-            </section>
-          </div>
-        </main>
+              )}
+            </div>
 
-        <SiteFooter />
-      </div>
-    </RequireAuth>
+            {/* --- Diagnostics --- */}
+            <div className="rounded-2xl border p-4 space-y-2">
+              <div className="text-sm font-medium opacity-70">Diagnostics</div>
+              <div className="text-xs opacity-70">document.cookie</div>
+              <pre className="whitespace-pre-wrap break-words text-xs">
+                {docCookies}
+              </pre>
+
+              <div className="text-xs opacity-70">GET session-me response</div>
+              {sessionResp ? (
+                <pre className="overflow-auto text-xs">
+                  {JSON.stringify(sessionResp, null, 2)}
+                </pre>
+              ) : sessionError ? (
+                <pre className="overflow-auto text-xs text-red-700">
+                  {sessionError}
+                </pre>
+              ) : (
+                <div className="text-xs">Loading…</div>
+              )}
+
+              <p className="text-[11px] opacity-60">
+                This page performs no client-side redirects. If you still get bounced,
+                something upstream (middleware/layout/hosting) did it.
+              </p>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }
