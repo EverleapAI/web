@@ -15,28 +15,27 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Strip Domain= so cookies land on THIS host; ensure Path/SameSite/Secure defaults */
-function rewriteSetCookieForHost(raw: string | null): string | null {
-  if (!raw) return null;
+/** Return an array of rewritten Set-Cookie headers (NOT a single comma-joined string) */
+function rewriteSetCookieArray(raw: string | null): string[] {
+  if (!raw) return [];
+  // split multiple cookies in a single header safely
   const parts = raw.split(/,(?=[^ ;]+=)/);
-  const rewritten = parts.map((cookie) => {
+  return parts.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
     if (!/;\s*Path=/i.test(c)) c += "; Path=/";
     if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
     if (!/;\s*Secure/i.test(c)) c += "; Secure";
     return c;
   });
-  return rewritten.join(", ");
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
 
-  const res = await fetch(TARGET_URL, {
+  const upstream = await fetch(TARGET_URL, {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
-      // 🔑 forward the browser cookies so Functions can read challenge/state
       cookie: req.headers.get("cookie") || "",
       "x-forwarded-host": req.headers.get("host") || "",
       "x-forwarded-proto": "https",
@@ -47,18 +46,18 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
 
-  const contentType = res.headers.get("content-type") || "application/json";
-  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
+  const contentType = upstream.headers.get("content-type") || "application/json";
+  const payload = contentType.includes("application/json") ? await upstream.json() : await upstream.text();
 
-  const next = new NextResponse(
+  const res = new NextResponse(
     typeof payload === "string" ? payload : JSON.stringify(payload),
-    { status: res.status, headers: { "content-type": contentType } }
+    { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // Rewrite Set-Cookie so the session lands on the site host
-  const setCookie = res.headers.get("set-cookie");
-  const rewritten = rewriteSetCookieForHost(setCookie);
-  if (rewritten) next.headers.set("set-cookie", rewritten);
+  // Rewrite and APPEND each Set-Cookie individually
+  const rawSetCookie = upstream.headers.get("set-cookie");
+  const cookies = rewriteSetCookieArray(rawSetCookie);
+  for (const c of cookies) res.headers.append("set-cookie", c);
 
-  return setNoStore(next);
+  return setNoStore(res);
 }
