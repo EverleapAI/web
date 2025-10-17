@@ -20,11 +20,25 @@ function splitSetCookie(raw: string): string[] {
   return raw.split(/,(?=[^ ;]+=)/);
 }
 
-/** Rewrite Domain away and ensure sensible defaults, returning an array */
-function rewriteSetCookieArray(raw: string[] | string | null): string[] {
-  if (!raw) return [];
-  const arr = Array.isArray(raw) ? raw : splitSetCookie(raw);
-  return arr.map((cookie) => {
+/** Try to read all Set-Cookie values from Headers (supports Undici getSetCookie) */
+function getSetCookieArray(h: Headers): string[] {
+  // Undici (Node fetch) often provides headers.getSetCookie(), but it's not in lib types.
+  const maybeHeaders = h as unknown as { getSetCookie?: () => string[] };
+  if (typeof maybeHeaders.getSetCookie === "function") {
+    try {
+      const arr = maybeHeaders.getSetCookie();
+      if (Array.isArray(arr)) return arr;
+    } catch {
+      // fall through to single-header path
+    }
+  }
+  const single = h.get("set-cookie");
+  return single ? splitSetCookie(single) : [];
+}
+
+/** Rewrite Domain away and ensure sensible defaults */
+function rewriteSetCookieArray(raw: string[]): string[] {
+  return raw.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
     if (!/;\s*Path=/i.test(c)) c += "; Path=/";
     if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
@@ -68,13 +82,10 @@ export async function POST(req: NextRequest) {
   );
 
   // ---- Handle Set-Cookie(s) robustly ----
-  // Prefer non-standard undici API when available (Next on Node exposes this)
-  // @ts-ignore
-  const getSetCookie: undefined | (() => string[]) = upstream.headers.getSetCookie?.bind(upstream.headers);
-  const rawCookies = getSetCookie ? getSetCookie() : (upstream.headers.get("set-cookie") || "");
+  const rawCookies = getSetCookieArray(upstream.headers);
   const rewritten = rewriteSetCookieArray(rawCookies);
 
-  // TEMP: if an everleap_session cookie is present, mirror it to a debug cookie (non-HttpOnly) so you can see it
+  // TEMP: if an everleap_session cookie is present, mirror it to a debug cookie (non-HttpOnly)
   let sessionValue: string | null = null;
 
   for (const c of rewritten) {
@@ -86,7 +97,6 @@ export async function POST(req: NextRequest) {
   }
 
   if (sessionValue) {
-    // Non-HttpOnly debug cookie to confirm it reached the browser
     res.headers.append(
       "set-cookie",
       `everleap_session_debug=${sessionValue}; Path=/; SameSite=Lax; Secure; Max-Age=600`
