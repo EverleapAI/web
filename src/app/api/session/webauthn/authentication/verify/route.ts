@@ -15,25 +15,14 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Safely split comma-joined Set-Cookie header into individual cookies */
-function splitSetCookie(raw: string): string[] {
-  return raw.split(/,(?=[^ ;]+=)/);
-}
-
-/** Read all Set-Cookie values from Headers (supports Undici getSetCookie) */
+/** Helpers for Set-Cookie handling */
+function splitSetCookie(raw: string): string[] { return raw.split(/,(?=[^ ;]+=)/); }
 function getSetCookieArray(h: Headers): string[] {
   const maybe = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === "function") {
-    try {
-      const arr = maybe.getSetCookie();
-      if (Array.isArray(arr)) return arr;
-    } catch {}
-  }
+  if (typeof maybe.getSetCookie === "function") { try { const arr = maybe.getSetCookie(); if (Array.isArray(arr)) return arr; } catch {} }
   const single = h.get("set-cookie");
   return single ? splitSetCookie(single) : [];
 }
-
-/** Drop Domain and ensure sane defaults */
 function rewriteForHost(cookies: string[]): string[] {
   return cookies.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
@@ -44,10 +33,27 @@ function rewriteForHost(cookies: string[]): string[] {
   });
 }
 
-/** Extract "name" and "value" from a Set-Cookie string's first pair */
-function parseNameValue(sc: string): { name: string; value: string } | null {
-  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
-  return m ? { name: m[1], value: m[2] } : null;
+/** Heuristically extract a session token from a JSON payload */
+function extractToken(obj: unknown): string | null {
+  if (!obj || typeof obj !== "object") return null;
+  const o = obj as Record<string, unknown>;
+  const candidateKeys = [
+    "token","sessionToken","accessToken","jwt","idToken","authToken","session","bearer"
+  ];
+  for (const key of candidateKeys) {
+    const v = o[key];
+    if (typeof v === "string" && v.length > 10) return v;
+  }
+  // Nested common shapes e.g. { data: { token: "..." } }
+  const nestedKeys = ["data","result","session","auth"];
+  for (const nk of nestedKeys) {
+    const v = o[nk];
+    if (v && typeof v === "object") {
+      const t = extractToken(v);
+      if (t) return t;
+    }
+  }
+  return null;
 }
 
 export async function POST(req: NextRequest) {
@@ -62,13 +68,10 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
-      // Forward browser cookies so Functions can read challenge/state
       cookie: req.headers.get("cookie") || "",
-      // These help some backends decide whether to set cookies
       origin,
       referer,
       "user-agent": req.headers.get("user-agent") || "",
-      // Forwarded info for logging/upstream logic
       "x-forwarded-host": host,
       "x-forwarded-proto": "https",
       "cache-control": "no-cache",
@@ -78,30 +81,37 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
 
-  // Payload passthrough
+  // Read upstream payload (json or text)
   const contentType = upstream.headers.get("content-type") || "application/json";
-  const payload = contentType.includes("application/json")
-    ? await upstream.json()
-    : await upstream.text();
+  const isJson = contentType.includes("application/json");
+  const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 
+  // Build response passthrough
   const res = new NextResponse(
-    typeof payload === "string" ? payload : JSON.stringify(payload),
+    typeof payload === "string" ? payload : JSON.stringify(payload ?? {}),
     { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // Get all upstream cookies, rewrite for this host, and append them
+  // 1) Forward any upstream Set-Cookie (rewritten for this host)
   const rawCookies = getSetCookieArray(upstream.headers);
   const rewritten = rewriteForHost(rawCookies);
   for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // 🔎 TEMP DIAGNOSTIC: mirror each upstream cookie into a visible *_debug cookie
-  for (const c of rewritten) {
-    const nv = parseNameValue(c);
-    if (!nv) continue;
-    res.headers.append(
-      "set-cookie",
-      `${nv.name}_debug=${encodeURIComponent(nv.value)}; Path=/; SameSite=Lax; Secure; Max-Age=600`
-    );
+  // 2) If upstream didn't set a session cookie, set ours from the payload token
+  if (upstream.ok) {
+    const token = extractToken(payload);
+    if (token) {
+      // HttpOnly cookie for the app
+      res.headers.append(
+        "set-cookie",
+        `everleap_session=${encodeURIComponent(token)}; Path=/; SameSite=Lax; Secure; HttpOnly; Max-Age=2592000`
+      );
+      // TEMP visible mirror for debugging in /api/debug/cookies (remove later)
+      res.headers.append(
+        "set-cookie",
+        `everleap_session_debug=${encodeURIComponent(token)}; Path=/; SameSite=Lax; Secure; Max-Age=600`
+      );
+    }
   }
 
   return setNoStore(res);
