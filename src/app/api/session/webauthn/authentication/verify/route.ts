@@ -15,30 +15,27 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Split multiple Set-Cookie values safely */
+/** Safely split comma-joined Set-Cookie header into individual cookies */
 function splitSetCookie(raw: string): string[] {
   return raw.split(/,(?=[^ ;]+=)/);
 }
 
-/** Try to read all Set-Cookie values from Headers (supports Undici getSetCookie) */
+/** Read all Set-Cookie values from Headers (supports Undici getSetCookie) */
 function getSetCookieArray(h: Headers): string[] {
-  // Undici (Node fetch) often provides headers.getSetCookie(), but it's not in lib types.
-  const maybeHeaders = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybeHeaders.getSetCookie === "function") {
+  const maybe = h as unknown as { getSetCookie?: () => string[] };
+  if (typeof maybe.getSetCookie === "function") {
     try {
-      const arr = maybeHeaders.getSetCookie();
+      const arr = maybe.getSetCookie();
       if (Array.isArray(arr)) return arr;
-    } catch {
-      // fall through to single-header path
-    }
+    } catch {}
   }
   const single = h.get("set-cookie");
   return single ? splitSetCookie(single) : [];
 }
 
-/** Rewrite Domain away and ensure sensible defaults */
-function rewriteSetCookieArray(raw: string[]): string[] {
-  return raw.map((cookie) => {
+/** Drop Domain and ensure sane defaults */
+function rewriteForHost(cookies: string[]): string[] {
+  return cookies.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
     if (!/;\s*Path=/i.test(c)) c += "; Path=/";
     if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
@@ -47,10 +44,10 @@ function rewriteSetCookieArray(raw: string[]): string[] {
   });
 }
 
-/** Extract cookie value by name from a Set-Cookie string */
-function extractCookieValue(sc: string, name: string): string | null {
-  const m = sc.match(new RegExp(`^\\s*${name}=([^;]+)`));
-  return m ? m[1] : null;
+/** Extract "name" and "value" from a Set-Cookie string's first pair */
+function parseNameValue(sc: string): { name: string; value: string } | null {
+  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
+  return m ? { name: m[1], value: m[2] } : null;
 }
 
 export async function POST(req: NextRequest) {
@@ -60,6 +57,7 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
+      // Forward browser cookies so Functions can read challenge/state
       cookie: req.headers.get("cookie") || "",
       "x-forwarded-host": req.headers.get("host") || "",
       "x-forwarded-proto": "https",
@@ -81,25 +79,18 @@ export async function POST(req: NextRequest) {
     { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // ---- Handle Set-Cookie(s) robustly ----
+  // Get all upstream cookies, rewrite for this host, and append them
   const rawCookies = getSetCookieArray(upstream.headers);
-  const rewritten = rewriteSetCookieArray(rawCookies);
+  const rewritten = rewriteForHost(rawCookies);
+  for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // TEMP: if an everleap_session cookie is present, mirror it to a debug cookie (non-HttpOnly)
-  let sessionValue: string | null = null;
-
+  // 🔎 TEMP DIAGNOSTIC: mirror each upstream cookie into a visible *_debug cookie
   for (const c of rewritten) {
-    res.headers.append("set-cookie", c);
-    if (sessionValue === null) {
-      const maybe = extractCookieValue(c, "everleap_session");
-      if (maybe) sessionValue = maybe;
-    }
-  }
-
-  if (sessionValue) {
+    const nv = parseNameValue(c);
+    if (!nv) continue;
     res.headers.append(
       "set-cookie",
-      `everleap_session_debug=${sessionValue}; Path=/; SameSite=Lax; Secure; Max-Age=600`
+      `${nv.name}_debug=${encodeURIComponent(nv.value)}; Path=/; SameSite=Lax; Secure; Max-Age=600`
     );
   }
 
