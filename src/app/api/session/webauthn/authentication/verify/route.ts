@@ -1,3 +1,4 @@
+// apps/web/src/app/api/session/webauthn/authentication/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -14,10 +15,10 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/** Strip Domain= so cookies land on THIS host; preserve attrs; force Secure/Path/SameSite */
+/** Strip Domain= so cookies land on THIS host; ensure Path/SameSite/Secure defaults */
 function rewriteSetCookieForHost(raw: string | null): string | null {
   if (!raw) return null;
-  const parts = raw.split(/,(?=[^ ;]+=)/); // handle multiple Set-Cookie in one header
+  const parts = raw.split(/,(?=[^ ;]+=)/);
   const rewritten = parts.map((cookie) => {
     let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
     if (!/;\s*Path=/i.test(c)) c += "; Path=/";
@@ -35,25 +36,26 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
+      // 🔑 forward the browser cookies so Functions can read challenge/state
+      cookie: req.headers.get("cookie") || "",
       "x-forwarded-host": req.headers.get("host") || "",
       "x-forwarded-proto": "https",
+      "cache-control": "no-cache",
     },
     body,
     redirect: "manual",
+    cache: "no-store",
   });
 
-  const contentType = res.headers.get("content-type") || "";
-  const payload =
-    contentType.includes("application/json") ? await res.json() : await res.text();
+  const contentType = res.headers.get("content-type") || "application/json";
+  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
 
   const next = new NextResponse(
     typeof payload === "string" ? payload : JSON.stringify(payload),
-    {
-      status: res.status,
-      headers: { "content-type": contentType || "application/json" },
-    }
+    { status: res.status, headers: { "content-type": contentType } }
   );
 
+  // Rewrite Set-Cookie so the session lands on the site host
   const setCookie = res.headers.get("set-cookie");
   const rewritten = rewriteSetCookieForHost(setCookie);
   if (rewritten) next.headers.set("set-cookie", rewritten);

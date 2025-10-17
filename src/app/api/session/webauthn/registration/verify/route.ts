@@ -1,12 +1,12 @@
+// apps/web/src/app/api/session/webauthn/registration/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Normalize Functions base; ensure exactly one /api
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
-const TARGET_URL = `${BASE_WITH_API}/webauthn/registration/verify`;
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${API_BASE}/webauthn/registration/verify`;
 
 function setNoStore(res: NextResponse) {
   res.headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
@@ -14,72 +14,48 @@ function setNoStore(res: NextResponse) {
   return res;
 }
 
-/**
- * Normalize Set-Cookie to this web origin:
- * - remove Domain
- * - ensure Path=/, SameSite=Lax, Secure, HttpOnly
- * Supports multiple cookies in one header.
- */
-function normalizeSetCookieForHost(raw: string | null): string | null {
+function rewriteSetCookieForHost(raw: string | null): string | null {
   if (!raw) return null;
-  const parts = raw.split(/,(?=[^ ;]+=)/);
-  const fixed = parts.map((cookie) => {
-    let c = cookie.replace(/; *Domain=[^;]+/gi, "");
-    if (!/; *Path=/i.test(c)) c += "; Path=/";
-    if (!/; *SameSite=/i.test(c)) c += "; SameSite=Lax";
-    if (!/; *Secure/i.test(c)) c += "; Secure";
-    if (!/; *HttpOnly/i.test(c)) c += "; HttpOnly";
-    return c;
-  });
-  return fixed.join(", ");
+  return raw
+    .split(/,(?=[^ ;]+=)/)
+    .map((c) => {
+      let x = c.replace(/\s*;\s*Domain=[^;]+/gi, "");
+      if (!/;\s*Path=/i.test(x)) x += "; Path=/";
+      if (!/;\s*SameSite=/i.test(x)) x += "; SameSite=Lax";
+      if (!/;\s*Secure/i.test(x)) x += "; Secure";
+      return x;
+    })
+    .join(", ");
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const cookieHeader = req.headers.get("cookie") ?? "";
-    const body = await req.text();
+  const body = await req.text();
 
-    const upstream = await fetch(TARGET_URL, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        cookie: cookieHeader,
-        "cache-control": "no-cache",
-      },
-      body,
-      redirect: "manual",
-      cache: "no-store",
-    });
+  const res = await fetch(TARGET_URL, {
+    method: "POST",
+    headers: {
+      "content-type": req.headers.get("content-type") || "application/json",
+      cookie: req.headers.get("cookie") || "",
+      "x-forwarded-host": req.headers.get("host") || "",
+      "x-forwarded-proto": "https",
+      "cache-control": "no-cache",
+    },
+    body,
+    redirect: "manual",
+    cache: "no-store",
+  });
 
-    const status = upstream.status;
-    const location = upstream.headers.get("location") || null;
-    const rawSetCookie = upstream.headers.get("set-cookie");
-    const setCookie = normalizeSetCookieForHost(rawSetCookie);
+  const contentType = res.headers.get("content-type") || "application/json";
+  const payload = contentType.includes("application/json") ? await res.json() : await res.text();
 
-    // 🔎 Instead of redirecting, *always* return JSON so we can inspect headers in DevTools
-    const text = await upstream.text();
-    let payload: unknown = text;
-    try { payload = text ? JSON.parse(text) : null; } catch { /* keep text */ }
+  const next = new NextResponse(
+    typeof payload === "string" ? payload : JSON.stringify(payload),
+    { status: res.status, headers: { "content-type": contentType } }
+  );
 
-    const res = NextResponse.json(
-      {
-        ok: status >= 200 && status < 400,
-        upstreamStatus: status,
-        next: location,
-        payload,
-      },
-      { status: 200 }
-    );
+  const setCookie = res.headers.get("set-cookie");
+  const rewritten = rewriteSetCookieForHost(setCookie);
+  if (rewritten) next.headers.set("set-cookie", rewritten);
 
-    if (setCookie) res.headers.append("set-cookie", setCookie);
-    res.headers.set("x-bff-target", TARGET_URL);
-    res.headers.set("x-bff-upstream-status", String(status));
-    res.headers.set("x-bff-had-cookie", rawSetCookie ? "1" : "0");
-
-    return setNoStore(res);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Proxy failed";
-    const res = NextResponse.json({ ok: false, error: "BFF_ERROR", message }, { status: 502 });
-    return setNoStore(res);
-  }
+  return setNoStore(next);
 }
