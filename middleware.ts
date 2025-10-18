@@ -16,6 +16,8 @@ const PROTECTED_PREFIXES = ["/dashboard", "/profile", "/questions"] as const;
 
 const COOKIE_VERIFIED = "everleap_verified";
 const COOKIE_SESSION = "everleap_session";
+// TEMP during debugging so testers don't get bounced when using visible mirror cookie
+const COOKIE_SESSION_DEBUG = "everleap_session_debug";
 
 function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -47,7 +49,9 @@ export function middleware(req: NextRequest) {
   // --- 2) Gate protected routes (best-effort) ---
   if (isProtectedPath(pathname)) {
     const hasVerifiedFlag = req.cookies.get(COOKIE_VERIFIED)?.value === "1";
-    const hasSession = Boolean(req.cookies.get(COOKIE_SESSION)?.value);
+    const hasSession =
+      Boolean(req.cookies.get(COOKIE_SESSION)?.value) ||
+      Boolean(req.cookies.get(COOKIE_SESSION_DEBUG)?.value); // TEMP: accept mirror cookie
 
     if (hasVerifiedFlag || hasSession) {
       return NextResponse.next();

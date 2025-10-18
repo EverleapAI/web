@@ -1,3 +1,4 @@
+// apps/web/src/app/login/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState, type ChangeEvent, type KeyboardEvent } from "react";
@@ -164,7 +165,10 @@ export default function LoginPage() {
   // finalize after verify so cookies are in place
   async function finalizeAfterVerify() {
     try { localStorage.setItem("everleap.verified", "1"); } catch {}
-    try { await api.get("/api/session/me"); } catch {}
+    // ✅ call the site proxy so the request includes site cookies
+    try {
+      await fetch("/api/session/me", { method: "GET", credentials: "include", cache: "no-store" });
+    } catch {}
     window.location.assign("/dashboard");
   }
 
