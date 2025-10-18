@@ -29,9 +29,7 @@ function getSetCookieArray(h: Headers): string[] {
     try {
       const arr = maybe.getSetCookie();
       if (Array.isArray(arr)) return arr;
-    } catch {
-      // fall through
-    }
+    } catch {}
   }
   const single = h.get("set-cookie");
   return single ? splitSetCookie(single) : [];
@@ -59,25 +57,26 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
   const origin = `https://${host}`;
   const referer = `${origin}/login`;
 
+  const headers: Record<string, string> = {
+    cookie: req.headers.get("cookie") || "",
+    origin,
+    referer,
+    "user-agent": req.headers.get("user-agent") || "",
+    "x-forwarded-host": host,
+    "x-forwarded-proto": "https",
+    "cache-control": "no-cache",
+  };
+  if (method === "POST") {
+    headers["content-type"] = req.headers.get("content-type") || "application/json";
+  }
+
   const init: RequestInit = {
     method,
-    headers: {
-      "content-type": method === "POST" ? (req.headers.get("content-type") || "application/json") : undefined,
-      cookie: req.headers.get("cookie") || "",
-      origin,
-      referer,
-      "user-agent": req.headers.get("user-agent") || "",
-      "x-forwarded-host": host,
-      "x-forwarded-proto": "https",
-      "cache-control": "no-cache",
-    } as Record<string, string>,
+    headers,
     redirect: "manual",
     cache: "no-store",
+    body: method === "POST" ? await req.text() : undefined,
   };
-
-  if (method === "POST") {
-    (init as any).body = await req.text();
-  }
 
   const upstream = await fetch(TARGET_URL, init);
 
@@ -90,7 +89,7 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
     { status: upstream.status, headers: { "content-type": ct } }
   );
 
-  // Result depends on cookies; prevent intermediary caching mix-ups
+  // Result depends on cookies
   res.headers.set("Vary", "Cookie");
 
   // Rewrite and append each Set-Cookie individually
@@ -98,7 +97,7 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
   const rewritten = rewriteForHost(rawCookies);
   for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // TEMP: mirror upstream cookies into visible *_debug for troubleshooting; remove later
+  // TEMP: mirror upstream cookies for troubleshooting
   for (const c of rewritten) {
     const nv = parseNameValue(c);
     if (!nv) continue;
@@ -111,10 +110,6 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
   return setNoStore(res);
 }
 
-// Some libs call GET; support both safely.
-export async function GET(req: NextRequest) {
-  return forward(req, "GET");
-}
-export async function POST(req: NextRequest) {
-  return forward(req, "POST");
-}
+// Support both methods
+export async function GET(req: NextRequest) { return forward(req, "GET"); }
+export async function POST(req: NextRequest) { return forward(req, "POST"); }
