@@ -1,3 +1,4 @@
+// apps/web/src/app/api/session/webauthn/registration/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -19,12 +20,7 @@ function setNoStore(res: NextResponse) {
 function splitSetCookie(raw: string): string[] { return raw.split(/,(?=[^ ;]+=)/); }
 function getSetCookieArray(h: Headers): string[] {
   const maybe = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === "function") {
-    try {
-      const arr = maybe.getSetCookie();
-      if (Array.isArray(arr)) return arr;
-    } catch {}
-  }
+  if (typeof maybe.getSetCookie === "function") { try { const arr = maybe.getSetCookie(); if (Array.isArray(arr)) return arr; } catch {} }
   const single = h.get("set-cookie");
   return single ? splitSetCookie(single) : [];
 }
@@ -38,22 +34,29 @@ function rewriteForHost(cookies: string[]): string[] {
     return c;
   });
 }
-
-/** Fallback token extraction */
+function parseNameValue(sc: string): { name: string; value: string } | null {
+  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
+  return m ? { name: m[1], value: m[2] } : null;
+}
+function buildMergedCookieHeader(original: string, setCookies: string[]): string {
+  const jar = new Map<string,string>();
+  for (const part of (original || "").split(";")) {
+    const m = part.trim().match(/^([^=]+)=(.*)$/);
+    if (m) jar.set(m[1].trim(), m[2]);
+  }
+  for (const sc of setCookies) {
+    const nv = parseNameValue(sc);
+    if (nv) jar.set(nv.name, nv.value);
+  }
+  return Array.from(jar.entries()).map(([k,v]) => `${k}=${v}`).join("; ");
+}
 function extractToken(obj: unknown): string | null {
   if (!obj || typeof obj !== "object") return null;
   const o = obj as Record<string, unknown>;
   const keys = ["token","sessionToken","accessToken","jwt","idToken","authToken","session","bearer"];
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === "string" && v.length > 10) return v;
-  }
+  for (const k of keys) { const v = o[k]; if (typeof v === "string" && v.length > 10) return v; }
   for (const nk of ["data","result","session","auth"]) {
-    const v = o[nk];
-    if (v && typeof v === "object") {
-      const t = extractToken(v);
-      if (t) return t;
-    }
+    const v = o[nk]; if (v && typeof v === "object") { const t = extractToken(v); if (t) return t; }
   }
   return null;
 }
@@ -64,19 +67,17 @@ export async function POST(req: NextRequest) {
   const host = req.headers.get("host") || "";
   const origin = `https://${host}`;
   const referer = `${origin}/login`;
-  const cookieHeader = req.headers.get("cookie") || "";
+  const incomingCookie = req.headers.get("cookie") || "";
 
-  // 1) Call upstream verify
+  // 1) upstream verify
   const verifyRes = await fetch(VERIFY_URL, {
     method: "POST",
     headers: {
       "content-type": req.headers.get("content-type") || "application/json",
-      cookie: cookieHeader,
-      origin,
-      referer,
+      cookie: incomingCookie,
+      origin, referer,
       "user-agent": req.headers.get("user-agent") || "",
-      "x-forwarded-host": host,
-      "x-forwarded-proto": "https",
+      "x-forwarded-host": host, "x-forwarded-proto": "https",
       "cache-control": "no-cache",
     },
     body,
@@ -93,30 +94,32 @@ export async function POST(req: NextRequest) {
     { status: verifyRes.status, headers: { "content-type": verifyCT } }
   );
 
-  // Pass through any cookies from verify
-  const vCookies = rewriteForHost(getSetCookieArray(verifyRes.headers));
-  for (const c of vCookies) out.headers.append("set-cookie", c);
+  // pass through verify cookies
+  const verifySetCookies = getSetCookieArray(verifyRes.headers);
+  const rewrittenVerify = rewriteForHost(verifySetCookies);
+  for (const c of rewrittenVerify) out.headers.append("set-cookie", c);
 
-  // 2) Hydrate session via session-me if verify OK
+  // 2) hydrate using MERGED cookie jar
   if (verifyRes.ok) {
+    const mergedCookieHeader = buildMergedCookieHeader(incomingCookie, verifySetCookies);
+
     const hydrateRes = await fetch(HYDRATE_URL, {
       method: "GET",
       headers: {
-        cookie: cookieHeader,
-        origin,
-        referer,
-        "x-forwarded-host": host,
-        "x-forwarded-proto": "https",
+        cookie: mergedCookieHeader,
+        origin, referer,
+        "x-forwarded-host": host, "x-forwarded-proto": "https",
         "cache-control": "no-cache",
       },
       redirect: "manual",
       cache: "no-store",
     });
 
-    const hCookies = rewriteForHost(getSetCookieArray(hydrateRes.headers));
-    for (const c of hCookies) out.headers.append("set-cookie", c);
+    const hydrateSetCookies = getSetCookieArray(hydrateRes.headers);
+    const rewrittenHydrate = rewriteForHost(hydrateSetCookies);
+    for (const c of rewrittenHydrate) out.headers.append("set-cookie", c);
 
-    if (hCookies.length === 0) {
+    if (hydrateSetCookies.length === 0 && rewrittenVerify.length === 0) {
       const tryJson = await hydrateRes.json().catch(() => null) as unknown;
       const token = extractToken(tryJson) || extractToken(verifyPayload);
       if (token) {
