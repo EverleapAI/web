@@ -13,36 +13,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js
-      - name: Set up Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'apps/web/package-lock.json'
+          # This is the FIX (GitHub monorepo-safe caching)
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            apps/web/package.json
 
-      # 3. Install dependencies
       - name: Install dependencies
         working-directory: apps/web
         run: npm ci
 
-      # 4. Build Next.js application
-      - name: Build Next.js
+      - name: Build Next.js app
         working-directory: apps/web
         run: npm run build
 
-      # 5. Zip build folder for Azure deployment
       - name: Prepare app artifact
         run: |
           cd apps/web
           zip -r ../web.zip ./*
         shell: bash
 
-      # 6. Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
