@@ -27,12 +27,12 @@ jobs:
             apps/web/package-lock.json
             apps/web/package.json
 
-      # 3. Install dependencies (clean install)
+      # 3. Install dependencies
       - name: Install dependencies
         working-directory: apps/web
         run: npm ci
 
-      # 4. Build the Next.js app
+      # 4. Build the Next.js application
       - name: Build Next.js app
         working-directory: apps/web
         run: npm run build
@@ -44,7 +44,7 @@ jobs:
           zip -r ../web.zip ./*
         shell: bash
 
-      # 6. Deploy to Azure Web App using publish profile
+      # 6. Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
