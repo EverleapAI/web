@@ -1,0 +1,261 @@
+SET NOCOUNT ON;
+
+DECLARE 
+  @schemas   nvarchar(max),
+  @tables    nvarchar(max),
+  @columns   nvarchar(max),
+  @primaryKeys nvarchar(max),
+  @foreignKeys nvarchar(max),
+  @indexes   nvarchar(max),
+  @views     nvarchar(max),
+  @procedures nvarchar(max),
+  @functions nvarchar(max),
+  @triggers  nvarchar(max),
+  @types     nvarchar(max);
+
+-- Schemas
+SET @schemas = (
+  SELECT s.schema_id, s.name
+  FROM sys.schemas s
+  WHERE s.principal_id <> 1
+  ORDER BY s.name
+  FOR JSON PATH
+);
+
+-- Tables
+SET @tables = (
+  SELECT
+    t.object_id,
+    schema_name(t.schema_id) AS schemaName,
+    t.name AS tableName,
+    t.create_date,
+    t.modify_date,
+    t.temporal_type,
+    t.is_memory_optimized
+  FROM sys.tables t
+  ORDER BY schema_name(t.schema_id), t.name
+  FOR JSON PATH
+);
+
+-- Columns
+SET @columns = (
+  SELECT
+    t.object_id,
+    schema_name(t.schema_id) AS schemaName,
+    t.name AS tableName,
+    c.column_id,
+    c.name AS columnName,
+    TY.name AS dataType,
+    c.max_length,
+    c.precision,
+    c.scale,
+    c.is_nullable,
+    c.is_identity,
+    c.is_rowguidcol,
+    c.is_computed,
+    CC.definition AS computedDefinition,
+    DC.name AS defaultConstraintName,
+    OBJECT_DEFINITION(DC.object_id) AS defaultDefinition,
+    c.collation_name
+  FROM sys.tables t
+  JOIN sys.columns c ON c.object_id = t.object_id
+  JOIN sys.types TY ON TY.user_type_id = c.user_type_id
+  LEFT JOIN sys.default_constraints DC ON DC.parent_object_id = t.object_id AND DC.parent_column_id = c.column_id
+  LEFT JOIN sys.computed_columns CC ON CC.object_id = t.object_id AND CC.column_id = c.column_id
+  ORDER BY schema_name(t.schema_id), t.name, c.column_id
+  FOR JSON PATH
+);
+
+-- Primary Keys
+SET @primaryKeys = (
+  SELECT
+    kc.object_id AS constraintObjectId,
+    schema_name(t.schema_id) AS schemaName,
+    t.name AS tableName,
+    kc.name AS constraintName,
+    kc.type_desc AS constraintType,
+    (
+      SELECT 
+        ic.key_ordinal AS ordinal,
+        c.name AS columnName,
+        ic.is_descending_key AS isDesc
+      FROM sys.index_columns ic
+      JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+      WHERE ic.object_id = kc.parent_object_id
+        AND ic.index_id = kc.unique_index_id
+        AND ic.is_included_column = 0
+      ORDER BY ic.key_ordinal
+      FOR JSON PATH
+    ) AS keyColumns
+  FROM sys.key_constraints kc
+  JOIN sys.tables t ON t.object_id = kc.parent_object_id
+  WHERE kc.type = 'PK'
+  ORDER BY schema_name(t.schema_id), t.name
+  FOR JSON PATH
+);
+
+-- Foreign Keys
+SET @foreignKeys = (
+  SELECT
+    fk.object_id AS fkObjectId,
+    fk.name AS fkName,
+    schema_name(pt.schema_id) AS parentSchema,
+    pt.name AS parentTable,
+    schema_name(rt.schema_id) AS referencedSchema,
+    rt.name AS referencedTable,
+    fk.delete_referential_action_desc AS onDelete,
+    fk.update_referential_action_desc AS onUpdate,
+    (
+      SELECT
+        fkc.constraint_column_id AS ordinal,
+        pc.name AS parentColumn,
+        rc.name AS referencedColumn
+      FROM sys.foreign_key_columns fkc
+      JOIN sys.columns pc ON pc.object_id = fkc.parent_object_id AND pc.column_id = fkc.parent_column_id
+      JOIN sys.columns rc ON rc.object_id = fkc.referenced_object_id AND rc.column_id = fkc.referenced_column_id
+      WHERE fkc.constraint_object_id = fk.object_id
+      ORDER BY fkc.constraint_column_id
+      FOR JSON PATH
+    ) AS columns
+  FROM sys.foreign_keys fk
+  JOIN sys.tables pt ON pt.object_id = fk.parent_object_id
+  JOIN sys.tables rt ON rt.object_id = fk.referenced_object_id
+  ORDER BY parentSchema, parentTable, fk.name
+  FOR JSON PATH
+);
+
+-- Indexes (including unique, filtered, include columns)
+SET @indexes = (
+  SELECT
+    i.object_id,
+    schema_name(t.schema_id) AS schemaName,
+    t.name AS tableName,
+    i.index_id,
+    i.name AS indexName,
+    i.type_desc AS indexType,
+    i.is_unique,
+    i.is_primary_key,
+    i.has_filter,
+    i.filter_definition,
+    (
+      SELECT 
+        ic.key_ordinal AS ordinal,
+        c.name AS columnName,
+        ic.is_descending_key AS isDesc
+      FROM sys.index_columns ic
+      JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+      WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0
+      ORDER BY ic.key_ordinal
+      FOR JSON PATH
+    ) AS keyColumns,
+    (
+      SELECT 
+        c.name AS columnName
+      FROM sys.index_columns ic
+      JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+      WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 1
+      ORDER BY c.name
+      FOR JSON PATH
+    ) AS includeColumns
+  FROM sys.indexes i
+  JOIN sys.tables t ON t.object_id = i.object_id
+  WHERE i.type > 0  -- exclude heap
+    AND i.is_hypothetical = 0
+  ORDER BY schema_name(t.schema_id), t.name, i.name
+  FOR JSON PATH
+);
+
+-- Views
+SET @views = (
+  SELECT
+    v.object_id,
+    schema_name(v.schema_id) AS schemaName,
+    v.name AS viewName,
+    v.create_date,
+    v.modify_date,
+    OBJECT_DEFINITION(v.object_id) AS definition
+  FROM sys.views v
+  ORDER BY schema_name(v.schema_id), v.name
+  FOR JSON PATH
+);
+
+-- Stored Procedures
+SET @procedures = (
+  SELECT
+    p.object_id,
+    schema_name(p.schema_id) AS schemaName,
+    p.name AS procedureName,
+    p.create_date,
+    p.modify_date,
+    OBJECT_DEFINITION(p.object_id) AS definition
+  FROM sys.procedures p
+  ORDER BY schema_name(p.schema_id), p.name
+  FOR JSON PATH
+);
+
+-- Functions (scalar, inline, table-valued)
+SET @functions = (
+  SELECT
+    o.object_id,
+    schema_name(o.schema_id) AS schemaName,
+    o.name AS functionName,
+    o.type_desc,
+    o.create_date,
+    o.modify_date,
+    OBJECT_DEFINITION(o.object_id) AS definition
+  FROM sys.objects o
+  WHERE o.type IN ('FN','IF','TF')  -- scalar, inline TVF, multi-statement TVF
+  ORDER BY schema_name(o.schema_id), o.name
+  FOR JSON PATH
+);
+
+-- Triggers (table-level)
+SET @triggers = (
+  SELECT
+    tr.object_id,
+    tr.name AS triggerName,
+    schema_name(t.schema_id) AS tableSchema,
+    t.name AS tableName,
+    tr.is_instead_of_trigger,
+    tr.is_disabled,
+    OBJECT_DEFINITION(tr.object_id) AS definition
+  FROM sys.triggers tr
+  JOIN sys.tables t ON t.object_id = tr.parent_id
+  ORDER BY tableSchema, tableName, tr.name
+  FOR JSON PATH
+);
+
+-- User-defined types
+SET @types = (
+  SELECT
+    TY.user_type_id,
+    TY.name AS typeName,
+    BT.name AS baseType,
+    TY.max_length,
+    TY.precision,
+    TY.scale,
+    TY.is_user_defined,
+    TY.is_assembly_type
+  FROM sys.types TY
+  LEFT JOIN sys.types BT ON TY.system_type_id = BT.user_type_id AND BT.user_type_id = BT.system_type_id
+  WHERE TY.is_user_defined = 1
+  ORDER BY TY.name
+  FOR JSON PATH
+);
+
+-- Final JSON object
+SELECT
+  DB_NAME()            AS [database],
+  SYSUTCDATETIME()     AS generatedAtUtc,
+  JSON_QUERY(@schemas) AS schemas,
+  JSON_QUERY(@tables)  AS tables,
+  JSON_QUERY(@columns) AS columns,
+  JSON_QUERY(@primaryKeys) AS primaryKeys,
+  JSON_QUERY(@foreignKeys) AS foreignKeys,
+  JSON_QUERY(@indexes) AS indexes,
+  JSON_QUERY(@views)   AS views,
+  JSON_QUERY(@procedures) AS procedures,
+  JSON_QUERY(@functions)  AS functions,
+  JSON_QUERY(@triggers)   AS triggers,
+  JSON_QUERY(@types)      AS userDefinedTypes
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;

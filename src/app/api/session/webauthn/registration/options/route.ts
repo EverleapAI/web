@@ -5,99 +5,115 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Normalize Functions base; ensure exactly one /api
-const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for WebAuthn registration/options proxy.");
-const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
-const TARGET_URL = `${API_BASE}/webauthn/registration/options`;
+/**
+ * Proxies registration *options* requests from the app to the Functions API.
+ * New backend route:  POST /api/passkey/register/options
+ */
 
-function setNoStore(res: NextResponse) {
-  res.headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-  res.headers.set("pragma", "no-cache");
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey registration options proxy.");
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${API_BASE}/passkey/register/options`;
+
+function noStore(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Vary", "Cookie");
   return res;
 }
 
-/** Safely split comma-joined Set-Cookie header into individual cookies */
-function splitSetCookie(raw: string): string[] {
-  return raw.split(/,(?=[^ ;]+=)/);
+function getSetCookieArray(headers: Headers): string[] {
+  // Some runtimes expose multiple Set-Cookie headers; iterate safely
+  const values: string[] = [];
+  const sc = headers.get("set-cookie");
+  if (sc) values.push(sc);
+  // @ts-ignore - nonstandard iterator is present in Edge runtimes / node fetch
+  const all = headers.getSetCookie?.() as string[] | undefined;
+  if (Array.isArray(all)) values.push(...all);
+  return values;
 }
 
-/** Read all Set-Cookie values from Headers (supports Undici getSetCookie) */
-function getSetCookieArray(h: Headers): string[] {
-  const maybe = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === "function") {
-    try {
-      const arr = maybe.getSetCookie();
-      if (Array.isArray(arr)) return arr;
-    } catch {}
-  }
-  const single = h.get("set-cookie");
-  return single ? splitSetCookie(single) : [];
-}
+/** Rewrite cookie attributes so they land correctly for the current host */
+function rewriteSetCookieForHost(rawCookies: string[], host: string): string[] {
+  return rawCookies.map((c) => {
+    // Ensure Path, SameSite, Secure are present; strip Domain to avoid cross-subdomain surprises
+    let out = c
+      // remove any Domain=... attribute
+      .replace(/;\s*Domain=[^;]+/gi, "")
+      // normalize SameSite (prefer Lax for top-level navigations)
+      .replace(/;\s*SameSite=[^;]+/gi, "")
+      .replace(/;\s*Path=[^;]+/gi, "");
 
-/** Drop Domain and ensure sane defaults */
-function rewriteForHost(cookies: string[]): string[] {
-  return cookies.map((cookie) => {
-    let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
-    if (!/;\s*Path=/i.test(c)) c += "; Path=/";
-    if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
-    if (!/;\s*Secure/i.test(c)) c += "; Secure";
-    return c;
+    if (!/;\s*Path=/i.test(out)) out += "; Path=/";
+    if (!/;\s*SameSite=/i.test(out)) out += "; SameSite=Lax";
+    if (!/;\s*Secure/i.test(out)) out += "; Secure";
+
+    // HttpOnly should be kept if upstream set it; don’t add here to avoid altering JS-readable debug cookies
+    return out;
   });
 }
 
-/** Extract "name" and "value" from a Set-Cookie string's first pair */
-function parseNameValue(sc: string): { name: string; value: string } | null {
-  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
+function parseNameValue(cookie: string): { name: string; value: string } | null {
+  const m = cookie.match(/^\s*([^=\s]+)\s*=\s*([^;]*)/);
   return m ? { name: m[1], value: m[2] } : null;
 }
 
-async function forward(req: NextRequest, method: "POST" | "GET") {
-  const host = req.headers.get("host") || "";
-  const origin = `https://${host}`;
-  const referer = `${origin}/login`;
+async function forward(req: NextRequest, method: "GET" | "POST") {
+  const url = TARGET_URL;
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
 
-  const headers: Record<string, string> = {
-    cookie: req.headers.get("cookie") || "",
-    origin,
-    referer,
-    "user-agent": req.headers.get("user-agent") || "",
-    "x-forwarded-host": host,
-    "x-forwarded-proto": "https",
-    "cache-control": "no-cache",
-  };
+  // Build body for POST, pass through Content-Type when present
+  let body: BodyInit | undefined = undefined;
+  const ct = req.headers.get("content-type") || undefined;
   if (method === "POST") {
-    headers["content-type"] = req.headers.get("content-type") || "application/json";
+    if (ct?.includes("application/json")) {
+      const json = await req.json().catch(() => ({}));
+      body = JSON.stringify(json ?? {});
+    } else if (ct?.includes("application/x-www-form-urlencoded")) {
+      body = await req.text();
+    } else if (ct?.includes("multipart/form-data")) {
+      // Pass form data as-is
+      body = await req.formData();
+    } else {
+      body = await req.text();
+    }
   }
 
-  const init: RequestInit = {
+  const upstream = await fetch(url, {
     method,
-    headers,
+    headers: {
+      "content-type": ct || "application/json",
+      "x-forwarded-host": host,
+      "x-forwarded-proto": proto,
+      "user-agent": req.headers.get("user-agent") || "",
+      // Pass cookies through so API can read any state/CSRF if applicable
+      cookie: req.headers.get("cookie") || "",
+      "cache-control": "no-cache",
+    },
+    body,
     redirect: "manual",
     cache: "no-store",
-    body: method === "POST" ? await req.text() : undefined,
-  };
+  });
 
-  const upstream = await fetch(TARGET_URL, init);
-
-  const ct = upstream.headers.get("content-type") || "application/json";
-  const isJson = ct.includes("application/json");
+  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const isJson = contentType.includes("application/json");
   const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 
   const res = new NextResponse(
     typeof payload === "string" ? payload : JSON.stringify(payload ?? {}),
-    { status: upstream.status, headers: { "content-type": ct } }
+    { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // Result depends on cookies
+  // Ensure caches vary on Cookie
   res.headers.set("Vary", "Cookie");
 
-  // Rewrite and append each Set-Cookie individually
+  // Rewrite and append Set-Cookie from upstream
   const rawCookies = getSetCookieArray(upstream.headers);
-  const rewritten = rewriteForHost(rawCookies);
+  const rewritten = rewriteSetCookieForHost(rawCookies, host);
   for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // TEMP: mirror upstream cookies for troubleshooting
+  // (Optional) short-lived debug mirror of upstream cookies to verify landing in the browser
   for (const c of rewritten) {
     const nv = parseNameValue(c);
     if (!nv) continue;
@@ -107,9 +123,9 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
     );
   }
 
-  return setNoStore(res);
+  return noStore(res);
 }
 
-// Support both methods
+// Support both methods (some callers prefer POST even for “options”)
 export async function GET(req: NextRequest) { return forward(req, "GET"); }
 export async function POST(req: NextRequest) { return forward(req, "POST"); }

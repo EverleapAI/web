@@ -1,83 +1,81 @@
 // apps/web/src/app/api/session/webauthn/registration/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 
-/** Normalize Functions base; ensure exactly one /api */
-const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
-const VERIFY_URL = `${API_BASE}/webauthn/registration/verify`;
-const HYDRATE_URL = `${API_BASE}/session-me`;
+/**
+ * Proxies registration *verify* requests from the app to the API.
+ * New backend route: POST /api/passkey/register/verify
+ * - Should set/refresh the HttpOnly session cookie on success
+ * - We rewrite Set-Cookie attrs for the current host and enforce Secure/Lax/Path=/
+ */
 
-function setNoStore(res: NextResponse) {
-  res.headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-  res.headers.set("pragma", "no-cache");
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey registration verify proxy.");
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${API_BASE}/passkey/register/verify`;
+
+function noStore(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.headers.set("Pragma", "no-cache");
   res.headers.set("Vary", "Cookie");
   return res;
 }
 
-function splitSetCookie(raw: string): string[] { return raw.split(/,(?=[^ ;]+=)/); }
-function getSetCookieArray(h: Headers): string[] {
-  const maybe = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === "function") { try { const arr = maybe.getSetCookie(); if (Array.isArray(arr)) return arr; } catch {} }
-  const single = h.get("set-cookie");
-  return single ? splitSetCookie(single) : [];
+function getSetCookieArray(headers: Headers): string[] {
+  const values: string[] = [];
+  const sc = headers.get("set-cookie");
+  if (sc) values.push(sc);
+  // @ts-ignore - some runtimes expose getSetCookie()
+  const all = headers.getSetCookie?.() as string[] | undefined;
+  if (Array.isArray(all)) values.push(...all);
+  return values;
 }
-function rewriteForHost(cookies: string[]): string[] {
-  return cookies.map((cookie) => {
-    let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
-    if (!/;\s*Path=/i.test(c)) c += "; Path=/";
-    if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
-    if (!/;\s*Secure/i.test(c)) c += "; Secure";
-    if (!/;\s*HttpOnly/i.test(c)) c += "; HttpOnly";
-    return c;
+
+/** Ensure cookies land for the current host; remove Domain=, enforce Path=/, SameSite=Lax, Secure */
+function rewriteSetCookieForHost(rawCookies: string[]): string[] {
+  return rawCookies.map((c) => {
+    let out = c
+      .replace(/;\s*Domain=[^;]+/gi, "")
+      .replace(/;\s*SameSite=[^;]+/gi, "")
+      .replace(/;\s*Path=[^;]+/gi, "");
+
+    if (!/;\s*Path=/i.test(out)) out += "; Path=/";
+    if (!/;\s*SameSite=/i.test(out)) out += "; SameSite=Lax";
+    if (!/;\s*Secure/i.test(out)) out += "; Secure";
+
+    return out;
   });
 }
-function parseNameValue(sc: string): { name: string; value: string } | null {
-  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
-  return m ? { name: m[1], value: m[2] } : null;
-}
-function buildMergedCookieHeader(original: string, setCookies: string[]): string {
-  const jar = new Map<string,string>();
-  for (const part of (original || "").split(";")) {
-    const m = part.trim().match(/^([^=]+)=(.*)$/);
-    if (m) jar.set(m[1].trim(), m[2]);
-  }
-  for (const sc of setCookies) {
-    const nv = parseNameValue(sc);
-    if (nv) jar.set(nv.name, nv.value);
-  }
-  return Array.from(jar.entries()).map(([k,v]) => `${k}=${v}`).join("; ");
-}
-function extractToken(obj: unknown): string | null {
-  if (!obj || typeof obj !== "object") return null;
-  const o = obj as Record<string, unknown>;
-  const keys = ["token","sessionToken","accessToken","jwt","idToken","authToken","session","bearer"];
-  for (const k of keys) { const v = o[k]; if (typeof v === "string" && v.length > 10) return v; }
-  for (const nk of ["data","result","session","auth"]) {
-    const v = o[nk]; if (v && typeof v === "object") { const t = extractToken(v); if (t) return t; }
-  }
-  return null;
-}
 
-export async function POST(req: NextRequest) {
-  const body = await req.text();
+async function forward(req: NextRequest) {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
 
-  const host = req.headers.get("host") || "";
-  const origin = `https://${host}`;
-  const referer = `${origin}/login`;
-  const incomingCookie = req.headers.get("cookie") || "";
+  // Body: pass JSON straight through; some libs send base64url-encoded credential fields
+  const ct = req.headers.get("content-type") || "application/json";
+  let body: BodyInit | undefined;
+  if (ct.includes("application/json")) {
+    const json = await req.json().catch(() => ({}));
+    body = JSON.stringify(json ?? {});
+  } else if (ct.includes("application/x-www-form-urlencoded")) {
+    body = await req.text();
+  } else if (ct.includes("multipart/form-data")) {
+    body = await req.formData();
+  } else {
+    body = await req.text();
+  }
 
-  // 1) upstream verify
-  const verifyRes = await fetch(VERIFY_URL, {
+  const upstream = await fetch(TARGET_URL, {
     method: "POST",
     headers: {
-      "content-type": req.headers.get("content-type") || "application/json",
-      cookie: incomingCookie,
-      origin, referer,
+      "content-type": ct,
+      "x-forwarded-host": host,
+      "x-forwarded-proto": proto,
       "user-agent": req.headers.get("user-agent") || "",
-      "x-forwarded-host": host, "x-forwarded-proto": "https",
+      cookie: req.headers.get("cookie") || "",
       "cache-control": "no-cache",
     },
     body,
@@ -85,51 +83,26 @@ export async function POST(req: NextRequest) {
     cache: "no-store",
   });
 
-  const verifyCT = verifyRes.headers.get("content-type") || "application/json";
-  const verifyIsJson = verifyCT.includes("application/json");
-  const verifyPayload = verifyIsJson ? await verifyRes.json().catch(() => null) : await verifyRes.text();
+  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 
-  const out = new NextResponse(
-    typeof verifyPayload === "string" ? verifyPayload : JSON.stringify(verifyPayload ?? {}),
-    { status: verifyRes.status, headers: { "content-type": verifyCT } }
+  const res = new NextResponse(
+    typeof payload === "string" ? payload : JSON.stringify(payload ?? {}),
+    { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // pass through verify cookies
-  const verifySetCookies = getSetCookieArray(verifyRes.headers);
-  const rewrittenVerify = rewriteForHost(verifySetCookies);
-  for (const c of rewrittenVerify) out.headers.append("set-cookie", c);
+  // Forward & normalize Set-Cookie from API so the browser receives the session
+  const rawCookies = getSetCookieArray(upstream.headers);
+  const rewritten = rewriteSetCookieForHost(rawCookies);
+  for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // 2) hydrate using MERGED cookie jar
-  if (verifyRes.ok) {
-    const mergedCookieHeader = buildMergedCookieHeader(incomingCookie, verifySetCookies);
+  // Avoid cache issues in Azure/AppGateway/CDN
+  res.headers.set("Vary", "Cookie");
 
-    const hydrateRes = await fetch(HYDRATE_URL, {
-      method: "GET",
-      headers: {
-        cookie: mergedCookieHeader,
-        origin, referer,
-        "x-forwarded-host": host, "x-forwarded-proto": "https",
-        "cache-control": "no-cache",
-      },
-      redirect: "manual",
-      cache: "no-store",
-    });
+  return noStore(res);
+}
 
-    const hydrateSetCookies = getSetCookieArray(hydrateRes.headers);
-    const rewrittenHydrate = rewriteForHost(hydrateSetCookies);
-    for (const c of rewrittenHydrate) out.headers.append("set-cookie", c);
-
-    if (hydrateSetCookies.length === 0 && rewrittenVerify.length === 0) {
-      const tryJson = await hydrateRes.json().catch(() => null) as unknown;
-      const token = extractToken(tryJson) || extractToken(verifyPayload);
-      if (token) {
-        out.headers.append(
-          "set-cookie",
-          `everleap_session=${encodeURIComponent(token)}; Path=/; SameSite=Lax; Secure; HttpOnly; Max-Age=2592000`
-        );
-      }
-    }
-  }
-
-  return setNoStore(out);
+export async function POST(req: NextRequest) {
+  return forward(req);
 }

@@ -10,51 +10,51 @@ export class ApiError extends Error {
   }
 }
 
-// Base URL for the Azure Functions app (e.g. https://<func>.azurewebsites.net or .../api)
-const API_BASE_RAW = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+/**
+ * Base URL for the Azure Functions app
+ * Example: https://everleapfunctionsdev-f5hbhadhre9c8eqha.westus-01.azurewebsites.net
+ */
+const API_BASE_RAW = (process.env.NEXT_PUBLIC_API_BASE || "").replace(/\/+$/, "");
 const API_BASE_HAS_API = /\/api$/i.test(API_BASE_RAW);
-const API_BASE = API_BASE_RAW; // keep as-is (may or may not include /api)
+const API_BASE = API_BASE_RAW;
 
-// API routes that should be proxied directly to Azure Functions (from the browser)
-const PROXY_PREFIXES = ["/session", "/webauthn", "/auth"] as const;
+// API routes that should be proxied directly to Azure Functions
+const PROXY_PREFIXES = ["/session", "/webauthn", "/auth", "/passkey"] as const;
 
 /**
  * Build an absolute URL from a path.
- * - Absolute http(s) URLs pass through.
- * - Paths that start with `/api/` are same-origin (Next.js BFF route handlers).
- * - Paths that start with one of PROXY_PREFIXES are sent to Functions:
- *     API_BASE + (ensure /api once) + normalized path
- * - Everything else stays same-origin.
+ * - Absolute URLs pass through
+ * - `/api/...` routes are same-origin **unless** they match proxy prefixes
+ * - `/session`, `/webauthn`, `/auth`, `/passkey` → sent to Azure Functions backend
  */
 function toUrl(path: string) {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
 
-  if (path.startsWith("/api/")) return path; // Next.js route handler (same-origin)
+  // Local Next.js API routes stay same-origin unless they match a proxied prefix
+  if (path.startsWith("/api/") && !PROXY_PREFIXES.some((p) => path.startsWith(`/api${p}`))) {
+    return path;
+  }
 
-  // If calling one of our backend endpoints, send to Functions
-  if (PROXY_PREFIXES.some((p) => path.startsWith(p))) {
+  // Proxy known backend paths to Azure
+  if (PROXY_PREFIXES.some((p) => path.startsWith(p) || path.startsWith(`/api${p}`))) {
     if (!API_BASE) {
-      throw new Error(
-        "NEXT_PUBLIC_API_BASE_URL is not set but a backend call was attempted."
-      );
+      throw new Error("NEXT_PUBLIC_API_BASE is not set but a backend call was attempted.");
     }
-    const normalized = path.startsWith("/") ? path : `/${path}`;
+    // Remove any leading /api for backend requests
+    const normalized = path.replace(/^\/api/, "");
     const baseWithApi = API_BASE_HAS_API ? API_BASE : `${API_BASE}/api`;
     return `${baseWithApi}${normalized}`;
   }
 
-  // Anything else stays same-origin
+  // Everything else stays same-origin
   return path;
 }
 
-/** Decide whether to include cookies based on the final URL */
+/** Only send cookies to same-origin API calls */
 function credentialsFor(url: string): RequestCredentials {
-  // Only include cookies for same-origin BFF calls (`/api/...`).
-  // For absolute URLs (Functions), omit credentials — cookies there won’t help anyway.
   return url.startsWith("/api/") ? "include" : "omit";
 }
 
-/** Safe JSON parse (falls back to raw text) */
 function safeJson(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -63,7 +63,6 @@ function safeJson(text: string): unknown {
   }
 }
 
-/** Extract a human message from a server error payload */
 function extractMessage(info: unknown, fallback: string): string {
   if (typeof info === "string") return info;
   if (info && typeof info === "object" && "message" in info) {
@@ -73,7 +72,6 @@ function extractMessage(info: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Build query string from an object (skips null/undefined) */
 export function qsp(params?: Record<string, unknown>): string {
   const sp = new URLSearchParams();
   if (params) {
@@ -146,16 +144,14 @@ async function apiFetch<T>(
   }
 }
 
-/** Public API */
+/** Public API facade */
 export const api = {
-  /** Compose a URL with query params */
   url(path: string, params?: Record<string, unknown>) {
     const qs = qsp(params);
     const withQs = qs ? `${path}${path.includes("?") ? "&" : "?"}${qs}` : path;
     return toUrl(withQs);
   },
 
-  /** GET with optional query params */
   get: <T>(path: string, params?: Record<string, unknown>, timeout?: number) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
@@ -163,7 +159,6 @@ export const api = {
       timeout
     ),
 
-  /** POST JSON or FormData body (optional query params) */
   post: <T>(
     path: string,
     body: unknown,
@@ -172,11 +167,13 @@ export const api = {
   ) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
-      { method: "POST", body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body) },
+      {
+        method: "POST",
+        body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body),
+      },
       timeout
     ),
 
-  /** PUT JSON or FormData body (optional query params) */
   put: <T>(
     path: string,
     body: unknown,
@@ -185,11 +182,13 @@ export const api = {
   ) =>
     apiFetch<T>(
       params ? `${path}${path.includes("?") ? "&" : "?"}${qsp(params)}` : path,
-      { method: "PUT", body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body) },
+      {
+        method: "PUT",
+        body: isFormData(body) ? (body as BodyInit) : JSON.stringify(body),
+      },
       timeout
     ),
 
-  /** DELETE with optional query params */
   del: <T = { ok: true }>(
     path: string,
     params?: Record<string, unknown>,

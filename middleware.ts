@@ -19,14 +19,35 @@ const COOKIE_SESSION = "everleap_session";
 // TEMP during debugging so testers don't get bounced when using visible mirror cookie
 const COOKIE_SESSION_DEBUG = "everleap_session_debug";
 
+// Paths we should never block/redirect (auth flows and entry points)
+const AUTH_PASS_PATHS = [
+  "/login",
+  "/logout",
+  "/register",
+  "/auth/magic",
+  "/auth/webauthn",
+];
+
 function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 }
 
+function isAuthPassPath(pathname: string) {
+  if (AUTH_PASS_PATHS.includes(pathname)) return true;
+  // Allow /auth/webauthn/* nested routes
+  if (pathname.startsWith("/auth/webauthn/")) return true;
+  return false;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // 🔓 Always allow auth pages/flows to proceed
+  if (isAuthPassPath(pathname)) {
+    return NextResponse.next();
+  }
 
   // ⛳ TEMP: bypass auth for /dashboard to isolate redirect source
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
@@ -43,6 +64,7 @@ export function middleware(req: NextRequest) {
 
     const res = NextResponse.redirect(url, 308);
     res.headers.set("Cache-Control", "no-store");
+    res.headers.set("Vary", "Cookie");
     return res;
   }
 
@@ -66,6 +88,7 @@ export function middleware(req: NextRequest) {
 
     const res = NextResponse.redirect(url, 307);
     res.headers.set("Cache-Control", "no-store");
+    res.headers.set("Vary", "Cookie");
     return res;
   }
 

@@ -1,4 +1,3 @@
-// apps/web/src/app/auth/magic/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -15,44 +14,50 @@ export default function MagicCatcherPage() {
   const nextParam = sp.get("next") || ""; // preserve desired post-login destination
   const [error, setError] = useState<string | null>(null);
 
-  // Compose API consume URL, handling bases that may already include /api
+  // Normalize API base (frontend always calls BFF under /api/session/magic)
   const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
   const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 
   const consumeUrl = useMemo(() => {
-    if (!token || !RAW_BASE) return null;
-    const url = new URL(`${BASE_WITH_API}/auth/magic/consume`);
+    if (!token) return null;
+
+    // ✅ Call our BFF proxy (not the Functions endpoint directly)
+    const url = new URL(`/api/session/magic/consume`, window.location.origin);
     url.searchParams.set("token", token);
     if (nextParam && nextParam.startsWith("/")) {
       url.searchParams.set("next", nextParam);
     }
     return url.toString();
-  }, [BASE_WITH_API, RAW_BASE, token, nextParam]);
+  }, [token, nextParam]);
 
   useEffect(() => {
     if (!token) {
       setError("This link is missing its token. Try sending yourself a new link.");
       return;
     }
-    if (!RAW_BASE || !consumeUrl) {
-      setError("We’re missing our API base URL. Please try again in a moment.");
+    if (!consumeUrl) {
+      setError("We’re missing our sign-in endpoint. Please try again in a moment.");
       return;
     }
 
-    // Hard redirect so the API can set cookies & 302 to /dashboard (or ?next=…)
+    // Use a direct redirect so the backend can set cookies securely
     try {
       window.location.replace(consumeUrl);
-      // As a safety net, attempt a second nudge shortly after
+
+      // Fallback retry after a moment in case the browser blocks the first redirect
       const t = setTimeout(() => {
         if (document.visibilityState === "visible") {
-          try { window.location.href = consumeUrl; } catch {}
+          try {
+            window.location.href = consumeUrl;
+          } catch {}
         }
       }, 1200);
+
       return () => clearTimeout(t);
     } catch {
       setError("We couldn’t open your sign-in link. You can try again.");
     }
-  }, [RAW_BASE, token, consumeUrl]);
+  }, [token, consumeUrl]);
 
   const headline = error ? "We couldn’t complete your sign-in" : "Validating your link…";
 
@@ -70,7 +75,7 @@ export default function MagicCatcherPage() {
                 <p>Hang tight — we’re finishing your sign-in.</p>
                 {consumeUrl ? (
                   <p className="text-[12px] opacity-70 mt-2">
-                    If nothing happens,{" "}
+                    If nothing happens,&nbsp;
                     <a className="link" href={consumeUrl}>
                       tap here to continue
                     </a>
@@ -103,7 +108,9 @@ export default function MagicCatcherPage() {
               </div>
             )}
             {process.env.NODE_ENV !== "production" && token ? (
-              <p className="text-[11px] opacity-60 text-center">token…{token.slice(-8)}</p>
+              <p className="text-[11px] opacity-60 text-center">
+                token…{token.slice(-8)}
+              </p>
             ) : null}
           </section>
         </ConversationChrome>

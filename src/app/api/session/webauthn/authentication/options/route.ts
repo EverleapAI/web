@@ -5,99 +5,107 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Normalize Functions base; ensure exactly one /api
-const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for WebAuthn auth/options proxy.");
-const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
-const TARGET_URL = `${API_BASE}/webauthn/authentication/options`;
+/**
+ * Proxies authentication *options* requests from the app to the API.
+ * New backend route:  POST /api/passkey/auth/options
+ */
 
-function setNoStore(res: NextResponse) {
-  res.headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
-  res.headers.set("pragma", "no-cache");
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey authentication options proxy.");
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${API_BASE}/passkey/auth/options`;
+
+function noStore(res: NextResponse) {
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Vary", "Cookie");
   return res;
 }
 
-/** Safely split comma-joined Set-Cookie header into individual cookies */
-function splitSetCookie(raw: string): string[] {
-  return raw.split(/,(?=[^ ;]+=)/);
+function getSetCookieArray(headers: Headers): string[] {
+  const values: string[] = [];
+  const sc = headers.get("set-cookie");
+  if (sc) values.push(sc);
+  // @ts-ignore - some runtimes expose getSetCookie()
+  const all = headers.getSetCookie?.() as string[] | undefined;
+  if (Array.isArray(all)) values.push(...all);
+  return values;
 }
 
-/** Read all Set-Cookie values from Headers (supports Undici getSetCookie) */
-function getSetCookieArray(h: Headers): string[] {
-  const maybe = h as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === "function") {
-    try {
-      const arr = maybe.getSetCookie();
-      if (Array.isArray(arr)) return arr;
-    } catch {}
-  }
-  const single = h.get("set-cookie");
-  return single ? splitSetCookie(single) : [];
-}
+/** Rewrite cookie attributes so they land correctly for the current host */
+function rewriteSetCookieForHost(rawCookies: string[]): string[] {
+  return rawCookies.map((c) => {
+    let out = c
+      .replace(/;\s*Domain=[^;]+/gi, "")
+      .replace(/;\s*SameSite=[^;]+/gi, "")
+      .replace(/;\s*Path=[^;]+/gi, "");
 
-/** Drop Domain and ensure sane defaults */
-function rewriteForHost(cookies: string[]): string[] {
-  return cookies.map((cookie) => {
-    let c = cookie.replace(/\s*;\s*Domain=[^;]+/gi, "");
-    if (!/;\s*Path=/i.test(c)) c += "; Path=/";
-    if (!/;\s*SameSite=/i.test(c)) c += "; SameSite=Lax";
-    if (!/;\s*Secure/i.test(c)) c += "; Secure";
-    return c;
+    if (!/;\s*Path=/i.test(out)) out += "; Path=/";
+    if (!/;\s*SameSite=/i.test(out)) out += "; SameSite=Lax";
+    if (!/;\s*Secure/i.test(out)) out += "; Secure";
+
+    return out;
   });
 }
 
-/** Extract "name" and "value" from a Set-Cookie string's first pair */
-function parseNameValue(sc: string): { name: string; value: string } | null {
-  const m = sc.match(/^\s*([^=;,\s]+)=([^;]+)/);
+function parseNameValue(cookie: string): { name: string; value: string } | null {
+  const m = cookie.match(/^\s*([^=\s]+)\s*=\s*([^;]*)/);
   return m ? { name: m[1], value: m[2] } : null;
 }
 
-async function forward(req: NextRequest, method: "POST" | "GET") {
-  const host = req.headers.get("host") || "";
-  const origin = `https://${host}`;
-  const referer = `${origin}/login`;
+async function forward(req: NextRequest, method: "GET" | "POST") {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
 
-  const headers: Record<string, string> = {
-    cookie: req.headers.get("cookie") || "",
-    origin,
-    referer,
-    "user-agent": req.headers.get("user-agent") || "",
-    "x-forwarded-host": host,
-    "x-forwarded-proto": "https",
-    "cache-control": "no-cache",
-  };
+  // Prepare body for POST
+  const ct = req.headers.get("content-type") || undefined;
+  let body: BodyInit | undefined = undefined;
   if (method === "POST") {
-    headers["content-type"] = req.headers.get("content-type") || "application/json";
+    if (ct?.includes("application/json")) {
+      const json = await req.json().catch(() => ({}));
+      body = JSON.stringify(json ?? {});
+    } else if (ct?.includes("application/x-www-form-urlencoded")) {
+      body = await req.text();
+    } else if (ct?.includes("multipart/form-data")) {
+      body = await req.formData();
+    } else {
+      body = await req.text();
+    }
   }
 
-  const init: RequestInit = {
+  const upstream = await fetch(TARGET_URL, {
     method,
-    headers,
+    headers: {
+      "content-type": ct || "application/json",
+      "x-forwarded-host": host,
+      "x-forwarded-proto": proto,
+      "user-agent": req.headers.get("user-agent") || "",
+      cookie: req.headers.get("cookie") || "",
+      "cache-control": "no-cache",
+    },
+    body,
     redirect: "manual",
     cache: "no-store",
-    body: method === "POST" ? await req.text() : undefined,
-  };
+  });
 
-  const upstream = await fetch(TARGET_URL, init);
-
-  const ct = upstream.headers.get("content-type") || "application/json";
-  const isJson = ct.includes("application/json");
+  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const isJson = contentType.includes("application/json");
   const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 
   const res = new NextResponse(
     typeof payload === "string" ? payload : JSON.stringify(payload ?? {}),
-    { status: upstream.status, headers: { "content-type": ct } }
+    { status: upstream.status, headers: { "content-type": contentType } }
   );
 
-  // Result depends on cookies
+  // Ensure caches vary on Cookie
   res.headers.set("Vary", "Cookie");
 
-  // Rewrite and append each Set-Cookie individually
+  // Forward & normalize Set-Cookie from API
   const rawCookies = getSetCookieArray(upstream.headers);
-  const rewritten = rewriteForHost(rawCookies);
+  const rewritten = rewriteSetCookieForHost(rawCookies);
   for (const c of rewritten) res.headers.append("set-cookie", c);
 
-  // TEMP: mirror upstream cookies for troubleshooting
+  // Optional: short-lived debug mirror to verify cookies land in the browser
   for (const c of rewritten) {
     const nv = parseNameValue(c);
     if (!nv) continue;
@@ -107,9 +115,9 @@ async function forward(req: NextRequest, method: "POST" | "GET") {
     );
   }
 
-  return setNoStore(res);
+  return noStore(res);
 }
 
-// Support both methods
+// Support both GET and POST (some clients use POST for “options”)
 export async function GET(req: NextRequest) { return forward(req, "GET"); }
 export async function POST(req: NextRequest) { return forward(req, "POST"); }

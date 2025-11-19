@@ -4,6 +4,7 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from "next/server";
 import { setNoStore } from "@/lib/security";
+import { getSetCookieArray, rewriteForHost } from "@/app/api/_bff/cookies";
 
 // Resolve your Functions base from env; handle bases that may already include /api
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
@@ -44,11 +45,19 @@ export async function GET(req: NextRequest) {
 
     // Forward cookies so Functions can read the same session
     const cookieHeader = req.headers.get("cookie") ?? "";
+    const secure = req.nextUrl.protocol === "https:";
+    const origin = req.nextUrl.origin;
+    const host = req.headers.get("host") || req.nextUrl.host || "";
+    const referer = `${origin}/`;
 
     const upstream = await fetch(TARGET_URL, {
       method: "GET",
       headers: {
         cookie: cookieHeader,
+        origin,
+        referer,
+        "x-forwarded-host": host,
+        "x-forwarded-proto": secure ? "https" : "http",
         "cache-control": "no-cache",
       },
       redirect: "follow",
@@ -68,6 +77,12 @@ export async function GET(req: NextRequest) {
 
     const res = NextResponse.json(stable, { status: 200 });
     res.headers.set("Vary", "Cookie"); // different users → different responses
+
+    // ⬇️ Propagate any upstream Set-Cookie values (rewritten for current host/scheme)
+    const rawSetCookies = getSetCookieArray(upstream.headers);
+    const rewritten = rewriteForHost(rawSetCookies, secure);
+    for (const c of rewritten) res.headers.append("set-cookie", c);
+
     return setNoStore(res);
   } catch (err) {
     const res = NextResponse.json(
