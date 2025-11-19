@@ -22,22 +22,17 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: apps/web
         run: npm ci
 
       - name: Build Next.js app
-        working-directory: apps/web
         run: npm run build
 
-      - name: Prepare deployment artifact
-        run: |
-          cd apps/web
-          zip -r ../web.zip ./*
-        shell: bash
+      - name: Zip app for deploy
+        run: zip -r app.zip ./*
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'front-end'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: apps/web.zip
+          package: app.zip
