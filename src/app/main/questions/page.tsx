@@ -3,6 +3,10 @@
 import { useState, useCallback, FormEvent } from "react";
 import Link from "next/link";
 import { Mic } from "lucide-react";
+import {
+  BottomNav,
+  type BottomNavKey,
+} from "@/components/navigation/BottomNav";
 
 type QuestionType = "onboarding" | "core" | "ancillary";
 
@@ -63,6 +67,7 @@ export default function StoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [activeTab, setActiveTab] = useState<BottomNavKey>("story");
 
   const question = storyQuestions[index];
 
@@ -127,7 +132,7 @@ export default function StoryPage() {
             "radial-gradient(circle at top left, rgba(56,189,248,0.2), transparent 55%), radial-gradient(circle at bottom right, rgba(251,113,133,0.2), transparent 55%)",
         }}
       >
-        <div className="relative flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-20">
           {/* Ambient blobs */}
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-24 left-[-10%] h-64 w-64 rounded-full bg-fuchsia-500/40 blur-3xl animate-pulse" />
@@ -166,6 +171,9 @@ export default function StoryPage() {
             </div>
           </div>
         </div>
+
+        {/* Bottom nav */}
+        <BottomNav activeKey={activeTab} onChange={setActiveTab} />
       </div>
     );
   }
@@ -180,7 +188,7 @@ export default function StoryPage() {
           "radial-gradient(circle at top left, rgba(56,189,248,0.2), transparent 55%), radial-gradient(circle at bottom right, rgba(251,113,133,0.2), transparent 55%)",
       }}
     >
-      <div className="relative flex min-h-screen flex-col px-4 pt-6 pb-8 sm:px-6 md:px-10">
+      <div className="relative flex min-h-screen flex-col px-4 pt-6 pb-24 sm:px-6 md:px-10">
         {/* Animated ambient blobs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-[-10%] h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl animate-pulse" />
@@ -291,6 +299,9 @@ export default function StoryPage() {
           </div>
         </main>
       </div>
+
+      {/* Bottom nav */}
+      <BottomNav activeKey={activeTab} onChange={setActiveTab} />
     </div>
   );
 }
