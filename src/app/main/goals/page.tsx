@@ -1,0 +1,214 @@
+// src/app/main/goals/page.tsx
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+
+import { AiGuideOrb } from "@/components/main/AiGuideOrb";
+import { BottomNav, BottomNavKey } from "@/components/navigation/BottomNav";
+
+export default function GoalsPage() {
+  const [activeTab, setActiveTab] = useState<BottomNavKey>("you");
+
+  return (
+    <div
+      className="min-h-screen bg-[#020617] text-slate-50"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at bottom right, rgba(251,113,133,0.14), transparent 55%)",
+      }}
+    >
+      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-20 pt-6 md:px-8 md:pt-10">
+        {/* Page header */}
+        <header className="mb-4 md:mb-6">
+          {/* Title + AI guide (desktop) */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                Goals
+              </p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50 md:text-3xl">
+                Turn your insights into small, doable goals
+              </h1>
+              <p className="mt-1 text-sm text-slate-200/85 md:text-base">
+                Soon, you&apos;ll be able to turn what Everleap learns about you
+                into concrete goals that fit your energy, strengths, and season
+                of life.
+              </p>
+            </div>
+
+            {/* AI guide – desktop only */}
+            <div className="hidden md:block">
+              <AiGuideOrb
+                subline="Ask Everleap how to turn your current situation into 1–2 realistic goals."
+                onClick={() => {
+                  // Later: open global AI guide modal scoped to goals.
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Quick paths row – full width under heading */}
+          <div className="mt-4">
+            <QuickPathsRow />
+          </div>
+
+          {/* AI guide – mobile (under quick paths) */}
+          <div className="mt-3 md:hidden">
+            <AiGuideOrb
+              subline="Ask Everleap how to turn your current situation into 1–2 realistic goals."
+              onClick={() => {
+                // Same modal trigger as desktop in the future.
+              }}
+            />
+          </div>
+        </header>
+
+        {/* Main content */}
+        <main className="flex flex-1 flex-col">
+          <section className="mt-2 md:mt-0">
+            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/80 p-4 shadow-xl backdrop-blur md:p-6">
+              <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-sky-300/80">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-400/60 bg-sky-500/10 text-[0.75rem]">
+                  Coming soon
+                </span>
+                <span>Goals from your profile</span>
+              </div>
+
+              <h2 className="mt-4 text-base font-semibold text-slate-50 md:text-lg">
+                Soon you&apos;ll see suggested goals based on your strengths,
+                motivations, and current season.
+              </h2>
+
+              <p className="mt-2 text-xs text-slate-400 md:text-sm">
+                For now, you can start by exploring your profile and answering a
+                few story questions. That&apos;s what Everleap will use to build
+                smart, personalized goals for you.
+              </p>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <PlaceholderGoalCard label="Explore your profile" emoji="🧭" />
+                <PlaceholderGoalCard label="Answer story questions" emoji="✍️" />
+                <PlaceholderGoalCard
+                  label="Connect with your guide"
+                  emoji="🤖"
+                />
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-2 text-xs text-slate-500 md:text-sm">
+                <span className="rounded-full border border-slate-700/80 bg-slate-950/80 px-3 py-1">
+                  Examples later: habits, weekly actions, check-ins
+                </span>
+                <span className="rounded-full border border-slate-700/80 bg-slate-950/80 px-3 py-1">
+                  Built from your profile, not generic tips
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[0.7rem] text-slate-500 md:mt-4">
+              As we learn more about you, this Goals space will become the
+              simplest place to decide what&apos;s worth focusing on next.
+            </p>
+          </section>
+        </main>
+      </div>
+
+      <BottomNav activeKey={activeTab} onChange={setActiveTab} />
+    </div>
+  );
+}
+
+/* ========= Quick paths row (reusing pattern from main pages) ========= */
+
+function QuickPathsRow() {
+  return (
+    <div className="rounded-2xl border border-slate-700/70 bg-slate-950/80 px-3 py-2 shadow-lg backdrop-blur">
+      <p className="text-[0.7rem] uppercase tracking-[0.16em] text-slate-400">
+        Quick paths
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <NavPill
+          href="/main"
+          label="Back to Spotlight"
+          icon="🏠"
+          tone="default"
+        />
+        <NavPill
+          href="/main/carousel"
+          label="Explore your profile"
+          icon="🧭"
+        />
+        <NavPill
+          href="/main/questions"
+          label="Tell your story"
+          icon="✍️"
+        />
+        <NavPill
+          href="/main/goals"
+          label="Goals (here)"
+          icon="🎯"
+          tone="primary"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ========= Small nav pill component ========= */
+
+function NavPill({
+  href,
+  label,
+  icon,
+  disabled,
+  tone = "default",
+}: {
+  href: string;
+  label: string;
+  icon: string;
+  disabled?: boolean;
+  tone?: "default" | "primary";
+}) {
+  const baseStyles =
+    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.72rem] font-medium border shadow-sm";
+
+  if (disabled) {
+    return (
+      <span
+        className={`${baseStyles} cursor-default border-slate-700/70 bg-slate-900/70 text-slate-500`}
+      >
+        <span className="text-sm">{icon}</span>
+        <span>{label}</span>
+      </span>
+    );
+  }
+
+  const toneClasses =
+    tone === "primary"
+      ? "border-sky-500/70 bg-sky-500/15 text-sky-100 hover:bg-sky-500/25"
+      : "border-slate-700/70 bg-slate-900/80 text-slate-100 hover:bg-slate-900";
+
+  return (
+    <Link href={href} className={`${baseStyles} ${toneClasses}`}>
+      <span className="text-sm">{icon}</span>
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+/* ========= Placeholder goal card ========= */
+
+function PlaceholderGoalCard({ label, emoji }: { label: string; emoji: string }) {
+  return (
+    <div className="flex flex-col justify-between rounded-xl border border-slate-700/70 bg-slate-900/70 px-3 py-3 text-sm text-slate-200">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{emoji}</span>
+        <span className="font-medium">{label}</span>
+      </div>
+      <p className="mt-2 text-[0.7rem] text-slate-400">
+        This will become an automatically suggested goal once Everleap has more
+        to work with.
+      </p>
+    </div>
+  );
+}
