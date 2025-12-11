@@ -38,6 +38,24 @@
 
     /* Micro-effects */
     --shimmer-alpha: .24;
+
+    /* ===== EVERLEAP DARK THEME (used by main experience screens) ===== */
+    --el-bg: #020617;            /* deep navy page background */
+    --el-bg-elevated: #020819;   /* elevated cards/panels */
+    --el-bg-soft: #020617;       /* softer surfaces / chips */
+
+    /* Accent system for youth / futuristic feel */
+    --el-accent: #4f9cff;        /* main neon-ish blue */
+    --el-accent-soft: rgba(79, 156, 255, 0.15);
+    --el-accent-strong: rgba(79, 156, 255, 0.7);
+
+    /* Text colors on dark */
+    --el-text-primary: #f9fafb;
+    --el-text-muted: rgba(148, 163, 184, 0.95);
+
+    /* Borders / outlines on dark */
+    --el-border-subtle: rgba(148, 163, 184, 0.15);
+    --el-border-strong: rgba(148, 163, 184, 0.3);
   }
 
   body { color: var(--text); background-color: var(--bg-base); }
@@ -47,6 +65,30 @@
 @layer utilities {
   /* Page background — white keeps it flat/clean */
   .bg-app { background-color: var(--bg-base); }
+
+  /* Everleap dark page wrapper (used for the MainCarousel experience) */
+  .el-page {
+    background:
+      radial-gradient(circle at top left, rgba(79, 156, 255, 0.10), transparent 55%),
+      radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.07), transparent 55%),
+      var(--el-bg);
+    color: var(--el-text-primary);
+  }
+
+  /* Scoped dark scrollbars for el-page containers */
+  .el-page::-webkit-scrollbar {
+    width: 8px;
+  }
+  .el-page::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .el-page::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+  .el-page::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
 
   /* Subtle center spotlight so the content area feels “alive” (white only) */
   .spotlight-white { position: relative; isolation: isolate; }
@@ -259,7 +301,18 @@
   .fade-in-up      { animation: fadeUp .32s ease both; }
   .fade-in-up-200  { animation: fadeUp .32s ease both .2s; }
   .fade-in-up-400  { animation: fadeUp .32s ease both .4s; }
+
+  /* Hide horizontal scrollbars, but keep scroll behavior */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE / Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
 }
+
 /* Optional: highlight VoiceField while recording */
 [data-listening="true"] input { caret-color: var(--accent); }
 [data-listening="true"] {

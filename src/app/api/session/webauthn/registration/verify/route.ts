@@ -13,7 +13,11 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey registration verify proxy.");
+if (!RAW_BASE) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_API_BASE_URL for passkey registration verify proxy."
+  );
+}
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${API_BASE}/passkey/register/verify`;
 
@@ -28,9 +32,15 @@ function getSetCookieArray(headers: Headers): string[] {
   const values: string[] = [];
   const sc = headers.get("set-cookie");
   if (sc) values.push(sc);
-  // @ts-ignore - some runtimes expose getSetCookie()
-  const all = headers.getSetCookie?.() as string[] | undefined;
+
+  // Some runtimes expose a non-standard getSetCookie() helper
+  const withMaybeGetSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  const all = withMaybeGetSetCookie.getSetCookie?.();
   if (Array.isArray(all)) values.push(...all);
+
   return values;
 }
 
@@ -57,6 +67,7 @@ async function forward(req: NextRequest) {
   // Body: pass JSON straight through; some libs send base64url-encoded credential fields
   const ct = req.headers.get("content-type") || "application/json";
   let body: BodyInit | undefined;
+
   if (ct.includes("application/json")) {
     const json = await req.json().catch(() => ({}));
     body = JSON.stringify(json ?? {});
@@ -83,7 +94,8 @@ async function forward(req: NextRequest) {
     cache: "no-store",
   });
 
-  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const contentType =
+    upstream.headers.get("content-type") || "application/json; charset=utf-8";
   const isJson = contentType.includes("application/json");
   const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 

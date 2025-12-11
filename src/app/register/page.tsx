@@ -86,8 +86,12 @@ export default function RegisterPage() {
       await hydrateSession();
       setSuccess(true);
       router.replace("/dashboard");
-    } catch (err: any) {
-      setError(err?.message || "Registration failed.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Registration failed.");
+      } else {
+        setError("Registration failed.");
+      }
     } finally {
       setBusy(false);
     }
@@ -122,7 +126,9 @@ export default function RegisterPage() {
             autoComplete="username"
             inputMode="email"
           />
-          <p className="text-xs text-gray-500 mt-1">We’ll bind your passkey to this identifier.</p>
+          <p className="text-xs text-gray-500 mt-1">
+            We’ll bind your passkey to this identifier.
+          </p>
         </div>
 
         <button
@@ -146,7 +152,11 @@ export default function RegisterPage() {
       )}
 
       <div className="mt-8 text-xs text-gray-500">
-        Already have a passkey? <a href="/login" className="underline">Log in</a>.
+        Already have a passkey?{" "}
+        <a href="/login" className="underline">
+          Log in
+        </a>
+        .
       </div>
     </main>
   );

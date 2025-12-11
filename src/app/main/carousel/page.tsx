@@ -1,7 +1,7 @@
+// src/app/main/carousel/page.tsx
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Sparkles,
   Zap,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { AiGuideOrb } from "@/components/main/AiGuideOrb";
-import { AiGuideModal } from "@/components/main/AiGuideModal";
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 type TraitCard = {
   id: string;
@@ -119,7 +119,8 @@ const areas: YouMapArea[] = [
     chip: "How you naturally show up",
     icon: <Sparkles className="h-5 w-5" />,
     glowClass: "from-violet-500 via-fuchsia-500 to-sky-400",
-    hint: "These are the muscles you use without thinking. You may underestimate them because they feel ‘normal’.",
+    hint:
+      "These are the muscles you use without thinking. You may underestimate them because they feel ‘normal’.",
     signals: ["Pattern spotter", "Reliable under pressure", "Learns fast"],
     about:
       "Strengths are the things you do so naturally that you sometimes forget they’re rare. When you name them, it’s easier to choose paths where those strengths actually matter.",
@@ -141,7 +142,8 @@ const areas: YouMapArea[] = [
     chip: "What you can already do",
     icon: <Zap className="h-5 w-5" />,
     glowClass: "from-cyan-400 via-sky-500 to-indigo-500",
-    hint: "Skills are tools you’ve picked up along the way. Some are obvious, some are hidden.",
+    hint:
+      "Skills are tools you’ve picked up along the way. Some are obvious, some are hidden.",
     signals: ["Emerging builder", "Comfortable learning tools"],
     about:
       "Skills are the tools you already have. When you combine them with your motivations and strengths, new paths start to show up that didn’t look possible before.",
@@ -201,7 +203,8 @@ const areas: YouMapArea[] = [
     chip: "Paths that might fit",
     icon: <Briefcase className="h-5 w-5" />,
     glowClass: "from-sky-400 via-indigo-500 to-slate-400",
-    hint: "We’re not locking you into one path. We’re exploring directions that fit your wiring.",
+    hint:
+      "We’re not locking you into one path. We’re exploring directions that fit your wiring.",
     signals: ["Curious explorer", "Values impact over titles"],
     about:
       "Career for you isn’t just a job title. It’s a mix of impact, lifestyle, people, and the kind of problems you like solving.",
@@ -219,7 +222,6 @@ const areas: YouMapArea[] = [
 
 export default function YouMapPage() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [guideOpen, setGuideOpen] = useState(false);
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [whyOpen, setWhyOpen] = useState(false);
 
@@ -234,7 +236,7 @@ export default function YouMapPage() {
   const handleNext = () => {
     setExpandedCardId(null);
     setWhyOpen(false);
-    setActiveIndex((i) => (i === areas.length ? 0 : (i + 1) % areas.length));
+    setActiveIndex((i) => (i + 1) % areas.length);
   };
 
   return (
@@ -271,19 +273,9 @@ export default function YouMapPage() {
 
             <AiGuideOrb
               subline={`How Everleap sees your ${activeArea.label.toLowerCase()}.`}
-              onClick={() => setGuideOpen(true)}
+              source={`youmap_${activeArea.id}_orb`}
             />
           </header>
-
-          {/* Quick paths */}
-          <div className="mb-4 rounded-3xl border border-slate-800/80 bg-slate-950/70 px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.7)] backdrop-blur-xl">
-            <div className="flex flex-wrap gap-2 text-xs text-slate-200">
-              <QuickPath href="/main" label="Back to Spotlight" />
-              <QuickPath href="/main/questions" label="Story" />
-              <QuickPath href="/main/goals" label="Goals" />
-              <QuickPath href="/main/actions" label="Actions (coming soon)" />
-            </div>
-          </div>
 
           {/* Carousel */}
           <section className="mb-5">
@@ -462,30 +454,10 @@ export default function YouMapPage() {
             )}
           </section>
         </div>
-
-        {/* AI Guide modal */}
-        {guideOpen && (
-          <AiGuideModal
-            onClose={() => setGuideOpen(false)}
-            title="How Everleap sees you"
-            subtitle={`Let’s talk about your ${activeArea.label.toLowerCase()} and what to do with these patterns.`}
-          />
-        )}
       </main>
+
+      {/* Bottom nav – same pattern as Spotlight */}
+      <BottomNav />
     </div>
-  );
-}
-
-/* ==== Small helpers ==== */
-
-function QuickPath({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900/80 px-3 py-1.5 text-[0.7rem] font-medium text-slate-100 hover:bg-slate-800/80"
-    >
-      <span className="inline-block h-1.5 w-1.5 rounded-full bg-sky-400" />
-      <span>{label}</span>
-    </Link>
   );
 }

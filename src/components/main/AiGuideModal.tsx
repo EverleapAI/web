@@ -1,27 +1,71 @@
 // src/components/main/AiGuideModal.tsx
 "use client";
 
-import { FormEvent, KeyboardEvent, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+export type SuggestedGoal = {
+  id?: string;
+  title: string;
+  style?: string;
+  description: string;
+};
 
 type AiGuideModalProps = {
   onClose: () => void;
-  title: string;          // currently unused visually
-  subtitle: string;       // friendly one-line message, e.g. “Hi Tom…”
-  suggestions?: string[]; // reserved for future use
+  title: string;
+  subtitle: string;
+  suggestions?: string[];
+  suggestedGoals?: SuggestedGoal[];
+  initialSelectedId?: string;
+  activeGoalId?: string;
+  onActivateGoal?: (goal: SuggestedGoal) => void;
 };
 
 export function AiGuideModal({
   onClose,
   subtitle,
+  suggestions,
+  suggestedGoals,
+  initialSelectedId,
+  activeGoalId,
+  onActivateGoal,
 }: AiGuideModalProps) {
   const [draft, setDraft] = useState("");
   const [listening, setListening] = useState(false);
+  const [isThinking, setIsThinking] = useState(
+    !!suggestedGoals && suggestedGoals.length > 0
+  );
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    initialSelectedId || suggestedGoals?.[0]?.id
+  );
+
+  useEffect(() => {
+    if (!suggestedGoals || suggestedGoals.length === 0) {
+      setIsThinking(false);
+      return;
+    }
+    setIsThinking(true);
+    const t = setTimeout(() => setIsThinking(false), 900);
+    return () => clearTimeout(t);
+  }, [suggestedGoals]);
 
   const handleSubmit = (e: FormEvent | KeyboardEvent) => {
     e.preventDefault();
     if (!draft.trim()) return;
 
-    // Later: send draft / voice transcript to backend.
+    // Later: send draft, selected goal, and context to backend
+    // eslint-disable-next-line no-console
+    console.log("AI Guide submit", {
+      text: draft,
+      selectedGoal,
+    });
+
     onClose();
   };
 
@@ -32,8 +76,23 @@ export function AiGuideModal({
   };
 
   const toggleListening = () => {
-    // Visual-only for now; later this can start/stop recording.
     setListening((prev) => !prev);
+  };
+
+  const goals = suggestedGoals ?? [];
+  const selectedGoal = useMemo(
+    () => goals.find((g) => g.id === selectedId) ?? goals[0],
+    [goals, selectedId]
+  );
+
+  const handleTryThis = () => {
+    if (!selectedGoal) return;
+    if (onActivateGoal) {
+      onActivateGoal(selectedGoal);
+    }
+
+    // Prefill text to keep flow going (still optional)
+    setDraft("That sounds good. Help me break this into tiny steps.");
   };
 
   return (
@@ -46,7 +105,7 @@ export function AiGuideModal({
         className="relative w-full max-w-xl rounded-[2rem] bg-gradient-to-br from-sky-500/60 via-indigo-500/40 to-pink-500/60 p-[1px] shadow-[0_30px_120px_rgba(0,0,0,0.9)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Tiny floating glow orbs around the border */}
+        {/* Tiny floating glow orbs */}
         <div className="pointer-events-none absolute -top-2 left-10 h-3 w-3 rounded-full bg-sky-400/80 blur-[2px] animate-pulse" />
         <div className="pointer-events-none absolute bottom-0 right-14 h-3 w-3 rounded-full bg-pink-400/80 blur-[2px] animate-ping" />
 
@@ -69,13 +128,12 @@ export function AiGuideModal({
 
           {/* Orb + mic */}
           <div className="mt-2 flex flex-col items-center">
-            {/* Main glowing orb */}
             <div className="relative h-20 w-20">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-sky-500 to-pink-500 shadow-[0_0_50px_rgba(56,189,248,0.9)]" />
               <div className="absolute inset-3 rounded-full bg-slate-950/40 shadow-[0_0_26px_rgba(15,23,42,1)]" />
             </div>
 
-            {/* Mic button (no text) */}
+            {/* Mic button + listening label */}
             <button
               type="button"
               onClick={toggleListening}
@@ -88,14 +146,116 @@ export function AiGuideModal({
             >
               🎤
             </button>
+            <p className="mt-1 text-[0.65rem] text-slate-400">
+              {listening
+                ? "Listening… (mock for now)"
+                : "Talk instead of typing (coming soon)"}
+            </p>
           </div>
 
           {/* Friendly one-line intro */}
-          <p className="mt-7 text-center text-base leading-relaxed text-slate-100 md:text-lg">
+          <p className="mt-6 text-center text-base leading-relaxed text-slate-100 md:text-lg">
             {subtitle}
           </p>
 
-          {/* Single input – type + Enter to “speak” */}
+          {/* Thinking indicator */}
+          {isThinking && (
+            <div className="mt-3 flex justify-center">
+              <div className="flex items-center gap-2 text-[0.75rem] text-slate-300">
+                <span className="inline-flex h-1.5 w-1.5 animate-bounce rounded-full bg-slate-300" />
+                <span className="inline-flex h-1.5 w-1.5 animate-bounce rounded-full bg-slate-300 [animation-delay:0.12s]" />
+                <span className="inline-flex h-1.5 w-1.5 animate-bounce rounded-full bg-slate-300 [animation-delay:0.24s]" />
+                <span className="text-slate-400">
+                  Thinking about goals for you…
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Suggested goal(s) */}
+          {goals.length > 0 && (
+            <div className="mt-6 space-y-3">
+              {/* Primary selected card */}
+              {selectedGoal && (
+                <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-900/80 px-4 py-3 text-sm text-slate-100 shadow-[0_12px_40px_rgba(15,23,42,0.9)]">
+                  <p className="mb-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Here’s a goal idea to start with
+                  </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">
+                        {selectedGoal.title}
+                        {selectedGoal.style && (
+                          <span className="ml-2 text-[0.7rem] font-semibold uppercase tracking-wide text-sky-300">
+                            • {selectedGoal.style}
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-300">
+                        {selectedGoal.description}
+                      </p>
+                    </div>
+                    {activeGoalId && selectedGoal.id === activeGoalId && (
+                      <span className="mt-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.65rem] font-semibold text-emerald-300">
+                        Active
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTryThis}
+                    className="mt-3 inline-flex items-center justify-center rounded-full bg-sky-400 px-4 py-1.5 text-xs font-semibold text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.5)] hover:bg-sky-300 active:scale-95 transition"
+                  >
+                    Try this goal
+                  </button>
+                </div>
+              )}
+
+              {/* Swipable alternatives */}
+              {goals.length > 1 && (
+                <div className="no-scrollbar flex gap-3 overflow-x-auto px-1 pt-1">
+                  {goals.map((goal) => (
+                    <button
+                      key={goal.id ?? goal.title}
+                      type="button"
+                      onClick={() => setSelectedId(goal.id)}
+                      className={`min-w-[190px] rounded-2xl border px-3 py-2 text-left text-[0.72rem] transition ${
+                        goal.id === selectedGoal?.id
+                          ? "border-sky-400 bg-sky-500/10 text-sky-100"
+                          : "border-slate-700 bg-slate-900/70 text-slate-200 hover:border-slate-500"
+                      }`}
+                    >
+                      <p className="font-semibold">{goal.title}</p>
+                      {goal.style && (
+                        <p className="mt-0.5 text-[0.65rem] uppercase tracking-[0.16em] text-slate-400">
+                          {goal.style}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Optional text suggestions for the input */}
+          {suggestions && suggestions.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setDraft(s)}
+                  className="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-[0.7rem] text-slate-200 hover:border-sky-400 hover:text-sky-100"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Single input – type + Enter */}
           <form onSubmit={handleSubmit} className="mt-8 flex justify-center">
             <input
               autoFocus

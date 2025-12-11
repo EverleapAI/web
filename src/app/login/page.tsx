@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import {
   fetchJson,
   performAuthentication,
@@ -17,7 +16,7 @@ import {
  * Everleap Passwordless Entry
  * --------------------------------------------------
  * Unified login + registration using WebAuthn passkeys.
- * 
+ *
  * Flow:
  *  1) User enters email or phone → Continue
  *  2) Try authentication options (auth.options)
@@ -27,7 +26,6 @@ import {
  */
 
 export default function LoginPage() {
-  const router = useRouter();
   const [identifier, setIdentifier] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -85,9 +83,13 @@ export default function LoginPage() {
 
       await hydrateSession();
       window.location.assign("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Auth error:", err);
-      setError(err?.message || "Something went wrong.");
+      if (err instanceof Error) {
+        setError(err.message || "Something went wrong.");
+      } else {
+        setError("Something went wrong.");
+      }
     } finally {
       setBusy(false);
     }

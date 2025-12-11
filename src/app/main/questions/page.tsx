@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { AiGuideOrb } from "@/components/main/AiGuideOrb";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -54,7 +55,18 @@ const BADGES: Badge[] = [
   },
 ];
 
+// Match your bottom nav keys
+type BottomNavKey =
+  | "spotlight"
+  | "story"
+  | "insights"
+  | "goals"
+  | "actions"
+  | "notifications";
+
 export default function YourStoryQuestionsPage() {
+  const router = useRouter();
+
   // In your real app, these probably come from props or context.
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // 0-based
   const answeredCount = currentQuestionIndex; // simple assumption for demo
@@ -105,6 +117,34 @@ export default function YourStoryQuestionsPage() {
 
   const questionText =
     "If you could experiment with one new direction in your life, what would you be curious to try?";
+
+  // Wire bottom nav to routes
+  const handleNavChange = (key: BottomNavKey) => {
+    switch (key) {
+      case "spotlight":
+        router.push("/main");
+        break;
+      case "story":
+        router.push("/main/questions");
+        break;
+      case "insights":
+        router.push("/main/carousel");
+        break;
+      case "goals":
+        router.push("/main/goals");
+        break;
+      case "actions":
+        router.push("/main/actions");
+        break;
+      case "notifications":
+        router.push("/main/notifications");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const activeKey: BottomNavKey = "story";
 
   return (
     <div
@@ -216,7 +256,7 @@ export default function YourStoryQuestionsPage() {
                     {/* Mic button placeholder */}
                     <button
                       type="button"
-                      className="h-10 w-10 rounded-full bg-slate-900/90 border border-slate-600/80 flex items-center justify-center text-slate-200 text-sm hover:bg-slate-800/90 transition-colors"
+                      className="h-10 w-10 rounded-full bg-slate-900/90 border border-slate-600/80 flex items-center justify_center text-slate-200 text-sm hover:bg-slate-800/90 transition-colors"
                     >
                       🎙
                     </button>

@@ -7,18 +7,36 @@ import { motion } from "framer-motion";
 interface AiGuideOrbProps {
   label?: string;
   subline?: string;
-  onClick?: () => void;
+  /** Where this orb was clicked from, e.g. "spotlight_page_orb" */
+  source?: string;
+  onClick?: () => void; // optional extra side-effect
 }
 
 export function AiGuideOrb({
   label = "Your AI guide",
   subline,
+  source,
   onClick,
 }: AiGuideOrbProps) {
+  const handleOpen = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("everleap-open-ai-guide", {
+          detail: {
+            // if page doesn't pass anything, fall back to generic orb_click
+            source: source ?? "orb_click",
+          },
+        })
+      );
+    }
+
+    if (onClick) onClick();
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleOpen}
       className="group flex max-w-xs items-center gap-2 text-left text-xs text-slate-200"
     >
       <div className="relative h-11 w-11">

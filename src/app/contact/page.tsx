@@ -9,7 +9,7 @@ export default function ContactPage() {
     <div className="min-h-dvh bg-app flex flex-col">
       <SiteHeader />
 
-      {/* Vertically centered between header/footer + soft spotlight */}
+      {/* Vertically centered between header/footer + soft spotlight x */}
       <main className="flex-1 grid place-items-center px-4 py-10 spotlight-white">
         <div className="w-full max-w-lg">
           <section className="card-surface rounded-2xl">

@@ -1,15 +1,12 @@
 // src/app/main/actions/page.tsx
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
 import { AiGuideOrb } from "@/components/main/AiGuideOrb";
-import { BottomNav, BottomNavKey } from "@/components/navigation/BottomNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 export default function ActionsPage() {
-  const [activeTab, setActiveTab] = useState<BottomNavKey>("you");
-
   return (
     <div
       className="min-h-screen bg-[#020617] text-slate-50"
@@ -41,9 +38,7 @@ export default function ActionsPage() {
             <div className="hidden md:block">
               <AiGuideOrb
                 subline="Ask Everleap for one tiny habit you could try this week."
-                onClick={() => {
-                  // Later: open global AI guide modal scoped to actions.
-                }}
+                source="actions_page_orb"
               />
             </div>
           </div>
@@ -57,9 +52,7 @@ export default function ActionsPage() {
           <div className="mt-3 md:hidden">
             <AiGuideOrb
               subline="Ask Everleap for one tiny habit you could try this week."
-              onClick={() => {
-                // Same modal trigger as desktop in the future.
-              }}
+              source="actions_page_orb"
             />
           </div>
         </header>
@@ -122,7 +115,8 @@ export default function ActionsPage() {
         </main>
       </div>
 
-      <BottomNav activeKey={activeTab} onChange={setActiveTab} />
+      {/* Bottom nav (self-contained) */}
+      <BottomNav />
     </div>
   );
 }
@@ -142,17 +136,9 @@ function QuickPathsRow() {
           icon="🏠"
           tone="default"
         />
-        <NavPill
-          href="/main/carousel"
-          label="Explore your profile"
-          icon="🧭"
-        />
+        <NavPill href="/main/carousel" label="Explore your profile" icon="🧭" />
         <NavPill href="/main/questions" label="Tell your story" icon="✍️" />
-        <NavPill
-          href="/main/goals"
-          label="Goals"
-          icon="🎯"
-        />
+        <NavPill href="/main/goals" label="Goals" icon="🎯" />
         <NavPill
           href="/main/actions"
           label="Actions & habits (here)"

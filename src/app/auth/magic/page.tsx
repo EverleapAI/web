@@ -15,8 +15,9 @@ export default function MagicCatcherPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Normalize API base (frontend always calls BFF under /api/session/magic)
-  const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-  const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+  // NOTE: No longer needed here; keeping comment for context.
+  // const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+  // const BASE_WITH_API = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 
   const consumeUrl = useMemo(() => {
     if (!token) return null;
@@ -32,11 +33,15 @@ export default function MagicCatcherPage() {
 
   useEffect(() => {
     if (!token) {
-      setError("This link is missing its token. Try sending yourself a new link.");
+      setError(
+        "This link is missing its token. Try sending yourself a new link."
+      );
       return;
     }
     if (!consumeUrl) {
-      setError("We’re missing our sign-in endpoint. Please try again in a moment.");
+      setError(
+        "We’re missing our sign-in endpoint. Please try again in a moment."
+      );
       return;
     }
 
@@ -49,7 +54,9 @@ export default function MagicCatcherPage() {
         if (document.visibilityState === "visible") {
           try {
             window.location.href = consumeUrl;
-          } catch {}
+          } catch {
+            // ignore
+          }
         }
       }, 1200);
 
@@ -59,7 +66,9 @@ export default function MagicCatcherPage() {
     }
   }, [token, consumeUrl]);
 
-  const headline = error ? "We couldn’t complete your sign-in" : "Validating your link…";
+  const headline = error
+    ? "We couldn’t complete your sign-in"
+    : "Validating your link…";
 
   return (
     <div className="min-h-dvh bg-app flex flex-col">
@@ -67,7 +76,9 @@ export default function MagicCatcherPage() {
       <main className="flex-1 grid place-items-center px-4">
         <ConversationChrome
           progress={error ? 0 : 0.9}
-          prompt={<span className="opacity-100 translate-y-0">{headline}</span>}
+          prompt={
+            <span className="opacity-100 translate-y-0">{headline}</span>
+          }
         >
           <section className="mt-4 space-y-5 opacity-100 translate-y-0">
             {!error ? (

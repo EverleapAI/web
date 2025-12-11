@@ -1,22 +1,48 @@
 // src/components/navigation/BottomNav.tsx
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export type BottomNavKey = "you" | "goals" | "actions" | "notifications";
+export type BottomNavKey =
+  | "spotlight"
+  | "story"
+  | "youmap"
+  | "goals"
+  | "actions"
+  | "notifications";
 
 type BottomNavProps = {
-  activeKey: BottomNavKey;
-  onChange: (key: BottomNavKey) => void;
+  /** Optional – if you want to control which tab is active from a page */
+  activeKey?: BottomNavKey;
+  /** Optional – if you want to react when the tab changes */
+  onChange?: (key: BottomNavKey) => void;
 };
 
-const NAV_ITEMS: { key: BottomNavKey; label: string; icon: string; href: string }[] = [
+const NAV_ITEMS: {
+  key: BottomNavKey;
+  label: string;
+  icon: string;
+  href: string;
+}[] = [
   {
-    key: "you",
-    label: "You",
-    icon: "😊",
+    key: "spotlight",
+    label: "Spotlight",
+    icon: "✨",
     href: "/main",
+  },
+  {
+    key: "story",
+    label: "Your Story",
+    icon: "📝",
+    href: "/main/questions",
+  },
+  {
+    key: "youmap",
+    label: "Insights",
+    icon: "🧬",
+    href: "/main/carousel",
   },
   {
     key: "goals",
@@ -27,7 +53,7 @@ const NAV_ITEMS: { key: BottomNavKey; label: string; icon: string; href: string 
   {
     key: "actions",
     label: "Actions",
-    icon: "✅",
+    icon: "⚡",
     href: "/main/actions",
   },
   {
@@ -38,12 +64,39 @@ const NAV_ITEMS: { key: BottomNavKey; label: string; icon: string; href: string 
   },
 ];
 
+// Helper: infer active tab from URL when BottomNav is uncontrolled
+function keyFromPath(pathname: string | null): BottomNavKey {
+  if (!pathname) return "spotlight";
+  if (pathname.startsWith("/main/questions")) return "story";
+  if (pathname.startsWith("/main/carousel")) return "youmap";
+  if (pathname.startsWith("/main/goals")) return "goals";
+  if (pathname.startsWith("/main/actions")) return "actions";
+  if (pathname.startsWith("/main/notifications")) return "notifications";
+  // default for /main and anything else under /main
+  return "spotlight";
+}
+
 export function BottomNav({ activeKey, onChange }: BottomNavProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  // internal state for when parent does NOT control the active key
+  const [internalKey, setInternalKey] = useState<BottomNavKey>(
+    () => keyFromPath(pathname)
+  );
+
+  // keep internalKey in sync if the URL changes (e.g., via back/forward)
+  useEffect(() => {
+    setInternalKey(keyFromPath(pathname));
+  }, [pathname]);
+
+  const currentKey = activeKey ?? internalKey;
 
   const handleClick = (key: BottomNavKey, href: string) => {
-    if (key !== activeKey) {
+    if (onChange) {
       onChange(key);
+    } else {
+      setInternalKey(key);
     }
     router.push(href);
   };
@@ -53,7 +106,7 @@ export function BottomNav({ activeKey, onChange }: BottomNavProps) {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-2 md:px-8 md:py-3">
         <div className="flex flex-1 items-center justify-around gap-1 md:justify-between">
           {NAV_ITEMS.map((item) => {
-            const isActive = item.key === activeKey;
+            const isActive = item.key === currentKey;
             return (
               <button
                 key={item.key}

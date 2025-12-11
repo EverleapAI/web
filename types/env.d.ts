@@ -9,6 +9,7 @@ declare namespace NodeJS {
 }
 
 // Declare the global `process` so TS doesn't complain in the browser bundle.
-declare var process: {
+// Use `declare const` instead of `var` (fixes eslint no-var)
+declare const process: {
   env: NodeJS.ProcessEnv;
 };

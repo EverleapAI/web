@@ -1,4 +1,3 @@
-// apps/web/src/app/api/session/webauthn/authentication/options/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
@@ -26,11 +25,18 @@ function getSetCookieArray(headers: Headers): string[] {
   const values: string[] = [];
   const sc = headers.get("set-cookie");
   if (sc) values.push(sc);
-  // @ts-ignore - some runtimes expose getSetCookie()
-  const all = headers.getSetCookie?.() as string[] | undefined;
+
+  // Some runtimes expose a non-standard getSetCookie() helper
+  const withMaybeGetSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  const all = withMaybeGetSetCookie.getSetCookie?.();
   if (Array.isArray(all)) values.push(...all);
+
   return values;
 }
+
 
 /** Rewrite cookie attributes so they land correctly for the current host */
 function rewriteSetCookieForHost(rawCookies: string[]): string[] {
@@ -60,6 +66,7 @@ async function forward(req: NextRequest, method: "GET" | "POST") {
   // Prepare body for POST
   const ct = req.headers.get("content-type") || undefined;
   let body: BodyInit | undefined = undefined;
+
   if (method === "POST") {
     if (ct?.includes("application/json")) {
       const json = await req.json().catch(() => ({}));
@@ -119,5 +126,9 @@ async function forward(req: NextRequest, method: "GET" | "POST") {
 }
 
 // Support both GET and POST (some clients use POST for “options”)
-export async function GET(req: NextRequest) { return forward(req, "GET"); }
-export async function POST(req: NextRequest) { return forward(req, "POST"); }
+export async function GET(req: NextRequest) {
+  return forward(req, "GET");
+}
+export async function POST(req: NextRequest) {
+  return forward(req, "POST");
+}

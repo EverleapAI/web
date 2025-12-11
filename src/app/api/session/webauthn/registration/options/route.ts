@@ -11,7 +11,11 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey registration options proxy.");
+if (!RAW_BASE) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_API_BASE_URL for passkey registration options proxy."
+  );
+}
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${API_BASE}/passkey/register/options`;
 
@@ -27,14 +31,20 @@ function getSetCookieArray(headers: Headers): string[] {
   const values: string[] = [];
   const sc = headers.get("set-cookie");
   if (sc) values.push(sc);
-  // @ts-ignore - nonstandard iterator is present in Edge runtimes / node fetch
-  const all = headers.getSetCookie?.() as string[] | undefined;
+
+  // Some runtimes expose a non-standard getSetCookie() helper
+  const withMaybeGetSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  const all = withMaybeGetSetCookie.getSetCookie?.();
   if (Array.isArray(all)) values.push(...all);
+
   return values;
 }
 
 /** Rewrite cookie attributes so they land correctly for the current host */
-function rewriteSetCookieForHost(rawCookies: string[], host: string): string[] {
+function rewriteSetCookieForHost(rawCookies: string[]): string[] {
   return rawCookies.map((c) => {
     // Ensure Path, SameSite, Secure are present; strip Domain to avoid cross-subdomain surprises
     let out = c
@@ -96,7 +106,8 @@ async function forward(req: NextRequest, method: "GET" | "POST") {
     cache: "no-store",
   });
 
-  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const contentType =
+    upstream.headers.get("content-type") || "application/json; charset=utf-8";
   const isJson = contentType.includes("application/json");
   const payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
 
@@ -110,7 +121,7 @@ async function forward(req: NextRequest, method: "GET" | "POST") {
 
   // Rewrite and append Set-Cookie from upstream
   const rawCookies = getSetCookieArray(upstream.headers);
-  const rewritten = rewriteSetCookieForHost(rawCookies, host);
+  const rewritten = rewriteSetCookieForHost(rawCookies);
   for (const c of rewritten) res.headers.append("set-cookie", c);
 
   // (Optional) short-lived debug mirror of upstream cookies to verify landing in the browser
@@ -127,5 +138,9 @@ async function forward(req: NextRequest, method: "GET" | "POST") {
 }
 
 // Support both methods (some callers prefer POST even for “options”)
-export async function GET(req: NextRequest) { return forward(req, "GET"); }
-export async function POST(req: NextRequest) { return forward(req, "POST"); }
+export async function GET(req: NextRequest) {
+  return forward(req, "GET");
+}
+export async function POST(req: NextRequest) {
+  return forward(req, "POST");
+}

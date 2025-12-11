@@ -1,4 +1,4 @@
-// web/src/lib/passkey.ts
+// apps/web/src/lib/passkey.ts
 import { api } from "@/lib/api";
 
 /**
@@ -13,7 +13,11 @@ import { api } from "@/lib/api";
 
 export type PublicKeyCredentialRequestOptionsJSON = {
   challenge: string;
-  allowCredentials?: Array<{ type: "public-key"; id: string; transports?: AuthenticatorTransport[] }>;
+  allowCredentials?: Array<{
+    type: "public-key";
+    id: string;
+    transports?: AuthenticatorTransport[];
+  }>;
   timeout?: number;
   rpId?: string;
   userVerification?: "required" | "preferred" | "discouraged";
@@ -26,7 +30,11 @@ export type PublicKeyCredentialCreationOptionsJSON = {
   user: { id: string; name: string; displayName?: string };
   pubKeyCredParams: Array<{ type: "public-key"; alg: number }>;
   timeout?: number;
-  excludeCredentials?: Array<{ type: "public-key"; id: string; transports?: AuthenticatorTransport[] }>;
+  excludeCredentials?: Array<{
+    type: "public-key";
+    id: string;
+    transports?: AuthenticatorTransport[];
+  }>;
   authenticatorSelection?: PublicKeyCredentialCreationOptions["authenticatorSelection"];
   attestation?: "none" | "indirect" | "direct" | "enterprise";
   extensions?: AuthenticationExtensionsClientInputs;
@@ -48,81 +56,149 @@ export type RegVerifyBody = {
   type: string;
   clientDataJSON: string;
   attestationObject?: string;
+  // transports are optional metadata; we can live without them
   transports?: AuthenticatorTransport[];
 };
 
-export type OptionsOK<T> = { ok: true; options: T; bridgeId?: string | null; debugUrl?: string | null };
-export type OptionsErr = { ok: false; error?: string; message?: string };
-export type AuthnOptionsResponse = OptionsOK<PublicKeyCredentialRequestOptionsJSON> | OptionsErr;
-export type RegOptionsResponse  = OptionsOK<PublicKeyCredentialCreationOptionsJSON> | OptionsErr;
+export type OptionsOK<T> = {
+  ok: true;
+  options: T;
+  bridgeId?: string | null;
+  debugUrl?: string | null;
+};
+
+export type OptionsErr = {
+  ok: false;
+  error?: string;
+  message?: string;
+};
+
+export type AuthnOptionsResponse =
+  | OptionsOK<PublicKeyCredentialRequestOptionsJSON>
+  | OptionsErr;
+
+export type RegOptionsResponse =
+  | OptionsOK<PublicKeyCredentialCreationOptionsJSON>
+  | OptionsErr;
 
 /* ----------------------- Base64URL helpers ----------------------- */
 
 export function b64urlToArrayBuffer(b64url: string): ArrayBuffer {
   const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
   const base64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + padding;
+
   const binary =
-    typeof atob !== "undefined" ? atob(base64) : Buffer.from(base64, "base64").toString("binary");
+    typeof atob !== "undefined"
+      ? atob(base64)
+      : Buffer.from(base64, "base64").toString("binary");
+
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
   return bytes.buffer;
 }
 
 export function arrayBufferToB64url(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  const base64 = typeof btoa !== "undefined" ? btoa(binary) : Buffer.from(binary, "binary").toString("base64");
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  const base64 =
+    typeof btoa !== "undefined"
+      ? btoa(binary)
+      : Buffer.from(binary, "binary").toString("base64");
+
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 /* ----------------------------- Fetch ----------------------------- */
 
-export async function fetchJson<T = any>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  // Route through the Azure-aware URL builder
-  const finalUrl =
-    typeof input === "string"
-      ? api.url(input)
-      : api.url((input as any)?.toString?.() ?? String(input));
+type JsonErrorShape = {
+  error?: string;
+  message?: string;
+};
+
+function toApiUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") {
+    return api.url(input);
+  }
+
+  if (input instanceof URL) {
+    return api.url(input.toString());
+  }
+
+  // Fallback: let Request/RequestInfo stringify itself
+  return api.url(String(input as unknown));
+}
+
+export async function fetchJson<T = unknown>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<T> {
+  const finalUrl = toApiUrl(input);
 
   const res = await fetch(finalUrl, {
     ...init,
     credentials: "include",
-    headers: { "content-type": "application/json", ...(init?.headers || {}) },
+    headers: {
+      "content-type": "application/json",
+      ...(init?.headers ?? {}),
+    },
     cache: "no-store",
   });
-  const ct = res.headers.get("content-type") || "";
-  const body = ct.includes("application/json") ? await res.json().catch(() => ({})) : await res.text();
+
+  const ct = res.headers.get("content-type") ?? "";
+  const body: unknown = ct.includes("application/json")
+    ? await res.json().catch(() => ({}))
+    : await res.text();
+
   if (!res.ok) {
-    const msg =
-      typeof body === "string"
-        ? body
-        : (body as any)?.error || (body as any)?.message || `HTTP ${res.status}`;
+    let msg = `HTTP ${res.status}`;
+
+    if (typeof body === "string" && body.trim()) {
+      msg = body;
+    } else if (body && typeof body === "object") {
+      const shaped = body as JsonErrorShape;
+      msg = shaped.error ?? shaped.message ?? msg;
+    }
+
     throw new Error(msg);
   }
+
   return body as T;
 }
 
 /** Try a list of URLs in order; return first successful JSON */
-export async function tryEndpoints<T = any>(paths: string[], init?: RequestInit): Promise<T> {
+export async function tryEndpoints<T = unknown>(
+  paths: string[],
+  init?: RequestInit,
+): Promise<T> {
   let lastErr: unknown = null;
+
   for (const p of paths) {
     try {
       return await fetchJson<T>(p, init);
-    } catch (e) {
-      lastErr = e;
+    } catch (err) {
+      lastErr = err;
     }
   }
-  throw (lastErr instanceof Error ? lastErr : new Error("All endpoints failed"));
+
+  if (lastErr instanceof Error) {
+    throw lastErr;
+  }
+  throw new Error("All endpoints failed");
 }
 
 /* ---------------------- WebAuthn conversions --------------------- */
 
 export function decodeRequestOptions(
-  json: PublicKeyCredentialRequestOptionsJSON
+  json: PublicKeyCredentialRequestOptionsJSON,
 ): PublicKeyCredentialRequestOptions {
-  const allowCreds: PublicKeyCredentialDescriptor[] = (json.allowCredentials ?? []).map((c) => ({
-    type: "public-key",
+  const allowCreds = (json.allowCredentials ?? []).map((c) => ({
+    type: "public-key" as const,
     id: b64urlToArrayBuffer(c.id),
     transports: c.transports,
   }));
@@ -130,15 +206,16 @@ export function decodeRequestOptions(
   return {
     ...json,
     challenge: b64urlToArrayBuffer(json.challenge),
-    allowCredentials: allowCreds,
+    allowCredentials:
+      allowCreds as unknown as PublicKeyCredentialRequestOptions["allowCredentials"],
   };
 }
 
 export function decodeCreationOptions(
-  json: PublicKeyCredentialCreationOptionsJSON
+  json: PublicKeyCredentialCreationOptionsJSON,
 ): PublicKeyCredentialCreationOptions {
-  const excludeCreds: PublicKeyCredentialDescriptor[] = (json.excludeCredentials ?? []).map((cred) => ({
-    type: "public-key",
+  const excludeCreds = (json.excludeCredentials ?? []).map((cred) => ({
+    type: "public-key" as const,
     id: b64urlToArrayBuffer(cred.id),
     transports: cred.transports,
   }));
@@ -153,17 +230,27 @@ export function decodeCreationOptions(
       name: user.name,
       displayName: user.displayName ?? user.name,
     },
-    excludeCredentials: excludeCreds,
+    excludeCredentials:
+      excludeCreds as unknown as PublicKeyCredentialCreationOptions["excludeCredentials"],
   };
 }
 
+/* -------------------- WebAuthn credential flows ------------------ */
+
 export async function performAuthentication(
-  optsJson: PublicKeyCredentialRequestOptionsJSON
+  optsJson: PublicKeyCredentialRequestOptionsJSON,
 ): Promise<AuthnVerifyBody> {
   const publicKey = decodeRequestOptions(optsJson);
-  const cred = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential | null;
-  if (!cred) throw new Error("No credential returned");
+  const cred = (await navigator.credentials.get({
+    publicKey,
+  })) as PublicKeyCredential | null;
+
+  if (!cred) {
+    throw new Error("No credential returned");
+  }
+
   const resp = cred.response as AuthenticatorAssertionResponse;
+
   return {
     id: cred.id,
     rawId: arrayBufferToB64url(cred.rawId),
@@ -171,46 +258,69 @@ export async function performAuthentication(
     clientDataJSON: arrayBufferToB64url(resp.clientDataJSON),
     authenticatorData: arrayBufferToB64url(resp.authenticatorData),
     signature: arrayBufferToB64url(resp.signature),
-    userHandle: resp.userHandle ? arrayBufferToB64url(resp.userHandle) : null,
+    userHandle: resp.userHandle
+      ? arrayBufferToB64url(resp.userHandle)
+      : null,
   };
 }
 
 export async function performRegistration(
-  optsJson: PublicKeyCredentialCreationOptionsJSON
+  optsJson: PublicKeyCredentialCreationOptionsJSON,
 ): Promise<RegVerifyBody> {
   const publicKey = decodeCreationOptions(optsJson);
-  const cred = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential | null;
-  if (!cred) throw new Error("No credential returned");
+  const cred = (await navigator.credentials.create({
+    publicKey,
+  })) as PublicKeyCredential | null;
+
+  if (!cred) {
+    throw new Error("No credential returned");
+  }
+
   const resp = cred.response as AuthenticatorAttestationResponse;
-  const transports =
-    typeof (resp as any).getTransports === "function" ? (resp as any).getTransports() : undefined;
+
   return {
     id: cred.id,
     rawId: arrayBufferToB64url(cred.rawId),
     type: cred.type,
     clientDataJSON: arrayBufferToB64url(resp.clientDataJSON),
     attestationObject: arrayBufferToB64url(resp.attestationObject),
-    transports,
+    // transports intentionally omitted (not critical for our flows)
   };
 }
 
 /* ------------------------- Session helpers ------------------------ */
 
-export async function hydrateSession() {
-  try { await fetchJson("/api/me", { method: "GET" }); } catch {}
+export async function hydrateSession(): Promise<void> {
+  try {
+    await fetchJson("/api/me", { method: "GET" });
+  } catch {
+    // best-effort; ignore errors
+  }
 }
 
-export function parseContact(raw: string): { method: "email" | "phone"; value: string } | null {
+export function isEmail(input: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.trim());
+}
+
+export function parseContact(
+  raw: string,
+): { method: "email" | "phone"; value: string } | null {
   const s = raw.trim();
   if (!s) return null;
-  if (isEmail(s)) return { method: "email", value: s.toLowerCase() };
-  const digits = s.replace(/[^\d+]/g, "");
-  if (/^\+?\d{8,15}$/.test(digits)) return { method: "phone", value: digits.startsWith("+") ? digits : `+${digits}` };
-  return null;
-}
 
-export function isEmail(input: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.trim());
+  if (isEmail(s)) {
+    return { method: "email", value: s.toLowerCase() };
+  }
+
+  const digits = s.replace(/[^\d+]/g, "");
+  if (/^\+?\d{8,15}$/.test(digits)) {
+    return {
+      method: "phone",
+      value: digits.startsWith("+") ? digits : `+${digits}`,
+    };
+  }
+
+  return null;
 }
 
 /* ------------------------- Endpoint groups ------------------------ */

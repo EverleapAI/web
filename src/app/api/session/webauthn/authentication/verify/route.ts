@@ -1,4 +1,3 @@
-// apps/web/src/app/api/session/webauthn/authentication/verify/route.ts
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
@@ -13,7 +12,11 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-if (!RAW_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for passkey authentication verify proxy.");
+if (!RAW_BASE) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_API_BASE_URL for passkey authentication verify proxy."
+  );
+}
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${API_BASE}/passkey/auth/verify`;
 
@@ -28,9 +31,15 @@ function getSetCookieArray(headers: Headers): string[] {
   const out: string[] = [];
   const single = headers.get("set-cookie");
   if (single) out.push(single);
-  // @ts-ignore Node/Edge fetch may expose getSetCookie()
-  const all = headers.getSetCookie?.() as string[] | undefined;
+
+  // Some runtimes expose a non-standard getSetCookie() helper
+  const withMaybeGetSetCookie = headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+
+  const all = withMaybeGetSetCookie.getSetCookie?.();
   if (Array.isArray(all)) out.push(...all);
+
   return out;
 }
 
@@ -55,6 +64,7 @@ async function forward(req: NextRequest) {
 
   const ct = req.headers.get("content-type") || "application/json";
   let body: BodyInit | undefined;
+
   if (ct.includes("application/json")) {
     const json = await req.json().catch(() => ({}));
     body = JSON.stringify(json ?? {});
@@ -82,23 +92,32 @@ async function forward(req: NextRequest) {
   });
 
   // Handle empty/204 responses gracefully
-  const contentType = upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const contentType =
+    upstream.headers.get("content-type") || "application/json; charset=utf-8";
   const isJson = contentType.includes("application/json");
-  let payload: any;
+  let payload: unknown;
+
   if (upstream.status === 204) {
     payload = null;
   } else {
-    payload = isJson ? await upstream.json().catch(() => null) : await upstream.text();
+    payload = isJson
+      ? await upstream.json().catch(() => null)
+      : await upstream.text();
   }
 
-  const res = new NextResponse(
-    upstream.status === 204
-      ? null
-      : typeof payload === "string"
-      ? payload
-      : JSON.stringify(payload ?? {}),
-    { status: upstream.status, headers: { "content-type": contentType } }
-  );
+  let bodyToSend: BodyInit | null;
+  if (upstream.status === 204) {
+    bodyToSend = null;
+  } else if (typeof payload === "string") {
+    bodyToSend = payload;
+  } else {
+    bodyToSend = JSON.stringify(payload ?? {});
+  }
+
+  const res = new NextResponse(bodyToSend, {
+    status: upstream.status,
+    headers: { "content-type": contentType },
+  });
 
   // Forward & normalize Set-Cookie from API so the browser receives/rotates the session
   const rawCookies = getSetCookieArray(upstream.headers);

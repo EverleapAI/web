@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
+import { AiGuideHost } from "@/components/main/AiGuideHost";
 
 export const metadata: Metadata = {
   title: "Everleap",
@@ -37,7 +38,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: prepaint }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+
+          {/* Global Everleap AI guide overlay */}
+          <AiGuideHost />
+        </Providers>
       </body>
     </html>
   );
