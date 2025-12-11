@@ -63,9 +63,10 @@ export default function YourStoryQuestionsPage() {
   const [showBadge, setShowBadge] = useState(false);
   const [activeBadge, setActiveBadge] = useState<Badge | null>(null);
 
-  const progressPercent = useMemo(() => {
-    return Math.min(100, (answeredCount / TOTAL_QUESTIONS) * 100);
-  }, [answeredCount]);
+  const progressPercent = useMemo(
+    () => Math.min(100, (answeredCount / TOTAL_QUESTIONS) * 100),
+    [answeredCount]
+  );
 
   // Determine which badge should be active based on answeredCount
   useEffect(() => {
@@ -133,10 +134,7 @@ export default function YourStoryQuestionsPage() {
 
             {/* AI guide – desktop only */}
             <div className="hidden md:block">
-              <AiGuideOrb
-                subline="Talk to Everleap about any answer—or ask for ideas if you feel stuck."
-                source="your_story_questions_orb"
-              />
+              <AiGuideOrb subline="Talk to Everleap about any answer—or ask for ideas if you feel stuck." />
             </div>
           </div>
 
@@ -172,10 +170,7 @@ export default function YourStoryQuestionsPage() {
 
           {/* AI guide – mobile */}
           <div className="mt-4 md:hidden">
-            <AiGuideOrb
-              subline="Talk to Everleap about any answer—or ask for ideas if you feel stuck."
-              source="your_story_questions_orb"
-            />
+            <AiGuideOrb subline="Talk to Everleap about any answer—or ask for ideas if you feel stuck." />
           </div>
         </header>
 
