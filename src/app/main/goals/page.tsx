@@ -1,295 +1,727 @@
-// src/app/goals/page.tsx
+// src/app/main/goals/page.tsx
 "use client";
 
-import { useRef } from "react";
-import { motion } from "framer-motion";
-import { ChevronRight, Sparkles } from "lucide-react";
-import { AiGuideOrb } from "@/components/main/AiGuideOrb";
+import {
+  useState,
+  useEffect,
+  type CSSProperties,
+} from "react";
+import {
+  Sparkles,
+  ArrowRight,
+  Flame,
+  Moon,
+  Clock3,
+  HeartHandshake,
+} from "lucide-react";
+
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { CoachIntroModal } from "@/components/main/CoachIntroModal";
 
-type GoalStyle = {
-  id: string;
-  title: string;
-  tagLine: string;
-};
+/* ========= Data types ========= */
 
-type ExampleGoal = {
+type GoalStatus = "not_started" | "in_progress" | "done";
+
+type GoalCard = {
   id: string;
-  label: string;
-  style: string;
+  kindChip: string;
   title: string;
   description: string;
+  status: GoalStatus;
+  statusLabel: string;
+  moodTag?: string;
 };
 
-const goalStyles: GoalStyle[] = [
-  {
-    id: "tiny-experiments",
-    title: "Tiny experiments",
-    tagLine: "Try something for 7 days and just see what happens.",
-  },
-  {
-    id: "anchor-habits",
-    title: "Anchor habits",
-    tagLine: "Attach a small action to something you already do.",
-  },
-  {
-    id: "support-goals",
-    title: "Support goals",
-    tagLine: "Check-ins, asking for help, being accountable.",
-  },
-  {
-    id: "reset-recharge",
-    title: "Reset & recharge",
-    tagLine: "Rest, screens, boundaries — real recovery counts.",
-  },
-];
+type SpotlightThemeId =
+  | "nightDusk"
+  | "berrySoft"
+  | "forestSoft"
+  | "warmSand"
+  | "coolNotebook"
+  | "cleanPaper";
 
-const exampleGoals: ExampleGoal[] = [
+type GradientLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
+type GoalsTheme = {
+  id: SpotlightThemeId;
+  label: string;
+  pageBgBaseClass: string;
+  pageTextMutedClass: string;
+  sectionLabelClass: string;
+  ambientTopLeftClass: string;
+  ambientRightClass: string;
+  cardBgClass: string;
+  cardBorderClass: string;
+  chipBgClass: string;
+  chipBorderClass: string;
+};
+
+type GradientConfig = {
+  level: GradientLevel;
+  ambientOpacity: number;
+};
+
+/* ========= Sample data ========= */
+
+const myGoals: GoalCard[] = [
   {
     id: "focus-test",
-    label: "Tiny experiment",
-    style: "Tiny experiment",
+    kindChip: "TINY EXPERIMENT",
     title: "3-day focus test",
     description:
       "Pick one class or project. Try a 20-minute no-phone focus block each day for three days.",
+    status: "in_progress",
+    statusLabel: "In progress",
+    moodTag: "Energy check",
   },
   {
     id: "after-school-reset",
-    label: "Anchor habit",
-    style: "Anchor habit",
+    kindChip: "ANCHOR HABIT",
     title: "After-school reset",
     description:
       "When you get home, take 10 minutes to decompress before touching homework or your phone.",
+    status: "not_started",
+    statusLabel: "Not started yet",
+    moodTag: "Routine",
   },
   {
     id: "weekly-checkin",
-    label: "Support goal",
-    style: "Support goal",
+    kindChip: "SUPPORT GOAL",
     title: "Weekly check-in",
     description:
       "Text or talk to one trusted person once a week and share one win + one stress.",
-  },
-  {
-    id: "screen-curfew",
-    label: "Reset & recharge",
-    style: "Reset & recharge",
-    title: "Screen curfew",
-    description:
-      "Pick two nights this week to put your phone away 30 minutes before bed and see how you sleep.",
+    status: "not_started",
+    statusLabel: "Not started yet",
+    moodTag: "Support",
   },
 ];
 
-export default function GoalsPage() {
-  const examplesRef = useRef<HTMLDivElement | null>(null);
+const suggestedGoals: GoalCard[] = [
+  {
+    id: "screen-curfew",
+    kindChip: "RESET & RECHARGE",
+    title: "Screen curfew",
+    description:
+      "Pick two nights this week to put your phone away 30 minutes before sleep and see how you feel.",
+    status: "not_started",
+    statusLabel: "Suggestion",
+    moodTag: "Sleep",
+  },
+  {
+    id: "micro-progress",
+    kindChip: "TINY EXPERIMENT",
+    title: "Micro-progress log",
+    description:
+      "For 5 days, write down one tiny win each evening. School, friends, anything that counts as progress.",
+    status: "not_started",
+    statusLabel: "Suggestion",
+    moodTag: "Confidence",
+  },
+  {
+    id: "energy-scan",
+    kindChip: "REFLECT",
+    title: "Energy scan week",
+    description:
+      "Each day, note one thing that secretly energised you and one thing that drained you.",
+    status: "not_started",
+    statusLabel: "Suggestion",
+    moodTag: "Awareness",
+  },
+];
 
-  const handleShowExamples = () => {
-    if (examplesRef.current) {
-      examplesRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  };
+/* ========= Themes (aligned with other pages) ========= */
 
-  /** Opens the AI Guide with the passed example goals */
-  const openGuideWithGoals = (source: string, primaryId?: string) => {
-    const suggestedGoals = exampleGoals.map((g) => ({
-      id: g.id,
-      title: g.title,
-      style: g.style,
-      description: g.description,
-    }));
+const GOALS_THEMES: GoalsTheme[] = [
+  {
+    id: "nightDusk",
+    label: "Night",
+    pageBgBaseClass: "bg-[#020617] text-slate-50",
+    pageTextMutedClass: "text-slate-300/90",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-400",
+    ambientTopLeftClass: "bg-indigo-400",
+    ambientRightClass: "bg-sky-400",
+    cardBgClass: "bg-slate-950/85",
+    cardBorderClass: "border-slate-800/80",
+    chipBgClass: "bg-slate-900/80",
+    chipBorderClass: "border-slate-700/80",
+  },
+  {
+    id: "berrySoft",
+    label: "Berry",
+    pageBgBaseClass: "bg-[#f7ecff] text-slate-900",
+    pageTextMutedClass: "text-slate-600",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-violet-500",
+    ambientTopLeftClass: "bg-fuchsia-200",
+    ambientRightClass: "bg-violet-200",
+    cardBgClass: "bg-white/95",
+    cardBorderClass: "border-fuchsia-100",
+    chipBgClass: "bg-fuchsia-50",
+    chipBorderClass: "border-fuchsia-100",
+  },
+  {
+    id: "forestSoft",
+    label: "Teal",
+    pageBgBaseClass: "bg-[#e7f5f1] text-slate-900",
+    pageTextMutedClass: "text-slate-600",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-500",
+    ambientTopLeftClass: "bg-emerald-200",
+    ambientRightClass: "bg-teal-200",
+    cardBgClass: "bg-white/95",
+    cardBorderClass: "border-emerald-100",
+    chipBgClass: "bg-emerald-50",
+    chipBorderClass: "border-emerald-100",
+  },
+  {
+    id: "warmSand",
+    label: "Sand",
+    pageBgBaseClass: "bg-[#f5ebe0] text-stone-900",
+    pageTextMutedClass: "text-stone-600",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-stone-500",
+    ambientTopLeftClass: "bg-amber-200",
+    ambientRightClass: "bg-orange-200",
+    cardBgClass: "bg-[#fdf7ef]/95",
+    cardBorderClass: "border-amber-200",
+    chipBgClass: "bg-amber-50",
+    chipBorderClass: "border-amber-100",
+  },
+  {
+    id: "coolNotebook",
+    label: "Cool",
+    pageBgBaseClass: "bg-[#e5f0ff] text-slate-900",
+    pageTextMutedClass: "text-slate-600",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500",
+    ambientTopLeftClass: "bg-sky-200",
+    ambientRightClass: "bg-indigo-200",
+    cardBgClass: "bg-white/95",
+    cardBorderClass: "border-slate-200",
+    chipBgClass: "bg-slate-50",
+    chipBorderClass: "border-slate-200",
+  },
+  {
+    id: "cleanPaper",
+    label: "Paper",
+    pageBgBaseClass: "bg-[#f9fafb] text-slate-900",
+    pageTextMutedClass: "text-slate-600",
+    sectionLabelClass:
+      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500",
+    ambientTopLeftClass: "bg-slate-200",
+    ambientRightClass: "bg-amber-100",
+    cardBgClass: "bg-white/95",
+    cardBorderClass: "border-slate-200",
+    chipBgClass: "bg-slate-50",
+    chipBorderClass: "border-slate-200",
+  },
+];
 
-    // Bring chosen goal to the front if provided
-    if (primaryId) {
-      suggestedGoals.sort((a, b) =>
-        a.id === primaryId ? -1 : b.id === primaryId ? 1 : 0
-      );
-    }
+const GRADIENT_CONFIGS: GradientConfig[] = [
+  { level: 0, ambientOpacity: 0 },
+  { level: 1, ambientOpacity: 0.1 },
+  { level: 2, ambientOpacity: 0.18 },
+  { level: 3, ambientOpacity: 0.3 },
+  { level: 4, ambientOpacity: 0.45 },
+  { level: 5, ambientOpacity: 0.6 },
+];
 
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("everleap-open-ai-guide", {
-          detail: { source, suggestedGoals },
-        })
-      );
-    }
-  };
+/* ========= Bg helper ========= */
 
-  const handleGoalIdeaClick = () => {
-    openGuideWithGoals("goals_page_goal_idea");
-  };
+function getPageBackgroundImage(themeId: SpotlightThemeId): string {
+  switch (themeId) {
+    case "nightDusk":
+      return [
+        "radial-gradient(circle at top left, rgba(129,140,248,0.22), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(56,189,248,0.18), transparent 55%)",
+      ].join(", ");
+    case "berrySoft":
+      return [
+        "radial-gradient(circle at top left, rgba(244,219,255,0.9), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(234,222,255,0.8), transparent 55%)",
+      ].join(", ");
+    case "forestSoft":
+      return [
+        "radial-gradient(circle at top left, rgba(209,250,229,0.9), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(204,251,241,0.85), transparent 55%)",
+      ].join(", ");
+    case "warmSand":
+      return [
+        "radial-gradient(circle at top left, rgba(253,230,200,0.9), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(254,249,195,0.9), transparent 55%)",
+      ].join(", ");
+    case "coolNotebook":
+      return [
+        "radial-gradient(circle at top left, rgba(191,219,254,0.85), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(226,232,240,0.9), transparent 55%)",
+      ].join(", ");
+    case "cleanPaper":
+    default:
+      return [
+        "radial-gradient(circle at top left, rgba(248,250,252,1), transparent 55%)",
+        "radial-gradient(circle at bottom right, rgba(241,245,249,1), transparent 55%)",
+      ].join(", ");
+  }
+}
 
-  const handleExampleClick = (goalId: string) => {
-    openGuideWithGoals("goals_page_example_click", goalId);
-  };
+/* ========= Toggles ========= */
+
+type ThemeToggleProps = {
+  activeId: SpotlightThemeId;
+  onChange: (id: SpotlightThemeId) => void;
+};
+
+function ThemeToggle({ activeId, onChange }: ThemeToggleProps) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/70 px-1 py-1 text-[0.65rem] shadow-sm md:bg-slate-900/70">
+      {GOALS_THEMES.map((theme) => {
+        const isActive = theme.id === activeId;
+        return (
+          <button
+            key={theme.id}
+            type="button"
+            onClick={() => onChange(theme.id)}
+            className={`h-5 w-5 rounded-full transition ${
+              isActive
+                ? "bg-sky-300 shadow-sm shadow-sky-300/60"
+                : "bg-slate-800/80 hover:bg-slate-700/80"
+            }`}
+            aria-label={theme.label}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+type GradientToggleProps = {
+  activeLevel: GradientLevel;
+  onChange: (level: GradientLevel) => void;
+};
+
+function GradientToggle({ activeLevel, onChange }: GradientToggleProps) {
+  const levels: GradientLevel[] = [0, 1, 2, 3, 4, 5];
 
   return (
-    <div
-      className="min-h-screen bg-slate-950 text-slate-50"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at bottom right, rgba(251,113,133,0.16), transparent 55%)",
-      }}
-    >
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-24 pt-20 md:px-8">
-        <main className="w-full space-y-10">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-300">
-                Goals
-              </p>
-              <h1 className="text-3xl font-bold text-slate-50 md:text-4xl">
-                Turn your insights into small, doable goals
-              </h1>
-              <p className="mt-2 max-w-xl text-sm text-slate-300 md:text-base">
-                Everleap generates realistic goals based on who you are. Pick
-                what matches your energy today.
-              </p>
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/70 px-1 py-1 text-[0.65rem] shadow-sm md:bg-slate-900/70">
+      {levels.map((level) => {
+        const isActive = level === activeLevel;
+        const isZero = level === 0;
 
-              {/* Mobile AI guide */}
-              <div className="mt-3 md:hidden">
-                <AiGuideOrb
-                  subline="Ask Everleap for a goal that fits your energy today."
-                  source="goals_page_orb"
-                />
-              </div>
-            </div>
+        return (
+          <button
+            key={level}
+            type="button"
+            onClick={() => onChange(level)}
+            className={`flex items-center justify-center rounded-full transition ${
+              isZero
+                ? isActive
+                  ? "h-4 w-4 border border-amber-300 bg-transparent"
+                  : "h-4 w-4 border border-slate-600/80 bg-transparent hover:border-slate-400"
+                : isActive
+                ? "h-4 w-4 bg-amber-300 shadow-sm shadow-amber-300/60"
+                : "h-4 w-4 bg-slate-800/80 hover:bg-slate-700/80"
+            }`}
+            aria-label={
+              isZero ? "No gradient" : `Gradient level ${level}`
+            }
+          />
+        );
+      })}
+    </div>
+  );
+}
 
-            {/* AI guide orb (desktop) */}
-            <div className="hidden md:block">
-              <AiGuideOrb
-                subline="Ask Everleap for a goal that fits your energy today."
-                source="goals_page_orb"
-              />
-            </div>
+/* ========= Guide openers ========= */
+
+function openGuide() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("everleap-open-ai-guide", {
+      detail: { source: "goals_header_orb" },
+    })
+  );
+}
+
+// Hero button -> open guide with a starter suggestion payload
+function openGoalIdeaGuide() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("everleap-open-ai-guide", {
+      detail: {
+        source: "goals_hero_goal_idea",
+        // Placeholder copy for the guide to use when it opens
+        prompt:
+          "Suggest a simple starting goal, like a 3-day focus test or a short screen-curfew experiment, based on my energy right now.",
+      },
+    })
+  );
+}
+
+/* ========= Helpers ========= */
+
+function statusChipClasses(
+  status: GoalStatus,
+  isDark: boolean
+): string {
+  const base =
+    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.65rem] border";
+
+  if (isDark) {
+    if (status === "in_progress") {
+      return (
+        base +
+        " border-emerald-400/70 bg-emerald-500/15 text-emerald-200"
+      );
+    }
+    if (status === "done") {
+      return (
+        base +
+        " border-sky-400/70 bg-sky-500/15 text-sky-200"
+      );
+    }
+    return (
+      base +
+      " border-slate-600/80 bg-slate-900/80 text-slate-300/90"
+    );
+  }
+
+  // light themes
+  if (status === "in_progress") {
+    return (
+      base +
+      " border-emerald-400 bg-emerald-50 text-emerald-700"
+    );
+  }
+  if (status === "done") {
+    return base + " border-sky-400 bg-sky-50 text-sky-700";
+  }
+  return base + " border-slate-200 bg-slate-50 text-slate-600";
+}
+
+/* ========= Main page ========= */
+
+export default function GoalsPage() {
+  const [themeId, setThemeId] =
+    useState<SpotlightThemeId>("nightDusk");
+  const [gradientLevel, setGradientLevel] =
+    useState<GradientLevel>(3);
+  const [showIntro, setShowIntro] = useState(false);
+
+  useEffect(() => {
+    setShowIntro(true);
+  }, []);
+
+  const theme =
+    GOALS_THEMES.find((t) => t.id === themeId) ??
+    GOALS_THEMES[0];
+  const gradient =
+    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
+    GRADIENT_CONFIGS[3];
+
+  const pageBgImage =
+    gradientLevel === 0 ? undefined : getPageBackgroundImage(theme.id);
+
+  const pageBgStyle: CSSProperties = pageBgImage
+    ? { backgroundImage: pageBgImage }
+    : {};
+
+  const isDarkTheme = theme.id === "nightDusk";
+
+  const heroShadowClasses = isDarkTheme
+    ? "shadow-[0_20px_70px_rgba(0,0,0,0.65)]"
+    : "shadow-[0_20px_60px_rgba(15,23,42,0.25)]";
+
+  const sectionTitleMuted = theme.pageTextMutedClass;
+
+  const goalCardBase = isDarkTheme
+    ? "rounded-3xl border border-slate-800/80 bg-slate-950/80 shadow-[0_14px_45px_rgba(0,0,0,0.7)] backdrop-blur-xl"
+    : "rounded-3xl border border-slate-200 bg-white shadow-sm";
+
+  return (
+    <>
+      {/* Intro modal explaining Goals */}
+      <CoachIntroModal
+        open={showIntro}
+        onClose={() => setShowIntro(false)}
+        subtitle="This is your Goals Lab. Everleap turns your insights into tiny experiments you can actually try. You don’t need a life plan—just one small goal to run this week."
+        enableTyping
+      />
+
+      <div
+        className={`min-h-screen ${theme.pageBgBaseClass}`}
+        style={pageBgStyle}
+      >
+        <main className="relative flex min-h-screen flex-col">
+          {/* Ambient blobs */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ opacity: gradient.ambientOpacity }}
+          >
+            <div
+              className={`absolute -top-24 -left-20 h-60 w-60 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
+            />
+            <div
+              className={`absolute bottom-0 right-[-40px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+            />
           </div>
 
-          {/* Goal Lab */}
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="relative overflow-hidden rounded-[2rem] border border-slate-700/60 bg-[radial-gradient(circle_at_top_left,#4f46e5,transparent_55%),radial-gradient(circle_at_bottom_right,#ec4899,transparent_55%),#020617] px-5 py-6 shadow-[0_18px_60px_rgba(0,0,0,0.55)] md:px-8 md:py-8"
-          >
-            <div className="relative z-10 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-2 md:space-y-3">
-                <div className="inline-flex items-center rounded-full border border-sky-500/40 bg-slate-900/60 px-3 py-1 text-xs font-semibold text-sky-200">
-                  <Sparkles className="mr-2 h-3 w-3" />
-                  Goal Lab
-                </div>
-
-                <h2 className="text-2xl font-semibold text-slate-50 md:text-3xl">
-                  Start with something small this week.
-                </h2>
-
-                <p className="max-w-xl text-sm text-slate-200/80">
-                  No giant life plan. Just one experiment you can actually
-                  start.
+          <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8 md:pt-8">
+            {/* Header row */}
+            <header className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <div className={theme.sectionLabelClass}>Goals</div>
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">
+                  Turn this into one small goal
+                </h1>
+                <p
+                  className={`mt-2 max-w-xl text-sm ${theme.pageTextMutedClass}`}
+                >
+                  Everleap suggests tiny experiments from your patterns.
+                  Pick one that feels doable.
                 </p>
               </div>
 
-              <div className="flex w-full max-w-xs shrink-0 flex-col gap-3 md:items-end">
-                <button
-                  type="button"
-                  onClick={handleGoalIdeaClick}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_40px_rgba(56,189,248,0.55)] transition hover:bg-sky-300 active:scale-95"
-                >
-                  I want a goal idea
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+              <div className="flex flex-col items-end gap-2 md:flex-row md:items-center">
+                <ThemeToggle
+                  activeId={themeId}
+                  onChange={setThemeId}
+                />
+                <GradientToggle
+                  activeLevel={gradientLevel}
+                  onChange={setGradientLevel}
+                />
 
+                {/* AI guide orb */}
                 <button
                   type="button"
-                  onClick={handleShowExamples}
-                  className="text-xs text-slate-200/80 underline-offset-2 hover:text-slate-50 hover:underline md:text-sm"
+                  onClick={openGuide}
+                  className="group relative mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 via-fuchsia-400 to-amber-300 shadow-lg shadow-sky-400/40 transition-transform duration-200 hover:scale-110 md:mt-0"
+                  aria-label="Open Everleap Guide"
                 >
-                  Just show me examples for now
+                  <span className="absolute inset-0 rounded-full bg-sky-400/30 blur-md opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                  <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-slate-50">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
                 </button>
               </div>
-            </div>
+            </header>
 
-            {/* Glow overlays */}
-            <div className="pointer-events-none absolute inset-0 opacity-60">
-              <div className="absolute -right-10 -top-24 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
-              <div className="absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
-            </div>
-          </motion.section>
+            {/* Hero Goal Lab card */}
+            <section className="mb-6">
+              <div
+                className={`relative overflow-hidden rounded-[32px] px-5 py-5 sm:px-7 sm:py-6 ${theme.cardBgClass} ${theme.cardBorderClass} ${heroShadowClasses}`}
+              >
+                <div className="pointer-events-none absolute inset-2 rounded-[28px] bg-gradient-to-br from-sky-500/40 via-fuchsia-500/35 to-amber-300/30 opacity-40 blur-2xl" />
 
-          {/* Goal styles */}
-          <section className="space-y-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-100">
-                Goal styles Everleap loves
-              </h3>
-              <span className="text-[11px] text-slate-400 md:text-xs">
-                Pick the mode that matches your energy.
-              </span>
-            </div>
-
-            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-1 pt-1">
-              {goalStyles.map((style) => (
-                <motion.article
-                  key={style.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.25 }}
-                  className="min-w-[220px] max-w-xs rounded-2xl border border-slate-700/80 bg-slate-900/70 px-4 py-4 shadow-[0_10px_35px_rgba(15,23,42,0.8)]"
-                >
-                  <h4 className="mb-1 text-base font-semibold text-slate-50">
-                    {style.title}
-                  </h4>
-                  <p className="text-xs text-slate-300">{style.tagLine}</p>
-                </motion.article>
-              ))}
-            </div>
-          </section>
-
-          {/* Example goals */}
-          <section ref={examplesRef} className="space-y-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-100">
-                Example goals Everleap might suggest
-              </h3>
-              <span className="text-[11px] text-slate-400 md:text-xs">
-                These adapt to your story and your patterns.
-              </span>
-            </div>
-
-            <div className="no-scrollbar flex gap-4 overflow-x-auto pb-2 pt-1">
-              {exampleGoals.map((goal) => (
-                <motion.button
-                  key={goal.id}
-                  type="button"
-                  onClick={() => handleExampleClick(goal.id)}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.25 }}
-                  className="flex min-w-[260px] max-w-sm flex-col justify-between rounded-2xl border border-slate-700/80 bg-slate-900/70 px-4 py-4 text-left shadow-[0_10px_35px_rgba(15,23,42,0.9)]"
-                >
-                  <div className="space-y-2">
-                    <span className="inline-flex items-center rounded-full border border-sky-500/50 bg-sky-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-sky-200">
-                      {goal.label}
-                    </span>
-                    <h4 className="text-base font-semibold text-slate-50">
-                      {goal.title}
-                    </h4>
-                    <p className="text-xs leading-relaxed text-slate-300">
-                      {goal.description}
+                <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="max-w-xl">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/70 bg-sky-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-100">
+                      <Flame className="h-3 w-3" />
+                      <span>Goal Lab</span>
+                    </div>
+                    <h2 className="mt-3 text-xl font-semibold md:text-2xl">
+                      Start with something tiny this week.
+                    </h2>
+                    <p
+                      className={`mt-2 text-sm ${sectionTitleMuted}`}
+                    >
+                      No giant life plan. Just one experiment you can
+                      actually start and tweak.
                     </p>
                   </div>
-                </motion.button>
-              ))}
-            </div>
-          </section>
-        </main>
-      </div>
 
-      {/* Bottom nav, same as other main pages */}
-      <BottomNav />
-    </div>
+                  <div className="flex flex-col items-stretch gap-2 md:w-64">
+                    <button
+                      type="button"
+                      onClick={openGoalIdeaGuide}
+                      className="inline-flex items-center justify-center rounded-full bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_14px_40px_rgba(56,189,248,0.65)] transition hover:bg-sky-300 hover:shadow-[0_18px_50px_rgba(56,189,248,0.8)] active:scale-95"
+                    >
+                      I want a goal idea
+                      <ArrowRight className="ml-1.5 h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Your goals right now */}
+            <section className="mb-6">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold">
+                    Your goals right now
+                  </div>
+                  <p
+                    className={`mt-1 text-xs ${sectionTitleMuted}`}
+                  >
+                    These are tiny goals you&apos;re playing with. You
+                    can change them anytime.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {myGoals.map((goal) => (
+                  <div
+                    key={goal.id}
+                    className={`flex flex-col gap-3 px-4 py-4 ${goalCardBase}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2 py-1 text-[0.65rem] font-semibold tracking-[0.16em] ${
+                              isDarkTheme
+                                ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
+                                : "border-sky-300 bg-sky-50 text-sky-700"
+                            }`}
+                          >
+                            {goal.kindChip}
+                          </span>
+                          {goal.moodTag && (
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-[0.65rem] ${
+                                isDarkTheme
+                                  ? "bg-slate-900/80 text-slate-200"
+                                  : "bg-slate-100 text-slate-700"
+                              }`}
+                            >
+                              {goal.moodTag}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-sm font-semibold">
+                          {goal.title}
+                        </h3>
+                        <p
+                          className={`mt-1 text-xs ${sectionTitleMuted}`}
+                        >
+                          {goal.description}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                        <span
+                          className={statusChipClasses(
+                            goal.status,
+                            isDarkTheme
+                          )}
+                        >
+                          <Clock3 className="h-3 w-3" />
+                          <span>{goal.statusLabel}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center justify-between text-[0.7rem] ${
+                        isDarkTheme
+                          ? "text-slate-400"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      <span>Tap a goal to edit or swap later.</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Suggested goals */}
+            <section className="mb-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold">
+                    Goal ideas Everleap is playing with
+                  </div>
+                  <p
+                    className={`mt-1 text-xs ${sectionTitleMuted}`}
+                  >
+                    These ideas adapt to your story and energy. Pick
+                    one, or just steal pieces that fit.
+                  </p>
+                </div>
+                <div
+                  className={`hidden items-center gap-1 text-[0.7rem] ${sectionTitleMuted} md:flex`}
+                >
+                  <HeartHandshake className="h-3.5 w-3.5" />
+                  <span>We&apos;ll keep suggesting new ones over time.</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {suggestedGoals.map((goal) => (
+                  <div
+                    key={goal.id}
+                    className={`flex flex-col gap-3 px-4 py-4 ${goalCardBase}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="mb-1 flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2 py-1 text-[0.65rem] font-semibold tracking-[0.16em] ${
+                              isDarkTheme
+                                ? "border-violet-300/70 bg-violet-500/10 text-violet-100"
+                                : "border-violet-300 bg-violet-50 text-violet-700"
+                            }`}
+                          >
+                            {goal.kindChip}
+                          </span>
+                          {goal.moodTag && (
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-[0.65rem] ${
+                                isDarkTheme
+                                  ? "bg-slate-900/80 text-slate-200"
+                                  : "bg-slate-100 text-slate-700"
+                              }`}
+                            >
+                              {goal.moodTag}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-sm font-semibold">
+                          {goal.title}
+                        </h3>
+                        <p
+                          className={`mt-1 text-xs ${sectionTitleMuted}`}
+                        >
+                          {goal.description}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                        <span
+                          className={statusChipClasses(
+                            goal.status,
+                            isDarkTheme
+                          )}
+                        >
+                          <Moon className="h-3 w-3" />
+                          <span>{goal.statusLabel}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center justify-between text-[0.7rem] ${
+                        isDarkTheme
+                          ? "text-slate-400"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      <span>Tap to turn this into an active goal.</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <BottomNav />
+      </div>
+    </>
   );
 }
