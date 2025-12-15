@@ -3,7 +3,9 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mic, Send } from "lucide-react";
+import { Mic, Send } from "lucide-react";
+
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 type QA = { id: string; question: string; answer?: string; skipped?: boolean };
 
@@ -37,10 +39,7 @@ const PLACEHOLDER_QUESTIONS: QA[] = Array.from({ length: TOTAL }).map((_, i) => 
 }));
 
 const STORAGE_KEY = "everleap.story.answers.v1";
-
-function clamp(n: number, min: number, max: number) {
-  return Math.min(Math.max(n, min), max);
-}
+const TRANSITION_MS = 180;
 
 function loadSaved(): Record<string, { answer?: string; skipped?: boolean }> {
   if (typeof window === "undefined") return {};
@@ -74,11 +73,59 @@ export default function QuestionFlow() {
   const [listening, setListening] = React.useState(false);
   const [speechInterim, setSpeechInterim] = React.useState("");
 
+  // ✅ transition state
+  const [transitioning, setTransitioning] = React.useState(false);
+
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const transitionTimerRef = React.useRef<number | null>(null);
 
   const q = PLACEHOLDER_QUESTIONS[index] ?? PLACEHOLDER_QUESTIONS[0];
-  const progress = (index + 1) / TOTAL;
+
+  const autosize = React.useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  const clearComposer = React.useCallback(() => {
+    // ✅ key fix: wipe the input immediately so next answer starts fresh
+    setDraft("");
+    setSpeechInterim("");
+    requestAnimationFrame(autosize);
+  }, [autosize]);
+
+  const goToNextWithAnimation = React.useCallback(
+    (nextIndex: number) => {
+      if (transitioning) return;
+
+      // fade out current screen
+      setTransitioning(true);
+
+      // clear any pending timers
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+
+      transitionTimerRef.current = window.setTimeout(() => {
+        // if finished, exit funnel
+        if (nextIndex >= TOTAL) {
+          router.push("/main");
+          return;
+        }
+
+        setIndex(nextIndex);
+
+        // fade back in on next frame (so transition applies)
+        requestAnimationFrame(() => {
+          setTransitioning(false);
+        });
+      }, TRANSITION_MS);
+    },
+    [router, transitioning]
+  );
 
   React.useEffect(() => {
     // hydrate draft from localStorage if present
@@ -86,10 +133,8 @@ export default function QuestionFlow() {
     if (saved?.answer) setDraft(saved.answer);
     else setDraft("");
     setSpeechInterim("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "0px";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
+
+    requestAnimationFrame(autosize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.id]);
 
@@ -103,6 +148,9 @@ export default function QuestionFlow() {
 
   React.useEffect(() => {
     return () => {
+      if (transitionTimerRef.current) {
+        window.clearTimeout(transitionTimerRef.current);
+      }
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -113,38 +161,29 @@ export default function QuestionFlow() {
     };
   }, []);
 
-  const autosize = () => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "0px";
-    el.style.height = `${el.scrollHeight}px`;
-  };
-
-  const goNext = React.useCallback(() => {
-    setIndex((prev) => {
-      const next = prev + 1;
-      if (next >= TOTAL) {
-        router.push("/main");
-        return prev;
-      }
-      return next;
-    });
-  }, [router]);
-
   const submit = React.useCallback(() => {
+    if (transitioning) return;
+
     const text = (draft + (speechInterim ? ` ${speechInterim}` : "")).trim();
     if (!text) return;
 
     saveOne(q.id, { answer: text, skipped: false });
-    setSpeechInterim("");
-    goNext();
-  }, [draft, speechInterim, goNext, q.id]);
+
+    // ✅ blank out immediately so we never append into the next question
+    clearComposer();
+
+    goToNextWithAnimation(index + 1);
+  }, [transitioning, draft, speechInterim, q.id, clearComposer, goToNextWithAnimation, index]);
 
   const skip = React.useCallback(() => {
+    if (transitioning) return;
+
     saveOne(q.id, { answer: undefined, skipped: true });
-    setSpeechInterim("");
-    goNext();
-  }, [goNext, q.id]);
+
+    clearComposer();
+
+    goToNextWithAnimation(index + 1);
+  }, [transitioning, q.id, clearComposer, goToNextWithAnimation, index]);
 
   function getOrCreateRecognition(): SpeechRecognition | null {
     if (typeof window === "undefined") return null;
@@ -176,7 +215,6 @@ export default function QuestionFlow() {
         else interimChunk += (interimChunk ? " " : "") + text;
       }
 
-      // IMPORTANT: no duplication
       if (interimChunk) setSpeechInterim(interimChunk);
 
       if (finalChunk) {
@@ -187,7 +225,6 @@ export default function QuestionFlow() {
         setSpeechInterim("");
       }
 
-      // keep textarea sized
       requestAnimationFrame(autosize);
     };
 
@@ -206,6 +243,8 @@ export default function QuestionFlow() {
   }
 
   const toggleListening = () => {
+    if (transitioning) return;
+
     // stop
     if (listening && recognitionRef.current) {
       try {
@@ -228,31 +267,24 @@ export default function QuestionFlow() {
     }
   };
 
+  const sendEnabled = Boolean(draft.trim() || speechInterim.trim());
+
   return (
     <div className="relative min-h-[100svh]">
       {/* Subtle funnel fade layer (keeps AppChrome behind it) */}
       <div className="pointer-events-none absolute inset-0 bg-slate-950/10" />
 
-      {/* Exit + hint */}
-      <div className="absolute left-4 top-4 z-20 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => router.push("/main")}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-950/40 text-slate-100 backdrop-blur-xl hover:bg-slate-950/55"
-          aria-label="Back to Spotlight"
-          title="Back to Spotlight"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <div className="hidden text-xs text-slate-200/60 md:block">
-          Press <span className="rounded bg-white/10 px-1.5 py-0.5">Esc</span> to exit
-        </div>
-      </div>
-
       {/* Centered panel */}
-      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10">
+      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10 pb-28">
         <div className="w-full max-w-4xl">
-          <div className="relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px] shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+          <div
+            className={`
+              relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px]
+              shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl
+              transition-all duration-200 ease-out
+              ${transitioning ? "opacity-0 translate-y-2 scale-[0.99]" : "opacity-100 translate-y-0 scale-100"}
+            `}
+          >
             {/* Inner */}
             <div className="relative rounded-[43px] bg-slate-950/35 px-6 py-10 sm:px-10 sm:py-12">
               {/* Header label + dots */}
@@ -268,9 +300,7 @@ export default function QuestionFlow() {
                     return (
                       <span
                         key={i}
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          on ? "bg-sky-300" : "bg-white/10"
-                        }`}
+                        className={`h-1.5 w-1.5 rounded-full ${on ? "bg-sky-300" : "bg-white/10"}`}
                       />
                     );
                   })}
@@ -314,9 +344,10 @@ export default function QuestionFlow() {
                         <button
                           type="button"
                           onClick={toggleListening}
+                          disabled={transitioning}
                           className={`
                             inline-flex h-11 w-11 items-center justify-center rounded-full border
-                            transition active:scale-95
+                            transition active:scale-95 disabled:opacity-60
                             ${
                               listening
                                 ? "border-rose-300/60 bg-rose-500/15 text-rose-100 shadow-[0_0_24px_rgba(244,63,94,0.35)]"
@@ -332,12 +363,12 @@ export default function QuestionFlow() {
                         <button
                           type="button"
                           onClick={submit}
-                          disabled={!(draft.trim() || speechInterim.trim())}
+                          disabled={!sendEnabled || transitioning}
                           className={`
                             inline-flex h-11 w-11 items-center justify-center rounded-full
-                            transition active:scale-95
+                            transition active:scale-95 disabled:opacity-60
                             ${
-                              draft.trim() || speechInterim.trim()
+                              sendEnabled
                                 ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
                                 : "bg-white/10 text-slate-200/50"
                             }
@@ -352,7 +383,8 @@ export default function QuestionFlow() {
                       {/* Interim caption (kept subtle) */}
                       {speechInterim ? (
                         <div className="pointer-events-none absolute left-6 top-3 text-[0.7rem] text-slate-200/60">
-                          Listening: <span className="text-slate-100/70">{speechInterim}</span>
+                          Listening:{" "}
+                          <span className="text-slate-100/70">{speechInterim}</span>
                         </div>
                       ) : null}
                     </div>
@@ -360,18 +392,10 @@ export default function QuestionFlow() {
 
                   {/* Actions */}
                   <div className="mt-6 flex items-center justify-center gap-8 text-sm text-slate-200/60">
-                    <button
-                      type="button"
-                      onClick={skip}
-                      className="hover:text-slate-100"
-                    >
+                    <button type="button" onClick={skip} className="hover:text-slate-100">
                       I’m not sure
                     </button>
-                    <button
-                      type="button"
-                      onClick={skip}
-                      className="hover:text-slate-100"
-                    >
+                    <button type="button" onClick={skip} className="hover:text-slate-100">
                       Skip for now
                     </button>
                   </div>
@@ -387,6 +411,9 @@ export default function QuestionFlow() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Use footer nav for exiting/going elsewhere */}
+      <BottomNav />
     </div>
   );
 }
