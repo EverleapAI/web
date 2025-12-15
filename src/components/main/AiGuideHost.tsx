@@ -1,3 +1,4 @@
+// src/components/main/AiGuideHost.tsx
 "use client";
 
 import {
@@ -21,7 +22,7 @@ type GuideSourceDetail = {
   }>;
 };
 
-const userName = "Tom";
+// ✅ removed unused userName constant (was causing lint warning)
 
 type GuideState = {
   open: boolean;
@@ -32,60 +33,62 @@ type GuideState = {
 
 function greetingFromSource(source?: string): string {
   if (!source) {
-    return `Hi ${userName}, let’s pick one thing to focus on that would actually help.`;
+    return "Hi — what’s on your mind right now?";
   }
 
   if (source.startsWith("actions_page")) {
-    return `Hi ${userName}, you’re on the Actions & habits page. Let’s turn a goal or insight into a repeatable action.`;
+    return "You’re on Actions. Want to turn something into one tiny, repeatable step?";
   }
 
   if (source.startsWith("goals_page")) {
-    return `Hi ${userName}, you’re on the Goals page. Let’s find one small goal that fits your energy today.`;
+    return "You’re on Goals. What would feel like a meaningful win this week?";
   }
 
   if (source.startsWith("notifications_page")) {
-    return `Hi ${userName}, you’re on the Notifications page. Let’s sort through what actually matters.`;
+    return "You’re on Notifications. Want to sort what matters vs. what can wait?";
   }
 
   if (source.startsWith("spotlight_")) {
-    return `Hi ${userName}, you’re on the Spotlight page. Let’s choose one next step together.`;
+    return "What would actually help right now?";
   }
 
   if (source.includes("questions")) {
-    return `Hi ${userName}, you’re in your Story flow. Want to talk about something you shared?`;
+    return "Want to talk about something you just answered?";
   }
 
   if (source.includes("carousel") || source.includes("youmap")) {
-    return `Hi ${userName}, you’re exploring your profile. Let’s unpack what feels true or interesting.`;
+    return "Anything here feel true… or totally off?";
   }
 
-  return `Hi ${userName}, let’s pick one thing to focus on that would actually help.`;
+  return "What would actually help right now?";
 }
 
 function placeholderResponse(input: string, source?: string): string {
-  const trimmed = input.trim();
+  const t = input.trim();
 
   if (source?.startsWith("goals_page")) {
-    return `Got it, ${userName}. We can shape that into a small, realistic goal instead of a huge project.`;
+    return "Got it. Want to make that smaller and more realistic—like a 10-minute version?";
   }
 
   if (source?.startsWith("actions_page")) {
-    return `Thanks, ${userName}. Let’s turn that into one tiny action you could actually try this week, not a full system.`;
+    return "Okay. What’s the smallest action you could do once—just to start momentum?";
   }
 
   if (source?.startsWith("notifications_page")) {
-    return `I hear you, ${userName}. Let’s focus on the one update here that would reduce stress the most.`;
+    return "I hear you. Which one thing here would reduce stress the most if it were handled?";
   }
 
   if (source?.includes("questions")) {
-    return `Thanks for sharing that, ${userName}. There’s a lot in what you just said—we can slow down and unpack it one piece at a time.`;
+    return "Thanks for sharing. What part of that feels most important to you right now?";
   }
 
   if (source?.includes("carousel") || source?.includes("youmap")) {
-    return `That helps, ${userName}. Let’s connect what you just said to how your profile is reading you so far.`;
+    return "That helps. What part feels most accurate—or most surprising?";
   }
 
-  return `Got it, ${userName}. Let’s stay with this for a moment and see what would actually help you next.`;
+  return t.length < 6
+    ? "Want to say a bit more, or should I ask you a simpler question?"
+    : "Got it. What’s the next tiny step that would make this feel lighter?";
 }
 
 export function AiGuideHost() {
@@ -96,14 +99,13 @@ export function AiGuideHost() {
 
   const [input, setInput] = useState("");
   const [isFading, setIsFading] = useState(false);
+  const [listening, setListening] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resetTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "80px";
-    }
+    if (textareaRef.current) textareaRef.current.style.height = "80px";
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -115,9 +117,7 @@ export function AiGuideHost() {
   };
 
   const runFadeToLine = (nextLine: string) => {
-    if (fadeTimeoutRef.current) {
-      clearTimeout(fadeTimeoutRef.current);
-    }
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
 
     setIsFading(true);
     fadeTimeoutRef.current = setTimeout(() => {
@@ -131,7 +131,6 @@ export function AiGuideHost() {
     if (!trimmed) return;
 
     const response = placeholderResponse(trimmed, state.source);
-
     setInput("");
     resetTextareaHeight();
     runFadeToLine(response);
@@ -150,13 +149,12 @@ export function AiGuideHost() {
   };
 
   const handleClose = useCallback(() => {
-    if (fadeTimeoutRef.current) {
-      clearTimeout(fadeTimeoutRef.current);
-    }
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
     setState((prev) => ({ ...prev, open: false }));
     setInput("");
     resetTextareaHeight();
     setIsFading(false);
+    setListening(false);
   }, []);
 
   useEffect(() => {
@@ -165,9 +163,7 @@ export function AiGuideHost() {
       const detail = custom.detail || {};
       const line = greetingFromSource(detail.source);
 
-      if (fadeTimeoutRef.current) {
-        clearTimeout(fadeTimeoutRef.current);
-      }
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
 
       setState({
         open: true,
@@ -179,6 +175,7 @@ export function AiGuideHost() {
       setInput("");
       resetTextareaHeight();
       setIsFading(false);
+      setListening(false);
     };
 
     window.addEventListener("everleap-open-ai-guide", handler as EventListener);
@@ -193,12 +190,7 @@ export function AiGuideHost() {
   if (!state.open) return null;
 
   return (
-    <div
-      className="
-        fixed inset-0 z-[9999] flex items-center justify-center
-        bg-slate-950/70 backdrop-blur-sm
-      "
-    >
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
       {/* Click-outside overlay */}
       <button
         type="button"
@@ -207,7 +199,7 @@ export function AiGuideHost() {
         onClick={handleClose}
       />
 
-      {/* Centered guide card, sized & styled like Story panel */}
+      {/* Centered guide card */}
       <div
         className="
           relative z-10 w-full max-w-3xl mx-4
@@ -220,10 +212,9 @@ export function AiGuideHost() {
         <div className="pointer-events-none absolute inset-0 rounded-[36px] bg-gradient-to-br from-sky-500/30 via-fuchsia-500/22 to-amber-400/24 blur-3xl opacity-80" />
 
         <div className="relative flex flex-col gap-4">
-          {/* Header: orb + label + close */}
+          {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              {/* HAL orb */}
               <div className="relative h-12 w-12">
                 <div className="absolute inset-0 rounded-full bg-sky-500/25 blur-md animate-pulse" />
                 <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-900/90 shadow-[0_0_45px_rgba(56,189,248,0.95)]">
@@ -234,11 +225,9 @@ export function AiGuideHost() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300">
-                  Everleap guide
-                </p>
-              </div>
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300">
+                Everleap guide
+              </p>
             </div>
 
             <button
@@ -249,12 +238,13 @@ export function AiGuideHost() {
                 rounded-full bg-slate-900/80 text-slate-400
                 hover:text-slate-100 hover:bg-slate-800
               "
+              aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          {/* Conversation line with fade */}
+          {/* Conversation line */}
           <p
             className={`
               text-sm sm:text-base text-slate-100
@@ -265,7 +255,7 @@ export function AiGuideHost() {
             {state.line}
           </p>
 
-          {/* Big gradient-framed text area, mirroring Story page */}
+          {/* Input bubble */}
           <form onSubmit={handleSubmit} className="mt-1 space-y-2">
             <div className="relative rounded-[32px] bg-gradient-to-br from-sky-500/60 via-fuchsia-500/60 to-amber-400/60 p-[1px]">
               <div className="relative flex items-end gap-3 rounded-[32px] bg-slate-950/85 px-4 py-3 sm:px-5 sm:py-4">
@@ -284,20 +274,23 @@ export function AiGuideHost() {
                   "
                 />
 
-                <div className="flex flex-col items-center gap-2 pb-1">
-                  <button
-                    type="button"
-                    className="
-                      inline-flex h-9 w-9 items-center justify-center
-                      rounded-full bg-slate-900/90 border border-slate-600
-                      text-slate-100 shadow-lg shadow-slate-950/70
-                      hover:bg-slate-800 active:scale-95 transition
-                    "
-                    aria-label="Speak instead"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setListening((p) => !p)} // still mock; keep parity with UI
+                  className={`
+                    inline-flex h-11 w-11 items-center justify-center rounded-full border
+                    transition active:scale-95
+                    ${
+                      listening
+                        ? "border-rose-300/60 bg-rose-500/15 text-rose-100 shadow-[0_0_24px_rgba(244,63,94,0.35)]"
+                        : "border-white/15 bg-slate-950/35 text-slate-100 hover:border-sky-300/60 hover:bg-slate-950/50"
+                    }
+                  `}
+                  aria-label={listening ? "Stop listening" : "Start listening"}
+                  title={listening ? "Listening…" : "Talk instead of typing"}
+                >
+                  <Mic className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </form>

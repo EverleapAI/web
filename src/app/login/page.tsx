@@ -1,135 +1,214 @@
 "use client";
 
 import * as React from "react";
-import {
-  fetchJson,
-  performAuthentication,
-  performRegistration,
-  hydrateSession,
-  Endpoints,
-  parseContact,
-  type AuthnOptionsResponse,
-  type RegOptionsResponse,
-} from "@/lib/passkey";
+import type { CSSProperties } from "react";
 
-/**
- * Everleap Passwordless Entry
- * --------------------------------------------------
- * Unified login + registration using WebAuthn passkeys.
- *
- * Flow:
- *  1) User enters email or phone → Continue
- *  2) Try authentication options (auth.options)
- *  3) If UNKNOWN_CONTACT → switch to registration (register.options)
- *  4) Complete passkey flow (get() or create())
- *  5) Verify → hydrate → redirect
- */
+import BrandBadge from "@/components/site/BrandBadge";
+import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
+
+import {
+  INSIGHTS_THEMES,
+  GRADIENT_CONFIGS,
+  getPageBackgroundImage,
+  isDarkTheme,
+  SpotlightThemeId,
+  GradientLevel,
+} from "@/theme/everleapVisuals";
+
+/* ========= Local Theme Toggle (same pattern as Privacy) ========= */
+
+function ThemeToggle({
+  activeId,
+  onChange,
+}: {
+  activeId: SpotlightThemeId;
+  onChange: (id: SpotlightThemeId) => void;
+}) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/80 px-1 py-1 text-[0.65rem] shadow-sm">
+      {INSIGHTS_THEMES.map((theme) => {
+        const active = theme.id === activeId;
+        return (
+          <button
+            key={theme.id}
+            onClick={() => onChange(theme.id)}
+            className={`h-5 w-5 rounded-full transition ${
+              active
+                ? "bg-sky-300 shadow-sm shadow-sky-300/60"
+                : "bg-slate-800/80 hover:bg-slate-700/80"
+            }`}
+            aria-label={theme.label}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/* ========= Local Gradient Toggle (same pattern as Privacy) ========= */
+
+function GradientToggle({
+  activeLevel,
+  onChange,
+}: {
+  activeLevel: GradientLevel;
+  onChange: (l: GradientLevel) => void;
+}) {
+  const levels: GradientLevel[] = [0, 1, 2, 3, 4, 5];
+
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/80 px-1 py-1 text-[0.65rem] shadow-sm">
+      {levels.map((level) => {
+        const isActive = level === activeLevel;
+        const isZero = level === 0;
+        return (
+          <button
+            key={level}
+            onClick={() => onChange(level)}
+            className={`flex items-center justify-center rounded-full transition ${
+              isZero
+                ? isActive
+                  ? "h-4 w-4 border border-amber-300 bg-transparent"
+                  : "h-4 w-4 border border-slate-600/80 bg-transparent hover:border-slate-400"
+                : isActive
+                ? "h-4 w-4 bg-amber-300 shadow-sm shadow-amber-300/60"
+                : "h-4 w-4 bg-slate-800/80 hover:bg-slate-700/80"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/* ========= Main Page ========= */
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = React.useState("");
-  const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
+  const [gradientLevel, setGradientLevel] =
+    React.useState<GradientLevel>(3);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const theme =
+    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  const gradient =
+    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
+    GRADIENT_CONFIGS[3];
+
+  const dark = isDarkTheme(themeId);
+
+  const bgImage =
+    gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
+  const bgStyle: CSSProperties = bgImage ? { backgroundImage: bgImage } : {};
+
+  const cardShadow = dark
+    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
+    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
+
+  const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
+  const mutedText = dark ? "text-slate-400/90" : "text-slate-500";
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-
-    const contact = parseContact(identifier);
-    if (!contact) {
-      setError("Enter a valid email or phone number.");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      // 1️⃣ Attempt authentication first
-      const auth = await fetchJson<AuthnOptionsResponse>(Endpoints.auth.options[0], {
-        method: "POST",
-        body: JSON.stringify({ contact }),
-      });
-
-      if (!auth.ok && auth.error === "UNKNOWN_CONTACT") {
-        // 2️⃣ New user → begin registration flow
-        const reg = await fetchJson<RegOptionsResponse>(Endpoints.register.options[0], {
-          method: "POST",
-          body: JSON.stringify({ contact }),
-        });
-
-        if (!reg.ok) throw new Error(reg.error || "Registration failed to start.");
-
-        // Create new passkey credential
-        const attestation = await performRegistration(reg.options);
-
-        // Verify registration
-        await fetchJson(Endpoints.register.verify[0], {
-          method: "POST",
-          body: JSON.stringify(attestation),
-        });
-
-        await hydrateSession();
-        window.location.assign("/dashboard");
-        return;
-      }
-
-      if (!auth.ok) throw new Error(auth.error || "Sign-in failed. Try again.");
-
-      // 3️⃣ Existing user → authenticate
-      const assertion = await performAuthentication(auth.options);
-
-      await fetchJson(Endpoints.auth.verify[0], {
-        method: "POST",
-        body: JSON.stringify(assertion),
-      });
-
-      await hydrateSession();
-      window.location.assign("/dashboard");
-    } catch (err: unknown) {
-      console.error("Auth error:", err);
-      if (err instanceof Error) {
-        setError(err.message || "Something went wrong.");
-      } else {
-        setError("Something went wrong.");
-      }
-    } finally {
-      setBusy(false);
-    }
+    // No real auth for now — just go to Spotlight
+    window.location.assign("/main");
   }
 
   return (
-    <main className="flex flex-col justify-center min-h-screen px-6 bg-white">
-      <div className="mx-auto w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-center">Sign in securely</h1>
-        <p className="text-gray-500 text-center mt-2">
-          Use your passkey — no passwords needed.
-        </p>
-
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <input
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="Email or phone"
-            autoComplete="username"
-            className="w-full border border-gray-300 rounded-xl h-12 px-4 text-base focus:ring-2 focus:ring-blue-500 focus:outline-none"
+    <div
+      className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
+      style={bgStyle}
+    >
+      {/* Ambient blobs */}
+      {gradientLevel > 0 && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ opacity: gradient.ambientOpacity }}
+        >
+          <div
+            className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
           />
+          <div
+            className={`absolute top-40 -right-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+          />
+        </div>
+      )}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full h-12 rounded-xl bg-blue-600 text-white text-base font-medium hover:bg-blue-700 disabled:opacity-60"
-          >
-            {busy ? "Processing…" : "Continue"}
-          </button>
-        </form>
-
-        {error && (
-          <p className="mt-4 text-center text-sm text-red-600">{error}</p>
-        )}
-
-        <p className="mt-8 text-xs text-center text-gray-400">
-          Everleap • Secure by WebAuthn
-        </p>
+      {/* Top-right toggles (mobile-safe, like Privacy) */}
+      <div className="fixed right-4 top-20 z-50 flex flex-col gap-2 md:right-6 md:top-6 md:flex-row">
+        <ThemeToggle activeId={themeId} onChange={setThemeId} />
+        <GradientToggle
+          activeLevel={gradientLevel}
+          onChange={setGradientLevel}
+        />
       </div>
-    </main>
+
+      {/* Everleap badge */}
+      <BrandBadge />
+
+      {/* Main content */}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
+        <section className="w-full max-w-md">
+          <div
+            className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}
+            role="region"
+            aria-labelledby="login-title"
+          >
+            {/* Header copy */}
+            <div className="mb-5">
+              <p className={theme.sectionLabelClass}>Everleap · Sign in</p>
+
+              <h1
+                id="login-title"
+                className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl"
+              >
+                Sign in securely
+              </h1>
+
+              <p className={`mt-2 text-sm ${mutedText}`}>
+                Use the email or phone you shared with Everleap. If you’re new,
+                we’ll still walk you into the app.
+              </p>
+            </div>
+
+            {/* Simple, fake form – just routes to Spotlight */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <label className="block text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
+                Email or phone
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="you@example.com or (555) 555-1234"
+                  className={`mt-1 w-full rounded-xl border bg-transparent px-3 py-2.5 text-sm outline-none transition ${
+                    dark
+                      ? "border-slate-700/80 text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:ring-1 focus:ring-sky-400/60"
+                      : "border-slate-300/80 text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-400/70 bg-slate-950/5"
+                  }`}
+                />
+              </label>
+
+              <button
+                type="submit"
+                className={`mt-2 inline-flex w-full items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
+                  dark
+                    ? "bg-sky-400 text-slate-950 hover:bg-sky-300"
+                    : "bg-sky-500 text-white hover:bg-sky-400"
+                }`}
+              >
+                Continue to Everleap
+              </button>
+
+              <p className={`mt-2 text-[0.7rem] ${mutedText}`}>
+                No passwords here—just a simple way back into your Everleap
+                journey.
+              </p>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <OnboardingFooterNav />
+    </div>
   );
 }

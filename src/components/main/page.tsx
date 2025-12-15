@@ -4,10 +4,7 @@
 import { useState } from "react";
 import { MainCarousel } from "@/components/main/MainCarousel";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import {
-  mainCarouselCards,
-  type MainCardId,
-} from "@/app/main/mainCarouselData";
+import { mainCarouselCards, type MainCardId } from "@/app/main/mainCarouselData";
 
 export default function MainPage() {
   const [activeCardId, setActiveCardId] = useState<MainCardId>("spotlight");
@@ -22,26 +19,7 @@ export default function MainPage() {
         />
       </div>
 
-      {/* New self-contained bottom nav */}
       <BottomNav />
     </main>
-  );
-}
-
-interface PlaceholderPanelProps {
-  title: string;
-  subtitle: string;
-  body: string;
-}
-
-function PlaceholderPanel({ title, subtitle, body }: PlaceholderPanelProps) {
-  return (
-    <section className="mt-4 flex-1 rounded-3xl border border-white/10 bg-slate-900/70 p-5 shadow-[0_0_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl md:p-7">
-      <h1 className="text-xl font-semibold text-slate-50 md:text-2xl">
-        {title}
-      </h1>
-      <p className="mt-2 max-w-2xl text-sm text-slate-200/85">{subtitle}</p>
-      <p className="mt-4 max-w-2xl text-sm text-slate-200/80">{body}</p>
-    </section>
   );
 }

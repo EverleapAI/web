@@ -32,9 +32,9 @@ export default function HomePage() {
   }, [motionOk, videoError]);
 
   return (
-    <div className="relative min-h-[100svh] flex flex-col bg-app">
-      {/* Background video layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className="relative flex min-h-[100svh] flex-col bg-app">
+      {/* Background video */}
+      <div className="pointer-events-none absolute inset-0 z-0">
         {!videoError && (
           <video
             ref={videoRef}
@@ -50,55 +50,41 @@ export default function HomePage() {
             <source src="/video/background.mp4" type="video/mp4" />
           </video>
         )}
-        {/* Light, top-only scrim so the badge stays readable */}
-        <div className="absolute inset-x-0 top-0 h-24 top-scrim pointer-events-none" />
+
+        {/* Top + bottom scrims for readability */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 top-scrim" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/75 via-black/40 to-transparent" />
       </div>
 
-      {/* Floating brand badge (replaces full header on Home) */}
       <BrandBadge />
 
-      {/* Center the hero */}
-      <main className="relative z-10 flex-1 grid place-items-center px-4">
-        <section className="w-full max-w-4xl text-center py-16">
-          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-            Build a future you’re excited about—your pace, your way
-          </h1>
-          <p className="mt-4 text-base md:text-lg text-white/90 max-w-3xl mx-auto">
-            Everleap helps students and supporters explore options, plan paths,
-            and make confident, meaningful choices—at their own pace.
-          </p>
-
-          <div className="mt-8 flex flex-col items-center justify-center gap-3">
-            <Link
-              href="/consent"
-              className="inline-flex items-center justify-center rounded-xl bg-[rgb(var(--accent-rgb))] px-5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-black/20 transition-transform hover:opacity-95 active:scale-[0.99]"
-            >
-              Get started
-            </Link>
-
-            {/* Inline, non-intrusive links */}
-            <Link
-              href="/contact"
-              className="text-white/85 hover:text-white underline underline-offset-2 text-sm"
-            >
-              Questions? Contact us
-            </Link>
-
-            {/* New: Already a member? Log In */}
-            <p className="text-white/85 text-sm">
-              Already a member?{" "}
-              <Link
-                href="/login"
-                className="underline underline-offset-2 hover:text-white"
-              >
-                Log In
-              </Link>
+      {/* Centered hero card */}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4">
+        <section className="w-full max-w-3xl">
+          <div className="w-full rounded-3xl border border-white/12 bg-slate-950/70 px-6 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.8)] backdrop-blur-md md:px-8 md:py-10">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-sky-200/80">
+              Everleap · Your guide
             </p>
+
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+              Let&apos;s talk about what&apos;s next for you.
+            </h1>
+
+            <p className="mt-4 mx-auto max-w-xl text-sm text-white/85 md:text-base">
+              Big dreams start with small conversations. Let’s begin.
+            </p>
+
+            <div className="mt-7 flex justify-center md:mt-8">
+              <Link
+                href="/consent"
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/5 px-6 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition hover:bg-white/10 active:scale-[0.99]"
+              >
+                Start talking to Everleap
+              </Link>
+            </div>
           </div>
         </section>
       </main>
-
-      {/* No footer on the hero page */}
     </div>
   );
 }
