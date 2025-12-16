@@ -1,13 +1,14 @@
+// src/app/main/questions/page.tsx
 "use client";
 
 import * as React from "react";
 import { AppChrome } from "@/components/site/AppChrome";
-import { BottomNav } from "@/components/navigation/BottomNav";
 import QuestionFlow from "./QuestionFlow";
 
 import type { SpotlightThemeId, GradientLevel } from "@/theme/everleapVisuals";
 
 export default function QuestionsPage() {
+  // Keep consistent with Spotlight defaults
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
@@ -20,12 +21,7 @@ export default function QuestionsPage() {
       orbSource="questions_orb"
       ambientCap={0.35}
     >
-      <div className="relative flex min-h-[100svh] flex-col">
-        <main className="relative z-10 flex-1 pb-24">
-          <QuestionFlow />
-        </main>
-        <BottomNav />
-      </div>
+      <QuestionFlow />
     </AppChrome>
   );
 }

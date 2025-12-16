@@ -1,13 +1,19 @@
-// src/app/main/questions/QuestionFlow.tsx
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Mic, Send } from "lucide-react";
+import { Mic, MicOff, Send } from "lucide-react";
 
-import { BottomNav } from "@/components/navigation/BottomNav";
+type Category = "motivations" | "strengths" | "skills";
 
-type QA = { id: string; question: string; answer?: string; skipped?: boolean };
+type QA = {
+  id: string;
+  category: Category;
+  question: string;
+};
+
+type Saved = { answer?: string; skipped?: boolean };
 
 type SpeechRecognitionConstructor = {
   new (): SpeechRecognition;
@@ -21,10 +27,74 @@ declare global {
 }
 
 const TOTAL = 30;
+const STORAGE_KEY = "everleap.story.answers.v1";
+const ONBOARDING_KEY = "everleapOnboarding_v1"; // for name (if present)
 
-const PLACEHOLDER_QUESTIONS: QA[] = Array.from({ length: TOTAL }).map((_, i) => ({
-  id: `q_${i + 1}`,
-  question: [
+const TYPE_SPEED_MS = 28;
+
+function loadSaved(): Record<string, Saved> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed as Record<string, Saved>;
+  } catch {
+    return {};
+  }
+}
+
+function saveOne(id: string, payload: Saved) {
+  if (typeof window === "undefined") return;
+  const current = loadSaved();
+  current[id] = payload;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  } catch {
+    // ignore
+  }
+}
+
+function readNameFromOnboarding(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const raw = window.localStorage.getItem(ONBOARDING_KEY);
+    if (!raw) return "";
+    const parsed = JSON.parse(raw) as { name?: string } | null;
+    return (parsed?.name ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** same heuristic you used elsewhere */
+function isMeaningfulText(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length < 3) return false;
+
+  const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, "");
+  if (!lettersOnly) return false;
+
+  const unique = new Set(lettersOnly.toLowerCase()).size;
+  if (unique <= 2) return false;
+
+  const squashed = trimmed.replace(/\s+/g, "");
+  if (/^(.)\1{6,}$/i.test(squashed)) return false;
+
+  return true;
+}
+
+/* ============================================================
+   Questions
+   ============================================================ */
+
+const QUESTIONS: QA[] = Array.from({ length: TOTAL }).map((_, i) => {
+  const idx = i + 1;
+  const category: Category =
+    idx <= 10 ? "motivations" : idx <= 20 ? "strengths" : "skills";
+
+  const questionBank = [
     "What usually gives you energy during the day?",
     "When do you feel most focused?",
     "What drains you faster than it should?",
@@ -35,122 +105,181 @@ const PLACEHOLDER_QUESTIONS: QA[] = Array.from({ length: TOTAL }).map((_, i) => 
     "What’s something you’re proud of that most people don’t see?",
     "What does a “good day” look like for you?",
     "What’s one thing you want more of in your life right now?",
-  ][i % 10],
-}));
+  ];
 
-const STORAGE_KEY = "everleap.story.answers.v1";
-const TRANSITION_MS = 180;
+  return {
+    id: `q_${idx}`,
+    category,
+    question: questionBank[i % questionBank.length],
+  };
+});
 
-function loadSaved(): Record<string, { answer?: string; skipped?: boolean }> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-    return parsed as Record<string, { answer?: string; skipped?: boolean }>;
-  } catch {
-    return {};
-  }
+/* ============================================================
+   Typing hook
+   ============================================================ */
+
+function useTypewriter(text: string, speedMs: number, enabled: boolean) {
+  const [out, setOut] = React.useState("");
+
+  React.useEffect(() => {
+    if (!enabled) {
+      setOut(text);
+      return;
+    }
+
+    let cancelled = false;
+    let i = 0;
+    setOut("");
+
+    const tick = () => {
+      if (cancelled) return;
+      i += 1;
+      setOut(text.slice(0, i));
+      if (i < text.length) window.setTimeout(tick, speedMs);
+    };
+
+    const t = window.setTimeout(tick, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [text, speedMs, enabled]);
+
+  const done = out.length >= text.length;
+  return { typed: out, done };
 }
 
-function saveOne(id: string, payload: { answer?: string; skipped?: boolean }) {
-  if (typeof window === "undefined") return;
-  const current = loadSaved();
-  current[id] = payload;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-  } catch {
-    // ignore storage failures
-  }
+/* ============================================================
+   Branch copy helpers (comment + question)
+   ============================================================ */
+
+function buildBranchPrefix(name?: string) {
+  const n = (name ?? "").trim();
+  // comment only; question comes after (the real next question)
+  return n ? `Ok cool, ${n}. Let’s keep the momentum:` : "Ok cool. Let’s keep the momentum:";
 }
+
+function buildRetryBranchPrompt(name?: string) {
+  const n = (name ?? "").trim();
+  // Must end with a question:
+  return n
+    ? `Hmm, ${n} — I didn’t quite catch that.\n\nTry one real sentence (even short). What’s a true answer for you?`
+    : "Hmm — I didn’t quite catch that.\n\nTry one real sentence (even short). What’s a true answer for you?";
+}
+
+function buildSkipBranchPrefix(name?: string) {
+  const n = (name ?? "").trim();
+  return n ? `All good, ${n}. Next one:` : "All good. Next one:";
+}
+
+/* ============================================================
+   Badge UI helpers
+   ============================================================ */
+
+const BADGES: Array<{
+  id: Category;
+  label: string;
+  imgSrc: string;
+  startIdx: number;
+  endIdx: number;
+}> = [
+  { id: "motivations", label: "Motivations", imgSrc: "/motivations.png", startIdx: 0, endIdx: 9 },
+  { id: "strengths", label: "Strengths", imgSrc: "/strengths.png", startIdx: 10, endIdx: 19 },
+  { id: "skills", label: "Skills", imgSrc: "/skills.png", startIdx: 20, endIdx: 29 },
+];
+
+function countAnswered(saved: Record<string, Saved>, startIdx: number, endIdx: number) {
+  let c = 0;
+  for (let i = startIdx; i <= endIdx; i += 1) {
+    const id = `q_${i + 1}`;
+    const s = saved[id];
+    if (s?.answer && s.answer.trim()) c += 1;
+  }
+  return c;
+}
+
+/* ============================================================
+   Component
+   ============================================================ */
+
+type PromptStyle = "normal" | "branch";
 
 export default function QuestionFlow() {
   const router = useRouter();
 
+  const [name, setName] = React.useState("");
+
   const [index, setIndex] = React.useState(0);
+
+  // draft answer
   const [draft, setDraft] = React.useState("");
-  const [listening, setListening] = React.useState(false);
-  const [speechInterim, setSpeechInterim] = React.useState("");
 
-  // ✅ transition state
-  const [transitioning, setTransitioning] = React.useState(false);
+  // branch styling / prefix (comment + question)
+  const [promptStyle, setPromptStyle] = React.useState<PromptStyle>("normal");
+  const [branchPrefix, setBranchPrefix] = React.useState<string | null>(null);
 
+  // a temporary “branch prompt” override (used for retry after garbage)
+  const [overridePrompt, setOverridePrompt] = React.useState<string | null>(null);
+
+  // hydration-safe localStorage state (prevents mismatch)
+  const [mounted, setMounted] = React.useState(false);
+  const [liveSaved, setLiveSaved] = React.useState<Record<string, Saved>>({});
+
+  // speech
+  const [isListening, setIsListening] = React.useState(false);
+  const [speechSupported, setSpeechSupported] = React.useState(true);
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
+  const lastFinalRef = React.useRef<string>("");
+
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const transitionTimerRef = React.useRef<number | null>(null);
 
-  const q = PLACEHOLDER_QUESTIONS[index] ?? PLACEHOLDER_QUESTIONS[0];
+  const q = QUESTIONS[index] ?? QUESTIONS[0];
 
-  const autosize = React.useCallback(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "0px";
-    el.style.height = `${el.scrollHeight}px`;
+  React.useEffect(() => {
+    setName(readNameFromOnboarding());
   }, []);
 
-  const clearComposer = React.useCallback(() => {
-    // ✅ key fix: wipe the input immediately so next answer starts fresh
-    setDraft("");
-    setSpeechInterim("");
-    requestAnimationFrame(autosize);
-  }, [autosize]);
-
-  const goToNextWithAnimation = React.useCallback(
-    (nextIndex: number) => {
-      if (transitioning) return;
-
-      // fade out current screen
-      setTransitioning(true);
-
-      // clear any pending timers
-      if (transitionTimerRef.current) {
-        window.clearTimeout(transitionTimerRef.current);
-        transitionTimerRef.current = null;
-      }
-
-      transitionTimerRef.current = window.setTimeout(() => {
-        // if finished, exit funnel
-        if (nextIndex >= TOTAL) {
-          router.push("/main");
-          return;
-        }
-
-        setIndex(nextIndex);
-
-        // fade back in on next frame (so transition applies)
-        requestAnimationFrame(() => {
-          setTransitioning(false);
-        });
-      }, TRANSITION_MS);
-    },
-    [router, transitioning]
-  );
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
-    // hydrate draft from localStorage if present
-    const saved = loadSaved()[q.id];
-    if (saved?.answer) setDraft(saved.answer);
-    else setDraft("");
-    setSpeechInterim("");
+    if (!mounted) return;
 
-    requestAnimationFrame(autosize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const refresh = () => setLiveSaved(loadSaved());
+    refresh();
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) refresh();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [mounted, index]);
+
+  // hydrate draft when question changes (blank unless previously answered)
+  React.useEffect(() => {
+    const s = loadSaved()[q.id];
+    if (s?.answer) setDraft(s.answer);
+    else setDraft("");
+    lastFinalRef.current = "";
   }, [q.id]);
 
+  // speech supported
   React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") router.push("/main");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [router]);
+    if (typeof window === "undefined") return;
+    const SpeechRec =
+      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+    setSpeechSupported(Boolean(SpeechRec));
+  }, []);
 
   React.useEffect(() => {
     return () => {
-      if (transitionTimerRef.current) {
-        window.clearTimeout(transitionTimerRef.current);
-      }
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -161,39 +290,12 @@ export default function QuestionFlow() {
     };
   }, []);
 
-  const submit = React.useCallback(() => {
-    if (transitioning) return;
-
-    const text = (draft + (speechInterim ? ` ${speechInterim}` : "")).trim();
-    if (!text) return;
-
-    saveOne(q.id, { answer: text, skipped: false });
-
-    // ✅ blank out immediately so we never append into the next question
-    clearComposer();
-
-    goToNextWithAnimation(index + 1);
-  }, [transitioning, draft, speechInterim, q.id, clearComposer, goToNextWithAnimation, index]);
-
-  const skip = React.useCallback(() => {
-    if (transitioning) return;
-
-    saveOne(q.id, { answer: undefined, skipped: true });
-
-    clearComposer();
-
-    goToNextWithAnimation(index + 1);
-  }, [transitioning, q.id, clearComposer, goToNextWithAnimation, index]);
-
   function getOrCreateRecognition(): SpeechRecognition | null {
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
 
     const SpeechRec =
-      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-        | SpeechRecognitionConstructor
-        | undefined;
-
+      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
     if (!SpeechRec) return null;
 
     const rec = new SpeechRec();
@@ -203,55 +305,56 @@ export default function QuestionFlow() {
     rec.continuous = false;
 
     rec.onresult = (event: SpeechRecognitionEvent) => {
+      // Only commit final chunks; do not show interim text at all.
       let finalChunk = "";
-      let interimChunk = "";
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const res = event.results[i];
-        const text = (res?.[0]?.transcript ?? "").trim();
-        if (!text) continue;
-
-        if (res.isFinal) finalChunk += (finalChunk ? " " : "") + text;
-        else interimChunk += (interimChunk ? " " : "") + text;
+        const t = (res?.[0]?.transcript ?? "").trim();
+        if (!t) continue;
+        if (res.isFinal) finalChunk += (finalChunk ? " " : "") + t;
       }
 
-      if (interimChunk) setSpeechInterim(interimChunk);
+      const cleaned = finalChunk.trim();
+      if (!cleaned) return;
 
-      if (finalChunk) {
-        setDraft((prev) => {
-          const base = prev.trim();
-          return base ? `${base} ${finalChunk}` : finalChunk;
-        });
-        setSpeechInterim("");
-      }
+      if (cleaned === lastFinalRef.current) return;
+      lastFinalRef.current = cleaned;
 
-      requestAnimationFrame(autosize);
+      setDraft((prev) => {
+        const base = prev.trim();
+        return base ? `${base} ${cleaned}` : cleaned;
+      });
     };
 
     rec.onerror = () => {
-      setListening(false);
-      setSpeechInterim("");
+      setIsListening(false);
     };
-
     rec.onend = () => {
-      setListening(false);
-      setSpeechInterim("");
+      setIsListening(false);
     };
 
     recognitionRef.current = rec;
     return rec;
   }
 
-  const toggleListening = () => {
-    if (transitioning) return;
+  function stopListening() {
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // ignore
+    }
+    setIsListening(false);
+  }
 
-    // stop
-    if (listening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
+  function toggleMic() {
+    textareaRef.current?.focus();
+    setDraft("");
+    lastFinalRef.current = "";
+
+    if (isListening) {
+      stopListening();
       return;
     }
 
@@ -259,71 +362,224 @@ export default function QuestionFlow() {
     if (!rec) return;
 
     try {
-      setListening(true);
-      setSpeechInterim("");
+      setIsListening(true);
       rec.start();
     } catch {
-      setListening(false);
+      setIsListening(false);
     }
-  };
+  }
 
-  const sendEnabled = Boolean(draft.trim() || speechInterim.trim());
+  function goToIndex(nextIndex: number, opts?: { branch?: boolean; prefix?: string | null }) {
+    setOverridePrompt(null);
+
+    setIndex(() => {
+      if (nextIndex >= TOTAL) {
+        router.push("/main");
+        return TOTAL - 1;
+      }
+      return Math.max(0, nextIndex);
+    });
+
+    const branch = Boolean(opts?.branch);
+    setPromptStyle(branch ? "branch" : "normal");
+    setBranchPrefix(branch ? opts?.prefix ?? buildBranchPrefix(name) : null);
+
+    // draft will re-hydrate via effect on q.id
+  }
+
+  function jumpToBadge(cat: Category) {
+    const badge = BADGES.find((b) => b.id === cat);
+    if (!badge) return;
+
+    const s = loadSaved();
+    for (let i = badge.startIdx; i <= badge.endIdx; i += 1) {
+      const id = `q_${i + 1}`;
+      const item = s[id];
+      if (!item?.answer || !item.answer.trim()) {
+        // jump = normal (not a “branch injection”)
+        goToIndex(i, { branch: false, prefix: null });
+        return;
+      }
+    }
+
+    goToIndex(badge.startIdx, { branch: false, prefix: null });
+  }
+
+  function submit() {
+    const text = draft.trim();
+    if (!text) return;
+
+    if (!isMeaningfulText(text)) {
+      // keep them on the same question, but show a branch-styled retry prompt
+      setDraft("");
+      stopListening();
+      setPromptStyle("branch");
+      setBranchPrefix(null);
+      setOverridePrompt(buildRetryBranchPrompt(name)); // ends with '?'
+      textareaRef.current?.focus();
+      return;
+    }
+
+    saveOne(q.id, { answer: text, skipped: false });
+    stopListening();
+
+    if (mounted) setLiveSaved(loadSaved());
+
+    // move to the next real question, but with a branch comment prefix
+    const next = index + 1;
+    goToIndex(next, { branch: true, prefix: buildBranchPrefix(name) });
+  }
+
+  function skip() {
+    saveOne(q.id, { answer: undefined, skipped: true });
+    stopListening();
+
+    if (mounted) setLiveSaved(loadSaved());
+
+    const next = index + 1;
+    goToIndex(next, { branch: true, prefix: buildSkipBranchPrefix(name) });
+  }
+
+  // Badge progress (hydration-safe)
+  const badgeStats = BADGES.map((b) => {
+    const source = mounted ? liveSaved : {};
+    const answered = countAnswered(source, b.startIdx, b.endIdx);
+    const total = b.endIdx - b.startIdx + 1;
+    return {
+      ...b,
+      answered,
+      total,
+      done: answered >= total,
+      active: q.category === b.id,
+    };
+  });
+
+  // Prompt text (either retry override, or branch prefix + question, or plain question)
+  const baseQuestion = q.question;
+  const promptText =
+    overridePrompt ??
+    (branchPrefix ? `${branchPrefix}\n\n${baseQuestion}` : baseQuestion);
+
+  const { typed } = useTypewriter(promptText, TYPE_SPEED_MS, true);
+
+  const isBranchStyled = promptStyle === "branch" || Boolean(overridePrompt);
+
+  const questionClass = isBranchStyled
+    ? "text-center text-2xl font-semibold tracking-tight text-sky-100 sm:text-3xl"
+    : "text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl";
+
+  const pillClass =
+    "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
 
   return (
     <div className="relative min-h-[100svh]">
-      {/* Subtle funnel fade layer (keeps AppChrome behind it) */}
+      {/* soft funnel tint */}
       <div className="pointer-events-none absolute inset-0 bg-slate-950/10" />
 
-      {/* Centered panel */}
-      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10 pb-28">
-        <div className="w-full max-w-4xl">
-          <div
-            className={`
-              relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px]
-              shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl
-              transition-all duration-200 ease-out
-              ${transitioning ? "opacity-0 translate-y-2 scale-[0.99]" : "opacity-100 translate-y-0 scale-100"}
-            `}
-          >
-            {/* Inner */}
+      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10">
+        <div className="w-full max-w-5xl">
+          <div className="relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px] shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
             <div className="relative rounded-[43px] bg-slate-950/35 px-6 py-10 sm:px-10 sm:py-12">
-              {/* Header label + dots */}
-              <div className="flex flex-col items-center gap-3">
-                <div className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-200/60">
-                  Your Story
-                </div>
+              {/* Badges row */}
+              <div className="mb-8 flex items-center justify-center gap-6">
+                {badgeStats.map((b) => {
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => jumpToBadge(b.id)}
+                      className={`group relative flex flex-col items-center gap-2 outline-none_toggle ${
+                        b.active ? "" : "opacity-80 hover:opacity-100"
+                      }`}
+                      aria-label={`Jump to ${b.label}`}
+                      title={`Jump to ${b.label}`}
+                    >
+                      <div
+                        className={`relative h-20 w-20 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-xl ${
+                          b.active
+                            ? "border-sky-300/60 bg-slate-950/40 shadow-[0_0_55px_rgba(56,189,248,0.25)]"
+                            : "border-white/10 bg-slate-950/35"
+                        }`}
+                      >
+                        <Image
+                          src={b.imgSrc}
+                          alt={b.label}
+                          fill
+                          sizes="80px"
+                          className="object-contain p-3"
+                          priority={b.active}
+                        />
 
-                {/* 30-dot progress (compact) */}
-                <div className="flex items-center gap-1.5">
-                  {Array.from({ length: TOTAL }).map((_, i) => {
-                    const on = i <= index;
-                    return (
-                      <span
-                        key={i}
-                        className={`h-1.5 w-1.5 rounded-full ${on ? "bg-sky-300" : "bg-white/10"}`}
-                      />
-                    );
-                  })}
-                </div>
+                        {b.done ? (
+                          <div className="absolute right-2 top-2 rounded-full bg-emerald-400/90 px-2 py-0.5 text-[0.65rem] font-bold text-slate-950">
+                            ✓
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="text-xs font-medium text-white/70">{b.label}</div>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: b.total }).map((_, i) => {
+                          const on = i < b.answered;
+                          const current = i === Math.min(b.answered, b.total - 1);
+                          return (
+                            <span
+                              key={i}
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                on ? "bg-sky-300" : "bg-white/10"
+                              } ${current ? "ring-2 ring-sky-300/30" : ""}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Question */}
-              <h1 className="mt-8 text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
-                {q.question}
-              </h1>
+              {/* Prompt */}
+              <div className="flex flex-col items-center">
+                <div className={pillClass}>Your Story</div>
 
-              {/* Input bubble (onboarding-style) */}
-              <div className="mt-10 flex justify-center">
-                <div className="w-full max-w-3xl">
+                <h1 className={questionClass}>
+                  {typed}
+                  <span className="ml-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.08em] animate-pulse rounded-sm bg-white/40" />
+                </h1>
+
+                {/* Mic under the prompt */}
+                <div className="mt-7 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={toggleMic}
+                    disabled={!speechSupported}
+                    className={`
+                      inline-flex h-12 w-12 items-center justify-center rounded-full border
+                      transition active:scale-95
+                      ${
+                        isListening
+                          ? "border-rose-300/80 bg-rose-500/20 text-rose-100 shadow-[0_0_38px_rgba(244,63,94,0.35)]"
+                          : "border-sky-300/70 bg-slate-900/40 text-slate-100 shadow-[0_0_34px_rgba(56,189,248,0.22)] hover:bg-slate-900/55"
+                      }
+                      ${!speechSupported ? "opacity-40 cursor-not-allowed" : ""}
+                    `}
+                    aria-label={isListening ? "Stop voice input" : "Start voice input"}
+                    title={
+                      !speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Talk instead of typing"
+                    }
+                  >
+                    {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </button>
+                </div>
+
+                {/* Input bubble */}
+                <div className="mt-8 w-full max-w-3xl">
                   <div className="relative rounded-[34px] bg-gradient-to-r from-sky-400/70 via-fuchsia-500/65 to-amber-300/65 p-[1px]">
                     <div className="relative flex items-end gap-3 rounded-[34px] bg-slate-950/65 px-4 py-4 sm:px-6 sm:py-5">
                       <textarea
                         ref={textareaRef}
                         value={draft}
-                        onChange={(e) => {
-                          setDraft(e.target.value);
-                          autosize();
-                        }}
+                        onChange={(e) => setDraft(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
@@ -331,7 +587,7 @@ export default function QuestionFlow() {
                           }
                         }}
                         rows={3}
-                        placeholder="Type here…"
+                        placeholder=""
                         className="
                           min-h-[84px] flex-1 resize-none bg-transparent
                           text-base text-slate-50 placeholder:text-slate-400/70
@@ -339,38 +595,18 @@ export default function QuestionFlow() {
                         "
                       />
 
-                      {/* Right controls: mic + send (like onboarding) */}
                       <div className="flex items-center gap-2 pb-1">
                         <button
                           type="button"
-                          onClick={toggleListening}
-                          disabled={transitioning}
-                          className={`
-                            inline-flex h-11 w-11 items-center justify-center rounded-full border
-                            transition active:scale-95 disabled:opacity-60
-                            ${
-                              listening
-                                ? "border-rose-300/60 bg-rose-500/15 text-rose-100 shadow-[0_0_24px_rgba(244,63,94,0.35)]"
-                                : "border-white/15 bg-slate-950/35 text-slate-100 hover:border-sky-300/60 hover:bg-slate-950/50"
-                            }
-                          `}
-                          aria-label={listening ? "Stop listening" : "Start listening"}
-                          title={listening ? "Listening…" : "Talk instead of typing"}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
-
-                        <button
-                          type="button"
                           onClick={submit}
-                          disabled={!sendEnabled || transitioning}
+                          disabled={!draft.trim()}
                           className={`
                             inline-flex h-11 w-11 items-center justify-center rounded-full
-                            transition active:scale-95 disabled:opacity-60
+                            transition active:scale-95
                             ${
-                              sendEnabled
+                              draft.trim()
                                 ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
-                                : "bg-white/10 text-slate-200/50"
+                                : "bg-white/10 text-slate-200/50 cursor-not-allowed"
                             }
                           `}
                           aria-label="Submit"
@@ -379,19 +615,11 @@ export default function QuestionFlow() {
                           <Send className="h-4 w-4" />
                         </button>
                       </div>
-
-                      {/* Interim caption (kept subtle) */}
-                      {speechInterim ? (
-                        <div className="pointer-events-none absolute left-6 top-3 text-[0.7rem] text-slate-200/60">
-                          Listening:{" "}
-                          <span className="text-slate-100/70">{speechInterim}</span>
-                        </div>
-                      ) : null}
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-6 flex items-center justify-center gap-8 text-sm text-slate-200/60">
+                  <div className="mt-6 flex items-center justify-center gap-10 text-sm text-slate-200/60">
                     <button type="button" onClick={skip} className="hover:text-slate-100">
                       I’m not sure
                     </button>
@@ -399,21 +627,14 @@ export default function QuestionFlow() {
                       Skip for now
                     </button>
                   </div>
-
-                  {/* Tiny progress label */}
-                  <div className="mt-6 text-center text-xs text-slate-200/45">
-                    Question {index + 1} of {TOTAL}
-                  </div>
                 </div>
               </div>
-              {/* /input */}
+
+              {/* (No “click to continue” hint anymore — everything is answerable) */}
             </div>
           </div>
         </div>
       </div>
-
-      {/* ✅ Use footer nav for exiting/going elsewhere */}
-      <BottomNav />
     </div>
   );
 }

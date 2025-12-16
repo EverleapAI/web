@@ -1,727 +1,908 @@
 // src/app/main/goals/page.tsx
 "use client";
 
+import * as React from "react";
 import {
-  useState,
-  useEffect,
-  type CSSProperties,
-} from "react";
-import {
-  Sparkles,
   ArrowRight,
-  Flame,
-  Moon,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Waves,
+  FlaskConical,
+  Search,
+  Zap,
+  Hammer,
+  Boxes,
+  RefreshCw,
+  CheckCircle2,
   Clock3,
-  HeartHandshake,
+  MessageCircle,
 } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { CoachIntroModal } from "@/components/main/CoachIntroModal";
+import { AppChrome } from "@/components/site/AppChrome";
 
-/* ========= Data types ========= */
+import {
+  isDarkTheme,
+  type SpotlightThemeId,
+  type GradientLevel,
+  INSIGHTS_THEMES,
+} from "@/theme/everleapVisuals";
 
-type GoalStatus = "not_started" | "in_progress" | "done";
+/* =========================
+   Guide helper (shared event)
+========================= */
 
-type GoalCard = {
+function openGuide(detail?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("everleap-open-ai-guide", {
+      detail: { source: "goals", ...(detail ?? {}) },
+    })
+  );
+}
+
+
+// fallback if CustomAvoidEvent isn’t defined in your env
+function CustomAvoidEvent(type: string, init?: CustomEventInit) {
+  return new CustomEvent(type, init);
+}
+
+/* =========================
+   Types + mock data
+========================= */
+
+type GoalStatus = "not_started" | "in_progress" | "done" | "idea";
+
+type AlignedGoal = {
   id: string;
-  kindChip: string;
   title: string;
   description: string;
+  nextStep: string;
   status: GoalStatus;
-  statusLabel: string;
-  moodTag?: string;
+  accent: "sky" | "violet" | "emerald" | "amber";
+  iconKey: "talk" | "glossary" | "field" | "read" | "build" | "test" | "map" | "ship";
 };
 
-type SpotlightThemeId =
-  | "nightDusk"
-  | "berrySoft"
-  | "forestSoft"
-  | "warmSand"
-  | "coolNotebook"
-  | "cleanPaper";
-
-type GradientLevel = 0 | 1 | 2 | 3 | 4 | 5;
-
-type GoalsTheme = {
-  id: SpotlightThemeId;
-  label: string;
-  pageBgBaseClass: string;
-  pageTextMutedClass: string;
-  sectionLabelClass: string;
-  ambientTopLeftClass: string;
-  ambientRightClass: string;
-  cardBgClass: string;
-  cardBorderClass: string;
-  chipBgClass: string;
-  chipBorderClass: string;
+type InsightRec = {
+  id: string;
+  title: string;
+  summary: string;
+  tags: { label: string; icon: React.ReactNode }[];
+  accent: "sky" | "violet" | "emerald" | "amber";
+  nextMove: {
+    title: string;
+    description: string;
+    nextStep: string;
+    whyChips: string[];
+    todayBullets: string[];
+    status: GoalStatus;
+  };
+  alignedIdeas: AlignedGoal[];
 };
 
-type GradientConfig = {
-  level: GradientLevel;
-  ambientOpacity: number;
-};
-
-/* ========= Sample data ========= */
-
-const myGoals: GoalCard[] = [
+const RECS: InsightRec[] = [
   {
-    id: "focus-test",
-    kindChip: "TINY EXPERIMENT",
-    title: "3-day focus test",
-    description:
-      "Pick one class or project. Try a 20-minute no-phone focus block each day for three days.",
-    status: "in_progress",
-    statusLabel: "In progress",
-    moodTag: "Energy check",
-  },
-  {
-    id: "after-school-reset",
-    kindChip: "ANCHOR HABIT",
-    title: "After-school reset",
-    description:
-      "When you get home, take 10 minutes to decompress before touching homework or your phone.",
-    status: "not_started",
-    statusLabel: "Not started yet",
-    moodTag: "Routine",
-  },
-  {
-    id: "weekly-checkin",
-    kindChip: "SUPPORT GOAL",
-    title: "Weekly check-in",
-    description:
-      "Text or talk to one trusted person once a week and share one win + one stress.",
-    status: "not_started",
-    statusLabel: "Not started yet",
-    moodTag: "Support",
-  },
-];
-
-const suggestedGoals: GoalCard[] = [
-  {
-    id: "screen-curfew",
-    kindChip: "RESET & RECHARGE",
-    title: "Screen curfew",
-    description:
-      "Pick two nights this week to put your phone away 30 minutes before sleep and see how you feel.",
-    status: "not_started",
-    statusLabel: "Suggestion",
-    moodTag: "Sleep",
-  },
-  {
-    id: "micro-progress",
-    kindChip: "TINY EXPERIMENT",
-    title: "Micro-progress log",
-    description:
-      "For 5 days, write down one tiny win each evening. School, friends, anything that counts as progress.",
-    status: "not_started",
-    statusLabel: "Suggestion",
-    moodTag: "Confidence",
-  },
-  {
-    id: "energy-scan",
-    kindChip: "REFLECT",
-    title: "Energy scan week",
-    description:
-      "Each day, note one thing that secretly energised you and one thing that drained you.",
-    status: "not_started",
-    statusLabel: "Suggestion",
-    moodTag: "Awareness",
-  },
-];
-
-/* ========= Themes (aligned with other pages) ========= */
-
-const GOALS_THEMES: GoalsTheme[] = [
-  {
-    id: "nightDusk",
-    label: "Night",
-    pageBgBaseClass: "bg-[#020617] text-slate-50",
-    pageTextMutedClass: "text-slate-300/90",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-400",
-    ambientTopLeftClass: "bg-indigo-400",
-    ambientRightClass: "bg-sky-400",
-    cardBgClass: "bg-slate-950/85",
-    cardBorderClass: "border-slate-800/80",
-    chipBgClass: "bg-slate-900/80",
-    chipBorderClass: "border-slate-700/80",
-  },
-  {
-    id: "berrySoft",
-    label: "Berry",
-    pageBgBaseClass: "bg-[#f7ecff] text-slate-900",
-    pageTextMutedClass: "text-slate-600",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-violet-500",
-    ambientTopLeftClass: "bg-fuchsia-200",
-    ambientRightClass: "bg-violet-200",
-    cardBgClass: "bg-white/95",
-    cardBorderClass: "border-fuchsia-100",
-    chipBgClass: "bg-fuchsia-50",
-    chipBorderClass: "border-fuchsia-100",
-  },
-  {
-    id: "forestSoft",
-    label: "Teal",
-    pageBgBaseClass: "bg-[#e7f5f1] text-slate-900",
-    pageTextMutedClass: "text-slate-600",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-500",
-    ambientTopLeftClass: "bg-emerald-200",
-    ambientRightClass: "bg-teal-200",
-    cardBgClass: "bg-white/95",
-    cardBorderClass: "border-emerald-100",
-    chipBgClass: "bg-emerald-50",
-    chipBorderClass: "border-emerald-100",
-  },
-  {
-    id: "warmSand",
-    label: "Sand",
-    pageBgBaseClass: "bg-[#f5ebe0] text-stone-900",
-    pageTextMutedClass: "text-stone-600",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-stone-500",
-    ambientTopLeftClass: "bg-amber-200",
-    ambientRightClass: "bg-orange-200",
-    cardBgClass: "bg-[#fdf7ef]/95",
-    cardBorderClass: "border-amber-200",
-    chipBgClass: "bg-amber-50",
-    chipBorderClass: "border-amber-100",
-  },
-  {
-    id: "coolNotebook",
-    label: "Cool",
-    pageBgBaseClass: "bg-[#e5f0ff] text-slate-900",
-    pageTextMutedClass: "text-slate-600",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500",
-    ambientTopLeftClass: "bg-sky-200",
-    ambientRightClass: "bg-indigo-200",
-    cardBgClass: "bg-white/95",
-    cardBorderClass: "border-slate-200",
-    chipBgClass: "bg-slate-50",
-    chipBorderClass: "border-slate-200",
-  },
-  {
-    id: "cleanPaper",
-    label: "Paper",
-    pageBgBaseClass: "bg-[#f9fafb] text-slate-900",
-    pageTextMutedClass: "text-slate-600",
-    sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500",
-    ambientTopLeftClass: "bg-slate-200",
-    ambientRightClass: "bg-amber-100",
-    cardBgClass: "bg-white/95",
-    cardBorderClass: "border-slate-200",
-    chipBgClass: "bg-slate-50",
-    chipBorderClass: "border-slate-200",
-  },
-];
-
-const GRADIENT_CONFIGS: GradientConfig[] = [
-  { level: 0, ambientOpacity: 0 },
-  { level: 1, ambientOpacity: 0.1 },
-  { level: 2, ambientOpacity: 0.18 },
-  { level: 3, ambientOpacity: 0.3 },
-  { level: 4, ambientOpacity: 0.45 },
-  { level: 5, ambientOpacity: 0.6 },
-];
-
-/* ========= Bg helper ========= */
-
-function getPageBackgroundImage(themeId: SpotlightThemeId): string {
-  switch (themeId) {
-    case "nightDusk":
-      return [
-        "radial-gradient(circle at top left, rgba(129,140,248,0.22), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(56,189,248,0.18), transparent 55%)",
-      ].join(", ");
-    case "berrySoft":
-      return [
-        "radial-gradient(circle at top left, rgba(244,219,255,0.9), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(234,222,255,0.8), transparent 55%)",
-      ].join(", ");
-    case "forestSoft":
-      return [
-        "radial-gradient(circle at top left, rgba(209,250,229,0.9), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(204,251,241,0.85), transparent 55%)",
-      ].join(", ");
-    case "warmSand":
-      return [
-        "radial-gradient(circle at top left, rgba(253,230,200,0.9), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(254,249,195,0.9), transparent 55%)",
-      ].join(", ");
-    case "coolNotebook":
-      return [
-        "radial-gradient(circle at top left, rgba(191,219,254,0.85), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(226,232,240,0.9), transparent 55%)",
-      ].join(", ");
-    case "cleanPaper":
-    default:
-      return [
-        "radial-gradient(circle at top left, rgba(248,250,252,1), transparent 55%)",
-        "radial-gradient(circle at bottom right, rgba(241,245,249,1), transparent 55%)",
-      ].join(", ");
-  }
-}
-
-/* ========= Toggles ========= */
-
-type ThemeToggleProps = {
-  activeId: SpotlightThemeId;
-  onChange: (id: SpotlightThemeId) => void;
-};
-
-function ThemeToggle({ activeId, onChange }: ThemeToggleProps) {
-  return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/70 px-1 py-1 text-[0.65rem] shadow-sm md:bg-slate-900/70">
-      {GOALS_THEMES.map((theme) => {
-        const isActive = theme.id === activeId;
-        return (
-          <button
-            key={theme.id}
-            type="button"
-            onClick={() => onChange(theme.id)}
-            className={`h-5 w-5 rounded-full transition ${
-              isActive
-                ? "bg-sky-300 shadow-sm shadow-sky-300/60"
-                : "bg-slate-800/80 hover:bg-slate-700/80"
-            }`}
-            aria-label={theme.label}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-type GradientToggleProps = {
-  activeLevel: GradientLevel;
-  onChange: (level: GradientLevel) => void;
-};
-
-function GradientToggle({ activeLevel, onChange }: GradientToggleProps) {
-  const levels: GradientLevel[] = [0, 1, 2, 3, 4, 5];
-
-  return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/70 px-1 py-1 text-[0.65rem] shadow-sm md:bg-slate-900/70">
-      {levels.map((level) => {
-        const isActive = level === activeLevel;
-        const isZero = level === 0;
-
-        return (
-          <button
-            key={level}
-            type="button"
-            onClick={() => onChange(level)}
-            className={`flex items-center justify-center rounded-full transition ${
-              isZero
-                ? isActive
-                  ? "h-4 w-4 border border-amber-300 bg-transparent"
-                  : "h-4 w-4 border border-slate-600/80 bg-transparent hover:border-slate-400"
-                : isActive
-                ? "h-4 w-4 bg-amber-300 shadow-sm shadow-amber-300/60"
-                : "h-4 w-4 bg-slate-800/80 hover:bg-slate-700/80"
-            }`}
-            aria-label={
-              isZero ? "No gradient" : `Gradient level ${level}`
-            }
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/* ========= Guide openers ========= */
-
-function openGuide() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(
-    new CustomEvent("everleap-open-ai-guide", {
-      detail: { source: "goals_header_orb" },
-    })
-  );
-}
-
-// Hero button -> open guide with a starter suggestion payload
-function openGoalIdeaGuide() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(
-    new CustomEvent("everleap-open-ai-guide", {
-      detail: {
-        source: "goals_hero_goal_idea",
-        // Placeholder copy for the guide to use when it opens
-        prompt:
-          "Suggest a simple starting goal, like a 3-day focus test or a short screen-curfew experiment, based on my energy right now.",
+    id: "marine-bio",
+    title: "Marine Biology",
+    summary:
+      "You seem energized by nature + science + hands-on observation. Marine Biology could be a strong fit to explore next.",
+    tags: [
+      { label: "Nature + science", icon: <Waves className="h-4 w-4" /> },
+      { label: "Hands-on", icon: <FlaskConical className="h-4 w-4" /> },
+      { label: "Curiosity-driven", icon: <Search className="h-4 w-4" /> },
+    ],
+    accent: "sky",
+    nextMove: {
+      title: "3-day Marine Bio micro-sprint",
+      description:
+        "A tiny test-drive: learn one concept, notice one thing in the real world, and capture one question.",
+      nextStep: "Today: watch one 6–8 min reef ecology video, write 2 questions.",
+      whyChips: ["Real-world learning", "Short sprints", "Fast feedback"],
+      todayBullets: ["Watch 1 short reef ecology video (6–8 min)", "Write 2 questions"],
+      status: "in_progress",
+    },
+    alignedIdeas: [
+      {
+        id: "mb-talk",
+        title: "Talk to one Marine Bio person",
+        description:
+          "One conversation can save you months. Find a student, teacher, or researcher and ask the right question.",
+        nextStep: 'Message one person: “What surprised you most about the field?”',
+        status: "idea",
+        accent: "sky",
+        iconKey: "talk",
       },
-    })
-  );
+      {
+        id: "mb-glossary",
+        title: "10-word mini glossary",
+        description:
+          "Confidence comes from language. Learn a tiny set of terms so videos and articles make sense.",
+        nextStep: "Write 10 terms (reef, tidepool, ecosystem…) + 1-line meaning each.",
+        status: "idea",
+        accent: "violet",
+        iconKey: "glossary",
+      },
+      {
+        id: "mb-tidepool",
+        title: "Plan one tidepool visit",
+        description:
+          "Turn curiosity into a real experience—simple logistics, no perfection.",
+        nextStep: "Pick a location + day; set a 30-minute “just observe” window.",
+        status: "idea",
+        accent: "emerald",
+        iconKey: "field",
+      },
+      {
+        id: "mb-onepager",
+        title: "One-page “What is Marine Biology?”",
+        description:
+          "Make the field feel real: one page that answers the basics in your own words.",
+        nextStep: "Write: what they do, where they work, one cool sub-area you’d try.",
+        status: "idea",
+        accent: "amber",
+        iconKey: "read",
+      },
+    ],
+  },
+
+  {
+    id: "product-builder",
+    title: "Product Builder",
+    summary: "You’re drawn to building practical things: ship small, test fast, learn from real users.",
+    tags: [
+      { label: "Build + ship", icon: <Hammer className="h-4 w-4" /> },
+      { label: "Systems thinking", icon: <Boxes className="h-4 w-4" /> },
+      { label: "Iteration", icon: <Zap className="h-4 w-4" /> },
+    ],
+    accent: "amber",
+    nextMove: {
+      title: "3-day mini product sprint",
+      description: "Pick one tiny problem. Make a rough solution. Test it with one person.",
+      nextStep: "Today: write a 5-sentence problem statement + who it’s for.",
+      whyChips: ["Ship small", "Test fast", "Real users"],
+      todayBullets: ["Write 5 sentences: problem + user", "List 3 constraints (time, money, tools)"],
+      status: "in_progress",
+    },
+    alignedIdeas: [
+      {
+        id: "pb-landing",
+        title: "One-screen landing page",
+        description: "Make a single screen that explains the problem + promise.",
+        nextStep: "Write headline + 3 bullets. No design perfection.",
+        status: "idea",
+        accent: "sky",
+        iconKey: "build",
+      },
+      {
+        id: "pb-test",
+        title: "Test with one person",
+        description: "A 7-minute test reveals what to build next.",
+        nextStep: "Ask: “What would you expect to happen if you click this?”",
+        status: "idea",
+        accent: "emerald",
+        iconKey: "test",
+      },
+      {
+        id: "pb-map",
+        title: "Tiny user journey map",
+        description: "Draw 5 boxes: start → finish. Find the confusing step.",
+        nextStep: "Circle the step you’d simplify first.",
+        status: "idea",
+        accent: "violet",
+        iconKey: "map",
+      },
+      {
+        id: "pb-ship",
+        title: "Ship a micro version",
+        description: "Cut it down until you can finish in 45 minutes.",
+        nextStep: "Delete 1 feature. Keep 1 core action.",
+        status: "idea",
+        accent: "amber",
+        iconKey: "ship",
+      },
+    ],
+  },
+
+  {
+    id: "community-leader",
+    title: "Community Leader",
+    summary: "You get energy from people + momentum. You’re good at making things happen with others.",
+    tags: [
+      { label: "People-first", icon: <MessageCircle className="h-4 w-4" /> },
+      { label: "Momentum", icon: <Zap className="h-4 w-4" /> },
+      { label: "Organize", icon: <Boxes className="h-4 w-4" /> },
+    ],
+    accent: "violet",
+    nextMove: {
+      title: "3-day micro-community experiment",
+      description: "Start tiny: one invite, one moment, one follow-up. See what sticks.",
+      nextStep: "Today: invite 2 people to a 20-minute hang / study / walk.",
+      whyChips: ["Low pressure", "People energy", "Fast iteration"],
+      todayBullets: ["Invite 2 people (simple text)", "Pick a 20-minute window"],
+      status: "in_progress",
+    },
+    alignedIdeas: [
+      {
+        id: "cl-invite",
+        title: "Two-text invite",
+        description: "A tiny invite beats planning forever.",
+        nextStep: "Text: “Want to do a 20-min ___ after school tomorrow?”",
+        status: "idea",
+        accent: "emerald",
+        iconKey: "talk",
+      },
+      {
+        id: "cl-role",
+        title: "Pick one role to try",
+        description: "Leader doesn’t mean “boss.” Try one role: host, connector, planner.",
+        nextStep: "Choose 1 role for 3 days. Notice what feels natural.",
+        status: "idea",
+        accent: "violet",
+        iconKey: "map",
+      },
+      {
+        id: "cl-question",
+        title: "One question check-in",
+        description: "Use one question to deepen a conversation.",
+        nextStep: "Ask: “What’s been taking up most of your brain lately?”",
+        status: "idea",
+        accent: "sky",
+        iconKey: "read",
+      },
+      {
+        id: "cl-follow",
+        title: "Follow-up loop",
+        description: "Leaders close loops. That’s the magic.",
+        nextStep: "Send one follow-up: “Thanks—should we do it again next week?”",
+        status: "idea",
+        accent: "amber",
+        iconKey: "ship",
+      },
+    ],
+  },
+
+  {
+    id: "visual-creative",
+    title: "Visual Creative",
+    summary: "You think in visuals: patterns, style, mood, story. You learn by making.",
+    tags: [
+      { label: "Visual thinking", icon: <Sparkles className="h-4 w-4" /> },
+      { label: "Make + remix", icon: <RefreshCw className="h-4 w-4" /> },
+      { label: "Story", icon: <MessageCircle className="h-4 w-4" /> },
+    ],
+    accent: "emerald",
+    nextMove: {
+      title: "3-day visual remix sprint",
+      description: "Pick one thing you like. Rebuild it. Add your twist. Done.",
+      nextStep: "Today: screenshot 3 designs you like + write what you like about each.",
+      whyChips: ["Make to learn", "Low stakes", "Style confidence"],
+      todayBullets: ["Save 3 screenshots", "Write 1 sentence: what you like (color/type/layout)"],
+      status: "in_progress",
+    },
+    alignedIdeas: [
+      {
+        id: "vc-moodboard",
+        title: "Mini moodboard",
+        description: "Collect 9 images that match your vibe.",
+        nextStep: "Pick 3 words for your vibe (calm, electric, warm…).",
+        status: "idea",
+        accent: "emerald",
+        iconKey: "read",
+      },
+      {
+        id: "vc-remix",
+        title: "Remix one screen",
+        description: "Rebuild one screen with your own choices.",
+        nextStep: "Change only 3 things: headline, color accent, spacing.",
+        status: "idea",
+        accent: "sky",
+        iconKey: "build",
+      },
+      {
+        id: "vc-share",
+        title: "Show it to one person",
+        description: "Confidence grows with tiny shares.",
+        nextStep: "Ask: “What’s the first thing you notice?”",
+        status: "idea",
+        accent: "violet",
+        iconKey: "test",
+      },
+      {
+        id: "vc-ship",
+        title: "Ship a tiny post",
+        description: "Make a 1-slide post (or story) and publish it.",
+        nextStep: "One slide: before/after remix.",
+        status: "idea",
+        accent: "amber",
+        iconKey: "ship",
+      },
+    ],
+  },
+];
+
+function accentBarClass(accent: InsightRec["accent"]): string {
+  switch (accent) {
+    case "sky":
+      return "from-sky-300/90 via-cyan-300/70 to-indigo-300/60";
+    case "violet":
+      return "from-violet-300/90 via-fuchsia-300/70 to-sky-300/60";
+    case "emerald":
+      return "from-emerald-300/90 via-teal-300/70 to-sky-300/60";
+    case "amber":
+      return "from-amber-300/90 via-orange-300/70 to-rose-300/60";
+    default:
+      return "from-sky-300/90 via-cyan-300/70 to-indigo-300/60";
+  }
 }
 
-/* ========= Helpers ========= */
-
-function statusChipClasses(
-  status: GoalStatus,
-  isDark: boolean
-): string {
-  const base =
-    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.65rem] border";
-
-  if (isDark) {
-    if (status === "in_progress") {
-      return (
-        base +
-        " border-emerald-400/70 bg-emerald-500/15 text-emerald-200"
-      );
-    }
-    if (status === "done") {
-      return (
-        base +
-        " border-sky-400/70 bg-sky-500/15 text-sky-200"
-      );
-    }
-    return (
-      base +
-      " border-slate-600/80 bg-slate-900/80 text-slate-300/90"
-    );
+function subtleTintClass(accent: AlignedGoal["accent"]): string {
+  // very minimal: just a faint left gradient + slightly different border tone
+  switch (accent) {
+    case "sky":
+      return "before:from-sky-400/20 before:via-cyan-400/5 before:to-transparent border-white/10";
+    case "violet":
+      return "before:from-violet-400/20 before:via-fuchsia-400/5 before:to-transparent border-white/10";
+    case "emerald":
+      return "before:from-emerald-400/20 before:via-teal-400/5 before:to-transparent border-white/10";
+    case "amber":
+      return "before:from-amber-400/20 before:via-orange-400/5 before:to-transparent border-white/10";
+    default:
+      return "before:from-sky-400/20 before:via-cyan-400/5 before:to-transparent border-white/10";
   }
-
-  // light themes
-  if (status === "in_progress") {
-    return (
-      base +
-      " border-emerald-400 bg-emerald-50 text-emerald-700"
-    );
-  }
-  if (status === "done") {
-    return base + " border-sky-400 bg-sky-50 text-sky-700";
-  }
-  return base + " border-slate-200 bg-slate-50 text-slate-600";
 }
 
-/* ========= Main page ========= */
+function iconForAligned(key: AlignedGoal["iconKey"]) {
+  const cls = "h-4 w-4";
+  switch (key) {
+    case "talk":
+      return <MessageCircle className={cls} />;
+    case "glossary":
+      return <FlaskConical className={cls} />;
+    case "field":
+      return <Waves className={cls} />;
+    case "read":
+      return <Search className={cls} />;
+    case "build":
+      return <Hammer className={cls} />;
+    case "test":
+      return <CheckCircle2 className={cls} />;
+    case "map":
+      return <Boxes className={cls} />;
+    case "ship":
+      return <Zap className={cls} />;
+    default:
+      return <Sparkles className={cls} />;
+  }
+}
+
+function statusChipClasses(status: GoalStatus, dark: boolean) {
+  const base = "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.65rem] border";
+  if (dark) {
+    if (status === "in_progress") return base + " border-emerald-400/70 bg-emerald-500/15 text-emerald-200";
+    if (status === "done") return base + " border-sky-400/70 bg-sky-500/15 text-sky-200";
+    if (status === "idea") return base + " border-white/10 bg-white/5 text-slate-200/80";
+    return base + " border-slate-600/80 bg-slate-900/80 text-slate-300/90";
+  }
+  // light fallback (rare for now)
+  return base + " border-slate-200 bg-white text-slate-700";
+}
+
+/* =========================
+   Page
+========================= */
+
+const SWIPE_HINT_KEY = "everleap.goals.swipeHint.v1";
 
 export default function GoalsPage() {
-  const [themeId, setThemeId] =
-    useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] =
-    useState<GradientLevel>(3);
-  const [showIntro, setShowIntro] = useState(false);
+  // Shared AppChrome visual state
+  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
+  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
-  useEffect(() => {
-    setShowIntro(true);
+  const dark = isDarkTheme(themeId);
+  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+
+  // Which recommendation we’re on (1..4)
+  const [recIndex, setRecIndex] = React.useState(0);
+
+  // One-time swipe hint
+  const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+
+  // Infinite feed
+  const [feedCount, setFeedCount] = React.useState(6);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  const rec = RECS[recIndex];
+
+  // Surface styles match Spotlight/Insights
+  const cardShadow = dark
+    ? "shadow-[0_24px_80px_rgba(0,0,0,0.75)]"
+    : "shadow-[0_16px_45px_rgba(0,0,0,0.18)]";
+  const surface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
+
+  const sectionLabelClass = dark
+    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
+    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500";
+
+  const pageTextMutedClass = dark ? "text-slate-300/90" : "text-slate-600";
+
+  // One-time swipe hint (show for a few seconds, then never again)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const seen = window.localStorage.getItem(SWIPE_HINT_KEY);
+    if (seen === "1") return;
+
+    setShowSwipeHint(true);
+    const t = window.setTimeout(() => {
+      setShowSwipeHint(false);
+      window.localStorage.setItem(SWIPE_HINT_KEY, "1");
+    }, 3200);
+
+    return () => window.clearTimeout(t);
   }, []);
 
-  const theme =
-    GOALS_THEMES.find((t) => t.id === themeId) ??
-    GOALS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
-    GRADIENT_CONFIGS[3];
+  // Keep feed consistent per recommendation
+  React.useEffect(() => {
+    setFeedCount(6);
+  }, [recIndex]);
 
-  const pageBgImage =
-    gradientLevel === 0 ? undefined : getPageBackgroundImage(theme.id);
+  // Infinite scroll observer (fixed deps)
+  React.useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
 
-  const pageBgStyle: CSSProperties = pageBgImage
-    ? { backgroundImage: pageBgImage }
-    : {};
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (!hit) return;
+        setFeedCount((n) => Math.min(n + 4, rec.alignedIdeas.length));
+      },
+      { root: null, rootMargin: "800px 0px", threshold: 0 }
+    );
 
-  const isDarkTheme = theme.id === "nightDusk";
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [recIndex, rec.alignedIdeas.length]);
 
-  const heroShadowClasses = isDarkTheme
-    ? "shadow-[0_20px_70px_rgba(0,0,0,0.65)]"
-    : "shadow-[0_20px_60px_rgba(15,23,42,0.25)]";
+  // Swipe on the hero header area (minimal + reliable)
+  const drag = React.useRef<{ x: number; active: boolean } | null>(null);
 
-  const sectionTitleMuted = theme.pageTextMutedClass;
+  const goPrev = React.useCallback(() => {
+    setRecIndex((i) => (i - 1 + RECS.length) % RECS.length);
+  }, []);
 
-  const goalCardBase = isDarkTheme
-    ? "rounded-3xl border border-slate-800/80 bg-slate-950/80 shadow-[0_14px_45px_rgba(0,0,0,0.7)] backdrop-blur-xl"
-    : "rounded-3xl border border-slate-200 bg-white shadow-sm";
+  const goNext = React.useCallback(() => {
+    setRecIndex((i) => (i + 1) % RECS.length);
+  }, []);
+
+  const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    drag.current = { x: e.clientX, active: true };
+  };
+
+  const onPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d?.active) return;
+
+    const dx = e.clientX - d.x;
+    // Ignore small drags
+    if (Math.abs(dx) < 40) return;
+
+    if (dx < 0) goNext();
+    else goPrev();
+  };
+
+  const onPointerCancel: React.PointerEventHandler<HTMLDivElement> = () => {
+    drag.current = null;
+  };
+
+  const openCoachFeedback = (choice: "yes" | "not_quite") => {
+    openGuide({
+      source: "goals_coach_check",
+      choice,
+      rec: { id: rec.id, title: rec.title },
+      prompt:
+        choice === "yes"
+          ? "User says this direction feels right. Ask ONE follow-up question to make their goals fit even better."
+          : "User says this direction does NOT feel right. Ask ONE question to correct course and pick a better direction.",
+    });
+  };
+
+  const surpriseMe = () => {
+    openGuide({
+      source: "goals_surprise_me",
+      rec: { id: rec.id, title: rec.title },
+      prompt:
+        "Surprise me with ONE tiny goal aligned to this direction. Keep it 3 days max and give the first step.",
+    });
+  };
 
   return (
-    <>
-      {/* Intro modal explaining Goals */}
-      <CoachIntroModal
-        open={showIntro}
-        onClose={() => setShowIntro(false)}
-        subtitle="This is your Goals Lab. Everleap turns your insights into tiny experiments you can actually try. You don’t need a life plan—just one small goal to run this week."
-        enableTyping
-      />
-
-      <div
-        className={`min-h-screen ${theme.pageBgBaseClass}`}
-        style={pageBgStyle}
-      >
-        <main className="relative flex min-h-screen flex-col">
-          {/* Ambient blobs */}
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: gradient.ambientOpacity }}
+    <AppChrome
+      themeId={themeId}
+      setThemeId={setThemeId}
+      gradientLevel={gradientLevel}
+      setGradientLevel={setGradientLevel}
+      orbSource="goals_orb"
+      ambientCap={0.35}
+    >
+      <div className="relative flex min-h-[100svh] flex-col">
+        <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
+          {/* =========================
+              HEADER (swipe-able)
+             ========================= */}
+          <section
+            className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerCancel}
+            style={{ touchAction: "pan-y" }}
+            aria-label="Swipe left or right to change recommendation"
           >
-            <div
-              className={`absolute -top-24 -left-20 h-60 w-60 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-            />
-            <div
-              className={`absolute bottom-0 right-[-40px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
-            />
-          </div>
-
-          <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8 md:pt-8">
-            {/* Header row */}
-            <header className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <div className={theme.sectionLabelClass}>Goals</div>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">
-                  Turn this into one small goal
-                </h1>
-                <p
-                  className={`mt-2 max-w-xl text-sm ${theme.pageTextMutedClass}`}
-                >
-                  Everleap suggests tiny experiments from your patterns.
-                  Pick one that feels doable.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-end gap-2 md:flex-row md:items-center">
-                <ThemeToggle
-                  activeId={themeId}
-                  onChange={setThemeId}
-                />
-                <GradientToggle
-                  activeLevel={gradientLevel}
-                  onChange={setGradientLevel}
-                />
-
-                {/* AI guide orb */}
-                <button
-                  type="button"
-                  onClick={openGuide}
-                  className="group relative mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 via-fuchsia-400 to-amber-300 shadow-lg shadow-sky-400/40 transition-transform duration-200 hover:scale-110 md:mt-0"
-                  aria-label="Open Everleap Guide"
-                >
-                  <span className="absolute inset-0 rounded-full bg-sky-400/30 blur-md opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-                  <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-slate-50">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                </button>
-              </div>
-            </header>
-
-            {/* Hero Goal Lab card */}
-            <section className="mb-6">
+            {gradientLevel > 0 && (
               <div
-                className={`relative overflow-hidden rounded-[32px] px-5 py-5 sm:px-7 sm:py-6 ${theme.cardBgClass} ${theme.cardBorderClass} ${heroShadowClasses}`}
-              >
-                <div className="pointer-events-none absolute inset-2 rounded-[28px] bg-gradient-to-br from-sky-500/40 via-fuchsia-500/35 to-amber-300/30 opacity-40 blur-2xl" />
+                className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
+                style={{ opacity: 0.18 }}
+              />
+            )}
 
-                <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="max-w-xl">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/70 bg-sky-500/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-sky-100">
-                      <Flame className="h-3 w-3" />
-                      <span>Goal Lab</span>
-                    </div>
-                    <h2 className="mt-3 text-xl font-semibold md:text-2xl">
-                      Start with something tiny this week.
-                    </h2>
-                    <p
-                      className={`mt-2 text-sm ${sectionTitleMuted}`}
+            {/* subtle accent bar */}
+            <div
+              className={`pointer-events-none absolute left-0 top-8 hidden h-[70%] w-[2px] rounded-full bg-gradient-to-b ${accentBarClass(
+                rec.accent
+              )} sm:block`}
+              style={{ opacity: 0.75 }}
+            />
+
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
+                        dark ? "bg-white/10 text-slate-100" : "bg-slate-900/5 text-slate-900"
+                      }`}
                     >
-                      No giant life plan. Just one experiment you can
-                      actually start and tweak.
-                    </p>
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div className={`${sectionLabelClass} opacity-90`}>Goals</div>
                   </div>
 
-                  <div className="flex flex-col items-stretch gap-2 md:w-64">
+                  <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                    From your Insights: {rec.title}
+                  </h1>
+
+                  <p className={`mt-2 max-w-2xl text-sm ${pageTextMutedClass}`}>{rec.summary}</p>
+
+                  {/* tags */}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {rec.tags.map((t) => (
+                      <span
+                        key={t.label}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                        }`}
+                      >
+                        <span className={`${dark ? "text-slate-100/80" : "text-slate-600"}`}>{t.icon}</span>
+                        {t.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pager (chevrons + dots + one-time hint pill) */}
+                <div className="shrink-0">
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={openGoalIdeaGuide}
-                      className="inline-flex items-center justify-center rounded-full bg-sky-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_14px_40px_rgba(56,189,248,0.65)] transition hover:bg-sky-300 hover:shadow-[0_18px_50px_rgba(56,189,248,0.8)] active:scale-95"
+                      onClick={goPrev}
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
+                        dark
+                          ? "border-white/10 bg-slate-950/35 text-slate-100 hover:bg-slate-950/55"
+                          : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                      }`}
+                      aria-label="Previous recommendation"
+                      title="Previous"
                     >
-                      I want a goal idea
-                      <ArrowRight className="ml-1.5 h-4 w-4" />
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        {RECS.map((_, i) => {
+                          const on = i === recIndex;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setRecIndex(i)}
+                              className={`h-2 w-2 rounded-full transition ${
+                                on ? "bg-sky-300" : dark ? "bg-white/10 hover:bg-white/20" : "bg-slate-300 hover:bg-slate-400"
+                              }`}
+                              aria-label={`Go to recommendation ${i + 1} of ${RECS.length}`}
+                              title={`${i + 1}/${RECS.length}`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      <div className={`text-xs ${dark ? "text-slate-300/70" : "text-slate-600"}`}>
+                        {recIndex + 1}/{RECS.length}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={goNext}
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
+                        dark
+                          ? "border-white/10 bg-slate-950/35 text-slate-100 hover:bg-slate-950/55"
+                          : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                      }`}
+                      aria-label="Next recommendation"
+                      title="Next"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* one-time hint (minimal) */}
+                  {showSwipeHint ? (
+                    <div className="mt-2 flex justify-end">
+                      <div
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.7rem] font-semibold ${
+                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                        }`}
+                      >
+                        <span className="opacity-80">Swipe</span>
+                        <span className="opacity-80">↔</span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className={`mt-2 text-right text-[0.7rem] ${dark ? "text-slate-300/50" : "text-slate-500"}`}>
+                    Swipe or tap dots
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* =========================
+              NEXT MOVE
+             ========================= */}
+          <section className="mt-5">
+            <div className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+              {/* accent rail */}
+              <div
+                className={`pointer-events-none absolute left-0 top-7 h-[78%] w-[2px] rounded-full bg-gradient-to-b ${accentBarClass(
+                  rec.accent
+                )}`}
+                style={{ opacity: 0.6 }}
+              />
+
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className={`${sectionLabelClass} opacity-90`}>Your next move</div>
+                  <div className="mt-2 text-2xl font-semibold tracking-tight">{rec.nextMove.title}</div>
+                  <p className={`mt-2 text-sm ${pageTextMutedClass}`}>{rec.nextMove.description}</p>
+
+                  <div className={`mt-4 text-sm ${dark ? "text-slate-200/90" : "text-slate-800"}`}>
+                    <span className="font-semibold">Next step:</span> {rec.nextMove.nextStep}
+                  </div>
+
+                  {/* why chips */}
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className={`text-xs font-semibold ${dark ? "text-slate-300/70" : "text-slate-600"}`}>
+                      Why this:
+                    </span>
+                    {rec.nextMove.whyChips.map((c) => (
+                      <span
+                        key={c}
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                        }`}
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* today box */}
+                  <div
+                    className={`mt-5 rounded-3xl border px-4 py-4 ${
+                      dark ? "border-white/10 bg-slate-950/35" : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className={`${sectionLabelClass} opacity-90`}>Today</div>
+                    <div className="mt-3 space-y-2">
+                      {rec.nextMove.todayBullets.map((b) => (
+                        <div key={b} className="flex items-start gap-2">
+                          <span
+                            className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border ${
+                              dark ? "border-sky-300/30 bg-sky-300/10 text-sky-200" : "border-sky-300 bg-sky-50 text-sky-700"
+                            }`}
+                          >
+                            <CheckCircle2 className="h-3 w-3" />
+                          </span>
+                          <div className={`text-sm ${dark ? "text-slate-100/95" : "text-slate-900"}`}>{b}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CTA row */}
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openGuide({
+                          source: "goals_lets_do_this",
+                          rec: { id: rec.id, title: rec.title },
+                          goal: rec.nextMove,
+                          prompt:
+                            "User wants to start this goal. Ask ONE question to personalize the first step (time/place/energy), then confirm a simple plan.",
+                        })
+                      }
+                      className="inline-flex items-center justify-center rounded-full bg-sky-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-300/35 transition hover:bg-sky-200 active:scale-95"
+                    >
+                      Let’s do this <ArrowRight className="ml-2 h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={surpriseMe}
+                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition active:scale-95 ${
+                        dark
+                          ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                          : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                      }`}
+                    >
+                      Surprise me <ArrowRight className="ml-2 h-4 w-4 opacity-70" />
                     </button>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            {/* Your goals right now */}
-            <section className="mb-6">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div>
-                  <div className="text-sm font-semibold">
-                    Your goals right now
-                  </div>
-                  <p
-                    className={`mt-1 text-xs ${sectionTitleMuted}`}
-                  >
-                    These are tiny goals you&apos;re playing with. You
-                    can change them anytime.
+                <span className={statusChipClasses(rec.nextMove.status, dark)}>
+                  <Clock3 className="h-3 w-3" />
+                  <span>{rec.nextMove.status === "in_progress" ? "In progress" : rec.nextMove.status}</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* =========================
+              COACH CHECK (feedback CTA)
+             ========================= */}
+          <section className="mt-5">
+            <div className={`rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className={`${sectionLabelClass} opacity-90`}>Coach check</div>
+                  <div className="mt-2 text-lg font-semibold">Does this direction feel right so far?</div>
+                  <p className={`mt-1 text-sm ${pageTextMutedClass}`}>
+                    Tell the Guide, and Everleap will tune your goals to better match your Insights.
                   </p>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                {myGoals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className={`flex flex-col gap-3 px-4 py-4 ${goalCardBase}`}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openCoachFeedback("yes")}
+                    className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                      dark
+                        ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                        : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                    }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-1 text-[0.65rem] font-semibold tracking-[0.16em] ${
-                              isDarkTheme
-                                ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
-                                : "border-sky-300 bg-sky-50 text-sky-700"
-                            }`}
-                          >
-                            {goal.kindChip}
-                          </span>
-                          {goal.moodTag && (
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-1 text-[0.65rem] ${
-                                isDarkTheme
-                                  ? "bg-slate-900/80 text-slate-200"
-                                  : "bg-slate-100 text-slate-700"
-                              }`}
-                            >
-                              {goal.moodTag}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-semibold">
-                          {goal.title}
-                        </h3>
-                        <p
-                          className={`mt-1 text-xs ${sectionTitleMuted}`}
-                        >
-                          {goal.description}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-2">
-                        <span
-                          className={statusChipClasses(
-                            goal.status,
-                            isDarkTheme
-                          )}
-                        >
-                          <Clock3 className="h-3 w-3" />
-                          <span>{goal.statusLabel}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`flex items-center justify-between text-[0.7rem] ${
-                        isDarkTheme
-                          ? "text-slate-400"
-                          : "text-slate-500"
-                      }`}
-                    >
-                      <span>Tap a goal to edit or swap later.</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Suggested goals */}
-            <section className="mb-4">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div>
-                  <div className="text-sm font-semibold">
-                    Goal ideas Everleap is playing with
-                  </div>
-                  <p
-                    className={`mt-1 text-xs ${sectionTitleMuted}`}
+                    Yes, keep going
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openCoachFeedback("not_quite")}
+                    className="inline-flex items-center justify-center rounded-full bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow-md shadow-amber-300/25 transition hover:bg-amber-200 active:scale-95"
                   >
-                    These ideas adapt to your story and energy. Pick
-                    one, or just steal pieces that fit.
-                  </p>
+                    Not quite
+                  </button>
                 </div>
-                <div
-                  className={`hidden items-center gap-1 text-[0.7rem] ${sectionTitleMuted} md:flex`}
+              </div>
+            </div>
+          </section>
+
+          {/* =========================
+              ALIGNED IDEAS (true-ish infinite scroll)
+             ========================= */}
+          <section className="mt-7">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div className={`${sectionLabelClass} opacity-90`}>Aligned ideas (scroll)</div>
+                <div className={`mt-1 text-sm ${pageTextMutedClass}`}>A feed of tiny goals that match this direction.</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={surpriseMe}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition active:scale-95 ${
+                  dark
+                    ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                    : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                Get one new goal <ArrowRight className="h-4 w-4 opacity-70" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {rec.alignedIdeas.slice(0, feedCount).map((g) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() =>
+                    openGuide({
+                      source: "goals_feed_pick",
+                      rec: { id: rec.id, title: rec.title },
+                      idea: g,
+                      prompt:
+                        "User tapped an aligned idea. Offer ONE way to make the next step smaller and easier, then ask if they want to add it as their goal.",
+                    })
+                  }
+                  className={`
+                    relative w-full overflow-hidden rounded-[28px] border px-5 py-5 text-left transition
+                    ${surface}
+                    hover:brightness-[1.06] active:scale-[0.99]
+                    before:absolute before:inset-0 before:bg-gradient-to-r before:opacity-100
+                    ${subtleTintClass(g.accent)}
+                  `}
                 >
-                  <HeartHandshake className="h-3.5 w-3.5" />
-                  <span>We&apos;ll keep suggesting new ones over time.</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {suggestedGoals.map((goal) => (
-                  <div
-                    key={goal.id}
-                    className={`flex flex-col gap-3 px-4 py-4 ${goalCardBase}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2 py-1 text-[0.65rem] font-semibold tracking-[0.16em] ${
-                              isDarkTheme
-                                ? "border-violet-300/70 bg-violet-500/10 text-violet-100"
-                                : "border-violet-300 bg-violet-50 text-violet-700"
-                            }`}
-                          >
-                            {goal.kindChip}
-                          </span>
-                          {goal.moodTag && (
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-1 text-[0.65rem] ${
-                                isDarkTheme
-                                  ? "bg-slate-900/80 text-slate-200"
-                                  : "bg-slate-100 text-slate-700"
-                              }`}
-                            >
-                              {goal.moodTag}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-semibold">
-                          {goal.title}
-                        </h3>
-                        <p
-                          className={`mt-1 text-xs ${sectionTitleMuted}`}
-                        >
-                          {goal.description}
-                        </p>
+                  <div className="relative flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className={`${sectionLabelClass} opacity-90`}>
+                        Aligned: {rec.title}
                       </div>
 
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="mt-2 flex items-center gap-2">
                         <span
-                          className={statusChipClasses(
-                            goal.status,
-                            isDarkTheme
-                          )}
+                          className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl border ${
+                            dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-900"
+                          }`}
                         >
-                          <Moon className="h-3 w-3" />
-                          <span>{goal.statusLabel}</span>
+                          {iconForAligned(g.iconKey)}
                         </span>
+                        <div className="text-base font-semibold">{g.title}</div>
+                      </div>
+
+                      <div className={`mt-2 text-sm ${pageTextMutedClass}`}>{g.description}</div>
+
+                      <div className={`mt-4 text-sm ${dark ? "text-slate-200/90" : "text-slate-800"}`}>
+                        <span className="font-semibold">Next:</span> {g.nextStep}
                       </div>
                     </div>
 
-                    <div
-                      className={`flex items-center justify-between text-[0.7rem] ${
-                        isDarkTheme
-                          ? "text-slate-400"
-                          : "text-slate-500"
-                      }`}
-                    >
-                      <span>Tap to turn this into an active goal.</span>
-                    </div>
+                    <span className={statusChipClasses(g.status, dark)}>
+                      <Clock3 className="h-3 w-3" />
+                      <span>{g.status === "idea" ? "Idea" : g.status}</span>
+                    </span>
                   </div>
-                ))}
-              </div>
-            </section>
-          </div>
+                </button>
+              ))}
+
+              {/* sentinel for infinite load */}
+              <div ref={sentinelRef} className="h-6" />
+
+              {feedCount >= rec.alignedIdeas.length ? (
+                <div className={`mt-2 text-center text-xs ${dark ? "text-slate-300/50" : "text-slate-500"}`}>
+                  End of feed for this direction. Swipe up top to switch.
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <div className="h-6" />
         </main>
 
         <BottomNav />
       </div>
-    </>
+    </AppChrome>
   );
 }
