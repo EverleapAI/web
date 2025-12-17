@@ -6,11 +6,11 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, Send, ArrowRight } from "lucide-react";
 
 import BrandBadge from "@/components/site/BrandBadge";
 import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
-import { AiGuideOrb } from "@/components/main/AiGuideOrb";
+import { AppChrome } from "@/components/site/AppChrome";
 
 import {
   INSIGHTS_THEMES,
@@ -22,8 +22,7 @@ import {
 } from "@/theme/everleapVisuals";
 
 /**
- * DOM lib provides SpeechRecognition types in most TS configs.
- * We still need a constructor shape for vendor-prefixed access.
+ * Speech types
  */
 type SpeechRecognitionConstructor = {
   new (): SpeechRecognition;
@@ -37,7 +36,7 @@ declare global {
 }
 
 /* ============================================================
-   Types & Constants
+   Types & constants
    ============================================================ */
 
 type StepId =
@@ -87,93 +86,71 @@ type BadgeId = "onboarding" | "motivations" | "strengths" | "skills";
 const STORAGE_KEY = "everleapOnboarding_v1";
 const BADGES_KEY = "everleapBadges_v1";
 
-/* ============================================================
-   Theme / Gradient Toggles
-   ============================================================ */
-
-function ThemeToggle({
-  activeId,
-  onChange,
-}: {
-  activeId: SpotlightThemeId;
-  onChange: (id: SpotlightThemeId) => void;
-}) {
-  return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/80 px-1 py-1 text-[0.65rem] shadow-sm">
-      {INSIGHTS_THEMES.map((theme) => {
-        const active = theme.id === activeId;
-        return (
-          <button
-            key={theme.id}
-            onClick={() => onChange(theme.id)}
-            className={`h-5 w-5 rounded-full transition ${
-              active
-                ? "bg-sky-300 shadow-sm shadow-sky-300/60"
-                : "bg-slate-800/80 hover:bg-slate-700/80"
-            }`}
-            aria-label={theme.label}
-            type="button"
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function GradientToggle({
-  activeLevel,
-  onChange,
-}: {
-  activeLevel: GradientLevel;
-  onChange: (l: GradientLevel) => void;
-}) {
-  const levels: GradientLevel[] = [0, 1, 2, 3, 4, 5];
-  return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600/60 bg-slate-950/80 px-1 py-1 text-[0.65rem] shadow-sm">
-      {levels.map((level) => {
-        const isActive = level === activeLevel;
-        const isZero = level === 0;
-        return (
-          <button
-            key={level}
-            onClick={() => onChange(level)}
-            className={`flex items-center justify-center rounded-full transition ${
-              isZero
-                ? isActive
-                  ? "h-4 w-4 border border-amber-300 bg-transparent"
-                  : "h-4 w-4 border border-slate-600/80 bg-transparent hover:border-slate-400"
-                : isActive
-                ? "h-4 w-4 bg-amber-300 shadow-sm shadow-amber-300/60"
-                : "h-4 w-4 bg-slate-800/80 hover:bg-slate-700/80"
-            }`}
-            type="button"
-            aria-label={isZero ? "No gradient" : `Gradient level ${level}`}
-          />
-        );
-      })}
-    </div>
-  );
-}
+const TYPE_SPEED_MS = 28;
 
 /* ============================================================
-   Helpers
+   Small helpers
    ============================================================ */
 
 function toggleInList<T>(list: T[], value: T): T[] {
-  return list.includes(value)
-    ? list.filter((v) => v !== value)
-    : [...list, value];
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
+/** same heuristic you used elsewhere */
 function isMeaningfulText(value: string): boolean {
   const trimmed = value.trim();
-  if (trimmed.length < 10) return false;
+  if (trimmed.length < 3) return false;
+
   const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, "");
   if (!lettersOnly) return false;
-  const uniqueChars = new Set(lettersOnly.toLowerCase()).size;
-  if (uniqueChars <= 3) return false; // likely keyboard smash
+
+  const unique = new Set(lettersOnly.toLowerCase()).size;
+  if (unique <= 2) return false;
+
+  const squashed = trimmed.replace(/\s+/g, "");
+  if (/^(.)\1{6,}$/i.test(squashed)) return false;
+
   return true;
 }
+
+/* ============================================================
+   Typing hook (same pattern as questions)
+   ============================================================ */
+
+function useTypewriter(text: string, speedMs: number, enabled: boolean) {
+  const [out, setOut] = React.useState("");
+
+  React.useEffect(() => {
+    if (!enabled) {
+      setOut(text);
+      return;
+    }
+
+    let cancelled = false;
+    let i = 0;
+    setOut("");
+
+    const tick = () => {
+      if (cancelled) return;
+      i += 1;
+      setOut(text.slice(0, i));
+      if (i < text.length) window.setTimeout(tick, speedMs);
+    };
+
+    const t = window.setTimeout(tick, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [text, speedMs, enabled]);
+
+  const done = out.length >= text.length;
+  return { typed: out, done };
+}
+
+/* ============================================================
+   Insight summary helper
+   ============================================================ */
 
 function buildInsight(options: {
   name: string;
@@ -184,15 +161,7 @@ function buildInsight(options: {
   activitiesOther: string;
   funChoice: FunChoice;
 }) {
-  const {
-    name,
-    situation,
-    certainty,
-    postPlans,
-    activities,
-    activitiesOther,
-    funChoice,
-  } = options;
+  const { name, situation, certainty, postPlans, activities, activitiesOther, funChoice } = options;
 
   const parts: string[] = [];
   const cleanedName = name.trim();
@@ -212,9 +181,7 @@ function buildInsight(options: {
         `${you}you’re in high school and honest about not knowing what comes next. That honesty is actually one of the best places to begin.`
       );
     } else {
-      parts.push(
-        `${you}you’re in high school and taking a moment to step back and look at your next steps.`
-      );
+      parts.push(`${you}you’re in high school and taking a moment to think about what’s next.`);
     }
   } else if (situation === "young_adult") {
     if (certainty === "strong") {
@@ -230,38 +197,25 @@ function buildInsight(options: {
         `${you}you’re a young adult who isn’t sure yet what comes next, and that’s more common than people admit. Everleap is built for exactly this moment.`
       );
     } else {
-      parts.push(
-        `${you}you’re a young adult pausing long enough to reflect, which already puts you ahead of most people rushing on autopilot.`
-      );
+      parts.push(`${you}you’re a young adult pausing long enough to reflect, which already helps.`);
     }
   } else {
-    parts.push(
-      `${you}you’re taking a moment to step back and look at where you are and where you might go next.`
-    );
+    parts.push(`${you}you’re taking a moment to step back and look at where you are and where you might go next.`);
   }
 
   if (postPlans.length > 0) {
     const mapped: string[] = [];
-    if (postPlans.includes("job"))
-      mapped.push("getting a job and building real-world experience");
-    if (postPlans.includes("associates"))
-      mapped.push("community or two-year college options");
-    if (postPlans.includes("credential"))
-      mapped.push("shorter training or credential programs");
+    if (postPlans.includes("job")) mapped.push("getting a job and building real-world experience");
+    if (postPlans.includes("associates")) mapped.push("community or two-year college options");
+    if (postPlans.includes("credential")) mapped.push("shorter training or credential programs");
     if (postPlans.includes("military")) mapped.push("a path through the military");
     if (postPlans.includes("four_year")) mapped.push("a four-year college path");
-    if (postPlans.includes("no_idea"))
-      mapped.push("different possibilities without one clear lane yet");
+    if (postPlans.includes("no_idea")) mapped.push("different possibilities without one clear lane yet");
 
     if (mapped.length > 0) {
       const last = mapped.pop();
-      const listText =
-        mapped.length === 0
-          ? last
-          : mapped.join(", ") + (last ? `, and ${last}` : "");
-      parts.push(
-        `Right now you’re open to ${listText}, which gives you several directions you can test against your strengths and interests.`
-      );
+      const listText = mapped.length === 0 ? last : mapped.join(", ") + (last ? `, and ${last}` : "");
+      parts.push(`Right now you’re open to ${listText}, which gives you several directions you can test.`);
     }
   }
 
@@ -269,251 +223,76 @@ function buildInsight(options: {
     const act: string[] = [];
     if (activities.includes("sports")) act.push("sports and physical activity");
     if (activities.includes("visual_arts")) act.push("visual or creative arts");
-    if (activities.includes("performing_arts"))
-      act.push("performing arts and being in front of people");
+    if (activities.includes("performing_arts")) act.push("performing arts");
     if (activities.includes("volunteer")) act.push("volunteering or helping others");
     if (activities.includes("job")) act.push("working a job outside of school");
 
     const last = act.pop();
-    const listText =
-      act.length === 0
-        ? last
-        : act.join(", ") + (last ? `, and ${last}` : "");
-
-    if (listText) {
-      parts.push(
-        `Outside of school, you’re already investing your time in ${listText}, which says a lot about how you like to use your energy and where you show up for others.`
-      );
-    }
+    const listText = act.length === 0 ? last : act.join(", ") + (last ? `, and ${last}` : "");
+    if (listText) parts.push(`Outside of school, you’re investing time in ${listText}.`);
 
     if (isMeaningfulText(activitiesOther)) {
-      parts.push(
-        "Those extra details you shared also hint at experiences that are more unique to you—and Everleap will use them to shape more personalized ideas over time."
-      );
+      parts.push("Those extra details you shared will help Everleap shape more personalized ideas over time.");
     }
   }
 
   let closing =
-    "This is just your starting point. As you keep answering questions and exploring, Everleap will get better at spotting patterns and suggesting paths that actually feel like you.";
+    "This is just your starting point. As you keep answering questions, Everleap will get better at spotting patterns and suggesting paths that actually fit you.";
 
-  if (funChoice === "cat") {
-    closing +=
-      " Also, cat person noted—there’s a good chance that independent streak of yours can become a real strength.";
-  } else if (funChoice === "dog") {
-    closing +=
-      " Also, dog person energy usually comes with a big heart and loyalty—great traits for any future path.";
-  }
+  if (funChoice === "cat") closing += " Also, cat person noted.";
+  if (funChoice === "dog") closing += " Also, dog person energy noted.";
 
   parts.push(closing);
   return parts.join(" ");
 }
 
 /* ============================================================
-   Badge tiles (same treatment, different icon + color)
+   Badges (simple inline tiles, matches earlier)
    ============================================================ */
 
 function BadgeTile({
-  id,
   label,
-  accent,
+  imgSrc,
   dimmed,
 }: {
-  id: BadgeId;
   label: string;
-  accent: string;
+  imgSrc: string;
   dimmed?: boolean;
 }) {
-  const opacity = dimmed ? 0.35 : 1;
-
   return (
-    <div className="flex flex-col items-center gap-2" style={{ opacity }}>
-      <div
-        className="h-20 w-20 rounded-2xl shadow-sm"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
-          border: "1px solid rgba(255,255,255,0.16)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-        }}
-        aria-label={`${label} badge`}
-      >
-        <svg viewBox="0 0 96 96" className="h-full w-full" role="img">
-          <rect
-            x="10"
-            y="10"
-            width="76"
-            height="76"
-            rx="18"
-            fill="rgba(0,0,0,0.18)"
-            stroke={accent}
-            strokeWidth="3"
-          />
-
-          {id === "onboarding" && (
-            <>
-              <path
-                d="M34 60 L62 32"
-                stroke={accent}
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <path
-                d="M30 64 L38 56"
-                stroke={accent}
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              <path
-                d="M63 27 L67 23"
-                stroke={accent}
-                strokeWidth="6"
-                strokeLinecap="round"
-              />
-              <path
-                d="M55 26 L55 18"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M70 41 L78 41"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </>
-          )}
-
-          {id === "motivations" && (
-            <>
-              <path
-                d="M48 68
-                   C42 64, 28 55, 28 43
-                   C28 36, 33 32, 39 32
-                   C43 32, 46 34, 48 37
-                   C50 34, 53 32, 57 32
-                   C63 32, 68 36, 68 43
-                   C68 55, 54 64, 48 68Z"
-                fill="rgba(0,0,0,0.10)"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M48 44 L60 40"
-                stroke={accent}
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <circle cx="48" cy="44" r="3" fill={accent} opacity="0.95" />
-            </>
-          )}
-
-          {id === "strengths" && (
-            <>
-              <path
-                d="M34 56
-                   C34 48, 40 44, 46 44
-                   L50 44
-                   C50 40, 53 36, 58 36
-                   C62 36, 66 39, 66 44
-                   L66 52
-                   C66 61, 59 68, 50 68
-                   L44 68
-                   C38 68, 34 63, 34 56Z"
-                fill="rgba(0,0,0,0.10)"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M46 44 C44 50, 45 55, 50 58"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M60 52 C58 55, 56 56, 52 56"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </>
-          )}
-
-          {id === "skills" && (
-            <>
-              <rect
-                x="30"
-                y="38"
-                width="36"
-                height="30"
-                rx="8"
-                fill="rgba(0,0,0,0.10)"
-                stroke={accent}
-                strokeWidth="3"
-              />
-              <path
-                d="M40 38
-                   C40 32, 44 28, 48 28
-                   C52 28, 56 32, 56 38"
-                fill="none"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M38 50 L58 50"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle cx="44" cy="50" r="4" fill={accent} />
-              <path
-                d="M38 60 L58 60"
-                stroke={accent}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle cx="54" cy="60" r="4" fill={accent} />
-            </>
-          )}
-        </svg>
+    <div className="flex flex-col items-center gap-2" style={{ opacity: dimmed ? 0.35 : 1 }}>
+      <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35 shadow-sm backdrop-blur-xl">
+        <Image src={imgSrc} alt={label} fill sizes="80px" className="object-contain p-3" />
       </div>
-      <div className="text-xs font-medium text-white/80">{label}</div>
+      <div className="text-xs font-medium text-white/70">{label}</div>
     </div>
   );
 }
 
 /* ============================================================
-   Main Component
+   Page
    ============================================================ */
+
+type VoiceTarget = "name" | "activitiesOther";
 
 export default function OnboardingPage() {
   const router = useRouter();
 
-  /* Theme + background state */
+  // Shared AppChrome visual state
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
-    GRADIENT_CONFIGS[3];
+  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[3];
+
+  const pageBgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
+  const pageBgStyle: CSSProperties = pageBgImage ? { backgroundImage: pageBgImage } : {};
   const dark = isDarkTheme(themeId);
 
-  const bgImage =
-    gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
-  const bgStyle: CSSProperties = bgImage ? { backgroundImage: bgImage } : {};
-
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
+  const cardShadow = dark ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]" : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
   const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
 
-  /* Conversation state */
+  // State
   const [stepIndex, setStepIndex] = React.useState(0);
   const stepId = STEPS[stepIndex];
 
@@ -525,55 +304,62 @@ export default function OnboardingPage() {
   const [activitiesOther, setActivitiesOther] = React.useState("");
   const [funChoice, setFunChoice] = React.useState<FunChoice>(null);
 
-  /* Voice input (fixed) */
-  type VoiceTarget = "name" | "activitiesOther";
+  // "Questions" style input state
+  const [draft, setDraft] = React.useState("");
+
+  // Speech
   const [isListening, setIsListening] = React.useState(false);
   const [speechSupported, setSpeechSupported] = React.useState(true);
-
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
-  const activeVoiceTargetRef = React.useRef<VoiceTarget | null>(null);
+  const lastFinalRef = React.useRef<string>(""); // dedupe final chunks
+  const activeTargetRef = React.useRef<VoiceTarget | null>(null);
 
-  const nameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const activitiesOtherRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
-  /* Save state to localStorage */
+  // Persist onboarding state
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          stepIndex,
+          name,
+          situation,
+          certainty,
+          postPlans,
+          activities,
+          activitiesOther,
+          funChoice,
+        })
+      );
+    } catch {
+      // ignore
+    }
+  }, [stepIndex, name, situation, certainty, postPlans, activities, activitiesOther, funChoice]);
 
-    const payload = JSON.stringify({
-      stepIndex,
-      name,
-      situation,
-      certainty,
-      postPlans,
-      activities,
-      activitiesOther,
-      funChoice,
-    });
-
-    window.localStorage.setItem(STORAGE_KEY, payload);
-  }, [
-    stepIndex,
-    name,
-    situation,
-    certainty,
-    postPlans,
-    activities,
-    activitiesOther,
-    funChoice,
-  ]);
-
-  /* Speech support flag once */
+  // Speech supported
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const SpeechRec =
-      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-        | SpeechRecognitionConstructor
-        | undefined;
+      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
 
-  /* Stop listening when step changes */
+  // Cleanup
+  React.useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
+
+  // Stop listening when step changes
   React.useEffect(() => {
     if (recognitionRef.current) {
       try {
@@ -583,81 +369,61 @@ export default function OnboardingPage() {
       }
     }
     setIsListening(false);
-    activeVoiceTargetRef.current = null;
+    lastFinalRef.current = "";
+    activeTargetRef.current = null;
   }, [stepId]);
-
-  /* Cleanup on unmount */
-  React.useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.onresult = null;
-          recognitionRef.current.onerror = null;
-          recognitionRef.current.onend = null;
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
-      }
-      recognitionRef.current = null;
-      activeVoiceTargetRef.current = null;
-    };
-  }, []);
 
   function getOrCreateRecognition(): SpeechRecognition | null {
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
 
     const SpeechRec =
-      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-        | SpeechRecognitionConstructor
-        | undefined;
-
+      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
     if (!SpeechRec) return null;
 
-    const recognition = new SpeechRec();
-    recognition.lang = "en-US";
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = false;
+    const rec = new SpeechRec();
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.continuous = false;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = "";
+    rec.onresult = (event: SpeechRecognitionEvent) => {
+      // ✅ Fix for doubling: only commit FINAL chunks and dedupe repeats.
+      let finalChunk = "";
+
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        transcript += event.results[i][0]?.transcript ?? "";
+        const res = event.results[i];
+        const t = (res?.[0]?.transcript ?? "").trim();
+        if (!t) continue;
+        if (res.isFinal) finalChunk += (finalChunk ? " " : "") + t;
       }
-      transcript = transcript.trim();
-      if (!transcript) return;
 
-      const target = activeVoiceTargetRef.current;
+      const cleaned = finalChunk.trim();
+      if (!cleaned) return;
+
+      if (cleaned === lastFinalRef.current) return;
+      lastFinalRef.current = cleaned;
+
+      const target = activeTargetRef.current;
 
       if (target === "name") {
-        setName((prev) => {
-          if (!prev) return transcript;
-          const needsSpace = !prev.endsWith(" ");
-          return prev + (needsSpace ? " " : "") + transcript;
+        setDraft((prev) => {
+          const base = prev.trim();
+          return base ? `${base} ${cleaned}` : cleaned;
         });
       } else if (target === "activitiesOther") {
-        setActivitiesOther((prev) => {
-          if (!prev) return transcript;
-          const needsSpace = !prev.endsWith(" ");
-          return prev + (needsSpace ? " " : "") + transcript;
+        setDraft((prev) => {
+          const base = prev.trim();
+          return base ? `${base} ${cleaned}` : cleaned;
         });
       }
     };
 
-    recognition.onend = () => {
-      setIsListening(false);
-      activeVoiceTargetRef.current = null;
-    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend = () => setIsListening(false);
 
-    recognition.onerror = () => {
-      setIsListening(false);
-      activeVoiceTargetRef.current = null;
-    };
-
-    recognitionRef.current = recognition;
-    return recognition;
+    recognitionRef.current = rec;
+    return rec;
   }
 
   function stopListening() {
@@ -668,58 +434,45 @@ export default function OnboardingPage() {
       // ignore
     }
     setIsListening(false);
-    activeVoiceTargetRef.current = null;
   }
 
   function toggleMic(target: VoiceTarget) {
-    if (typeof window === "undefined") return;
+    textareaRef.current?.focus();
+    setDraft(""); // ✅ same behavior as questions: blank on mic start
+    lastFinalRef.current = "";
+    activeTargetRef.current = target;
 
     if (isListening) {
       stopListening();
       return;
     }
 
-    const recognition = getOrCreateRecognition();
-    if (!recognition) {
-      const ref =
-        target === "name" ? nameInputRef.current : activitiesOtherRef.current;
-      ref?.focus();
-      return;
-    }
+    const rec = getOrCreateRecognition();
+    if (!rec) return;
 
     try {
-      activeVoiceTargetRef.current = target;
-      recognition.start();
       setIsListening(true);
-
-      const ref =
-        target === "name" ? nameInputRef.current : activitiesOtherRef.current;
-      ref?.focus();
+      rec.start();
     } catch {
       setIsListening(false);
-      activeVoiceTargetRef.current = null;
     }
   }
 
-  function goToNextStep() {
-    setStepIndex((idx) => (idx < STEPS.length - 1 ? idx + 1 : idx));
+  function goNext() {
+    setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
 
   function markOnboardingBadge() {
     if (typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(BADGES_KEY);
-      const existing = raw
-        ? (JSON.parse(raw) as Partial<Record<BadgeId, boolean>>)
-        : {};
-      const updated = { ...existing, onboarding: true };
-      window.localStorage.setItem(BADGES_KEY, JSON.stringify(updated));
+      const existing = raw ? (JSON.parse(raw) as Partial<Record<BadgeId, boolean>>) : {};
+      window.localStorage.setItem(BADGES_KEY, JSON.stringify({ ...existing, onboarding: true }));
     } catch {
       // ignore
     }
   }
 
-  // Mark badge exactly once when we ENTER summary.
   const didMarkSummaryRef = React.useRef(false);
   React.useEffect(() => {
     if (stepId !== "summary") return;
@@ -729,248 +482,245 @@ export default function OnboardingPage() {
   }, [stepId]);
 
   /* ============================================================
-     Step Renderers
+     Question-style shell
      ============================================================ */
 
-  function MicButton({ target }: { target: VoiceTarget }) {
-    const supported = speechSupported;
-    const active = isListening;
+  const pillClass =
+    "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
+
+  function QuestionShell(props: {
+    pill: string;
+    prompt: string;
+    micTarget?: VoiceTarget;
+    onSubmit?: () => void;
+    canSubmit?: boolean;
+    children?: React.ReactNode;
+  }) {
+    const { typed } = useTypewriter(props.prompt, TYPE_SPEED_MS, true);
 
     return (
-      <div className="flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => toggleMic(target)}
-          className={`
-            inline-flex h-12 w-12 items-center justify-center
-            rounded-full border
-            transition-transform transition-shadow
-            active:scale-95
-            ${
-              active
-                ? "border-rose-300/90 bg-rose-500/90 shadow-[0_0_50px_rgba(244,63,94,1)]"
-                : "border-sky-300/70 bg-slate-900/80 shadow-[0_0_40px_rgba(56,189,248,0.8)] hover:shadow-[0_0_55px_rgba(56,189,248,1)]"
-            }
-          `}
-          aria-label={active ? "Stop voice input" : "Start voice input"}
-        >
-          {active ? (
-            <MicOff className="h-5 w-5 text-slate-50" />
-          ) : (
-            <Mic className="h-5 w-5 text-slate-50" />
-          )}
-        </button>
+      <div className="flex flex-col items-center">
+        <div className={pillClass}>{props.pill}</div>
 
-        {!supported && (
-          <p className="text-[0.7rem] text-slate-400">
-            Voice input not supported here.
-          </p>
-        )}
+        <h1 className="text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
+          {typed}
+          <span className="ml-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.08em] animate-pulse rounded-sm bg-white/40" />
+        </h1>
+
+        {props.micTarget ? (
+          <div className="mt-7 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => toggleMic(props.micTarget!)}
+              disabled={!speechSupported}
+              className={`
+                inline-flex h-12 w-12 items-center justify-center rounded-full border
+                transition active:scale-95
+                ${
+                  isListening
+                    ? "border-rose-300/80 bg-rose-500/20 text-rose-100 shadow-[0_0_38px_rgba(244,63,94,0.35)]"
+                    : "border-sky-300/70 bg-slate-900/40 text-slate-100 shadow-[0_0_34px_rgba(56,189,248,0.22)] hover:bg-slate-900/55"
+                }
+                ${!speechSupported ? "opacity-40 cursor-not-allowed" : ""}
+              `}
+              aria-label={isListening ? "Stop voice input" : "Start voice input"}
+              title={!speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Talk instead of typing"}
+            >
+              {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            </button>
+          </div>
+        ) : null}
+
+        {props.children}
+
+        {typeof props.onSubmit === "function" ? (
+          <div className="mt-8 w-full max-w-3xl">
+            <div className="relative rounded-[34px] bg-gradient-to-r from-sky-400/70 via-fuchsia-500/65 to-amber-300/65 p-[1px]">
+              <div className="relative flex items-end gap-3 rounded-[34px] bg-slate-950/65 px-4 py-4 sm:px-6 sm:py-5">
+                <textarea
+                  ref={textareaRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      props.onSubmit?.();
+                    }
+                  }}
+                  rows={3}
+                  placeholder=""
+                  className="
+                    min-h-[84px] flex-1 resize-none bg-transparent
+                    text-base text-slate-50 placeholder:text-slate-400/70
+                    outline-none
+                  "
+                />
+
+                <div className="flex items-center gap-2 pb-1">
+                  <button
+                    type="button"
+                    onClick={props.onSubmit}
+                    disabled={!props.canSubmit}
+                    className={`
+                      inline-flex h-11 w-11 items-center justify-center rounded-full
+                      transition active:scale-95
+                      ${
+                        props.canSubmit
+                          ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
+                          : "bg-white/10 text-slate-200/50 cursor-not-allowed"
+                      }
+                    `}
+                    aria-label="Submit"
+                    title="Submit"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
 
+  /* ============================================================
+     Steps
+     ============================================================ */
+
   function renderWelcome() {
+    const prompt =
+      "You are starting a journey to better understand yourself and your path in life. Think of me as a college & career counselor and life coach all in one. This is a conversation — not a test. Answer as honestly as you can.";
+
     return (
-      <div className="space-y-6">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-300/90">
-          Welcome to Everleap
-        </p>
-
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            You are starting a journey to better understand yourself and your
-            path in life. Think of me as a college &amp; career counselor and
-            life coach all in one. I will ask you some questions, but this is
-            not a test, rather a conversation. Answer as honestly as you can.
-            The more you share, the more you will learn, and the more I can
-            provide guidance and insights to you. No right or wrong answers
-            here.
-          </p>
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={goToNextStep}
-            className="
-              inline-flex h-10 w-10 items-center justify-center rounded-full
-              border border-sky-300/80 bg-sky-400/90 text-slate-950
-              shadow-[0_0_32px_rgba(56,189,248,0.9)]
-              hover:bg-sky-300 active:scale-95 transition
-            "
-            aria-label="Begin"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
+      <div className="space-y-8">
+        <QuestionShell pill="Everleap" prompt={prompt}>
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={goNext}
+              className="
+                inline-flex items-center gap-2 rounded-full
+                border border-sky-300/80 bg-sky-400/90 px-6 py-2.5
+                text-sm font-semibold text-slate-950
+                shadow-[0_0_35px_rgba(56,189,248,0.9)]
+                transition hover:bg-sky-300 active:scale-95
+              "
+            >
+              Let’s go <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </QuestionShell>
       </div>
     );
+  }
+
+  function submitName() {
+    const text = draft.trim();
+    if (!text) return;
+    setName(text);
+    setDraft("");
+    goNext();
   }
 
   function renderName() {
     return (
-      <div className="space-y-6">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-300/90">
-          Let&apos;s start simple
-        </p>
-
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            What name do you go by?
-          </p>
-        </div>
-
-        <div className="flex items-center justify-center pt-1">
-          <MicButton target="name" />
-        </div>
-
-        <div className="relative rounded-2xl border border-slate-600/70 bg-slate-950/80 px-4 pb-4 pt-3.5 shadow-[0_24px_70px_rgba(0,0,0,0.9)]">
-          <textarea
-            ref={nameInputRef}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                goToNextStep();
-              }
-            }}
-            rows={2}
-            className="
-              w-full bg-transparent
-              text-base md:text-lg text-slate-50
-              placeholder:text-slate-500
-              resize-none outline-none border-none
-            "
-            placeholder="Say or type your name…"
-          />
-
-          <div className="mt-3 flex justify-end">
-            <button
-              type="button"
-              onClick={goToNextStep}
-              className="
-                inline-flex h-9 w-9 items-center justify-center rounded-full
-                border border-sky-300/70 bg-sky-400/80 text-slate-950
-                shadow-[0_0_30px_rgba(56,189,248,0.9)]
-                hover:bg-sky-300
-                transition active:scale-95
-              "
-              aria-label="Continue"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+      <QuestionShell
+        pill="Onboarding"
+        prompt="What name do you go by?"
+        micTarget="name"
+        onSubmit={submitName}
+        canSubmit={Boolean(draft.trim())}
+      />
     );
   }
 
   function renderSituation() {
-    const greeting = name.trim()
-      ? `Nice to meet you, ${name.trim()}. Let’s jump in.`
-      : "Nice to meet you. Let’s jump in.";
-
-    const options: { key: Situation; label: string }[] = [
-      { key: "high_school", label: "I'm a high school student" },
-      { key: "young_adult", label: "I'm a young adult (18–24 years old)" },
-    ];
+    const prompt = name.trim()
+      ? `Ok cool, ${name.trim()}. Which of these best describes your situation?`
+      : "Ok cool. Which of these best describes your situation?";
 
     return (
-      <div className="space-y-6">
-        <p className="text-xs text-slate-300/90">{greeting}</p>
-
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            Which of the following best describes your situation?
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {options.map((opt) => {
-            const active = situation === opt.key;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => {
-                  setSituation(opt.key);
-                  goToNextStep();
-                }}
-                className={`
-                  flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                  transition shadow-sm
-                  ${
-                    active
-                      ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                      : "border-slate-600/70 bg-slate-950/70 hover:border-sky-300/70 hover:bg-slate-900/80"
-                  }
-                `}
-              >
-                <span className="text-sm md:text-base text-slate-100">
-                  {opt.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="space-y-8">
+        <QuestionShell pill="Onboarding" prompt={prompt}>
+          <div className="mt-8 w-full max-w-3xl space-y-3">
+            {[
+              { key: "high_school" as const, label: "I'm a high school student" },
+              { key: "young_adult" as const, label: "I'm a young adult (18–24 years old)" },
+            ].map((opt) => {
+              const active = situation === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setSituation(opt.key);
+                    goNext();
+                  }}
+                  className={`
+                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
+                    transition shadow-sm
+                    ${
+                      active
+                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
+                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
+                    }
+                  `}
+                >
+                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </QuestionShell>
       </div>
     );
   }
 
   function renderCertainty() {
-    const options: { key: Certainty; label: string }[] = [
-      { key: "strong", label: "Strong idea" },
-      { key: "kinda", label: "Kind of" },
-      { key: "no_clue", label: "No clue" },
-    ];
+    const prompt = "Do you know what you are going to do after high school?";
 
     return (
-      <div className="space-y-6">
-        <p className="text-xs text-slate-300/90">
-          There’s no pressure to have it all figured out.
-        </p>
-
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            Do you know what you are going to do after high school?
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {options.map((opt) => {
-            const active = certainty === opt.key;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => {
-                  setCertainty(opt.key);
-                  goToNextStep();
-                }}
-                className={`
-                  flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                  transition shadow-sm
-                  ${
-                    active
-                      ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                      : "border-slate-600/70 bg-slate-950/70 hover:border-sky-300/70 hover:bg-slate-900/80"
-                  }
-                `}
-              >
-                <span className="text-sm md:text-base text-slate-100">
-                  {opt.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      <div className="space-y-8">
+        <QuestionShell pill="Onboarding" prompt={prompt}>
+          <div className="mt-8 w-full max-w-3xl space-y-3">
+            {[
+              { key: "strong" as const, label: "Strong idea" },
+              { key: "kinda" as const, label: "Kind of" },
+              { key: "no_clue" as const, label: "No clue" },
+            ].map((opt) => {
+              const active = certainty === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setCertainty(opt.key);
+                    goNext();
+                  }}
+                  className={`
+                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
+                    transition shadow-sm
+                    ${
+                      active
+                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
+                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
+                    }
+                  `}
+                >
+                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </QuestionShell>
       </div>
     );
   }
 
   function renderPostPlans() {
+    const prompt = "What are you considering after high school? (Pick more than one.)";
+
     const options: { key: PostPlanKey; label: string }[] = [
       { key: "job", label: "Get a job" },
       { key: "associates", label: "Associate’s degree" },
@@ -980,82 +730,80 @@ export default function OnboardingPage() {
       { key: "no_idea", label: "No idea" },
     ];
 
-    const hasSelection = postPlans.length > 0;
+    const canContinue = postPlans.length > 0;
 
-    function handleToggle(key: PostPlanKey) {
+    const handleToggle = (key: PostPlanKey) => {
       if (key === "no_idea") {
-        if (postPlans.includes("no_idea")) setPostPlans([]);
-        else setPostPlans(["no_idea"]);
+        setPostPlans((prev) => (prev.includes("no_idea") ? [] : ["no_idea"]));
         return;
       }
-
       setPostPlans((prev) => {
         const cleaned = prev.filter((k) => k !== "no_idea");
         return toggleInList(cleaned as PostPlanKey[], key);
       });
-    }
+    };
 
     return (
-      <div className="space-y-6">
-        <p className="text-xs text-slate-300/90">You can pick more than one.</p>
+      <div className="space-y-8">
+        <QuestionShell pill="Onboarding" prompt={prompt}>
+          <div className="mt-8 w-full max-w-3xl space-y-3">
+            {options.map((opt) => {
+              const active = postPlans.includes(opt.key);
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => handleToggle(opt.key)}
+                  className={`
+                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
+                    transition shadow-sm
+                    ${
+                      active
+                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
+                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
+                    }
+                  `}
+                >
+                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
+                </button>
+              );
+            })}
 
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            What are you considering after high school?
-          </p>
-          <p className="mt-1 text-xs text-slate-400">Select all that apply.</p>
-        </div>
-
-        <div className="space-y-3">
-          {options.map((opt) => {
-            const active = postPlans.includes(opt.key);
-            return (
+            <div className="pt-4 flex justify-center">
               <button
-                key={opt.key}
                 type="button"
-                onClick={() => handleToggle(opt.key)}
+                onClick={goNext}
+                disabled={!canContinue}
                 className={`
-                  flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                  transition shadow-sm
+                  inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold
+                  transition active:scale-95
                   ${
-                    active
-                      ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                      : "border-slate-600/70 bg-slate-950/70 hover:border-sky-300/70 hover:bg-slate-900/80"
+                    canContinue
+                      ? "border border-sky-300/80 bg-sky-400/90 text-slate-950 shadow-[0_0_35px_rgba(56,189,248,0.9)] hover:bg-sky-300"
+                      : "border border-white/10 bg-white/5 text-slate-200/40 cursor-not-allowed"
                   }
                 `}
               >
-                <span className="text-sm md:text-base text-slate-100">
-                  {opt.label}
-                </span>
+                Continue <ArrowRight className="h-4 w-4" />
               </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-3 flex justify-end">
-          <button
-            type="button"
-            onClick={goToNextStep}
-            disabled={!hasSelection}
-            className={`
-              inline-flex h-9 w-9 items-center justify-center rounded-full
-              border transition active:scale-95
-              ${
-                hasSelection
-                  ? "border-sky-300/70 bg-sky-400/80 text-slate-950 shadow-[0_0_30px_rgba(56,189,248,0.9)] hover:bg-sky-300"
-                  : "border-slate-600/70 bg-slate-800/80 text-slate-500 opacity-60 cursor-default"
-              }
-            `}
-            aria-label="Continue"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
+            </div>
+          </div>
+        </QuestionShell>
       </div>
     );
   }
 
+  function submitActivitiesOther() {
+    const text = draft.trim();
+    // allow empty; they can just hit send after selecting things
+    if (activities.includes("other")) setActivitiesOther(text);
+    setDraft("");
+    goNext();
+  }
+
   function renderActivities() {
+    const prompt = "What kind of things do you do outside of school?";
+
     const options: { key: ActivityKey; label: string }[] = [
       { key: "sports", label: "Sports" },
       { key: "visual_arts", label: "Visual arts" },
@@ -1065,164 +813,127 @@ export default function OnboardingPage() {
       { key: "other", label: "Other" },
     ];
 
-    const hasSelection =
-      activities.length > 0 || activitiesOther.trim().length > 0;
-    const showOtherDetails = activities.includes("other");
-
-    function handleToggle(key: ActivityKey) {
-      setActivities((prev) => toggleInList(prev, key));
-    }
+    const hasSelection = activities.length > 0;
 
     return (
-      <div className="space-y-6">
-        <p className="text-xs text-slate-300/90">
-          This helps Everleap see more of your world.
-        </p>
+      <div className="space-y-8">
+        <QuestionShell pill="Onboarding" prompt={prompt}>
+          <div className="mt-8 w-full max-w-3xl space-y-3">
+            {options.map((opt) => {
+              const active = activities.includes(opt.key);
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setActivities((prev) => toggleInList(prev, opt.key))}
+                  className={`
+                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
+                    transition shadow-sm
+                    ${
+                      active
+                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
+                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
+                    }
+                  `}
+                >
+                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
+                </button>
+              );
+            })}
 
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            What kind of things do you do outside of school?
-          </p>
-          <p className="mt-1 text-xs text-slate-400">Select all that apply.</p>
-        </div>
-
-        <div className="space-y-3">
-          {options.map((opt) => {
-            const active = activities.includes(opt.key);
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleToggle(opt.key)}
-                className={`
-                  flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                  transition shadow-sm
-                  ${
-                    active
-                      ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                      : "border-slate-600/70 bg-slate-950/70 hover:border-sky-300/70 hover:bg-slate-900/80"
-                  }
-                `}
-              >
-                <span className="text-sm md:text-base text-slate-100">
-                  {opt.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {showOtherDetails && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-400">Share more details (optional):</p>
-
-            <div className="flex items-center justify-center pt-1">
-              <MicButton target="activitiesOther" />
-            </div>
-
-            <div className="rounded-2xl border border-slate-600/70 bg-slate-950/80 px-4 pb-3 pt-3 shadow-[0_18px_60px_rgba(0,0,0,0.85)]">
-              <textarea
-                ref={activitiesOtherRef}
-                value={activitiesOther}
-                onChange={(e) => setActivitiesOther(e.target.value)}
-                rows={3}
-                className="
-                  w-full bg-transparent
-                  text-sm md:text-base text-slate-50
-                  placeholder:text-slate-500
-                  resize-none outline-none border-none
-                "
-                placeholder="Type here…"
-              />
-            </div>
+            {activities.includes("other") ? (
+              <div className="pt-6">
+                <QuestionShell
+                  pill="Onboarding"
+                  prompt="Want to share a quick detail?"
+                  micTarget="activitiesOther"
+                  onSubmit={submitActivitiesOther}
+                  canSubmit={true}
+                />
+              </div>
+            ) : (
+              <div className="pt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={!hasSelection}
+                  className={`
+                    inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold
+                    transition active:scale-95
+                    ${
+                      hasSelection
+                        ? "border border-sky-300/80 bg-sky-400/90 text-slate-950 shadow-[0_0_35px_rgba(56,189,248,0.9)] hover:bg-sky-300"
+                        : "border border-white/10 bg-white/5 text-slate-200/40 cursor-not-allowed"
+                    }
+                  `}
+                >
+                  Continue <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
-
-        <div className="mt-3 flex justify-end">
-          <button
-            type="button"
-            onClick={goToNextStep}
-            disabled={!hasSelection}
-            className={`
-              inline-flex h-9 w-9 items-center justify-center rounded-full
-              border transition active:scale-95
-              ${
-                hasSelection
-                  ? "border-sky-300/70 bg-sky-400/80 text-slate-950 shadow-[0_0_30px_rgba(56,189,248,0.9)] hover:bg-sky-300"
-                  : "border-slate-600/70 bg-slate-800/80 text-slate-500 opacity-60 cursor-default"
-              }
-            `}
-            aria-label="Continue"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
+        </QuestionShell>
       </div>
     );
   }
 
   function renderFun() {
-    function handleChoose(choice: FunChoice) {
-      setFunChoice(choice);
-      goToNextStep();
-    }
+    const prompt = "Last one — just for fun. Which is best?";
 
     return (
-      <div className="space-y-6">
-        <p className="text-xs text-slate-300/90">Last one — just for fun.</p>
+      <div className="space-y-8">
+        <QuestionShell pill="Onboarding" prompt={prompt}>
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 w-full max-w-3xl">
+            <button
+              type="button"
+              onClick={() => {
+                setFunChoice("cat");
+                goNext();
+              }}
+              className="
+                group flex flex-col items-center justify-center rounded-2xl border
+                border-white/10 bg-slate-950/35 p-2
+                shadow-[0_18px_55px_rgba(0,0,0,0.85)]
+                transition hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
+              "
+            >
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
+                <Image
+                  src="/onboarding-fun-cat.jpg"
+                  alt="Cat selfie"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            </button>
 
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-900/80 px-5 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.75)]">
-          <p className="text-base md:text-lg leading-relaxed text-slate-100">
-            Which is best?
-          </p>
-        </div>
-
-        <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => handleChoose("cat")}
-            className="
-              group flex flex-col items-center justify-center rounded-2xl border
-              border-slate-600/70 bg-slate-950/80 p-2
-              shadow-[0_18px_55px_rgba(0,0,0,0.85)]
-              hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
-              transition
-            "
-          >
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-              <Image
-                src="/onboarding-fun-cat.jpg"
-                alt="Cat selfie"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleChoose("dog")}
-            className="
-              group flex flex-col items-center justify-center rounded-2xl border
-              border-slate-600/70 bg-slate-950/80 p-2
-              shadow-[0_18px_55px_rgba(0,0,0,0.85)]
-              hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
-              transition
-            "
-          >
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-              <Image
-                src="/onboarding-fun-dog.jpg"
-                alt="Dog selfie"
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-              />
-            </div>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFunChoice("dog");
+                goNext();
+              }}
+              className="
+                group flex flex-col items-center justify-center rounded-2xl border
+                border-white/10 bg-slate-950/35 p-2
+                shadow-[0_18px_55px_rgba(0,0,0,0.85)]
+                transition hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
+              "
+            >
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
+                <Image
+                  src="/onboarding-fun-dog.jpg"
+                  alt="Dog selfie"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+            </button>
+          </div>
+        </QuestionShell>
       </div>
     );
   }
@@ -1239,53 +950,28 @@ export default function OnboardingPage() {
     });
 
     return (
-      <div className="space-y-8">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <BadgeTile
-              id="onboarding"
-              label="Onboarding"
-              accent="#fbbf24"
-              dimmed={false}
-            />
-            <BadgeTile
-              id="motivations"
-              label="Motivations"
-              accent="#60a5fa"
-              dimmed
-            />
-            <BadgeTile
-              id="strengths"
-              label="Strengths"
-              accent="#34d399"
-              dimmed
-            />
-            <BadgeTile id="skills" label="Skills" accent="#f472b6" dimmed />
-          </div>
-
-          <p className="text-xs text-slate-300/80">
-            1 of 4 areas unlocked — more will open up as you keep going.
-          </p>
+      <div className="space-y-10">
+        <div className="flex flex-wrap items-center justify-center gap-6">
+          <BadgeTile label="Onboarding" imgSrc="/onboarding.png" dimmed={false} />
+          <BadgeTile label="Motivations" imgSrc="/motivations.png" dimmed />
+          <BadgeTile label="Strengths" imgSrc="/strengths.png" dimmed />
+          <BadgeTile label="Skills" imgSrc="/skills.png" dimmed />
         </div>
 
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-3xl">
             {name.trim() ? `Nice work, ${name.trim()}!` : "Nice work!"}
           </h1>
-          <p className="mt-2 text-sm md:text-base text-slate-200/90">
-            You’ve already started building a clearer picture of where you are
-            and where you might go. Here’s one quick insight from what you
-            shared:
+          <p className="mt-2 text-sm text-slate-200/90 md:text-base">
+            Here’s one quick insight from what you shared:
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-600/70 bg-slate-950/80 px-5 py-5 shadow-[0_22px_70px_rgba(0,0,0,0.9)]">
-          <p className="text-sm md:text-base leading-relaxed text-slate-100">
-            {insight}
-          </p>
+        <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-6 py-6 shadow-[0_22px_70px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+          <p className="text-sm leading-relaxed text-slate-100 md:text-base">{insight}</p>
         </div>
 
-        <div className="mt-4 flex justify-center">
+        <div className="flex justify-center">
           <button
             type="button"
             onClick={() => router.push("/login")}
@@ -1294,7 +980,7 @@ export default function OnboardingPage() {
               border border-sky-300/80 bg-sky-400/90 px-6 py-2.5
               text-sm font-semibold text-slate-950
               shadow-[0_0_35px_rgba(56,189,248,0.9)]
-              hover:bg-sky-300 active:scale-95 transition
+              transition hover:bg-sky-300 active:scale-95
             "
           >
             Join Everleap!
@@ -1310,63 +996,57 @@ export default function OnboardingPage() {
      ============================================================ */
 
   return (
-    <div
-      className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
-      style={bgStyle}
+    <AppChrome
+      themeId={themeId}
+      setThemeId={setThemeId}
+      gradientLevel={gradientLevel}
+      setGradientLevel={setGradientLevel}
+      orbSource="onboarding_orb"
+      ambientCap={0.35}
     >
-      {gradientLevel > 0 && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ opacity: gradient.ambientOpacity }}
-        >
-          <div
-            className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-          />
-          <div
-            className={`absolute top-40 -right-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
-          />
-        </div>
-      )}
-
-      <BrandBadge />
-
-      <div className="fixed right-4 top-4 z-50 md:right-6 md:top-6">
-        <AiGuideOrb minimal source="onboarding_orb" />
-      </div>
-
-      <div className="fixed right-4 top-20 z-40 flex flex-col gap-2 md:right-6 md:top-20 md:flex-row">
-        <ThemeToggle activeId={themeId} onChange={setThemeId} />
-        <GradientToggle activeLevel={gradientLevel} onChange={setGradientLevel} />
-      </div>
-
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
-        <section className="w-full max-w-3xl">
-          <div
-            className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={stepId}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.28, ease: "easeOut" }}
-              >
-                {stepId === "welcome" && renderWelcome()}
-                {stepId === "name" && renderName()}
-                {stepId === "situation" && renderSituation()}
-                {stepId === "certainty" && renderCertainty()}
-                {stepId === "postPlans" && renderPostPlans()}
-                {stepId === "activities" && renderActivities()}
-                {stepId === "fun" && renderFun()}
-                {stepId === "summary" && renderSummary()}
-              </motion.div>
-            </AnimatePresence>
+      <div
+        className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
+        style={pageBgStyle}
+      >
+        {/* Ambient blobs (same as Consent) */}
+        {gradientLevel > 0 && (
+          <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity }}>
+            <div className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
+            <div className={`absolute top-40 right-[-32px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`} />
           </div>
-        </section>
-      </main>
+        )}
 
-      <OnboardingFooterNav />
-    </div>
+        <BrandBadge />
+
+        <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
+          <div className="w-full max-w-5xl -translate-y-6">
+            <section className="w-full">
+              <div className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={stepId}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.28, ease: "easeOut" }}
+                  >
+                    {stepId === "welcome" && renderWelcome()}
+                    {stepId === "name" && renderName()}
+                    {stepId === "situation" && renderSituation()}
+                    {stepId === "certainty" && renderCertainty()}
+                    {stepId === "postPlans" && renderPostPlans()}
+                    {stepId === "activities" && renderActivities()}
+                    {stepId === "fun" && renderFun()}
+                    {stepId === "summary" && renderSummary()}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <OnboardingFooterNav />
+      </div>
+    </AppChrome>
   );
 }
