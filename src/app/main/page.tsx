@@ -4,7 +4,7 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Clock, Smile, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Smile, Sparkles } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { CoachIntroModal } from "@/components/main/CoachIntroModal";
@@ -87,9 +87,10 @@ function safeJsonParse<T>(raw: string | null): T | null {
 
 function countAnsweredStory(): number {
   if (typeof window === "undefined") return 0;
-  const parsed = safeJsonParse<Record<string, { answer?: string; skipped?: boolean }>>(
-    window.localStorage.getItem(STORY_STORAGE_KEY)
-  );
+  const parsed =
+    safeJsonParse<Record<string, { answer?: string; skipped?: boolean }>>(
+      window.localStorage.getItem(STORY_STORAGE_KEY)
+    );
   if (!parsed || typeof parsed !== "object") return 0;
 
   let n = 0;
@@ -135,7 +136,7 @@ function accentGradientClass(
   }
 }
 
-type RailCard =
+type ListCard =
   | {
       kind: "tiny";
       id: string;
@@ -213,8 +214,8 @@ export default function SpotlightPage() {
 
   const ctaPad = started ? "py-2.5" : "py-3.5";
 
-  // Build one rail: tiny tasks + explore (no duplicate “Story” card)
-  const railCards: RailCard[] = [
+  // One vertical list: tiny tasks + explore
+  const listCards: ListCard[] = [
     ...payload.tinyTasks.map((t) => ({
       kind: "tiny" as const,
       id: t.id,
@@ -233,28 +234,6 @@ export default function SpotlightPage() {
       accentKey: c.accentKey,
     })),
   ];
-
-  const railRef = React.useRef<HTMLDivElement | null>(null);
-
-  const scrollRailBy = (dir: -1 | 1) => {
-    const el = railRef.current;
-    if (!el) return;
-    const amount = Math.round(el.clientWidth * 0.9) * dir;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
-  // Makes trackpad/mouse-wheel feel like “horizontal swipe” on desktop
-  const onRailWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
-    const el = railRef.current;
-    if (!el) return;
-
-    // If user is already doing horizontal scroll (trackpad), don’t interfere.
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-
-    // Convert vertical wheel into horizontal movement.
-    e.preventDefault();
-    el.scrollBy({ left: e.deltaY, behavior: "auto" });
-  };
 
   return (
     <>
@@ -278,7 +257,9 @@ export default function SpotlightPage() {
           <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
             {/* HERO */}
             <section className="mb-5">
-              <div className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+              <div
+                className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
+              >
                 {gradientLevel > 0 && (
                   <div
                     className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
@@ -287,7 +268,7 @@ export default function SpotlightPage() {
                 )}
 
                 <div className="relative flex flex-col gap-4">
-                  {/* Mini label only (no big header/subheader above hero) */}
+                  {/* Mini label only */}
                   <div
                     className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] ${
                       dark ? "text-slate-100/90" : "text-amber-700/90"
@@ -295,7 +276,9 @@ export default function SpotlightPage() {
                   >
                     <span
                       className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.7rem] ${
-                        dark ? "bg-amber-200/90 text-slate-950" : "bg-amber-400 text-slate-900"
+                        dark
+                          ? "bg-amber-200/90 text-slate-950"
+                          : "bg-amber-400 text-slate-900"
                       }`}
                     >
                       <Sparkles className="h-3 w-3" />
@@ -312,7 +295,7 @@ export default function SpotlightPage() {
                     </p>
                   </div>
 
-                  {/* Progress: dots only + label */}
+                  {/* Progress: dots colored up to current */}
                   <div className="mt-2">
                     <div className="flex items-center justify-between gap-4">
                       <div className={`${sectionLabelClass} opacity-90`}>
@@ -325,12 +308,12 @@ export default function SpotlightPage() {
 
                     <div className="mt-2 flex items-center gap-1.5">
                       {Array.from({ length: STORY_TOTAL }).map((_, i) => {
-                        const on = i === progressIndex;
+                        const filled = i <= progressIndex && storyAnswered > 0;
                         return (
                           <span
                             key={i}
                             className={`h-1.5 w-1.5 rounded-full transition ${
-                              on ? "bg-sky-300" : "bg-white/10"
+                              filled ? "bg-sky-300" : "bg-white/10"
                             }`}
                           />
                         );
@@ -338,7 +321,7 @@ export default function SpotlightPage() {
                     </div>
                   </div>
 
-                  {/* CTA (adaptive) */}
+                  {/* CTA */}
                   <div className="mt-3 flex">
                     <Link
                       href={payload.spotlight.ctaHref}
@@ -351,90 +334,63 @@ export default function SpotlightPage() {
               </div>
             </section>
 
-            {/* RAIL (Tiny tasks + Explore) */}
-            {railCards.length > 0 && (
+            {/* TINY TASKS + EXPLORATIONS (VERTICAL LIST) */}
+            {listCards.length > 0 && (
               <section className="mt-2">
-                <div className="mb-2 flex items-center justify-center">
-                  <div className="text-xs opacity-70">Swipe for tiny tasks and explorations.</div>
+                <div className="mb-3">
+                  <div className={`${sectionLabelClass} mb-1`}>
+                    Tiny tasks + explorations
+                  </div>
+                  <div className="text-sm opacity-70">
+                    Scroll for quick wins and deeper dives.
+                  </div>
                 </div>
 
-                <div className="relative">
-                  {/* Desktop chevrons */}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-10 items-center md:flex">
-                    <button
-                      type="button"
-                      onClick={() => scrollRailBy(-1)}
-                      className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/35 text-slate-100 backdrop-blur-xl hover:bg-slate-950/55"
-                      aria-label="Scroll left"
+                <div className="flex flex-col gap-3 md:gap-4">
+                  {listCards.map((c) => (
+                    <Link
+                      key={`${c.kind}_${c.id}`}
+                      href={c.href}
+                      className={`rounded-3xl border px-5 py-4 transition hover:translate-y-[-1px] ${
+                        theme.cardBgClass
+                      } ${theme.cardBorderClass} shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl`}
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-10 items-center justify-end md:flex">
-                    <button
-                      type="button"
-                      onClick={() => scrollRailBy(1)}
-                      className="pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950/35 text-slate-100 backdrop-blur-xl hover:bg-slate-950/55"
-                      aria-label="Scroll right"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div
-                    ref={railRef}
-                    onWheel={onRailWheel}
-                    className="
-                      -mx-4 px-4 md:mx-0 md:px-0
-                      flex gap-3 overflow-x-auto pb-2
-                      snap-x snap-mandatory
-                      [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-                    "
-                  >
-                    {railCards.map((c) => (
-                      <Link
-                        key={`${c.kind}_${c.id}`}
-                        href={c.href}
-                        className={`
-                          snap-center shrink-0
-                          w-[260px] sm:w-[300px]
-                          rounded-3xl border px-4 py-4
-                          ${theme.cardBgClass} ${theme.cardBorderClass}
-                          shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl
-                        `}
-                      >
-                        {c.kind === "explore" ? (
-                          <div
-                            className={`mb-2 h-1.5 w-14 rounded-full bg-gradient-to-r ${accentGradientClass(
-                              c.accentKey
-                            )}`}
-                          />
-                        ) : (
-                          <div className="mb-2 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`flex h-8 w-8 items-center justify-center rounded-2xl ${
-                                  dark ? "bg-slate-900/90 text-slate-50" : "bg-slate-900/5 text-slate-800"
-                                }`}
-                              >
-                                {c.icon}
-                              </div>
-                              <div className={`${sectionLabelClass} opacity-90`}>Tiny task</div>
+                      {c.kind === "explore" ? (
+                        <div
+                          className={`mb-2 h-1.5 w-16 rounded-full bg-gradient-to-r ${accentGradientClass(
+                            c.accentKey
+                          )}`}
+                        />
+                      ) : (
+                        <div className="mb-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded-2xl ${
+                                dark
+                                  ? "bg-slate-900/90 text-slate-50"
+                                  : "bg-slate-900/5 text-slate-800"
+                              }`}
+                            >
+                              {c.icon}
                             </div>
-                            {typeof c.minutes === "number" && (
-                              <div className="text-[0.7rem] uppercase tracking-[0.16em] opacity-70">
-                                {c.minutes}m
-                              </div>
-                            )}
+                            <div className={`${sectionLabelClass} opacity-90`}>
+                              Tiny task
+                            </div>
                           </div>
-                        )}
+                          {typeof c.minutes === "number" && (
+                            <div className="text-[0.7rem] uppercase tracking-[0.16em] opacity-70">
+                              {c.minutes}m
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                        <h3 className="text-base font-semibold">{c.title}</h3>
-                        <p className={`mt-2 text-sm ${pageTextMutedClass}`}>{c.summary}</p>
-                      </Link>
-                    ))}
-                  </div>
+                      <h3 className="text-base font-semibold">{c.title}</h3>
+                      <p className={`mt-2 text-sm ${pageTextMutedClass}`}>
+                        {c.summary}
+                      </p>
+                    </Link>
+                  ))}
                 </div>
               </section>
             )}

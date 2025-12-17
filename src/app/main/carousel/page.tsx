@@ -374,9 +374,21 @@ const areas: YouMapArea[] = [
     about:
       "This is based on common patterns in people who value depth and signal. If you actually love big groups and constant stimulation, tell us.",
     nextMoves: [
-      { id: "energy-people", title: "Name 2 ‘energy people’", blurb: "Who leaves you feeling clearer after you talk?" },
-      { id: "drain", title: "Name 1 drain dynamic", blurb: "What kind of interaction makes you shrink?" },
-      { id: "real-text", title: "Send one real text", blurb: "One honest message beats 10 memes." },
+      {
+        id: "energy-people",
+        title: "Name 2 ‘energy people’",
+        blurb: "Who leaves you feeling clearer after you talk?",
+      },
+      {
+        id: "drain",
+        title: "Name 1 drain dynamic",
+        blurb: "What kind of interaction makes you shrink?",
+      },
+      {
+        id: "real-text",
+        title: "Send one real text",
+        blurb: "One honest message beats 10 memes.",
+      },
     ],
     deepDive: {
       title: "My read so far • Friends",
@@ -689,12 +701,12 @@ export default function YouMapPage() {
     : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white";
 
   const areaChipActive = dark
-  ? `
+    ? `
     border-white/18 text-slate-50
     bg-gradient-to-r from-white/10 via-white/6 to-white/5
     shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_28px_rgba(56,189,248,0.18)]
   `
-  : `
+    : `
     border-sky-300 text-slate-900
     bg-gradient-to-r from-sky-50 via-white to-white
     shadow-[0_0_0_1px_rgba(56,189,248,0.22),0_10px_24px_rgba(56,189,248,0.16)]
@@ -702,7 +714,6 @@ export default function YouMapPage() {
 
   const accentGlow = `bg-gradient-to-br ${activeArea.glowClass}`;
   const chipAccentBar = `bg-gradient-to-b ${activeArea.glowClass}`;
-
 
   const topSignals = activeArea.signals.slice(0, 3);
   const extraSignals = Math.max(activeArea.signals.length - topSignals.length, 0);
@@ -771,10 +782,7 @@ export default function YouMapPage() {
         ? "Helpful. Which part should I tone down or flip, and what’s the better version?"
         : "Nice. What’s one specific example from your life that proves this is true?";
 
-    setGuideMsgs((prev) => [
-      ...prev,
-      { role: "guide", text: followUp },
-    ]);
+    setGuideMsgs((prev) => [...prev, { role: "guide", text: followUp }]);
   }
 
   // keyboard UX for modals
@@ -801,8 +809,10 @@ export default function YouMapPage() {
 
   const feedbackButtonBase =
     "inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95";
-  const feedbackButtonDark = "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10";
-  const feedbackButtonLight = "border-slate-200 bg-white/85 text-slate-800 hover:bg-white";
+  const feedbackButtonDark =
+    "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10";
+  const feedbackButtonLight =
+    "border-slate-200 bg-white/85 text-slate-800 hover:bg-white";
 
   const careerDeepHref = (id: string) => `/main/career/${id}`;
 
@@ -817,89 +827,112 @@ export default function YouMapPage() {
     >
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
-          {/* calm top row */}
           {/* calm top row (micro-pop) */}
-<div className="relative mb-4 flex flex-col gap-3">
-  {/* subtle accent rail */}
-  <div
-    aria-hidden
-    className={`pointer-events-none absolute left-0 top-1 h-10 w-[3px] rounded-full ${chipAccentBar} opacity-60`}
-  />
+          <div className="relative mb-5 flex flex-col gap-3">
+            {/* subtle accent rail */}
+            <div
+              aria-hidden
+              className={`pointer-events-none absolute left-0 top-1 h-10 w-[3px] rounded-full ${chipAccentBar} opacity-60`}
+            />
 
-  <div className="flex items-center justify-between gap-3">
-    <div className="flex items-center gap-2">
-      <span className={sectionLabelClass}>Insights</span>
-      <span className={`h-1 w-1 rounded-full ${dark ? "bg-white/20" : "bg-slate-300"}`} />
-      <span
-        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
-          dark
-            ? "border-white/10 bg-white/5 text-slate-100"
-            : "border-slate-200 bg-white/80 text-slate-800"
-        }`}
-      >
-        <span className={`mr-2 h-2 w-2 rounded-full ${chipAccentBar}`} />
-        {activeArea.label}
-      </span>
-    </div>
-  </div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className={sectionLabelClass}>Insights</span>
+                <span
+                  className={`h-1 w-1 rounded-full ${
+                    dark ? "bg-white/20" : "bg-slate-300"
+                  }`}
+                />
+                <span
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                    dark
+                      ? "border-white/10 bg-white/5 text-slate-100"
+                      : "border-slate-200 bg-white/80 text-slate-800"
+                  }`}
+                >
+                  <span className={`mr-2 h-2 w-2 rounded-full ${chipAccentBar}`} />
+                  {activeArea.label}
+                </span>
+              </div>
+            </div>
 
-  {/* compact area chips */}
-  <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <div className="flex items-center gap-2 pr-2">
-      {areas.map((area, idx) => {
-        const active = idx === activeIndex;
-        return (
-          <button
-            key={area.id}
-            type="button"
-            onClick={() => goToArea(idx)}
-            className={`relative inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-left text-sm transition ${
-              active ? areaChipActive : areaChipBase
-            }`}
-          >
-            {active && (
-              <span
-                aria-hidden
-                className={`absolute left-1 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b ${area.glowClass}`}
-              />
-            )}
-            <span className="font-semibold">{area.label}</span>
-            <span className={`hidden text-xs md:inline ${microText}`}>
-              {area.chip}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  </div>
-</div>
+            {/* area chips — pushed down a touch + two-line labels */}
+            <div className="mt-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex items-stretch gap-2 pr-2">
+                {areas.map((area, idx) => {
+                  const active = idx === activeIndex;
+                  return (
+                    <button
+                      key={area.id}
+                      type="button"
+                      onClick={() => goToArea(idx)}
+                      className={`relative inline-flex shrink-0 flex-col items-start gap-0.5 rounded-2xl border px-4 py-2.5 text-left transition ${
+                        active ? areaChipActive : areaChipBase
+                      }`}
+                    >
+                      {active && (
+                        <span
+                          aria-hidden
+                          className={`absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b ${area.glowClass}`}
+                        />
+                      )}
+
+                      <span className="text-sm font-semibold leading-tight">
+                        {area.label}
+                      </span>
+                      <span className={`text-xs leading-tight ${microText}`}>
+                        {area.chip}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* hero / coach read */}
           <section className="mb-5">
-            <div className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+            <div
+              className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
+            >
               {/* glow */}
               <div className="pointer-events-none absolute inset-0">
-                <div className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`} />
-                <div className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`} />
+                <div
+                  className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
+                />
+                <div
+                  className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
+                />
               </div>
 
               <div className="relative">
                 <div className={sectionLabelClass}>What I’m noticing</div>
 
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                  {activeArea.summary}
-                </h2>
+                {/* summary should NOT read like a page title */}
+                <p
+                  className={`mt-2 max-w-2xl text-sm leading-relaxed sm:text-[0.95rem] ${pageTextMutedClass}`}
+                >
+                  <span className={dark ? "text-slate-100" : "text-slate-900"}>
+                    {activeArea.summary}
+                  </span>
+                </p>
 
-                <p className={`mt-2 text-sm ${pageTextMutedClass}`}>{activeArea.hint}</p>
+                <p className={`mt-2 text-sm ${pageTextMutedClass}`}>
+                  {activeArea.hint}
+                </p>
 
                 {/* meat */}
-                <div className={`mt-3 max-w-2xl text-sm leading-relaxed ${pageTextMutedClass}`}>
+                <div
+                  className={`mt-3 max-w-2xl text-sm leading-relaxed ${pageTextMutedClass}`}
+                >
                   {activeArea.coachRead}
                 </div>
 
                 {/* signals */}
                 <div className="mt-4">
-                  <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
+                  <div
+                    className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                  >
                     Signals I’m picking up
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -931,28 +964,36 @@ export default function YouMapPage() {
 
                 {/* feedback (ON PAGE) */}
                 <div className="mt-6">
-                  <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
+                  <div
+                    className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                  >
                     Is this accurate?
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => openGuide("mostly", "page")}
-                      className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                      className={`${feedbackButtonBase} ${
+                        dark ? feedbackButtonDark : feedbackButtonLight
+                      }`}
                     >
                       👍 Mostly
                     </button>
                     <button
                       type="button"
                       onClick={() => openGuide("somewhat", "page")}
-                      className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                      className={`${feedbackButtonBase} ${
+                        dark ? feedbackButtonDark : feedbackButtonLight
+                      }`}
                     >
                       😐 Somewhat
                     </button>
                     <button
                       type="button"
                       onClick={() => openGuide("nope", "page")}
-                      className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                      className={`${feedbackButtonBase} ${
+                        dark ? feedbackButtonDark : feedbackButtonLight
+                      }`}
                     >
                       👎 Not really
                     </button>
@@ -960,9 +1001,12 @@ export default function YouMapPage() {
                 </div>
 
                 {/* career special: 4 suggestions + per-item Go Deeper link */}
-                {activeArea.id === "career" && activeArea.careerSuggestions?.length ? (
+                {activeArea.id === "career" &&
+                activeArea.careerSuggestions?.length ? (
                   <div className="mt-6">
-                    <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
+                    <div
+                      className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                    >
                       4 directions I’d test first
                     </div>
 
@@ -978,8 +1022,13 @@ export default function YouMapPage() {
                         >
                           <div className="text-sm font-semibold">{c.title}</div>
                           <div className={`mt-1 text-xs ${microText}`}>{c.why}</div>
-                          <div className={`mt-2 text-xs ${dark ? "text-slate-200/80" : "text-slate-700"}`}>
-                            <span className="font-semibold">Try:</span> {c.starterExperiment}
+                          <div
+                            className={`mt-2 text-xs ${
+                              dark ? "text-slate-200/80" : "text-slate-700"
+                            }`}
+                          >
+                            <span className="font-semibold">Try:</span>{" "}
+                            {c.starterExperiment}
                           </div>
 
                           <div className="mt-3 flex items-center justify-between gap-3">
@@ -997,7 +1046,11 @@ export default function YouMapPage() {
                             <button
                               type="button"
                               onClick={() => openGuide("somewhat", "page")}
-                              className={`text-xs font-semibold ${dark ? "text-slate-200/70 hover:text-slate-50" : "text-slate-700/70 hover:text-slate-900"}`}
+                              className={`text-xs font-semibold ${
+                                dark
+                                  ? "text-slate-200/70 hover:text-slate-50"
+                                  : "text-slate-700/70 hover:text-slate-900"
+                              }`}
                               title="Tell Everleap what to change about this lane"
                             >
                               React to this
@@ -1011,7 +1064,9 @@ export default function YouMapPage() {
 
                 {/* next moves */}
                 <div className="mt-6">
-                  <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
+                  <div
+                    className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                  >
                     Next moves (tiny, but powerful)
                   </div>
 
@@ -1058,7 +1113,9 @@ export default function YouMapPage() {
                     aria-expanded={whyOpen}
                   >
                     What I’m basing this on
-                    <ChevronDown className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
                 </div>
 
@@ -1306,10 +1363,7 @@ export default function YouMapPage() {
                     {guideMsgs.map((m, i) => {
                       const isGuide = m.role === "guide";
                       return (
-                        <div
-                          key={i}
-                          className={`flex ${isGuide ? "justify-start" : "justify-end"}`}
-                        >
+                        <div key={i} className={`flex ${isGuide ? "justify-start" : "justify-end"}`}>
                           <div
                             className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                               isGuide
