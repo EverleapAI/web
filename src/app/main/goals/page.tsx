@@ -42,12 +42,6 @@ function openGuide(detail?: Record<string, unknown>) {
   );
 }
 
-
-// fallback if CustomAvoidEvent isn’t defined in your env
-function CustomAvoidEvent(type: string, init?: CustomEventInit) {
-  return new CustomEvent(type, init);
-}
-
 /* =========================
    Types + mock data
 ========================= */
@@ -126,8 +120,7 @@ const RECS: InsightRec[] = [
       {
         id: "mb-tidepool",
         title: "Plan one tidepool visit",
-        description:
-          "Turn curiosity into a real experience—simple logistics, no perfection.",
+        description: "Turn curiosity into a real experience—simple logistics, no perfection.",
         nextStep: "Pick a location + day; set a 30-minute “just observe” window.",
         status: "idea",
         accent: "emerald",
@@ -136,8 +129,7 @@ const RECS: InsightRec[] = [
       {
         id: "mb-onepager",
         title: "One-page “What is Marine Biology?”",
-        description:
-          "Make the field feel real: one page that answers the basics in your own words.",
+        description: "Make the field feel real: one page that answers the basics in your own words.",
         nextStep: "Write: what they do, where they work, one cool sub-area you’d try.",
         status: "idea",
         accent: "amber",
@@ -149,7 +141,8 @@ const RECS: InsightRec[] = [
   {
     id: "product-builder",
     title: "Product Builder",
-    summary: "You’re drawn to building practical things: ship small, test fast, learn from real users.",
+    summary:
+      "You’re drawn to building practical things: ship small, test fast, learn from real users.",
     tags: [
       { label: "Build + ship", icon: <Hammer className="h-4 w-4" /> },
       { label: "Systems thinking", icon: <Boxes className="h-4 w-4" /> },
@@ -207,7 +200,8 @@ const RECS: InsightRec[] = [
   {
     id: "community-leader",
     title: "Community Leader",
-    summary: "You get energy from people + momentum. You’re good at making things happen with others.",
+    summary:
+      "You get energy from people + momentum. You’re good at making things happen with others.",
     tags: [
       { label: "People-first", icon: <MessageCircle className="h-4 w-4" /> },
       { label: "Momentum", icon: <Zap className="h-4 w-4" /> },
@@ -379,7 +373,8 @@ function iconForAligned(key: AlignedGoal["iconKey"]) {
 function statusChipClasses(status: GoalStatus, dark: boolean) {
   const base = "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.65rem] border";
   if (dark) {
-    if (status === "in_progress") return base + " border-emerald-400/70 bg-emerald-500/15 text-emerald-200";
+    if (status === "in_progress")
+      return base + " border-emerald-400/70 bg-emerald-500/15 text-emerald-200";
     if (status === "done") return base + " border-sky-400/70 bg-sky-500/15 text-sky-200";
     if (status === "idea") return base + " border-white/10 bg-white/5 text-slate-200/80";
     return base + " border-slate-600/80 bg-slate-900/80 text-slate-300/90";
@@ -581,10 +576,14 @@ export default function GoalsPage() {
                       <span
                         key={t.label}
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                          dark
+                            ? "border-white/10 bg-white/5 text-slate-100/90"
+                            : "border-slate-200 bg-white text-slate-800"
                         }`}
                       >
-                        <span className={`${dark ? "text-slate-100/80" : "text-slate-600"}`}>{t.icon}</span>
+                        <span className={`${dark ? "text-slate-100/80" : "text-slate-600"}`}>
+                          {t.icon}
+                        </span>
                         {t.label}
                       </span>
                     ))}
@@ -596,7 +595,7 @@ export default function GoalsPage() {
                   <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={goPrev}
+                      onClick={() => setRecIndex((i) => (i - 1 + RECS.length) % RECS.length)}
                       className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
                         dark
                           ? "border-white/10 bg-slate-950/35 text-slate-100 hover:bg-slate-950/55"
@@ -618,7 +617,11 @@ export default function GoalsPage() {
                               type="button"
                               onClick={() => setRecIndex(i)}
                               className={`h-2 w-2 rounded-full transition ${
-                                on ? "bg-sky-300" : dark ? "bg-white/10 hover:bg-white/20" : "bg-slate-300 hover:bg-slate-400"
+                                on
+                                  ? "bg-sky-300"
+                                  : dark
+                                    ? "bg-white/10 hover:bg-white/20"
+                                    : "bg-slate-300 hover:bg-slate-400"
                               }`}
                               aria-label={`Go to recommendation ${i + 1} of ${RECS.length}`}
                               title={`${i + 1}/${RECS.length}`}
@@ -634,7 +637,7 @@ export default function GoalsPage() {
 
                     <button
                       type="button"
-                      onClick={goNext}
+                      onClick={() => setRecIndex((i) => (i + 1) % RECS.length)}
                       className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition active:scale-95 ${
                         dark
                           ? "border-white/10 bg-slate-950/35 text-slate-100 hover:bg-slate-950/55"
@@ -652,7 +655,9 @@ export default function GoalsPage() {
                     <div className="mt-2 flex justify-end">
                       <div
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.7rem] font-semibold ${
-                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                          dark
+                            ? "border-white/10 bg-white/5 text-slate-100/90"
+                            : "border-slate-200 bg-white text-slate-800"
                         }`}
                       >
                         <span className="opacity-80">Swipe</span>
@@ -661,7 +666,11 @@ export default function GoalsPage() {
                     </div>
                   ) : null}
 
-                  <div className={`mt-2 text-right text-[0.7rem] ${dark ? "text-slate-300/50" : "text-slate-500"}`}>
+                  <div
+                    className={`mt-2 text-right text-[0.7rem] ${
+                      dark ? "text-slate-300/50" : "text-slate-500"
+                    }`}
+                  >
                     Swipe or tap dots
                   </div>
                 </div>
@@ -701,7 +710,9 @@ export default function GoalsPage() {
                       <span
                         key={c}
                         className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
-                          dark ? "border-white/10 bg-white/5 text-slate-100/90" : "border-slate-200 bg-white text-slate-800"
+                          dark
+                            ? "border-white/10 bg-white/5 text-slate-100/90"
+                            : "border-slate-200 bg-white text-slate-800"
                         }`}
                       >
                         {c}
@@ -721,7 +732,9 @@ export default function GoalsPage() {
                         <div key={b} className="flex items-start gap-2">
                           <span
                             className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border ${
-                              dark ? "border-sky-300/30 bg-sky-300/10 text-sky-200" : "border-sky-300 bg-sky-50 text-sky-700"
+                              dark
+                                ? "border-sky-300/30 bg-sky-300/10 text-sky-200"
+                                : "border-sky-300 bg-sky-50 text-sky-700"
                             }`}
                           >
                             <CheckCircle2 className="h-3 w-3" />
@@ -752,7 +765,14 @@ export default function GoalsPage() {
 
                     <button
                       type="button"
-                      onClick={surpriseMe}
+                      onClick={() =>
+                        openGuide({
+                          source: "goals_surprise_me",
+                          rec: { id: rec.id, title: rec.title },
+                          prompt:
+                            "Surprise me with ONE tiny goal aligned to this direction. Keep it 3 days max and give the first step.",
+                        })
+                      }
                       className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition active:scale-95 ${
                         dark
                           ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
@@ -817,12 +837,21 @@ export default function GoalsPage() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <div className={`${sectionLabelClass} opacity-90`}>Aligned ideas (scroll)</div>
-                <div className={`mt-1 text-sm ${pageTextMutedClass}`}>A feed of tiny goals that match this direction.</div>
+                <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
+                  A feed of tiny goals that match this direction.
+                </div>
               </div>
 
               <button
                 type="button"
-                onClick={surpriseMe}
+                onClick={() =>
+                  openGuide({
+                    source: "goals_surprise_me",
+                    rec: { id: rec.id, title: rec.title },
+                    prompt:
+                      "Surprise me with ONE tiny goal aligned to this direction. Keep it 3 days max and give the first step.",
+                  })
+                }
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition active:scale-95 ${
                   dark
                     ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
@@ -857,14 +886,14 @@ export default function GoalsPage() {
                 >
                   <div className="relative flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className={`${sectionLabelClass} opacity-90`}>
-                        Aligned: {rec.title}
-                      </div>
+                      <div className={`${sectionLabelClass} opacity-90`}>Aligned: {rec.title}</div>
 
                       <div className="mt-2 flex items-center gap-2">
                         <span
                           className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl border ${
-                            dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-900"
+                            dark
+                              ? "border-white/10 bg-white/5 text-slate-100"
+                              : "border-slate-200 bg-white text-slate-900"
                           }`}
                         >
                           {iconForAligned(g.iconKey)}
