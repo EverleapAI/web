@@ -83,10 +83,15 @@ type FunChoice = "cat" | "dog" | null;
 
 type BadgeId = "onboarding" | "motivations" | "strengths" | "skills";
 
+type VoiceTarget = "name" | "activitiesOther";
+
 const STORAGE_KEY = "everleapOnboarding_v1";
 const BADGES_KEY = "everleapBadges_v1";
 
 const TYPE_SPEED_MS = 28;
+
+const pillClass =
+  "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
 
 /* ============================================================
    Small helpers
@@ -119,8 +124,14 @@ function isMeaningfulText(value: string): boolean {
 
 function useTypewriter(text: string, speedMs: number, enabled: boolean) {
   const [out, setOut] = React.useState("");
+  const timerRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (!enabled) {
       setOut(text);
       return;
@@ -134,18 +145,150 @@ function useTypewriter(text: string, speedMs: number, enabled: boolean) {
       if (cancelled) return;
       i += 1;
       setOut(text.slice(0, i));
-      if (i < text.length) window.setTimeout(tick, speedMs);
+      if (i < text.length) {
+        timerRef.current = window.setTimeout(tick, speedMs);
+      }
     };
 
-    const t = window.setTimeout(tick, 120);
+    timerRef.current = window.setTimeout(tick, 120);
+
     return () => {
       cancelled = true;
-      window.clearTimeout(t);
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [text, speedMs, enabled]);
 
   const done = out.length >= text.length;
   return { typed: out, done };
+}
+
+/* ============================================================
+   Stable QuestionShell component (MUST be outside page component)
+   ============================================================ */
+
+type QuestionShellProps = {
+  pill: string;
+  prompt: string;
+
+  micTarget?: VoiceTarget;
+  isListening: boolean;
+  speechSupported: boolean;
+  onToggleMic?: (target: VoiceTarget) => void;
+
+  draft?: string;
+  setDraft?: (v: string) => void;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+
+  onSubmit?: () => void;
+  canSubmit?: boolean;
+
+  typingEnabled?: boolean;
+  children?: React.ReactNode;
+};
+
+function QuestionShell(props: QuestionShellProps) {
+  const typingEnabled = props.typingEnabled ?? true;
+  const { typed, done } = useTypewriter(props.prompt, TYPE_SPEED_MS, typingEnabled);
+
+  const showInput = typeof props.onSubmit === "function";
+  const draft = props.draft ?? "";
+  const canSubmit = props.canSubmit ?? false;
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className={pillClass}>{props.pill}</div>
+
+      <h1 className="text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
+        {typed}
+        {!done && (
+          <span className="ml-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.08em] animate-pulse rounded-sm bg-white/40" />
+        )}
+      </h1>
+
+      {props.micTarget ? (
+        <div className="mt-7 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => props.onToggleMic?.(props.micTarget!)}
+            disabled={!props.speechSupported}
+            className={`
+              inline-flex h-12 w-12 items-center justify-center rounded-full border
+              transition active:scale-95
+              ${
+                props.isListening
+                  ? "border-rose-300/80 bg-rose-500/20 text-rose-100 shadow-[0_0_38px_rgba(244,63,94,0.35)]"
+                  : "border-sky-300/70 bg-slate-900/40 text-slate-100 shadow-[0_0_34px_rgba(56,189,248,0.22)] hover:bg-slate-900/55"
+              }
+              ${!props.speechSupported ? "opacity-40 cursor-not-allowed" : ""}
+            `}
+            aria-label={props.isListening ? "Stop voice input" : "Start voice input"}
+            title={
+              !props.speechSupported
+                ? "Voice not supported"
+                : props.isListening
+                  ? "Listening…"
+                  : "Talk instead of typing"
+            }
+          >
+            {props.isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          </button>
+        </div>
+      ) : null}
+
+      {props.children}
+
+      {showInput ? (
+        <div className="mt-8 w-full max-w-3xl">
+          <div className="relative rounded-[34px] bg-gradient-to-r from-sky-400/70 via-fuchsia-500/65 to-amber-300/65 p-[1px]">
+            <div className="relative flex items-end gap-3 rounded-[34px] bg-slate-950/65 px-4 py-4 sm:px-6 sm:py-5">
+              <textarea
+                ref={props.textareaRef}
+                value={draft}
+                onChange={(e) => props.setDraft?.(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    props.onSubmit?.();
+                  }
+                }}
+                rows={3}
+                placeholder=""
+                className="
+                  min-h-[84px] flex-1 resize-none bg-transparent
+                  text-base text-slate-50 placeholder:text-slate-400/70
+                  outline-none
+                "
+              />
+
+              <div className="flex items-center gap-2 pb-1">
+                <button
+                  type="button"
+                  onClick={props.onSubmit}
+                  disabled={!canSubmit}
+                  className={`
+                    inline-flex h-11 w-11 items-center justify-center rounded-full
+                    transition active:scale-95
+                    ${
+                      canSubmit
+                        ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
+                        : "bg-white/10 text-slate-200/50 cursor-not-allowed"
+                    }
+                  `}
+                  aria-label="Submit"
+                  title="Submit"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 /* ============================================================
@@ -247,7 +390,7 @@ function buildInsight(options: {
 }
 
 /* ============================================================
-   Badges (simple inline tiles, matches earlier)
+   Badges
    ============================================================ */
 
 function BadgeTile({
@@ -273,8 +416,6 @@ function BadgeTile({
    Page
    ============================================================ */
 
-type VoiceTarget = "name" | "activitiesOther";
-
 export default function OnboardingPage() {
   const router = useRouter();
 
@@ -289,7 +430,9 @@ export default function OnboardingPage() {
   const pageBgStyle: CSSProperties = pageBgImage ? { backgroundImage: pageBgImage } : {};
   const dark = isDarkTheme(themeId);
 
-  const cardShadow = dark ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]" : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
+  const cardShadow = dark
+    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
+    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
   const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
 
   // State
@@ -388,7 +531,6 @@ export default function OnboardingPage() {
     rec.continuous = false;
 
     rec.onresult = (event: SpeechRecognitionEvent) => {
-      // ✅ Fix for doubling: only commit FINAL chunks and dedupe repeats.
       let finalChunk = "";
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -406,12 +548,7 @@ export default function OnboardingPage() {
 
       const target = activeTargetRef.current;
 
-      if (target === "name") {
-        setDraft((prev) => {
-          const base = prev.trim();
-          return base ? `${base} ${cleaned}` : cleaned;
-        });
-      } else if (target === "activitiesOther") {
+      if (target === "name" || target === "activitiesOther") {
         setDraft((prev) => {
           const base = prev.trim();
           return base ? `${base} ${cleaned}` : cleaned;
@@ -438,7 +575,7 @@ export default function OnboardingPage() {
 
   function toggleMic(target: VoiceTarget) {
     textareaRef.current?.focus();
-    setDraft(""); // ✅ same behavior as questions: blank on mic start
+    setDraft("");
     lastFinalRef.current = "";
     activeTargetRef.current = target;
 
@@ -482,109 +619,6 @@ export default function OnboardingPage() {
   }, [stepId]);
 
   /* ============================================================
-     Question-style shell
-     ============================================================ */
-
-  const pillClass =
-    "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
-
-  function QuestionShell(props: {
-    pill: string;
-    prompt: string;
-    micTarget?: VoiceTarget;
-    onSubmit?: () => void;
-    canSubmit?: boolean;
-    children?: React.ReactNode;
-  }) {
-    const { typed } = useTypewriter(props.prompt, TYPE_SPEED_MS, true);
-
-    return (
-      <div className="flex flex-col items-center">
-        <div className={pillClass}>{props.pill}</div>
-
-        <h1 className="text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
-          {typed}
-          <span className="ml-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.08em] animate-pulse rounded-sm bg-white/40" />
-        </h1>
-
-        {props.micTarget ? (
-          <div className="mt-7 flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => toggleMic(props.micTarget!)}
-              disabled={!speechSupported}
-              className={`
-                inline-flex h-12 w-12 items-center justify-center rounded-full border
-                transition active:scale-95
-                ${
-                  isListening
-                    ? "border-rose-300/80 bg-rose-500/20 text-rose-100 shadow-[0_0_38px_rgba(244,63,94,0.35)]"
-                    : "border-sky-300/70 bg-slate-900/40 text-slate-100 shadow-[0_0_34px_rgba(56,189,248,0.22)] hover:bg-slate-900/55"
-                }
-                ${!speechSupported ? "opacity-40 cursor-not-allowed" : ""}
-              `}
-              aria-label={isListening ? "Stop voice input" : "Start voice input"}
-              title={!speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Talk instead of typing"}
-            >
-              {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </button>
-          </div>
-        ) : null}
-
-        {props.children}
-
-        {typeof props.onSubmit === "function" ? (
-          <div className="mt-8 w-full max-w-3xl">
-            <div className="relative rounded-[34px] bg-gradient-to-r from-sky-400/70 via-fuchsia-500/65 to-amber-300/65 p-[1px]">
-              <div className="relative flex items-end gap-3 rounded-[34px] bg-slate-950/65 px-4 py-4 sm:px-6 sm:py-5">
-                <textarea
-                  ref={textareaRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      props.onSubmit?.();
-                    }
-                  }}
-                  rows={3}
-                  placeholder=""
-                  className="
-                    min-h-[84px] flex-1 resize-none bg-transparent
-                    text-base text-slate-50 placeholder:text-slate-400/70
-                    outline-none
-                  "
-                />
-
-                <div className="flex items-center gap-2 pb-1">
-                  <button
-                    type="button"
-                    onClick={props.onSubmit}
-                    disabled={!props.canSubmit}
-                    className={`
-                      inline-flex h-11 w-11 items-center justify-center rounded-full
-                      transition active:scale-95
-                      ${
-                        props.canSubmit
-                          ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
-                          : "bg-white/10 text-slate-200/50 cursor-not-allowed"
-                      }
-                    `}
-                    aria-label="Submit"
-                    title="Submit"
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  /* ============================================================
      Steps
      ============================================================ */
 
@@ -594,7 +628,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Everleap" prompt={prompt}>
+        <QuestionShell pill="Everleap" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 flex justify-center">
             <button
               type="button"
@@ -629,6 +663,12 @@ export default function OnboardingPage() {
         pill="Onboarding"
         prompt="What name do you go by?"
         micTarget="name"
+        isListening={isListening}
+        speechSupported={speechSupported}
+        onToggleMic={toggleMic}
+        draft={draft}
+        setDraft={setDraft}
+        textareaRef={textareaRef}
         onSubmit={submitName}
         canSubmit={Boolean(draft.trim())}
       />
@@ -642,7 +682,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt}>
+        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 w-full max-w-3xl space-y-3">
             {[
               { key: "high_school" as const, label: "I'm a high school student" },
@@ -682,7 +722,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt}>
+        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 w-full max-w-3xl space-y-3">
             {[
               { key: "strong" as const, label: "Strong idea" },
@@ -745,7 +785,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt}>
+        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 w-full max-w-3xl space-y-3">
             {options.map((opt) => {
               const active = postPlans.includes(opt.key);
@@ -795,7 +835,6 @@ export default function OnboardingPage() {
 
   function submitActivitiesOther() {
     const text = draft.trim();
-    // allow empty; they can just hit send after selecting things
     if (activities.includes("other")) setActivitiesOther(text);
     setDraft("");
     goNext();
@@ -817,7 +856,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt}>
+        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 w-full max-w-3xl space-y-3">
             {options.map((opt) => {
               const active = activities.includes(opt.key);
@@ -847,6 +886,12 @@ export default function OnboardingPage() {
                   pill="Onboarding"
                   prompt="Want to share a quick detail?"
                   micTarget="activitiesOther"
+                  isListening={isListening}
+                  speechSupported={speechSupported}
+                  onToggleMic={toggleMic}
+                  draft={draft}
+                  setDraft={setDraft}
+                  textareaRef={textareaRef}
                   onSubmit={submitActivitiesOther}
                   canSubmit={true}
                 />
@@ -882,7 +927,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt}>
+        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 w-full max-w-3xl">
             <button
               type="button"
@@ -1004,11 +1049,7 @@ export default function OnboardingPage() {
       orbSource="onboarding_orb"
       ambientCap={0.35}
     >
-      <div
-        className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
-        style={pageBgStyle}
-      >
-        {/* Ambient blobs (same as Consent) */}
+      <div className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`} style={pageBgStyle}>
         {gradientLevel > 0 && (
           <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity }}>
             <div className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
