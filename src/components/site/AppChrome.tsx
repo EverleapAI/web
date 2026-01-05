@@ -2,125 +2,142 @@
 "use client";
 
 import * as React from "react";
-import type { CSSProperties, ReactNode } from "react";
-import { SlidersHorizontal } from "lucide-react";
-
-import { AiGuideOrb } from "@/components/main/AiGuideOrb";
-import { ThemeToggle, GradientToggle } from "@/components/site/VisualToggles";
 
 import {
-  INSIGHTS_THEMES,
-  GRADIENT_CONFIGS,
+  DEFAULT_THEME_ID,
+  DEFAULT_GRADIENT_LEVEL,
+  getThemeById,
+  getGradientConfig,
   getPageBackgroundImage,
-  isDarkTheme,
   type SpotlightThemeId,
   type GradientLevel,
 } from "@/theme/everleapVisuals";
 
 type AppChromeProps = {
-  themeId: SpotlightThemeId;
-  setThemeId: (id: SpotlightThemeId) => void;
-  gradientLevel: GradientLevel;
-  setGradientLevel: (lvl: GradientLevel) => void;
+  title?: string;
+  children: React.ReactNode;
 
-  /** where the orb click came from */
+  themeId?: SpotlightThemeId;
+  gradientLevel?: GradientLevel;
+
+  /** Some pages pass setters for in-place theme controls */
+  setThemeId?: (id: SpotlightThemeId) => void;
+  setGradientLevel?: (level: GradientLevel) => void;
+
+  /** Optional identifier (analytics/debug) */
   orbSource?: string;
 
-  /** optional: render additional controls in the top-right row */
-  rightExtras?: ReactNode;
+  /**
+   * Per-page cap on ambient intensity (0..1).
+   * We still clamp to a safe default so gradients stay subtle.
+   */
+  ambientCap?: number;
 
-  /** main content */
-  children: ReactNode;
+  className?: string;
 
-  /** optional: cap ambient strength further for calmer pages */
-  ambientCap?: number; // default 0.35
+  /** Accept legacy/unknown props without breaking pages */
+  [key: string]: unknown;
 };
 
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
 export function AppChrome({
-  themeId,
-  setThemeId,
-  gradientLevel,
-  setGradientLevel,
-  orbSource = "app_orb",
-  rightExtras,
+  title,
   children,
-  ambientCap = 0.35,
+  themeId = DEFAULT_THEME_ID,
+  gradientLevel = DEFAULT_GRADIENT_LEVEL,
+  setThemeId: _setThemeId,
+  setGradientLevel: _setGradientLevel,
+  orbSource: _orbSource,
+  ambientCap,
+  className,
 }: AppChromeProps) {
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
-    GRADIENT_CONFIGS[3];
+  const theme = getThemeById(themeId);
+  const gradient = getGradientConfig(gradientLevel);
 
-  const bgImage =
-    gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
-  const bgStyle: CSSProperties = bgImage ? { backgroundImage: bgImage } : {};
+  /**
+   * Keep ambience subtle:
+   * - Start with configured ambientOpacity
+   * - Apply per-page cap if provided
+   * - Apply a conservative global cap (prevents bright corners / bright right wall)
+   */
+  const globalCap = 0.18;
+  const pageCap = typeof ambientCap === "number" ? clamp01(ambientCap) : 1;
+  const ambientOpacity = Math.min(
+    clamp01(gradient.ambientOpacity),
+    pageCap,
+    globalCap
+  );
 
-  const ambientOpacity = Math.min(gradient.ambientOpacity, ambientCap);
-  const dark = isDarkTheme(themeId);
-
-  const [showAppearance, setShowAppearance] = React.useState(false);
+  const bgImage = getPageBackgroundImage(themeId, gradientLevel);
+  const showHeader = Boolean(title);
 
   return (
     <div
-      className={`relative min-h-[100svh] ${theme.pageBgBaseClass}`}
-      style={bgStyle}
+      className={[
+        "relative min-h-[100svh] w-full overflow-hidden",
+        theme.pageBgBaseClass,
+        className ?? "",
+      ].join(" ")}
+      style={
+        {
+          backgroundImage: bgImage,
+        } as React.CSSProperties
+      }
     >
       {/* Ambient blobs */}
-      {gradientLevel > 0 && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ opacity: ambientOpacity }}
-        >
+      {ambientOpacity > 0 && (
+        <>
+          {/* Top-left: intentionally weaker to avoid the bright-corner wash */}
           <div
-            className={`absolute -top-28 -left-20 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
+            aria-hidden="true"
+            className={[
+              "pointer-events-none absolute -top-14 -left-14 h-[340px] w-[340px] rounded-full blur-[160px]",
+              theme.ambientTopLeftClass,
+            ].join(" ")}
+            style={{ opacity: ambientOpacity * 0.26 }}
           />
+
+          {/* Right side: also subtle (no big cyan wall) */}
           <div
-            className={`absolute top-40 -right-8 h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+            aria-hidden="true"
+            className={[
+              "pointer-events-none absolute -top-10 -right-20 h-[420px] w-[420px] rounded-full blur-[180px]",
+              theme.ambientRightClass,
+            ].join(" ")}
+            style={{ opacity: ambientOpacity * 0.32 }}
           />
-        </div>
+        </>
       )}
 
-      {/* Top-right controls */}
-      <div className="fixed right-4 top-4 z-50 flex items-center gap-2 md:right-6 md:top-6">
-        {/* Appearance (toggles behind this) */}
-        <button
-          type="button"
-          onClick={() => setShowAppearance((v) => !v)}
-          className={`
-            inline-flex h-11 w-11 items-center justify-center rounded-full
-            border border-slate-600/60 bg-slate-950/70 text-slate-200
-            shadow-[0_10px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl
-            hover:text-slate-50 transition
-          `}
-          aria-label="Appearance"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-        </button>
-
-        {rightExtras}
-
-        <AiGuideOrb minimal source={orbSource} />
-      </div>
-
-      {/* Appearance panel */}
-      {showAppearance && (
-        <div className="fixed right-4 top-[4.2rem] z-50 flex flex-col gap-2 md:right-6 md:top-[5.2rem]">
-          <ThemeToggle activeId={themeId} onChange={setThemeId} />
-          <GradientToggle
-            activeLevel={gradientLevel}
-            onChange={setGradientLevel}
-          />
-          {/* Optional micro-hint for light themes */}
-          {!dark && (
-            <div className="rounded-xl border border-slate-200 bg-white/75 px-3 py-2 text-[0.7rem] text-slate-600 shadow-sm backdrop-blur">
-              Appearance
+      {/* Header (ONLY when title exists) */}
+      {showHeader && (
+        <header className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-3">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <div className="truncate text-[0.95rem] font-semibold text-slate-100">
+                {title}
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* spacing placeholder (no controls) */}
+            <div className="h-10 w-10 opacity-0" aria-hidden="true" />
+          </div>
+        </header>
       )}
 
-      {children}
+      {/* Content */}
+      <main
+        className={[
+          "relative z-10 mx-auto w-full max-w-5xl px-4 pb-24",
+          showHeader ? "pt-3" : "pt-2",
+        ].join(" ")}
+      >
+        {children}
+      </main>
     </div>
   );
 }
