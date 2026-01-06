@@ -10,6 +10,7 @@ import {
   Sparkles,
   Compass,
   ListChecks,
+  Plus,
   Sparkle,
 } from "lucide-react";
 
@@ -22,6 +23,8 @@ import {
   type GradientLevel,
 } from "@/theme/everleapVisuals";
 
+import MoreMenuPopover from "@/components/navigation/MoreMenuPopover";
+
 type NavKey = "home" | "you" | "insights" | "explore" | "actions";
 
 type BottomNavProps = {
@@ -31,8 +34,11 @@ type BottomNavProps = {
   themeId?: SpotlightThemeId;
   gradientLevel?: GradientLevel;
 
-  /** Show the bottom-right Guide button (it was lost) */
+  /** Show the bottom-right Guide button */
   showGuideFab?: boolean;
+
+  /** Show the + (More) menu trigger */
+  showMoreButton?: boolean;
 
   className?: string;
 };
@@ -50,7 +56,7 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/insights")) return "insights";
   if (pathname.startsWith("/main/explore")) return "explore";
   if (pathname.startsWith("/main/actions")) return "actions";
-  // Guide route should highlight Explore (since tabs are fixed)
+  // legacy/alias: guide highlights Explore
   if (pathname.startsWith("/main/guide")) return "explore";
   return undefined;
 }
@@ -79,6 +85,7 @@ export function BottomNav({
   themeId = DEFAULT_THEME_ID,
   gradientLevel = DEFAULT_GRADIENT_LEVEL,
   showGuideFab = true,
+  showMoreButton = true,
   className,
 }: BottomNavProps) {
   const pathname = usePathname();
@@ -89,10 +96,9 @@ export function BottomNav({
   const theme = getThemeById(themeId);
   const grad = getGradientConfig(gradientLevel);
 
-  // Footer should be even quieter than the page.
+  // Footer ambience: intentionally quieter than the page.
   const ambient = Math.min(clamp01(grad.ambientOpacity), 0.18);
 
-  // requested order: home, you, insights, explore, actions
   const items: NavItem[] = [
     { key: "home", href: "/main/home", label: "Home", Icon: Home },
     { key: "you", href: "/main/you", label: "You", Icon: UserRound },
@@ -101,93 +107,123 @@ export function BottomNav({
     { key: "actions", href: "/main/actions", label: "Actions", Icon: ListChecks },
   ];
 
-  return (
-    <nav
-      aria-label="Bottom navigation"
-      className={["fixed bottom-0 left-0 right-0 z-50", className ?? ""].join(" ")}
-    >
-      {/* Right-side floating Guide orb (restored) */}
-      {showGuideFab && (
-        <Link
-          href="/main/guide"
-          aria-label="Guide"
-          className={[
-            "fixed z-[60]",
-            "right-4",
-            "bottom-[76px]",
-            "h-14 w-14 rounded-full",
-            "border border-white/20",
-            "bg-white/10 backdrop-blur-md",
-            "shadow-xl shadow-black/40",
-            "grid place-items-center",
-            "transition hover:bg-white/14 active:scale-95",
-          ].join(" ")}
-        >
-          <div className="absolute inset-0 rounded-full ring-1 ring-white/10" />
-          <Sparkle className="h-6 w-6 text-white" />
-        </Link>
-      )}
+  const [moreOpen, setMoreOpen] = React.useState(false);
 
-      {/* Footer bar */}
-      <div className="relative border-t border-white/10 bg-black/45 backdrop-blur-md">
-        {/* Subtle theme-tinted ambience INSIDE the bar (matches main site) */}
-        {ambient > 0 && (
-          <>
-            {/* Left tint */}
-            <div
-              aria-hidden="true"
-              className={[
-                "pointer-events-none absolute -left-24 -top-28 h-[260px] w-[260px] rounded-full blur-[90px]",
-                theme.ambientTopLeftClass,
-              ].join(" ")}
-              style={{ opacity: ambient * 0.28 }}
-            />
-            {/* Right tint */}
-            <div
-              aria-hidden="true"
-              className={[
-                "pointer-events-none absolute -right-28 -bottom-28 h-[320px] w-[320px] rounded-full blur-[100px]",
-                theme.ambientRightClass,
-              ].join(" ")}
-              style={{ opacity: ambient * 0.28 }}
-            />
-          </>
+  // Close on navigation
+  React.useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  return (
+    <>
+      {/* Compact + menu (anchored above the + button) */}
+      <MoreMenuPopover
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        themeId={themeId}
+        gradientLevel={gradientLevel}
+      />
+
+      <nav
+        aria-label="Bottom navigation"
+        className={["fixed bottom-0 left-0 right-0 z-50", className ?? ""].join(" ")}
+      >
+        {/* Bottom-right Guide button */}
+        {showGuideFab && (
+          <Link
+            href="/main/guide"
+            aria-label="Guide"
+            className={[
+              "fixed z-[60]",
+              "right-4",
+              "bottom-[76px]",
+              "h-14 w-14 rounded-full",
+              "border border-white/20",
+              "bg-white/10 backdrop-blur-md",
+              "shadow-xl shadow-black/40",
+              "grid place-items-center",
+              "transition hover:bg-white/14 active:scale-95",
+            ].join(" ")}
+          >
+            <div className="absolute inset-0 rounded-full ring-1 ring-white/10" />
+            <Sparkle className="h-6 w-6 text-white" />
+          </Link>
         )}
 
-        {/* Soft highlight line */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+        {/* + button (More menu trigger) */}
+        {showMoreButton && (
+          <button
+            type="button"
+            aria-label="More"
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((v) => !v)}
+            className={[
+              "fixed z-[60]",
+              "left-4",
+              "bottom-[76px]",
+              "h-14 w-14 rounded-full",
+              "border border-white/20",
+              "bg-white/10 backdrop-blur-md",
+              "shadow-xl shadow-black/40",
+              "grid place-items-center",
+              "transition hover:bg-white/14 active:scale-95",
+            ].join(" ")}
+          >
+            <div className="absolute inset-0 rounded-full ring-1 ring-white/10" />
+            <Plus className="h-6 w-6 text-white" />
+          </button>
+        )}
 
-        <div className="mx-auto flex w-full items-center justify-between px-4 py-2">
-          {items.map(({ key, href, label, Icon }) => {
-            const active = resolvedActiveKey === key;
+        {/* Footer bar */}
+        <div className="relative border-t border-white/10 bg-black/45 backdrop-blur-md">
+          {/* Subtle theme tint inside the bar */}
+          {ambient > 0 && (
+            <>
+              <div
+                aria-hidden="true"
+                className={[
+                  "pointer-events-none absolute -left-24 -top-28 h-[260px] w-[260px] rounded-full blur-[90px]",
+                  theme.ambientTopLeftClass,
+                ].join(" ")}
+                style={{ opacity: ambient * 0.28 }}
+              />
+              <div
+                aria-hidden="true"
+                className={[
+                  "pointer-events-none absolute -right-28 -bottom-28 h-[320px] w-[320px] rounded-full blur-[100px]",
+                  theme.ambientRightClass,
+                ].join(" ")}
+                style={{ opacity: ambient * 0.28 }}
+              />
+            </>
+          )}
 
-            return (
-              <Link
-                key={key}
-                href={href}
-                className="flex w-full flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 hover:bg-white/5"
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon
-                  className={
-                    active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"
-                  }
-                />
-                <span
-                  className={
-                    active ? "text-[11px] text-white" : "text-[11px] text-white/55"
-                  }
+          {/* Soft highlight line */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
+
+          <div className="mx-auto flex w-full items-center justify-between px-4 py-2">
+            {items.map(({ key, href, label, Icon }) => {
+              const active = resolvedActiveKey === key;
+              return (
+                <Link
+                  key={key}
+                  href={href}
+                  className="flex w-full flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 hover:bg-white/5"
+                  aria-current={active ? "page" : undefined}
                 >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+                  <Icon className={active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"} />
+                  <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
 
-        <div className="h-[env(safe-area-inset-bottom)]" />
-      </div>
-    </nav>
+          <div className="h-[env(safe-area-inset-bottom)]" />
+        </div>
+      </nav>
+    </>
   );
 }
 

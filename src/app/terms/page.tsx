@@ -2,48 +2,216 @@
 "use client";
 
 import * as React from "react";
-import type { CSSProperties } from "react";
-
-import BrandBadge from "@/components/site/BrandBadge";
-import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
-import { AppChrome } from "@/components/site/AppChrome";
-
+import Link from "next/link";
 import {
-  INSIGHTS_THEMES,
-  GRADIENT_CONFIGS,
-  getPageBackgroundImage,
-  isDarkTheme,
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+  FileText,
+  CheckCircle2,
+  UserCheck,
+  Shield,
+  Handshake,
+  Globe,
+  AlertTriangle,
+  Scale,
+  RefreshCw,
+  ChevronRight,
+} from "lucide-react";
+
+import { AppChrome } from "@/components/site/AppChrome";
+import { BottomNav } from "@/components/navigation/BottomNav";
+
+import { type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
+
+type TocItem = { id: string; label: string };
+
+type Section = {
+  id: string;
+  title: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  body: React.ReactNode;
+};
+
+function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 export default function TermsPage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
-    GRADIENT_CONFIGS[3];
+  const toc: TocItem[] = [
+    { id: "summary", label: "Summary" },
+    { id: "acceptance", label: "Acceptance" },
+    { id: "eligibility", label: "Eligibility" },
+    { id: "use", label: "Use" },
+    { id: "content", label: "Content" },
+    { id: "privacy", label: "Privacy" },
+    { id: "thirdparty", label: "Third-party" },
+    { id: "disclaimers", label: "Disclaimers" },
+    { id: "liability", label: "Liability" },
+    { id: "changes", label: "Changes" },
+  ];
 
-  const dark = isDarkTheme(themeId);
+  const sections: Section[] = [
+    {
+      id: "summary",
+      title: "Plain-English Summary",
+      Icon: FileText,
+      body: (
+        <>
+          <p className="text-[15px] leading-7 text-white/80">
+            This is the friendly version. The legal terms follow below. In
+            short:
+          </p>
 
-  const bgImage =
-    gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
-  const bgStyle: CSSProperties = bgImage ? { backgroundImage: bgImage } : {};
+          <ul className="mt-4 space-y-2">
+            {[
+              "Use Everleap respectfully and legally.",
+              "You’re responsible for your account and activity.",
+              "We may update features and these Terms over time.",
+            ].map((t) => (
+              <li key={t} className="flex gap-3">
+                <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-white/65" />
+                <span className="text-[15px] leading-7 text-white/80">{t}</span>
+              </li>
+            ))}
+          </ul>
 
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+              Heads up
+            </div>
+            <div className="mt-1 text-[14px] leading-6 text-white/75">
+              This page is a structured placeholder. Replace with finalized
+              legal language when ready.
+            </div>
+          </div>
+        </>
+      ),
+    },
+    {
+      id: "acceptance",
+      title: "1. Acceptance of Terms",
+      Icon: CheckCircle2,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          By accessing or using Everleap, you agree to these Terms. If you do
+          not agree, do not use the service.
+        </p>
+      ),
+    },
+    {
+      id: "eligibility",
+      title: "2. Eligibility & Accounts",
+      Icon: UserCheck,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          You are responsible for your account credentials and for all activity
+          under your account. If you are under the age required by local laws,
+          you must have consent from a parent or guardian.
+        </p>
+      ),
+    },
+    {
+      id: "use",
+      title: "3. Use of the Service",
+      Icon: Shield,
+      body: (
+        <>
+          <p className="text-[15px] leading-7 text-white/80">
+            Please don’t misuse the service. Examples of prohibited behavior:
+          </p>
 
-  const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
-
-  const bodyText = dark ? "text-slate-200/90" : "text-slate-700/95";
-  const mutedText = dark ? "text-slate-300/70" : "text-slate-600/70";
-
-  const sectionTitleClass = dark ? "text-slate-50" : "text-slate-900";
-  const bulletDot = dark ? "bg-sky-400" : "bg-sky-600";
+          <ul className="mt-4 space-y-2">
+            {[
+              "Do not disrupt, overload, or interfere with the service.",
+              "Do not attempt to access data you do not have permission to access.",
+              "Follow applicable laws and regulations.",
+            ].map((t) => (
+              <li key={t} className="flex gap-3">
+                <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-white/60" />
+                <span className="text-[15px] leading-7 text-white/80">{t}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ),
+    },
+    {
+      id: "content",
+      title: "4. Content & Feedback",
+      Icon: Handshake,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          You retain ownership of content you submit. By submitting content or
+          feedback, you grant us a non-exclusive license to use it to operate
+          and improve the service.
+        </p>
+      ),
+    },
+    {
+      id: "privacy",
+      title: "5. Privacy",
+      Icon: Shield,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          Your use of the service is subject to our{" "}
+          <Link
+            href="/privacy"
+            className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white/60"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      ),
+    },
+    {
+      id: "thirdparty",
+      title: "6. Third-Party Services",
+      Icon: Globe,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          We may integrate third-party services. We aren’t responsible for their
+          content, availability, or practices.
+        </p>
+      ),
+    },
+    {
+      id: "disclaimers",
+      title: "7. Disclaimers",
+      Icon: AlertTriangle,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          The service is provided “as is” without warranties of any kind, to the
+          fullest extent permitted by law.
+        </p>
+      ),
+    },
+    {
+      id: "liability",
+      title: "8. Limitation of Liability",
+      Icon: Scale,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          To the fullest extent permitted by law, Everleap will not be liable
+          for indirect, incidental, special, consequential, or punitive damages.
+        </p>
+      ),
+    },
+    {
+      id: "changes",
+      title: "9. Changes to the Service or Terms",
+      Icon: RefreshCw,
+      body: (
+        <p className="text-[15px] leading-7 text-white/80">
+          We may update the service or these Terms periodically. Updates will be
+          posted here with a revised date.
+        </p>
+      ),
+    },
+  ];
 
   return (
     <AppChrome
@@ -54,233 +222,118 @@ export default function TermsPage() {
       orbSource="terms_orb"
       ambientCap={0.35}
     >
-      <div
-        className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
-        style={bgStyle}
-      >
-        {/* Ambient blobs */}
-        {gradientLevel > 0 && (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: gradient.ambientOpacity }}
-          >
-            <div
-              className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-            />
-            <div
-              className={`absolute top-40 -right-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
-            />
+      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-8">
+        {/* Top header */}
+        <div className="mb-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs font-semibold tracking-wide text-white/75">
+              Everleap · Terms
+            </span>
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">
+              Updated Oct 4, 2025
+            </span>
           </div>
-        )}
 
-        <BrandBadge />
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            Terms of Service
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">
+            Clear structure, calm visuals, and easy navigation. Replace with
+            your finalized legal terms anytime.
+          </p>
+        </div>
 
-        {/* Centered layout */}
-        <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
-          <div className="w-full max-w-4xl -translate-y-4">
-            {/* Header */}
-            <div className="mb-5">
-              <p className={theme.sectionLabelClass}>Everleap · Terms</p>
-              <h1
-                id="terms-title"
-                className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl"
-              >
-                Terms of Service
-              </h1>
-              <p className={`mt-1 text-sm ${mutedText}`}>
-                Last updated October 4, 2025
-              </p>
+        {/* Reading card */}
+        <section className="relative overflow-hidden rounded-3xl border border-white/12 bg-black/35 backdrop-blur-xl">
+          {/* One subtle corner glow only */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-16 -top-16 h-[220px] w-[220px] rounded-full bg-gradient-to-br from-violet-400/20 via-sky-300/10 to-transparent blur-[70px]"
+          />
+
+          <div className="relative">
+            {/* Mini TOC */}
+            <div className="border-b border-white/10 px-5 py-4 md:px-7">
+              <div className="flex flex-wrap gap-2">
+                {toc.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => scrollToId(t.id)}
+                    className="rounded-full border border-white/12 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70 hover:bg-white/8"
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Card */}
-            <section className="w-full">
-              <div
-                className={`relative w-full overflow-hidden rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}
-                role="region"
-                aria-labelledby="terms-title"
-              >
-                {/* subtle pop */}
-                <div className="pointer-events-none absolute inset-0">
-                  <div
-                    className={`absolute -top-10 -left-10 h-44 w-44 rounded-full blur-3xl opacity-20 bg-gradient-to-br ${
-                      dark
-                        ? "from-sky-400 via-cyan-300 to-indigo-400"
-                        : "from-sky-300 via-cyan-200 to-indigo-300"
-                    }`}
-                  />
-                  <div
-                    className={`absolute -bottom-14 -right-10 h-52 w-52 rounded-full blur-3xl opacity-15 bg-gradient-to-br ${
-                      dark
-                        ? "from-fuchsia-400 via-violet-400 to-sky-400"
-                        : "from-fuchsia-200 via-violet-200 to-sky-200"
-                    }`}
-                  />
-                </div>
-
-                <div className="relative space-y-7">
-                  {/* 1 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      1. Acceptance of Terms
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      By accessing or using Everleap, you agree to these Terms.
-                      If you do not agree, do not use the service.
-                    </p>
-                  </section>
-
-                  {/* 2 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      2. Eligibility & Accounts
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      You are responsible for your account credentials and for
-                      all activity under your account. If you are under the age
-                      required by local laws, you must have consent from a
-                      parent or guardian.
-                    </p>
-                  </section>
-
-                  {/* 3 */}
-                  <section className="space-y-3">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      3. Use of the Service
-                    </h2>
-                    <ul className="space-y-2">
-                      {[
-                        "Do not misuse, disrupt, or interfere with the service.",
-                        "Do not attempt to access data you do not have permission to access.",
-                        "Follow all applicable laws and regulations.",
-                      ].map((t) => (
-                        <li key={t} className="flex gap-3">
-                          <span
-                            className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${bulletDot}`}
-                          />
-                          <span className={`text-sm ${bodyText}`}>{t}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-
-                  {/* 4 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      4. Content & Feedback
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      You retain ownership of content you submit. By submitting
-                      content or feedback, you grant us a non-exclusive license
-                      to use it to operate and improve the service.
-                    </p>
-                  </section>
-
-                  {/* 5 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      5. Privacy
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      Your use of the service is subject to our{" "}
-                      <a
-                        href="/privacy"
-                        className={`underline underline-offset-2 ${
-                          dark ? "hover:text-sky-300" : "hover:text-sky-600"
-                        }`}
-                      >
-                        Privacy Policy
-                      </a>
-                      .
-                    </p>
-                  </section>
-
-                  {/* 6 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      6. Third-Party Services
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      We may integrate third-party services. We aren’t
-                      responsible for their content or practices.
-                    </p>
-                  </section>
-
-                  {/* 7 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      7. Disclaimers
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      The service is provided “as is” without warranties of any
-                      kind, to the fullest extent permitted by law.
-                    </p>
-                  </section>
-
-                  {/* 8 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      8. Limitation of Liability
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      To the fullest extent permitted by law, Everleap will not
-                      be liable for indirect, incidental, special,
-                      consequential, or punitive damages.
-                    </p>
-                  </section>
-
-                  {/* 9 */}
-                  <section className="space-y-2">
-                    <h2 className={`text-xl font-semibold ${sectionTitleClass}`}>
-                      9. Changes to the Service or Terms
-                    </h2>
-                    <p className={`text-sm leading-relaxed ${bodyText}`}>
-                      We may update the service or these Terms periodically.
-                      Updates will be posted here with a revised date.
-                    </p>
-                  </section>
-
-                  {/* Bottom actions (no collision with AppChrome toggles) */}
-                  <div className="pt-2">
-                    <div
-                      className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${
-                        dark
-                          ? "border-slate-700/60 bg-slate-950/30"
-                          : "border-slate-200/70 bg-white/50"
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div
-                          className={`text-xs font-semibold uppercase tracking-[0.22em] ${
-                            dark ? "text-slate-300/70" : "text-slate-600/70"
-                          }`}
-                        >
-                          Account
-                        </div>
-                        <div className={`mt-1 text-sm ${bodyText}`}>
-                          Already have an account?
-                        </div>
+            {/* Content */}
+            <div className="px-5 py-6 md:px-7 md:py-7">
+              <div className="mx-auto max-w-[72ch] space-y-10">
+                {sections.map(({ id, title, Icon, body }) => (
+                  <section key={id} id={id} className="scroll-mt-24">
+                    <div className="flex items-start gap-4">
+                      {/* Section icon chip */}
+                      <div className="mt-0.5 grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/12 bg-white/6">
+                        <Icon className="h-5 w-5 text-white/80" />
                       </div>
 
-                      <a
-                        href="/login"
-                        className={`shrink-0 inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.99] ${
-                          dark
-                            ? "border border-sky-400/70 bg-sky-500/85 text-white hover:bg-sky-400 shadow-sm shadow-sky-500/30"
-                            : "border border-sky-500/70 bg-sky-500 text-white hover:bg-sky-400"
-                        }`}
-                      >
-                        Sign in
-                      </a>
+                      {/* Title + rail */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-[2px] rounded-full bg-gradient-to-b from-violet-300/70 via-white/10 to-transparent" />
+                          <h2 className="text-xl font-semibold text-white">
+                            {title}
+                          </h2>
+                        </div>
+                        <div className="mt-3">{body}</div>
+                      </div>
                     </div>
+                  </section>
+                ))}
+
+                {/* Footer note */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+                    Questions?
+                  </div>
+                  <div className="mt-1 text-[14px] leading-6 text-white/75">
+                    Reach us via{" "}
+                    <Link
+                      href="/contact"
+                      className="text-white underline decoration-white/30 underline-offset-4 hover:decoration-white/60"
+                    >
+                      Contact
+                    </Link>
+                    .
+                  </div>
+
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      href="/privacy"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 hover:bg-white/8"
+                    >
+                      Privacy Policy
+                      <ChevronRight className="h-4 w-4 text-white/50" />
+                    </Link>
+                    <Link
+                      href="/accessibility"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white/75 hover:bg-white/8"
+                    >
+                      Accessibility
+                      <ChevronRight className="h-4 w-4 text-white/50" />
+                    </Link>
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
           </div>
-        </main>
+        </section>
+      </main>
 
-        <OnboardingFooterNav />
-      </div>
+      {/* Bottom nav includes Guide + + menu */}
+      <BottomNav activeKey="home" themeId={themeId} gradientLevel={gradientLevel} />
     </AppChrome>
   );
 }
