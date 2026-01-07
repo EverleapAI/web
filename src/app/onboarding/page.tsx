@@ -4,9 +4,9 @@
 import * as React from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Send, ArrowRight } from "lucide-react";
+import { Mic, MicOff, Send, ArrowRight, ArrowLeft } from "lucide-react";
 
 import BrandBadge from "@/components/site/BrandBadge";
 import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
@@ -418,6 +418,8 @@ function BadgeTile({
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
 
   // Shared AppChrome visual state
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
@@ -599,6 +601,24 @@ export default function OnboardingPage() {
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
 
+  function goBack() {
+    setDraft("");
+    setStepIndex((i) => {
+      if (i <= 0) return 0;
+      return i - 1;
+    });
+  }
+
+  function exitOnboarding() {
+    // If user came from consent flow, go back there.
+    if (from === "consent") {
+      router.push("/consent");
+      return;
+    }
+    // Otherwise, safest fallback
+    router.push("/");
+  }
+
   function markOnboardingBadge() {
     if (typeof window === "undefined") return;
     try {
@@ -617,6 +637,8 @@ export default function OnboardingPage() {
     didMarkSummaryRef.current = true;
     markOnboardingBadge();
   }, [stepId]);
+
+  const canShowBack = stepIndex > 0;
 
   /* ============================================================
      Steps
@@ -1062,7 +1084,52 @@ export default function OnboardingPage() {
         <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
           <div className="w-full max-w-5xl -translate-y-6">
             <section className="w-full">
-              <div className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}>
+              <div className={`w-full rounded-3xl border px-6 py-6 md:px-8 md:py-7 ${cardSurface}`}>
+                {/* Top row: Back + progress */}
+                <div className="mb-5 flex items-center justify-between">
+                  <div>
+                    {canShowBack ? (
+                      <button
+                        type="button"
+                        onClick={goBack}
+                        className="
+                          inline-flex items-center gap-2 rounded-full
+                          border border-white/10 bg-white/5 px-3 py-1.5
+                          text-xs font-semibold text-white/80
+                          transition hover:bg-white/10 active:scale-95
+                        "
+                        aria-label="Go back"
+                        title="Back"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={exitOnboarding}
+                        className="
+                          inline-flex items-center gap-2 rounded-full
+                          border border-white/10 bg-white/5 px-3 py-1.5
+                          text-xs font-semibold text-white/70
+                          transition hover:bg-white/10 active:scale-95
+                        "
+                        aria-label="Exit onboarding"
+                        title="Exit"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Exit
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="text-[0.72rem] font-semibold tracking-[0.18em] text-white/45">
+                    STEP {Math.min(stepIndex + 1, STEPS.length)} OF {STEPS.length}
+                  </div>
+
+                  <div className="w-[70px]" />
+                </div>
+
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={stepId}
