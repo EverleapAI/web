@@ -646,7 +646,7 @@ export default function OnboardingPage() {
 
   function renderWelcome() {
     const prompt =
-      "You are starting a journey to better understand yourself and your path in life. Think of me as a college & career counselor and life coach all in one. This is a conversation — not a test. Answer as honestly as you can.";
+      "You are starting a journey to better understand yourself and your path in life. Think of me as a college & career counselor and life coach all in one. This is a conversation — not a test. Answer as honestly as you can. The more you share, the more you will learn, and the more I can provide guidance and insights to you. No right or wrong answers here.";
 
     return (
       <div className="space-y-8">
@@ -906,7 +906,7 @@ export default function OnboardingPage() {
               <div className="pt-6">
                 <QuestionShell
                   pill="Onboarding"
-                  prompt="Want to share a quick detail?"
+                  prompt="Share more details (optional)"
                   micTarget="activitiesOther"
                   isListening={isListening}
                   speechSupported={speechSupported}
