@@ -49,9 +49,6 @@ export function AppChrome({
   children,
   themeId = DEFAULT_THEME_ID,
   gradientLevel = DEFAULT_GRADIENT_LEVEL,
-  setThemeId: _setThemeId,
-  setGradientLevel: _setGradientLevel,
-  orbSource: _orbSource,
   ambientCap,
   className,
 }: AppChromeProps) {

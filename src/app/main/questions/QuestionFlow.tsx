@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Mic, MicOff, Send } from "lucide-react";
+import { Mic, MicOff, Send, Sparkles } from "lucide-react";
 
 type Category = "motivations" | "strengths" | "skills";
 
@@ -26,10 +26,14 @@ declare global {
   }
 }
 
-const TOTAL = 30;
-const STORAGE_KEY = "everleap.story.answers.v1";
-const ONBOARDING_KEY = "everleapOnboarding_v1"; // for name (if present)
+const TOTAL = 15;
 
+// Bump key so we can ignore/clear old data.
+const STORAGE_KEY_V1 = "everleap.story.answers.v1";
+const STORAGE_KEY = "everleap.story.answers.v2";
+const RESET_FLAG = "everleap.story.reset.v2.session";
+
+const ONBOARDING_KEY = "everleapOnboarding_v1"; // for name (if present)
 const TYPE_SPEED_MS = 28;
 
 function loadSaved(): Record<string, Saved> {
@@ -86,33 +90,50 @@ function isMeaningfulText(value: string): boolean {
 }
 
 /* ============================================================
-   Questions
+   Questions (5 + 5 + 5)
    ============================================================ */
 
-const QUESTIONS: QA[] = Array.from({ length: TOTAL }).map((_, i) => {
-  const idx = i + 1;
-  const category: Category =
-    idx <= 10 ? "motivations" : idx <= 20 ? "strengths" : "skills";
+const MOTIVATIONS_5 = [
+  "What usually gives you energy during the day?",
+  "When do you feel most focused?",
+  "What drains you faster than it should?",
+  "What do you naturally get curious about?",
+  "What does a “good day” look like for you?",
+];
 
-  const questionBank = [
-    "What usually gives you energy during the day?",
-    "When do you feel most focused?",
-    "What drains you faster than it should?",
-    "What do you naturally get curious about?",
-    "If you could improve one habit, what would it be?",
-    "What kind of people bring out your best?",
-    "What kind of tasks do you avoid—even when you know they matter?",
-    "What’s something you’re proud of that most people don’t see?",
-    "What does a “good day” look like for you?",
-    "What’s one thing you want more of in your life right now?",
-  ];
+const STRENGTHS_5 = [
+  "What kind of people bring out your best?",
+  "What’s something you’re proud of that most people don’t see?",
+  "When do friends come to you for help?",
+  "What do you learn faster than most people?",
+  "What’s a challenge you’ve handled better than you expected?",
+];
 
-  return {
-    id: `q_${idx}`,
-    category,
-    question: questionBank[i % questionBank.length],
-  };
-});
+const SKILLS_5 = [
+  "What’s a skill you’d like to level up this year?",
+  "What do you like doing so much you lose track of time?",
+  "What kind of tasks do you avoid—even when you know they matter?",
+  "What’s one habit that would make your life easier if you improved it?",
+  "If you could get really good at one thing, what would you pick?",
+];
+
+const QUESTIONS: QA[] = [
+  ...MOTIVATIONS_5.map((q, i) => ({
+    id: `q_${i + 1}`,
+    category: "motivations" as const,
+    question: q,
+  })),
+  ...STRENGTHS_5.map((q, i) => ({
+    id: `q_${i + 6}`,
+    category: "strengths" as const,
+    question: q,
+  })),
+  ...SKILLS_5.map((q, i) => ({
+    id: `q_${i + 11}`,
+    category: "skills" as const,
+    question: q,
+  })),
+];
 
 /* ============================================================
    Typing hook
@@ -150,18 +171,11 @@ function useTypewriter(text: string, speedMs: number, enabled: boolean) {
 }
 
 /* ============================================================
-   Branch copy helpers (comment + question)
+   Copy helpers
    ============================================================ */
-
-function buildBranchPrefix(name?: string) {
-  const n = (name ?? "").trim();
-  // comment only; question comes after (the real next question)
-  return n ? `Ok cool, ${n}. Let’s keep the momentum:` : "Ok cool. Let’s keep the momentum:";
-}
 
 function buildRetryBranchPrompt(name?: string) {
   const n = (name ?? "").trim();
-  // Must end with a question:
   return n
     ? `Hmm, ${n} — I didn’t quite catch that.\n\nTry one real sentence (even short). What’s a true answer for you?`
     : "Hmm — I didn’t quite catch that.\n\nTry one real sentence (even short). What’s a true answer for you?";
@@ -172,6 +186,35 @@ function buildSkipBranchPrefix(name?: string) {
   return n ? `All good, ${n}. Next one:` : "All good. Next one:";
 }
 
+function sectionTitle(cat: Category) {
+  if (cat === "motivations") return "Motivations";
+  if (cat === "strengths") return "Strengths";
+  return "Skills";
+}
+
+function nextSectionTitle(finished: Category) {
+  if (finished === "motivations") return "Strengths";
+  if (finished === "strengths") return "Skills";
+  return "Insights";
+}
+
+function sectionCongratsHeadline(finished: Category, name?: string) {
+  const n = (name ?? "").trim();
+  const base =
+    finished === "motivations"
+      ? "Motivations complete"
+      : finished === "strengths"
+        ? "Strengths complete"
+        : "Skills complete";
+  return n ? `Nice work, ${n}. ${base}.` : `Nice work. ${base}.`;
+}
+
+function sectionCongratsBody(finished: Category) {
+  if (finished === "motivations") return "Next up: Strengths. This helps us understand what pulls you forward.";
+  if (finished === "strengths") return "Next up: Skills. This helps us spot where you’ll grow the fastest.";
+  return "You’re done. Next we’ll show a few early insights from what you shared.";
+}
+
 /* ============================================================
    Badge UI helpers
    ============================================================ */
@@ -180,12 +223,12 @@ const BADGES: Array<{
   id: Category;
   label: string;
   imgSrc: string;
-  startIdx: number;
-  endIdx: number;
+  startIdx: number; // 0-based
+  endIdx: number; // 0-based
 }> = [
-  { id: "motivations", label: "Motivations", imgSrc: "/motivations.png", startIdx: 0, endIdx: 9 },
-  { id: "strengths", label: "Strengths", imgSrc: "/strengths.png", startIdx: 10, endIdx: 19 },
-  { id: "skills", label: "Skills", imgSrc: "/skills.png", startIdx: 20, endIdx: 29 },
+  { id: "motivations", label: "Motivations", imgSrc: "/motivations.png", startIdx: 0, endIdx: 4 },
+  { id: "strengths", label: "Strengths", imgSrc: "/strengths.png", startIdx: 5, endIdx: 9 },
+  { id: "skills", label: "Skills", imgSrc: "/skills.png", startIdx: 10, endIdx: 14 },
 ];
 
 function countAnswered(saved: Record<string, Saved>, startIdx: number, endIdx: number) {
@@ -198,11 +241,21 @@ function countAnswered(saved: Record<string, Saved>, startIdx: number, endIdx: n
   return c;
 }
 
+function findBadge(cat: Category) {
+  return BADGES.find((b) => b.id === cat) ?? BADGES[0];
+}
+
 /* ============================================================
    Component
    ============================================================ */
 
 type PromptStyle = "normal" | "branch";
+type InterstitialState =
+  | null
+  | {
+      kind: "section";
+      finished: Category; // motivations or strengths
+    };
 
 export default function QuestionFlow() {
   const router = useRouter();
@@ -225,6 +278,12 @@ export default function QuestionFlow() {
   const [mounted, setMounted] = React.useState(false);
   const [liveSaved, setLiveSaved] = React.useState<Record<string, Saved>>({});
 
+  // interstitial screens between sections
+  const [interstitial, setInterstitial] = React.useState<InterstitialState>(null);
+
+  // final completion screen
+  const [flowDone, setFlowDone] = React.useState(false);
+
   // speech
   const [isListening, setIsListening] = React.useState(false);
   const [speechSupported, setSpeechSupported] = React.useState(true);
@@ -237,6 +296,22 @@ export default function QuestionFlow() {
 
   React.useEffect(() => {
     setName(readNameFromOnboarding());
+  }, []);
+
+  // Reset local data ONCE per session (ignore old v1 + clear v2)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const already = window.sessionStorage.getItem(RESET_FLAG);
+      if (!already) {
+        window.localStorage.removeItem(STORAGE_KEY_V1);
+        window.localStorage.removeItem(STORAGE_KEY);
+        window.sessionStorage.setItem(RESET_FLAG, "1");
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   React.useEffect(() => {
@@ -327,12 +402,8 @@ export default function QuestionFlow() {
       });
     };
 
-    rec.onerror = () => {
-      setIsListening(false);
-    };
-    rec.onend = () => {
-      setIsListening(false);
-    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend = () => setIsListening(false);
 
     recognitionRef.current = rec;
     return rec;
@@ -373,36 +444,13 @@ export default function QuestionFlow() {
     setOverridePrompt(null);
 
     setIndex(() => {
-      if (nextIndex >= TOTAL) {
-        router.push("/main");
-        return TOTAL - 1;
-      }
+      if (nextIndex >= TOTAL) return TOTAL - 1;
       return Math.max(0, nextIndex);
     });
 
     const branch = Boolean(opts?.branch);
     setPromptStyle(branch ? "branch" : "normal");
-    setBranchPrefix(branch ? opts?.prefix ?? buildBranchPrefix(name) : null);
-
-    // draft will re-hydrate via effect on q.id
-  }
-
-  function jumpToBadge(cat: Category) {
-    const badge = BADGES.find((b) => b.id === cat);
-    if (!badge) return;
-
-    const s = loadSaved();
-    for (let i = badge.startIdx; i <= badge.endIdx; i += 1) {
-      const id = `q_${i + 1}`;
-      const item = s[id];
-      if (!item?.answer || !item.answer.trim()) {
-        // jump = normal (not a “branch injection”)
-        goToIndex(i, { branch: false, prefix: null });
-        return;
-      }
-    }
-
-    goToIndex(badge.startIdx, { branch: false, prefix: null });
+    setBranchPrefix(branch ? opts?.prefix ?? null : null);
   }
 
   function submit() {
@@ -410,12 +458,11 @@ export default function QuestionFlow() {
     if (!text) return;
 
     if (!isMeaningfulText(text)) {
-      // keep them on the same question, but show a branch-styled retry prompt
       setDraft("");
       stopListening();
       setPromptStyle("branch");
       setBranchPrefix(null);
-      setOverridePrompt(buildRetryBranchPrompt(name)); // ends with '?'
+      setOverridePrompt(buildRetryBranchPrompt(name));
       textareaRef.current?.focus();
       return;
     }
@@ -423,11 +470,33 @@ export default function QuestionFlow() {
     saveOne(q.id, { answer: text, skipped: false });
     stopListening();
 
-    if (mounted) setLiveSaved(loadSaved());
+    const updatedSaved = loadSaved();
+    if (mounted) setLiveSaved(updatedSaved);
 
-    // move to the next real question, but with a branch comment prefix
     const next = index + 1;
-    goToIndex(next, { branch: true, prefix: buildBranchPrefix(name) });
+
+    // Finished all 15
+    if (next >= TOTAL) {
+      setFlowDone(true);
+      return;
+    }
+
+    // Interstitial at section boundaries: after q5 (index 4) -> next index 5; after q10 (index 9) -> next 10
+    if (next === 5) {
+      // Move index forward (so badges/dots reflect completion), then show interstitial.
+      goToIndex(next, { branch: false, prefix: null });
+      setInterstitial({ kind: "section", finished: "motivations" });
+      return;
+    }
+    if (next === 10) {
+      goToIndex(next, { branch: false, prefix: null });
+      setInterstitial({ kind: "section", finished: "strengths" });
+      return;
+    }
+
+    // normal next
+    goToIndex(next, { branch: false, prefix: null });
+    textareaRef.current?.focus();
   }
 
   function skip() {
@@ -437,6 +506,24 @@ export default function QuestionFlow() {
     if (mounted) setLiveSaved(loadSaved());
 
     const next = index + 1;
+
+    if (next >= TOTAL) {
+      setFlowDone(true);
+      return;
+    }
+
+    // If they skip across a boundary, still show the interstitial.
+    if (next === 5) {
+      goToIndex(next, { branch: true, prefix: buildSkipBranchPrefix(name) });
+      setInterstitial({ kind: "section", finished: "motivations" });
+      return;
+    }
+    if (next === 10) {
+      goToIndex(next, { branch: true, prefix: buildSkipBranchPrefix(name) });
+      setInterstitial({ kind: "section", finished: "strengths" });
+      return;
+    }
+
     goToIndex(next, { branch: true, prefix: buildSkipBranchPrefix(name) });
   }
 
@@ -444,7 +531,7 @@ export default function QuestionFlow() {
   const badgeStats = BADGES.map((b) => {
     const source = mounted ? liveSaved : {};
     const answered = countAnswered(source, b.startIdx, b.endIdx);
-    const total = b.endIdx - b.startIdx + 1;
+    const total = b.endIdx - b.startIdx + 1; // always 5
     return {
       ...b,
       answered,
@@ -457,8 +544,7 @@ export default function QuestionFlow() {
   // Prompt text (either retry override, or branch prefix + question, or plain question)
   const baseQuestion = q.question;
   const promptText =
-    overridePrompt ??
-    (branchPrefix ? `${branchPrefix}\n\n${baseQuestion}` : baseQuestion);
+    overridePrompt ?? (branchPrefix ? `${branchPrefix}\n\n${baseQuestion}` : baseQuestion);
 
   const { typed } = useTypewriter(promptText, TYPE_SPEED_MS, true);
 
@@ -471,6 +557,157 @@ export default function QuestionFlow() {
   const pillClass =
     "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
 
+  /* =========================
+     Interstitial screen
+     ========================= */
+
+  if (interstitial?.kind === "section") {
+    const finished = interstitial.finished;
+    const finishedBadge = findBadge(finished);
+
+    return (
+      <div className="relative min-h-[100svh]">
+        <div className="pointer-events-none absolute inset-0 bg-slate-950/10" />
+
+        <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10">
+          <div className="w-full max-w-3xl">
+            <div className="relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px] shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+              <div className="relative rounded-[43px] bg-slate-950/35 px-6 py-10 sm:px-10 sm:py-12">
+                <div className={pillClass}>{sectionTitle(finished)} Complete</div>
+
+                {/* Badge image (styled as a "nice" badge) */}
+                <div className="mt-6 flex items-center justify-center">
+                  <div className="relative">
+                    {/* glow */}
+                    <div className="pointer-events-none absolute inset-0 -z-10 scale-[1.25] rounded-[40px] bg-gradient-to-r from-sky-400/25 via-fuchsia-500/20 to-amber-300/20 blur-2xl" />
+                    <div className="relative h-40 w-40 overflow-hidden rounded-[40px] border border-white/12 bg-slate-950/40 shadow-[0_0_70px_rgba(56,189,248,0.18)] backdrop-blur-xl sm:h-44 sm:w-44">
+                      <Image
+                        src={finishedBadge.imgSrc}
+                        alt={`${finishedBadge.label} badge`}
+                        fill
+                        sizes="176px"
+                        className="object-contain p-6"
+                        priority
+                      />
+                      <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2.5 py-1 text-[0.7rem] font-extrabold text-slate-950">
+                        ✓ <span className="font-bold">DONE</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <h1 className="mt-7 text-center text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl">
+                  {sectionCongratsHeadline(finished, name)}
+                </h1>
+
+                <p className="mx-auto mt-4 max-w-xl text-center text-sm text-slate-200/70">
+                  {sectionCongratsBody(finished)}
+                </p>
+
+                {/* subtle “what’s next” */}
+                <div className="mx-auto mt-6 flex max-w-xl items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+                  <Sparkles className="h-4 w-4 text-sky-200/80" />
+                  <span>
+                    Up next: <span className="font-semibold text-white/85">{nextSectionTitle(finished)}</span>
+                  </span>
+                </div>
+
+                <div className="mt-8 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInterstitial(null);
+                      setPromptStyle("normal");
+                      setBranchPrefix(null);
+                      setOverridePrompt(null);
+                      // focus input on next paint
+                      window.setTimeout(() => textareaRef.current?.focus(), 50);
+                    }}
+                    className="inline-flex items-center justify-center rounded-2xl bg-sky-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_14px_40px_rgba(56,189,248,0.35)] transition active:scale-[0.98] hover:bg-sky-200"
+                  >
+                    Continue
+                  </button>
+                </div>
+
+                <div className="mt-6 text-center text-[0.7rem] text-slate-200/55">
+                  You can change answers later.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* =========================
+     Final completion screen
+     ========================= */
+
+  if (flowDone) {
+    const n = name?.trim();
+    return (
+      <div className="relative min-h-[100svh]">
+        <div className="pointer-events-none absolute inset-0 bg-slate-950/10" />
+
+        <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-10">
+          <div className="w-full max-w-3xl">
+            <div className="relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px] shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+              <div className="relative rounded-[43px] bg-slate-950/35 px-6 py-10 sm:px-10 sm:py-12">
+                <div className={pillClass}>All Set</div>
+
+                <div className="mt-6 flex items-center justify-center">
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-0 -z-10 scale-[1.35] rounded-[44px] bg-gradient-to-r from-sky-400/25 via-fuchsia-500/20 to-amber-300/20 blur-2xl" />
+                    <div className="relative h-44 w-44 overflow-hidden rounded-[44px] border border-white/12 bg-slate-950/40 shadow-[0_0_80px_rgba(56,189,248,0.16)] backdrop-blur-xl">
+                      <Image
+                        src="/skills.png"
+                        alt="Completion badge"
+                        fill
+                        sizes="176px"
+                        className="object-contain p-7"
+                        priority
+                      />
+                      <div className="absolute right-3 top-3 rounded-full bg-emerald-400/90 px-2.5 py-1 text-[0.7rem] font-extrabold text-slate-950">
+                        ✓ DONE
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <h1 className="mt-7 text-center text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl">
+                  {n ? `Nice work, ${n}.` : "Nice work."} You finished your Story check-in.
+                </h1>
+
+                <p className="mx-auto mt-4 max-w-xl text-center text-sm text-slate-200/70">
+                  Next, we’ll show a few early insights we can infer from what you shared.
+                </p>
+
+                <div className="mt-8 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/main/carousel")}
+                    className="inline-flex items-center justify-center rounded-2xl bg-sky-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_14px_40px_rgba(56,189,248,0.35)] transition active:scale-[0.98] hover:bg-sky-200"
+                  >
+                    See my insights
+                  </button>
+                </div>
+
+                <div className="mt-6 text-center text-[0.7rem] text-slate-200/55">
+                  You can always refine answers later.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* =========================
+     Main question UI
+     ========================= */
+
   return (
     <div className="relative min-h-[100svh]">
       {/* soft funnel tint */}
@@ -480,19 +717,15 @@ export default function QuestionFlow() {
         <div className="w-full max-w-5xl">
           <div className="relative rounded-[44px] border border-white/10 bg-slate-950/35 p-[1px] shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
             <div className="relative rounded-[43px] bg-slate-950/35 px-6 py-10 sm:px-10 sm:py-12">
-              {/* Badges row */}
+              {/* Badges row (visual only; linear flow) */}
               <div className="mb-8 flex items-center justify-center gap-6">
                 {badgeStats.map((b) => {
                   return (
-                    <button
+                    <div
                       key={b.id}
-                      type="button"
-                      onClick={() => jumpToBadge(b.id)}
-                      className={`group relative flex flex-col items-center gap-2 outline-none_toggle ${
-                        b.active ? "" : "opacity-80 hover:opacity-100"
-                      }`}
-                      aria-label={`Jump to ${b.label}`}
-                      title={`Jump to ${b.label}`}
+                      className={`relative flex flex-col items-center gap-2 ${b.active ? "" : "opacity-80"}`}
+                      aria-label={b.label}
+                      title={b.label}
                     >
                       <div
                         className={`relative h-20 w-20 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-xl ${
@@ -533,7 +766,7 @@ export default function QuestionFlow() {
                           );
                         })}
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -564,9 +797,7 @@ export default function QuestionFlow() {
                       ${!speechSupported ? "opacity-40 cursor-not-allowed" : ""}
                     `}
                     aria-label={isListening ? "Stop voice input" : "Start voice input"}
-                    title={
-                      !speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Talk instead of typing"
-                    }
+                    title={!speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Talk instead of typing"}
                   >
                     {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                   </button>
@@ -630,7 +861,7 @@ export default function QuestionFlow() {
                 </div>
               </div>
 
-              {/* (No “click to continue” hint anymore — everything is answerable) */}
+              {/* (Linear flow) */}
             </div>
           </div>
         </div>

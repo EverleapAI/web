@@ -6,6 +6,7 @@ import type { StepperStep, StepperPersistedState } from "@/components/career/ste
 type Props = {
   step: StepperStep;
   progress: StepperPersistedState;
+  setProgress: React.Dispatch<React.SetStateAction<StepperPersistedState>>;
 };
 
 type Specialty = {
@@ -75,6 +76,48 @@ const SPECIALTIES: Specialty[] = [
   },
 ];
 
+const PICK_KEY = "productUx_specialties";
+
+/** Read-only helpers (no `any`) */
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function readStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  if (!v.every((x) => typeof x === "string")) return [];
+  return v;
+}
+
+/**
+ * PersistedState doesn’t guarantee a “bag” key.
+ * We support common keys: data | progress | meta.
+ * If none exist, we create/use `data`.
+ */
+function getBag(p: StepperPersistedState): { key: "data" | "progress" | "meta"; bag: Record<string, unknown> } {
+  const root = p as unknown as Record<string, unknown>;
+
+  const d = root["data"];
+  if (isRecord(d)) return { key: "data", bag: d };
+
+  const pr = root["progress"];
+  if (isRecord(pr)) return { key: "progress", bag: pr };
+
+  const m = root["meta"];
+  if (isRecord(m)) return { key: "meta", bag: m };
+
+  return { key: "data", bag: {} };
+}
+
+function setBag(p: StepperPersistedState, key: "data" | "progress" | "meta", bag: Record<string, unknown>) {
+  // we purposely write the bag back into the same key (or `data` if none existed)
+  return {
+    ...(p as unknown as Record<string, unknown>),
+    [key]: bag,
+    updatedAt: new Date().toISOString(),
+  } as StepperPersistedState;
+}
+
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1.5 text-xs text-slate-100">
@@ -83,24 +126,28 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SpecialtiesStep({ step, progress }: Props) {
-  const [picked, setPicked] = React.useState<string[]>([]);
+export function SpecialtiesStep({ step, progress, setProgress }: Props) {
+  const { key: bagKey, bag } = getBag(progress);
+
+  const picked = readStringArray(bag[PICK_KEY]);
+  const pickedSet = React.useMemo(() => new Set(picked), [picked]);
 
   function toggle(id: string) {
-    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id].slice(-3)));
+    const next = pickedSet.has(id) ? picked.filter((x) => x !== id) : [...picked, id].slice(-3);
+
+    setProgress((prev) => {
+      const { key, bag: prevBag } = getBag(prev);
+      const nextBag: Record<string, unknown> = { ...prevBag, [PICK_KEY]: next };
+      return setBag(prev, key, nextBag);
+    });
   }
 
-  const pickedSet = new Set(picked);
-
-  // Small “coach” logic: show 2–3 suggestions based on picks (simple heuristics)
   const coachLine = React.useMemo(() => {
     if (!picked.length) return "Pick up to 3 — just the ones that spark curiosity. This isn’t a commitment.";
     if (picked.length === 1) return "Nice. Add one more so we can triangulate your vibe.";
     if (picked.length === 2) return "Good signal. If you add a third, we can get even sharper.";
     return "Great. These three are enough to guide the next steps.";
   }, [picked.length]);
-
-  const zip = (progress.zipCode ?? "").trim();
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
@@ -119,7 +166,10 @@ export function SpecialtiesStep({ step, progress }: Props) {
       <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold text-slate-50">Coach note</div>
-          <div className="text-xs text-slate-300/60">{picked.length}/3 picked</div>
+          <div className="text-xs text-slate-300/60">
+            {picked.length}/3 picked
+            <span className="ml-2 opacity-60">({bagKey})</span>
+          </div>
         </div>
         <p className="mt-2 text-sm text-slate-200/85">{coachLine}</p>
 
@@ -134,7 +184,6 @@ export function SpecialtiesStep({ step, progress }: Props) {
         ) : null}
       </div>
 
-      {/* Mobile-friendly list of cards */}
       <div className="space-y-3">
         {SPECIALTIES.map((s) => {
           const on = pickedSet.has(s.id);
@@ -179,17 +228,6 @@ export function SpecialtiesStep({ step, progress }: Props) {
             </button>
           );
         })}
-      </div>
-
-      <div className="pt-2 text-xs text-slate-300/60">
-        {zip ? (
-          <>
-            Later, we’ll use <span className="text-slate-100">{zip}</span> to surface local programs for the specialties
-            you pick.
-          </>
-        ) : (
-          <>Later we’ll ask for your ZIP so we can show local options for your specialty picks.</>
-        )}
       </div>
     </section>
   );

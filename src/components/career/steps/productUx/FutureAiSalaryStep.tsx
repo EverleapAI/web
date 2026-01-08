@@ -1,3 +1,4 @@
+// src/components/career/steps/productUx/FutureAiSalaryStep.tsx
 "use client";
 
 import * as React from "react";
@@ -16,13 +17,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Card({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="text-sm font-semibold text-slate-50">{title}</div>
@@ -54,6 +49,12 @@ function RangeRow({
   );
 }
 
+function normalizeZip(v: unknown): string {
+  const s = typeof v === "string" ? v.trim() : "";
+  if (/^\d{5}(-\d{4})?$/.test(s)) return s;
+  return "";
+}
+
 /**
  * NOTE:
  * These are intentionally "safe placeholder" ranges for now.
@@ -83,7 +84,7 @@ const PLACEHOLDER_RANGES = [
 ];
 
 export function FutureAiSalaryStep({ step, progress }: Props) {
-  const zip = (progress.zipCode ?? "").trim();
+  const zip = normalizeZip(progress["zip"]);
 
   const aiImpact = [
     {
@@ -119,9 +120,7 @@ export function FutureAiSalaryStep({ step, progress }: Props) {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
-          AI + salary (what to expect)
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">AI + salary (what to expect)</h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
           Today these are placeholder ranges. Soon we’ll tailor this by location and lane specialty—plus show where the
           numbers come from.
@@ -171,9 +170,7 @@ export function FutureAiSalaryStep({ step, progress }: Props) {
 
       <Card title="How to win in an AI-heavy UX world">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
-            Your advantage
-          </div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Your advantage</div>
           <ul className="mt-3 ml-5 list-disc space-y-1 text-sm text-slate-200/85">
             {howToWin.map((t) => (
               <li key={t}>{t}</li>

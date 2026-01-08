@@ -4,7 +4,14 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ChevronDown, ArrowRight, X, Send } from "lucide-react";
+import {
+  ChevronDown,
+  ArrowRight,
+  X,
+  Send,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -66,10 +73,11 @@ type YouMapArea = {
 };
 
 /* ============================================================
-   Opinionated placeholder content (intentionally “spiky”)
+   Placeholder content
    ============================================================ */
 
 const areas: YouMapArea[] = [
+  // ✅ Recommendations FIRST
   {
     id: "career",
     label: "Recommendations",
@@ -208,7 +216,8 @@ const areas: YouMapArea[] = [
     ],
   },
 
-  // --- rest unchanged ---
+  // --- the rest of your lanes (same as you pasted) ---
+  // (Keeping these as-is; they already contain the data we’ll render)
   {
     id: "motivations",
     label: "Motivations",
@@ -230,23 +239,70 @@ const areas: YouMapArea[] = [
     about:
       "Based on what you’ve shared so far (and how people like you typically describe energy), Everleap is forming hypotheses about what energizes you vs drains you. This is meant to be challenged.",
     nextMoves: [
-      { id: "cut-busywork", title: "Delete one fake task", blurb: "Pick one thing you’re doing for appearances and drop it." },
-      { id: "make-real", title: "Make a task real", blurb: "Attach one person, one outcome, or one deadline to it." },
-      { id: "tiny-win", title: "Create a visible win", blurb: "Define what “done” looks like in one sentence." },
+      {
+        id: "cut-busywork",
+        title: "Delete one fake task",
+        blurb: "Pick one thing you’re doing for appearances and drop it.",
+      },
+      {
+        id: "make-real",
+        title: "Make a task real",
+        blurb: "Attach one person, one outcome, or one deadline to it.",
+      },
+      {
+        id: "tiny-win",
+        title: "Create a visible win",
+        blurb: "Define what “done” looks like in one sentence.",
+      },
     ],
     deepDive: {
       title: "My read so far • Motivations",
       sections: [
-        { h: "The claim", p: "You are meaning-and-momentum wired. Your motivation doesn’t respond to generic pressure—it responds to purpose + progress." },
-        { h: "What you do when it’s working", p: "When something matters, you get locked in. You move fast. You’ll even tolerate discomfort because the effort feels connected to something real.\n\nYou become the person who “suddenly has energy” once the goal makes sense." },
-        { h: "What you do when it’s not working", p: "When something feels pointless, you don’t just get bored—you get slippery.\nYou procrastinate, you drift, you switch tasks, you scroll. It looks like laziness, but it’s actually rejection: your brain refuses low-signal effort." },
-        { h: "The trap", p: "The trap is thinking you need more discipline. You don’t.\nYou need better signal: clearer stakes, clearer purpose, clearer checkpoints." },
-        { h: "One experiment", p: "Take one task you’re avoiding. Add a win-condition + a 20-minute start.\nIf your motivation returns, you didn’t have a discipline problem—you had a meaning problem." },
+        {
+          h: "The claim",
+          p: "You are meaning-and-momentum wired. Your motivation doesn’t respond to generic pressure—it responds to purpose + progress.",
+        },
+        {
+          h: "What you do when it’s working",
+          p:
+            "When something matters, you get locked in. You move fast. You’ll even tolerate discomfort because the effort feels connected to something real.\n\n" +
+            "You become the person who “suddenly has energy” once the goal makes sense.",
+        },
+        {
+          h: "What you do when it’s not working",
+          p:
+            "When something feels pointless, you don’t just get bored—you get slippery.\n" +
+            "You procrastinate, you drift, you switch tasks, you scroll. It looks like laziness, but it’s actually rejection: your brain refuses low-signal effort.",
+        },
+        {
+          h: "The trap",
+          p:
+            "The trap is thinking you need more discipline. You don’t.\n" +
+            "You need better signal: clearer stakes, clearer purpose, clearer checkpoints.",
+        },
+        {
+          h: "One experiment",
+          p:
+            "Take one task you’re avoiding. Add a win-condition + a 20-minute start.\n" +
+            "If your motivation returns, you didn’t have a discipline problem—you had a meaning problem.",
+        },
       ],
     },
     cards: [
-      { id: "meaning-vs-status", title: "Meaning beats status", short: "You’ll pick “real” over “impressive.”", long: "If something looks good on paper but feels empty, you won’t stay engaged. You’d rather do work that matters than work that impresses strangers.", icon: "🎯" },
-      { id: "momentum-fuel", title: "Momentum is fuel", short: "Progress is your dopamine.", long: "You don’t need massive rewards. You need movement—evidence the effort is going somewhere.", icon: "📈" },
+      {
+        id: "meaning-vs-status",
+        title: "Meaning beats status",
+        short: "You’ll pick “real” over “impressive.”",
+        long: "If something looks good on paper but feels empty, you won’t stay engaged. You’d rather do work that matters than work that impresses strangers.",
+        icon: "🎯",
+      },
+      {
+        id: "momentum-fuel",
+        title: "Momentum is fuel",
+        short: "Progress is your dopamine.",
+        long: "You don’t need massive rewards. You need movement—evidence the effort is going somewhere.",
+        icon: "📈",
+      },
     ],
   },
 
@@ -415,7 +471,7 @@ const areas: YouMapArea[] = [
 ];
 
 /* ============================================================
-   Local “Guide” feedback modal (placeholder, no AI API yet)
+   Local “Guide” feedback modal (placeholder)
    ============================================================ */
 
 type FeedbackRating = "mostly" | "somewhat" | "nope";
@@ -435,9 +491,10 @@ export default function YouMapPage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const [whyOpen, setWhyOpen] = React.useState(false);
 
+  const [whyOpen, setWhyOpen] = React.useState(false);
   const [recContextOpen, setRecContextOpen] = React.useState(false);
+  const [laneContextOpen, setLaneContextOpen] = React.useState(false);
 
   const [deepOpen, setDeepOpen] = React.useState(false);
   const deepCloseBtnRef = React.useRef<HTMLButtonElement | null>(null);
@@ -453,6 +510,12 @@ export default function YouMapPage() {
   } | null>(null);
 
   const guideInputRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  // chip scroller affordance
+  const chipsWrapRef = React.useRef<HTMLDivElement | null>(null);
+  const [chipsHintSeen, setChipsHintSeen] = React.useState(false);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
 
   const dark = isDarkTheme(themeId);
   const theme =
@@ -494,11 +557,15 @@ export default function YouMapPage() {
   const chipAccentBar = `bg-gradient-to-b ${activeArea.glowClass}`;
 
   const topSignals = activeArea.signals.slice(0, 3);
-  const extraSignals = Math.max(activeArea.signals.length - topSignals.length, 0);
+  const extraSignals = Math.max(
+    activeArea.signals.length - topSignals.length,
+    0
+  );
 
   function goToArea(nextIndex: number) {
     setWhyOpen(false);
     setRecContextOpen(false);
+    setLaneContextOpen(false);
     setActiveIndex(nextIndex);
   }
 
@@ -523,8 +590,9 @@ export default function YouMapPage() {
       {
         role: "guide",
         text:
-          `Calibration for **${activeArea.label}**: you said “${labelForRating(rating)}.”\n\n` +
-          `What part felt most true — and what part is wrong?`,
+          `Calibration for **${activeArea.label}**: you said “${labelForRating(
+            rating
+          )}.”\n\n` + `What part felt most true — and what part is wrong?`,
       },
       {
         role: "guide",
@@ -611,6 +679,29 @@ export default function YouMapPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [guideOpen]);
 
+  function computeChipScrollState() {
+    const el = chipsWrapRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }
+
+  React.useEffect(() => {
+    computeChipScrollState();
+    const onResize = () => computeChipScrollState();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  function scrollChips(dir: "left" | "right") {
+    const el = chipsWrapRef.current;
+    if (!el) return;
+    setChipsHintSeen(true);
+    el.scrollBy({ left: dir === "left" ? -260 : 260, behavior: "smooth" });
+    window.setTimeout(computeChipScrollState, 250);
+  }
+
   const feedbackButtonBase =
     "inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95";
   const feedbackButtonDark =
@@ -618,10 +709,10 @@ export default function YouMapPage() {
   const feedbackButtonLight =
     "border-slate-200 bg-white/85 text-slate-800 hover:bg-white";
 
-  const careerDeepHref = (id: CareerSuggestion["id"]) => `/main/career/${id}`;
+  const careerDeepHref = (id: CareerSuggestion["id"]) => `/main/career/${id}?mode=explore`;
+
   const isRecommendations = activeArea.id === "career";
 
-  // ✅ per-recommendation “pop” accents (not just same gray card)
   const recAccents = [
     {
       rail: "from-sky-300 via-cyan-300 to-indigo-300",
@@ -649,6 +740,301 @@ export default function YouMapPage() {
     },
   ] as const;
 
+  // ✅ helper to render non-recommendation lanes
+  function LaneCard() {
+    return (
+      <section className="mb-5">
+        <div
+          className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
+        >
+          <div className="pointer-events-none absolute inset-0">
+            <div
+              className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
+            />
+            <div
+              className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
+            />
+          </div>
+
+          <div className="relative">
+            <div className={sectionLabelClass}>{activeArea.label}</div>
+
+            <div className="mt-2 max-w-2xl">
+              <div
+                className={`text-lg font-semibold ${
+                  dark ? "text-slate-50" : "text-slate-900"
+                }`}
+              >
+                {activeArea.summary}
+              </div>
+              <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
+                {activeArea.hint}
+              </div>
+            </div>
+
+            {/* cards */}
+            {activeArea.cards?.length ? (
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {activeArea.cards.slice(0, 4).map((c) => (
+                  <div
+                    key={c.id}
+                    className={`rounded-3xl border px-5 py-4 backdrop-blur-xl ${
+                      dark
+                        ? "border-white/10 bg-white/5"
+                        : "border-slate-200 bg-white/80"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                          dark
+                            ? "bg-slate-950/60 text-slate-50"
+                            : "bg-slate-900/5 text-slate-800"
+                        }`}
+                        aria-hidden
+                      >
+                        <span className="text-lg">{c.icon ?? "✨"}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <div
+                          className={`text-base font-semibold ${
+                            dark ? "text-slate-50" : "text-slate-900"
+                          }`}
+                        >
+                          {c.title}
+                        </div>
+                        <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
+                          {c.short}
+                        </div>
+                      </div>
+                    </div>
+
+                    {c.long ? (
+                      <div
+                        className={`mt-3 text-xs leading-relaxed ${
+                          dark ? "text-slate-200/75" : "text-slate-700/80"
+                        }`}
+                      >
+                        {c.long}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* next moves */}
+            {activeArea.nextMoves?.length ? (
+              <div className="mt-6">
+                <div
+                  className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                >
+                  Next moves
+                </div>
+                <div className="space-y-2">
+                  {activeArea.nextMoves.slice(0, 4).map((m, idx) => (
+                    <div
+                      key={m.id}
+                      className={`rounded-2xl border px-4 py-3 ${
+                        dark
+                          ? "border-white/10 bg-slate-950/35"
+                          : "border-slate-200 bg-white/75"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                            dark
+                              ? "bg-white/10 text-slate-100"
+                              : "bg-slate-900/5 text-slate-800"
+                          }`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <div
+                            className={`text-sm font-semibold ${
+                              dark ? "text-slate-50" : "text-slate-900"
+                            }`}
+                          >
+                            {m.title}
+                          </div>
+                          <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
+                            {m.blurb}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* signals */}
+            <div className="mt-6">
+              <div
+                className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+              >
+                Signals
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {topSignals.map((sig) => (
+                  <span
+                    key={sig}
+                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
+                      dark
+                        ? "border-white/10 bg-white/5 text-slate-100"
+                        : "border-slate-200 bg-white/80 text-slate-800"
+                    }`}
+                  >
+                    {sig}
+                  </span>
+                ))}
+                {extraSignals > 0 ? (
+                  <span
+                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs opacity-85 ${
+                      dark
+                        ? "border-white/10 bg-white/5 text-slate-100"
+                        : "border-slate-200 bg-white/80 text-slate-800"
+                    }`}
+                  >
+                    +{extraSignals} more
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            {/* quick check */}
+            <div className="mt-6">
+              <div
+                className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+              >
+                Quick check
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => openGuide("mostly", "page")}
+                  className={`${feedbackButtonBase} ${
+                    dark ? feedbackButtonDark : feedbackButtonLight
+                  }`}
+                >
+                  👍 This fits
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openGuide("somewhat", "page")}
+                  className={`${feedbackButtonBase} ${
+                    dark ? feedbackButtonDark : feedbackButtonLight
+                  }`}
+                >
+                  😐 Kinda
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openGuide("nope", "page")}
+                  className={`${feedbackButtonBase} ${
+                    dark ? feedbackButtonDark : feedbackButtonLight
+                  }`}
+                >
+                  👎 Nope
+                </button>
+              </div>
+            </div>
+
+            {/* context + go deeper */}
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={() => setLaneContextOpen((o) => !o)}
+                className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
+                  dark
+                    ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
+                    : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
+                }`}
+                aria-expanded={laneContextOpen}
+              >
+                More context
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${
+                    laneContextOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <button
+                type="button"
+                onClick={openDeepDive}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/35 transition hover:bg-amber-200 active:scale-95"
+              >
+                Go deeper <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {laneContextOpen ? (
+              <div className="mt-4 space-y-4">
+                <div
+                  className={`rounded-2xl border px-4 py-3 text-sm ${
+                    dark
+                      ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
+                      : "border-slate-200 bg-white/80 text-slate-700"
+                  }`}
+                >
+                  <div className="font-semibold">What I’m noticing</div>
+                  <div className={`mt-2 ${pageTextMutedClass}`}>
+                    <span className={dark ? "text-slate-100" : "text-slate-900"}>
+                      {activeArea.summary}
+                    </span>
+                  </div>
+                  <div className={`mt-2 ${pageTextMutedClass}`}>
+                    {activeArea.hint}
+                  </div>
+                  <div
+                    className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}
+                  >
+                    {activeArea.coachRead}
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setWhyOpen((o) => !o)}
+                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      dark
+                        ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
+                        : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
+                    }`}
+                    aria-expanded={whyOpen}
+                  >
+                    What I’m basing this on
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${
+                        whyOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {whyOpen ? (
+                    <div
+                      className={`relative mt-3 rounded-2xl border px-4 py-3 text-sm ${
+                        dark
+                          ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
+                          : "border-slate-200 bg-white/80 text-slate-700"
+                      }`}
+                    >
+                      {activeArea.about}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <AppChrome
       themeId={themeId}
@@ -660,7 +1046,7 @@ export default function YouMapPage() {
     >
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
-          {/* calm top row (micro-pop) */}
+          {/* top row */}
           <div className="relative mb-5 flex flex-col gap-3">
             <div
               aria-hidden
@@ -670,60 +1056,120 @@ export default function YouMapPage() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className={sectionLabelClass}>Insights</span>
-                <span
-                  className={`h-1 w-1 rounded-full ${dark ? "bg-white/20" : "bg-slate-300"}`}
-                />
-                <span
-                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
-                    dark
-                      ? "border-white/10 bg-white/5 text-slate-100"
-                      : "border-slate-200 bg-white/80 text-slate-800"
-                  }`}
-                >
-                  <span className={`mr-2 h-2 w-2 rounded-full ${chipAccentBar}`} />
-                  {activeArea.label}
-                </span>
               </div>
             </div>
 
-            {/* area chips (add per-chip dot color so row isn’t “all same”) */}
-            <div className="mt-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="flex items-stretch gap-2 pr-2">
-                {areas.map((area, idx) => {
-                  const active = idx === activeIndex;
-                  const dot = `bg-gradient-to-br ${area.glowClass}`;
-                  return (
-                    <button
-                      key={area.id}
-                      type="button"
-                      onClick={() => goToArea(idx)}
-                      className={`relative inline-flex shrink-0 flex-col items-start gap-0.5 rounded-2xl border px-4 py-2.5 text-left transition ${
-                        active ? areaChipActive : areaChipBase
-                      }`}
-                    >
-                      {active && (
-                        <span
-                          aria-hidden
-                          className={`absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b ${area.glowClass}`}
-                        />
-                      )}
+            {/* chips row + scroll affordance */}
+            <div className="relative mt-2">
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute inset-y-0 left-0 w-10 ${
+                  dark
+                    ? "bg-gradient-to-r from-slate-950/70 to-transparent"
+                    : "bg-gradient-to-r from-white/80 to-transparent"
+                } ${canScrollLeft ? "opacity-100" : "opacity-0"} transition-opacity`}
+              />
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute inset-y-0 right-0 w-10 ${
+                  dark
+                    ? "bg-gradient-to-l from-slate-950/70 to-transparent"
+                    : "bg-gradient-to-l from-white/80 to-transparent"
+                } ${
+                  canScrollRight ? "opacity-100" : "opacity-0"
+                } transition-opacity`}
+              />
 
-                      <span className="flex items-center gap-2 text-sm font-semibold leading-tight">
-                        <span className={`h-2.5 w-2.5 rounded-full ${dot} opacity-90`} />
-                        {area.label}
-                      </span>
-                      <span className={`text-xs leading-tight ${microText}`}>
-                        {area.chip}
-                      </span>
-                    </button>
-                  );
-                })}
+              {canScrollLeft ? (
+                <button
+                  type="button"
+                  onClick={() => scrollChips("left")}
+                  className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
+                    dark
+                      ? "border-white/10 bg-slate-950/55 text-slate-100 hover:bg-slate-950/70"
+                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
+                  }`}
+                  aria-label="Scroll insights left"
+                  title="Scroll left"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              ) : null}
+
+              {canScrollRight ? (
+                <button
+                  type="button"
+                  onClick={() => scrollChips("right")}
+                  className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
+                    dark
+                      ? "border-white/10 bg-slate-950/55 text-slate-100 hover:bg-slate-950/70"
+                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
+                  }`}
+                  aria-label="Scroll insights right"
+                  title="Scroll right"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : null}
+
+              <div
+                ref={chipsWrapRef}
+                onScroll={() => {
+                  computeChipScrollState();
+                  setChipsHintSeen(true);
+                }}
+                className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                <div className="flex items-stretch gap-2 pr-2">
+                  {areas.map((area, idx) => {
+                    const active = idx === activeIndex;
+                    const dot = `bg-gradient-to-br ${area.glowClass}`;
+                    return (
+                      <button
+                        key={area.id}
+                        type="button"
+                        onClick={() => goToArea(idx)}
+                        className={`relative inline-flex shrink-0 flex-col items-start gap-0.5 rounded-2xl border px-4 py-2.5 text-left transition ${
+                          active ? areaChipActive : areaChipBase
+                        }`}
+                      >
+                        {active && (
+                          <span
+                            aria-hidden
+                            className={`absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b ${area.glowClass}`}
+                          />
+                        )}
+
+                        <span className="flex items-center gap-2 text-sm font-semibold leading-tight">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${dot} opacity-90`}
+                          />
+                          {area.label}
+                        </span>
+                        <span className={`text-xs leading-tight ${microText}`}>
+                          {area.chip}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
+              {!chipsHintSeen && canScrollRight ? (
+                <div
+                  className={`mt-2 text-center text-xs ${
+                    dark ? "text-slate-300/60" : "text-slate-600/70"
+                  }`}
+                >
+                  Swipe <span className="mx-1">←</span>
+                  <span className="mx-1">→</span> to explore
+                </div>
+              ) : null}
             </div>
           </div>
 
           {/* =========================
-             RECOMMENDATIONS LANE
+             LANE CONTENT
              ========================= */}
           {isRecommendations ? (
             <section className="mb-5">
@@ -731,142 +1177,189 @@ export default function YouMapPage() {
                 className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
               >
                 <div className="pointer-events-none absolute inset-0">
-                  <div className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`} />
-                  <div className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`} />
+                  <div
+                    className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
+                  />
+                  <div
+                    className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
+                  />
                 </div>
 
                 <div className="relative">
                   <div className={sectionLabelClass}>Recommendations</div>
                   <div className="mt-2 max-w-2xl">
-                    <div className={`text-lg font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                    <div
+                      className={`text-lg font-semibold ${
+                        dark ? "text-slate-50" : "text-slate-900"
+                      }`}
+                    >
                       4 Everleap recommendations for you
                     </div>
                     <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
-                      Not a forever decision. Pick one lane, run a tiny test, then adjust.
+                      Not a forever decision. Pick one lane, run a tiny test,
+                      then adjust.
                     </div>
                   </div>
 
                   {activeArea.careerSuggestions?.length ? (
                     <div className="mt-5 space-y-3">
-                      {activeArea.careerSuggestions.slice(0, 4).map((c, idx) => {
-                        const a = recAccents[idx] ?? recAccents[0];
-                        return (
-                          <div
-                            key={c.id}
-                            className={`
-                              relative overflow-hidden rounded-3xl border p-[1px]
-                              ${dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}
-                            `}
-                          >
-                            {/* inner halo for color pop */}
-                            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo}`} />
-
-                            {/* rail */}
+                      {activeArea.careerSuggestions
+                        .slice(0, 4)
+                        .map((c, idx) => {
+                          const a = recAccents[idx] ?? recAccents[0];
+                          return (
                             <div
-                              aria-hidden
-                              className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full bg-gradient-to-b ${a.rail} opacity-90`}
-                            />
-
-                            <div
-                              className={`relative rounded-3xl px-5 py-4 ${
-                                dark ? "bg-slate-950/35" : "bg-white/70"
-                              }`}
+                              key={c.id}
+                              className={`
+                                relative overflow-hidden rounded-3xl border p-[1px]
+                                ${
+                                  dark
+                                    ? "border-white/10 bg-white/5"
+                                    : "border-slate-200 bg-white/80"
+                                }
+                              `}
                             >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              <div
+                                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo}`}
+                              />
+
+                              <div
+                                aria-hidden
+                                className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full bg-gradient-to-b ${a.rail} opacity-90`}
+                              />
+
+                              <div
+                                className={`relative rounded-3xl px-5 py-4 ${
+                                  dark ? "bg-slate-950/35" : "bg-white/70"
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                                        dark
+                                          ? `border-white/10 ${a.chip}`
+                                          : "border-slate-200 bg-white text-slate-800"
+                                      }`}
+                                    >
+                                      #{idx + 1}
+                                    </span>
+                                    <div
+                                      className={`text-base font-semibold ${
+                                        dark ? "text-slate-50" : "text-slate-900"
+                                      }`}
+                                    >
+                                      {c.title}
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    className={`mt-2 text-sm ${pageTextMutedClass}`}
+                                  >
+                                    {c.why}
+                                  </div>
+
+                                  <div
+                                    className={`mt-2 text-xs ${
                                       dark
-                                        ? `border-white/10 ${a.chip}`
-                                        : "border-slate-200 bg-white text-slate-800"
+                                        ? "text-slate-300/70"
+                                        : "text-slate-600/80"
                                     }`}
                                   >
-                                    #{idx + 1}
-                                  </span>
-                                  <div className={`text-base font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
-                                    {c.title}
+                                    <span className="font-semibold">
+                                      Best if:
+                                    </span>{" "}
+                                    {c.bestFor}
+                                  </div>
+
+                                  <div
+                                    className={`mt-3 text-xs ${
+                                      dark ? "text-slate-200/80" : "text-slate-700"
+                                    }`}
+                                  >
+                                    <span className="font-semibold">
+                                      3-day test:
+                                    </span>{" "}
+                                    {c.starterExperiment}
                                   </div>
                                 </div>
 
-                                <div className={`mt-2 text-sm ${pageTextMutedClass}`}>
-                                  {c.why}
+                                <div className="mt-4 flex flex-wrap items-center gap-2">
+                                  <Link
+                                    href={careerDeepHref(c.id)}
+                                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg transition active:scale-95 ${
+                                      dark
+                                        ? `${a.cta} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
+                                        : "bg-sky-600 text-white hover:bg-sky-500"
+                                    }`}
+                                  >
+                                    Dive deeper{" "}
+                                    <ArrowRight className="h-4 w-4" />
+                                  </Link>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => openRecommendationGuide(c)}
+                                    className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                                      dark
+                                        ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                                        : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
+                                    }`}
+                                  >
+                                    Try this
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => openGuide("somewhat", "page")}
+                                    className={`ml-auto text-xs font-semibold ${
+                                      dark
+                                        ? "text-slate-200/70 hover:text-slate-50"
+                                        : "text-slate-700/70 hover:text-slate-900"
+                                    }`}
+                                    title="Tell Everleap what to change about these picks"
+                                  >
+                                    React to these
+                                  </button>
                                 </div>
-
-                                <div className={`mt-2 text-xs ${dark ? "text-slate-300/70" : "text-slate-600/80"}`}>
-                                  <span className="font-semibold">Best if:</span> {c.bestFor}
-                                </div>
-
-                                <div className={`mt-3 text-xs ${dark ? "text-slate-200/80" : "text-slate-700"}`}>
-                                  <span className="font-semibold">3-day test:</span> {c.starterExperiment}
-                                </div>
-                              </div>
-
-                              {/* CTAs: Details is PRIMARY now */}
-                              <div className="mt-4 flex flex-wrap items-center gap-2">
-                                <Link
-                                  href={careerDeepHref(c.id)}
-                                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                                    dark
-                                      ? `${a.cta} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                                      : "bg-sky-600 text-white hover:bg-sky-500"
-                                  }`}
-                                >
-                                  Dive deeper <ArrowRight className="h-4 w-4" />
-                                </Link>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openRecommendationGuide(c)}
-                                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                                    dark
-                                      ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                                  }`}
-                                >
-                                  Try this
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openGuide("somewhat", "page")}
-                                  className={`ml-auto text-xs font-semibold ${
-                                    dark ? "text-slate-200/70 hover:text-slate-50" : "text-slate-700/70 hover:text-slate-900"
-                                  }`}
-                                  title="Tell Everleap what to change about these picks"
-                                >
-                                  React to these
-                                </button>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   ) : null}
 
                   <div className="mt-6">
-                    <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
+                    <div
+                      className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
+                    >
                       Quick check
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => openGuide("mostly", "page")}
-                        className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                        className={`${feedbackButtonBase} ${
+                          dark ? feedbackButtonDark : feedbackButtonLight
+                        }`}
                       >
                         👍 These fit
                       </button>
                       <button
                         type="button"
                         onClick={() => openGuide("somewhat", "page")}
-                        className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                        className={`${feedbackButtonBase} ${
+                          dark ? feedbackButtonDark : feedbackButtonLight
+                        }`}
                       >
                         😐 Kinda
                       </button>
                       <button
                         type="button"
                         onClick={() => openGuide("nope", "page")}
-                        className={`${feedbackButtonBase} ${dark ? feedbackButtonDark : feedbackButtonLight}`}
+                        className={`${feedbackButtonBase} ${
+                          dark ? feedbackButtonDark : feedbackButtonLight
+                        }`}
                       >
                         👎 Nope
                       </button>
@@ -885,7 +1378,11 @@ export default function YouMapPage() {
                       aria-expanded={recContextOpen}
                     >
                       More context
-                      <ChevronDown className={`h-4 w-4 transition-transform ${recContextOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${
+                          recContextOpen ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
 
                     <button
@@ -901,41 +1398,26 @@ export default function YouMapPage() {
                     <div className="mt-4 space-y-4">
                       <div
                         className={`rounded-2xl border px-4 py-3 text-sm ${
-                          dark ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90" : "border-slate-200 bg-white/80 text-slate-700"
+                          dark
+                            ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
+                            : "border-slate-200 bg-white/80 text-slate-700"
                         }`}
                       >
                         <div className="font-semibold">What I’m noticing</div>
                         <div className={`mt-2 ${pageTextMutedClass}`}>
-                          <span className={dark ? "text-slate-100" : "text-slate-900"}>{activeArea.summary}</span>
+                          <span
+                            className={dark ? "text-slate-100" : "text-slate-900"}
+                          >
+                            {activeArea.summary}
+                          </span>
                         </div>
-                        <div className={`mt-2 ${pageTextMutedClass}`}>{activeArea.hint}</div>
-                        <div className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}>{activeArea.coachRead}</div>
-                      </div>
-
-                      <div>
-                        <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}>
-                          Signals I’m picking up
+                        <div className={`mt-2 ${pageTextMutedClass}`}>
+                          {activeArea.hint}
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {topSignals.map((sig) => (
-                            <span
-                              key={sig}
-                              className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
-                                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-800"
-                              }`}
-                            >
-                              {sig}
-                            </span>
-                          ))}
-                          {extraSignals > 0 ? (
-                            <span
-                              className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs opacity-85 ${
-                                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-800"
-                              }`}
-                            >
-                              +{extraSignals} more
-                            </span>
-                          ) : null}
+                        <div
+                          className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}
+                        >
+                          {activeArea.coachRead}
                         </div>
                       </div>
 
@@ -951,7 +1433,11 @@ export default function YouMapPage() {
                           aria-expanded={whyOpen}
                         >
                           What I’m basing this on
-                          <ChevronDown className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${
+                              whyOpen ? "rotate-180" : ""
+                            }`}
+                          />
                         </button>
 
                         {whyOpen ? (
@@ -972,8 +1458,8 @@ export default function YouMapPage() {
               </div>
             </section>
           ) : (
-            // Other lanes unchanged (kept as-is)
-            <></>
+            // ✅ This is the fix: render every other lane using its data
+            <LaneCard />
           )}
         </main>
 
@@ -1014,7 +1500,9 @@ export default function YouMapPage() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-slate-300/70">Accurate?</span>
+                        <span className="text-xs text-slate-300/70">
+                          Accurate?
+                        </span>
                         <button
                           type="button"
                           onClick={() => openGuide("mostly", "deep")}
@@ -1038,7 +1526,8 @@ export default function YouMapPage() {
                         </button>
                       </div>
 
-                      {activeArea.id === "career" && activeArea.careerSuggestions?.length ? (
+                      {activeArea.id === "career" &&
+                      activeArea.careerSuggestions?.length ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {activeArea.careerSuggestions.slice(0, 4).map((c) => (
                             <Link
@@ -1046,7 +1535,8 @@ export default function YouMapPage() {
                               href={careerDeepHref(c.id)}
                               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
                             >
-                              {c.id.toUpperCase()} <ArrowRight className="h-3 w-3" />
+                              {c.id.toUpperCase()}{" "}
+                              <ArrowRight className="h-3 w-3" />
                             </Link>
                           ))}
                         </div>
@@ -1070,7 +1560,9 @@ export default function YouMapPage() {
                   <div className="space-y-6">
                     {activeArea.deepDive.sections.map((s) => (
                       <section key={s.h} className="space-y-2">
-                        <div className="text-sm font-semibold text-slate-50">{s.h}</div>
+                        <div className="text-sm font-semibold text-slate-50">
+                          {s.h}
+                        </div>
                         <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200/85">
                           {s.p}
                         </div>
@@ -1155,7 +1647,12 @@ export default function YouMapPage() {
                     {guideMsgs.map((m, i) => {
                       const isGuide = m.role === "guide";
                       return (
-                        <div key={i} className={`flex ${isGuide ? "justify-start" : "justify-end"}`}>
+                        <div
+                          key={i}
+                          className={`flex ${
+                            isGuide ? "justify-start" : "justify-end"
+                          }`}
+                        >
                           <div
                             className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                               isGuide
@@ -1211,7 +1708,8 @@ export default function YouMapPage() {
                   </div>
 
                   <div className="mt-2 text-xs text-slate-300/50">
-                    Placeholder guide flow for now (no AI API yet). Your responses can be stored later for learning.
+                    Placeholder guide flow for now (no AI API yet). Your
+                    responses can be stored later for learning.
                   </div>
                 </div>
 

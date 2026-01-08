@@ -1,16 +1,23 @@
 "use client";
 
 import * as React from "react";
-import type { StepperStep } from "@/components/career/stepperTypes";
-import type { StepperPersistedState } from "@/components/career/stepperTypes";
+import type { StepperStep, StepperPersistedState } from "@/components/career/stepperTypes";
 
 type Props = {
   step: StepperStep;
   progress: StepperPersistedState;
 };
 
+function normalizeZip(v: unknown): string {
+  const s = typeof v === "string" ? v.trim() : "";
+  // allow 5-digit or 5+4; keep it simple for now
+  if (/^\d{5}(-\d{4})?$/.test(s)) return s;
+  return "";
+}
+
 export function OverviewStep({ step, progress }: Props) {
-  const zip = (progress.zipCode ?? "").trim();
+  // Some environments have zipCode typed as {} — treat as unknown and normalize.
+  const zip = normalizeZip((progress as unknown as { zipCode?: unknown }).zipCode);
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
@@ -21,24 +28,16 @@ export function OverviewStep({ step, progress }: Props) {
 
       {/* Headline */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
-          Product / UX
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Product / UX</h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
-          You’re wired for clarity + momentum. Product/UX rewards people who can
-          turn messy human needs into something real — and improve it fast.
+          You’re wired for clarity + momentum. Product/UX rewards people who can turn messy human needs into something
+          real — and improve it fast.
         </p>
       </div>
 
       {/* Micro chips (skim-friendly) */}
       <div className="flex flex-wrap gap-2">
-        {[
-          "Build → test → iterate",
-          "Real users",
-          "Fast feedback",
-          "Outcome-focused",
-          "Creative + logical",
-        ].map((t) => (
+        {["Build → test → iterate", "Real users", "Fast feedback", "Outcome-focused", "Creative + logical"].map((t) => (
           <span
             key={t}
             className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1.5 text-xs text-slate-100"
@@ -51,40 +50,29 @@ export function OverviewStep({ step, progress }: Props) {
       {/* 3 quick sections (cards) */}
       <div className="grid gap-3">
         <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="text-sm font-semibold text-slate-50">
-            Why this fits
-          </div>
+          <div className="text-sm font-semibold text-slate-50">Why this fits</div>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-200/85">
             <li>You like impact you can see — Product work gives fast signal.</li>
             <li>You get bored by performative work — this forces outcomes.</li>
-            <li>
-              Your edge is sense-making: what matters, what doesn’t, what to fix
-              next.
-            </li>
+            <li>Your edge is sense-making: what matters, what doesn’t, what to fix next.</li>
           </ul>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="text-sm font-semibold text-slate-50">
-            What you’ll actually do
-          </div>
+          <div className="text-sm font-semibold text-slate-50">What you’ll actually do</div>
           <p className="mt-2 text-sm leading-relaxed text-slate-200/85">
-            You’ll design and improve experiences people use: apps, websites,
-            flows, onboarding, checkout, dashboards. You’ll talk to users, make
-            prototypes, test ideas, and iterate.
+            You’ll design and improve experiences people use: apps, websites, flows, onboarding, checkout, dashboards.
+            You’ll talk to users, make prototypes, test ideas, and iterate.
           </p>
 
           <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-200/80">
-            <span className="font-semibold text-slate-100">Reality check:</span>{" "}
-            Most of the job is deciding what to build next and why — not “making
-            it pretty.”
+            <span className="font-semibold text-slate-100">Reality check:</span> Most of the job is deciding what to
+            build next and why — not “making it pretty.”
           </div>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-          <div className="text-sm font-semibold text-slate-50">
-            Your 3-day micro test
-          </div>
+          <div className="text-sm font-semibold text-slate-50">Your 3-day micro test</div>
           <ol className="mt-3 space-y-2 text-sm text-slate-200/85">
             <li className="flex gap-3">
               <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-300 text-xs font-bold text-slate-950">
@@ -112,8 +100,7 @@ export function OverviewStep({ step, progress }: Props) {
       <div className="pt-2 text-xs text-slate-300/60">
         {zip ? (
           <>
-            We’ll use <span className="text-slate-100">{zip}</span> later to
-            show local classes, meetups, and programs.
+            We’ll use <span className="text-slate-100">{zip}</span> later to show local classes, meetups, and programs.
           </>
         ) : (
           <>Later we’ll ask for your ZIP so we can show local options.</>

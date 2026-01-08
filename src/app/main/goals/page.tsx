@@ -504,15 +504,6 @@ export default function GoalsPage() {
     });
   };
 
-  const surpriseMe = () => {
-    openGuide({
-      source: "goals_surprise_me",
-      rec: { id: rec.id, title: rec.title },
-      prompt:
-        "Surprise me with ONE tiny goal aligned to this direction. Keep it 3 days max and give the first step.",
-    });
-  };
-
   return (
     <AppChrome
       themeId={themeId}
@@ -581,9 +572,7 @@ export default function GoalsPage() {
                             : "border-slate-200 bg-white text-slate-800"
                         }`}
                       >
-                        <span className={`${dark ? "text-slate-100/80" : "text-slate-600"}`}>
-                          {t.icon}
-                        </span>
+                        <span className={`${dark ? "text-slate-100/80" : "text-slate-600"}`}>{t.icon}</span>
                         {t.label}
                       </span>
                     ))}
@@ -666,11 +655,7 @@ export default function GoalsPage() {
                     </div>
                   ) : null}
 
-                  <div
-                    className={`mt-2 text-right text-[0.7rem] ${
-                      dark ? "text-slate-300/50" : "text-slate-500"
-                    }`}
-                  >
+                  <div className={`mt-2 text-right text-[0.7rem] ${dark ? "text-slate-300/50" : "text-slate-500"}`}>
                     Swipe or tap dots
                   </div>
                 </div>
@@ -837,9 +822,7 @@ export default function GoalsPage() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <div className={`${sectionLabelClass} opacity-90`}>Aligned ideas (scroll)</div>
-                <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
-                  A feed of tiny goals that match this direction.
-                </div>
+                <div className={`mt-1 text-sm ${pageTextMutedClass}`}>A feed of tiny goals that match this direction.</div>
               </div>
 
               <button
@@ -891,9 +874,7 @@ export default function GoalsPage() {
                       <div className="mt-2 flex items-center gap-2">
                         <span
                           className={`inline-flex h-9 w-9 items-center justify-center rounded-2xl border ${
-                            dark
-                              ? "border-white/10 bg-white/5 text-slate-100"
-                              : "border-slate-200 bg-white text-slate-900"
+                            dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-900"
                           }`}
                         >
                           {iconForAligned(g.iconKey)}

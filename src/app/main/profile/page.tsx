@@ -89,36 +89,6 @@ function alphaForLevel(level: GradientLevel) {
   return 0.38;
 }
 
-function PillButton({
-  active,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon?: React.ReactNode;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm",
-        "transition",
-        active
-          ? "bg-white/20 text-white ring-1 ring-white/30"
-          : "bg-white/10 text-white/80 hover:bg-white/15 ring-1 ring-white/15",
-      ].join(" ")}
-      aria-pressed={active}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
 function SectionCard({
   title,
   subtitle,
@@ -163,9 +133,7 @@ function SectionCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-base font-semibold leading-6">{title}</h2>
-              {subtitle ? (
-                <p className="mt-0.5 text-sm opacity-75">{subtitle}</p>
-              ) : null}
+              {subtitle ? <p className="mt-0.5 text-sm opacity-75">{subtitle}</p> : null}
             </div>
           </div>
 
@@ -220,7 +188,8 @@ function ToggleRow({
   dark: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 ring-1"
+    <div
+      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 ring-1"
       style={{
         background: dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.60)",
         borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
@@ -228,9 +197,7 @@ function ToggleRow({
     >
       <div className="min-w-0">
         <div className="text-sm font-medium">{label}</div>
-        {helper ? (
-          <div className="mt-0.5 text-xs opacity-70">{helper}</div>
-        ) : null}
+        {helper ? <div className="mt-0.5 text-xs opacity-70">{helper}</div> : null}
       </div>
 
       <button
@@ -272,11 +239,16 @@ export default function ProfilePage() {
       `linear-gradient(180deg, ${t.bg0} 0%, ${t.bg1} 65%, ${t.bg1} 100%)`,
       // soft glows
       `radial-gradient(900px 500px at 20% 10%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 100%)`,
-      `radial-gradient(700px 420px at 18% 22%, rgba(255,255,255,${t.dark ? 0.03 : 0.20}) 0%, rgba(255,255,255,0) 60%)`,
+      `radial-gradient(700px 420px at 18% 22%, rgba(255,255,255,${
+        t.dark ? 0.03 : 0.20
+      }) 0%, rgba(255,255,255,0) 60%)`,
       `radial-gradient(820px 520px at 82% 18%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 100%)`,
       `radial-gradient(900px 600px at 15% 30%, ${hexToRgba(t.glowA, a)} 0%, rgba(0,0,0,0) 60%)`,
       `radial-gradient(900px 600px at 85% 28%, ${hexToRgba(t.glowB, clamp01(a * 0.9))} 0%, rgba(0,0,0,0) 60%)`,
-      `radial-gradient(1100px 700px at 50% 78%, ${hexToRgba(t.glowC, clamp01(a * 0.75))} 0%, rgba(0,0,0,0) 62%)`,
+      `radial-gradient(1100px 700px at 50% 78%, ${hexToRgba(
+        t.glowC,
+        clamp01(a * 0.75),
+      )} 0%, rgba(0,0,0,0) 62%)`,
     ].join(", "),
   };
 
@@ -291,9 +263,7 @@ export default function ProfilePage() {
                 <div
                   className="inline-flex h-9 w-9 items-center justify-center rounded-xl"
                   style={{
-                    background: t.dark
-                      ? "rgba(255,255,255,0.10)"
-                      : "rgba(15,23,42,0.06)",
+                    background: t.dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.06)",
                     border: t.dark
                       ? "1px solid rgba(255,255,255,0.14)"
                       : "1px solid rgba(15,23,42,0.08)",
@@ -304,8 +274,8 @@ export default function ProfilePage() {
                 <h1 className="text-xl font-semibold leading-7">Profile</h1>
               </div>
               <p className="mt-2 text-sm" style={{ color: t.subtext }}>
-                This page will manage your account + personal settings (not your Everleap
-                content). For now, it’s a preview.
+                This page will manage your account + personal settings (not your Everleap content).
+                For now, it’s a preview.
               </p>
             </div>
 
@@ -400,7 +370,8 @@ export default function ProfilePage() {
               </button>
 
               {/* Gradient pills */}
-              <div className="mx-1 h-6 w-px opacity-30"
+              <div
+                className="mx-1 h-6 w-px opacity-30"
                 style={{ background: t.dark ? "white" : "black" }}
               />
               <button
@@ -470,9 +441,7 @@ export default function ProfilePage() {
                   className={[
                     "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium",
                     "ring-1 transition opacity-70",
-                    t.dark
-                      ? "bg-white/10 text-white ring-white/15"
-                      : "bg-white/60 text-slate-900 ring-slate-900/10",
+                    t.dark ? "bg-white/10 text-white ring-white/15" : "bg-white/60 text-slate-900 ring-slate-900/10",
                   ].join(" ")}
                   title="Coming soon"
                 >
@@ -616,8 +585,9 @@ function LinkRow({
         borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
       }}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
           style={{
             background: dark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.05)",
             border: dark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(15,23,42,0.08)",
@@ -626,8 +596,8 @@ function LinkRow({
           {icon}
         </span>
         <div className="min-w-0">
-          <div className="text-sm font-medium truncate">{label}</div>
-          <div className="text-xs opacity-70 truncate">Opens the policy page</div>
+          <div className="truncate text-sm font-medium">{label}</div>
+          <div className="truncate text-xs opacity-70">Opens the policy page</div>
         </div>
       </div>
       <ChevronRight className="h-4 w-4 opacity-60" />

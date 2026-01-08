@@ -19,7 +19,8 @@ type Props = {
 };
 
 export function DayInLifeStep({ step, progress, setProgress }: Props) {
-  const progressMap = progress.progress;
+  // progress IS the map now
+  const progressMap = progress;
 
   const [mode, setMode] = React.useState<"student" | "junior" | "mid">(
     ((progressMap.productUx_dayMode as string) ?? "junior") as
@@ -31,7 +32,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
   React.useEffect(() => {
     setProgress((p) => ({
       ...p,
-      progress: { ...p.progress, productUx_dayMode: mode },
+      productUx_dayMode: mode,
     }));
   }, [mode, setProgress]);
 
@@ -39,13 +40,15 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
     "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-95";
   const chipOn =
     "border-sky-300/60 bg-sky-300/10 text-slate-50 shadow-[0_0_0_1px_rgba(56,189,248,0.16)]";
-  const chipOff = "border-white/10 bg-white/5 text-slate-200/70 hover:bg-white/10";
+  const chipOff =
+    "border-white/10 bg-white/5 text-slate-200/70 hover:bg-white/10";
 
   const card =
     "rounded-3xl border border-white/10 bg-slate-950/45 px-5 py-4 shadow-[0_18px_55px_rgba(0,0,0,0.55)] backdrop-blur-xl";
   const h = "text-sm font-semibold text-slate-50";
   const pClass = "mt-1 text-sm leading-relaxed text-slate-200/85";
-  const micro = "text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/60";
+  const micro =
+    "text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/60";
 
   const day = buildDay(mode);
 
@@ -192,7 +195,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
               onClick={() =>
                 setProgress((p) => ({
                   ...p,
-                  progress: { ...p.progress, productUx_daySelfCheck: s.id },
+                  productUx_daySelfCheck: s.id,
                 }))
               }
               className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-100 transition hover:bg-white/10 active:scale-[0.99]"
@@ -211,6 +214,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
    ========================= */
 
 function buildDay(mode: "student" | "junior" | "mid") {
+  // (unchanged)
   if (mode === "student") {
     return {
       tag: "Exploring / portfolio",
@@ -249,28 +253,13 @@ function buildDay(mode: "student" | "junior" | "mid") {
           k: "You’re learning to see patterns",
           v: "What people do vs what they say. Where they hesitate. What they misunderstand.",
         },
-        {
-          k: "You’re practicing clarity",
-          v: "Better wording, fewer steps, cleaner choices.",
-        },
-        {
-          k: "You’re building proof",
-          v: "Artifacts that show you can think and improve things.",
-        },
+        { k: "You’re practicing clarity", v: "Better wording, fewer steps, cleaner choices." },
+        { k: "You’re building proof", v: "Artifacts that show you can think and improve things." },
       ],
       selfCheck: [
-        {
-          id: "like_fixing",
-          text: "I like fixing confusing things and making them clearer.",
-        },
-        {
-          id: "like_people",
-          text: "I like understanding people and why they do what they do.",
-        },
-        {
-          id: "prefer_build",
-          text: "I prefer building and iterating over studying forever.",
-        },
+        { id: "like_fixing", text: "I like fixing confusing things and making them clearer." },
+        { id: "like_people", text: "I like understanding people and why they do what they do." },
+        { id: "prefer_build", text: "I prefer building and iterating over studying forever." },
       ],
     };
   }
@@ -309,37 +298,18 @@ function buildDay(mode: "student" | "junior" | "mid") {
         },
       ],
       doing: [
-        {
-          k: "Decision-making",
-          v: "Balancing user needs, business goals, and engineering constraints.",
-        },
-        {
-          k: "Reducing risk",
-          v: "Testing assumptions early so you don’t build the wrong thing.",
-        },
-        {
-          k: "Making work visible",
-          v: "Clear rationale, crisp artifacts, fast iteration.",
-        },
+        { k: "Decision-making", v: "Balancing user needs, business goals, and engineering constraints." },
+        { k: "Reducing risk", v: "Testing assumptions early so you don’t build the wrong thing." },
+        { k: "Making work visible", v: "Clear rationale, crisp artifacts, fast iteration." },
       ],
       selfCheck: [
-        {
-          id: "like_ambiguity",
-          text: "I can handle ambiguity if the goal is clear.",
-        },
-        {
-          id: "like_feedback",
-          text: "I can take feedback and improve without taking it personally.",
-        },
-        {
-          id: "like_iterate",
-          text: "I like shipping improvements repeatedly, not one perfect thing.",
-        },
+        { id: "like_ambiguity", text: "I can handle ambiguity if the goal is clear." },
+        { id: "like_feedback", text: "I can take feedback and improve without taking it personally." },
+        { id: "like_iterate", text: "I like shipping improvements repeatedly, not one perfect thing." },
       ],
     };
   }
 
-  // junior default
   return {
     tag: "Junior role",
     blocks: [
@@ -373,32 +343,14 @@ function buildDay(mode: "student" | "junior" | "mid") {
       },
     ],
     doing: [
-      {
-        k: "Making things understandable",
-        v: "Helping people know what to do next without thinking too hard.",
-      },
-      {
-        k: "Learning the system",
-        v: "Design systems, constraints, and how real teams ship.",
-      },
-      {
-        k: "Building confidence through output",
-        v: "Draft → feedback → improved draft. Repeat.",
-      },
+      { k: "Making things understandable", v: "Helping people know what to do next without thinking too hard." },
+      { k: "Learning the system", v: "Design systems, constraints, and how real teams ship." },
+      { k: "Building confidence through output", v: "Draft → feedback → improved draft. Repeat." },
     ],
     selfCheck: [
-      {
-        id: "enjoy_improve",
-        text: "I enjoy improving a thing more than starting from nothing.",
-      },
-      {
-        id: "enjoy_feedback",
-        text: "I can handle critique if it helps the work get better.",
-      },
-      {
-        id: "enjoy_real",
-        text: "I like work that affects real people, not just theory.",
-      },
+      { id: "enjoy_improve", text: "I enjoy improving a thing more than starting from nothing." },
+      { id: "enjoy_feedback", text: "I can handle critique if it helps the work get better." },
+      { id: "enjoy_real", text: "I like work that affects real people, not just theory." },
     ],
   };
 }

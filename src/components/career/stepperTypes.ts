@@ -16,40 +16,38 @@ export type StepperStepId =
   | "dayInLife"
   | "finish";
 
+export type StepperShellCta = {
+  id: string;
+  label: string;
+  tone?: "primary" | "secondary";
+  disabled?: boolean;
+  onClick?: () => void;
+};
+
 export type StepperStep = {
   id: StepperStepId;
   title: string;
   subtitle?: string;
 
-  /**
-   * Optional: used for tiny label chips, analytics, etc.
-   * Keep it lightweight; the content lives in the step component.
-   */
+  /** Optional: used for tiny label chips, analytics, etc. */
   tag?: string;
+
+  /** Optional: if provided, StepperShell will render these CTAs instead of defaults */
+  ctas?: StepperShellCta[];
 };
 
 export type StepperShellState = {
   laneId: StepperLaneId;
-  activeStepIndex: number;
-};
-
-export type StepperShellCta = {
-  id: "back" | "primary" | string;
-  kind: "primary" | "secondary" | "ghost";
-  label: string;
-  intent: "back" | "next" | "done" | "exit" | "custom";
-  disabled?: boolean;
+  steps: StepperStep[];
+  stepIndex: number;
+  step: StepperStep;
+  isFirst: boolean;
+  isLast: boolean;
+  totalSteps: number;
 };
 
 export type StepperPersistedState = {
-  laneId: StepperLaneId;
-  activeStepIndex: number;
-
-  /** Lane-specific answers & flags */
-  progress: Record<string, unknown>;
-
-  /** Optional location signal (from onboarding or later prompt) */
-  zipCode?: string;
-
-  updatedAt: string;
+  // Per-step / per-lane scratchpad.
+  // Examples: picks[], intensity, zip, plan7Day_tasks, productUx_dayMode, etc.
+  [key: string]: unknown;
 };

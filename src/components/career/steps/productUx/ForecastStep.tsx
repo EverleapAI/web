@@ -1,3 +1,4 @@
+// src/components/career/steps/productUx/ForecastStep.tsx
 "use client";
 
 import * as React from "react";
@@ -16,13 +17,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MiniCard({
-  title,
-  body,
-}: {
-  title: string;
-  body: React.ReactNode;
-}) {
+function MiniCard({ title, body }: { title: string; body: React.ReactNode }) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="text-sm font-semibold text-slate-50">{title}</div>
@@ -31,10 +26,15 @@ function MiniCard({
   );
 }
 
-export function ForecastStep({ step, progress }: Props) {
-  const zip = (progress.zipCode ?? "").trim();
+function normalizeZip(v: unknown): string {
+  const s = typeof v === "string" ? v.trim() : "";
+  if (/^\d{5}(-\d{4})?$/.test(s)) return s;
+  return "";
+}
 
-  // Keep this “forecast” intentionally plain + mobile-first.
+export function ForecastStep({ step, progress }: Props) {
+  const zip = normalizeZip(progress["zip"]);
+
   const headlines = [
     "Product + UX is still growing — but the bar is rising.",
     "AI won’t replace UX. It will replace sloppy UX.",
@@ -119,9 +119,10 @@ export function ForecastStep({ step, progress }: Props) {
         body={
           <div className="space-y-3">
             <div>
-              The safest strategy is simple: <span className="text-slate-50 font-semibold">be the person who can find the real problem</span>,{" "}
-              <span className="text-slate-50 font-semibold">test quickly</span>, and{" "}
-              <span className="text-slate-50 font-semibold">ship improvements that actually work</span>.
+              The safest strategy is simple:{" "}
+              <span className="font-semibold text-slate-50">be the person who can find the real problem</span>,{" "}
+              <span className="font-semibold text-slate-50">test quickly</span>, and{" "}
+              <span className="font-semibold text-slate-50">ship improvements that actually work</span>.
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">

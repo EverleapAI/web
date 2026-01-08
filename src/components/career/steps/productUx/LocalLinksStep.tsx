@@ -1,3 +1,4 @@
+// src/components/career/steps/productUx/LocalLinksStep.tsx
 "use client";
 
 import * as React from "react";
@@ -106,8 +107,8 @@ function normalizeZip(v: unknown): string {
 }
 
 export function LocalLinksStep({ step, progress }: Props) {
-  // ✅ no `any` — StepperPersistedState already has `zipCode?: string`
-  const zip = normalizeZip(progress.zipCode) || "94901";
+  // ✅ no `any` — progress is a persisted map; we read the "zip" key safely
+  const zip = normalizeZip(progress["zip"]) || "94901";
 
   const quick = [
     { label: "ZIP", value: zip },

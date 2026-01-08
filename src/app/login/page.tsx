@@ -56,7 +56,7 @@ export default function LoginPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // Placeholder only: route into the app.
-    router.push("/main");
+    router.push("/main/questions");
   }
 
   return (

@@ -1,14 +1,13 @@
+// src/components/career/steps/productUx/FinishStep.tsx
 "use client";
 
 import * as React from "react";
-import type {
-  StepperStep,
-  StepperPersistedState,
-} from "@/components/career/stepperTypes";
+import type { StepperStep, StepperPersistedState } from "@/components/career/stepperTypes";
 
 type Props = {
   step: StepperStep;
   progress: StepperPersistedState;
+  setProgress: React.Dispatch<React.SetStateAction<StepperPersistedState>>;
 };
 
 type CommitLevel = "light" | "medium" | "full";
@@ -102,14 +101,27 @@ function MiniCard({
   );
 }
 
-export function FinishStep({ step }: Props) {
-  const [commit, setCommit] = React.useState<CommitLevel>("medium");
-  const [zip, setZip] = React.useState("");
+function readString(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
+export function FinishStep({ step, progress, setProgress }: Props) {
+  const [commit, setCommit] = React.useState<CommitLevel>(() => {
+    const v = readString(progress["intensity"]);
+    return (v === "light" || v === "medium" || v === "full") ? v : "medium";
+  });
+
+  const [zip, setZip] = React.useState<string>(() => {
+    const fromProgress = readString(progress["zip"]).trim();
+    if (fromProgress) return fromProgress;
+    return "94901";
+  });
+
   const [zipTouched, setZipTouched] = React.useState(false);
 
   React.useEffect(() => {
     const z = readZip();
-    setZip(z || "94901"); // safe default for now, per your note
+    if (z) setZip(z);
   }, []);
 
   const zipOk = !zipTouched ? true : isValidUSZip(zip);
@@ -117,11 +129,26 @@ export function FinishStep({ step }: Props) {
   function handleSaveZip() {
     setZipTouched(true);
     if (!isValidUSZip(zip)) return;
-    saveZip(zip);
+    const trimmed = zip.trim();
+    saveZip(trimmed);
+
+    // persist into stepper progress map too
+    setProgress((p) => ({
+      ...p,
+      zip: trimmed,
+    }));
   }
 
+  // persist intensity selection
+  React.useEffect(() => {
+    setProgress((p) => ({
+      ...p,
+      intensity: commit,
+    }));
+  }, [commit, setProgress]);
+
   function sendToGuide(kind: "share_summary" | "custom_plan" | "local_recs") {
-    const payload = {
+    const payload: Record<string, unknown> = {
       laneId: "productUx",
       laneTitle: "Product / UX",
       commit,
@@ -180,9 +207,7 @@ export function FinishStep({ step }: Props) {
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
-          Lock in your next move
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Lock in your next move</h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
           Everleap gets powerful when it turns a recommendation into a plan you’ll actually do.
         </p>
@@ -190,29 +215,17 @@ export function FinishStep({ step }: Props) {
 
       {/* Commitment selector */}
       <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
-          Choose your intensity
-        </div>
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Choose your intensity</div>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <ChoicePill
-            active={commit === "light"}
-            label="Light"
-            sub="2 tiny moves"
-            onClick={() => setCommit("light")}
-          />
+          <ChoicePill active={commit === "light"} label="Light" sub="2 tiny moves" onClick={() => setCommit("light")} />
           <ChoicePill
             active={commit === "medium"}
             label="Medium"
             sub="4–5 days + feedback"
             onClick={() => setCommit("medium")}
           />
-          <ChoicePill
-            active={commit === "full"}
-            label="Full"
-            sub="run the full 7-day"
-            onClick={() => setCommit("full")}
-          />
+          <ChoicePill active={commit === "full"} label="Full" sub="run the full 7-day" onClick={() => setCommit("full")} />
         </div>
 
         <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -223,14 +236,10 @@ export function FinishStep({ step }: Props) {
 
       {/* Zip capture (mobile-friendly, optional) */}
       <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-4 backdrop-blur-xl">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
-              Make it local (optional)
-            </div>
-            <div className="mt-1 text-sm text-slate-200/85">
-              Add a zip code so we can suggest nearby classes, events, and communities.
-            </div>
+        <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Make it local (optional)</div>
+          <div className="mt-1 text-sm text-slate-200/85">
+            Add a zip code so we can suggest nearby classes, events, and communities.
           </div>
         </div>
 
@@ -256,9 +265,7 @@ export function FinishStep({ step }: Props) {
           </button>
         </div>
 
-        {!zipOk ? (
-          <div className="mt-2 text-xs text-rose-200/90">Use a 5-digit US zip (like 94901).</div>
-        ) : null}
+        {!zipOk ? <div className="mt-2 text-xs text-rose-200/90">Use a 5-digit US zip (like 94901).</div> : null}
       </div>
 
       {/* Action cards */}
@@ -285,12 +292,10 @@ export function FinishStep({ step }: Props) {
 
       {/* Final nudge */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
-          One question
-        </div>
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">One question</div>
         <div className="mt-2 text-sm text-slate-200/85">
-          If you had to start today in <span className="text-slate-50 font-semibold">15 minutes</span>, what would you do first:
-          sketch a screen, interview one person, or pick a problem?
+          If you had to start today in <span className="text-slate-50 font-semibold">15 minutes</span>, what would you do
+          first: sketch a screen, interview one person, or pick a problem?
         </div>
       </div>
     </section>
