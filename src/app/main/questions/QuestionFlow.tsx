@@ -686,7 +686,7 @@ export default function QuestionFlow() {
                 <div className="mt-8 flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={() => router.push("/main/carousel")}
+                    onClick={() => router.push("/main/insights")}
                     className="inline-flex items-center justify-center rounded-2xl bg-sky-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_14px_40px_rgba(56,189,248,0.35)] transition active:scale-[0.98] hover:bg-sky-200"
                   >
                     See my insights

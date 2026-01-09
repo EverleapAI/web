@@ -4,15 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Home,
-  UserRound,
-  Sparkles,
-  Compass,
-  ListChecks,
-  Plus,
-  Sparkle,
-} from "lucide-react";
+import { Home, UserRound, Sparkles, Compass, ListChecks, Plus, Sparkle } from "lucide-react";
 
 import {
   DEFAULT_THEME_ID,
@@ -90,8 +82,7 @@ export function BottomNav({
 }: BottomNavProps) {
   const pathname = usePathname();
   const resolvedActiveKey =
-    normalizeActiveKey(activeKey as string | undefined) ??
-    deriveActiveKey(pathname);
+    normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
 
   const theme = getThemeById(themeId);
   const grad = getGradientConfig(gradientLevel);
@@ -131,7 +122,8 @@ export function BottomNav({
         {/* Bottom-right Guide button */}
         {showGuideFab && (
           <Link
-            href="/main/guide"
+            // ✅ send users to the REAL Explore page (no intro/placeholder)
+            href="/main/explore"
             aria-label="Guide"
             className={[
               "fixed z-[60]",
