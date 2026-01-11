@@ -96,7 +96,6 @@ export default function InsightsPage() {
       a.id === "career" ? areaParam === "career" : areaParam === a.id
     );
     if (idx >= 0) setActiveIndex(idx);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areaParam]);
 
   const activeArea = INSIGHTS_AREAS[activeIndex];
@@ -328,7 +327,6 @@ export default function InsightsPage() {
      IMPORTANT: vertical stack always
      ============================================================ */
 
-  // Allow story / warning / micro payloads (e.g. Historical Doppelganger)
   type StoryPayload = {
     title?: string;
     lead?: string;
@@ -398,7 +396,9 @@ export default function InsightsPage() {
         <div className="flex items-start gap-3">
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-              dark ? "bg-slate-950/60 text-slate-50" : "bg-slate-900/5 text-slate-800"
+              dark
+                ? "bg-slate-950/60 text-slate-50"
+                : "bg-slate-900/5 text-slate-800"
             }`}
             aria-hidden
           >
@@ -487,16 +487,26 @@ export default function InsightsPage() {
               >
                 <div className={`px-4 py-3 ${dark ? "bg-slate-950/40" : "bg-white/70"}`}>
                   <div className="flex items-center justify-between gap-2">
-                    <div className={`text-sm font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                    <div
+                      className={`text-sm font-semibold ${
+                        dark ? "text-slate-50" : "text-slate-900"
+                      }`}
+                    >
                       {card.story?.title ?? "Mini story"}
                     </div>
-                    <span className={`text-xs font-semibold ${dark ? "text-slate-300/70" : "text-slate-600/80"}`}>
+                    <span
+                      className={`text-xs font-semibold ${
+                        dark ? "text-slate-300/70" : "text-slate-600/80"
+                      }`}
+                    >
                       playful read
                     </span>
                   </div>
 
                   {card.story?.lead ? (
-                    <div className={`mt-2 text-sm ${pageTextMutedClass}`}>{card.story.lead}</div>
+                    <div className={`mt-2 text-sm ${pageTextMutedClass}`}>
+                      {card.story.lead}
+                    </div>
                   ) : null}
                 </div>
 
@@ -507,7 +517,9 @@ export default function InsightsPage() {
                         <li key={`${c.id}-beat-${idx}`} className="flex items-start gap-3">
                           <span
                             className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                              dark ? "bg-white/10 text-slate-100" : "bg-slate-900/5 text-slate-800"
+                              dark
+                                ? "bg-white/10 text-slate-100"
+                                : "bg-slate-900/5 text-slate-800"
                             }`}
                           >
                             {idx + 1}
@@ -600,8 +612,8 @@ export default function InsightsPage() {
      ============================================================ */
 
   function LaneCard() {
-    // ✅ Force Historical Doppelganger to appear right after Skills (if both exist)
-    const orderedCards = React.useMemo(() => {
+    // Compute inline (tiny list) to avoid hook-deps warnings in nested component
+    const orderedCards = (() => {
       const cards = (activeArea.cards ?? []).slice();
       if (!cards.length) return cards;
 
@@ -619,10 +631,9 @@ export default function InsightsPage() {
         return cards;
       }
 
-      // If skills isn't present for some reason, put new card at end
       cards.push(newCard);
       return cards;
-    }, [activeArea.cards]);
+    })();
 
     return (
       <section className="mb-5">

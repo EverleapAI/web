@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { AppChrome } from "@/components/site/AppChrome";
@@ -12,11 +12,16 @@ import StepperShell from "@/components/career/StepperShell";
 import { getCareerLane } from "@/components/career/lanes";
 import type { StepperLaneId } from "@/components/career/stepperTypes";
 
-import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
+import {
+  isDarkTheme,
+  type SpotlightThemeId,
+  type GradientLevel,
+} from "@/theme/everleapVisuals";
 
 export default function CareerLanePage() {
   const params = useParams<{ laneId?: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const laneId = (params?.laneId ?? "") as StepperLaneId;
   const lane = React.useMemo(() => getCareerLane(laneId), [laneId]);
@@ -26,9 +31,13 @@ export default function CareerLanePage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
   const dark = isDarkTheme(themeId);
 
+  // If launched from Explore, go back to Explore. Otherwise, back to Insights.
+  const mode = searchParams?.get("mode") ?? "";
+  const exitHref = mode === "explore" ? "/main/explore" : "/main/insights";
+
   const onExit = React.useCallback(() => {
-    router.push("/main/insights");
-  }, [router]);
+    router.push(exitHref);
+  }, [router, exitHref]);
 
   if (!lane) {
     return (
@@ -44,7 +53,9 @@ export default function CareerLanePage() {
           <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8">
             <div
               className={`rounded-[32px] border p-6 backdrop-blur-xl ${
-                dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
+                dark
+                  ? "border-white/10 bg-slate-950/40"
+                  : "border-slate-200 bg-white"
               }`}
             >
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
@@ -67,7 +78,7 @@ export default function CareerLanePage() {
                 }`}
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Insights
+                Back
               </button>
             </div>
           </main>
@@ -99,7 +110,7 @@ export default function CareerLanePage() {
                   ? "border-white/10 bg-slate-950/35 text-slate-100 hover:bg-slate-950/55"
                   : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
               }`}
-              aria-label="Back to Insights"
+              aria-label="Back"
               title="Back"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -110,8 +121,12 @@ export default function CareerLanePage() {
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
                 Career lane
               </div>
-              <div className="mt-1 text-sm font-semibold text-slate-50">{lane.title}</div>
-              <div className="mt-0.5 text-xs text-slate-300/70">{lane.subtitle}</div>
+              <div className="mt-1 text-sm font-semibold text-slate-50">
+                {lane.title}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-300/70">
+                {lane.subtitle}
+              </div>
             </div>
           </div>
 
