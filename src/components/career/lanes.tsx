@@ -87,10 +87,10 @@ function productUxLane(): CareerLane {
     title: "Product / UX",
     subtitle: "Building things people actually use",
     steps: PRODUCT_UX_STEPS,
-    renderStep: ({ step, progress, setProgress }) => {
+    renderStep: ({ step, state, progress, setProgress }) => {
       switch (step.id) {
         case "overview":
-          return <OverviewStep step={step} progress={progress} />;
+          return <OverviewStep step={step} progress={progress} state={state} />;
 
         case "specialties":
           return <SpecialtiesStep step={step} progress={progress} setProgress={setProgress} />;

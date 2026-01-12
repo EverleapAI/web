@@ -9,8 +9,10 @@ import type {
 } from "@/components/career/stepperTypes";
 
 /**
- * Mobile-first “Day in the Life” step.
- * Keep it skimmable: short blocks, light emphasis, micro chips.
+ * Mobile-first “Day in the Life” step (more colorful + conversational)
+ * - Keeps persisted keys the same:
+ *    - productUx_dayMode
+ *    - productUx_daySelfCheck
  */
 type Props = {
   step: StepperStep;
@@ -18,151 +20,217 @@ type Props = {
   setProgress: React.Dispatch<React.SetStateAction<StepperPersistedState>>;
 };
 
+type Mode = "student" | "junior" | "mid";
+
+function isMode(v: unknown): v is Mode {
+  return v === "student" || v === "junior" || v === "mid";
+}
+
+function safeString(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
 export function DayInLifeStep({ step, progress, setProgress }: Props) {
   // progress IS the map now
-  const progressMap = progress;
+  const progressMap = progress as unknown as Record<string, unknown>;
 
-  const [mode, setMode] = React.useState<"student" | "junior" | "mid">(
-    ((progressMap.productUx_dayMode as string) ?? "junior") as
-      | "student"
-      | "junior"
-      | "mid"
-  );
+  const initialMode = React.useMemo<Mode>(() => {
+    const raw = progressMap["productUx_dayMode"];
+    return isMode(raw) ? raw : "junior";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [mode, setMode] = React.useState<Mode>(initialMode);
+
+  const selectedSelfCheck = safeString(progressMap["productUx_daySelfCheck"]);
 
   React.useEffect(() => {
+    // Persist mode
     setProgress((p) => ({
-      ...p,
+      ...(p as unknown as Record<string, unknown>),
       productUx_dayMode: mode,
-    }));
+    })) as unknown as void;
   }, [mode, setProgress]);
 
   const chipBase =
     "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition active:scale-95";
   const chipOn =
-    "border-sky-300/60 bg-sky-300/10 text-slate-50 shadow-[0_0_0_1px_rgba(56,189,248,0.16)]";
+    "border-sky-300/60 bg-sky-300/12 text-slate-50 shadow-[0_0_0_1px_rgba(56,189,248,0.16)]";
   const chipOff =
     "border-white/10 bg-white/5 text-slate-200/70 hover:bg-white/10";
 
   const card =
-    "rounded-3xl border border-white/10 bg-slate-950/45 px-5 py-4 shadow-[0_18px_55px_rgba(0,0,0,0.55)] backdrop-blur-xl";
+    "relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/45 px-5 py-4 shadow-[0_18px_55px_rgba(0,0,0,0.55)] backdrop-blur-xl";
   const h = "text-sm font-semibold text-slate-50";
   const pClass = "mt-1 text-sm leading-relaxed text-slate-200/85";
   const micro =
     "text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/60";
 
-  const day = buildDay(mode);
+  const day = React.useMemo(() => buildDay(mode), [mode]);
+
+  const coachOneLiner = React.useMemo(() => {
+    if (mode === "student")
+      return "We’re not chasing perfection — we’re chasing a tiny loop: notice → improve → show → learn.";
+    if (mode === "junior")
+      return "A junior day is mostly momentum + clarity. You make the work easy to build, easy to understand.";
+    return "Mid-level is about outcomes. You turn ambiguity into decisions, then ship improvements on repeat.";
+  }, [mode]);
+
+  const modeLabel =
+    mode === "student"
+      ? "Student / exploring"
+      : mode === "junior"
+        ? "Junior role"
+        : "Mid-level";
+
+  const modeEmoji = mode === "student" ? "🧪" : mode === "junior" ? "🧭" : "🎯";
 
   return (
     <div className="space-y-4">
-      {/* Hero */}
-      <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
-        <div className={micro}>{step.title ?? "Day in the life"}</div>
-        <div className="mt-2 text-xl font-semibold tracking-tight text-slate-50">
-          What a real Product / UX day can feel like
-        </div>
-        <div className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-200/85">
-          Not “perfectly aesthetic screens.” It’s figuring out what people need,
-          turning messy problems into usable solutions, and learning fast.
+      {/* Hero (more pop) */}
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-16 -left-14 h-60 w-60 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
+          <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-amber-500/14 via-orange-400/8 to-rose-500/10 blur-3xl opacity-60" />
         </div>
 
-        {/* Mode chips */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setMode("student")}
-            className={`${chipBase} ${mode === "student" ? chipOn : chipOff}`}
-          >
-            Student / exploring
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("junior")}
-            className={`${chipBase} ${mode === "junior" ? chipOn : chipOff}`}
-          >
-            Junior role
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("mid")}
-            className={`${chipBase} ${mode === "mid" ? chipOn : chipOff}`}
-          >
-            Mid-level
-          </button>
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <div className={micro}>{step.title ?? "Day in the life"}</div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200/70">
+              <span aria-hidden>{modeEmoji}</span>
+              {modeLabel}
+            </span>
+          </div>
+
+          <div className="mt-2 text-xl font-semibold tracking-tight text-slate-50">
+            What a Product / UX day can actually feel like
+          </div>
+
+          <div className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-200/85">
+            Not “make pretty screens.” More like: figure out what’s confusing,
+            make it clearer, get a reaction, and iterate.
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200/85">
+            <span className="font-semibold text-slate-50">Coach note:</span>{" "}
+            {coachOneLiner}
+          </div>
+
+          {/* Mode chips */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setMode("student")}
+              className={`${chipBase} ${mode === "student" ? chipOn : chipOff}`}
+            >
+              Student / exploring
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("junior")}
+              className={`${chipBase} ${mode === "junior" ? chipOn : chipOff}`}
+            >
+              Junior role
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("mid")}
+              className={`${chipBase} ${mode === "mid" ? chipOn : chipOff}`}
+            >
+              Mid-level
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Timeline blocks (mobile-friendly) */}
       <div className={card}>
-        <div className="flex items-center justify-between gap-3">
-          <div className={h}>A simple timeline</div>
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200/70">
-            {day.tag}
-          </span>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-10 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/14 via-cyan-400/8 to-indigo-500/8 blur-3xl opacity-60" />
         </div>
 
-        <div className="mt-4 space-y-3">
-          {day.blocks.map((b) => (
-            <div
-              key={b.t}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300/60">
-                  {b.t}
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <div className={h}>A simple timeline</div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200/70">
+              {day.tag}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {day.blocks.map((b) => (
+              <div
+                key={b.t}
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300/60">
+                    {b.t}
+                  </div>
+                  <span className="text-[0.7rem] font-semibold text-slate-300/60">
+                    {b.vibe}
+                  </span>
                 </div>
-                <span className="text-[0.7rem] font-semibold text-slate-300/60">
-                  {b.vibe}
-                </span>
-              </div>
-              <div className="mt-2 text-sm font-semibold text-slate-50">
-                {b.title}
-              </div>
-              <div className="mt-1 text-sm leading-relaxed text-slate-200/85">
-                {b.desc}
-              </div>
-              {b.chips?.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {b.chips.map((c) => (
-                    <span
-                      key={c}
-                      className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/35 px-3 py-1 text-xs text-slate-200/80"
-                    >
-                      {c}
-                    </span>
-                  ))}
+                <div className="mt-2 text-sm font-semibold text-slate-50">
+                  {b.title}
                 </div>
-              ) : null}
-            </div>
-          ))}
+                <div className="mt-1 text-sm leading-relaxed text-slate-200/85">
+                  {b.desc}
+                </div>
+
+                {b.chips?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {b.chips.map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/35 px-3 py-1 text-xs text-slate-200/80"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* What you actually do */}
       <div className={card}>
-        <div className={h}>What you’re actually doing (not the stereotype)</div>
-        <p className={pClass}>
-          You’ll spend a lot of time translating between three worlds: people,
-          product, and engineering. The best work feels like: “we reduced
-          confusion,” “we removed steps,” “we made it obvious.”
-        </p>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -bottom-14 -right-12 h-72 w-72 rounded-full bg-gradient-to-br from-emerald-500/12 via-teal-400/8 to-sky-500/8 blur-3xl opacity-55" />
+        </div>
 
-        <div className="mt-4 grid gap-2">
-          {day.doing.map((item) => (
-            <div
-              key={item.k}
-              className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-            >
-              <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-sky-300/80" />
-              <div>
-                <div className="text-sm font-semibold text-slate-50">
-                  {item.k}
-                </div>
-                <div className="mt-1 text-sm leading-relaxed text-slate-200/85">
-                  {item.v}
+        <div className="relative">
+          <div className={h}>What you’re actually doing</div>
+          <p className={pClass}>
+            Think of this as translating between three worlds:{" "}
+            <span className="text-slate-50 font-semibold">people</span>,{" "}
+            <span className="text-slate-50 font-semibold">product</span>, and{" "}
+            <span className="text-slate-50 font-semibold">engineering</span>.
+            The best days end with something clearer than it started.
+          </p>
+
+          <div className="mt-4 grid gap-2">
+            {day.doing.map((item) => (
+              <div
+                key={item.k}
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-sky-300/80" />
+                <div>
+                  <div className="text-sm font-semibold text-slate-50">
+                    {item.k}
+                  </div>
+                  <div className="mt-1 text-sm leading-relaxed text-slate-200/85">
+                    {item.v}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -171,38 +239,81 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
         <div className="rounded-3xl bg-slate-950/55 px-5 py-4 backdrop-blur-2xl">
           <div className={micro}>The honest truth</div>
           <div className="mt-2 text-sm leading-relaxed text-slate-200/90">
-            Most days are small decisions, not dramatic breakthroughs. If you
-            like shipping, learning, and improving real things, that’s a good
-            sign. If you hate ambiguity, feedback, or changing your mind, this
-            lane will feel heavy.
+            Most days are small decisions, not movie-moment breakthroughs.
+            If you like shipping, learning, and improving real things, that’s a
+            good sign. If you hate ambiguity or feedback, this lane will feel
+            heavy.
           </div>
         </div>
       </div>
 
-      {/* Tiny self-check */}
+      {/* Tiny self-check (now shows selected + persists) */}
       <div className={card}>
-        <div className={h}>Quick self-check</div>
-        <p className={pClass}>
-          Which statement feels most true{" "}
-          <span className="text-slate-200/70">(for now)</span>?
-        </p>
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-14 -left-14 h-64 w-64 rounded-full bg-gradient-to-br from-amber-500/12 via-orange-400/8 to-rose-500/8 blur-3xl opacity-55" />
+        </div>
 
-        <div className="mt-4 space-y-2">
-          {day.selfCheck.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() =>
-                setProgress((p) => ({
-                  ...p,
-                  productUx_daySelfCheck: s.id,
-                }))
-              }
-              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-100 transition hover:bg-white/10 active:scale-[0.99]"
-            >
-              {s.text}
-            </button>
-          ))}
+        <div className="relative">
+          <div className={h}>Quick self-check</div>
+          <p className={pClass}>
+            Which statement feels most true{" "}
+            <span className="text-slate-200/70">(for now)</span>?
+          </p>
+
+          <div className="mt-4 space-y-2">
+            {day.selfCheck.map((s) => {
+              const selected = selectedSelfCheck === s.id;
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() =>
+                    setProgress((p) => ({
+                      ...(p as unknown as Record<string, unknown>),
+                      productUx_daySelfCheck: selected ? "" : s.id,
+                    }))
+                  }
+                  className={`
+                    w-full rounded-2xl border px-4 py-3 text-left text-sm transition active:scale-[0.99]
+                    ${
+                      selected
+                        ? "border-sky-300/55 bg-sky-300/12 text-slate-50 shadow-[0_0_0_1px_rgba(56,189,248,0.14)]"
+                        : "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                    }
+                  `}
+                  aria-pressed={selected}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">{s.text}</div>
+                    <span
+                      className={`
+                        shrink-0 rounded-full border px-2 py-1 text-[0.7rem] font-semibold
+                        ${
+                          selected
+                            ? "border-sky-300/40 bg-sky-300/15 text-sky-50/90"
+                            : "border-white/10 bg-slate-950/35 text-slate-100/70"
+                        }
+                      `}
+                      aria-hidden
+                    >
+                      {selected ? "Selected" : "Tap"}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedSelfCheck ? (
+            <div className="mt-3 text-xs text-slate-300/65">
+              Nice. This helps Everleap tune what it suggests next.
+            </div>
+          ) : (
+            <div className="mt-3 text-xs text-slate-300/65">
+              Optional — but useful signal if you’re on the fence.
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -210,11 +321,10 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
 }
 
 /* =========================
-   Content helpers
+   Content helpers (unchanged content)
    ========================= */
 
 function buildDay(mode: "student" | "junior" | "mid") {
-  // (unchanged)
   if (mode === "student") {
     return {
       tag: "Exploring / portfolio",

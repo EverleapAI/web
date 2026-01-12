@@ -2,8 +2,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -25,11 +23,6 @@ import { RENDERERS } from "./renderers";
 
 /* ========= helpers ========= */
 
-function clampIndex(i: number, n: number) {
-  if (n <= 0) return 0;
-  return Math.max(0, Math.min(n - 1, i));
-}
-
 // Temporary UI aliasing (until content keys/labels are updated)
 function displayLabelForSection(s: ExploreSection): string {
   if (s.key === ("forYou" as ExploreKey)) return "Recommendations";
@@ -37,7 +30,36 @@ function displayLabelForSection(s: ExploreSection): string {
 }
 
 function isRecommendationsLane(key: ExploreKey): boolean {
-  return key === ("recommendations" as ExploreKey) || key === ("forYou" as ExploreKey);
+  return (
+    key === ("recommendations" as ExploreKey) || key === ("forYou" as ExploreKey)
+  );
+}
+
+/* ========= Explore tab “pill pop” config (Insights-style) ========= */
+
+type TabMeta = {
+  dot: string; // tailwind bg-*
+  subtitle: string;
+};
+
+function metaForSectionKey(key: ExploreKey): TabMeta {
+  // Keep these tiny + teen-readable.
+  // Colors are intentionally “poppy but minimal” like Insights pills.
+  switch (key as string) {
+    case "recommendations":
+    case "forYou":
+      return { dot: "bg-sky-400", subtitle: "Best next steps" };
+    case "education":
+      return { dot: "bg-amber-400", subtitle: "School + learning paths" };
+    case "travel":
+      return { dot: "bg-emerald-400", subtitle: "Places + adventures" };
+    case "community":
+      return { dot: "bg-violet-400", subtitle: "People + belonging" };
+    case "hobbies":
+      return { dot: "bg-rose-400", subtitle: "Fun to explore" };
+    default:
+      return { dot: "bg-slate-300", subtitle: "Browse ideas" };
+  }
 }
 
 export default function ExplorePage() {
@@ -45,10 +67,10 @@ export default function ExplorePage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
   const dark = isDarkTheme(themeId);
 
-  // ✅ CRITICAL: force EXPLORE_SECTIONS to be treated as ExploreSection[]
+  // ✅ Treat EXPLORE_SECTIONS as ExploreSection[]
   const sections: ExploreSection[] = EXPLORE_SECTIONS as ExploreSection[];
 
-  // ✅ CRITICAL: ensure initializer returns ExploreKey (not inferred string)
+  // ✅ Ensure initializer returns ExploreKey (not inferred string)
   const [activeKey, setActiveKey] = React.useState<ExploreKey>(() => {
     const first = sections[0]?.key;
     return (first ?? "education") as ExploreKey;
@@ -60,12 +82,6 @@ export default function ExplorePage() {
   }, [activeKey, sections]);
 
   const activeSection: ExploreSection = sections[activeIndex] ?? sections[0];
-
-  function go(delta: number) {
-    const next = clampIndex(activeIndex + delta, sections.length);
-    const nextKey = sections[next]?.key;
-    if (nextKey) setActiveKey(nextKey);
-  }
 
   // Special-case: Recommendations should render as a full lane (not a chip grid)
   const renderRecommendationsLane = isRecommendationsLane(activeSection.key);
@@ -82,6 +98,9 @@ export default function ExplorePage() {
     return preferred;
   }, [activeSection.chips, renderRecommendationsLane]);
 
+  const pageTitle = "Explore";
+  const pageSubtitle = "Different paths, interests, and directions you might want to try.";
+
   return (
     <AppChrome
       themeId={themeId}
@@ -91,29 +110,24 @@ export default function ExplorePage() {
     >
       <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-4">
         {/* Header */}
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className={`text-lg font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
-              Explore
+            <h1
+              className={`text-lg font-semibold ${
+                dark ? "text-white" : "text-slate-900"
+              }`}
+            >
+              {pageTitle}
             </h1>
             <p className={`text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
-              Browse ideas by category — different chip styles per lane.
+              {pageSubtitle}
             </p>
           </div>
 
-          <Link
-            href="/main/home"
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs shadow-sm ${
-              dark
-                ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                : "border-black/10 bg-white text-slate-800 hover:bg-slate-50"
-            }`}
-          >
-            Back to Home <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          {/* Removed “Back to Home” — BottomNav already covers this */}
         </div>
 
-        {/* Section tabs */}
+        {/* Section tabs (Insights-style pills with dot + micro subtitle) */}
         <div
           className={`mb-4 flex flex-wrap gap-2 rounded-2xl border p-2 shadow-sm ${
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
@@ -121,21 +135,49 @@ export default function ExplorePage() {
         >
           {sections.map((s) => {
             const active = s.key === activeKey;
+            const label = displayLabelForSection(s);
+            const meta = metaForSectionKey(s.key);
+
             return (
               <button
                 key={s.key}
+                type="button"
                 onClick={() => setActiveKey(s.key)}
-                className={`rounded-full px-3 py-1.5 text-xs transition ${
+                className={`group rounded-2xl px-3 py-2 text-left transition active:scale-[0.99] ${
                   active
                     ? dark
                       ? "bg-white/15 text-white"
                       : "bg-slate-900 text-white"
                     : dark
-                      ? "text-white/75 hover:bg-white/10"
-                      : "text-slate-700 hover:bg-slate-100"
+                    ? "text-white/80 hover:bg-white/10"
+                    : "text-slate-800 hover:bg-slate-100"
                 }`}
               >
-                {displayLabelForSection(s)}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      active
+                        ? meta.dot
+                        : dark
+                        ? `${meta.dot} opacity-80`
+                        : `${meta.dot} opacity-70`
+                    }`}
+                    aria-hidden
+                  />
+                  <div className="text-xs font-semibold">{label}</div>
+                </div>
+
+                <div
+                  className={`mt-0.5 text-[0.7rem] leading-4 ${
+                    active
+                      ? "text-white/70"
+                      : dark
+                      ? "text-white/55"
+                      : "text-slate-600"
+                  }`}
+                >
+                  {meta.subtitle}
+                </div>
               </button>
             );
           })}
@@ -147,42 +189,24 @@ export default function ExplorePage() {
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-3">
             <div className="min-w-0">
-              <h2 className={`truncate text-base font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+              <h2
+                className={`truncate text-base font-semibold ${
+                  dark ? "text-white" : "text-slate-900"
+                }`}
+              >
                 {renderRecommendationsLane ? "Recommendations" : activeSection.title}
               </h2>
+
               <p className={`text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
                 {renderRecommendationsLane
-                  ? "What to try next — pick one lane, run a tiny test, then adjust."
+                  ? "Pick one direction and try it for a moment — you can always adjust."
                   : activeSection.subtitle}
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                onClick={() => go(-1)}
-                className={`inline-flex items-center justify-center rounded-full border p-2 ${
-                  dark
-                    ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                    : "border-black/10 bg-white text-slate-800 hover:bg-slate-50"
-                }`}
-                aria-label="Previous section"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => go(1)}
-                className={`inline-flex items-center justify-center rounded-full border p-2 ${
-                  dark
-                    ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                    : "border-black/10 bg-white text-slate-800 hover:bg-slate-50"
-                }`}
-                aria-label="Next section"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            {/* Removed left/right arrow buttons — redundant with the top tabs */}
           </div>
 
           {/* Content */}
@@ -195,7 +219,9 @@ export default function ExplorePage() {
             ) : (
               <div
                 className={`rounded-2xl border p-5 ${
-                  dark ? "border-white/10 bg-white/5 text-white/80" : "border-black/10 bg-white text-slate-700"
+                  dark
+                    ? "border-white/10 bg-white/5 text-white/80"
+                    : "border-black/10 bg-white text-slate-700"
                 }`}
               >
                 No recommendations content found for this lane yet.

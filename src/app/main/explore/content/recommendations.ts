@@ -51,7 +51,7 @@ const recommendations: ExploreArea = {
   ],
 
   /**
-   * Cards = the 4 lanes.
+   * Cards = the recommendation lanes (AI returns 8; UI shows top 4).
    * - id must match StepperLaneId
    * - short currently includes why + bestFor + starterExperiment in a readable format
    *   until we extend MiniCard type in content/types.ts.
@@ -92,6 +92,45 @@ const recommendations: ExploreArea = {
         "Autonomy + momentum + output. Your wiring likes shipping.\n" +
         "Best if: you crave freedom + making things from scratch.\n" +
         "3-day test: Make one tiny thing in a weekend (guide, video, mini-tool). Ship it.",
+    },
+
+    /* ===== Additional 4 (so Explore can cycle 5–8 as user dislikes) ===== */
+
+    {
+      id: "dataAi",
+      icon: "🧠",
+      title: "Data + AI (analysis, modeling, insight-building)",
+      short:
+        "Pattern-finding + clear thinking + leverage.\n" +
+        "Best if: you like turning messy info into decisions.\n" +
+        "3-day test: Pick a question you care about. Gather 20 data points, chart them, and write 5 insights + 2 next actions.",
+    },
+    {
+      id: "operationsProjects",
+      icon: "🗺️",
+      title: "Ops + Projects (making chaos run smoothly)",
+      short:
+        "Clarity + momentum + reliability.\n" +
+        "Best if: you enjoy fixing systems and making work calmer.\n" +
+        "3-day test: Map a process you live inside (school, club, work). Find 2 bottlenecks and propose 2 small fixes.",
+    },
+    {
+      id: "creativeStorytelling",
+      icon: "🎬",
+      title: "Creative Storytelling (writing, video, design, brand)",
+      short:
+        "Emotion + meaning + craft.\n" +
+        "Best if: you feel alive making things people feel.\n" +
+        "3-day test: Tell one story in 3 formats: 200 words, 60-second voice memo, and a single image/poster. Compare what lands.",
+    },
+    {
+      id: "businessPartnerships",
+      icon: "🤝",
+      title: "Business + Partnerships (sales, deals, community building)",
+      short:
+        "People + persuasion + outcomes.\n" +
+        "Best if: you like connecting humans to solutions.\n" +
+        "3-day test: Ask 5 people what problem annoys them most. Pitch one simple solution and track what sparks interest.",
     },
   ],
 };

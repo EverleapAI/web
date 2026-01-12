@@ -55,36 +55,6 @@ const PLAN: DayTask[] = [
   },
 ];
 
-function TaskCard({ task, onToggle }: { task: DayTask; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`
-        w-full text-left rounded-[26px] border p-4 transition active:scale-[0.99]
-        ${task.done ? "border-emerald-400/40 bg-emerald-400/10" : "border-white/10 bg-slate-950/40 hover:bg-slate-950/50"}
-      `}
-      aria-pressed={task.done}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`
-            flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-bold
-            ${task.done ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-200" : "border-white/10 bg-white/5 text-slate-100"}
-          `}
-        >
-          {task.day}
-        </div>
-
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-slate-50">{task.title}</div>
-          <div className="mt-1 text-xs leading-relaxed text-slate-200/80">{task.blurb}</div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
 function coerceDoneMap(v: unknown): Record<string, boolean> {
   if (!v || typeof v !== "object") return {};
   const out: Record<string, boolean> = {};
@@ -94,8 +64,114 @@ function coerceDoneMap(v: unknown): Record<string, boolean> {
   return out;
 }
 
+function ProgressPill({
+  completed,
+  total,
+}: {
+  completed: number;
+  total: number;
+}) {
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100/90">
+      <span className="text-slate-300/70">{completed}</span>
+      <span className="text-slate-300/50">/</span>
+      <span className="text-slate-300/70">{total}</span>
+      <span className="ml-1 text-slate-300/50">•</span>
+      <span className="text-slate-200/90">{pct}%</span>
+    </div>
+  );
+}
+
+function TaskCard({
+  task,
+  onToggle,
+}: {
+  task: DayTask;
+  onToggle: () => void;
+}) {
+  const on = Boolean(task.done);
+
+  const halo =
+    task.day <= 2
+      ? "from-sky-500/18 via-cyan-400/10 to-indigo-500/10"
+      : task.day <= 4
+        ? "from-amber-500/16 via-orange-400/10 to-rose-500/10"
+        : "from-emerald-500/16 via-teal-400/10 to-sky-500/10";
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`
+        relative w-full text-left rounded-[26px] border p-[1px] transition active:scale-[0.99]
+        ${on ? "border-emerald-400/35" : "border-white/10 hover:border-white/15"}
+      `}
+      aria-pressed={on}
+    >
+      <div className={`pointer-events-none absolute inset-0 rounded-[26px] bg-gradient-to-br ${halo} opacity-60`} />
+      <div
+        className={`
+          relative rounded-[25px] p-4 backdrop-blur-xl
+          ${
+            on
+              ? "bg-emerald-400/10"
+              : "bg-slate-950/40 hover:bg-slate-950/50"
+          }
+        `}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={`
+              flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold
+              ${
+                on
+                  ? "border-emerald-400/55 bg-emerald-400/20 text-emerald-100"
+                  : "border-white/10 bg-white/5 text-slate-100"
+              }
+            `}
+            aria-hidden
+          >
+            {on ? "✓" : task.day}
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-50">
+                Day {task.day}: {task.title}
+              </div>
+
+              <span
+                className={`
+                  shrink-0 rounded-full border px-2 py-1 text-[0.7rem] font-semibold
+                  ${
+                    on
+                      ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-50/90"
+                      : "border-white/10 bg-slate-950/35 text-slate-100/75"
+                  }
+                `}
+              >
+                {on ? "Done" : "Tap to mark"}
+              </span>
+            </div>
+
+            <div className="mt-1 text-xs leading-relaxed text-slate-200/80">
+              {task.blurb}
+            </div>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export function Plan7DayStep({ step, progress, setProgress }: Props) {
-  const doneMap = React.useMemo(() => coerceDoneMap(progress["plan7_done"]), [progress]);
+  // ✅ Keep your persisted key EXACTLY the same
+  const doneMap = React.useMemo(
+    () => coerceDoneMap(progress["plan7_done"]),
+    [progress]
+  );
 
   const tasks = React.useMemo<DayTask[]>(() => {
     return PLAN.map((t) => ({ ...t, done: Boolean(doneMap[String(t.day)]) }));
@@ -111,39 +187,104 @@ export function Plan7DayStep({ step, progress, setProgress }: Props) {
   }
 
   const completed = tasks.filter((t) => t.done).length;
+  const doneToday = completed > 0;
+
+  const coachLine = React.useMemo(() => {
+    if (completed <= 0) return "Start with Day 1. Just pick a screen that annoys you. That’s enough for today.";
+    if (completed === 1) return "Nice. You’ve started a real UX loop. Keep it tiny and keep moving.";
+    if (completed <= 3) return "You’re doing the thing most people only talk about. Keep the momentum.";
+    if (completed <= 6) return "You’re basically building a portfolio piece. Don’t polish — ship.";
+    return "Seven for seven. This is real proof. Screenshot it. Save it. You earned it.";
+  }, [completed]);
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
       <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
-        Recommendation · {step.title}
+        Dive deeper · {step.title}
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Your 7-day starter plan</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+          Your 7-day starter plan
+        </h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
-          This isn’t about becoming “ready.” It’s about building momentum with something real.
+          This isn’t about being “ready.” It’s about building momentum with something real.
+          Tiny proof beats perfect planning.
         </p>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-slate-50">7-day UX challenge</div>
-          <div className="text-xs text-slate-300/70">{completed} / 7 done</div>
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-16 -left-14 h-60 w-60 rounded-full bg-gradient-to-br from-sky-500/16 via-cyan-400/9 to-indigo-500/10 blur-3xl opacity-70" />
+          <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-amber-500/14 via-orange-400/8 to-rose-500/9 blur-3xl opacity-60" />
         </div>
 
-        <div className="mt-3 space-y-2">
-          {tasks.map((t) => (
-            <TaskCard key={t.day} task={t} onToggle={() => toggleDay(t.day)} />
-          ))}
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-slate-50">
+                7-day UX challenge
+              </div>
+              <div className="mt-1 text-xs text-slate-300/70">
+                Tap a day to mark it done. You can unmark it anytime.
+              </div>
+            </div>
+
+            <ProgressPill completed={completed} total={7} />
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {tasks.map((t) => (
+              <TaskCard key={t.day} task={t} onToggle={() => toggleDay(t.day)} />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Coach note</div>
-        <div className="mt-2 text-sm text-slate-200/85">
-          If you complete even <span className="text-slate-50 font-semibold">3 of these</span>, you’ll be ahead of most
-          people who say they want to do UX.
+      {/* “If you only do one thing…” */}
+      <div className="relative overflow-hidden rounded-[26px] border border-sky-200/15 bg-sky-300/10 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-10 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
         </div>
+        <div className="relative">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-50/80">
+            If you only do one thing…
+          </div>
+          <div className="mt-2 text-sm text-sky-50/90">
+            Redo one screen you use daily, then show it to one human and ask:
+            <span className="font-semibold text-sky-50">
+              {" "}
+              “What’s clearer? What’s still confusing?”
+            </span>
+            <span className="text-sky-50/80"> That’s UX.</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Satisfying “done for today” moment */}
+      <div
+        className={`rounded-[26px] border p-5 backdrop-blur-xl ${
+          doneToday
+            ? "border-emerald-200/20 bg-emerald-300/10"
+            : "border-white/10 bg-white/5"
+        }`}
+      >
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+          Coach note
+        </div>
+        <div
+          className={`mt-2 text-sm ${
+            doneToday ? "text-emerald-50/90" : "text-slate-200/85"
+          }`}
+        >
+          {coachLine}
+        </div>
+
+        {doneToday ? (
+          <div className="mt-3 text-xs text-emerald-50/70">
+            You can stop for today. Seriously. Consistency beats intensity.
+          </div>
+        ) : null}
       </div>
     </section>
   );

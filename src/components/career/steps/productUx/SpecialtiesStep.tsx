@@ -1,18 +1,23 @@
 "use client";
 
 import * as React from "react";
-import type { StepperStep, StepperPersistedState } from "@/components/career/stepperTypes";
+import { ArrowRight } from "lucide-react";
+import type {
+  StepperStep,
+  StepperPersistedState,
+} from "@/components/career/stepperTypes";
 
 type Props = {
   step: StepperStep;
   progress: StepperPersistedState;
   setProgress: React.Dispatch<React.SetStateAction<StepperPersistedState>>;
+  state?: unknown; // StepperShell passes nav API here
 };
 
 type Specialty = {
   id: string;
   title: string;
-  blurb: string;
+  narrative: string[];
   examples: string[];
   bestFor: string;
 };
@@ -21,58 +26,95 @@ const SPECIALTIES: Specialty[] = [
   {
     id: "consumerApps",
     title: "Consumer apps",
-    blurb: "High-velocity products where clarity + delight matter. Strong taste + fast iteration.",
+    narrative: [
+      "This is the world of speed + taste. You ship fast, learn fast, and you obsess over the *feel*.",
+      "A great day here is turning messy human behavior into something that feels effortless.",
+      "If you love tiny moments of delight and clean interaction patterns, this is your lane.",
+    ],
     examples: ["Social", "Music", "Photo/video", "Fitness", "Shopping"],
-    bestFor: "If you love making things feel effortless.",
+    bestFor: "You want to build things people choose to use every day.",
   },
   {
     id: "healthcare",
     title: "Healthcare / medical UX",
-    blurb: "Complex systems with real consequences. Safety, trust, and accessibility are everything.",
+    narrative: [
+      "Here, UX isn’t decoration — it’s safety, trust, and reducing real-world harm.",
+      "You design for anxious moments, busy clinicians, and decisions that carry weight.",
+      "If you like meaningful constraints and high integrity work, this one hits different.",
+    ],
     examples: ["Patient portals", "Telehealth", "Clinician tools", "Wearables"],
-    bestFor: "If meaning + impact is non-negotiable.",
+    bestFor: "Impact matters more than hype — and you want your work to count.",
   },
   {
     id: "education",
     title: "Education products",
-    blurb: "Learning design + motivation design. You build for attention, confidence, and progress.",
-    examples: ["Study tools", "Tutoring platforms", "School systems", "Language learning"],
-    bestFor: "If you like coaching people through change.",
+    narrative: [
+      "This is motivation design. You’re helping someone move from ‘I can’t’ to ‘I’ve got this.’",
+      "You’ll think about attention, confidence, pacing, and the little wins that keep people going.",
+      "If you like coaching through design, you’ll love this space.",
+    ],
+    examples: [
+      "Study tools",
+      "Tutoring platforms",
+      "School systems",
+      "Language learning",
+    ],
+    bestFor: "You like turning confusion into progress people can feel.",
   },
   {
     id: "games",
     title: "Games / interactive experiences",
-    blurb: "Flow state, feedback loops, and emotional design. UX is the product.",
+    narrative: [
+      "Here, UX *is* the product. You’re shaping flow state, feedback loops, and emotion.",
+      "You’ll care about pacing, reward timing, friction (the good kind), and retention without being gross.",
+      "If you’re obsessed with engagement and feeling, this is your playground.",
+    ],
     examples: ["Mobile games", "Game UX/UI", "Live ops", "Player journeys"],
-    bestFor: "If you’re obsessed with engagement and feeling.",
+    bestFor: "You want to design moments people remember.",
   },
   {
     id: "fintech",
     title: "Fintech",
-    blurb: "Money is emotional. You design for trust, risk, and clean decision-making.",
+    narrative: [
+      "Money is emotional. Your job is to bring calm, clarity, and trust to high-stakes decisions.",
+      "You design for risk, error prevention, and ‘I understand exactly what happens next.’",
+      "If you like clean decision-making under pressure, you’ll thrive here.",
+    ],
     examples: ["Banking", "Investing", "Payments", "Budgeting"],
-    bestFor: "If you like clarity under pressure.",
+    bestFor: "You want to help people feel confident (not confused) about money.",
   },
   {
     id: "enterprise",
     title: "Enterprise / B2B tools",
-    blurb: "Power-user workflows. Less flashy, more “make hard jobs easier.”",
+    narrative: [
+      "This is ‘make hard jobs easier.’ Power-user workflows, real constraints, big systems.",
+      "You’ll spend time untangling complexity, reducing chaos, and designing for speed at scale.",
+      "If you like systems thinking and craftsmanship, this lane is quietly elite.",
+    ],
     examples: ["Dashboards", "Admin tools", "Workflow systems", "Analytics"],
-    bestFor: "If you like systems thinking and reducing chaos.",
+    bestFor: "You want to build tools that professionals rely on all day.",
   },
   {
     id: "aiProducts",
     title: "AI product UX",
-    blurb: "Explainability + trust + good defaults. You design human + model collaboration.",
+    narrative: [
+      "You’re designing human + model collaboration — good defaults, good boundaries, good outcomes.",
+      "You’ll care about explainability, trust, calibration, and how people recover when the model is wrong.",
+      "If you like building the future *and* making it understandable, this is for you.",
+    ],
     examples: ["Copilots", "Chat UX", "AI editors", "Safety UX"],
-    bestFor: "If you like building the future (and making it understandable).",
+    bestFor: "You want to shape how humans work with intelligence.",
   },
   {
     id: "accessibility",
     title: "Accessibility & inclusive design",
-    blurb: "Designing so more humans can succeed. This multiplies impact across every product.",
+    narrative: [
+      "This is impact-multiplying design. You’re making sure more humans can succeed.",
+      "You’ll think about clarity, affordances, motion, contrast, neurodiversity, and real-world constraints.",
+      "If you want your work to help the widest set of people, this is the path.",
+    ],
     examples: ["WCAG", "Neurodiversity", "Assistive tech", "Plain language"],
-    bestFor: "If you want your work to help the widest set of people.",
+    bestFor: "You want ‘good design’ to include more people by default.",
   },
 ];
 
@@ -94,7 +136,9 @@ function readStringArray(v: unknown): string[] {
  * We support common keys: data | progress | meta.
  * If none exist, we create/use `data`.
  */
-function getBag(p: StepperPersistedState): { key: "data" | "progress" | "meta"; bag: Record<string, unknown> } {
+function getBag(
+  p: StepperPersistedState
+): { key: "data" | "progress" | "meta"; bag: Record<string, unknown> } {
   const root = p as unknown as Record<string, unknown>;
 
   const d = root["data"];
@@ -109,8 +153,11 @@ function getBag(p: StepperPersistedState): { key: "data" | "progress" | "meta"; 
   return { key: "data", bag: {} };
 }
 
-function setBag(p: StepperPersistedState, key: "data" | "progress" | "meta", bag: Record<string, unknown>) {
-  // we purposely write the bag back into the same key (or `data` if none existed)
+function setBag(
+  p: StepperPersistedState,
+  key: "data" | "progress" | "meta",
+  bag: Record<string, unknown>
+) {
   return {
     ...(p as unknown as Record<string, unknown>),
     [key]: bag,
@@ -126,15 +173,62 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SpecialtiesStep({ step, progress, setProgress }: Props) {
-  const { key: bagKey, bag } = getBag(progress);
+function accentFor(id: string) {
+  if (id === "consumerApps")
+    return "from-sky-300/25 via-cyan-300/12 to-indigo-300/12";
+  if (id === "healthcare")
+    return "from-emerald-300/22 via-teal-300/12 to-sky-300/10";
+  if (id === "education")
+    return "from-amber-300/22 via-orange-300/12 to-rose-300/10";
+  if (id === "games")
+    return "from-violet-300/22 via-fuchsia-300/12 to-sky-300/10";
+  if (id === "fintech")
+    return "from-lime-300/18 via-emerald-300/10 to-teal-300/10";
+  if (id === "enterprise")
+    return "from-slate-300/16 via-slate-200/8 to-sky-300/10";
+  if (id === "aiProducts")
+    return "from-fuchsia-300/20 via-violet-300/12 to-sky-300/10";
+  if (id === "accessibility")
+    return "from-rose-300/18 via-amber-300/10 to-lime-300/10";
+  return "from-sky-300/20 via-cyan-300/10 to-indigo-300/10";
+}
+
+function railFor(id: string) {
+  if (id === "consumerApps") return "from-sky-300 via-cyan-300 to-indigo-300";
+  if (id === "healthcare") return "from-emerald-300 via-teal-300 to-sky-300";
+  if (id === "education") return "from-amber-300 via-orange-300 to-rose-300";
+  if (id === "games") return "from-violet-300 via-fuchsia-300 to-sky-300";
+  if (id === "fintech") return "from-lime-300 via-emerald-300 to-teal-300";
+  if (id === "enterprise") return "from-slate-300 via-slate-200 to-sky-300";
+  if (id === "aiProducts") return "from-fuchsia-300 via-violet-300 to-sky-300";
+  if (id === "accessibility") return "from-rose-300 via-amber-300 to-lime-300";
+  return "from-sky-300 via-cyan-300 to-indigo-300";
+}
+
+/**
+ * ✅ Suggestion A nav API from StepperShell
+ * We avoid relying on goToStep("forecast") for the pill.
+ * The pill should behave like the old sticky primary CTA: advance one step.
+ */
+function getGoNext(state: unknown): (() => void) | null {
+  const obj = (state ?? {}) as Record<string, unknown>;
+  const fn = obj.goNext;
+  return typeof fn === "function" ? (fn as () => void) : null;
+}
+
+function pillTextFor(title: string) {
+  return `Future outlook: ${title}`;
+}
+
+export function SpecialtiesStep({ step, progress, setProgress, state }: Props) {
+  const { bag } = getBag(progress);
 
   const picked = readStringArray(bag[PICK_KEY]);
   const pickedSet = React.useMemo(() => new Set(picked), [picked]);
 
-  function toggle(id: string) {
-    const next = pickedSet.has(id) ? picked.filter((x) => x !== id) : [...picked, id].slice(-3);
+  const goNext = React.useMemo(() => getGoNext(state), [state]);
 
+  function setPicked(next: string[]) {
     setProgress((prev) => {
       const { key, bag: prevBag } = getBag(prev);
       const nextBag: Record<string, unknown> = { ...prevBag, [PICK_KEY]: next };
@@ -142,90 +236,164 @@ export function SpecialtiesStep({ step, progress, setProgress }: Props) {
     });
   }
 
-  const coachLine = React.useMemo(() => {
-    if (!picked.length) return "Pick up to 3 — just the ones that spark curiosity. This isn’t a commitment.";
-    if (picked.length === 1) return "Nice. Add one more so we can triangulate your vibe.";
-    if (picked.length === 2) return "Good signal. If you add a third, we can get even sharper.";
-    return "Great. These three are enough to guide the next steps.";
-  }, [picked.length]);
+  function toggle(id: string) {
+    const next = pickedSet.has(id)
+      ? picked.filter((x) => x !== id)
+      : [...picked, id].slice(-3);
+    setPicked(next);
+  }
+
+  function ensurePicked(id: string) {
+    if (pickedSet.has(id)) return;
+    setPicked([...picked, id].slice(-3));
+  }
+
+  function diveFrom(id: string) {
+    ensurePicked(id);
+    goNext?.();
+  }
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
       <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
-        Recommendation · {step.title}
+        Dive deeper · {step.title}
       </div>
 
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Pick a specialty vibe</h1>
-        <p className="text-sm leading-relaxed text-slate-200/85">
-          Product/UX is a huge umbrella. Your “lane” gets clearer when you choose what kind of problems and people you
-          want to design for.
-        </p>
-      </div>
-
-      <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-50">Coach note</div>
-          <div className="text-xs text-slate-300/60">
-            {picked.length}/3 picked
-            <span className="ml-2 opacity-60">({bagKey})</span>
-          </div>
+      {/* Slim header: only ONE line after header; no picked pills */}
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/35 p-5 backdrop-blur-2xl">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-16 -left-16 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
+          <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-gradient-to-br from-violet-500/16 via-fuchsia-400/9 to-sky-500/10 blur-3xl opacity-55" />
         </div>
-        <p className="mt-2 text-sm text-slate-200/85">{coachLine}</p>
 
-        {picked.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {picked.map((id) => {
-              const s = SPECIALTIES.find((x) => x.id === id);
-              if (!s) return null;
-              return <Chip key={id}>{s.title}</Chip>;
-            })}
-          </div>
-        ) : null}
+        <div className="relative space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+            Pick a specialty vibe
+          </h1>
+
+          <p className="text-sm leading-relaxed text-slate-200/85">
+            Product/UX has lots of specialties. Choose a few that match your kind of
+            people + problems — then tap a Future outlook pill to go deeper.
+          </p>
+        </div>
       </div>
 
+      {/* Options */}
       <div className="space-y-3">
         {SPECIALTIES.map((s) => {
           const on = pickedSet.has(s.id);
+          const accent = accentFor(s.id);
+          const rail = railFor(s.id);
+
           return (
-            <button
+            <div
               key={s.id}
-              type="button"
-              onClick={() => toggle(s.id)}
               className={`
-                w-full text-left transition active:scale-[0.99]
-                rounded-[28px] border p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl
-                ${on ? "border-sky-300/60 bg-slate-950/55" : "border-white/10 bg-slate-950/40 hover:bg-slate-950/50"}
+                relative overflow-hidden rounded-[28px] border p-[1px] backdrop-blur-xl
+                ${on ? "border-sky-300/55" : "border-white/10"}
               `}
-              aria-pressed={on}
-              aria-label={`Toggle ${s.title}`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-base font-semibold text-slate-50">{s.title}</div>
-                  <div className="mt-2 text-sm leading-relaxed text-slate-200/85">{s.blurb}</div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {s.examples.slice(0, 4).map((e) => (
-                      <Chip key={e}>{e}</Chip>
-                    ))}
-                  </div>
-
-                  <div className="mt-3 text-xs text-slate-300/70">
-                    <span className="font-semibold text-slate-100">Best for:</span> {s.bestFor}
-                  </div>
-                </div>
-
+              <div
+                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-60`}
+              />
+              <div
+                className={`
+                  relative rounded-[27px] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]
+                  ${on ? "bg-slate-950/62" : "bg-slate-950/42"}
+                `}
+              >
+                {/* Accent rail */}
                 <div
-                  className={`mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
-                    on ? "border-sky-300/60 bg-sky-300/15 text-sky-100" : "border-white/10 bg-white/5 text-white/70"
-                  }`}
                   aria-hidden
-                >
-                  {on ? "✓" : "+"}
+                  className={`pointer-events-none absolute left-0 top-6 h-[70%] w-[3px] rounded-full bg-gradient-to-b ${rail} opacity-90`}
+                />
+
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="text-base font-semibold text-slate-50">
+                          {s.title}
+                        </div>
+
+                        {on ? (
+                          <span className="inline-flex items-center rounded-full border border-sky-200/25 bg-sky-300/15 px-2 py-0.5 text-[0.7rem] font-semibold text-sky-100">
+                            Selected
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Conversational narrative */}
+                      <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-200/85">
+                        {s.narrative.map((line, idx) => (
+                          <p key={idx}>{line}</p>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {s.examples.slice(0, 4).map((e) => (
+                          <Chip key={e}>{e}</Chip>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 text-xs text-slate-300/70">
+                        <span className="font-semibold text-slate-100">
+                          Best for:
+                        </span>{" "}
+                        {s.bestFor}
+                      </div>
+                    </div>
+
+                    {/* Toggle button */}
+                    <button
+                      type="button"
+                      onClick={() => toggle(s.id)}
+                      className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition active:scale-95 ${
+                        on
+                          ? "border-sky-300/60 bg-sky-300/18 text-sky-100 hover:bg-sky-300/22"
+                          : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                      }`}
+                      aria-pressed={on}
+                      aria-label={`${on ? "Remove" : "Pick"} ${s.title}`}
+                      title={on ? "Selected" : "Pick this"}
+                    >
+                      {on ? "✓" : "+"}
+                    </button>
+                  </div>
+
+                  {/* Per-specialty CTA as a small pill (not a big block) */}
+                  <div className="mt-4 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => diveFrom(s.id)}
+                      disabled={!goNext}
+                      className={`
+                        group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition active:scale-95
+                        ${
+                          goNext
+                            ? "border-white/10 bg-white/5 text-slate-50 hover:bg-white/10"
+                            : "cursor-not-allowed border-white/10 bg-white/5 text-slate-200/50"
+                        }
+                      `}
+                      aria-label={`Open future outlook for ${s.title}`}
+                      title={goNext ? "Future outlook" : "Navigation not wired yet"}
+                    >
+                      <span
+                        className={`
+                          inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-br ${accent}
+                          opacity-90 shadow-[0_0_0_3px_rgba(255,255,255,0.04)]
+                        `}
+                        aria-hidden
+                      />
+                      <span className="max-w-[16rem] truncate">
+                        {pillTextFor(s.title)}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

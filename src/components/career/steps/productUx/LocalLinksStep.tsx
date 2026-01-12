@@ -2,7 +2,10 @@
 "use client";
 
 import * as React from "react";
-import type { StepperStep, StepperPersistedState } from "@/components/career/stepperTypes";
+import type {
+  StepperStep,
+  StepperPersistedState,
+} from "@/components/career/stepperTypes";
 
 type Props = {
   step: StepperStep;
@@ -18,9 +21,26 @@ type LinkItem = {
   tag?: string;
 };
 
-function Chip({ children }: { children: React.ReactNode }) {
+function Chip({
+  children,
+  tone = "neutral",
+}: {
+  children: React.ReactNode;
+  tone?: "neutral" | "sky" | "emerald" | "amber";
+}) {
+  const cls =
+    tone === "sky"
+      ? "border-sky-200/20 bg-sky-300/12 text-sky-50"
+      : tone === "emerald"
+        ? "border-emerald-200/20 bg-emerald-300/12 text-emerald-50"
+        : tone === "amber"
+          ? "border-amber-200/20 bg-amber-300/12 text-amber-50"
+          : "border-white/10 bg-white/5 text-slate-100/90";
+
   return (
-    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100/90">
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold ${cls}`}
+    >
       {children}
     </span>
   );
@@ -30,20 +50,43 @@ function Tiny({ children }: { children: React.ReactNode }) {
   return <div className="text-xs leading-relaxed text-slate-300/70">{children}</div>;
 }
 
-function SectionCard({
+function Panel({
   title,
   subtitle,
+  icon,
   children,
 }: {
   title: string;
   subtitle?: string;
+  icon?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[26px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-      <div className="text-sm font-semibold text-slate-50">{title}</div>
-      {subtitle ? <div className="mt-1 text-xs text-slate-300/70">{subtitle}</div> : null}
-      <div className="mt-4 space-y-2">{children}</div>
+    <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-14 -left-12 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/16 via-cyan-400/9 to-indigo-500/10 blur-3xl opacity-70" />
+        <div className="absolute -bottom-16 -right-12 h-72 w-72 rounded-full bg-gradient-to-br from-emerald-500/12 via-teal-400/7 to-sky-500/9 blur-3xl opacity-60" />
+      </div>
+
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {icon ? (
+                <span className="text-base" aria-hidden>
+                  {icon}
+                </span>
+              ) : null}
+              <div className="text-sm font-semibold text-slate-50">{title}</div>
+            </div>
+            {subtitle ? (
+              <div className="mt-1 text-xs text-slate-300/70">{subtitle}</div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-2">{children}</div>
+      </div>
     </section>
   );
 }
@@ -53,10 +96,10 @@ function LinkCard({ item }: { item: LinkItem }) {
     item.kind === "learn"
       ? "📚"
       : item.kind === "build"
-      ? "🧪"
-      : item.kind === "community"
-      ? "🧑‍🤝‍👩"
-      : "📍";
+        ? "🧪"
+        : item.kind === "community"
+          ? "🧑‍🤝‍👩"
+          : "📍";
 
   return (
     <a
@@ -65,7 +108,7 @@ function LinkCard({ item }: { item: LinkItem }) {
       rel={item.href ? "noreferrer" : undefined}
       className="
         group block rounded-2xl border border-white/10 bg-white/5 px-4 py-3
-        transition hover:bg-white/8 active:scale-[0.99]
+        transition hover:bg-white/10 active:scale-[0.99]
       "
       aria-disabled={!item.href}
       onClick={(e) => {
@@ -78,9 +121,13 @@ function LinkCard({ item }: { item: LinkItem }) {
             <span className="text-base" aria-hidden>
               {icon}
             </span>
-            <div className="truncate text-sm font-semibold text-slate-50">{item.title}</div>
+            <div className="truncate text-sm font-semibold text-slate-50">
+              {item.title}
+            </div>
           </div>
-          <div className="mt-1 text-xs leading-relaxed text-slate-200/80">{item.blurb}</div>
+          <div className="mt-1 text-xs leading-relaxed text-slate-200/80">
+            {item.blurb}
+          </div>
         </div>
 
         {item.tag ? (
@@ -101,21 +148,29 @@ function LinkCard({ item }: { item: LinkItem }) {
 
 function normalizeZip(v: unknown): string {
   const s = typeof v === "string" ? v.trim() : "";
-  // allow 5-digit or 5+4; keep it simple for now
   if (/^\d{5}(-\d{4})?$/.test(s)) return s;
   return "";
 }
 
+function hasRealZip(v: unknown): boolean {
+  return Boolean(normalizeZip(v));
+}
+
 export function LocalLinksStep({ step, progress }: Props) {
-  // ✅ no `any` — progress is a persisted map; we read the "zip" key safely
-  const zip = normalizeZip(progress["zip"]) || "94901";
+  // Keep your existing behavior:
+  // - read progress["zip"]
+  // - default to 94901 if missing
+  const rawZip = (progress as unknown as Record<string, unknown>)["zip"];
+  const zip = normalizeZip(rawZip) || "94901";
+  const zipIsReal = hasRealZip(rawZip);
 
   const quick = [
-    { label: "ZIP", value: zip },
-    { label: "Mode", value: "Mobile-friendly" },
-    { label: "Goal", value: "Start small" },
+    { label: "ZIP", value: zip, tone: zipIsReal ? ("emerald" as const) : ("amber" as const) },
+    { label: "Goal", value: "Start small", tone: "sky" as const },
+    { label: "Mode", value: "Mobile-friendly", tone: "neutral" as const },
   ];
 
+  // Keep your placeholder data, but present as “3 nearby moves”.
   const learn: LinkItem[] = [
     {
       id: "learn-1",
@@ -133,14 +188,6 @@ export function LocalLinksStep({ step, progress }: Props) {
       href: undefined,
       tag: "hands-on",
     },
-    {
-      id: "learn-3",
-      kind: "learn",
-      title: "Usability testing mini-guide",
-      blurb: "How to run a simple test with 1 person and learn a lot.",
-      href: undefined,
-      tag: "fast",
-    },
   ];
 
   const build: LinkItem[] = [
@@ -154,14 +201,6 @@ export function LocalLinksStep({ step, progress }: Props) {
     },
     {
       id: "build-2",
-      kind: "build",
-      title: "Portfolio starter template",
-      blurb: "A simple structure: problem → your design → why → what you learned.",
-      href: undefined,
-      tag: "simple",
-    },
-    {
-      id: "build-3",
       kind: "build",
       title: "Case study checklist",
       blurb: "How to show your thinking without writing a novel.",
@@ -193,15 +232,17 @@ export function LocalLinksStep({ step, progress }: Props) {
     {
       id: "local-1",
       kind: "local",
-      title: "Local workshops near you",
-      blurb: `We’ll show nearby classes, meetups, and camps based on ${zip}.`,
+      title: "Workshops near you",
+      blurb: zipIsReal
+        ? `We’ll show classes, meetups, and workshops near ${zip}.`
+        : `We’ll show classes, meetups, and workshops once we have your ZIP.`,
       href: undefined,
-      tag: "coming",
+      tag: zipIsReal ? "next" : "needs ZIP",
     },
     {
       id: "local-2",
       kind: "local",
-      title: "Volunteer design opportunities",
+      title: "Volunteer UX opportunities",
       blurb: "Small nonprofits often need simple UX help — great for portfolios.",
       href: undefined,
       tag: "real work",
@@ -211,61 +252,104 @@ export function LocalLinksStep({ step, progress }: Props) {
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
       <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
-        Recommendation · {step.title}
+        Dive deeper · {step.title}
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Links + places to explore</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
+          Make this real (3 nearby moves)
+        </h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
-          This is where Everleap becomes *actionable*: learn something, build something, and find real-world places to
-          practice.
+          This is the “go do something” step. Don’t try to do all of it — pick one
+          move that feels doable this week.
         </p>
 
         <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
-            <Chip key={q.label}>
-              <span className="text-slate-300/70">{q.label}:</span>&nbsp;{q.value}
+            <Chip key={q.label} tone={q.tone}>
+              <span className="text-slate-200/70">{q.label}:</span>&nbsp;{q.value}
             </Chip>
           ))}
         </div>
 
         <Tiny>
-          For now these are placeholders. Next we can connect real links and local results (and tune them based on your
-          interests and ZIP).
+          These are placeholders right now. Next we’ll wire real links and real local results
+          (and personalize based on your specialty picks).
         </Tiny>
       </div>
 
-      <SectionCard title="Start learning (keep it short)" subtitle="Pick ONE. Finish it. Then build a tiny artifact.">
+      <Panel
+        icon="✅"
+        title="Pick 1 learning bite"
+        subtitle="One short thing. Finish it. Momentum beats motivation."
+      >
         {learn.map((i) => (
           <LinkCard key={i.id} item={i} />
         ))}
-      </SectionCard>
+      </Panel>
 
-      <SectionCard title="Build something (this makes you real)" subtitle="Portfolios are proof — tiny proof still counts.">
+      <Panel
+        icon="🧩"
+        title="Build 1 tiny artifact"
+        subtitle="This is how you become “real” in the lane — proof over talk."
+      >
         {build.map((i) => (
           <LinkCard key={i.id} item={i} />
         ))}
-      </SectionCard>
 
-      <SectionCard title="Community + feedback" subtitle="Your growth accelerates when someone reacts to your work.">
+        <div className="mt-2 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+            Coach note
+          </div>
+          <div className="mt-2 text-sm text-slate-200/85">
+            If you only do one thing: redo one screen and show it to one person.
+            That’s already a real UX loop.
+          </div>
+        </div>
+      </Panel>
+
+      <Panel
+        icon="🧑‍🤝‍👩"
+        title="Get 1 piece of feedback"
+        subtitle="Your growth accelerates the moment someone reacts to your work."
+      >
         {community.map((i) => (
           <LinkCard key={i.id} item={i} />
         ))}
-      </SectionCard>
+      </Panel>
 
-      <SectionCard title="Local (based on your ZIP)" subtitle="When we wire the data, this becomes a real “go do it” map.">
+      <Panel
+        icon="📍"
+        title="Local (based on your ZIP)"
+        subtitle="When we wire data, this becomes a real “go do it” map."
+      >
         {local.map((i) => (
           <LinkCard key={i.id} item={i} />
         ))}
 
-        <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Next improvement</div>
-          <div className="mt-2 text-sm text-slate-200/85">
-            If we don’t have a ZIP yet, we’ll ask during onboarding. Until then, we default to{" "}
-            <span className="text-slate-50 font-semibold">94901</span>.
+        {!zipIsReal ? (
+          <div className="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-50/80">
+              Quick fix later
+            </div>
+            <div className="mt-2 text-sm text-amber-50/90">
+              We don’t have your ZIP yet, so we’re defaulting to{" "}
+              <span className="font-semibold text-amber-50">94901</span>. Once you add it,
+              we’ll pull nearby meetups, classes, internships, and volunteer projects.
+            </div>
           </div>
-        </div>
-      </SectionCard>
+        ) : (
+          <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+              Next improvement
+            </div>
+            <div className="mt-2 text-sm text-slate-200/85">
+              We’ll use <span className="font-semibold text-slate-50">{zip}</span> to rank:
+              closest options first, then “highest signal for beginners.”
+            </div>
+          </div>
+        )}
+      </Panel>
     </section>
   );
 }
