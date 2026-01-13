@@ -1,104 +1,52 @@
-// apps/web/middleware.ts
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 /**
- * Routing + lightweight auth gate.
- *
- * Redirects:
- *   - "/" and "/welcome" → "/login" (no-store)
- *
- * Protects:
- *   - /dashboard, /profile, /questions → requires presence of session/verified cookie.
- *     (Authoritative verification still happens on the API; this just blocks obvious unauth’d hits.)
+ * HTTP Basic Auth challenge (browser popup).
  */
-
-const PROTECTED_PREFIXES = ["/dashboard", "/profile", "/questions"] as const;
-
-const COOKIE_VERIFIED = "everleap_verified";
-const COOKIE_SESSION = "everleap_session";
-// TEMP during debugging so testers don't get bounced when using visible mirror cookie
-const COOKIE_SESSION_DEBUG = "everleap_session_debug";
-
-// Paths we should never block/redirect (auth flows and entry points)
-const AUTH_PASS_PATHS = [
-  "/login",
-  "/logout",
-  "/register",
-  "/auth/magic",
-  "/auth/webauthn",
-];
-
-function isProtectedPath(pathname: string) {
-  return PROTECTED_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(p + "/"),
-  );
-}
-
-function isAuthPassPath(pathname: string) {
-  if (AUTH_PASS_PATHS.includes(pathname)) return true;
-  // Allow /auth/webauthn/* nested routes
-  if (pathname.startsWith("/auth/webauthn/")) return true;
-  return false;
+function unauthorized() {
+  return new NextResponse("Authentication required", {
+    status: 401,
+    headers: {
+      "WWW-Authenticate": 'Basic realm="Everleap Private Beta"',
+    },
+  });
 }
 
 export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const user = process.env.SITE_BASIC_USER ?? "";
+  const pass = process.env.SITE_BASIC_PASS ?? "";
 
-  // 🔓 Always allow auth pages/flows to proceed
-  if (isAuthPassPath(pathname)) {
-    return NextResponse.next();
+  // Fail closed: if env vars aren't set, lock everything.
+  if (!user || !pass) return unauthorized();
+
+  const auth = req.headers.get("authorization");
+  if (!auth?.startsWith("Basic ")) return unauthorized();
+
+  const encoded = auth.slice("Basic ".length).trim();
+
+  let decoded = "";
+  try {
+    decoded = atob(encoded);
+  } catch {
+    return unauthorized();
   }
 
-  // ⛳ TEMP: bypass auth for /dashboard to isolate redirect source
-  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
-    return NextResponse.next();
-  }
+  const sep = decoded.indexOf(":");
+  if (sep < 0) return unauthorized();
 
-  // --- 1) Normalize entry: "/" and "/welcome" → "/login" ---
-  if (pathname === "/" || pathname === "/welcome") {
-    const url = req.nextUrl.clone();
-    const nextParam = req.nextUrl.searchParams.get("next"); // preserve ?next if provided
-    url.pathname = "/login";
-    url.search = "";
-    if (nextParam) url.searchParams.set("next", nextParam);
+  const u = decoded.slice(0, sep);
+  const p = decoded.slice(sep + 1);
 
-    const res = NextResponse.redirect(url, 308);
-    res.headers.set("Cache-Control", "no-store");
-    res.headers.set("Vary", "Cookie");
-    return res;
-  }
+  if (u !== user || p !== pass) return unauthorized();
 
-  // --- 2) Gate protected routes (best-effort) ---
-  if (isProtectedPath(pathname)) {
-    const hasVerifiedFlag = req.cookies.get(COOKIE_VERIFIED)?.value === "1";
-    const hasSession =
-      Boolean(req.cookies.get(COOKIE_SESSION)?.value) ||
-      Boolean(req.cookies.get(COOKIE_SESSION_DEBUG)?.value); // TEMP: accept mirror cookie
-
-    if (hasVerifiedFlag || hasSession) {
-      return NextResponse.next();
-    }
-
-    // No client hint → send to /login with ?next=<intended>
-    const url = req.nextUrl.clone();
-    const intended = `${pathname}${req.nextUrl.search || ""}`;
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set("next", intended);
-
-    const res = NextResponse.redirect(url, 307);
-    res.headers.set("Cache-Control", "no-store");
-    res.headers.set("Vary", "Cookie");
-    return res;
-  }
-
-  // Default pass-through
   return NextResponse.next();
 }
 
+/**
+ * Protect everything except Next.js internal static assets.
+ * (We still protect pages, API routes, and app routes.)
+ */
 export const config = {
-  // Run on all app routes except static assets and Next API routes
-  matcher: [
-    "/((?!_next|favicon.ico|robots.txt|sitemap.xml|images|video|assets|api).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
