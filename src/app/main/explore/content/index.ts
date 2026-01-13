@@ -3,27 +3,39 @@
 import type { ExploreArea, ExploreSection, ExploreChipType, ExploreKey } from "./types";
 
 // These imports assume each file exports DEFAULT ExploreArea.
-// If your files use named exports instead, switch accordingly.
 import recommendations from "./recommendations";
 import education from "./education";
 import travel from "./travel";
 import community from "./community";
 import hobbies from "./hobbies";
 
-const AREAS: ExploreArea[] = [recommendations, education, travel, community, hobbies];
+/**
+ * Canonical order + top-level nav for Explore.
+ * This is what drives the 5 big buttons you described:
+ * Careers, Education, Travel, Community, Hobbies
+ */
+const AREAS: ExploreArea[] = [
+  recommendations, // Careers
+  education,
+  travel,
+  community,
+  hobbies,
+];
 
 function toSection(area: ExploreArea): ExploreSection {
   const key = area.id as ExploreKey;
 
   return {
     key,
+
+    // 🔑 Use the area label directly (we renamed it to "Careers" in recommendations.ts)
     label: area.label,
 
     // Page header text
     title: area.headline,
     subtitle: area.summary,
 
-    // One chip per section (keeps it simple and matches your renderer pattern)
+    // One chip per section (keeps renderer model consistent)
     chips: [
       {
         id: `${area.id}-chip`,

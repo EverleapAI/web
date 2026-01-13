@@ -2,26 +2,19 @@
 import type { ExploreArea } from "./types";
 
 /**
- * Explore › Recommendations
- * Separate from Insights. This file is Explore-only data.
- *
- * IMPORTANT:
- * - card.id MUST match StepperLaneId so /main/career/[laneId] works.
- * - We encode extra fields (bestFor + starterExperiment) into the MiniCard.short
- *   for now, so we DON'T have to change types.ts yet.
- *
- * Next file (after this): src/app/main/explore/content/types.ts
- * (we'll add optional bestFor/starterExperiment to MiniCard cleanly).
+ * Explore › Careers
+ * These are not job listings — they are identity experiments.
+ * Tone: life coach talking to an older teen.
  */
 const recommendations: ExploreArea = {
   id: "recommendations",
-  label: "Recommendations",
-  chip: "What to try next",
+  label: "Careers",
+  chip: "Everleap suggestions",
   glowClass: "from-sky-400 via-indigo-500 to-slate-400",
   href: "/main/explore/recommendations",
 
-  headline: "4 Everleap recommendations for you",
-  summary: "Not a forever decision. Pick one lane, run a tiny test, then adjust.",
+  headline: "Careers",
+  summary: "Everleap suggestions — directions that fit your strengths, values, and vibe.",
   hint: "These are experiments, not commitments.",
 
   signals: [
@@ -50,87 +43,86 @@ const recommendations: ExploreArea = {
     },
   ],
 
-  /**
-   * Cards = the recommendation lanes (AI returns 8; UI shows top 4).
-   * - id must match StepperLaneId
-   * - short currently includes why + bestFor + starterExperiment in a readable format
-   *   until we extend MiniCard type in content/types.ts.
-   */
   cards: [
     {
       id: "productUx",
       icon: "🧩",
-      title: "Product / UX (building things people use)",
+      title: "Product / UX",
       short:
-        "Visible progress + real users + fast feedback.\n" +
-        "Best if: you like building + improving real things.\n" +
-        "3-day test: Redesign one screen of an app you use. Show it to 2 people and ask what they’d change.",
+        "You know when an app just *feels right* to use? That’s not an accident.\n\n" +
+        "Product and UX is about noticing what’s confusing or annoying — and making it better for real people.\n\n" +
+        "If you like building things and you care how people experience them, this might be your lane.\n\n" +
+        "Tiny test: pick an app you use, redesign one screen, and show it to two people. See what they say.",
     },
     {
       id: "healthHumanSupport",
       icon: "🫶",
-      title: "Health + Human Support (coaching, wellness, patient support)",
+      title: "Health + Human Support",
       short:
-        "Meaning is automatic. You can see impact in real humans.\n" +
-        "Best if: helping people directly gives you energy.\n" +
-        "3-day test: Interview someone in a helping role. Ask: what do you love and what do you hate?",
+        "Some people are just good at being there when things get real.\n\n" +
+        "This path is about helping people through physical, mental, or emotional stuff — and actually making their day better.\n\n" +
+        "If people come to you when they’re struggling, that’s not random.\n\n" +
+        "Tiny test: talk to someone who works in a helping role and ask what makes the job feel worth it.",
     },
     {
       id: "educationCommunityPrograms",
       icon: "🏫",
-      title: "Education / Community / Programs (impact work)",
+      title: "Education / Community",
       short:
-        "Purpose + people + momentum. Not theory—real outcomes.\n" +
-        "Best if: you like people + momentum + organizing outcomes.\n" +
-        "3-day test: Volunteer once. Track energy before/after and what felt meaningful vs draining.",
+        "This is about creating spaces where people grow.\n\n" +
+        "You might be teaching, running programs, or organizing groups so things actually work.\n\n" +
+        "If you like helping people level up and hate wasted potential, this could be you.\n\n" +
+        "Tiny test: help out with one group or program and notice what parts give you energy.",
     },
     {
       id: "independentBuilder",
       icon: "🚀",
-      title: "Independent Builder (creator, startup, entrepreneurship)",
+      title: "Independent Builder",
       short:
-        "Autonomy + momentum + output. Your wiring likes shipping.\n" +
-        "Best if: you crave freedom + making things from scratch.\n" +
-        "3-day test: Make one tiny thing in a weekend (guide, video, mini-tool). Ship it.",
+        "This is for people who’d rather make their own thing than wait for permission.\n\n" +
+        "You come up with ideas, try them, and learn by doing.\n\n" +
+        "If freedom matters to you more than having everything planned, pay attention to that.\n\n" +
+        "Tiny test: build something small this weekend and put it out into the world.",
     },
-
-    /* ===== Additional 4 (so Explore can cycle 5–8 as user dislikes) ===== */
-
     {
       id: "dataAi",
       icon: "🧠",
-      title: "Data + AI (analysis, modeling, insight-building)",
+      title: "Data + AI",
       short:
-        "Pattern-finding + clear thinking + leverage.\n" +
-        "Best if: you like turning messy info into decisions.\n" +
-        "3-day test: Pick a question you care about. Gather 20 data points, chart them, and write 5 insights + 2 next actions.",
+        "This is about turning messy information into clear decisions.\n\n" +
+        "You look for patterns, test ideas, and figure out what’s actually going on.\n\n" +
+        "If you like being right for the right reasons, this could be your thing.\n\n" +
+        "Tiny test: track something you care about for a week and see what you learn.",
     },
     {
       id: "operationsProjects",
       icon: "🗺️",
-      title: "Ops + Projects (making chaos run smoothly)",
+      title: "Ops + Projects",
       short:
-        "Clarity + momentum + reliability.\n" +
-        "Best if: you enjoy fixing systems and making work calmer.\n" +
-        "3-day test: Map a process you live inside (school, club, work). Find 2 bottlenecks and propose 2 small fixes.",
+        "Some people are wired to make things run smoothly.\n\n" +
+        "You notice what’s missing, what’s slowing things down, and how to fix it.\n\n" +
+        "If you’re the quiet problem-solver in the group, this is real power.\n\n" +
+        "Tiny test: take one messy process and make it 20% better.",
     },
     {
       id: "creativeStorytelling",
       icon: "🎬",
-      title: "Creative Storytelling (writing, video, design, brand)",
+      title: "Creative Storytelling",
       short:
-        "Emotion + meaning + craft.\n" +
-        "Best if: you feel alive making things people feel.\n" +
-        "3-day test: Tell one story in 3 formats: 200 words, 60-second voice memo, and a single image/poster. Compare what lands.",
+        "This is about making people feel something.\n\n" +
+        "You use words, images, or video to get ideas to land.\n\n" +
+        "If you care how a message hits, not just what it says, this might be you.\n\n" +
+        "Tiny test: tell one story in three different ways and see what connects.",
     },
     {
       id: "businessPartnerships",
       icon: "🤝",
-      title: "Business + Partnerships (sales, deals, community building)",
+      title: "Business + Partnerships",
       short:
-        "People + persuasion + outcomes.\n" +
-        "Best if: you like connecting humans to solutions.\n" +
-        "3-day test: Ask 5 people what problem annoys them most. Pitch one simple solution and track what sparks interest.",
+        "This is where conversations turn into real outcomes.\n\n" +
+        "You connect people, spot opportunities, and help things move forward.\n\n" +
+        "If you like talking to people and making things happen, that’s a clue.\n\n" +
+        "Tiny test: ask five people about a problem they have and listen closely.",
     },
   ],
 };

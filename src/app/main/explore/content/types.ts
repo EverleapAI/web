@@ -28,8 +28,7 @@ export type NextMove = {
 
 /**
  * Mini card used inside each ExploreArea.
- * NOTE: We extended this for Recommendations to match the richer Insights look,
- * but it remains Explore-only.
+ * NOTE: Recommendations is richer, but it remains Explore-only.
  */
 export type MiniCard = {
   id: string;
@@ -38,16 +37,17 @@ export type MiniCard = {
 
   /**
    * Short description (used everywhere).
-   * For Recommendations, can be the main "why it fits".
+   * For Recommendations, this is the main conversational narrative.
    */
   short: string;
 
   /**
-   * Optional richer fields (Recommendations uses these).
-   * Other lanes can ignore them.
+   * Optional richer fields (use when we want structure without forcing it).
+   * Recommendations can use these later; other lanes can ignore them.
    */
-  bestFor?: string;
-  starterExperiment?: string;
+  narrative?: string[]; // conversational paragraphs (older teen voice)
+  bestFor?: string; // optional callout
+  starterExperiment?: string; // optional “try this” prompt
 
   /**
    * Optional deep link target, if a renderer wants to push somewhere.
