@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "node server.mjs",
+    "dev:next": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.mjs",
+    "start:next": "next start",
     "lint": "eslint ."
   },
   "engines": {
@@ -20,6 +22,8 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.22",
     "ky": "^1.11.0",
