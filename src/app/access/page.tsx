@@ -110,7 +110,7 @@ export default function AccessPage() {
             </button>
 
             <div className="text-xs text-white/45">
-              Private beta · Session access
+              Private alpha · Session access
             </div>
           </form>
         </div>

@@ -3,12 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
@@ -16,11 +11,12 @@ import type { FeedbackResponse, RecommendationItem } from "../content/contracts"
 import FeedbackModal from "../components/FeedbackModal";
 
 /* =============================================================================
-   Explore › CommunityRenderer (Education/Travel-style mechanics)
-   - Accordion cards (only one expanded at a time)
-   - Tiny Test: collapsible steps + Add to my Actions + saved ack
+   Explore › CommunityRenderer (Careers-style mobile structure)
+   - 4 cards, vertical list, Careers card skeleton
+   - Rank pill (#1–#4) + keep emoji as secondary vibe marker
+   - Expand/collapse per card (one expanded at a time)
+   - Tiny Test: collapsible steps + Add to Actions + saved ack
    - Fit check: This fits / Kinda / Nope using FeedbackModal
-   - Distinct marker: emoji pill (no “Path” label)
 ============================================================================= */
 
 type CommunityCard = {
@@ -160,6 +156,7 @@ type TinyTest = {
 };
 
 const COM_TINY_TESTS: Record<string, TinyTest> = {
+  // Note: your current content ids differ; fallbacks will still work.
   "interest-crew": {
     title: "Tiny test: enter the room without overthinking it",
     eta: "20–35 min",
@@ -217,6 +214,7 @@ function tinyTestForTopic(topicId: string): TinyTest {
         "Stay 10 minutes.",
         "Write: “Do I want to do this again?”",
       ],
+      tip: "Tip: the first time can feel weird. That doesn’t mean it’s wrong.",
     }
   );
 }
@@ -256,10 +254,6 @@ function areaSignature(area: CommunityArea): string {
   return hashString(payload);
 }
 
-/**
- * Reuse FeedbackModal (expects a RecommendationItem).
- * We synthesize a lightweight RecommendationItem per community card.
- */
 function toRecFromCommunityCard(
   c: CommunityCard,
   area: CommunityArea,
@@ -297,19 +291,16 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
-  const shell = dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white";
-  const accentGlow = `bg-gradient-to-br ${area.glowClass ?? ""}`;
+  // Expand/collapse (one at a time)
+  const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
 
-  // Accordion: only one expanded card at a time
-  const [expandedId, setExpandedId] = React.useState<string | null>(null);
-
-  // Tiny Test: steps toggle + save state per card
-  const [showStepsById, setShowStepsById] = React.useState<
-    Record<string, boolean>
-  >({});
-  const [savedTinyById, setSavedTinyById] = React.useState<
-    Record<string, boolean>
-  >({});
+  // Tiny Test state
+  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
+    {}
+  );
+  const [savedTinyById, setSavedTinyById] = React.useState<Record<string, boolean>>(
+    {}
+  );
   const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
 
   // FeedbackModal state
@@ -323,20 +314,27 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
     return `explore_${chip.id}_${sig}`;
   }, [chip.id, area]);
 
-  function toggleExpanded(id: string) {
-    setExpandedId((cur) => (cur === id ? null : id));
+  function toggleExpanded(recId: string) {
+    setExpandedRecId((cur) => (cur === recId ? null : recId));
   }
 
   function toggleSteps(id: string) {
     setShowStepsById((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function onSaveTinyTest(topicId: string) {
+  function onSaveTinyTest(topicId: string, cardTitle: string) {
     setSavedTinyById((prev) => ({ ...prev, [topicId]: true }));
     setJustSavedId(topicId);
     window.setTimeout(() => {
       setJustSavedId((cur) => (cur === topicId ? null : cur));
     }, 1400);
+
+    // eslint-disable-next-line no-console
+    console.log("[TinyTest] save-to-actions (placeholder)", {
+      topicId,
+      title: cardTitle,
+      tinyTest: tinyTestForTopic(topicId),
+    });
   }
 
   function getSelectedFor(recId: string): FeedbackResponse | null {
@@ -378,6 +376,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
 
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
     const existing = getSelectedFor(rec.recId);
+    // Tap same choice again => clear (undo)
     if (existing && existing === response) {
       clearSelectedFor(rec.recId);
       return;
@@ -401,15 +400,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       comment: payload.comment,
     });
 
-    if (
-      payload.response === "disagree" &&
-      (payload.comment?.trim() ?? "").length
-    ) {
+    if (payload.response === "disagree" && (payload.comment?.trim() ?? "").length) {
       setAck({
         kind: "comment_disagree",
         feedbackId: pending.rec.recId,
-        message:
-          "Got it. Want me to tweak what you see next based on what you wrote?",
+        message: "Got it. Want me to tweak what you see next based on what you wrote?",
       });
     }
 
@@ -418,6 +413,30 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
 
   function handleRecalibrate() {
     setAck(null);
+    // eslint-disable-next-line no-console
+    console.log("[Community] recalibrate (placeholder)");
+  }
+
+  // Shared pill language (match Careers)
+  const pillBase =
+    "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95";
+  const pillNeutral = dark
+    ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50";
+
+  function pillSelected(kind: "agree" | "mixed" | "disagree") {
+    if (dark) {
+      if (kind === "agree")
+        return "border-emerald-300/30 bg-emerald-300/10 text-emerald-50 ring-2 ring-emerald-300/25";
+      if (kind === "mixed")
+        return "border-amber-300/30 bg-amber-300/10 text-amber-50 ring-2 ring-amber-300/25";
+      return "border-rose-300/30 bg-rose-300/10 text-rose-50 ring-2 ring-rose-300/25";
+    }
+    if (kind === "agree")
+      return "border-emerald-200 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-200/60";
+    if (kind === "mixed")
+      return "border-amber-200 bg-amber-50 text-amber-900 ring-2 ring-amber-200/60";
+    return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
   return (
@@ -430,21 +449,17 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${
-                dark ? "text-slate-200" : "text-slate-800"
-              } mt-0.5 h-5 w-5`}
+              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Okay — noted
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handleRecalibrate}
-                  className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                  className={`${pillBase} ${
                     dark
                       ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
                       : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
@@ -456,11 +471,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                 <button
                   type="button"
                   onClick={() => setAck(null)}
-                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                    dark
-                      ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                  }`}
+                  className={`${pillBase} ${pillNeutral}`}
                 >
                   Dismiss
                 </button>
@@ -470,539 +481,383 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
         </div>
       ) : null}
 
-      <div
-        className={`relative overflow-hidden rounded-[32px] border px-5 py-4 shadow-sm backdrop-blur-xl sm:px-7 sm:py-5 ${shell}`}
-      >
-        <div className="pointer-events-none absolute inset-0">
-          <div
-            className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
-          />
-          <div
-            className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
-          />
-        </div>
+      {cards.length ? (
+        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+          {cards.slice(0, 4).map((c, slotIdx) => {
+            const a = COM_ACCENTS[slotIdx] ?? COM_ACCENTS[0];
 
-        <div className="relative">
-          {cards.length ? (
-            <div className="space-y-3">
-              {cards.slice(0, 4).map((c, slotIdx) => {
-                const a = COM_ACCENTS[slotIdx] ?? COM_ACCENTS[0];
-                const spoken = splitSpokenParagraphs(c.short ?? "");
-                const teaser = spoken.slice(0, 2);
-                const extra = spoken.slice(2);
+            const spoken = splitSpokenParagraphs(c.short ?? "");
+            const teaser = spoken.slice(0, 2);
+            const extra = spoken.slice(2);
 
-                const expanded = expandedId === c.id;
+            const n = slotIdx + 1;
 
-                const deepDiveHref =
-                  c.href ??
-                  (c.id
-                    ? `/main/explore/community/${encodeURIComponent(c.id)}`
-                    : "/main/explore/community");
+            const rec = toRecFromCommunityCard(c, area, runId);
+            const selected = getSelectedFor(rec.recId);
 
-                const tiny = tinyTestForTopic(c.id);
-                const showSteps = Boolean(showStepsById[c.id]);
-                const tinySaved = Boolean(savedTinyById[c.id]);
-                const tinyJustSaved = justSavedId === c.id;
+            const expanded = expandedRecId === rec.recId;
 
-                const rec = toRecFromCommunityCard(c, area, runId);
-                const selected = getSelectedFor(rec.recId);
-                const locked = Boolean(selected);
+            const deepDiveHref =
+              c.href ??
+              (c.id
+                ? `/main/explore/community/${encodeURIComponent(c.id)}`
+                : "/main/explore/community");
 
-                return (
-                  <div
-                    key={c.id}
-                    className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                      dark
-                        ? "border-white/10 bg-white/5"
-                        : "border-slate-200 bg-white/80"
-                    }`}
+            const tiny = tinyTestForTopic(c.id);
+            const showSteps = Boolean(showStepsById[c.id]);
+            const tinySaved = Boolean(savedTinyById[c.id]);
+            const tinyJustSaved = justSavedId === c.id;
+
+            return (
+              <div
+                key={rec.recId}
+                className={`relative overflow-hidden rounded-3xl border p-[1px] ${
+                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                }`}
+              >
+                <div
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                  }`}
+                />
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
+                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-90 lg:opacity-70"
+                  } rounded-full bg-gradient-to-b ${a.rail}`}
+                />
+
+                <div
+                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
+                    dark
+                      ? expanded
+                        ? "bg-slate-950/25"
+                        : "bg-slate-950/22"
+                      : expanded
+                      ? "bg-white/70"
+                      : "bg-white/65"
+                  }`}
+                >
+                  {/* Header button */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(rec.recId)}
+                    className="w-full text-left"
+                    aria-expanded={expanded}
                   >
-                    <div
-                      className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                        expanded ? "opacity-45 lg:opacity-35" : "opacity-80 lg:opacity-65"
-                      }`}
-                    />
-                    <div
-                      aria-hidden
-                      className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                        expanded ? "w-[3px] opacity-70" : "w-[4px] opacity-85"
-                      } rounded-full bg-gradient-to-b ${a.rail}`}
-                    />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          
 
-                    <div
-                      className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                        dark
-                          ? expanded
-                            ? "bg-slate-950/25"
-                            : "bg-slate-950/22"
-                          : expanded
-                          ? "bg-white/70"
-                          : "bg-white/65"
-                      }`}
-                    >
-                      {/* Header button (tap to expand/collapse) */}
-                      <button
-                        type="button"
-                        onClick={() => toggleExpanded(c.id)}
-                        className="w-full text-left"
-                        aria-expanded={expanded}
+                          {/* Keep emoji as lane vibe (secondary) */}
+                          <span
+                            className={`inline-flex items-center justify-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              dark ? "border-white/10 bg-white/5 text-white/80" : "border-slate-200 bg-white text-slate-700"
+                            }`}
+                            aria-label="Community mode"
+                          >
+                            <span aria-hidden>{c.icon ?? "🤝"}</span>
+                          </span>
+
+                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                            <span className="truncate">{c.title}</span>
+                          </div>
+                        </div>
+
+                        {/* Collapsed: compact teaser (no teaser band) */}
+                        {!expanded && (teaser[0] ?? "").trim().length ? (
+                          <div className="mt-2">
+                            <p
+                              className={`text-sm lg:text-[0.95rem] ${
+                                dark ? "text-slate-100/85" : "text-slate-700"
+                              } line-clamp-2`}
+                            >
+                              {teaser[0]}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        {/* Expanded: show teaser paragraphs normally */}
+                        {expanded && teaser.length ? (
+                          <div className="mt-2 space-y-2">
+                            {teaser.map((p, i) => (
+                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                                {p}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* Chevron bubble */}
+                      <span
+                        className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
+                          dark ? "border-white/10" : "border-slate-200"
+                        }`}
+                        aria-hidden
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              {/* emoji pill (no “Path”) */}
-                              <span
-                                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                                  dark
-                                    ? `border-white/10 ${a.chip}`
-                                    : "border-slate-200 bg-white text-slate-800"
-                                }`}
-                              >
-                                <span className="mr-1.5" aria-hidden>
-                                  {c.icon ?? "🤝"}
-                                </span>
-                                Community
-                              </span>
+                        {!expanded ? (
+                          <span className="relative h-full w-full">
+                            <span
+                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
+                                dark ? "opacity-55" : "opacity-50"
+                              }`}
+                            />
+                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
+                            <span
+                              className={`relative flex h-full w-full items-center justify-center ${
+                                dark ? "text-white" : "text-slate-900"
+                              }`}
+                            >
+                              <ChevronDown className="h-4 w-4" />
+                            </span>
+                          </span>
+                        ) : (
+                          <span
+                            className={`flex h-full w-full items-center justify-center ${
+                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
+                            }`}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </button>
 
-                              <div
-                                className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
-                              >
-                                <span className="truncate">{c.title}</span>
-                              </div>
+                  {/* Expanded content */}
+                  {expanded ? (
+                    <div className="mt-4 lg:mt-5">
+                      {extra.length ? (
+                        <div className="space-y-2 lg:space-y-2.5">
+                          {extra.map((p, i) => (
+                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              {p}
+                            </p>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* Tiny Test */}
+                      <div
+                        className={`mt-4 lg:mt-5 relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
+                          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                        }`}
+                      >
+                        <div
+                          className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
+                            dark ? "opacity-14" : "opacity-10"
+                          }`}
+                          aria-hidden
+                        />
+                        <div
+                          className={`pointer-events-none absolute inset-0 ${dark ? "bg-slate-950/10" : "bg-white/20"}`}
+                          aria-hidden
+                        />
+
+                        <div className="relative">
+                          <div className="flex items-center justify-between gap-3">
+                            <div
+                              className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                                dark ? "text-white/80" : "text-slate-700"
+                              }`}
+                            >
+                              Tiny test
                             </div>
 
-                            {/* Collapsed-only teaser band */}
-                            {!expanded && teaser.length ? (
-                              <div className="relative mt-3 pr-14">
-                                <div
-                                  className={`pointer-events-none absolute inset-y-0 left-0 right-0 rounded-2xl bg-gradient-to-r ${a.rail} ${
-                                    dark ? "opacity-20" : "opacity-14"
-                                  }`}
-                                  aria-hidden
-                                />
-                                <div
-                                  className={`pointer-events-none absolute inset-y-0 left-0 right-0 rounded-2xl ${
-                                    dark ? "bg-slate-950/10" : "bg-white/20"
-                                  } backdrop-blur-[10px]`}
-                                  aria-hidden
-                                />
-                                <div
-                                  className={`pointer-events-none absolute inset-y-0 left-0 right-0 rounded-2xl ${
-                                    dark ? "ring-1 ring-white/10" : "ring-1 ring-black/5"
-                                  }`}
-                                  aria-hidden
-                                />
-
-                                <div className="relative rounded-2xl px-3.5 py-2.5">
-                                  <div className="space-y-2">
-                                    {teaser.map((p, i) => (
-                                      <p
-                                        key={i}
-                                        className={`text-sm lg:text-[0.95rem] ${
-                                          dark ? "text-slate-100/90" : "text-slate-700"
-                                        }`}
-                                      >
-                                        {p}
-                                      </p>
-                                    ))}
-                                  </div>
-
-                                  <div
-                                    className={`mt-2 inline-flex items-center gap-2 text-xs font-semibold ${
-                                      dark ? "text-white/70" : "text-slate-600"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`inline-flex h-1.5 w-1.5 rounded-full bg-gradient-to-r ${a.rail} ${
-                                        dark ? "opacity-90" : "opacity-80"
-                                      }`}
-                                      aria-hidden
-                                    />
-                                    Tap to open
-                                  </div>
-                                </div>
-                              </div>
-                            ) : null}
-
-                            {/* Expanded-only teaser as normal paragraphs */}
-                            {expanded && teaser.length ? (
-                              <div className="mt-2 space-y-2">
-                                {teaser.map((p, i) => (
-                                  <p
-                                    key={i}
-                                    className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                  >
-                                    {p}
-                                  </p>
-                                ))}
-                              </div>
-                            ) : null}
-
-                            {expanded ? (
-                              <div
-                                className={`mt-3 text-xs font-semibold ${
-                                  dark ? "text-white/55" : "text-slate-600"
-                                }`}
-                              >
-                                Tap to close
-                              </div>
-                            ) : null}
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                                dark
+                                  ? "border-white/10 bg-white/5 text-white/70"
+                                  : "border-slate-200 bg-white text-slate-700"
+                              }`}
+                            >
+                              <span aria-hidden>⏱</span> {tiny.eta}
+                            </span>
                           </div>
 
-                          {/* Chevron bubble */}
-                          <span
-                            className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
-                              dark ? "border-white/10" : "border-slate-200"
-                            }`}
-                            aria-hidden
-                          >
-                            {!expanded ? (
-                              <span className="relative h-full w-full">
-                                <span
-                                  className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                    dark ? "opacity-60" : "opacity-55"
-                                  }`}
-                                />
-                                <span
-                                  className={`absolute inset-0 ${
-                                    dark ? "bg-slate-950/20" : "bg-white/20"
-                                  }`}
-                                />
-                                <span
-                                  className={`relative flex h-full w-full items-center justify-center ${
-                                    dark ? "text-white" : "text-slate-900"
-                                  }`}
-                                >
-                                  <ChevronDown className="h-4 w-4" />
-                                </span>
-                              </span>
-                            ) : (
-                              <span
-                                className={`flex h-full w-full items-center justify-center ${
-                                  dark
-                                    ? "bg-white/5 text-white/80"
-                                    : "bg-white text-slate-800"
-                                }`}
-                              >
-                                <ChevronUp className="h-4 w-4" />
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      </button>
+                          <div className="mt-2">
+                            <div
+                              className={`text-sm font-semibold lg:text-[0.95rem] ${
+                                dark ? "text-white/90" : "text-slate-900"
+                              }`}
+                            >
+                              Try this first — don’t overthink it:
+                            </div>
+                            <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
+                              {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                            </div>
+                          </div>
 
-                      {/* Expanded content */}
-                      {expanded ? (
-                        <div className="mt-4 lg:mt-5">
-                          {extra.length ? (
-                            <div className="space-y-2 lg:space-y-2.5">
-                              {extra.map((p, i) => (
-                                <p
-                                  key={i}
-                                  className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                >
-                                  {p}
-                                </p>
-                              ))}
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => toggleSteps(c.id)}
+                              className={`${pillBase} ${pillNeutral}`}
+                            >
+                              {showSteps ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4" />
+                                  Hide steps
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4" />
+                                  Show steps
+                                </>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => onSaveTinyTest(c.id, c.title)}
+                              disabled={tinySaved}
+                              className={`${pillBase} ${
+                                tinySaved
+                                  ? dark
+                                    ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
+                                    : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
+                                  : pillNeutral
+                              }`}
+                            >
+                              {tinySaved ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  Saved
+                                </>
+                              ) : (
+                                <>
+                                  <span aria-hidden>📁</span>
+                                  Add to my Actions
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {tinyJustSaved ? (
+                            <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
+                              ✅ Added to Actions
                             </div>
                           ) : null}
 
-                          {/* Tiny Test */}
-                          <div className="mt-4 lg:mt-5">
+                          {showSteps ? (
                             <div
-                              className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                                dark
-                                  ? "border-white/10 bg-white/5"
-                                  : "border-slate-200 bg-white/80"
+                              className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
+                                dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                               }`}
                             >
-                              {/* NO extra left rail here */}
-                              <div
-                                className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                                  dark ? "opacity-14" : "opacity-10"
-                                }`}
-                                aria-hidden
-                              />
-                              <div
-                                className={`pointer-events-none absolute inset-0 ${
-                                  dark ? "bg-slate-950/10" : "bg-white/20"
-                                }`}
-                                aria-hidden
-                              />
-
-                              <div className="relative">
-                                <div className="flex items-center justify-between gap-3">
-                                  <div
-                                    className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                      dark ? "text-white/80" : "text-slate-700"
-                                    }`}
-                                  >
-                                    Tiny test
-                                  </div>
-
-                                  <span
-                                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                                      dark
-                                        ? "border-white/10 bg-white/5 text-white/70"
-                                        : "border-slate-200 bg-white text-slate-700"
-                                    }`}
-                                  >
-                                    <span aria-hidden>⏱</span> {tiny.eta}
-                                  </span>
-                                </div>
-
-                                <div className="mt-2">
-                                  <div
-                                    className={`text-sm font-semibold lg:text-[0.95rem] ${
-                                      dark ? "text-white/90" : "text-slate-900"
-                                    }`}
-                                  >
-                                    Try this first — keep it simple:
-                                  </div>
-                                  <div
-                                    className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
-                                  >
-                                    {tiny.steps?.[0] ??
-                                      "Try a super small version of it today."}
-                                  </div>
-                                </div>
-
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleSteps(c.id)}
-                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95 ${
-                                      dark
-                                        ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
-                                        : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
-                                    }`}
-                                  >
-                                    {showSteps ? (
-                                      <>
-                                        <ChevronUp className="h-4 w-4" />
-                                        Hide steps
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ChevronDown className="h-4 w-4" />
-                                        Show steps
-                                      </>
-                                    )}
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => onSaveTinyTest(c.id)}
-                                    disabled={tinySaved}
-                                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95 ${
-                                      tinySaved
-                                        ? dark
-                                          ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
-                                          : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
-                                        : dark
-                                        ? "border-white/10 bg-slate-950/40 text-white hover:bg-slate-950/60"
-                                        : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                                    }`}
-                                  >
-                                    {tinySaved ? (
-                                      <>
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Saved
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span aria-hidden>📁</span>
-                                        Add to my Actions
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-
-                                {tinyJustSaved ? (
-                                  <div
-                                    className={`mt-2 text-xs font-semibold ${
-                                      dark ? "text-white/70" : "text-slate-700"
-                                    }`}
-                                  >
-                                    ✅ Added to Actions
-                                  </div>
-                                ) : null}
-
-                                {showSteps ? (
-                                  <div
-                                    className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                      dark
-                                        ? "border-white/10 bg-white/5"
-                                        : "border-slate-200 bg-white/80"
-                                    }`}
-                                  >
-                                    <div
-                                      className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
-                                    >
-                                      {tiny.title}
-                                    </div>
-
-                                    <div className="mt-2 space-y-1.5 lg:space-y-2">
-                                      {tiny.steps.map((step, i) => (
-                                        <div
-                                          key={i}
-                                          className="flex items-start gap-2"
-                                        >
-                                          <span
-                                            className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
-                                              dark
-                                                ? "border-white/10 bg-white/5 text-white/70"
-                                                : "border-slate-200 bg-white text-slate-700"
-                                            }`}
-                                            aria-hidden
-                                          >
-                                            {i + 1}
-                                          </span>
-                                          <div
-                                            className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                          >
-                                            {step}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-
-                                    <div
-                                      className={`mt-2 text-xs font-semibold ${
-                                        dark ? "text-white/55" : "text-slate-600"
-                                      }`}
-                                    >
-                                      Time: {tiny.eta}
-                                    </div>
-
-                                    {tiny.tip ? (
-                                      <div
-                                        className={`mt-2 text-xs ${
-                                          dark ? "text-white/55" : "text-slate-600"
-                                        }`}
-                                      >
-                                        {tiny.tip}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ) : null}
+                              <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                                {tiny.title}
                               </div>
+
+                              <div className="mt-2 space-y-1.5 lg:space-y-2">
+                                {tiny.steps.map((step, i) => (
+                                  <div key={i} className="flex items-start gap-2">
+                                    <span
+                                      className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
+                                        dark
+                                          ? "border-white/10 bg-white/5 text-white/70"
+                                          : "border-slate-200 bg-white text-slate-700"
+                                      }`}
+                                      aria-hidden
+                                    >
+                                      {i + 1}
+                                    </span>
+                                    <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                Time: {tiny.eta}
+                              </div>
+
+                              {tiny.tip ? (
+                                <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                  {tiny.tip}
+                                </div>
+                              ) : null}
                             </div>
-                          </div>
-
-                          {/* Fit check */}
-                          <div className="mt-4 lg:mt-5">
-                            <div
-                              className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                dark ? "text-slate-300/60" : "text-slate-500"
-                              }`}
-                            >
-                              Fit check
-                            </div>
-
-                            <div
-                              className={`mt-1 text-xs ${
-                                dark ? "text-white/55" : "text-slate-600"
-                              }`}
-                            >
-                              Be honest — we’ll adjust what you see next.
-                            </div>
-
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                disabled={locked && selected !== "agree"}
-                                onClick={() => openFeedback(rec, "agree")}
-                                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  selected === "agree"
-                                    ? "border-emerald-400 bg-emerald-400/25 text-emerald-50 ring-2 ring-emerald-400/30"
-                                    : locked
-                                    ? "opacity-40 cursor-not-allowed"
-                                    : dark
-                                    ? "border-emerald-200/12 bg-emerald-300/8 text-emerald-50 hover:bg-emerald-300/12"
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                                }`}
-                              >
-                                <span aria-hidden>👍</span>
-                                {selected === "agree" ? "This fits ✓" : "This fits"}
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={locked && selected !== "mixed"}
-                                onClick={() => openFeedback(rec, "mixed")}
-                                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  selected === "mixed"
-                                    ? "border-amber-400 bg-amber-400/25 text-amber-50 ring-2 ring-amber-400/30"
-                                    : locked
-                                    ? "opacity-40 cursor-not-allowed"
-                                    : dark
-                                    ? "border-amber-200/12 bg-amber-300/8 text-amber-50 hover:bg-amber-300/12"
-                                    : "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
-                                }`}
-                              >
-                                <span aria-hidden>🙂</span>
-                                {selected === "mixed" ? "Kinda ✓" : "Kinda"}
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={locked && selected !== "disagree"}
-                                onClick={() => openFeedback(rec, "disagree")}
-                                className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  selected === "disagree"
-                                    ? "border-rose-400 bg-rose-400/25 text-rose-50 ring-2 ring-rose-400/30"
-                                    : locked
-                                    ? "opacity-40 cursor-not-allowed"
-                                    : dark
-                                    ? "border-rose-200/12 bg-rose-300/8 text-rose-50 hover:bg-rose-300/12"
-                                    : "border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"
-                                }`}
-                              >
-                                <span aria-hidden>👎</span>
-                                {selected === "disagree" ? "Nope ✓" : "Nope"}
-                              </button>
-                            </div>
-
-                            <Link
-                              href={deepDiveHref}
-                              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                                dark
-                                  ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                                  : "bg-violet-600 text-white hover:bg-violet-500"
-                              }`}
-                            >
-                              Go deeper (real options) <ArrowRight className="h-4 w-4" />
-                            </Link>
-                          </div>
+                          ) : null}
                         </div>
-                      ) : null}
+                      </div>
+
+                      {/* Quick check */}
+                      <div className="mt-4 lg:mt-5">
+                        <div
+                          className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                            dark ? "text-slate-300/60" : "text-slate-500"
+                          }`}
+                        >
+                          Quick check on:{" "}
+                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>{c.title}</span>
+                        </div>
+
+                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                          Be honest — we’ll adjust what you see next.
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "agree")}
+                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
+                          >
+                            <span aria-hidden>👍</span>
+                            {selected === "agree" ? "This fits ✓" : "This fits"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "mixed")}
+                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
+                          >
+                            <span aria-hidden>🙂</span>
+                            {selected === "mixed" ? "Kinda ✓" : "Kinda"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "disagree")}
+                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
+                          >
+                            <span aria-hidden>👎</span>
+                            {selected === "disagree" ? "Nope ✓" : "Nope"}
+                          </button>
+                        </div>
+
+                        <Link
+                          href={deepDiveHref}
+                          className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
+                            dark
+                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
+                              : "bg-violet-600 text-white hover:bg-violet-500"
+                          }`}
+                        >
+                          Go deeper (real options) <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div
-              className={`rounded-2xl border p-5 ${
-                dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
-              }`}
-            >
-              <div className={`text-sm font-semibold ${titleC}`}>
-                No community items yet
+                  ) : null}
+                </div>
               </div>
-              <div className={`mt-1 text-sm ${muted}`}>
-                Add items to{" "}
-                <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-                <span className="font-mono text-[0.9em]">
-                  explore/content/community.ts
-                </span>
-                .
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
-      </div>
+      ) : (
+        <div
+          className={`rounded-2xl border p-5 ${
+            dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
+          }`}
+        >
+          <div className={`text-sm font-semibold ${titleC}`}>No community items yet</div>
+          <div className={`mt-1 text-sm ${muted}`}>
+            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">explore/content/community.ts</span>.
+          </div>
+        </div>
+      )}
 
       <FeedbackModal
         open={Boolean(pending)}

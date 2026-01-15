@@ -551,13 +551,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           {/* Careers parity: rank pill */}
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? `border-white/10 ${a.chip}` : "border-slate-200 bg-white text-slate-800"
-                            }`}
-                          >
-                            #{n}
-                          </span>
+                         
 
                           {/* Education identity: icon chip (secondary) */}
                           <span
