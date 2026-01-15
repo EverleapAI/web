@@ -28,7 +28,15 @@ jobs:
         run: npm run build
 
       - name: Create deployment zip
-        run: zip -r release.zip . -x "*.git*"
+        run: |
+          zip -r release.zip . \
+            -x "*.git*" \
+            -x "node_modules/*" \
+            -x ".next/cache/*" \
+            -x ".next/**/*.map" \
+            -x "**/*.map" \
+            -x ".env*" \
+            -x "coverage/*"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
