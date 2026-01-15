@@ -43,11 +43,19 @@ export type MiniCard = {
 
   /**
    * Optional richer fields (use when we want structure without forcing it).
-   * Recommendations can use these later; other lanes can ignore them.
+   * Recommendations can use these; other lanes can ignore them.
    */
   narrative?: string[]; // conversational paragraphs (older teen voice)
   bestFor?: string; // optional callout
   starterExperiment?: string; // optional “try this” prompt
+
+  /**
+   * ✅ Recommendations-only richer fields (card-specific everything).
+   * Other lanes can ignore these safely.
+   */
+  why?: string[]; // per-card reasons (used for the “If you’re the type who likes…” line)
+  hint?: string; // per-card micro nudge / next step (optional; renderer can use or ignore)
+  tags?: string[]; // per-card tags/signals (optional; useful for future filtering)
 
   /**
    * Optional deep link target, if a renderer wants to push somewhere.

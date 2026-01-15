@@ -1,4 +1,3 @@
-// src/app/main/explore/page.tsx
 "use client";
 
 import * as React from "react";
@@ -29,19 +28,99 @@ function displayLabelForSection(s: ExploreSection): string {
   return s.label;
 }
 
-function isRecommendationsLane(key: ExploreKey): boolean {
-  return (
-    key === ("recommendations" as ExploreKey) || key === ("forYou" as ExploreKey)
-  );
+/**
+ * Layout policy per lane.
+ * - "structured": the lane renders ONE rich experience full-width (like Careers)
+ * - "grid": the lane shows multiple chips/cards in a grid
+ *
+ * Future: when Travel/Community/Hobbies become structured, just switch them here.
+ */
+type LaneLayout = "structured" | "grid";
+
+function laneLayoutForKey(key: ExploreKey): LaneLayout {
+  switch (key as string) {
+    case "recommendations":
+    case "forYou":
+    case "education":
+    case "travel":
+    case "community":
+    case "hobbies":
+      return "structured";
+    default:
+      return "grid";
+  }
+}
+
+/**
+ * Header copy per lane.
+ * Keep this centralized so each lane can evolve without touching rendering logic.
+ */
+function headerCopyForKey(
+  key: ExploreKey,
+  section: ExploreSection
+): {
+  laneKicker: string;
+  headline: string;
+  supportLine: string;
+} {
+  const laneKicker = displayLabelForSection(section);
+
+  switch (key as string) {
+    case "recommendations":
+    case "forYou":
+      return {
+        laneKicker,
+        headline: "4 Everleap recommendations for you",
+        supportLine:
+          "Not a forever decision. Pick one lane, run a tiny test, then adjust.",
+      };
+
+    case "education":
+      return {
+        laneKicker,
+        headline: "4 learning paths that fit you",
+        supportLine: "Pick one direction. Try a small first step. If it sticks, go deeper.",
+      };
+
+    case "travel":
+      return {
+        laneKicker,
+        headline: "4 travel styles that match your tempo",
+        supportLine: "Pick one vibe. Try a tiny plan. Upgrade it if you actually want more.",
+      };
+
+    case "community":
+      return {
+        laneKicker,
+        headline: "4 ways to find your people",
+        supportLine:
+          "Choose one setting to try. Notice: do you feel more like yourself there?",
+      };
+
+    case "hobbies":
+      return {
+        laneKicker,
+        headline: "4 hobbies you might actually stick with",
+        supportLine:
+          "Try one. Don’t judge it on day one. Judge it on: “Do I want to do it again?”",
+      };
+
+    default:
+      return {
+        laneKicker,
+        headline: "Pick a chip",
+        supportLine: "Tap a card to explore.",
+      };
+  }
 }
 
 /* ========= Explore tab config ========= */
 
 type TabMeta = {
   subtitle: string;
-  badgeIcon: string; // emoji badge
-  badgeHalo: string; // gradient halo for badge
-  badgeText: string; // text color for emoji
+  badgeIcon: string;
+  badgeHalo: string;
+  badgeText: string;
 };
 
 function metaForSectionKey(key: ExploreKey): TabMeta {
@@ -113,6 +192,15 @@ function useCompactTabs(thresholdPx = 56): boolean {
   return compact;
 }
 
+function preferredStructuredChip(section: ExploreSection): ExploreChip | null {
+  const chips = section.chips ?? [];
+  if (!chips.length) return null;
+
+  // Prefer the chip whose type matches the section key (scales to every lane)
+  const match = chips.find((c) => (c.type as string) === (section.key as string));
+  return match ?? chips[0] ?? null;
+}
+
 export default function ExplorePage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
@@ -132,26 +220,19 @@ export default function ExplorePage() {
 
   const activeSection: ExploreSection = sections[activeIndex] ?? sections[0];
 
-  const renderRecommendationsLane = isRecommendationsLane(activeSection.key);
+  const layout = laneLayoutForKey(activeSection.key);
+  const renderStructured = layout === "structured";
 
-  const recChip: ExploreChip | null = React.useMemo(() => {
-    if (!renderRecommendationsLane) return null;
-    const chips = activeSection.chips ?? [];
-    if (chips.length === 0) return null;
-
-    const preferred =
-      chips.find((c) => (c.type as string) === "recommendations") ?? chips[0];
-
-    return preferred;
-  }, [activeSection.chips, renderRecommendationsLane]);
+  const structuredChip: ExploreChip | null = React.useMemo(() => {
+    if (!renderStructured) return null;
+    return preferredStructuredChip(activeSection);
+  }, [activeSection, renderStructured]);
 
   const compactTabs = useCompactTabs(64);
 
-  // ===== tab strip refs + helpers =====
   const tabStripRef = React.useRef<HTMLDivElement | null>(null);
   const tabRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
 
-  // Show arrows only when strip actually overflows
   const [canScroll, setCanScroll] = React.useState({ left: false, right: false });
 
   const updateCanScroll = React.useCallback(() => {
@@ -181,7 +262,6 @@ export default function ExplorePage() {
     };
   }, [updateCanScroll]);
 
-  // Keep active tab visible
   React.useEffect(() => {
     const btn = tabRefs.current[String(activeKey)];
     if (!btn) return;
@@ -196,7 +276,6 @@ export default function ExplorePage() {
     el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   }
 
-  // Optional: map vertical wheel to horizontal scroll when hovering tabs
   function onStripWheel(e: React.WheelEvent<HTMLDivElement>) {
     const el = tabStripRef.current;
     if (!el) return;
@@ -208,11 +287,16 @@ export default function ExplorePage() {
     el.scrollBy({ left: e.deltaY, behavior: "auto" });
   }
 
-  // Lane header: consistent across lanes
-  const laneTitle = "Recommendations";
   const laneMeta = metaForSectionKey(activeSection.key);
   const laneAccent = `bg-gradient-to-r ${laneMeta.badgeHalo}`;
-  const laneHeaderIcon = "✨"; // must NOT match tab icons (🧭 🎓 🌍 🤝 🎨)
+
+  // Keep width consistent across all lanes now (structured UX everywhere)
+  const pageWidthClass = "max-w-5xl";
+
+  const { laneKicker, headline, supportLine } = headerCopyForKey(
+    activeSection.key,
+    activeSection
+  );
 
   return (
     <AppChrome
@@ -221,8 +305,8 @@ export default function ExplorePage() {
       onThemeChange={setThemeId}
       onGradientChange={setGradientLevel}
     >
-      <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-3">
-        {/* Header (Insights-style, tighter) */}
+      <div className={`mx-auto w-full ${pageWidthClass} px-4 pb-24 pt-3`}>
+        {/* Header */}
         <div className="mb-2">
           <div className="flex items-center gap-3">
             <div
@@ -248,16 +332,14 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Sticky section tabs (standalone pills — no outer container like Insights) */}
+        {/* Sticky tabs */}
         <div className="sticky top-2 z-40 -mx-4 px-4">
           <div className="relative">
-            {/* ambient glow (no border, no glass box) */}
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -top-14 -left-14 h-44 w-44 rounded-full bg-gradient-to-br from-sky-500/14 via-cyan-400/8 to-indigo-500/6 blur-3xl opacity-45" />
               <div className="absolute -bottom-16 -right-12 h-48 w-48 rounded-full bg-gradient-to-br from-violet-500/12 via-fuchsia-400/7 to-sky-500/6 blur-3xl opacity-35" />
             </div>
 
-            {/* arrows + strip */}
             <div className={`relative ${compactTabs ? "py-2" : "py-3"}`}>
               {canScroll.left ? (
                 <button
@@ -316,9 +398,7 @@ export default function ExplorePage() {
                     ? "text-white/85 hover:bg-white/10"
                     : "text-slate-800 hover:bg-slate-100";
 
-                  const badgeSize = compactTabs
-                    ? "h-7 w-7 rounded-2xl"
-                    : "h-9 w-9 rounded-2xl";
+                  const badgeSize = compactTabs ? "h-7 w-7 rounded-2xl" : "h-9 w-9 rounded-2xl";
                   const badgeText = compactTabs ? "text-sm" : "text-base";
 
                   return (
@@ -332,38 +412,27 @@ export default function ExplorePage() {
                       className={`${base} ${shape} ${activeBg}`}
                     >
                       <div className="flex items-center gap-2">
-                        {/* badge bubble (single visual element) */}
                         <span
                           className={`relative inline-flex ${badgeSize} items-center justify-center overflow-hidden border ${
                             dark ? "border-white/10" : "border-black/10"
                           }`}
                           aria-hidden
                         >
-                          <span
-                            className={`absolute inset-0 bg-gradient-to-br ${meta.badgeHalo}`}
-                          />
+                          <span className={`absolute inset-0 bg-gradient-to-br ${meta.badgeHalo}`} />
                           <span className={`relative ${badgeText} ${meta.badgeText}`}>
                             {meta.badgeIcon}
                           </span>
                         </span>
 
                         <div className="min-w-0">
-                          <div
-                            className={`font-semibold ${
-                              compactTabs ? "text-xs" : "text-sm"
-                            }`}
-                          >
+                          <div className={`font-semibold ${compactTabs ? "text-xs" : "text-sm"}`}>
                             <span className="truncate">{label}</span>
                           </div>
 
                           {!compactTabs ? (
                             <div
                               className={`mt-1 text-[0.75rem] leading-4 ${
-                                active
-                                  ? "text-white/70"
-                                  : dark
-                                  ? "text-white/55"
-                                  : "text-slate-600"
+                                active ? "text-white/70" : dark ? "text-white/55" : "text-slate-600"
                               }`}
                             >
                               {meta.subtitle}
@@ -391,54 +460,41 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Lane card */}
+        {/* Lane shell */}
         <div
           className={`mt-4 rounded-3xl border p-4 shadow-sm ${
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          {/* Lane header (consistent) */}
+          {/* Lane header */}
           <div className="mb-3">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`relative inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-2xl border ${
-                    dark ? "border-white/10" : "border-black/10"
-                  }`}
-                  aria-hidden
-                >
-                  <div className={`absolute inset-0 ${laneAccent}`} />
-                  <div className="relative text-[0.95rem] text-white">
-                    {laneHeaderIcon}
-                  </div>
-                </div>
+            <div
+              className={`text-[0.7rem] font-semibold uppercase tracking-[0.28em] ${
+                dark ? "text-white/80" : "text-slate-700"
+              }`}
+            >
+              {laneKicker}
+            </div>
 
-                <div className="min-w-0">
-                  <h2
-                    className={`truncate text-lg font-semibold tracking-tight ${
-                      dark ? "text-white" : "text-slate-900"
-                    }`}
-                  >
-                    {laneTitle}
-                  </h2>
-                </div>
-              </div>
+            <div className={`mt-1 text-base font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+              {headline}
+            </div>
 
-              <div className="mt-3 h-[2px] w-28 overflow-hidden rounded-full">
-                <div
-                  className={`h-full w-full ${laneAccent} ${
-                    dark ? "opacity-65" : "opacity-45"
-                  }`}
-                />
-              </div>
+            <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+              {supportLine}
+            </div>
+
+            <div className="mt-3 h-[2px] w-28 overflow-hidden rounded-full">
+              <div className={`h-full w-full ${laneAccent} ${dark ? "opacity-65" : "opacity-45"}`} />
             </div>
           </div>
 
-          {renderRecommendationsLane ? (
-            recChip ? (
+          {/* Lane content */}
+          {renderStructured ? (
+            structuredChip ? (
               (() => {
-                const Renderer = RENDERERS[recChip.type as ExploreChipType];
-                return <Renderer key={recChip.id} chip={recChip} dark={dark} />;
+                const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
+                return <Renderer key={structuredChip.id} chip={structuredChip} dark={dark} />;
               })()
             ) : (
               <div
@@ -448,7 +504,7 @@ export default function ExplorePage() {
                     : "border-black/10 bg-white text-slate-700"
                 }`}
               >
-                No recommendations content found for this lane yet.
+                No content found for this lane yet.
               </div>
             )
           ) : (

@@ -3,7 +3,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, RefreshCw, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  RefreshCw,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
@@ -24,16 +30,6 @@ import {
   clearFeedbackForRecommendation,
 } from "../state/feedbackStore";
 
-/* ============================================================================
-   Explore › RecommendationsRenderer
-   - page.tsx owns the lane shell (one border like Insights)
-   - this renderer outputs ONLY: ack/recal + recommendation cards + modal
-
-   IMPORTANT:
-   - feedbackStore caches a "batch" and only refreshes when generationRunId changes.
-   - we include a stable hash of current content in runId so copy edits show instantly.
-============================================================================ */
-
 type RecAccent = {
   rail: string;
   chip: string;
@@ -42,20 +38,14 @@ type RecAccent = {
 };
 
 const REC_ACCENTS: RecAccent[] = [
+  // #1 — Sky / Cyan / Indigo
   {
     rail: "from-sky-300 via-cyan-300 to-indigo-300",
     chip: "bg-sky-300/15 text-sky-100 border-sky-200/20",
     ctaDark: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
-    // toned down vs before
     halo: "from-sky-500/10 via-cyan-400/6 to-indigo-500/6",
   },
-  {
-    rail: "from-emerald-300 via-teal-300 to-sky-300",
-    chip: "bg-emerald-300/15 text-emerald-100 border-emerald-200/20",
-    ctaDark:
-      "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
-    halo: "from-emerald-500/9 via-teal-400/6 to-sky-500/6",
-  },
+  // #2 — Amber / Orange / Rose (make it clearly different from #1)
   {
     rail: "from-amber-300 via-orange-300 to-rose-300",
     chip: "bg-amber-300/15 text-amber-100 border-amber-200/20",
@@ -63,6 +53,15 @@ const REC_ACCENTS: RecAccent[] = [
       "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
     halo: "from-amber-500/9 via-orange-400/6 to-rose-500/6",
   },
+  // #3 — Emerald / Teal / Sky
+  {
+    rail: "from-emerald-300 via-teal-300 to-sky-300",
+    chip: "bg-emerald-300/15 text-emerald-100 border-emerald-200/20",
+    ctaDark:
+      "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
+    halo: "from-emerald-500/9 via-teal-400/6 to-sky-500/6",
+  },
+  // #4 — Violet / Fuchsia / Sky
   {
     rail: "from-violet-300 via-fuchsia-300 to-sky-300",
     chip: "bg-violet-300/15 text-violet-100 border-violet-200/20",
@@ -84,31 +83,20 @@ type AckState =
   | { kind: "comment_disagree"; feedbackId: string; message: string }
   | null;
 
-/* ============================================================================
-   Minimal typing for chip.area
-============================================================================ */
-
 type ExploreRecommendationCard = {
   id: string;
   title: string;
   short: string;
   icon?: string;
-};
-
-type ExploreNextMove = {
-  id: string;
-  title: string;
-  blurb: string;
+  why?: string[];
+  hint?: string;
+  tags?: string[];
 };
 
 type ExploreRecommendationsArea = {
-  glowClass?: string;
-  headline?: string;
-  summary?: string;
   hint?: string;
   signals?: string[];
   cards?: ExploreRecommendationCard[];
-  nextMoves?: ExploreNextMove[];
 };
 
 function asRecommendationsArea(input: unknown): ExploreRecommendationsArea {
@@ -119,6 +107,7 @@ function asRecommendationsArea(input: unknown): ExploreRecommendationsArea {
 
   const toCards = (v: unknown): ExploreRecommendationCard[] | undefined => {
     if (!Array.isArray(v)) return undefined;
+
     const out: ExploreRecommendationCard[] = [];
     for (const item of v) {
       const it = item as Record<string, unknown>;
@@ -126,32 +115,27 @@ function asRecommendationsArea(input: unknown): ExploreRecommendationsArea {
       const title = typeof it?.title === "string" ? it.title : "";
       const short = typeof it?.short === "string" ? it.short : "";
       const icon = typeof it?.icon === "string" ? it.icon : undefined;
-      if (id && title) out.push({ id, title, short, icon });
-    }
-    return out;
-  };
 
-  const toMoves = (v: unknown): ExploreNextMove[] | undefined => {
-    if (!Array.isArray(v)) return undefined;
-    const out: ExploreNextMove[] = [];
-    for (const item of v) {
-      const it = item as Record<string, unknown>;
-      const id = typeof it?.id === "string" ? it.id : "";
-      const title = typeof it?.title === "string" ? it.title : "";
-      const blurb = typeof it?.blurb === "string" ? it.blurb : "";
-      if (id && title) out.push({ id, title, blurb });
+      const why = Array.isArray(it?.why)
+        ? (it.why as unknown[]).map((x) => String(x))
+        : undefined;
+
+      const hint = typeof it?.hint === "string" ? it.hint : undefined;
+
+      const tags = Array.isArray(it?.tags)
+        ? (it.tags as unknown[]).map((x) => String(x))
+        : undefined;
+
+      if (id && title) out.push({ id, title, short, icon, why, hint, tags });
     }
+
     return out;
   };
 
   return {
-    glowClass: typeof obj.glowClass === "string" ? obj.glowClass : undefined,
-    headline: typeof obj.headline === "string" ? obj.headline : undefined,
-    summary: typeof obj.summary === "string" ? obj.summary : undefined,
     hint: typeof obj.hint === "string" ? obj.hint : undefined,
     signals: toStrArr(obj.signals),
     cards: toCards(obj.cards),
-    nextMoves: toMoves(obj.nextMoves),
   };
 }
 
@@ -159,10 +143,6 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-/**
- * Stable lightweight hash → base36.
- * Used ONLY to invalidate cached batches when copy changes.
- */
 function hashString(input: string): string {
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) {
@@ -172,17 +152,24 @@ function hashString(input: string): string {
   return (h >>> 0).toString(36);
 }
 
+/**
+ * IMPORTANT:
+ * We include why/hint/tags so the feedbackStore batch refreshes
+ * when copy changes (otherwise it can “stick”).
+ */
 function areaSignature(area: ExploreRecommendationsArea): string {
   const cards = Array.isArray(area.cards) ? area.cards : [];
-  const signals = Array.isArray(area.signals) ? area.signals : [];
-  const hint = area.hint ?? "";
-
   const payload =
-    `hint:${hint}||signals:${signals.join("|")}||cards:` +
+    "cards:" +
     cards
-      .map((c) => `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}`)
+      .map((c) => {
+        const why = Array.isArray(c.why) ? c.why.join("|") : "";
+        const tags = Array.isArray(c.tags) ? c.tags.join("|") : "";
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~why:${why}~hint:${
+          c.hint ?? ""
+        }~tags:${tags}`;
+      })
       .join("||");
-
   return hashString(payload);
 }
 
@@ -193,12 +180,27 @@ function mapCardsToRecommendations(
 ): RecommendationItem[] {
   const generatedAt = nowIso();
   const cards = Array.isArray(area.cards) ? area.cards : [];
-  const signals = Array.isArray(area.signals) ? area.signals : [];
-  const tags: string[] = signals.map((s) => s.trim()).filter(Boolean);
+
+  // Lane-level are OPTIONAL fallbacks only
+  const laneSignals = Array.isArray(area.signals) ? area.signals : [];
+  const laneHint = typeof area.hint === "string" ? area.hint.trim() : "";
 
   return cards.map((c, idx) => {
     const laneId = String(c.id ?? `lane_${idx}`);
     const recId = `explore.recommendations.${laneId}.v1`;
+
+    const cardWhy = Array.isArray(c.why)
+      ? c.why.map((s) => String(s).trim()).filter(Boolean).slice(0, 3)
+      : [];
+
+    const cardTags = Array.isArray(c.tags)
+      ? c.tags.map((s) => String(s).trim()).filter(Boolean)
+      : [];
+
+    const fallbackWhy = laneSignals
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .slice(0, 3);
 
     return {
       recId,
@@ -207,11 +209,17 @@ function mapCardsToRecommendations(
       domain: "career",
       title: String(c.title ?? "Recommendation"),
       summary: String(c.short ?? ""),
-      why: signals.length
-        ? signals.slice(0, 3)
-        : ["A good next experiment based on your answers."],
-      nextStep: area.hint ? String(area.hint) : undefined,
-      tags,
+
+      // ✅ card-specific first, lane-level only as a fallback
+      why: cardWhy.length ? cardWhy : fallbackWhy.length ? fallbackWhy : ["Based on your answers so far."],
+      nextStep:
+        typeof c.hint === "string" && c.hint.trim()
+          ? c.hint.trim()
+          : laneHint
+          ? laneHint
+          : undefined,
+      tags: cardTags.length ? cardTags : [],
+
       signals: undefined,
       modelScore: 0.5,
       constraints: [],
@@ -228,24 +236,11 @@ function laneIdFromRec(rec: RecommendationItem): string {
   return parts.length >= 4 ? parts[2] : rec.recId;
 }
 
-function iconForLane(area: ExploreRecommendationsArea, laneId: string): string {
-  const cards = Array.isArray(area.cards) ? area.cards : [];
-  const match = cards.find((c) => String(c.id) === laneId);
-  return match?.icon && typeof match.icon === "string" ? match.icon : "🧭";
-}
-
-/**
- * Render summary as spoken paragraphs:
- * - Primary separator: blank line blocks (\n\n)
- * - Fallback: single newlines (\n)
- *
- * Also: strip any legacy "Tiny test:" line(s) from authored copy,
- * because Tiny Tests now live in a dedicated UI block below.
- */
 function splitSpokenParagraphs(input: string): string[] {
   const raw = String(input ?? "");
   const normalized = raw.replace(/\r\n/g, "\n");
 
+  // Keep your narratives clean if they include “Tiny test:” lines
   const withoutTiny = normalized
     .split("\n")
     .filter((line) => !/^\s*tiny test\s*:/i.test(line.trim()))
@@ -264,10 +259,6 @@ function splitSpokenParagraphs(input: string): string[] {
     .filter(Boolean);
   return lines.length ? lines : [];
 }
-
-/* ============================================================================
-   Tiny Tests (career-specific placeholders)
-============================================================================ */
 
 type TinyTest = {
   title: string;
@@ -372,21 +363,35 @@ function tinyTestForLane(laneId: string): TinyTest {
   return TINY_TESTS[laneId] ?? fallback;
 }
 
-export default function RecommendationsRenderer({
-  chip,
-  dark,
-}: ExploreRendererProps) {
-  const area = React.useMemo(() => asRecommendationsArea(chip.area), [chip.area]);
+/**
+ * Fix the awkward phrasing:
+ * This function must *finish* the “If you’re the type who likes…” lead-in.
+ */
+function teenCoachWhy(why: string[]): string {
+  const bits = (why ?? [])
+    .map((s) => String(s).trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!bits.length) return "it matches the vibe of how you’ve been answering.";
+
+  const clean = (s: string) => s.replace(/[.]+$/, "");
+
+  if (bits.length === 1) return `${clean(bits[0])}, this usually clicks.`;
+
+  return `${clean(bits[0])} and ${clean(bits[1])}, this usually clicks.`;
+}
+
+export default function RecommendationsRenderer({ chip, dark }: ExploreRendererProps) {
 
   const [visible, setVisible] = React.useState<RecommendationItem[]>([]);
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
-  // Save to Actions (UI-only for now)
-  const [savedTinyByRec, setSavedTinyByRec] = React.useState<
-    Record<string, boolean>
-  >({});
+  const [savedTinyByRec, setSavedTinyByRec] = React.useState<Record<string, boolean>>({});
   const [justSavedRecId, setJustSavedRecId] = React.useState<string | null>(null);
+  const [showStepsByRec, setShowStepsByRec] = React.useState<Record<string, boolean>>({});
+  const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
@@ -414,15 +419,20 @@ export default function RecommendationsRenderer({
 
     setVisible(getAndMarkVisibleRecommendations());
     return () => unsub();
-  }, [chip.id, chip.area]); // ✅ constant length; HMR-safe
+  }, [chip.id, chip.area]);
 
   const state = getExploreFeedbackState();
   const batchStatus = state.batch?.status ?? "active";
   const suggestRecal = shouldSuggestRecalibrate();
 
+  function toggleExpanded(recId: string) {
+    setExpandedRecId((cur) => (cur === recId ? null : recId));
+  }
+
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
     const existing = getLatestFeedbackForRecommendation(rec.recId);
 
+    // Tap the same choice again => clear it (nice “undo”)
     if (existing && existing.response === response) {
       clearFeedbackForRecommendation(rec.recId);
       setVisible(getAndMarkVisibleRecommendations());
@@ -459,8 +469,7 @@ export default function RecommendationsRenderer({
       setAck({
         kind: "comment_disagree",
         feedbackId: fb.feedbackId,
-        message:
-          "Got it — want me to recalibrate your suggestions based on what you wrote?",
+        message: "Got it. Want me to tweak your next set based on what you wrote?",
       });
     }
 
@@ -469,7 +478,6 @@ export default function RecommendationsRenderer({
   }
 
   function onSaveTinyTest(rec: RecommendationItem, laneId: string) {
-    // UI-only now — later we’ll route this into an Actions store.
     setSavedTinyByRec((prev) => ({ ...prev, [rec.recId]: true }));
     setJustSavedRecId(rec.recId);
     window.setTimeout(() => {
@@ -484,9 +492,34 @@ export default function RecommendationsRenderer({
     });
   }
 
+  function toggleSteps(recId: string) {
+    setShowStepsByRec((prev) => ({ ...prev, [recId]: !prev[recId] }));
+  }
+
+  // Shared button language (Tiny Test + Quick Check)
+  const pillBase =
+    "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95";
+  const pillNeutral = dark
+    ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50";
+
+  function pillSelected(kind: "agree" | "mixed" | "disagree") {
+    if (dark) {
+      if (kind === "agree")
+        return "border-emerald-300/30 bg-emerald-300/10 text-emerald-50 ring-2 ring-emerald-300/25";
+      if (kind === "mixed")
+        return "border-amber-300/30 bg-amber-300/10 text-amber-50 ring-2 ring-amber-300/25";
+      return "border-rose-300/30 bg-rose-300/10 text-rose-50 ring-2 ring-rose-300/25";
+    }
+    if (kind === "agree")
+      return "border-emerald-200 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-200/60";
+    if (kind === "mixed")
+      return "border-amber-200 bg-amber-50 text-amber-900 ring-2 ring-amber-200/60";
+    return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
+  }
+
   return (
     <section className="space-y-3">
-      {/* ACK + RECALIBRATE live INSIDE the lane shell (page.tsx) now */}
       {ack ? (
         <div
           className={`rounded-2xl border px-4 py-3 ${
@@ -498,14 +531,14 @@ export default function RecommendationsRenderer({
               className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Thanks — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={handleRecalibrate}
-                  className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                  className={`${pillBase} ${
                     dark
                       ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
                       : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
@@ -515,15 +548,7 @@ export default function RecommendationsRenderer({
                   Recalibrate
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setAck(null)}
-                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                    dark
-                      ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                  }`}
-                >
+                <button type="button" onClick={() => setAck(null)} className={`${pillBase} ${pillNeutral}`}>
                   Dismiss
                 </button>
               </div>
@@ -537,7 +562,7 @@ export default function RecommendationsRenderer({
           <button
             type="button"
             onClick={handleRecalibrate}
-            className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition active:scale-95 ${
+            className={`${pillBase} ${
               dark
                 ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
                 : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
@@ -554,21 +579,26 @@ export default function RecommendationsRenderer({
       ) : null}
 
       {visible.length ? (
-        <div className="space-y-3">
+        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
           {visible.slice(0, 4).map((rec, slotIdx) => {
             const a = REC_ACCENTS[slotIdx] ?? REC_ACCENTS[0];
             const laneId = laneIdFromRec(rec);
 
             const feedback = getLatestFeedbackForRecommendation(rec.recId);
-            const locked = Boolean(feedback);
             const selected = feedback?.response;
 
-            const icon = iconForLane(area, laneId);
             const spoken = rec.summary ? splitSpokenParagraphs(rec.summary) : [];
+            const teaser = spoken.slice(0, 2);
+            const extra = spoken.slice(2);
 
             const tiny = tinyTestForLane(laneId);
             const tinySaved = Boolean(savedTinyByRec[rec.recId]);
             const tinyJustSaved = justSavedRecId === rec.recId;
+
+            const showSteps = Boolean(showStepsByRec[rec.recId]);
+            const expanded = expandedRecId === rec.recId;
+
+            const n = slotIdx + 1;
 
             return (
               <div
@@ -577,207 +607,334 @@ export default function RecommendationsRenderer({
                   dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                 }`}
               >
-                {/* smaller, darker halo (less “wash out”) */}
-                <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo}`} />
+                <div
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                  }`}
+                />
                 <div
                   aria-hidden
-                  className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full bg-gradient-to-b ${a.rail} opacity-80`}
+                  className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
+                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-90 lg:opacity-70"
+                  } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
                 <div
-                  className={`relative rounded-3xl px-5 py-4 ${
-                    dark ? "bg-slate-950/35" : "bg-white/70"
+                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
+                    dark
+                      ? expanded
+                        ? "bg-slate-950/25"
+                        : "bg-slate-950/22"
+                      : expanded
+                      ? "bg-white/70"
+                      : "bg-white/65"
                   }`}
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                          dark
-                            ? `border-white/10 ${a.chip}`
-                            : "border-slate-200 bg-white text-slate-800"
-                        }`}
-                      >
-                        <Sparkles className="mr-1 h-3.5 w-3.5" />
-                        Try this
-                      </span>
+                  {/* Header button (tap to expand/collapse) */}
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(rec.recId)}
+                    className="w-full text-left"
+                    aria-expanded={expanded}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              dark ? `border-white/10 ${a.chip}` : "border-slate-200 bg-white text-slate-800"
+                            }`}
+                          >
+                            #{n}
+                          </span>
 
-                      <div className={`text-base font-semibold ${titleC}`}>
-                        <span className="mr-2" aria-hidden>
-                          {icon}
-                        </span>
-                        {rec.title}
-                      </div>
-                    </div>
-
-                    {spoken.length ? (
-                      <div className="mt-2 space-y-2">
-                        {spoken.map((p, i) => (
-                          <p key={i} className={`text-sm ${muted}`}>
-                            {p}
-                          </p>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Tiny Test */}
-                  <div className="mt-4">
-                    <div
-                      className={`flex items-center justify-between gap-3 ${
-                        dark ? "text-slate-300/60" : "text-slate-500"
-                      }`}
-                    >
-                      <div className="text-[0.7rem] font-semibold uppercase tracking-[0.22em]">
-                        Tiny test
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => onSaveTinyTest(rec, laneId)}
-                        disabled={tinySaved}
-                        className={`shrink-0 inline-flex items-center justify-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                          tinySaved
-                            ? dark
-                              ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
-                              : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
-                            : dark
-                            ? "border-white/10 bg-slate-950/40 text-white hover:bg-slate-950/60"
-                            : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                        }`}
-                      >
-                        {tinySaved ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4" />
-                            Saved ✓
-                          </>
-                        ) : (
-                          <>
-                            <span aria-hidden>🗂️</span>
-                            Save to Actions
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div
-                      className={`mt-2 rounded-2xl border p-3 ${
-                        dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-                      }`}
-                    >
-                      <div className={`text-sm font-semibold ${titleC}`}>{tiny.title}</div>
-
-                      <div className="mt-2 space-y-1.5">
-                        {tiny.steps.map((step, i) => (
-                          <div key={i} className="flex items-start gap-2">
-                            <span
-                              className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
-                                dark
-                                  ? "border-white/10 bg-white/5 text-white/70"
-                                  : "border-slate-200 bg-white text-slate-700"
-                              }`}
-                              aria-hidden
-                            >
-                              {i + 1}
-                            </span>
-                            <div className={`text-sm ${muted}`}>{step}</div>
+                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                            <span className="truncate">{rec.title}</span>
                           </div>
-                        ))}
-                      </div>
-
-                      <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
-                        Time: {tiny.eta}
-                      </div>
-
-                      {tinySaved ? (
-                        <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/60" : "text-slate-600"}`}>
-                          In your Actions tab as a to-do.
                         </div>
-                      ) : tinyJustSaved ? (
-                        <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
-                          ✅ Added to Actions
+
+                        {/* Collapsed: compact teaser so #2–#4 have content */}
+                        {!expanded && (teaser[0] ?? "").trim().length ? (
+                          <div className="mt-2">
+                            <p
+                              className={`text-sm lg:text-[0.95rem] ${
+                                dark ? "text-slate-100/85" : "text-slate-700"
+                              } line-clamp-2`}
+                            >
+                              {teaser[0]}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        {/* Expanded: show teaser paragraphs normally */}
+                        {expanded && teaser.length ? (
+                          <div className="mt-2 space-y-2">
+                            {teaser.map((p, i) => (
+                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                                {p}
+                              </p>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* Chevron bubble */}
+                      <span
+                        className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
+                          dark ? "border-white/10" : "border-slate-200"
+                        }`}
+                        aria-hidden
+                      >
+                        {!expanded ? (
+                          <span className="relative h-full w-full">
+                            <span
+                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
+                                dark ? "opacity-55" : "opacity-50"
+                              }`}
+                            />
+                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
+                            <span className={`relative flex h-full w-full items-center justify-center ${dark ? "text-white" : "text-slate-900"}`}>
+                              <ChevronDown className="h-4 w-4" />
+                            </span>
+                          </span>
+                        ) : (
+                          <span className={`flex h-full w-full items-center justify-center ${dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"}`}>
+                            <ChevronUp className="h-4 w-4" />
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Expanded content */}
+                  {expanded ? (
+                    <div className="mt-4 lg:mt-5">
+                      {extra.length ? (
+                        <div className="space-y-2 lg:space-y-2.5">
+                          {extra.map((p, i) => (
+                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              {p}
+                            </p>
+                          ))}
                         </div>
                       ) : null}
+
+                      {/* Coach line (now card-specific because rec.why is card-specific) */}
+                      <div className="mt-3 space-y-3">
+                        <p className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                          <span className={`${dark ? "text-white/70" : "text-slate-700"} font-semibold`}>
+                            If you’re the type who likes…
+                          </span>{" "}
+                          {teenCoachWhy(rec.why)}
+                        </p>
+
+                        {/* Tiny Test callout (CLEAN: remove inner left rail to avoid collision) */}
+                        <div
+                          className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
+                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                          }`}
+                        >
+                          {/* keep the soft wash, no extra vertical rail */}
+                          <div
+                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
+                              dark ? "opacity-16" : "opacity-10"
+                            }`}
+                            aria-hidden
+                          />
+                          <div
+                            className={`pointer-events-none absolute inset-0 ${
+                              dark ? "bg-slate-950/10" : "bg-white/20"
+                            }`}
+                            aria-hidden
+                          />
+
+                          <div className="relative">
+                            <div className="flex items-center justify-between gap-3">
+                              <div
+                                className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                                  dark ? "text-white/80" : "text-slate-700"
+                                }`}
+                              >
+                                Tiny test
+                              </div>
+
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                                  dark
+                                    ? "border-white/10 bg-white/5 text-white/70"
+                                    : "border-slate-200 bg-white text-slate-700"
+                                }`}
+                              >
+                                <span aria-hidden>⏱</span> {tiny.eta}
+                              </span>
+                            </div>
+
+                            <div className="mt-2">
+                              <div
+                                className={`text-sm font-semibold lg:text-[0.95rem] ${
+                                  dark ? "text-white/90" : "text-slate-900"
+                                }`}
+                              >
+                                Try this first — don’t overthink it:
+                              </div>
+                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
+                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleSteps(rec.recId)}
+                                className={`${pillBase} ${pillNeutral}`}
+                              >
+                                {showSteps ? (
+                                  <>
+                                    <ChevronUp className="h-4 w-4" />
+                                    Hide steps
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="h-4 w-4" />
+                                    Show steps
+                                  </>
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => onSaveTinyTest(rec, laneId)}
+                                disabled={tinySaved}
+                                className={`${pillBase} ${
+                                  tinySaved
+                                    ? dark
+                                      ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
+                                      : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
+                                    : pillNeutral
+                                }`}
+                              >
+                                {tinySaved ? (
+                                  <>
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    Saved
+                                  </>
+                                ) : (
+                                  <>
+                                    <span aria-hidden>📁</span>
+                                    Add to my Actions
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            {tinyJustSaved ? (
+                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
+                                ✅ Added to Actions
+                              </div>
+                            ) : null}
+
+                            {showSteps ? (
+                              <div
+                                className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
+                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                                }`}
+                              >
+                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                                  {tiny.title}
+                                </div>
+
+                                <div className="mt-2 space-y-1.5 lg:space-y-2">
+                                  {tiny.steps.map((step, i) => (
+                                    <div key={i} className="flex items-start gap-2">
+                                      <span
+                                        className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
+                                          dark
+                                            ? "border-white/10 bg-white/5 text-white/70"
+                                            : "border-slate-200 bg-white text-slate-700"
+                                        }`}
+                                        aria-hidden
+                                      >
+                                        {i + 1}
+                                      </span>
+                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                  Time: {tiny.eta}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quick check */}
+                      <div className="mt-4 lg:mt-5">
+                        <div
+                          className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                            dark ? "text-slate-300/60" : "text-slate-500"
+                          }`}
+                        >
+                          Quick check on:{" "}
+                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
+                            {rec.title}
+                          </span>
+                        </div>
+
+                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                          Be honest — we’ll adjust what you see next.
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "agree")}
+                            className={`${pillBase} ${
+                              selected === "agree" ? pillSelected("agree") : pillNeutral
+                            }`}
+                          >
+                            <span aria-hidden>👍</span>
+                            {selected === "agree" ? "This fits ✓" : "This fits"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "mixed")}
+                            className={`${pillBase} ${
+                              selected === "mixed" ? pillSelected("mixed") : pillNeutral
+                            }`}
+                          >
+                            <span aria-hidden>🙂</span>
+                            {selected === "mixed" ? "Kinda ✓" : "Kinda"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openFeedback(rec, "disagree")}
+                            className={`${pillBase} ${
+                              selected === "disagree" ? pillSelected("disagree") : pillNeutral
+                            }`}
+                          >
+                            <span aria-hidden>👎</span>
+                            {selected === "disagree" ? "Nope ✓" : "Nope"}
+                          </button>
+                        </div>
+
+                        <Link
+                          href={careerDeepHref(laneId)}
+                          className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
+                            dark
+                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
+                              : "bg-sky-600 text-white hover:bg-sky-500"
+                          }`}
+                        >
+                          See what this career is really like <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Feedback + Dive deeper */}
-                  <div className="mt-4">
-                    <div
-                      className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                        dark ? "text-slate-300/60" : "text-slate-500"
-                      }`}
-                    >
-                      Quick check
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={locked && selected !== "agree"}
-                        onClick={() => openFeedback(rec, "agree")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                          selected === "agree"
-                            ? "border-emerald-400 bg-emerald-400/25 text-emerald-50 ring-2 ring-emerald-400/30"
-                            : locked
-                            ? "opacity-40 cursor-not-allowed"
-                            : dark
-                            ? "border-emerald-200/12 bg-emerald-300/8 text-emerald-50 hover:bg-emerald-300/12"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                        }`}
-                      >
-                        <span aria-hidden>👍</span>
-                        {selected === "agree" ? "This fits ✓" : "This fits"}
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={locked && selected !== "mixed"}
-                        onClick={() => openFeedback(rec, "mixed")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                          selected === "mixed"
-                            ? "border-amber-400 bg-amber-400/25 text-amber-50 ring-2 ring-amber-400/30"
-                            : locked
-                            ? "opacity-40 cursor-not-allowed"
-                            : dark
-                            ? "border-amber-200/12 bg-amber-300/8 text-amber-50 hover:bg-amber-300/12"
-                            : "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
-                        }`}
-                      >
-                        <span aria-hidden>🙂</span>
-                        {selected === "mixed" ? "Kinda ✓" : "Kinda"}
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={locked && selected !== "disagree"}
-                        onClick={() => openFeedback(rec, "disagree")}
-                        className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold transition active:scale-95 ${
-                          selected === "disagree"
-                            ? "border-rose-400 bg-rose-400/25 text-rose-50 ring-2 ring-rose-400/30"
-                            : locked
-                            ? "opacity-40 cursor-not-allowed"
-                            : dark
-                            ? "border-rose-200/12 bg-rose-300/8 text-rose-50 hover:bg-rose-300/12"
-                            : "border-rose-200 bg-rose-50 text-rose-900 hover:bg-rose-100"
-                        }`}
-                      >
-                        <span aria-hidden>👎</span>
-                        {selected === "disagree" ? "Nope ✓" : "Nope"}
-                      </button>
-                    </div>
-
-                    <Link
-                      href={careerDeepHref(laneId)}
-                      className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                        dark
-                          ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                          : "bg-sky-600 text-white hover:bg-sky-500"
-                      }`}
-                    >
-                      Dive deeper <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
+                  ) : null}
                 </div>
               </div>
             );
@@ -792,10 +949,7 @@ export default function RecommendationsRenderer({
           <div className={`text-sm font-semibold ${titleC}`}>No recommendations yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
             Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">
-              explore/content/recommendations.ts
-            </span>
-            .
+            <span className="font-mono text-[0.9em]">explore/content/recommendations.ts</span>.
           </div>
         </div>
       )}
