@@ -93,7 +93,9 @@ function productUxLane(): CareerLane {
           return <OverviewStep step={step} progress={progress} state={state} />;
 
         case "specialties":
-          return <SpecialtiesStep step={step} progress={progress} setProgress={setProgress} />;
+          return (
+            <SpecialtiesStep step={step} progress={progress} setProgress={setProgress} />
+          );
 
         case "forecast":
           return <ForecastStep step={step} progress={progress} />;
@@ -105,7 +107,9 @@ function productUxLane(): CareerLane {
           return <LocalLinksStep step={step} progress={progress} />;
 
         case "plan7Day":
-          return <Plan7DayStep step={step} progress={progress} setProgress={setProgress} />;
+          return (
+            <Plan7DayStep step={step} progress={progress} setProgress={setProgress} />
+          );
 
         case "dayInLife":
           return (
@@ -118,7 +122,9 @@ function productUxLane(): CareerLane {
               }
               setProgress={
                 (setProgress as unknown) as React.Dispatch<
-                  React.SetStateAction<import("@/components/career/stepperTypes").StepperPersistedState>
+                  React.SetStateAction<
+                    import("@/components/career/stepperTypes").StepperPersistedState
+                  >
                 >
               }
             />
@@ -135,7 +141,9 @@ function productUxLane(): CareerLane {
 }
 
 function placeholderLane(laneId: StepperLaneId, title: string, subtitle: string): CareerLane {
-  const steps: StepperStep[] = [{ id: "overview", title: "Overview", subtitle: "Coming soon", tag: "soon" }];
+  const steps: StepperStep[] = [
+    { id: "overview", title: "Overview", subtitle: "Coming soon", tag: "soon" },
+  ];
 
   return {
     laneId,
@@ -145,7 +153,9 @@ function placeholderLane(laneId: StepperLaneId, title: string, subtitle: string)
     renderStep: () => (
       <section className="space-y-3">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">{title}</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
+            {title}
+          </div>
           <h2 className="mt-2 text-lg font-semibold text-slate-50">Coming soon</h2>
           <p className="mt-2 text-sm text-slate-200/85">{subtitle}</p>
         </div>
@@ -159,8 +169,19 @@ export function getCareerLane(id: StepperLaneId): CareerLane | null {
     case "productUx":
       return productUxLane();
 
+    case "gameDesigner":
+      return placeholderLane(
+        "gameDesigner",
+        "Game Designer",
+        "Design rules, challenges, and rewards that make play feel amazing"
+      );
+
     case "healthHumanSupport":
-      return placeholderLane("healthHumanSupport", "Health + Human Support", "Coaching, wellness, patient support");
+      return placeholderLane(
+        "healthHumanSupport",
+        "Health + Human Support",
+        "Coaching, wellness, patient support"
+      );
 
     case "educationCommunityPrograms":
       return placeholderLane(
@@ -170,7 +191,11 @@ export function getCareerLane(id: StepperLaneId): CareerLane | null {
       );
 
     case "independentBuilder":
-      return placeholderLane("independentBuilder", "Independent Builder", "Creator / startup / entrepreneurship");
+      return placeholderLane(
+        "independentBuilder",
+        "Independent Builder",
+        "Creator / startup / entrepreneurship"
+      );
 
     default:
       return null;

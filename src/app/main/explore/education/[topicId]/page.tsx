@@ -21,113 +21,53 @@ import {
   type GradientLevel,
 } from "@/theme/everleapVisuals";
 
+import education from "@/app/main/explore/content/education";
+import type { ExploreOpportunity, ExploreOpportunityGroup } from "../../content/types";
+
 type Topic = {
   id: string;
   title: string;
   icon: string;
   spoken: string[]; // audio-ready paragraphs
-  localIdeas: { title: string; note: string }[];
-  onlineIdeas: { title: string; note: string }[];
+
+  // NEW: buckets (local / national / online)
+  opportunities?: ExploreOpportunityGroup;
+
+  // Optional: “Tiny plan” ideas (kept prototype-simple)
+  nextMoves?: { title: string; note: string }[];
 };
 
-const ZIP_DEFAULT = "92901";
+const ZIP_DEFAULT = "94901";
 
-// Prototype-only: hard-coded topics (Option B)
-// IMPORTANT: keys MUST match education.ts card ids (topic slugs).
-const TOPICS: Record<string, Topic> = {
-  "learn-to-code": {
-    id: "learn-to-code",
-    title: "Learn to code",
-    icon: "💻",
-    spoken: [
-      "Alright — if you’ve ever thought “I wish I could build my own thing”… coding is the unlock.",
-      "This isn’t about being a genius. It’s about learning enough to make something real.",
-      "We’ll keep it simple: one small project, one week, and you’ll feel the difference.",
-    ],
-    localIdeas: [
-      {
-        title: "Try a community college intro class",
-        note: `Search “intro to programming” near ${ZIP_DEFAULT}. Look for beginner-friendly + project-based.`,
-      },
-      {
-        title: "Find a teen-friendly coding group",
-        note: "Search “Hack Club”, “coding club”, or “youth coding” nearby. You want friendly humans + momentum.",
-      },
-    ],
-    onlineIdeas: [
-      {
-        title: "Pick one beginner track (and stick to it)",
-        note: "One platform for 7 days. No hopping. Consistency beats “the perfect resource.”",
-      },
-      {
-        title: "Build one tiny finished thing",
-        note: "A personal homepage, a habit tracker, or a tiny game. One finished thing beats ten half-starts.",
-      },
-    ],
-  },
+// Build topic map from the canonical lane content (education.ts)
+const TOPICS: Record<string, Topic> = Object.fromEntries(
+  (education.cards ?? []).map((c) => {
+    const spoken = String(c.short ?? "")
+      .replace(/\r\n/g, "\n")
+      .trim()
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
 
-  "science-deep-dive": {
-    id: "science-deep-dive",
-    title: "Science deep-dive",
-    icon: "🧪",
-    spoken: [
-      "This is for the part of you that can’t stop asking “yeah but WHY?”",
-      "The move is simple: pick one topic you actually care about… and go one layer deeper than everyone else.",
-      "You’re not memorizing facts. You’re training your brain to think clearly.",
-    ],
-    localIdeas: [
-      {
-        title: "Museum / science center day",
-        note: `Search for science museums near ${ZIP_DEFAULT}. Go in with one question you want answered.`,
-      },
-      {
-        title: "Talk to a real scientist (yes, seriously)",
-        note: "Email a university lab or local org. Ask what they’re working on and what surprises them most.",
-      },
-    ],
-    onlineIdeas: [
-      {
-        title: "One topic channel, one playlist",
-        note: "Follow one strong educator and binge one series — then write your own 8-sentence explanation.",
-      },
-      {
-        title: "Do a mini experiment",
-        note: "Track a claim, test it, write what happened. You’re building the habit of evidence.",
-      },
-    ],
-  },
+    const nextMoves =
+      (education.nextMoves ?? []).slice(0, 3).map((m) => ({
+        title: m.title,
+        note: m.blurb,
+      })) ?? [];
 
-  "public-speaking": {
-    id: "public-speaking",
-    title: "Public speaking",
-    icon: "🗣️",
-    spoken: [
-      "Public speaking isn’t a personality trait. It’s reps.",
-      "You don’t need confidence first — confidence shows up AFTER you practice.",
-      "We’ll make it low-stakes: tiny audiences, short runs, quick wins.",
-    ],
-    localIdeas: [
+    return [
+      c.id,
       {
-        title: "Toastmasters (youth-friendly options exist)",
-        note: `Search near ${ZIP_DEFAULT}. You want supportive, structured practice.`,
-      },
-      {
-        title: "Volunteer to present once",
-        note: "School club, community group, class — one small moment where you’re the voice.",
-      },
-    ],
-    onlineIdeas: [
-      {
-        title: "Record 60 seconds daily",
-        note: "One minute. One idea. Watch it back. Adjust one thing. Repeat.",
-      },
-      {
-        title: "Steal a great structure",
-        note: "Hook → point → example → takeaway. Most people ramble — structure makes you memorable.",
-      },
-    ],
-  },
-};
+        id: c.id,
+        title: c.title,
+        icon: c.icon ?? "🎓",
+        spoken,
+        opportunities: c.opportunities,
+        nextMoves,
+      } satisfies Topic,
+    ];
+  })
+);
 
 function safeParam(v: unknown): string {
   if (Array.isArray(v)) return String(v[0] ?? "");
@@ -136,6 +76,114 @@ function safeParam(v: unknown): string {
 
 function titleForTopicId(topicId: string): string {
   return TOPICS[topicId]?.title ?? "Education deep dive";
+}
+
+function OppCard({
+  item,
+  dark,
+  icon,
+}: {
+  item: ExploreOpportunity;
+  dark: boolean;
+  icon: React.ReactNode;
+}) {
+  const titleC = dark ? "text-white" : "text-slate-900";
+  const muted = dark ? "text-white/70" : "text-slate-600";
+  const sub = [item.provider, item.location].filter(Boolean).join(" • ");
+
+  const body = (
+    <>
+      <div className={`flex items-center gap-2 text-sm font-semibold ${titleC}`}>
+        {icon}
+        <span className="truncate">{item.name}</span>
+      </div>
+
+      {sub ? <div className={`mt-1 text-xs ${muted}`}>{sub}</div> : null}
+
+      {item.note ? (
+        <div className={`mt-1 text-sm ${dark ? "text-white/75" : "text-slate-700"}`}>
+          {item.note}
+        </div>
+      ) : null}
+
+      {item.meta ? <div className={`mt-2 text-[0.72rem] ${muted}`}>{item.meta}</div> : null}
+    </>
+  );
+
+  if (item.url && item.url.trim().length) {
+    return (
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noreferrer"
+        className={`block rounded-2xl border p-3 transition active:scale-[0.99] ${
+          dark
+            ? "border-white/10 bg-white/5 hover:bg-white/10"
+            : "border-black/10 bg-white hover:bg-slate-50"
+        }`}
+      >
+        {body}
+      </a>
+    );
+  }
+
+  return (
+    <div
+      className={`rounded-2xl border p-3 ${
+        dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
+      }`}
+    >
+      {body}
+    </div>
+  );
+}
+
+function Bucket({
+  title,
+  subtitle,
+  icon,
+  items,
+  dark,
+  panel,
+}: {
+  title: string;
+  subtitle?: string;
+  icon: React.ReactNode;
+  items: ExploreOpportunity[];
+  dark: boolean;
+  panel: string;
+}) {
+  if (!items.length) return null;
+
+  return (
+    <div className={`rounded-3xl border p-4 ${panel}`}>
+      <div
+        className={`text-xs font-semibold uppercase tracking-[0.2em] ${
+          dark ? "text-white/60" : "text-slate-500"
+        }`}
+      >
+        {title}
+      </div>
+
+      {subtitle ? (
+        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+          {subtitle}
+        </div>
+      ) : null}
+
+      <div className="mt-3 space-y-3">
+        {items.slice(0, 8).map((x, idx) => (
+          <OppCard key={`${title}-${idx}-${x.name}`} item={x} dark={dark} icon={icon} />
+        ))}
+      </div>
+
+      {items.length > 8 ? (
+        <div className={`mt-3 text-[0.72rem] ${dark ? "text-white/55" : "text-slate-600"}`}>
+          + {items.length - 8} more (we can show these later as “More options”)
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export default function EducationDeepDivePage() {
@@ -153,14 +201,16 @@ export default function EducationDeepDivePage() {
     : "border-black/10 bg-slate-50";
 
   // Big inner lane shell (matches Careers vibe)
-  const laneShell = dark
-    ? "border-white/10 bg-white/5"
-    : "border-black/10 bg-white";
+  const laneShell = dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white";
   const laneGlow = dark
     ? "bg-gradient-to-br from-emerald-500/22 via-teal-400/12 to-cyan-500/10"
     : "bg-gradient-to-br from-emerald-400/25 via-teal-300/14 to-cyan-300/12";
 
   const showNotFound = !topic;
+
+  const opp = topic?.opportunities;
+  const hasOpp =
+    Boolean((opp?.local?.length ?? 0) + (opp?.national?.length ?? 0) + (opp?.online?.length ?? 0));
 
   return (
     <AppChrome
@@ -189,11 +239,7 @@ export default function EducationDeepDivePage() {
               >
                 Explore
               </div>
-              <div
-                className={`mt-0.5 text-sm ${
-                  dark ? "text-white/70" : "text-slate-600"
-                }`}
-              >
+              <div className={`mt-0.5 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
                 Education • {titleForTopicId(topicId)}
               </div>
             </div>
@@ -245,20 +291,11 @@ export default function EducationDeepDivePage() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h1
-                    className={`text-lg font-semibold ${
-                      dark ? "text-white" : "text-slate-900"
-                    }`}
-                  >
+                  <h1 className={`text-lg font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
                     {topic?.title ?? "Topic not found"}
                   </h1>
-                  <div
-                    className={`mt-1 text-sm ${
-                      dark ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Prototype deep dive page (dynamic route). Local stuff will
-                    later use the user’s zip code.
+                  <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                    This page turns your interest into real options: local doors, bigger programs, and online paths.
                   </div>
 
                   {/* ZIP pill (prototype signal) */}
@@ -288,13 +325,8 @@ export default function EducationDeepDivePage() {
                     <AlertTriangle className="h-4 w-4 opacity-70" />
                     This topic isn’t wired up yet.
                   </div>
-                  <div
-                    className={`mt-1 text-sm ${
-                      dark ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Totally normal for the prototype. Pick a topic from Education
-                    and you’ll land on a real page.
+                  <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                    Totally normal for the prototype. Pick a topic from Education and you’ll land on a real page.
                   </div>
 
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -315,105 +347,91 @@ export default function EducationDeepDivePage() {
                   {/* Spoken coach copy */}
                   <div className="mt-4 space-y-2">
                     {topic.spoken.map((p, i) => (
-                      <p
-                        key={i}
-                        className={`text-sm ${
-                          dark ? "text-white/75" : "text-slate-700"
-                        }`}
-                      >
+                      <p key={i} className={`text-sm ${dark ? "text-white/75" : "text-slate-700"}`}>
                         {p}
                       </p>
                     ))}
                   </div>
 
-                  {/* Two columns: Local + Online */}
-                  <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className={`rounded-3xl border p-4 ${panel}`}>
-                      <div
-                        className={`text-xs font-semibold uppercase tracking-[0.2em] ${
-                          dark ? "text-white/60" : "text-slate-500"
-                        }`}
-                      >
-                        Local options
-                      </div>
+                  {/* Buckets: Local + National + Online */}
+                  {hasOpp ? (
+                    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Bucket
+                        title="Near you"
+                        subtitle={`Based on ZIP ${ZIP_DEFAULT} (prototype).`}
+                        icon={<MapPin className="h-4 w-4 opacity-70" />}
+                        items={opp?.local ?? []}
+                        dark={dark}
+                        panel={panel}
+                      />
 
-                      <div className="mt-3 space-y-3">
-                        {topic.localIdeas.map((x) => (
-                          <div
-                            key={x.title}
-                            className={`rounded-2xl border p-3 ${
-                              dark
-                                ? "border-white/10 bg-white/5"
-                                : "border-black/10 bg-white"
-                            }`}
-                          >
-                            <div
-                              className={`flex items-center gap-2 text-sm font-semibold ${
-                                dark ? "text-white" : "text-slate-900"
-                              }`}
-                            >
-                              <MapPin className="h-4 w-4 opacity-70" />
-                              {x.title}
-                            </div>
-                            <div
-                              className={`mt-1 text-xs ${
-                                dark ? "text-white/70" : "text-slate-600"
-                              }`}
-                            >
-                              {x.note}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <Bucket
+                        title="Bigger programs"
+                        subtitle="Recognizable programs you can apply to or join."
+                        icon={<Sparkles className="h-4 w-4 opacity-70" />}
+                        items={opp?.national ?? []}
+                        dark={dark}
+                        panel={panel}
+                      />
 
-                      <div
-                        className={`mt-3 text-[0.72rem] ${
-                          dark ? "text-white/55" : "text-slate-600"
-                        }`}
-                      >
-                        Later: we’ll plug in real nearby places based on zip.
+                      <div className="sm:col-span-2">
+                        <Bucket
+                          title="Online anytime"
+                          subtitle="Start today. Finish something small. Then decide."
+                          icon={<Sparkles className="h-4 w-4 opacity-70" />}
+                          items={opp?.online ?? []}
+                          dark={dark}
+                          panel={panel}
+                        />
                       </div>
                     </div>
-
-                    <div className={`rounded-3xl border p-4 ${panel}`}>
+                  ) : (
+                    <div className={`mt-5 rounded-3xl border p-4 ${panel}`}>
                       <div
                         className={`text-xs font-semibold uppercase tracking-[0.2em] ${
                           dark ? "text-white/60" : "text-slate-500"
                         }`}
                       >
-                        Online options
+                        Options coming soon
+                      </div>
+                      <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                        This topic doesn’t have opportunity lists yet. Add them in{" "}
+                        <span className="font-mono text-[0.9em]">education.ts</span> under{" "}
+                        <span className="font-mono text-[0.9em]">cards[].opportunities</span>.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mini plan (optional, uses lane nextMoves) */}
+                  {topic.nextMoves?.length ? (
+                    <div className="mt-5">
+                      <div
+                        className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                          dark ? "text-white/60" : "text-slate-500"
+                        }`}
+                      >
+                        A tiny plan (7 days)
                       </div>
 
                       <div className="mt-3 space-y-3">
-                        {topic.onlineIdeas.map((x) => (
+                        {topic.nextMoves.slice(0, 3).map((m) => (
                           <div
-                            key={x.title}
+                            key={m.title}
                             className={`rounded-2xl border p-3 ${
-                              dark
-                                ? "border-white/10 bg-white/5"
-                                : "border-black/10 bg-white"
+                              dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
                             }`}
                           >
-                            <div
-                              className={`flex items-center gap-2 text-sm font-semibold ${
-                                dark ? "text-white" : "text-slate-900"
-                              }`}
-                            >
-                              <Sparkles className="h-4 w-4 opacity-70" />
-                              {x.title}
+                            <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+                              {m.title}
                             </div>
-                            <div
-                              className={`mt-1 text-xs ${
-                                dark ? "text-white/70" : "text-slate-600"
-                              }`}
-                            >
-                              {x.note}
+                            <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                              {m.note}
                             </div>
                           </div>
                         ))}
                       </div>
 
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <button
                           type="button"
                           className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition active:scale-95 ${
@@ -424,16 +442,12 @@ export default function EducationDeepDivePage() {
                         >
                           Build my plan <ArrowRight className="h-4 w-4" />
                         </button>
-                        <div
-                          className={`mt-2 text-[0.72rem] ${
-                            dark ? "text-white/55" : "text-slate-600"
-                          }`}
-                        >
+                        <div className={`mt-2 text-[0.72rem] ${dark ? "text-white/55" : "text-slate-600"}`}>
                           Prototype only (button doesn’t do anything yet).
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ) : null}
                 </>
               )}
             </div>

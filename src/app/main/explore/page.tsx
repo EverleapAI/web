@@ -1,6 +1,8 @@
+// src/app/main/explore/page.tsx
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -32,8 +34,6 @@ function displayLabelForSection(s: ExploreSection): string {
  * Layout policy per lane.
  * - "structured": the lane renders ONE rich experience full-width (like Careers)
  * - "grid": the lane shows multiple chips/cards in a grid
- *
- * Future: when Travel/Community/Hobbies become structured, just switch them here.
  */
 type LaneLayout = "structured" | "grid";
 
@@ -53,7 +53,6 @@ function laneLayoutForKey(key: ExploreKey): LaneLayout {
 
 /**
  * Header copy per lane.
- * Keep this centralized so each lane can evolve without touching rendering logic.
  */
 function headerCopyForKey(
   key: ExploreKey,
@@ -79,14 +78,16 @@ function headerCopyForKey(
       return {
         laneKicker,
         headline: "4 learning paths that fit you",
-        supportLine: "Pick one direction. Try a small first step. If it sticks, go deeper.",
+        supportLine:
+          "Pick one direction. Try a small first step. If it sticks, go deeper.",
       };
 
     case "travel":
       return {
         laneKicker,
         headline: "4 travel styles that match your tempo",
-        supportLine: "Pick one vibe. Try a tiny plan. Upgrade it if you actually want more.",
+        supportLine:
+          "Pick one vibe. Try a tiny plan. Upgrade it if you actually want more.",
       };
 
     case "community":
@@ -196,9 +197,130 @@ function preferredStructuredChip(section: ExploreSection): ExploreChip | null {
   const chips = section.chips ?? [];
   if (!chips.length) return null;
 
-  // Prefer the chip whose type matches the section key (scales to every lane)
-  const match = chips.find((c) => (c.type as string) === (section.key as string));
+  const match = chips.find(
+    (c) => (c.type as string) === (section.key as string)
+  );
   return match ?? chips[0] ?? null;
+}
+
+/* ========= lane-level emotional media break (MP4 first, JPG fallback) ========= */
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(Boolean(mq.matches));
+    onChange();
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+
+  return reduced;
+}
+
+function LaneMediaBreak({
+  laneKey,
+  dark,
+  accentHalo,
+}: {
+  laneKey: ExploreKey;
+  dark: boolean;
+  accentHalo: string;
+}) {
+  const reducedMotion = usePrefersReducedMotion();
+
+  // ✅ show ONLY for "structured experience" lanes that need a media break
+  const shouldShowCareers =
+    (laneKey as string) === "forYou" || (laneKey as string) === "recommendations";
+  const shouldShowEducation = (laneKey as string) === "education";
+
+  // ✅ IMPORTANT: hooks must be called every render, so no early return before hooks
+  const [videoFailed, setVideoFailed] = React.useState(false);
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  // ✅ reset fail state when you switch lanes so it always retries properly
+  React.useEffect(() => {
+    setVideoFailed(false);
+    setImageFailed(false);
+  }, [laneKey]);
+
+  if (!shouldShowCareers && !shouldShowEducation) return null;
+
+  // Careers assets (existing behavior)
+  const careersMp4 = "/images/explore/careers/careers.mp4";
+  const careersPoster = "/images/explore/careers/careers.jpg";
+
+  // Education asset (new behavior)
+  const educationPoster = "/images/education/1.jpg";
+
+  const showVideo = shouldShowCareers && !reducedMotion && !videoFailed;
+  const poster = shouldShowEducation ? educationPoster : careersPoster;
+
+  const showImage = !imageFailed;
+
+  return (
+    <div className="mt-3">
+      <div
+        className={`relative overflow-hidden rounded-2xl border ${
+          dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
+        }`}
+      >
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentHalo} ${
+            dark ? "opacity-35" : "opacity-20"
+          }`}
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 ${
+            dark ? "bg-slate-950/25" : "bg-white/10"
+          }`}
+        />
+
+        {/* ✅ Careers: MP4 fallback to JPG. Education: JPG only. */}
+        {showVideo ? (
+          <video
+            className="relative h-[140px] w-full object-cover sm:h-[160px] lg:h-[180px]"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={careersPoster}
+            onError={() => setVideoFailed(true)}
+          >
+            <source src={careersMp4} type="video/mp4" />
+          </video>
+        ) : showImage ? (
+          <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
+            <Image
+              src={poster}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+              className="object-cover"
+              priority={false}
+              onError={() => setImageFailed(true)}
+            />
+          </div>
+        ) : (
+          <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]" />
+        )}
+
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 ${
+            dark
+              ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
+              : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
+          }`}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function ExplorePage() {
@@ -233,7 +355,10 @@ export default function ExplorePage() {
   const tabStripRef = React.useRef<HTMLDivElement | null>(null);
   const tabRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const [canScroll, setCanScroll] = React.useState({ left: false, right: false });
+  const [canScroll, setCanScroll] = React.useState({
+    left: false,
+    right: false,
+  });
 
   const updateCanScroll = React.useCallback(() => {
     const el = tabStripRef.current;
@@ -265,7 +390,11 @@ export default function ExplorePage() {
   React.useEffect(() => {
     const btn = tabRefs.current[String(activeKey)];
     if (!btn) return;
-    btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    btn.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
   }, [activeKey]);
 
   function nudgeStrip(dir: "left" | "right") {
@@ -290,7 +419,6 @@ export default function ExplorePage() {
   const laneMeta = metaForSectionKey(activeSection.key);
   const laneAccent = `bg-gradient-to-r ${laneMeta.badgeHalo}`;
 
-  // Keep width consistent across all lanes now (structured UX everywhere)
   const pageWidthClass = "max-w-5xl";
 
   const { laneKicker, headline, supportLine } = headerCopyForKey(
@@ -325,7 +453,11 @@ export default function ExplorePage() {
               >
                 Explore
               </div>
-              <div className={`mt-0.5 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+              <div
+                className={`mt-0.5 text-sm ${
+                  dark ? "text-white/70" : "text-slate-600"
+                }`}
+              >
                 Let’s find what fits you.
               </div>
             </div>
@@ -376,7 +508,9 @@ export default function ExplorePage() {
                 onWheel={onStripWheel}
                 className={`flex w-full gap-2 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory
                   [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
-                  ${canScroll.left ? "sm:pl-11" : ""} ${canScroll.right ? "sm:pr-11" : ""}`}
+                  ${canScroll.left ? "sm:pl-11" : ""} ${
+                  canScroll.right ? "sm:pr-11" : ""
+                }`}
               >
                 {sections.map((s) => {
                   const active = s.key === activeKey;
@@ -398,7 +532,9 @@ export default function ExplorePage() {
                     ? "text-white/85 hover:bg-white/10"
                     : "text-slate-800 hover:bg-slate-100";
 
-                  const badgeSize = compactTabs ? "h-7 w-7 rounded-2xl" : "h-9 w-9 rounded-2xl";
+                  const badgeSize = compactTabs
+                    ? "h-7 w-7 rounded-2xl"
+                    : "h-9 w-9 rounded-2xl";
                   const badgeText = compactTabs ? "text-sm" : "text-base";
 
                   return (
@@ -418,21 +554,33 @@ export default function ExplorePage() {
                           }`}
                           aria-hidden
                         >
-                          <span className={`absolute inset-0 bg-gradient-to-br ${meta.badgeHalo}`} />
-                          <span className={`relative ${badgeText} ${meta.badgeText}`}>
+                          <span
+                            className={`absolute inset-0 bg-gradient-to-br ${meta.badgeHalo}`}
+                          />
+                          <span
+                            className={`relative ${badgeText} ${meta.badgeText}`}
+                          >
                             {meta.badgeIcon}
                           </span>
                         </span>
 
                         <div className="min-w-0">
-                          <div className={`font-semibold ${compactTabs ? "text-xs" : "text-sm"}`}>
+                          <div
+                            className={`font-semibold ${
+                              compactTabs ? "text-xs" : "text-sm"
+                            }`}
+                          >
                             <span className="truncate">{label}</span>
                           </div>
 
                           {!compactTabs ? (
                             <div
                               className={`mt-1 text-[0.75rem] leading-4 ${
-                                active ? "text-white/70" : dark ? "text-white/55" : "text-slate-600"
+                                active
+                                  ? "text-white/70"
+                                  : dark
+                                  ? "text-white/55"
+                                  : "text-slate-600"
                               }`}
                             >
                               {meta.subtitle}
@@ -476,17 +624,36 @@ export default function ExplorePage() {
               {laneKicker}
             </div>
 
-            <div className={`mt-1 text-base font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+            <div
+              className={`mt-1 text-base font-semibold ${
+                dark ? "text-white" : "text-slate-900"
+              }`}
+            >
               {headline}
             </div>
 
-            <div className={`mt-1 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+            <div
+              className={`mt-1 text-sm ${
+                dark ? "text-white/70" : "text-slate-600"
+              }`}
+            >
               {supportLine}
             </div>
 
             <div className="mt-3 h-[2px] w-28 overflow-hidden rounded-full">
-              <div className={`h-full w-full ${laneAccent} ${dark ? "opacity-65" : "opacity-45"}`} />
+              <div
+                className={`h-full w-full ${laneAccent} ${
+                  dark ? "opacity-65" : "opacity-45"
+                }`}
+              />
             </div>
+
+            {/* ✅ emotional media break (now includes Education image break) */}
+            <LaneMediaBreak
+              laneKey={activeSection.key}
+              dark={dark}
+              accentHalo={laneMeta.badgeHalo}
+            />
           </div>
 
           {/* Lane content */}
@@ -494,7 +661,13 @@ export default function ExplorePage() {
             structuredChip ? (
               (() => {
                 const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
-                return <Renderer key={structuredChip.id} chip={structuredChip} dark={dark} />;
+                return (
+                  <Renderer
+                    key={structuredChip.id}
+                    chip={structuredChip}
+                    dark={dark}
+                  />
+                );
               })()
             ) : (
               <div

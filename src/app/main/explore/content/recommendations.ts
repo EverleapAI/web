@@ -46,6 +46,33 @@ const recommendations: ExploreArea = {
   ],
 
   cards: [
+    // ✅ NEW (put first so it shows in the top 4)
+    {
+      id: "gameDesigner",
+      icon: "🎮",
+      title: "Game Designer",
+      short:
+        "You’re basically a vibes engineer — but for fun.\n\n" +
+        "Game design is choosing rules, rewards, and challenges so a player *feels* something: tension, curiosity, pride, chaos, flow.\n\n" +
+        "If you’ve ever thought “this level is unfair” or “this is addictive” or “this is boring,” you’re already thinking like a designer.\n\n" +
+        "Tiny task: pick a simple game and change ONE rule. Watch what happens.",
+      visualBreak: {
+        asset: {
+          src: "/images/explore/careers/4.jpg",
+          kind: "process",
+          alt: "Teen at a messy desk moving paper cards around, testing rules for a simple homemade game.",
+        },
+        constraints: { noTextOverlay: true, noPolishedStock: true },
+      },
+      why: [
+        "You like experimenting with rules and seeing how behavior changes.",
+        "You notice what feels fun vs frustrating (and you want to fix it).",
+        "You enjoy fast feedback loops — you try something, test it, adjust.",
+      ],
+      hint: "Change one rule in a simple game and test it with one person.",
+      tags: ["systems", "creativity", "fast-feedback", "player-psychology"],
+    },
+
     {
       id: "productUx",
       icon: "🧩",
@@ -55,6 +82,14 @@ const recommendations: ExploreArea = {
         "Product and UX is about noticing what’s confusing or annoying — and making it better for real people.\n\n" +
         "If you like building things and you care how people experience them, this might be your lane.\n\n" +
         "Tiny test: pick an app you use, redesign one screen, and show it to two people. See what they say.",
+      visualBreak: {
+        asset: {
+          src: "/images/explore/careers/1.jpg",
+          kind: "process",
+          alt: "Person sketching a phone screen on paper, crossing out one layout and trying a simpler one.",
+        },
+        constraints: { noTextOverlay: true, noPolishedStock: true },
+      },
       why: [
         "You notice friction fast — clunky flows and confusing screens jump out at you.",
         "You care about real people using the thing, not just the idea of it.",
@@ -73,6 +108,14 @@ const recommendations: ExploreArea = {
         "This path is about helping people through physical, mental, or emotional stuff — and actually making their day better.\n\n" +
         "If people come to you when they’re struggling, that’s not random.\n\n" +
         "Tiny test: talk to someone who works in a helping role and ask what makes the job feel worth it.",
+      visualBreak: {
+        asset: {
+          src: "/images/explore/careers/2.jpg",
+          kind: "human",
+          alt: "Two people sitting quietly on a bench, one listening closely while the other talks.",
+        },
+        constraints: { noTextOverlay: true, noPolishedStock: true },
+      },
       why: [
         "People trust you with real stuff — you’re steady when it matters.",
         "You get satisfaction from making someone’s day meaningfully better.",
@@ -91,6 +134,14 @@ const recommendations: ExploreArea = {
         "You might be teaching, running programs, or organizing groups so things actually work.\n\n" +
         "If you like helping people level up and hate wasted potential, this could be you.\n\n" +
         "Tiny test: help out with one group or program and notice what parts give you energy.",
+      visualBreak: {
+        asset: {
+          src: "/images/explore/careers/3.jpg",
+          kind: "human",
+          alt: "A small group around a table with notebooks open, one person pointing while others follow along.",
+        },
+        constraints: { noTextOverlay: true, noPolishedStock: true },
+      },
       why: [
         "You can see people’s potential and you hate when it gets wasted.",
         "You like building environments where others can win (systems, support, structure).",

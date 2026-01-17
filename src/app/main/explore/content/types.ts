@@ -26,40 +26,111 @@ export type NextMove = {
   blurb: string;
 };
 
+/* ============================================================
+   Visual Break (Layer 1 Careers emphasis)
+   One quiet image moment inserted between narrative + Tiny Task.
+   No text overlay. No captions required.
+   ============================================================ */
+
+export type VisualBreakAsset = {
+  /** Public path, e.g. "/images/explore/careers/game-designer.jpg" */
+  src: string;
+  /** Intent (safe to ignore today) */
+  kind?: "process" | "human" | "place" | "artifact" | "abstract";
+  /** Accessibility alt text */
+  alt: string;
+};
+
+export type VisualBreak = {
+  asset: VisualBreakAsset;
+
+  /** Non-blocking hints */
+  constraints?: {
+    noTextOverlay?: boolean;
+    noPolishedStock?: boolean;
+  };
+};
+
+/* ============================================================
+   NEW: Opportunity types (Education + future lanes)
+   Curated, real-world “doors to walk through”.
+   ============================================================ */
+
+export type ExploreOpportunity = {
+  /** Short label users will recognize */
+  name: string;
+
+  /** Org / provider (optional but useful for credibility) */
+  provider?: string;
+
+  /** Where it happens (city/region) or “Online” */
+  location?: string;
+
+  /** Why it’s a good fit / what you’d do there (1 short line) */
+  note?: string;
+
+  /** Optional URL you can wire up later in the UI */
+  url?: string;
+
+  /** Optional hints: cost/age/season/time commitment */
+  meta?: string;
+};
+
+export type ExploreOpportunityGroup = {
+  /** Nearby / Bay Area / 94901-ish */
+  local?: ExploreOpportunity[];
+
+  /** Recognizable programs beyond local region */
+  national?: ExploreOpportunity[];
+
+  /** Online-anytime paths */
+  online?: ExploreOpportunity[];
+};
+
 /**
  * Mini card used inside each ExploreArea.
- * NOTE: Recommendations is richer, but it remains Explore-only.
+ * NOTE:
+ * - Recommendations is richer, but remains Explore-only.
+ * - Layer 1 Careers uses `short` as the canonical narrative source.
  */
 export type MiniCard = {
   id: string;
-  icon: string; // emoji string (kept compatible with existing UI)
+  icon: string; // emoji string
   title: string;
 
   /**
-   * Short description (used everywhere).
-   * For Recommendations, this is the main conversational narrative.
+   * Canonical conversational narrative.
+   * Renderer is responsible for paragraph splitting.
    */
   short: string;
 
   /**
-   * Optional richer fields (use when we want structure without forcing it).
-   * Recommendations can use these; other lanes can ignore them.
+   * Optional structured extensions (safe to ignore by renderers).
    */
-  narrative?: string[]; // conversational paragraphs (older teen voice)
-  bestFor?: string; // optional callout
-  starterExperiment?: string; // optional “try this” prompt
+  narrative?: string[];
+  bestFor?: string;
+  starterExperiment?: string;
 
   /**
-   * ✅ Recommendations-only richer fields (card-specific everything).
-   * Other lanes can ignore these safely.
+   * Recommendations-only (Layer 1 Careers)
    */
-  why?: string[]; // per-card reasons (used for the “If you’re the type who likes…” line)
-  hint?: string; // per-card micro nudge / next step (optional; renderer can use or ignore)
-  tags?: string[]; // per-card tags/signals (optional; useful for future filtering)
+  why?: string[]; // card-specific reasons
+  hint?: string; // micro nudge / next step
+  tags?: string[]; // optional tags/signals
 
   /**
-   * Optional deep link target, if a renderer wants to push somewhere.
-   * (e.g. Recommendations -> /main/career/[laneId]?mode=explore)
+   * ✅ Visual moment (Layer 1 Careers)
+   */
+  visualBreak?: VisualBreak;
+
+  /**
+   * NEW: Curated opportunities (Education lane now; others later)
+   * Keep it small per bucket (3–6).
+   */
+  opportunities?: ExploreOpportunityGroup;
+
+  /**
+   * Optional deep link target
    */
   href?: string;
 };
@@ -71,7 +142,7 @@ export type ExploreArea = {
   id: ExploreAreaId;
   label: string;
   chip: string;
-  glowClass: string; // tailwind gradient classes: "from-... via-... to-..."
+  glowClass: string;
   href: string;
 
   headline: string;
@@ -82,7 +153,7 @@ export type ExploreArea = {
   nextMoves: NextMove[];
   cards: MiniCard[];
 
-  /** Optional: UI icon (for future index cards/menus) */
+  /** Optional: UI icon (future use) */
   icon?: ReactNode;
 };
 
@@ -112,8 +183,7 @@ export type ExploreRendererProps = {
 };
 
 /**
- * Loose props variant (lets a renderer accept anything shaped like a section)
- * Helpful while iterating without getting blocked on types.
+ * Loose props variant (for iteration without blocking on types)
  */
 export type ExploreRendererPropsLoose = {
   section: unknown;

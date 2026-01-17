@@ -3,12 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
@@ -266,10 +261,6 @@ function areaSignature(area: TravelArea): string {
   return hashString(payload);
 }
 
-/**
- * We reuse the same FeedbackModal (expects a RecommendationItem).
- * We synthesize a lightweight RecommendationItem per travel card.
- */
 function toRecFromTravelCard(
   c: TravelCard,
   area: TravelArea,
@@ -309,10 +300,8 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
-  // Accordion: only one expanded at a time
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  // Tiny Test
   const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
     {}
   );
@@ -321,7 +310,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   );
   const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
 
-  // FeedbackModal
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
@@ -340,19 +328,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
     setShowStepsById((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function onSaveTinyTest(topicId: string, cardTitle: string) {
+  function onSaveTinyTest(topicId: string) {
     setSavedTinyById((prev) => ({ ...prev, [topicId]: true }));
     setJustSavedId(topicId);
     window.setTimeout(() => {
       setJustSavedId((cur) => (cur === topicId ? null : cur));
     }, 1400);
-
-    // eslint-disable-next-line no-console
-    console.log("[TinyTest] save-to-actions (placeholder)", {
-      topicId,
-      title: cardTitle,
-      tinyTest: tinyTestForTopic(topicId),
-    });
   }
 
   function getSelectedFor(recId: string): FeedbackResponse | null {
@@ -394,13 +375,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
     const existing = getSelectedFor(rec.recId);
-
-    // Tap same choice again => clear it (undo)
     if (existing && existing === response) {
       clearSelectedFor(rec.recId);
       return;
     }
-
     setPending({ rec, response });
   }
 
@@ -420,15 +398,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
       comment: payload.comment,
     });
 
-    if (
-      payload.response === "disagree" &&
-      (payload.comment?.trim() ?? "").length
-    ) {
+    if (payload.response === "disagree" && (payload.comment?.trim() ?? "").length) {
       setAck({
         kind: "comment_disagree",
         feedbackId: pending.rec.recId,
-        message:
-          "Got it. Want me to tweak what you see next based on what you wrote?",
+        message: "Got it. Want me to tweak what you see next based on what you wrote?",
       });
     }
 
@@ -437,11 +411,8 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
   function handleRecalibrate() {
     setAck(null);
-    // eslint-disable-next-line no-console
-    console.log("[Travel] recalibrate (placeholder)");
   }
 
-  // Shared button language (match Careers)
   const pillBase =
     "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95";
   const pillNeutral = dark
@@ -473,9 +444,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${
-                dark ? "text-slate-200" : "text-slate-800"
-              } mt-0.5 h-5 w-5`}
+              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
               <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
@@ -519,7 +488,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
             const expanded = expandedId === c.id;
 
             const deepDiveHref =
-              c.id && typeof c.id === "string"
+              typeof c.href === "string" && c.href.trim().length
+                ? c.href
+                : c.id
                 ? `/main/explore/travel/${encodeURIComponent(c.id)}`
                 : "/main/explore/travel";
 
@@ -561,7 +532,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                       : "bg-white/65"
                   }`}
                 >
-                  {/* Header button (tap to expand/collapse) */}
                   <button
                     type="button"
                     onClick={() => toggleExpanded(c.id)}
@@ -571,7 +541,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {/* Travel identity: emoji marker pill */}
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
                               dark ? `border-white/10 ${a.chip}` : "border-slate-200 bg-white text-slate-800"
@@ -581,14 +550,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                             <span aria-hidden>{c.icon ?? "✈️"}</span>
                           </span>
 
-                          <div
-                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
-                          >
+                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
                             <span className="truncate">{c.title}</span>
                           </div>
                         </div>
 
-                        {/* Collapsed: compact teaser (Careers-style) */}
                         {!expanded && (teaser[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
@@ -601,14 +567,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           </div>
                         ) : null}
 
-                        {/* Expanded: show teaser paragraphs normally */}
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p
-                                key={i}
-                                className={`text-sm lg:text-[0.95rem] ${muted}`}
-                              >
+                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                                 {p}
                               </p>
                             ))}
@@ -616,7 +578,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         ) : null}
                       </div>
 
-                      {/* Chevron bubble */}
                       <span
                         className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
                           dark ? "border-white/10" : "border-slate-200"
@@ -630,9 +591,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 dark ? "opacity-55" : "opacity-50"
                               }`}
                             />
-                            <span
-                              className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`}
-                            />
+                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
                             <span
                               className={`relative flex h-full w-full items-center justify-center ${
                                 dark ? "text-white" : "text-slate-900"
@@ -654,23 +613,18 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                     </div>
                   </button>
 
-                  {/* Expanded content */}
                   {expanded ? (
                     <div className="mt-4 lg:mt-5">
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p
-                              key={i}
-                              className={`text-sm lg:text-[0.95rem] ${muted}`}
-                            >
+                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                               {p}
                             </p>
                           ))}
                         </div>
                       ) : null}
 
-                      {/* Tiny Test */}
                       <div className="mt-4 lg:mt-5">
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
@@ -745,7 +699,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
                               <button
                                 type="button"
-                                onClick={() => onSaveTinyTest(c.id, c.title)}
+                                onClick={() => onSaveTinyTest(c.id)}
                                 disabled={tinySaved}
                                 className={`${pillBase} ${
                                   tinySaved
@@ -770,11 +724,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                             </div>
 
                             {tinyJustSaved ? (
-                              <div
-                                className={`mt-2 text-xs font-semibold ${
-                                  dark ? "text-white/70" : "text-slate-700"
-                                }`}
-                              >
+                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
                                 ✅ Added to Actions
                               </div>
                             ) : null}
@@ -802,9 +752,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                       >
                                         {i + 1}
                                       </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                                        {step}
-                                      </div>
+                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
                                     </div>
                                   ))}
                                 </div>
@@ -824,7 +772,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         </div>
                       </div>
 
-                      {/* Quick check (Careers-style label) */}
                       <div className="mt-4 lg:mt-5">
                         <div
                           className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
@@ -845,9 +792,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${
-                              selected === "agree" ? pillSelected("agree") : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
                           >
                             <span aria-hidden>👍</span>
                             {selected === "agree" ? "This fits ✓" : "This fits"}
@@ -856,9 +801,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${
-                              selected === "mixed" ? pillSelected("mixed") : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
                           >
                             <span aria-hidden>🙂</span>
                             {selected === "mixed" ? "Kinda ✓" : "Kinda"}
@@ -867,9 +810,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${
-                              selected === "disagree" ? pillSelected("disagree") : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
                           >
                             <span aria-hidden>👎</span>
                             {selected === "disagree" ? "Nope ✓" : "Nope"}

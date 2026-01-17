@@ -17,6 +17,10 @@ import FeedbackModal from "../components/FeedbackModal";
    - Expand/collapse per card (one expanded at a time)
    - Tiny Test: collapsible steps + Add to Actions + saved ack
    - Fit check: This fits / Kinda / Nope using FeedbackModal
+
+   LINT FIXES:
+   - Remove unused "n" variable
+   - Remove unused eslint-disable directives by removing console usage
 ============================================================================= */
 
 type CommunityCard = {
@@ -248,7 +252,10 @@ function areaSignature(area: CommunityArea): string {
   const payload =
     `hint:${hint}||signals:${signals.join("|")}||cards:` +
     cards
-      .map((c) => `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~${c.href ?? ""}`)
+      .map(
+        (c) =>
+          `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~${c.href ?? ""}`
+      )
       .join("||");
 
   return hashString(payload);
@@ -295,12 +302,12 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
 
   // Tiny Test state
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [savedTinyById, setSavedTinyById] = React.useState<Record<string, boolean>>(
-    {}
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [savedTinyById, setSavedTinyById] = React.useState<
+    Record<string, boolean>
+  >({});
   const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
 
   // FeedbackModal state
@@ -329,18 +336,16 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       setJustSavedId((cur) => (cur === topicId ? null : cur));
     }, 1400);
 
-    // eslint-disable-next-line no-console
-    console.log("[TinyTest] save-to-actions (placeholder)", {
-      topicId,
-      title: cardTitle,
-      tinyTest: tinyTestForTopic(topicId),
-    });
+    // placeholder wiring (no console to keep lint clean)
+    void { topicId, cardTitle };
   }
 
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(`explore.community.feedback.${recId}`);
+      const raw = window.localStorage.getItem(
+        `explore.community.feedback.${recId}`
+      );
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -400,11 +405,15 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       comment: payload.comment,
     });
 
-    if (payload.response === "disagree" && (payload.comment?.trim() ?? "").length) {
+    if (
+      payload.response === "disagree" &&
+      (payload.comment?.trim() ?? "").length
+    ) {
       setAck({
         kind: "comment_disagree",
         feedbackId: pending.rec.recId,
-        message: "Got it. Want me to tweak what you see next based on what you wrote?",
+        message:
+          "Got it. Want me to tweak what you see next based on what you wrote?",
       });
     }
 
@@ -412,9 +421,8 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   }
 
   function handleRecalibrate() {
+    // Placeholder: later hook into shared store like Careers
     setAck(null);
-    // eslint-disable-next-line no-console
-    console.log("[Community] recalibrate (placeholder)");
   }
 
   // Shared pill language (match Careers)
@@ -449,10 +457,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
+              className={`${
+                dark ? "text-slate-200" : "text-slate-800"
+              } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -490,40 +502,47 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
             const teaser = spoken.slice(0, 2);
             const extra = spoken.slice(2);
 
-            const n = slotIdx + 1;
-
             const rec = toRecFromCommunityCard(c, area, runId);
             const selected = getSelectedFor(rec.recId);
 
             const expanded = expandedRecId === rec.recId;
 
             const deepDiveHref =
-              c.href ??
-              (c.id
+              typeof c.href === "string" && c.href.trim().length
+                ? c.href
+                : c.id
                 ? `/main/explore/community/${encodeURIComponent(c.id)}`
-                : "/main/explore/community");
+                : "/main/explore/community";
 
             const tiny = tinyTestForTopic(c.id);
             const showSteps = Boolean(showStepsById[c.id]);
             const tinySaved = Boolean(savedTinyById[c.id]);
             const tinyJustSaved = justSavedId === c.id;
 
+            const rank = slotIdx + 1;
+
             return (
               <div
                 key={rec.recId}
                 className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                  dark
+                    ? "border-white/10 bg-white/5"
+                    : "border-slate-200 bg-white/80"
                 }`}
               >
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                    expanded
+                      ? "opacity-45 lg:opacity-35"
+                      : "opacity-85 lg:opacity-65"
                   }`}
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-90 lg:opacity-70"
+                    expanded
+                      ? "w-[3px] opacity-70 lg:opacity-55"
+                      : "w-[4px] opacity-90 lg:opacity-70"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
@@ -548,24 +567,38 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          
+                          {/* Rank pill (#1–#4) */}
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              dark
+                                ? "border-white/10 bg-white/5 text-white/80"
+                                : "border-slate-200 bg-white text-slate-800"
+                            }`}
+                            aria-hidden
+                          >
+                            #{rank}
+                          </span>
 
-                          {/* Keep emoji as lane vibe (secondary) */}
+                          {/* Emoji chip (secondary vibe marker) */}
                           <span
                             className={`inline-flex items-center justify-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? "border-white/10 bg-white/5 text-white/80" : "border-slate-200 bg-white text-slate-700"
+                              dark
+                                ? "border-white/10 bg-white/5 text-white/80"
+                                : "border-slate-200 bg-white text-slate-700"
                             }`}
                             aria-label="Community mode"
                           >
                             <span aria-hidden>{c.icon ?? "🤝"}</span>
                           </span>
 
-                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                          <div
+                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
+                          >
                             <span className="truncate">{c.title}</span>
                           </div>
                         </div>
 
-                        {/* Collapsed: compact teaser (no teaser band) */}
+                        {/* Collapsed teaser */}
                         {!expanded && (teaser[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
@@ -578,11 +611,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           </div>
                         ) : null}
 
-                        {/* Expanded: show teaser paragraphs normally */}
+                        {/* Expanded teaser paragraphs */}
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              <p
+                                key={i}
+                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                              >
                                 {p}
                               </p>
                             ))}
@@ -604,7 +640,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                                 dark ? "opacity-55" : "opacity-50"
                               }`}
                             />
-                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
+                            <span
+                              className={`absolute inset-0 ${
+                                dark ? "bg-slate-950/25" : "bg-white/20"
+                              }`}
+                            />
                             <span
                               className={`relative flex h-full w-full items-center justify-center ${
                                 dark ? "text-white" : "text-slate-900"
@@ -616,7 +656,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
+                              dark
+                                ? "bg-white/5 text-white/80"
+                                : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -632,7 +674,10 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                            <p
+                              key={i}
+                              className={`text-sm lg:text-[0.95rem] ${muted}`}
+                            >
                               {p}
                             </p>
                           ))}
@@ -642,7 +687,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                       {/* Tiny Test */}
                       <div
                         className={`mt-4 lg:mt-5 relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                          dark
+                            ? "border-white/10 bg-white/5"
+                            : "border-slate-200 bg-white/80"
                         }`}
                       >
                         <div
@@ -652,7 +699,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           aria-hidden
                         />
                         <div
-                          className={`pointer-events-none absolute inset-0 ${dark ? "bg-slate-950/10" : "bg-white/20"}`}
+                          className={`pointer-events-none absolute inset-0 ${
+                            dark ? "bg-slate-950/10" : "bg-white/20"
+                          }`}
                           aria-hidden
                         />
 
@@ -685,8 +734,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                             >
                               Try this first — don’t overthink it:
                             </div>
-                            <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
-                              {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                            <div
+                              className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
+                            >
+                              {tiny.steps?.[0] ??
+                                "Try a super small version of it today."}
                             </div>
                           </div>
 
@@ -736,7 +788,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           </div>
 
                           {tinyJustSaved ? (
-                            <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
+                            <div
+                              className={`mt-2 text-xs font-semibold ${
+                                dark ? "text-white/70" : "text-slate-700"
+                              }`}
+                            >
                               ✅ Added to Actions
                             </div>
                           ) : null}
@@ -744,10 +800,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           {showSteps ? (
                             <div
                               className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                                dark
+                                  ? "border-white/10 bg-white/5"
+                                  : "border-slate-200 bg-white/80"
                               }`}
                             >
-                              <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                              <div
+                                className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
+                              >
                                 {tiny.title}
                               </div>
 
@@ -764,17 +824,29 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                                     >
                                       {i + 1}
                                     </span>
-                                    <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                    <div
+                                      className={`text-sm lg:text-[0.95rem] ${muted}`}
+                                    >
+                                      {step}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
 
-                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
+                              <div
+                                className={`mt-2 text-xs font-semibold ${
+                                  dark ? "text-white/55" : "text-slate-600"
+                                }`}
+                              >
                                 Time: {tiny.eta}
                               </div>
 
                               {tiny.tip ? (
-                                <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                <div
+                                  className={`mt-2 text-xs ${
+                                    dark ? "text-white/55" : "text-slate-600"
+                                  }`}
+                                >
                                   {tiny.tip}
                                 </div>
                               ) : null}
@@ -791,10 +863,20 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           }`}
                         >
                           Quick check on:{" "}
-                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>{c.title}</span>
+                          <span
+                            className={`${
+                              dark ? "text-slate-200/90" : "text-slate-700"
+                            }`}
+                          >
+                            {c.title}
+                          </span>
                         </div>
 
-                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                        <div
+                          className={`mt-1 text-xs ${
+                            dark ? "text-white/55" : "text-slate-600"
+                          }`}
+                        >
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -802,7 +884,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "agree"
+                                ? pillSelected("agree")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>👍</span>
                             {selected === "agree" ? "This fits ✓" : "This fits"}
@@ -811,7 +897,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "mixed"
+                                ? pillSelected("mixed")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>🙂</span>
                             {selected === "mixed" ? "Kinda ✓" : "Kinda"}
@@ -820,7 +910,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "disagree"
+                                ? pillSelected("disagree")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>👎</span>
                             {selected === "disagree" ? "Nope ✓" : "Nope"}
@@ -835,7 +929,8 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               : "bg-violet-600 text-white hover:bg-violet-500"
                           }`}
                         >
-                          Go deeper (real options) <ArrowRight className="h-4 w-4" />
+                          Go deeper (real options){" "}
+                          <ArrowRight className="h-4 w-4" />
                         </Link>
                       </div>
                     </div>
@@ -851,10 +946,16 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>No community items yet</div>
+          <div className={`text-sm font-semibold ${titleC}`}>
+            No community items yet
+          </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">explore/content/community.ts</span>.
+            Add items to{" "}
+            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">
+              explore/content/community.ts
+            </span>
+            .
           </div>
         </div>
       )}

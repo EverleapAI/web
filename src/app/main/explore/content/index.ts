@@ -1,6 +1,11 @@
 // src/app/main/explore/content/index.ts
 
-import type { ExploreArea, ExploreSection, ExploreChipType, ExploreKey } from "./types";
+import type {
+  ExploreArea,
+  ExploreSection,
+  ExploreChipType,
+  ExploreKey,
+} from "./types";
 
 // These imports assume each file exports DEFAULT ExploreArea.
 import recommendations from "./recommendations";

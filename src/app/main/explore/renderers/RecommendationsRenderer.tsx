@@ -2,16 +2,11 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  RefreshCw,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
-import type { ExploreRendererProps } from "../content/types";
+import type { ExploreRendererProps, VisualBreak } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
 
 import FeedbackModal from "../components/FeedbackModal";
@@ -45,7 +40,7 @@ const REC_ACCENTS: RecAccent[] = [
     ctaDark: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
     halo: "from-sky-500/10 via-cyan-400/6 to-indigo-500/6",
   },
-  // #2 — Amber / Orange / Rose (make it clearly different from #1)
+  // #2 — Amber / Orange / Rose
   {
     rail: "from-amber-300 via-orange-300 to-rose-300",
     chip: "bg-amber-300/15 text-amber-100 border-amber-200/20",
@@ -91,6 +86,7 @@ type ExploreRecommendationCard = {
   why?: string[];
   hint?: string;
   tags?: string[];
+  visualBreak?: VisualBreak;
 };
 
 type ExploreRecommendationsArea = {
@@ -126,7 +122,13 @@ function asRecommendationsArea(input: unknown): ExploreRecommendationsArea {
         ? (it.tags as unknown[]).map((x) => String(x))
         : undefined;
 
-      if (id && title) out.push({ id, title, short, icon, why, hint, tags });
+      const visualBreak =
+        typeof it?.visualBreak === "object" && it.visualBreak
+          ? (it.visualBreak as VisualBreak)
+          : undefined;
+
+      if (id && title)
+        out.push({ id, title, short, icon, why, hint, tags, visualBreak });
     }
 
     return out;
@@ -154,8 +156,8 @@ function hashString(input: string): string {
 
 /**
  * IMPORTANT:
- * We include why/hint/tags so the feedbackStore batch refreshes
- * when copy changes (otherwise it can “stick”).
+ * We include why/hint/tags AND visualBreak so the feedbackStore batch refreshes
+ * when copy/visuals change (otherwise it can “stick”).
  */
 function areaSignature(area: ExploreRecommendationsArea): string {
   const cards = Array.isArray(area.cards) ? area.cards : [];
@@ -165,9 +167,14 @@ function areaSignature(area: ExploreRecommendationsArea): string {
       .map((c) => {
         const why = Array.isArray(c.why) ? c.why.join("|") : "";
         const tags = Array.isArray(c.tags) ? c.tags.join("|") : "";
+        const vb = c.visualBreak?.asset?.src
+          ? `vb:${c.visualBreak.asset.kind ?? ""}|${c.visualBreak.asset.src}|${
+              c.visualBreak.asset.alt
+            }`
+          : "vb:";
         return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~why:${why}~hint:${
           c.hint ?? ""
-        }~tags:${tags}`;
+        }~tags:${tags}~${vb}`;
       })
       .join("||");
   return hashString(payload);
@@ -211,7 +218,11 @@ function mapCardsToRecommendations(
       summary: String(c.short ?? ""),
 
       // ✅ card-specific first, lane-level only as a fallback
-      why: cardWhy.length ? cardWhy : fallbackWhy.length ? fallbackWhy : ["Based on your answers so far."],
+      why: cardWhy.length
+        ? cardWhy
+        : fallbackWhy.length
+        ? fallbackWhy
+        : ["Based on your answers so far."],
       nextStep:
         typeof c.hint === "string" && c.hint.trim()
           ? c.hint.trim()
@@ -220,6 +231,9 @@ function mapCardsToRecommendations(
           : undefined,
       tags: cardTags.length ? cardTags : [],
 
+      // ✅ carry visualBreak through for rendering
+      visualBreak: c.visualBreak,
+
       signals: undefined,
       modelScore: 0.5,
       constraints: [],
@@ -227,7 +241,7 @@ function mapCardsToRecommendations(
       generationRunId: runId,
       generatedAt,
       model: "placeholder",
-    };
+    } as RecommendationItem & { visualBreak?: VisualBreak };
   });
 }
 
@@ -267,6 +281,18 @@ type TinyTest = {
 };
 
 const TINY_TESTS: Record<string, TinyTest> = {
+  // ✅ NEW — Game Designer
+  gameDesigner: {
+    title: "Tiny task: change one rule",
+    eta: "10–20 min",
+    steps: [
+      "Pick a simple game you already know (cards, sport drill, phone game).",
+      "Change ONE rule.",
+      "Predict how the feeling changes (easier/harder, calmer/more tense, more/less fun).",
+      "Ask a friend which version they’d rather play — and why.",
+    ],
+  },
+
   productUx: {
     title: "Tiny test: redesign one real screen",
     eta: "20–30 min",
@@ -382,15 +408,58 @@ function teenCoachWhy(why: string[]): string {
   return `${clean(bits[0])} and ${clean(bits[1])}, this usually clicks.`;
 }
 
-export default function RecommendationsRenderer({ chip, dark }: ExploreRendererProps) {
+function VisualBreakBlock({
+  visual,
+  dark,
+}: {
+  visual: VisualBreak;
+  dark: boolean;
+}) {
+  const src = (visual?.asset?.src ?? "").trim();
+  const alt = String(visual?.asset?.alt ?? "").trim();
+  if (!src) return null;
 
+  return (
+    <div className="mt-3">
+      <div
+        className={`overflow-hidden rounded-2xl border ${
+          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+        }`}
+      >
+        <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
+          {/* NOTE: unoptimized avoids needing remotePatterns while you prototype */}
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes="(max-width: 640px) 100vw, 640px"
+            className="object-cover"
+            loading="lazy"
+            unoptimized
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function RecommendationsRenderer({
+  chip,
+  dark,
+}: ExploreRendererProps) {
   const [visible, setVisible] = React.useState<RecommendationItem[]>([]);
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
-  const [savedTinyByRec, setSavedTinyByRec] = React.useState<Record<string, boolean>>({});
-  const [justSavedRecId, setJustSavedRecId] = React.useState<string | null>(null);
-  const [showStepsByRec, setShowStepsByRec] = React.useState<Record<string, boolean>>({});
+  const [savedTinyByRec, setSavedTinyByRec] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [justSavedRecId, setJustSavedRecId] = React.useState<string | null>(
+    null
+  );
+  const [showStepsByRec, setShowStepsByRec] = React.useState<
+    Record<string, boolean>
+  >({});
   const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
@@ -484,19 +553,16 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
       setJustSavedRecId((cur) => (cur === rec.recId ? null : cur));
     }, 1400);
 
-    console.log("[TinyTest] save-to-actions (placeholder)", {
-      recId: rec.recId,
-      laneId,
-      title: rec.title,
-      tinyTest: tinyTestForLane(laneId),
-    });
+    // placeholder wiring (no-op in production; keeps eslint happy)
+    void rec;
+    void laneId;
   }
 
   function toggleSteps(recId: string) {
     setShowStepsByRec((prev) => ({ ...prev, [recId]: !prev[recId] }));
   }
 
-  // Shared button language (Tiny Test + Quick Check)
+  // Shared button language (Tiny Task + Quick Check)
   const pillBase =
     "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95";
   const pillNeutral = dark
@@ -518,6 +584,9 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
+  const showRecalBanner =
+    Boolean(suggestRecal) && batchStatus === "active" && !ack;
+
   return (
     <section className="space-y-3">
       {ack ? (
@@ -528,10 +597,14 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
+              className={`${
+                dark ? "text-slate-200" : "text-slate-800"
+              } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -544,11 +617,14 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                       : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
                   }`}
                 >
-                  <RefreshCw className="h-4 w-4" />
                   Recalibrate
                 </button>
 
-                <button type="button" onClick={() => setAck(null)} className={`${pillBase} ${pillNeutral}`}>
+                <button
+                  type="button"
+                  onClick={() => setAck(null)}
+                  className={`${pillBase} ${pillNeutral}`}
+                >
                   Dismiss
                 </button>
               </div>
@@ -557,23 +633,54 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
         </div>
       ) : null}
 
-      {suggestRecal && batchStatus === "active" && !ack ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={handleRecalibrate}
-            className={`${pillBase} ${
-              dark
-                ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-            }`}
-          >
-            <RefreshCw className="h-4 w-4" />
-            Recalibrate
-          </button>
-
-          <div className={`text-xs ${dark ? "text-slate-300/55" : "text-slate-500"}`}>
-            Uses your feedback to tune what shows up next.
+      {showRecalBanner ? (
+        <div
+          className={`rounded-2xl border px-4 py-3 ${
+            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`mt-0.5 h-2.5 w-2.5 rounded-full ${
+                dark ? "bg-amber-300/80" : "bg-amber-500"
+              }`}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1">
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Want a fresh set?
+              </div>
+              <div className={`mt-1 text-sm ${muted}`}>
+                I can recalibrate based on what you’ve liked/disliked so far.
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRecalibrate}
+                  className={`${pillBase} ${
+                    dark
+                      ? "border-amber-300/30 bg-amber-300/10 text-amber-50 hover:bg-amber-300/15"
+                      : "border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                  }`}
+                >
+                  Recalibrate suggestions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // keep it lightweight: just hide for now
+                    setAck({
+                      kind: "comment_disagree",
+                      feedbackId: "dismiss-recal",
+                      message: "All good — keeping the current set.",
+                    });
+                  }}
+                  className={`${pillBase} ${pillNeutral}`}
+                >
+                  Not yet
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -600,22 +707,29 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
 
             const n = slotIdx + 1;
 
+            const visualBreak = (rec as unknown as { visualBreak?: VisualBreak })
+              .visualBreak;
+
             return (
               <div
                 key={rec.recId}
                 className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                  dark
+                    ? "border-white/10 bg-white/5"
+                    : "border-slate-200 bg-white/80"
                 }`}
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
-                  }`}
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
+                    a.halo
+                  } ${expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"}`}
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-90 lg:opacity-70"
+                    expanded
+                      ? "w-[3px] opacity-70 lg:opacity-55"
+                      : "w-[4px] opacity-90 lg:opacity-70"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
@@ -630,7 +744,6 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                       : "bg-white/65"
                   }`}
                 >
-                  {/* Header button (tap to expand/collapse) */}
                   <button
                     type="button"
                     onClick={() => toggleExpanded(rec.recId)}
@@ -642,18 +755,20 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? `border-white/10 ${a.chip}` : "border-slate-200 bg-white text-slate-800"
+                              dark
+                                ? `border-white/10 ${a.chip}`
+                                : "border-slate-200 bg-white text-slate-800"
                             }`}
                           >
                             #{n}
                           </span>
-
-                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                          <div
+                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
+                          >
                             <span className="truncate">{rec.title}</span>
                           </div>
                         </div>
 
-                        {/* Collapsed: compact teaser so #2–#4 have content */}
                         {!expanded && (teaser[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
@@ -666,11 +781,13 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                           </div>
                         ) : null}
 
-                        {/* Expanded: show teaser paragraphs normally */}
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              <p
+                                key={i}
+                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                              >
                                 {p}
                               </p>
                             ))}
@@ -678,7 +795,6 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                         ) : null}
                       </div>
 
-                      {/* Chevron bubble */}
                       <span
                         className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
                           dark ? "border-white/10" : "border-slate-200"
@@ -688,17 +804,31 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                         {!expanded ? (
                           <span className="relative h-full w-full">
                             <span
-                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                dark ? "opacity-55" : "opacity-50"
+                              className={`absolute inset-0 bg-gradient-to-br ${
+                                a.rail
+                              } ${dark ? "opacity-55" : "opacity-50"}`}
+                            />
+                            <span
+                              className={`absolute inset-0 ${
+                                dark ? "bg-slate-950/25" : "bg-white/20"
                               }`}
                             />
-                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
-                            <span className={`relative flex h-full w-full items-center justify-center ${dark ? "text-white" : "text-slate-900"}`}>
+                            <span
+                              className={`relative flex h-full w-full items-center justify-center ${
+                                dark ? "text-white" : "text-slate-900"
+                              }`}
+                            >
                               <ChevronDown className="h-4 w-4" />
                             </span>
                           </span>
                         ) : (
-                          <span className={`flex h-full w-full items-center justify-center ${dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"}`}>
+                          <span
+                            className={`flex h-full w-full items-center justify-center ${
+                              dark
+                                ? "bg-white/5 text-white/80"
+                                : "bg-white text-slate-800"
+                            }`}
+                          >
                             <ChevronUp className="h-4 w-4" />
                           </span>
                         )}
@@ -706,39 +836,48 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                     </div>
                   </button>
 
-                  {/* Expanded content */}
                   {expanded ? (
                     <div className="mt-4 lg:mt-5">
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                            <p
+                              key={i}
+                              className={`text-sm lg:text-[0.95rem] ${muted}`}
+                            >
                               {p}
                             </p>
                           ))}
                         </div>
                       ) : null}
 
-                      {/* Coach line (now card-specific because rec.why is card-specific) */}
                       <div className="mt-3 space-y-3">
                         <p className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                          <span className={`${dark ? "text-white/70" : "text-slate-700"} font-semibold`}>
+                          <span
+                            className={`${
+                              dark ? "text-white/70" : "text-slate-700"
+                            } font-semibold`}
+                          >
                             If you’re the type who likes…
                           </span>{" "}
                           {teenCoachWhy(rec.why)}
                         </p>
 
-                        {/* Tiny Test callout (CLEAN: remove inner left rail to avoid collision) */}
+                        {visualBreak ? (
+                          <VisualBreakBlock visual={visualBreak} dark={dark} />
+                        ) : null}
+
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                            dark
+                              ? "border-white/10 bg-white/5"
+                              : "border-slate-200 bg-white/80"
                           }`}
                         >
-                          {/* keep the soft wash, no extra vertical rail */}
                           <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                              dark ? "opacity-16" : "opacity-10"
-                            }`}
+                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
+                              a.rail
+                            } ${dark ? "opacity-16" : "opacity-10"}`}
                             aria-hidden
                           />
                           <div
@@ -755,7 +894,7 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                                   dark ? "text-white/80" : "text-slate-700"
                                 }`}
                               >
-                                Tiny test
+                                Tiny task
                               </div>
 
                               <span
@@ -777,8 +916,11 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                               >
                                 Try this first — don’t overthink it:
                               </div>
-                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
-                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                              <div
+                                className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
+                              >
+                                {tiny.steps?.[0] ??
+                                  "Try a super small version of it today."}
                               </div>
                             </div>
 
@@ -828,7 +970,11 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                             </div>
 
                             {tinyJustSaved ? (
-                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
+                              <div
+                                className={`mt-2 text-xs font-semibold ${
+                                  dark ? "text-white/70" : "text-slate-700"
+                                }`}
+                              >
                                 ✅ Added to Actions
                               </div>
                             ) : null}
@@ -836,16 +982,23 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                             {showSteps ? (
                               <div
                                 className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                                  dark
+                                    ? "border-white/10 bg-white/5"
+                                    : "border-slate-200 bg-white/80"
                                 }`}
                               >
-                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                                <div
+                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
+                                >
                                   {tiny.title}
                                 </div>
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div key={i} className="flex items-start gap-2">
+                                    <div
+                                      key={i}
+                                      className="flex items-start gap-2"
+                                    >
                                       <span
                                         className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
                                           dark
@@ -856,12 +1009,20 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                                       >
                                         {i + 1}
                                       </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                      <div
+                                        className={`text-sm lg:text-[0.95rem] ${muted}`}
+                                      >
+                                        {step}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
 
-                                <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                <div
+                                  className={`mt-2 text-xs font-semibold ${
+                                    dark ? "text-white/55" : "text-slate-600"
+                                  }`}
+                                >
                                   Time: {tiny.eta}
                                 </div>
                               </div>
@@ -870,7 +1031,6 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                         </div>
                       </div>
 
-                      {/* Quick check */}
                       <div className="mt-4 lg:mt-5">
                         <div
                           className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
@@ -878,12 +1038,20 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                           }`}
                         >
                           Quick check on:{" "}
-                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
+                          <span
+                            className={`${
+                              dark ? "text-slate-200/90" : "text-slate-700"
+                            }`}
+                          >
                             {rec.title}
                           </span>
                         </div>
 
-                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                        <div
+                          className={`mt-1 text-xs ${
+                            dark ? "text-white/55" : "text-slate-600"
+                          }`}
+                        >
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -892,7 +1060,9 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
                             className={`${pillBase} ${
-                              selected === "agree" ? pillSelected("agree") : pillNeutral
+                              selected === "agree"
+                                ? pillSelected("agree")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>👍</span>
@@ -903,7 +1073,9 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
                             className={`${pillBase} ${
-                              selected === "mixed" ? pillSelected("mixed") : pillNeutral
+                              selected === "mixed"
+                                ? pillSelected("mixed")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>🙂</span>
@@ -914,7 +1086,9 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
                             className={`${pillBase} ${
-                              selected === "disagree" ? pillSelected("disagree") : pillNeutral
+                              selected === "disagree"
+                                ? pillSelected("disagree")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>👎</span>
@@ -930,7 +1104,8 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
                               : "bg-sky-600 text-white hover:bg-sky-500"
                           }`}
                         >
-                          See what this career is really like <ArrowRight className="h-4 w-4" />
+                          See what this career is really like{" "}
+                          <ArrowRight className="h-4 w-4" />
                         </Link>
                       </div>
                     </div>
@@ -946,10 +1121,16 @@ export default function RecommendationsRenderer({ chip, dark }: ExploreRendererP
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>No recommendations yet</div>
+          <div className={`text-sm font-semibold ${titleC}`}>
+            No recommendations yet
+          </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">explore/content/recommendations.ts</span>.
+            Add items to{" "}
+            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">
+              explore/content/recommendations.ts
+            </span>
+            .
           </div>
         </div>
       )}

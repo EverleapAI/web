@@ -4,7 +4,8 @@ export type StepperLaneId =
   | "productUx"
   | "healthHumanSupport"
   | "educationCommunityPrograms"
-  | "independentBuilder";
+  | "independentBuilder"
+  | "gameDesigner";
 
 export type StepperStepId =
   | "overview"

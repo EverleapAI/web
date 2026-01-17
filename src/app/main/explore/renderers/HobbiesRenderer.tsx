@@ -12,13 +12,6 @@ import FeedbackModal from "../components/FeedbackModal";
 
 /* =============================================================================
    Explore › HobbiesRenderer (Careers-structure parity with EducationRenderer)
-   STRUCTURE GOALS:
-   - Single vertical list (4 cards)
-   - Same skeleton as Education:
-     - halo + left rail + #1–#4 pill + icon chip + title row
-     - Collapsed: 1–2 line teaser (no teaser band)
-     - Expanded: paragraphs + Tiny Test + Quick Check + Deep link CTA
-   - Keep lane identity via HOB_ACCENTS + icon + copy (structure stays consistent)
 ============================================================================= */
 
 type HobbyCard = {
@@ -90,11 +83,6 @@ function asHobbiesArea(input: unknown): HobbiesArea {
   };
 }
 
-/**
- * Spoken paragraph splitting:
- * - Primary separator: blank lines (\n\n)
- * - Fallback: single lines (\n)
- */
 function splitSpokenParagraphs(input: string): string[] {
   const raw = String(input ?? "");
   const normalized = raw.replace(/\r\n/g, "\n").trim();
@@ -299,10 +287,8 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
-  // Expand/collapse parity with Education (one expanded at a time)
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  // Tiny Test mechanics (same structure as Education)
   const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
     {}
   );
@@ -311,7 +297,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   );
   const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
 
-  // FeedbackModal state
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
@@ -330,20 +315,12 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     setShowStepsById((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function onSaveTinyTest(topicId: string, cardTitle: string) {
+  function onSaveTinyTest(topicId: string) {
     setSavedTinyById((prev) => ({ ...prev, [topicId]: true }));
     setJustSavedId(topicId);
     window.setTimeout(() => {
       setJustSavedId((cur) => (cur === topicId ? null : cur));
     }, 1400);
-
-    // placeholder wiring
-    // eslint-disable-next-line no-console
-    console.log("[TinyTest] save-to-actions (placeholder)", {
-      topicId,
-      title: cardTitle,
-      tinyTest: tinyTestForTopic(topicId),
-    });
   }
 
   function getSelectedFor(recId: string): FeedbackResponse | null {
@@ -385,13 +362,10 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
     const existing = getSelectedFor(rec.recId);
-
-    // Parity: tapping same choice again clears it
     if (existing && existing === response) {
       clearSelectedFor(rec.recId);
       return;
     }
-
     setPending({ rec, response });
   }
 
@@ -427,10 +401,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   }
 
   function handleRecalibrate() {
-    // Placeholder: later hook into shared store like Careers
     setAck(null);
-    // eslint-disable-next-line no-console
-    console.log("[Hobbies] recalibrate (placeholder)");
   }
 
   const pillBase =
@@ -509,7 +480,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
             const expanded = expandedId === c.id;
 
-            // Prefer content-provided href, fallback to derived route
             const deepDiveHref =
               typeof c.href === "string" && c.href.trim().length
                 ? c.href
@@ -559,7 +529,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                       : "bg-white/65"
                   }`}
                 >
-                  {/* Header button (tap to expand/collapse) */}
                   <button
                     type="button"
                     onClick={() => toggleExpanded(c.id)}
@@ -569,9 +538,17 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {/* Parity: rank pill */}
-                          
-                          {/* Lane identity: icon chip */}
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              dark
+                                ? "border-white/10 bg-white/5 text-white/80"
+                                : "border-slate-200 bg-white text-slate-800"
+                            }`}
+                            aria-hidden
+                          >
+                            #{n}
+                          </span>
+
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
                               dark
@@ -590,7 +567,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                           </div>
                         </div>
 
-                        {/* Collapsed: compact teaser */}
                         {!expanded && (teaser[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
@@ -603,7 +579,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                           </div>
                         ) : null}
 
-                        {/* Expanded: show teaser paragraphs normally */}
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
@@ -615,7 +590,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         ) : null}
                       </div>
 
-                      {/* Chevron bubble */}
                       <span
                         className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
                           dark ? "border-white/10" : "border-slate-200"
@@ -655,7 +629,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                     </div>
                   </button>
 
-                  {/* Expanded content */}
                   {expanded ? (
                     <div className="mt-4 lg:mt-5">
                       {extra.length ? (
@@ -668,7 +641,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         </div>
                       ) : null}
 
-                      {/* Tiny Test callout (parity) */}
                       <div className="mt-3 space-y-3">
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
@@ -743,7 +715,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
                               <button
                                 type="button"
-                                onClick={() => onSaveTinyTest(c.id, c.title)}
+                                onClick={() => onSaveTinyTest(c.id)}
                                 disabled={tinySaved}
                                 className={`${pillBase} ${
                                   tinySaved
@@ -824,7 +796,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         </div>
                       </div>
 
-                      {/* Quick check (parity) */}
                       <div className="mt-4 lg:mt-5">
                         <div
                           className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
