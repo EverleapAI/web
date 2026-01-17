@@ -470,7 +470,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
       ) : null}
 
       {cards.length ? (
-        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+        <div className="space-y-4 lg:space-y-5">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = HOB_ACCENTS[slotIdx] ?? HOB_ACCENTS[0];
 
@@ -549,16 +549,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             #{n}
                           </span>
 
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark
-                                ? "border-white/10 bg-white/5 text-white/80"
-                                : "border-slate-200 bg-white text-slate-800"
-                            }`}
-                            aria-hidden
-                          >
-                            {c.icon ?? "🎨"}
-                          </span>
+                          
 
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}

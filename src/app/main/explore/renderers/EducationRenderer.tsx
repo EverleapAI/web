@@ -4,11 +4,11 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  ArrowRight,
 } from "lucide-react";
 
 import type {
@@ -31,6 +31,8 @@ import {
    - Support `opportunities` buckets per card: local / national / online
    - Add “Add to my Actions” for Tiny test + for each opportunity item
    - Add an in-card media break right before “Real doors to walk through”
+   - ✅ LINT: remove unused imports/vars + suppress next/img warning for poster fallback
+   - ✅ WIDTH: remove max-width clamp so cards align with lane header card
 ============================================================================= */
 
 type EducationCard = {
@@ -404,12 +406,15 @@ function EducationCardMediaBreak({ dark }: { dark: boolean }) {
             <source src={srcMp4} type="video/mp4" />
           </video>
         ) : showImage ? (
-          <img
-            src={poster}
-            alt=""
-            className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-            onError={() => setImageFailed(true)}
-          />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={poster}
+              alt=""
+              className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+              onError={() => setImageFailed(true)}
+            />
+          </>
         ) : (
           <div className="relative h-[120px] w-full sm:h-[140px] lg:h-[150px]" />
         )}
@@ -847,7 +852,8 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
       ) : null}
 
       {cards.length ? (
-        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+        // ✅ WIDTH FIX: removed lg:mx-auto lg:max-w-4xl so it matches lane shell width
+        <div className="space-y-4 lg:space-y-5">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = EDU_ACCENTS[slotIdx] ?? EDU_ACCENTS[0];
 
@@ -928,16 +934,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                             #{n}
                           </span>
 
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark
-                                ? "border-white/10 bg-white/5 text-white/80"
-                                : "border-slate-200 bg-white text-slate-800"
-                            }`}
-                            aria-hidden
-                          >
-                            {c.icon ?? "🎓"}
-                          </span>
+                          
 
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}

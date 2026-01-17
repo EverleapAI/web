@@ -16,7 +16,12 @@ import FeedbackModal from "../components/FeedbackModal";
    - 4 cards, collapsed teaser, tap-to-expand
    - Tiny Test block (toggle steps + Add to Actions placeholder + saved ack)
    - Quick check per card (FeedbackModal)
-   - Distinct identity: emoji marker pill (no #1–4)
+   - ✅ UPDATED: number marker pill (#1–#4) instead of emoji marker pill
+
+   Spacing fix (travel cards):
+   - Remove “double padding” between card shells (outer + inner)
+   - Normalize list spacing to match other lanes (tight on mobile, airy on lg)
+   - Ensure expanded content doesn’t add extra bottom gap
 ============================================================================= */
 
 type TravelCard = {
@@ -302,12 +307,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [savedTinyById, setSavedTinyById] = React.useState<Record<string, boolean>>(
-    {}
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [savedTinyById, setSavedTinyById] = React.useState<
+    Record<string, boolean>
+  >({});
   const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
@@ -339,7 +344,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(`explore.travel.feedback.${recId}`);
+      const raw = window.localStorage.getItem(
+        `explore.travel.feedback.${recId}`
+      );
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -393,16 +400,23 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   }) {
     if (!pending) return;
 
+    // ✅ ensure any prior ack doesn't linger
+    setAck(null);
+
     setSelectedFor(pending.rec.recId, {
       response: payload.response,
       comment: payload.comment,
     });
 
-    if (payload.response === "disagree" && (payload.comment?.trim() ?? "").length) {
+    if (
+      payload.response === "disagree" &&
+      (payload.comment?.trim() ?? "").length
+    ) {
       setAck({
         kind: "comment_disagree",
         feedbackId: pending.rec.recId,
-        message: "Got it. Want me to tweak what you see next based on what you wrote?",
+        message:
+          "Got it. Want me to tweak what you see next based on what you wrote?",
       });
     }
 
@@ -435,7 +449,8 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   }
 
   return (
-    <section className="space-y-3">
+    // ✅ IMPORTANT: section spacing should not stack with the lane shell in page.tsx
+    <section className="space-y-4">
       {ack ? (
         <div
           className={`rounded-2xl border px-4 py-3 ${
@@ -444,7 +459,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
+              className={`${
+                dark ? "text-slate-200" : "text-slate-800"
+              } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
               <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
@@ -477,7 +494,8 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
       ) : null}
 
       {cards.length ? (
-        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+        // ✅ spacing fix: avoid “double vertical whitespace” (mobile tighter)
+        <div className="space-y-4 lg:space-y-6">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = TRAVEL_ACCENTS[slotIdx] ?? TRAVEL_ACCENTS[0];
 
@@ -502,27 +520,34 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
             const rec = toRecFromTravelCard(c, area, runId);
             const selected = getSelectedFor(rec.recId);
 
+            const n = slotIdx + 1;
+
             return (
               <div
                 key={c.id}
-                className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                className={`relative overflow-hidden rounded-3xl border p-[1px] shadow-sm ${
+                  dark
+                    ? "border-white/10 bg-white/5 shadow-black/20"
+                    : "border-slate-200 bg-white/80 shadow-slate-200/60"
                 }`}
               >
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-75 lg:opacity-55"
                   }`}
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-90 lg:opacity-70"
+                    expanded
+                      ? "w-[3px] opacity-70 lg:opacity-55"
+                      : "w-[4px] opacity-85 lg:opacity-65"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
+                {/* ✅ spacing fix: reduce inner padding slightly and avoid adding extra bottom margin via nested blocks */}
                 <div
-                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
+                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-6 ${
                     dark
                       ? expanded
                         ? "bg-slate-950/25"
@@ -541,16 +566,21 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
+                          {/* ✅ UPDATED: number marker pill (#1–#4) */}
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? `border-white/10 ${a.chip}` : "border-slate-200 bg-white text-slate-800"
+                              dark
+                                ? "border-white/10 bg-white/5 text-white/80"
+                                : "border-slate-200 bg-white text-slate-800"
                             }`}
-                            aria-label="Travel vibe"
+                            aria-hidden
                           >
-                            <span aria-hidden>{c.icon ?? "✈️"}</span>
+                            #{n}
                           </span>
 
-                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                          <div
+                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
+                          >
                             <span className="truncate">{c.title}</span>
                           </div>
                         </div>
@@ -570,7 +600,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              <p
+                                key={i}
+                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                              >
                                 {p}
                               </p>
                             ))}
@@ -591,7 +624,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 dark ? "opacity-55" : "opacity-50"
                               }`}
                             />
-                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
+                            <span
+                              className={`absolute inset-0 ${
+                                dark ? "bg-slate-950/25" : "bg-white/20"
+                              }`}
+                            />
                             <span
                               className={`relative flex h-full w-full items-center justify-center ${
                                 dark ? "text-white" : "text-slate-900"
@@ -618,7 +655,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                            <p
+                              key={i}
+                              className={`text-sm lg:text-[0.95rem] ${muted}`}
+                            >
                               {p}
                             </p>
                           ))}
@@ -674,7 +714,8 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 Try this first — don’t overthink it:
                               </div>
                               <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
-                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                                {tiny.steps?.[0] ??
+                                  "Try a super small version of it today."}
                               </div>
                             </div>
 
@@ -724,7 +765,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                             </div>
 
                             {tinyJustSaved ? (
-                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
+                              <div
+                                className={`mt-2 text-xs font-semibold ${
+                                  dark ? "text-white/70" : "text-slate-700"
+                                }`}
+                              >
                                 ✅ Added to Actions
                               </div>
                             ) : null}
@@ -732,7 +777,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                             {showSteps ? (
                               <div
                                 className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                                  dark
+                                    ? "border-white/10 bg-white/5"
+                                    : "border-slate-200 bg-white/80"
                                 }`}
                               >
                                 <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
@@ -752,17 +799,27 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                       >
                                         {i + 1}
                                       </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                                        {step}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
 
-                                <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                <div
+                                  className={`mt-2 text-xs font-semibold ${
+                                    dark ? "text-white/55" : "text-slate-600"
+                                  }`}
+                                >
                                   Time: {tiny.eta}
                                 </div>
 
                                 {tiny.tip ? (
-                                  <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                  <div
+                                    className={`mt-2 text-xs ${
+                                      dark ? "text-white/55" : "text-slate-600"
+                                    }`}
+                                  >
                                     {tiny.tip}
                                   </div>
                                 ) : null}
@@ -779,12 +836,20 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           }`}
                         >
                           Quick check on:{" "}
-                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
+                          <span
+                            className={`${
+                              dark ? "text-slate-200/90" : "text-slate-700"
+                            }`}
+                          >
                             {c.title}
                           </span>
                         </div>
 
-                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                        <div
+                          className={`mt-1 text-xs ${
+                            dark ? "text-white/55" : "text-slate-600"
+                          }`}
+                        >
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -792,7 +857,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "agree"
+                                ? pillSelected("agree")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>👍</span>
                             {selected === "agree" ? "This fits ✓" : "This fits"}
@@ -801,7 +870,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "mixed"
+                                ? pillSelected("mixed")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>🙂</span>
                             {selected === "mixed" ? "Kinda ✓" : "Kinda"}
@@ -810,7 +883,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
+                            className={`${pillBase} ${
+                              selected === "disagree"
+                                ? pillSelected("disagree")
+                                : pillNeutral
+                            }`}
                           >
                             <span aria-hidden>👎</span>
                             {selected === "disagree" ? "Nope ✓" : "Nope"}
@@ -843,8 +920,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className={`text-sm font-semibold ${titleC}`}>No travel items yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">explore/content/travel.ts</span>.
+            Add items to <span className="font-mono text-[0.9em]">cards[]</span>{" "}
+            in{" "}
+            <span className="font-mono text-[0.9em]">
+              explore/content/travel.ts
+            </span>
+            .
           </div>
         </div>
       )}

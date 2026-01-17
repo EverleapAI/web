@@ -27,42 +27,81 @@ import {
 
 type RecAccent = {
   rail: string;
-  chip: string;
-  ctaDark: string;
   halo: string;
+
+  chipDark: string;
+  chipLight: string;
+
+  ctaDark: string;
+  ctaLight: string;
+
+  // subtle surface tint to help cards separate
+  surfaceDark: string;
+  surfaceLight: string;
+
+  // tiny top “cap” gradient strip
+  cap: string;
 };
 
 const REC_ACCENTS: RecAccent[] = [
-  // #1 — Sky / Cyan / Indigo
   {
     rail: "from-sky-300 via-cyan-300 to-indigo-300",
-    chip: "bg-sky-300/15 text-sky-100 border-sky-200/20",
-    ctaDark: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
     halo: "from-sky-500/10 via-cyan-400/6 to-indigo-500/6",
+    cap: "from-sky-400/35 via-cyan-300/20 to-indigo-400/25",
+
+    chipDark: "border-sky-200/20 bg-sky-300/15 text-sky-50",
+    chipLight: "border-sky-200/70 bg-sky-50 text-sky-900",
+
+    ctaDark: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
+    ctaLight: "bg-sky-600 text-white hover:bg-sky-500",
+
+    surfaceDark: "bg-slate-950/22",
+    surfaceLight: "bg-white/70",
   },
-  // #2 — Amber / Orange / Rose
   {
     rail: "from-amber-300 via-orange-300 to-rose-300",
-    chip: "bg-amber-300/15 text-amber-100 border-amber-200/20",
+    halo: "from-amber-500/10 via-orange-400/6 to-rose-500/6",
+    cap: "from-amber-300/40 via-orange-300/18 to-rose-300/20",
+
+    chipDark: "border-amber-200/20 bg-amber-300/15 text-amber-50",
+    chipLight: "border-amber-200/70 bg-amber-50 text-amber-950",
+
     ctaDark:
       "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
-    halo: "from-amber-500/9 via-orange-400/6 to-rose-500/6",
+    ctaLight: "bg-amber-600 text-white hover:bg-amber-500",
+
+    surfaceDark: "bg-slate-950/22",
+    surfaceLight: "bg-white/70",
   },
-  // #3 — Emerald / Teal / Sky
   {
     rail: "from-emerald-300 via-teal-300 to-sky-300",
-    chip: "bg-emerald-300/15 text-emerald-100 border-emerald-200/20",
+    halo: "from-emerald-500/10 via-teal-400/6 to-sky-500/6",
+    cap: "from-emerald-300/35 via-teal-300/18 to-sky-300/18",
+
+    chipDark: "border-emerald-200/20 bg-emerald-300/15 text-emerald-50",
+    chipLight: "border-emerald-200/70 bg-emerald-50 text-emerald-950",
+
     ctaDark:
       "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
-    halo: "from-emerald-500/9 via-teal-400/6 to-sky-500/6",
+    ctaLight: "bg-emerald-600 text-white hover:bg-emerald-500",
+
+    surfaceDark: "bg-slate-950/22",
+    surfaceLight: "bg-white/70",
   },
-  // #4 — Violet / Fuchsia / Sky
   {
     rail: "from-violet-300 via-fuchsia-300 to-sky-300",
-    chip: "bg-violet-300/15 text-violet-100 border-violet-200/20",
+    halo: "from-violet-500/10 via-fuchsia-400/6 to-sky-500/6",
+    cap: "from-violet-300/35 via-fuchsia-300/18 to-sky-300/18",
+
+    chipDark: "border-violet-200/20 bg-violet-300/15 text-violet-50",
+    chipLight: "border-violet-200/70 bg-violet-50 text-violet-950",
+
     ctaDark:
       "bg-violet-300 text-slate-950 hover:bg-violet-200 shadow-violet-300/25",
-    halo: "from-violet-500/9 via-fuchsia-400/6 to-sky-500/6",
+    ctaLight: "bg-violet-600 text-white hover:bg-violet-500",
+
+    surfaceDark: "bg-slate-950/22",
+    surfaceLight: "bg-white/70",
   },
 ];
 
@@ -188,7 +227,6 @@ function mapCardsToRecommendations(
   const generatedAt = nowIso();
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
-  // Lane-level are OPTIONAL fallbacks only
   const laneSignals = Array.isArray(area.signals) ? area.signals : [];
   const laneHint = typeof area.hint === "string" ? area.hint.trim() : "";
 
@@ -217,7 +255,6 @@ function mapCardsToRecommendations(
       title: String(c.title ?? "Recommendation"),
       summary: String(c.short ?? ""),
 
-      // ✅ card-specific first, lane-level only as a fallback
       why: cardWhy.length
         ? cardWhy
         : fallbackWhy.length
@@ -231,7 +268,6 @@ function mapCardsToRecommendations(
           : undefined,
       tags: cardTags.length ? cardTags : [],
 
-      // ✅ carry visualBreak through for rendering
       visualBreak: c.visualBreak,
 
       signals: undefined,
@@ -254,7 +290,6 @@ function splitSpokenParagraphs(input: string): string[] {
   const raw = String(input ?? "");
   const normalized = raw.replace(/\r\n/g, "\n");
 
-  // Keep your narratives clean if they include “Tiny test:” lines
   const withoutTiny = normalized
     .split("\n")
     .filter((line) => !/^\s*tiny test\s*:/i.test(line.trim()))
@@ -281,7 +316,6 @@ type TinyTest = {
 };
 
 const TINY_TESTS: Record<string, TinyTest> = {
-  // ✅ NEW — Game Designer
   gameDesigner: {
     title: "Tiny task: change one rule",
     eta: "10–20 min",
@@ -292,7 +326,6 @@ const TINY_TESTS: Record<string, TinyTest> = {
       "Ask a friend which version they’d rather play — and why.",
     ],
   },
-
   productUx: {
     title: "Tiny test: redesign one real screen",
     eta: "20–30 min",
@@ -389,10 +422,6 @@ function tinyTestForLane(laneId: string): TinyTest {
   return TINY_TESTS[laneId] ?? fallback;
 }
 
-/**
- * Fix the awkward phrasing:
- * This function must *finish* the “If you’re the type who likes…” lead-in.
- */
 function teenCoachWhy(why: string[]): string {
   const bits = (why ?? [])
     .map((s) => String(s).trim())
@@ -427,7 +456,6 @@ function VisualBreakBlock({
         }`}
       >
         <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
-          {/* NOTE: unoptimized avoids needing remotePatterns while you prototype */}
           <Image
             src={src}
             alt={alt}
@@ -501,7 +529,6 @@ export default function RecommendationsRenderer({
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
     const existing = getLatestFeedbackForRecommendation(rec.recId);
 
-    // Tap the same choice again => clear it (nice “undo”)
     if (existing && existing.response === response) {
       clearFeedbackForRecommendation(rec.recId);
       setVisible(getAndMarkVisibleRecommendations());
@@ -553,7 +580,6 @@ export default function RecommendationsRenderer({
       setJustSavedRecId((cur) => (cur === rec.recId ? null : cur));
     }, 1400);
 
-    // placeholder wiring (no-op in production; keeps eslint happy)
     void rec;
     void laneId;
   }
@@ -562,7 +588,6 @@ export default function RecommendationsRenderer({
     setShowStepsByRec((prev) => ({ ...prev, [recId]: !prev[recId] }));
   }
 
-  // Shared button language (Tiny Task + Quick Check)
   const pillBase =
     "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95";
   const pillNeutral = dark
@@ -588,7 +613,7 @@ export default function RecommendationsRenderer({
     Boolean(suggestRecal) && batchStatus === "active" && !ack;
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       {ack ? (
         <div
           className={`rounded-2xl border px-4 py-3 ${
@@ -668,7 +693,6 @@ export default function RecommendationsRenderer({
                 <button
                   type="button"
                   onClick={() => {
-                    // keep it lightweight: just hide for now
                     setAck({
                       kind: "comment_disagree",
                       feedbackId: "dismiss-recal",
@@ -686,7 +710,8 @@ export default function RecommendationsRenderer({
       ) : null}
 
       {visible.length ? (
-        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+        // ✅ Full-width list so cards match the hero/header card width
+        <div className="w-full space-y-5 lg:space-y-6">
           {visible.slice(0, 4).map((rec, slotIdx) => {
             const a = REC_ACCENTS[slotIdx] ?? REC_ACCENTS[0];
             const laneId = laneIdFromRec(rec);
@@ -711,37 +736,44 @@ export default function RecommendationsRenderer({
               .visualBreak;
 
             return (
+              // ✅ Single-shell card (no “outer layer” wrapper)
               <div
                 key={rec.recId}
-                className={`relative overflow-hidden rounded-3xl border p-[1px] ${
+                className={`relative w-full overflow-hidden rounded-3xl border ${
                   dark
-                    ? "border-white/10 bg-white/5"
-                    : "border-slate-200 bg-white/80"
+                    ? "border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.28)]"
+                    : "border-slate-200 shadow-[0_14px_40px_rgba(2,6,23,0.08)]"
                 }`}
               >
+                {/* Halo wash (kept subtle so cards don't blend) */}
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
                     a.halo
-                  } ${expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"}`}
+                  } ${expanded ? "opacity-40 lg:opacity-32" : "opacity-42 lg:opacity-36"}`}
                 />
+
+                {/* Top cap for separation */}
                 <div
                   aria-hidden
-                  className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${a.cap} ${
+                    dark ? "opacity-35" : "opacity-50"
+                  }`}
+                />
+
+                {/* Accent rail */}
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute left-0 top-4 h-[72%] ${
                     expanded
-                      ? "w-[3px] opacity-70 lg:opacity-55"
-                      : "w-[4px] opacity-90 lg:opacity-70"
+                      ? "w-[4px] opacity-80 lg:opacity-65"
+                      : "w-[5px] opacity-95 lg:opacity-75"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
+                {/* Surface */}
                 <div
                   className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                    dark
-                      ? expanded
-                        ? "bg-slate-950/25"
-                        : "bg-slate-950/22"
-                      : expanded
-                      ? "bg-white/70"
-                      : "bg-white/65"
+                    dark ? (expanded ? "bg-slate-950/26" : a.surfaceDark) : expanded ? "bg-white/75" : a.surfaceLight
                   }`}
                 >
                   <button
@@ -755,13 +787,12 @@ export default function RecommendationsRenderer({
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark
-                                ? `border-white/10 ${a.chip}`
-                                : "border-slate-200 bg-white text-slate-800"
+                              dark ? a.chipDark : a.chipLight
                             }`}
                           >
                             #{n}
                           </span>
+
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
                           >
@@ -810,7 +841,7 @@ export default function RecommendationsRenderer({
                             />
                             <span
                               className={`absolute inset-0 ${
-                                dark ? "bg-slate-950/25" : "bg-white/20"
+                                dark ? "bg-slate-950/25" : "bg-white/25"
                               }`}
                             />
                             <span
@@ -877,12 +908,12 @@ export default function RecommendationsRenderer({
                           <div
                             className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
                               a.rail
-                            } ${dark ? "opacity-16" : "opacity-10"}`}
+                            } ${dark ? "opacity-14" : "opacity-10"}`}
                             aria-hidden
                           />
                           <div
                             className={`pointer-events-none absolute inset-0 ${
-                              dark ? "bg-slate-950/10" : "bg-white/20"
+                              dark ? "bg-slate-950/10" : "bg-white/25"
                             }`}
                             aria-hidden
                           />
@@ -995,10 +1026,7 @@ export default function RecommendationsRenderer({
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div
-                                      key={i}
-                                      className="flex items-start gap-2"
-                                    >
+                                    <div key={i} className="flex items-start gap-2">
                                       <span
                                         className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
                                           dark
@@ -1101,7 +1129,7 @@ export default function RecommendationsRenderer({
                           className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
                             dark
                               ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                              : "bg-sky-600 text-white hover:bg-sky-500"
+                              : a.ctaLight
                           }`}
                         >
                           See what this career is really like{" "}

@@ -1,4 +1,3 @@
-// src/app/main/explore/page.tsx
 "use client";
 
 import * as React from "react";
@@ -231,16 +230,15 @@ function LaneMediaBreak({
 }) {
   const reducedMotion = usePrefersReducedMotion();
 
-  // ✅ show ONLY for "structured experience" lanes that need a media break
+  // ✅ show ONLY for structured lanes that need a media break
   const shouldShowCareers =
-    (laneKey as string) === "forYou" || (laneKey as string) === "recommendations";
+    (laneKey as string) === "forYou" ||
+    (laneKey as string) === "recommendations";
   const shouldShowEducation = (laneKey as string) === "education";
 
-  // ✅ IMPORTANT: hooks must be called every render, so no early return before hooks
   const [videoFailed, setVideoFailed] = React.useState(false);
   const [imageFailed, setImageFailed] = React.useState(false);
 
-  // ✅ reset fail state when you switch lanes so it always retries properly
   React.useEffect(() => {
     setVideoFailed(false);
     setImageFailed(false);
@@ -248,16 +246,21 @@ function LaneMediaBreak({
 
   if (!shouldShowCareers && !shouldShowEducation) return null;
 
-  // Careers assets (existing behavior)
+  // Careers assets
   const careersMp4 = "/images/explore/careers/careers.mp4";
   const careersPoster = "/images/explore/careers/careers.jpg";
 
-  // Education asset (new behavior)
-  const educationPoster = "/images/education/1.jpg";
+  // Education assets (MP4 first, JPG fallback)
+  const educationMp4 = "/images/education/education.mp4";
+  const educationPoster = "/images/education/education.jpg";
 
-  const showVideo = shouldShowCareers && !reducedMotion && !videoFailed;
+  const wantsVideo =
+    (shouldShowCareers || shouldShowEducation) && !reducedMotion && !videoFailed;
+
+  const srcMp4 = shouldShowEducation ? educationMp4 : careersMp4;
   const poster = shouldShowEducation ? educationPoster : careersPoster;
 
+  const showVideo = wantsVideo;
   const showImage = !imageFailed;
 
   return (
@@ -280,7 +283,7 @@ function LaneMediaBreak({
           }`}
         />
 
-        {/* ✅ Careers: MP4 fallback to JPG. Education: JPG only. */}
+        {/* ✅ MP4 fallback to JPG (Careers + Education) */}
         {showVideo ? (
           <video
             className="relative h-[140px] w-full object-cover sm:h-[160px] lg:h-[180px]"
@@ -289,10 +292,10 @@ function LaneMediaBreak({
             loop
             playsInline
             preload="metadata"
-            poster={careersPoster}
+            poster={poster}
             onError={() => setVideoFailed(true)}
           >
-            <source src={careersMp4} type="video/mp4" />
+            <source src={srcMp4} type="video/mp4" />
           </video>
         ) : showImage ? (
           <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
@@ -425,6 +428,19 @@ export default function ExplorePage() {
     activeSection.key,
     activeSection
   );
+
+  /**
+   * ✅ Detach these lanes so they match the Education structure:
+   * - The lane shell holds only header + media
+   * - The 4 cards render OUTSIDE the shell (full-width, clearly separate)
+   */
+  const detachContentFromShell =
+    (activeSection.key as string) === "education" ||
+    (activeSection.key as string) === "travel" ||
+    (activeSection.key as string) === "community" ||
+    (activeSection.key as string) === "hobbies" ||
+    (activeSection.key as string) === "recommendations" ||
+    (activeSection.key as string) === "forYou";
 
   return (
     <AppChrome
@@ -608,7 +624,7 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Lane shell */}
+        {/* Lane shell (header-only when detached lanes) */}
         <div
           className={`mt-4 rounded-3xl border p-4 shadow-sm ${
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
@@ -648,7 +664,7 @@ export default function ExplorePage() {
               />
             </div>
 
-            {/* ✅ emotional media break (now includes Education image break) */}
+            {/* ✅ emotional media break */}
             <LaneMediaBreak
               laneKey={activeSection.key}
               dark={dark}
@@ -656,39 +672,78 @@ export default function ExplorePage() {
             />
           </div>
 
-          {/* Lane content */}
-          {renderStructured ? (
-            structuredChip ? (
-              (() => {
-                const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
-                return (
-                  <Renderer
-                    key={structuredChip.id}
-                    chip={structuredChip}
-                    dark={dark}
-                  />
-                );
-              })()
+          {/* Lane content (keep inside shell only when NOT detached) */}
+          {!detachContentFromShell ? (
+            renderStructured ? (
+              structuredChip ? (
+                (() => {
+                  const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
+                  return (
+                    <Renderer
+                      key={structuredChip.id}
+                      chip={structuredChip}
+                      dark={dark}
+                    />
+                  );
+                })()
+              ) : (
+                <div
+                  className={`rounded-2xl border p-5 ${
+                    dark
+                      ? "border-white/10 bg-white/5 text-white/80"
+                      : "border-black/10 bg-white text-slate-700"
+                  }`}
+                >
+                  No content found for this lane yet.
+                </div>
+              )
             ) : (
-              <div
-                className={`rounded-2xl border p-5 ${
-                  dark
-                    ? "border-white/10 bg-white/5 text-white/80"
-                    : "border-black/10 bg-white text-slate-700"
-                }`}
-              >
-                No content found for this lane yet.
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {activeSection.chips.map((chip: ExploreChip) => {
+                  const Renderer = RENDERERS[chip.type as ExploreChipType];
+                  return <Renderer key={chip.id} chip={chip} dark={dark} />;
+                })}
               </div>
             )
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {activeSection.chips.map((chip: ExploreChip) => {
-                const Renderer = RENDERERS[chip.type as ExploreChipType];
-                return <Renderer key={chip.id} chip={chip} dark={dark} />;
-              })}
-            </div>
-          )}
+          ) : null}
         </div>
+
+        {/* ✅ Detached lanes: render content OUTSIDE the shell (Education structure) */}
+        {detachContentFromShell ? (
+          <div className="mt-4 space-y-4">
+            {renderStructured ? (
+              structuredChip ? (
+                (() => {
+                  const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
+                  return (
+                    <Renderer
+                      key={structuredChip.id}
+                      chip={structuredChip}
+                      dark={dark}
+                    />
+                  );
+                })()
+              ) : (
+                <div
+                  className={`rounded-2xl border p-5 ${
+                    dark
+                      ? "border-white/10 bg-white/5 text-white/80"
+                      : "border-black/10 bg-white text-slate-700"
+                  }`}
+                >
+                  No content found for this lane yet.
+                </div>
+              )
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {activeSection.chips.map((chip: ExploreChip) => {
+                  const Renderer = RENDERERS[chip.type as ExploreChipType];
+                  return <Renderer key={chip.id} chip={chip} dark={dark} />;
+                })}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
 
       <BottomNav />

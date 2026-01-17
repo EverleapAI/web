@@ -494,7 +494,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       ) : null}
 
       {cards.length ? (
-        <div className="space-y-4 lg:space-y-5 lg:mx-auto lg:max-w-4xl">
+        <div className="space-y-4 lg:space-y-5">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = COM_ACCENTS[slotIdx] ?? COM_ACCENTS[0];
 
@@ -580,16 +580,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           </span>
 
                           {/* Emoji chip (secondary vibe marker) */}
-                          <span
-                            className={`inline-flex items-center justify-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark
-                                ? "border-white/10 bg-white/5 text-white/80"
-                                : "border-slate-200 bg-white text-slate-700"
-                            }`}
-                            aria-label="Community mode"
-                          >
-                            <span aria-hidden>{c.icon ?? "🤝"}</span>
-                          </span>
+                      
 
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
