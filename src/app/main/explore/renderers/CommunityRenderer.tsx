@@ -9,28 +9,29 @@ import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
 
 import FeedbackModal from "../components/FeedbackModal";
-import {
-  addAction,
-  hasAction,
-  subscribeActionsStore,
-} from "../state/actionsStore";
+import { addAction, hasAction, subscribeActionsStore } from "../state/actionsStore";
 
 /* =============================================================================
-   Explore › CommunityRenderer (Education-aligned / Careers-style mobile structure)
-   - 4 cards, vertical list, strong per-card separation (no “one big shell” feel)
-   - Rank pill (#1–#4) + emoji as secondary vibe marker (subtle)
-   - Expand/collapse per card (one expanded at a time)
-   - Media break (safe image) inside expanded card (like Education’s in-card media)
-   - Tiny task: collapsible steps + Add to Actions + saved ack (wired to actionsStore)
-   - Quick check: This fits / Kinda / Nope using FeedbackModal
+   Explore › CommunityRenderer (Careers structure parity)
 
-   NOTE:
-   - Header-shell media (inside the lane header card) is controlled by explore/page.tsx.
-
-   Media standardization:
-   - In-card VisualBreak image defaults to /images/community/<n>.jpg (n=1..4)
-   - Optional per-card override via card.media.src
-   - SafeImage behavior: never show broken image icon; hide on failure (optional fallback -> /images/community/5.jpg)
+   REQUIRED parity:
+   - Disable scroll anchoring in card list
+   - No-jump expand/collapse (anchor capture/restore)
+   - Only one card expanded
+   - Collapsed shows 1 teaser paragraph + “Tap to expand”
+   - Expanded order:
+       1) Expanded copy
+       2) Go deeper CTA
+       3) Media (VisualBreak / card image)
+       4) Tiny task block
+       5) Quick check
+       6) Collapse button at bottom
+   - Dim sibling cards when one is expanded (opacity + saturate)
+   - Media standardization:
+       header media (in content): /images/community/6.mp4 fallback /images/community/5.jpg
+       card images: /images/community/1.jpg..4.jpg by slot order
+       paths live in TS content when provided; renderer supplies safe defaults
+   - Safe media behavior: never show broken icons; tolerate network issues
 ============================================================================= */
 
 type CommunityCard = {
@@ -56,6 +57,13 @@ type CommunityArea = {
   signals?: string[];
   cards?: CommunityCard[];
   nextMoves?: NextMove[];
+
+  /**
+   * Optional media configuration (preferred: defined in TS content).
+   * If absent, renderer falls back safely to /images/community defaults.
+   */
+  mediaBasePath?: string;
+  headerMedia?: { mp4?: string; jpg?: string; alt?: string };
 };
 
 function asCommunityArea(input: unknown): CommunityArea {
@@ -64,15 +72,25 @@ function asCommunityArea(input: unknown): CommunityArea {
   const toStrArr = (v: unknown): string[] | undefined =>
     Array.isArray(v) ? v.map((x) => String(x)) : undefined;
 
-  const toMedia = (
-    v: unknown
-  ): { src?: string; alt?: string } | undefined => {
+  const toMedia = (v: unknown): { src?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
     const src = typeof it?.src === "string" ? it.src : undefined;
     const alt = typeof it?.alt === "string" ? it.alt : undefined;
     if (!src && !alt) return undefined;
     return { src, alt };
+  };
+
+  const toHeaderMedia = (
+    v: unknown
+  ): { mp4?: string; jpg?: string; alt?: string } | undefined => {
+    if (!v || typeof v !== "object") return undefined;
+    const it = v as Record<string, unknown>;
+    const mp4 = typeof it?.mp4 === "string" ? it.mp4 : undefined;
+    const jpg = typeof it?.jpg === "string" ? it.jpg : undefined;
+    const alt = typeof it?.alt === "string" ? it.alt : undefined;
+    if (!mp4 && !jpg && !alt) return undefined;
+    return { mp4, jpg, alt };
   };
 
   const toCards = (v: unknown): CommunityCard[] | undefined => {
@@ -112,6 +130,9 @@ function asCommunityArea(input: unknown): CommunityArea {
     signals: toStrArr(obj.signals),
     cards: toCards(obj.cards),
     nextMoves: toMoves(obj.nextMoves),
+    mediaBasePath:
+      typeof obj.mediaBasePath === "string" ? obj.mediaBasePath : undefined,
+    headerMedia: toHeaderMedia(obj.headerMedia),
   };
 }
 
@@ -354,84 +375,179 @@ function toRecFromCommunityCard(
   };
 }
 
-/* ---------------------------------------------------------------------------
-   In-card VisualBreak (safe image, standardized paths)
---------------------------------------------------------------------------- */
+/* ---- Motion / Anchor helpers (no-jump expand) ---- */
 
-function standardizedCommunityCardImageSrc(slotIdx: number): string {
-  const n = Math.max(1, Math.min(4, slotIdx + 1));
-  return `/images/community/${n}.jpg`;
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(Boolean(mq.matches));
+    onChange();
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+
+  return reduced;
 }
 
-function SafeImage({
-  src,
-  alt,
-  className,
-  fallbackSrc,
-}: {
-  src: string;
+function useStableExpandAnchoring() {
+  const pendingRef = React.useRef<{
+    anchorId: string;
+    anchorTop: number;
+  } | null>(null);
+
+  const capture = React.useCallback((anchorId: string) => {
+    if (typeof window === "undefined") return;
+    const el = document.getElementById(anchorId);
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    pendingRef.current = { anchorId, anchorTop: rect.top };
+  }, []);
+
+  const restore = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+    const pending = pendingRef.current;
+    if (!pending) return;
+
+    pendingRef.current = null;
+
+    const run = () => {
+      const el = document.getElementById(pending.anchorId);
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const delta = rect.top - pending.anchorTop;
+      if (Math.abs(delta) > 0.5) {
+        window.scrollTo({ top: window.scrollY + delta, left: 0, behavior: "auto" });
+      }
+    };
+
+    requestAnimationFrame(() => {
+      run();
+      requestAnimationFrame(() => run());
+    });
+  }, []);
+
+  return { capture, restore };
+}
+
+/* ---- Media helpers (Safe media, standardized paths) ---- */
+
+function clamp1to4(n: number): number {
+  return Math.max(1, Math.min(4, n));
+}
+
+function normalizeBasePath(p: string): string {
+  const raw = String(p ?? "").trim();
+  if (!raw) return "/images/community";
+  return raw.endsWith("/") ? raw.slice(0, -1) : raw;
+}
+
+type SafeMediaProps = {
+  mp4Src?: string;
+  jpgCandidates: string[];
   alt: string;
-  className: string;
-  fallbackSrc?: string;
-}) {
-  const [failed, setFailed] = React.useState(false);
-  const [fallbackFailed, setFallbackFailed] = React.useState(false);
+  dark: boolean;
+  className?: string;
+};
 
-  if (failed && (!fallbackSrc || fallbackFailed)) return null;
+function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaProps) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [videoFailed, setVideoFailed] = React.useState(false);
+  const [imgIdx, setImgIdx] = React.useState(0);
 
-  const useSrc = failed ? (fallbackSrc as string) : src;
+  const candidates = React.useMemo(() => {
+    const out: string[] = [];
+    for (const c of jpgCandidates) {
+      const v = String(c ?? "").trim();
+      if (v) out.push(v);
+    }
+    return out;
+  }, [jpgCandidates]);
+
+  const currentImg = candidates[imgIdx] ?? "";
+
+  const showVideo = Boolean(mp4Src && !reducedMotion && !videoFailed);
+
+  const onVideoTrouble = React.useCallback(() => {
+    setVideoFailed(true);
+  }, []);
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={useSrc}
-      alt={alt}
-      className={className}
-      onError={() => {
-        if (!failed) setFailed(true);
-        else setFallbackFailed(true);
-      }}
-    />
+    <div
+      className={`relative overflow-hidden rounded-2xl border ${
+        dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+      } ${className ?? ""}`}
+    >
+      {showVideo ? (
+        <video
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={currentImg || undefined}
+          onError={onVideoTrouble}
+          onStalled={onVideoTrouble}
+          onAbort={onVideoTrouble}
+        >
+          <source src={mp4Src} type="video/mp4" />
+        </video>
+      ) : currentImg ? (
+        <img
+          // eslint-disable-next-line @next/next/no-img-element
+          src={currentImg}
+          alt={alt}
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+          onError={() => setImgIdx((i) => i + 1)}
+        />
+      ) : (
+        <div className="relative h-[120px] w-full sm:h-[140px] lg:h-[150px]" />
+      )}
+
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 ${
+          dark
+            ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
+            : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
+        }`}
+      />
+    </div>
   );
 }
 
 function CommunityCardMediaBreak({
   dark,
   slotIdx,
+  area,
   overrideSrc,
   overrideAlt,
 }: {
   dark: boolean;
   slotIdx: number;
+  area: CommunityArea;
   overrideSrc?: string;
   overrideAlt?: string;
 }) {
-  const primary =
-    (overrideSrc ?? "").trim() || standardizedCommunityCardImageSrc(slotIdx);
-  const fallback = "/images/community/5.jpg";
+  const base = normalizeBasePath(area.mediaBasePath ?? "/images/community");
+
+  const slot = clamp1to4(slotIdx + 1);
+  const slotJpg = `${base}/${slot}.jpg`;
+
+  const poster = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
+  const mp4Src = (area.headerMedia?.mp4 ?? "").trim() || `${base}/6.mp4`;
+
+  const imgCandidates = [(overrideSrc ?? "").trim(), slotJpg, poster];
+  const alt = (overrideAlt ?? "").trim() || "";
 
   return (
-    <div className="mt-4">
-      <div
-        className={`relative overflow-hidden rounded-2xl border ${
-          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-        }`}
-      >
-        <SafeImage
-          src={primary}
-          fallbackSrc={fallback}
-          alt={(overrideAlt ?? "").trim()}
-          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-        />
-        <div
-          aria-hidden
-          className={`pointer-events-none absolute inset-0 ${
-            dark
-              ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
-              : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
-          }`}
-        />
-      </div>
+    <div className="mt-4" style={{ overflowAnchor: "none" }}>
+      <SafeMedia mp4Src={mp4Src} jpgCandidates={imgCandidates} alt={alt} dark={dark} />
     </div>
   );
 }
@@ -454,18 +570,18 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
-  const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
-
-  const [showStepsById, setShowStepsById] = React.useState<
-    Record<string, boolean>
-  >({});
-
-  const [justSavedActionId, setJustSavedActionId] = React.useState<
-    string | null
-  >(null);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
+    {}
+  );
+  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
+    null
+  );
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
+
+  const { capture, restore } = useStableExpandAnchoring();
 
   const [, bump] = React.useState(0);
   React.useEffect(() => {
@@ -480,8 +596,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
     return `explore_${chip.id}_${sig}`;
   }, [chip.id, area]);
 
-  function toggleExpanded(recId: string) {
-    setExpandedRecId((cur) => (cur === recId ? null : recId));
+  React.useEffect(() => {
+    restore();
+  }, [expandedId, restore]);
+
+  function toggleExpanded(id: string) {
+    const anchorId = `community-card-anchor-${id}`;
+    capture(anchorId);
+    setExpandedId((cur) => (cur === id ? null : id));
   }
 
   function toggleSteps(id: string) {
@@ -498,9 +620,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(
-        `explore.community.feedback.${recId}`
-      );
+      const raw = window.localStorage.getItem(`explore.community.feedback.${recId}`);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -601,18 +721,16 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
-  function emojiForCard(c: CommunityCard): string | null {
-    const raw = (c.icon ?? "").trim();
-    return raw.length ? raw : null;
-  }
+  const anyExpanded = Boolean(expandedId);
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
       {ack ? (
         <div
           className={`rounded-2xl border px-4 py-3 ${
             dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
           }`}
+          style={{ overflowAnchor: "none" }}
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
@@ -653,18 +771,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       ) : null}
 
       {cards.length ? (
-        <div className="space-y-4 lg:space-y-5">
+        <div className="space-y-4 lg:space-y-6" style={{ overflowAnchor: "none" }}>
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = COM_ACCENTS[slotIdx] ?? COM_ACCENTS[0];
 
             const spoken = splitSpokenParagraphs(c.short ?? "");
-            const teaser = spoken.slice(0, 2);
-            const extra = spoken.slice(2);
+            const teaserOne = spoken.slice(0, 1);
 
-            const rec = toRecFromCommunityCard(c, area, runId);
-            const selected = getSelectedFor(rec.recId);
-
-            const expanded = expandedRecId === rec.recId;
+            const expanded = expandedId === c.id;
 
             const deepDiveHref =
               typeof c.href === "string" && c.href.trim().length
@@ -680,22 +794,30 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
             const tinySaved = hasAction(tinyActionId);
             const tinyJustSaved = justSavedActionId === tinyActionId;
 
-            const rank = slotIdx + 1;
-            const emoji = emojiForCard(c);
+            const rec = toRecFromCommunityCard(c, area, runId);
+            const selected = getSelectedFor(rec.recId);
+
+            const n = slotIdx + 1;
+
+            const siblingDim =
+              anyExpanded && !expanded ? "opacity-70 saturate-50" : "opacity-100 saturate-100";
+
+            const anchorId = `community-card-anchor-${c.id}`;
 
             return (
               <div
-                key={rec.recId}
-                className={`relative overflow-hidden rounded-3xl border p-[1px] ${
+                key={c.id}
+                className={`relative overflow-hidden rounded-3xl border p-[1px] shadow-sm transition ${siblingDim} ${
                   dark
-                    ? "border-white/10 bg-white/5"
-                    : "border-slate-200 bg-white/80"
+                    ? "border-white/10 bg-white/5 shadow-black/20"
+                    : "border-slate-200 bg-white/80 shadow-slate-200/60"
                 }`}
+                style={{ overflowAnchor: "none" }}
               >
+                <div id={anchorId} className="h-0 w-0" aria-hidden />
+
                 <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
-                    a.halo
-                  } ${
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
                     expanded
                       ? "opacity-45 lg:opacity-35"
                       : "opacity-85 lg:opacity-65"
@@ -712,7 +834,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                 />
 
                 <div
-                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
+                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-6 ${
                     dark
                       ? expanded
                         ? "bg-slate-950/25"
@@ -721,10 +843,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                       ? "bg-white/70"
                       : "bg-white/65"
                   }`}
+                  style={{ overflowAnchor: "none" }}
                 >
                   <button
                     type="button"
-                    onClick={() => toggleExpanded(rec.recId)}
+                    onClick={() => toggleExpanded(c.id)}
                     className="w-full text-left"
                     aria-expanded={expanded}
                   >
@@ -739,10 +862,8 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                             }`}
                             aria-hidden
                           >
-                            #{rank}
+                            #{n}
                           </span>
-
-
 
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
@@ -751,25 +872,29 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                           </div>
                         </div>
 
-                        {!expanded && (teaser[0] ?? "").trim().length ? (
+                        {!expanded && (teaserOne[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
                               className={`text-sm lg:text-[0.95rem] ${
                                 dark ? "text-slate-100/85" : "text-slate-700"
                               } line-clamp-2`}
                             >
-                              {renderTextWithLinks(teaser[0])}
+                              {renderTextWithLinks(teaserOne[0])}
                             </p>
+                            <div
+                              className={`mt-2 text-xs font-semibold ${
+                                dark ? "text-white/55" : "text-slate-600"
+                              }`}
+                            >
+                              Tap to expand
+                            </div>
                           </div>
                         ) : null}
 
-                        {expanded && teaser.length ? (
+                        {expanded && spoken.length ? (
                           <div className="mt-2 space-y-2">
-                            {teaser.map((p, i) => (
-                              <p
-                                key={i}
-                                className={`text-sm lg:text-[0.95rem] ${muted}`}
-                              >
+                            {spoken.map((p, i) => (
+                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                                 {renderTextWithLinks(p)}
                               </p>
                             ))}
@@ -786,9 +911,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                         {!expanded ? (
                           <span className="relative h-full w-full">
                             <span
-                              className={`absolute inset-0 bg-gradient-to-br ${
-                                a.rail
-                              } ${dark ? "opacity-55" : "opacity-50"}`}
+                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
+                                dark ? "opacity-55" : "opacity-50"
+                              }`}
                             />
                             <span
                               className={`absolute inset-0 ${
@@ -819,86 +944,53 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                   </button>
 
                   {expanded ? (
-                    <div className="mt-4 lg:mt-5">
-                      {extra.length ? (
-                        <div className="space-y-2 lg:space-y-2.5">
-                          {extra.map((p, i) => (
-                            <p
-                              key={i}
-                              className={`text-sm lg:text-[0.95rem] ${muted}`}
-                            >
-                              {renderTextWithLinks(p)}
-                            </p>
-                          ))}
-                        </div>
-                      ) : null}
+                    <div className="mt-4 lg:mt-5" style={{ overflowAnchor: "none" }}>
+                      {/* 2) Go deeper CTA */}
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <Link
+                          href={deepDiveHref}
+                          className={`${pillBase} ${
+                            dark
+                              ? "border-white/10 bg-white/5 text-white/85 hover:bg-white/10"
+                              : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                          }`}
+                        >
+                          Go deeper
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
 
-                      {/* Visual break (standardized safe image) */}
+                      {/* 3) Media */}
                       <CommunityCardMediaBreak
                         dark={dark}
                         slotIdx={slotIdx}
+                        area={area}
                         overrideSrc={c.media?.src}
                         overrideAlt={c.media?.alt}
                       />
 
-                      <div
-                        className={`mt-4 lg:mt-5 relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                          dark
-                            ? "border-white/10 bg-white/5"
-                            : "border-slate-200 bg-white/80"
-                        }`}
-                      >
+                      {/* 4) Tiny task block */}
+                      <div className="mt-5 lg:mt-6" style={{ overflowAnchor: "none" }}>
                         <div
-                          className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
-                            a.rail
-                          } ${dark ? "opacity-16" : "opacity-10"}`}
-                          aria-hidden
-                        />
-                        <div
-                          className={`pointer-events-none absolute inset-0 ${
-                            dark ? "bg-slate-950/10" : "bg-white/20"
+                          className={`rounded-2xl border p-4 ${
+                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                           }`}
-                          aria-hidden
-                        />
-
-                        <div className="relative">
-                          <div className="flex items-center justify-between gap-3">
-                            <div
-                              className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                dark ? "text-white/80" : "text-slate-700"
-                              }`}
-                            >
-                              Tiny task
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div
+                                className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                                  dark ? "text-slate-300/60" : "text-slate-500"
+                                }`}
+                              >
+                                Tiny task
+                              </div>
+                              <div className={`mt-1 text-sm font-semibold ${titleC}`}>{tiny.title}</div>
+                              <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                ETA: {tiny.eta}
+                              </div>
                             </div>
 
-                            <span
-                              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                                dark
-                                  ? "border-white/10 bg-white/5 text-white/70"
-                                  : "border-slate-200 bg-white text-slate-700"
-                              }`}
-                            >
-                              <span aria-hidden>⏱</span> {tiny.eta}
-                            </span>
-                          </div>
-
-                          <div className="mt-2">
-                            <div
-                              className={`text-sm font-semibold lg:text-[0.95rem] ${
-                                dark ? "text-white/90" : "text-slate-900"
-                              }`}
-                            >
-                              Try this first — keep it small:
-                            </div>
-                            <div
-                              className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
-                            >
-                              {tiny.steps?.[0] ??
-                                "Try a super small version of it today."}
-                            </div>
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => toggleSteps(c.id)}
@@ -916,7 +1008,43 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                                 </>
                               )}
                             </button>
+                          </div>
 
+                          {showSteps ? (
+                            <div className="mt-3 space-y-2">
+                              <ol className="space-y-2">
+                                {tiny.steps.map((s, idx) => (
+                                  <li key={idx} className={`flex gap-2 text-sm ${muted}`}>
+                                    <span
+                                      className={`mt-[2px] inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[0.75rem] font-semibold ${
+                                        dark
+                                          ? "border-white/10 bg-white/5 text-white/75"
+                                          : "border-slate-200 bg-white text-slate-800"
+                                      }`}
+                                      aria-hidden
+                                    >
+                                      {idx + 1}
+                                    </span>
+                                    <span className="min-w-0">{renderTextWithLinks(s)}</span>
+                                  </li>
+                                ))}
+                              </ol>
+
+                              {tiny.tip ? (
+                                <div
+                                  className={`mt-2 rounded-xl border px-3 py-2 text-xs ${
+                                    dark
+                                      ? "border-white/10 bg-slate-950/35 text-white/70"
+                                      : "border-slate-200 bg-white text-slate-700"
+                                  }`}
+                                >
+                                  {renderTextWithLinks(tiny.tip)}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => {
@@ -947,164 +1075,98 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               {tinySaved ? (
                                 <>
                                   <CheckCircle2 className="h-4 w-4" />
-                                  Saved
+                                  Added to Actions
                                 </>
                               ) : (
                                 <>
-                                  <span aria-hidden>📁</span>
+                                  <span aria-hidden>📌</span>
                                   Add to my Actions
                                 </>
                               )}
                             </button>
-                          </div>
 
-                          {tinyJustSaved ? (
-                            <div
-                              className={`mt-2 text-xs font-semibold ${
-                                dark ? "text-white/70" : "text-slate-700"
-                              }`}
-                            >
-                              ✅ Added to Actions
-                            </div>
-                          ) : null}
-
-                          {showSteps ? (
-                            <div
-                              className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                dark
-                                  ? "border-white/10 bg-white/5"
-                                  : "border-slate-200 bg-white/80"
-                              }`}
-                            >
-                              <div
-                                className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
-                              >
-                                {tiny.title}
-                              </div>
-
-                              <div className="mt-2 space-y-1.5 lg:space-y-2">
-                                {tiny.steps.map((step, i) => (
-                                  <div
-                                    key={i}
-                                    className="flex items-start gap-2"
-                                  >
-                                    <span
-                                      className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
-                                        dark
-                                          ? "border-white/10 bg-white/5 text-white/70"
-                                          : "border-slate-200 bg-white text-slate-700"
-                                      }`}
-                                      aria-hidden
-                                    >
-                                      {i + 1}
-                                    </span>
-                                    <div
-                                      className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                    >
-                                      {step}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-
-                              <div
-                                className={`mt-2 text-xs font-semibold ${
-                                  dark ? "text-white/55" : "text-slate-600"
+                            {tinyJustSaved ? (
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
+                                  dark
+                                    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
                                 }`}
                               >
-                                Time: {tiny.eta}
-                              </div>
-
-                              {tiny.tip ? (
-                                <div
-                                  className={`mt-2 text-xs ${
-                                    dark ? "text-white/55" : "text-slate-600"
-                                  }`}
-                                >
-                                  {tiny.tip}
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
+                                <CheckCircle2 className="h-4 w-4" />
+                                Saved
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 lg:mt-5">
+                      {/* 5) Quick check */}
+                      <div className="mt-5 lg:mt-6" style={{ overflowAnchor: "none" }}>
                         <div
-                          className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                            dark ? "text-slate-300/60" : "text-slate-500"
+                          className={`rounded-2xl border p-4 ${
+                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                           }`}
                         >
-                          Quick check on:{" "}
-                          <span
-                            className={`${
-                              dark ? "text-slate-200/90" : "text-slate-700"
+                          <div
+                            className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                              dark ? "text-slate-300/60" : "text-slate-500"
                             }`}
                           >
-                            {c.title}
-                          </span>
-                        </div>
+                            Quick check on {c.title}
+                          </div>
+                          <div className={`mt-1 text-sm ${muted}`}>
+                            Does this feel like a good direction to test next?
+                          </div>
 
-                        <div
-                          className={`mt-1 text-xs ${
-                            dark ? "text-white/55" : "text-slate-600"
-                          }`}
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "agree")}
+                              className={`${pillBase} ${
+                                selected === "agree"
+                                  ? pillSelected("agree")
+                                  : pillNeutral
+                              }`}
+                            >
+                              👍 Yes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "mixed")}
+                              className={`${pillBase} ${
+                                selected === "mixed"
+                                  ? pillSelected("mixed")
+                                  : pillNeutral
+                              }`}
+                            >
+                              🤔 Maybe
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "disagree")}
+                              className={`${pillBase} ${
+                                selected === "disagree"
+                                  ? pillSelected("disagree")
+                                  : pillNeutral
+                              }`}
+                            >
+                              👎 Not me
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 6) Collapse */}
+                      <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(c.id)}
+                          className={`${pillBase} ${pillNeutral}`}
                         >
-                          Be honest — we’ll adjust what you see next.
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${
-                              selected === "agree"
-                                ? pillSelected("agree")
-                                : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>👍</span>
-                            {selected === "agree" ? "This fits ✓" : "This fits"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${
-                              selected === "mixed"
-                                ? pillSelected("mixed")
-                                : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>🙂</span>
-                            {selected === "mixed" ? "Kinda ✓" : "Kinda"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${
-                              selected === "disagree"
-                                ? pillSelected("disagree")
-                                : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>👎</span>
-                            {selected === "disagree" ? "Nope ✓" : "Nope"}
-                          </button>
-                        </div>
-
-                        <Link
-                          href={deepDiveHref}
-                          className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                            dark
-                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                              : "bg-slate-900 text-white hover:bg-slate-800"
-                          }`}
-                        >
-                          Go deeper (real options){" "}
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                          <ChevronUp className="h-4 w-4" />
+                          Collapse
+                        </button>
                       </div>
                     </div>
                   ) : null}
@@ -1118,17 +1180,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
           className={`rounded-2xl border p-5 ${
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
+          style={{ overflowAnchor: "none" }}
         >
           <div className={`text-sm font-semibold ${titleC}`}>
             No community items yet
           </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to{" "}
-            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">
-              explore/content/community.ts
-            </span>
-            .
+            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">explore/content/community.ts</span>.
           </div>
         </div>
       )}

@@ -541,6 +541,19 @@ function VisualBreakBlock({
   );
 }
 
+/* ---------------------------------------------------------------------------
+   UX helpers (Careers pilot lane)
+   - Goal: expansion should feel like it opens DOWN, without trapping scroll.
+   - We preserve the header's on-screen position at toggle-time.
+   - Also disable browser scroll anchoring in this list to avoid "jumping".
+--------------------------------------------------------------------------- */
+
+type AnchorRequest = {
+  recId: string;
+  headerTopPx: number;
+  scrollY: number;
+} | null;
+
 export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
   const [visible, setVisible] = React.useState<RecommendationItem[]>([]);
   const [pending, setPending] = React.useState<PendingFeedback>(null);
@@ -559,6 +572,9 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
+
+  const headerRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+  const anchorReqRef = React.useRef<AnchorRequest>(null);
 
   React.useEffect(() => {
     const areaNow = asCareersArea(chip.area);
@@ -585,11 +601,42 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
     return () => unsub();
   }, [chip.id, chip.area]);
 
+  React.useLayoutEffect(() => {
+    const req = anchorReqRef.current;
+    if (!req) return;
+
+    const el = headerRefs.current[req.recId];
+    if (!el) {
+      anchorReqRef.current = null;
+      return;
+    }
+
+    const nextTop = el.getBoundingClientRect().top;
+    const delta = nextTop - req.headerTopPx;
+
+    if (Math.abs(delta) > 2) {
+      // Keep the header where it was when tapped.
+      window.scrollBy({ top: delta, left: 0, behavior: "auto" });
+    }
+
+    anchorReqRef.current = null;
+  }, [expandedRecId]);
+
   const state = getExploreFeedbackState();
   const batchStatus = state.batch?.status ?? "active";
   const suggestRecal = shouldSuggestRecalibrate();
 
   function toggleExpanded(recId: string) {
+    const el = headerRefs.current[recId];
+    if (el) {
+      anchorReqRef.current = {
+        recId,
+        headerTopPx: el.getBoundingClientRect().top,
+        scrollY: window.scrollY,
+      };
+    } else {
+      anchorReqRef.current = null;
+    }
     setExpandedRecId((cur) => (cur === recId ? null : recId));
   }
 
@@ -632,8 +679,7 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
       setAck({
         kind: "comment_disagree",
         feedbackId: fb.feedbackId,
-        message:
-          "Got it. Want me to tweak your next set based on what you wrote?",
+        message: "Got it. Want me to tweak your next set based on what you wrote?",
       });
     }
 
@@ -677,8 +723,8 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
-  const showRecalBanner =
-    Boolean(suggestRecal) && batchStatus === "active" && !ack;
+  const showRecalBanner = Boolean(suggestRecal) && batchStatus === "active" && !ack;
+  const anyExpanded = Boolean(expandedRecId);
 
   return (
     <section className="space-y-4">
@@ -690,14 +736,10 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${
-                dark ? "text-slate-200" : "text-slate-800"
-              } mt-0.5 h-5 w-5`}
+              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Okay — noted
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -740,9 +782,7 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
               aria-hidden
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Want a fresh set?
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Want a fresh set?</div>
               <div className={`mt-1 text-sm ${muted}`}>
                 I can recalibrate based on what you’ve liked/disliked so far.
               </div>
@@ -778,7 +818,7 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
       ) : null}
 
       {visible.length ? (
-        <div className="w-full space-y-5 lg:space-y-6">
+        <div className="w-full space-y-5 lg:space-y-6" style={{ overflowAnchor: "none" }}>
           {visible.slice(0, 4).map((rec, slotIdx) => {
             const a = REC_ACCENTS[slotIdx] ?? REC_ACCENTS[0];
             const laneId = laneIdFromRec(rec);
@@ -787,182 +827,185 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
             const selected = feedback?.response;
 
             const spoken = rec.summary ? splitSpokenParagraphs(rec.summary) : [];
-            const teaser = spoken.slice(0, 2);
+            const teaserText = (spoken[0] ?? "").trim(); // ✅ standardize: exactly 1 teaser block
+
             const extra = spoken.slice(2);
+            const expanded = expandedRecId === rec.recId;
 
             const tiny = tinyTestForLane(laneId);
             const tinySaved = Boolean(savedTinyByRec[rec.recId]);
             const tinyJustSaved = justSavedRecId === rec.recId;
 
             const showSteps = Boolean(showStepsByRec[rec.recId]);
-            const expanded = expandedRecId === rec.recId;
 
             const n = slotIdx + 1;
 
-            const visualBreak = (rec as unknown as { visualBreak?: VisualBreak })
-              .visualBreak;
+            const visualBreak = (rec as unknown as { visualBreak?: VisualBreak }).visualBreak;
+
+            const dimmed = anyExpanded && !expanded;
 
             return (
               <div
                 key={rec.recId}
-                className={`relative w-full overflow-hidden rounded-3xl border ${
+                style={{ overflowAnchor: "none" }}
+                className={`relative w-full overflow-hidden rounded-3xl border transition ${
+                  expanded ? "ring-2 ring-white/10 lg:ring-white/15" : ""
+                } ${
                   dark
                     ? "border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.28)]"
                     : "border-slate-200 shadow-[0_14px_40px_rgba(2,6,23,0.08)]"
-                }`}
+                } ${dimmed ? "opacity-[0.88] saturate-[0.92]" : "opacity-100"}`}
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
-                    a.halo
-                  } ${
-                    expanded
-                      ? "opacity-40 lg:opacity-32"
-                      : "opacity-42 lg:opacity-36"
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
+                    expanded ? "opacity-45 lg:opacity-36" : "opacity-42 lg:opacity-36"
                   }`}
                 />
 
                 <div
                   aria-hidden
-                  className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${
-                    a.cap
-                  } ${dark ? "opacity-35" : "opacity-50"}`}
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${a.cap} ${
+                    dark ? "opacity-35" : "opacity-50"
+                  }`}
                 />
 
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[72%] ${
-                    expanded
-                      ? "w-[4px] opacity-80 lg:opacity-65"
-                      : "w-[5px] opacity-95 lg:opacity-75"
+                    expanded ? "w-[5px] opacity-90 lg:opacity-75" : "w-[5px] opacity-95 lg:opacity-75"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
                 <div
                   className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                    dark
-                      ? expanded
-                        ? "bg-slate-950/26"
-                        : a.surfaceDark
-                      : expanded
-                      ? "bg-white/75"
-                      : a.surfaceLight
+                    dark ? (expanded ? "bg-slate-950/30" : a.surfaceDark) : expanded ? "bg-white/80" : a.surfaceLight
                   }`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleExpanded(rec.recId)}
-                    className="w-full text-left"
-                    aria-expanded={expanded}
+                  <div
+                    ref={(el) => {
+                      headerRefs.current[rec.recId] = el;
+                    }}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? a.chipDark : a.chipLight
-                            }`}
-                          >
-                            #{n}
-                          </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(rec.recId)}
+                      className="w-full text-left cursor-pointer"
+                      aria-expanded={expanded}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                                dark ? a.chipDark : a.chipLight
+                              }`}
+                            >
+                              #{n}
+                            </span>
 
-                          <div
-                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
-                          >
-                            <span className="truncate">{rec.title}</span>
+                            <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                              <span className="truncate">{rec.title}</span>
+                            </div>
                           </div>
+
+                          {!expanded && teaserText.length ? (
+                            <div className="mt-2">
+                              <p
+                                className={`text-sm lg:text-[0.95rem] ${
+                                  dark ? "text-slate-100/85" : "text-slate-700"
+                                } line-clamp-2`}
+                              >
+                                {teaserText}
+                              </p>
+
+                              <div
+                                className={`mt-1 text-[0.72rem] font-semibold tracking-wide ${
+                                  dark ? "text-white/45" : "text-slate-500"
+                                }`}
+                              >
+                                Tap to expand
+                              </div>
+                            </div>
+                          ) : null}
+
+                          {expanded ? (
+                            <div className="mt-2 space-y-2">
+                              {spoken.slice(0, 2).map((p, i) => (
+                                <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                                  {p}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
 
-                        {!expanded && (teaser[0] ?? "").trim().length ? (
-                          <div className="mt-2">
-                            <p
-                              className={`text-sm lg:text-[0.95rem] ${
-                                dark
-                                  ? "text-slate-100/85"
-                                  : "text-slate-700"
-                              } line-clamp-2`}
-                            >
-                              {teaser[0]}
-                            </p>
-                          </div>
-                        ) : null}
-
-                        {expanded && teaser.length ? (
-                          <div className="mt-2 space-y-2">
-                            {teaser.map((p, i) => (
-                              <p
-                                key={i}
-                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                        <span
+                          className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
+                            dark ? "border-white/10" : "border-slate-200"
+                          }`}
+                          aria-hidden
+                        >
+                          {!expanded ? (
+                            <span className="relative h-full w-full">
+                              <span
+                                className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
+                                  dark ? "opacity-55" : "opacity-50"
+                                }`}
+                              />
+                              <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/25"}`} />
+                              <span
+                                className={`relative flex h-full w-full items-center justify-center ${
+                                  dark ? "text-white" : "text-slate-900"
+                                }`}
                               >
-                                {p}
-                              </p>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <span
-                        className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
-                          dark ? "border-white/10" : "border-slate-200"
-                        }`}
-                        aria-hidden
-                      >
-                        {!expanded ? (
-                          <span className="relative h-full w-full">
+                                <ChevronDown className="h-4 w-4" />
+                              </span>
+                            </span>
+                          ) : (
                             <span
-                              className={`absolute inset-0 bg-gradient-to-br ${
-                                a.rail
-                              } ${dark ? "opacity-55" : "opacity-50"}`}
-                            />
-                            <span
-                              className={`absolute inset-0 ${
-                                dark ? "bg-slate-950/25" : "bg-white/25"
-                              }`}
-                            />
-                            <span
-                              className={`relative flex h-full w-full items-center justify-center ${
-                                dark ? "text-white" : "text-slate-900"
+                              className={`flex h-full w-full items-center justify-center ${
+                                dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
                               }`}
                             >
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronUp className="h-4 w-4" />
                             </span>
-                          </span>
-                        ) : (
-                          <span
-                            className={`flex h-full w-full items-center justify-center ${
-                              dark
-                                ? "bg-white/5 text-white/80"
-                                : "bg-white text-slate-800"
-                            }`}
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </button>
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
 
                   {expanded ? (
                     <div className="mt-4 lg:mt-5">
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p
-                              key={i}
-                              className={`text-sm lg:text-[0.95rem] ${muted}`}
-                            >
+                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                               {p}
                             </p>
                           ))}
                         </div>
                       ) : null}
 
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-4">
+                        <Link
+                          href={careerDeepHref(laneId)}
+                          className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
+                            dark
+                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
+                              : a.ctaLight
+                          }`}
+                        >
+                          See what this career is really like <ArrowRight className="h-4 w-4" />
+                        </Link>
+                        <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                          Quick peek first. You can decide later.
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
                         <p className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                          <span
-                            className={`${
-                              dark ? "text-white/70" : "text-slate-700"
-                            } font-semibold`}
-                          >
+                          <span className={`${dark ? "text-white/70" : "text-slate-700"} font-semibold`}>
                             If you’re the type who likes…
                           </span>{" "}
                           {teenCoachWhy(rec.why)}
@@ -977,15 +1020,13 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
 
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark
-                              ? "border-white/10 bg-white/5"
-                              : "border-slate-200 bg-white/80"
+                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                           }`}
                         >
                           <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
-                              a.rail
-                            } ${dark ? "opacity-14" : "opacity-10"}`}
+                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
+                              dark ? "opacity-14" : "opacity-10"
+                            }`}
                             aria-hidden
                           />
                           <div
@@ -1024,20 +1065,13 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                               >
                                 Try this first — don’t overthink it:
                               </div>
-                              <div
-                                className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
-                              >
-                                {tiny.steps?.[0] ??
-                                  "Try a super small version of it today."}
+                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
+                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
                               </div>
                             </div>
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleSteps(rec.recId)}
-                                className={`${pillBase} ${pillNeutral}`}
-                              >
+                              <button type="button" onClick={() => toggleSteps(rec.recId)} className={`${pillBase} ${pillNeutral}`}>
                                 {showSteps ? (
                                   <>
                                     <ChevronUp className="h-4 w-4" />
@@ -1078,11 +1112,7 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                             </div>
 
                             {tinyJustSaved ? (
-                              <div
-                                className={`mt-2 text-xs font-semibold ${
-                                  dark ? "text-white/70" : "text-slate-700"
-                                }`}
-                              >
+                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
                                 ✅ Added to Actions
                               </div>
                             ) : null}
@@ -1090,23 +1120,16 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                             {showSteps ? (
                               <div
                                 className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark
-                                    ? "border-white/10 bg-white/5"
-                                    : "border-slate-200 bg-white/80"
+                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                                 }`}
                               >
-                                <div
-                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
-                                >
+                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
                                   {tiny.title}
                                 </div>
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div
-                                      key={i}
-                                      className="flex items-start gap-2"
-                                    >
+                                    <div key={i} className="flex items-start gap-2">
                                       <span
                                         className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
                                           dark
@@ -1117,20 +1140,12 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                                       >
                                         {i + 1}
                                       </span>
-                                      <div
-                                        className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                      >
-                                        {step}
-                                      </div>
+                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
                                     </div>
                                   ))}
                                 </div>
 
-                                <div
-                                  className={`mt-2 text-xs font-semibold ${
-                                    dark ? "text-white/55" : "text-slate-600"
-                                  }`}
-                                >
+                                <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
                                   Time: {tiny.eta}
                                 </div>
                               </div>
@@ -1146,20 +1161,12 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                           }`}
                         >
                           Quick check on:{" "}
-                          <span
-                            className={`${
-                              dark ? "text-slate-200/90" : "text-slate-700"
-                            }`}
-                          >
+                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
                             {rec.title}
                           </span>
                         </div>
 
-                        <div
-                          className={`mt-1 text-xs ${
-                            dark ? "text-white/55" : "text-slate-600"
-                          }`}
-                        >
+                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -1167,54 +1174,41 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${
-                              selected === "agree"
-                                ? pillSelected("agree")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
                           >
                             <span aria-hidden>👍</span>
-                            {selected === "agree" ? "This fits ✓" : "This fits"}
+                            {selected === "agree" ? "I’m into this ✓" : "I’m into this"}
                           </button>
 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${
-                              selected === "mixed"
-                                ? pillSelected("mixed")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
                           >
                             <span aria-hidden>🙂</span>
-                            {selected === "mixed" ? "Kinda ✓" : "Kinda"}
+                            {selected === "mixed" ? "Curious ✓" : "Curious"}
                           </button>
 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${
-                              selected === "disagree"
-                                ? pillSelected("disagree")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
                           >
                             <span aria-hidden>👎</span>
-                            {selected === "disagree" ? "Nope ✓" : "Nope"}
+                            {selected === "disagree" ? "Not for me ✓" : "Not for me"}
                           </button>
                         </div>
 
-                        <Link
-                          href={careerDeepHref(laneId)}
-                          className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                            dark
-                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                              : a.ctaLight
-                          }`}
-                        >
-                          See what this career is really like{" "}
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(rec.recId)}
+                            className={`${pillBase} ${pillNeutral} w-full justify-center`}
+                          >
+                            Collapse
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : null}
@@ -1231,12 +1225,8 @@ export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className={`text-sm font-semibold ${titleC}`}>No careers yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to{" "}
-            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">
-              explore/content/careers.ts
-            </span>
-            .
+            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">explore/content/careers.ts</span>.
           </div>
         </div>
       )}
