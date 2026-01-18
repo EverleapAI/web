@@ -1,3 +1,4 @@
+// src/app/main/explore/page.tsx
 "use client";
 
 import * as React from "react";
@@ -13,21 +14,11 @@ import {
   type GradientLevel,
 } from "@/theme/everleapVisuals";
 
-import type {
-  ExploreKey,
-  ExploreSection,
-  ExploreChip,
-  ExploreChipType,
-} from "./content/types";
+import type { ExploreKey, ExploreSection, ExploreChip } from "./content/types";
 import { EXPLORE_SECTIONS } from "./content";
 import { RENDERERS } from "./renderers";
 
 /* ========= helpers ========= */
-
-function displayLabelForSection(s: ExploreSection): string {
-  if (s.key === ("forYou" as ExploreKey)) return "Careers";
-  return s.label;
-}
 
 /**
  * Layout policy per lane.
@@ -37,9 +28,8 @@ function displayLabelForSection(s: ExploreSection): string {
 type LaneLayout = "structured" | "grid";
 
 function laneLayoutForKey(key: ExploreKey): LaneLayout {
-  switch (key as string) {
-    case "recommendations":
-    case "forYou":
+  switch (key) {
+    case "careers":
     case "education":
     case "travel":
     case "community":
@@ -61,14 +51,13 @@ function headerCopyForKey(
   headline: string;
   supportLine: string;
 } {
-  const laneKicker = displayLabelForSection(section);
+  const laneKicker = section.label;
 
-  switch (key as string) {
-    case "recommendations":
-    case "forYou":
+  switch (key) {
+    case "careers":
       return {
         laneKicker,
-        headline: "4 Everleap recommendations for you",
+        headline: "4 careers that fit you",
         supportLine:
           "Not a forever decision. Pick one lane, run a tiny test, then adjust.",
       };
@@ -116,22 +105,44 @@ function headerCopyForKey(
 
 /* ========= Explore tab config ========= */
 
+type LaneMedia = {
+  mp4?: string;
+  poster?: string;
+};
+
 type TabMeta = {
   subtitle: string;
   badgeIcon: string;
   badgeHalo: string;
   badgeText: string;
+  media?: LaneMedia; // optional lane-level emotional break (MP4 first, JPG fallback)
 };
 
+function laneMediaForKey(key: ExploreKey): LaneMedia | undefined {
+  switch (key) {
+    case "careers":
+    case "education":
+    case "travel":
+    case "community":
+    case "hobbies":
+      return {
+        mp4: `/images/${key}/6.mp4`,
+        poster: `/images/${key}/5.jpg`,
+      };
+    default:
+      return undefined;
+  }
+}
+
 function metaForSectionKey(key: ExploreKey): TabMeta {
-  switch (key as string) {
-    case "recommendations":
-    case "forYou":
+  switch (key) {
+    case "careers":
       return {
         subtitle: "Future jobs?",
         badgeIcon: "🧭",
         badgeHalo: "from-sky-500/35 via-cyan-400/20 to-indigo-500/20",
         badgeText: "text-sky-50",
+        media: laneMediaForKey(key),
       };
     case "education":
       return {
@@ -139,6 +150,7 @@ function metaForSectionKey(key: ExploreKey): TabMeta {
         badgeIcon: "🎓",
         badgeHalo: "from-amber-500/35 via-orange-400/18 to-rose-400/18",
         badgeText: "text-amber-50",
+        media: laneMediaForKey(key),
       };
     case "travel":
       return {
@@ -146,6 +158,7 @@ function metaForSectionKey(key: ExploreKey): TabMeta {
         badgeIcon: "🌍",
         badgeHalo: "from-emerald-500/35 via-teal-400/18 to-sky-400/18",
         badgeText: "text-emerald-50",
+        media: laneMediaForKey(key),
       };
     case "community":
       return {
@@ -153,6 +166,7 @@ function metaForSectionKey(key: ExploreKey): TabMeta {
         badgeIcon: "🤝",
         badgeHalo: "from-violet-500/35 via-fuchsia-400/18 to-sky-400/18",
         badgeText: "text-violet-50",
+        media: laneMediaForKey(key),
       };
     case "hobbies":
       return {
@@ -160,6 +174,7 @@ function metaForSectionKey(key: ExploreKey): TabMeta {
         badgeIcon: "🎨",
         badgeHalo: "from-rose-500/35 via-pink-400/18 to-amber-400/18",
         badgeText: "text-rose-50",
+        media: laneMediaForKey(key),
       };
     default:
       return {
@@ -192,14 +207,24 @@ function useCompactTabs(thresholdPx = 56): boolean {
   return compact;
 }
 
+/**
+ * Structured lane must render the chip whose type matches the lane key.
+ * This prevents subtle bugs where section.key is "careers" but a chip is still
+ * typed as a legacy lane ("recommendations"/"forYou"/etc).
+ */
 function preferredStructuredChip(section: ExploreSection): ExploreChip | null {
   const chips = section.chips ?? [];
   if (!chips.length) return null;
 
-  const match = chips.find(
-    (c) => (c.type as string) === (section.key as string)
-  );
-  return match ?? chips[0] ?? null;
+  const match = chips.find((c) => c.type === section.key);
+  if (match) return match;
+
+  // Soft fallback: chip.id equals section.key (common pattern)
+  const byId = chips.find((c) => c.id === section.key);
+  if (byId) return byId;
+
+  // Fail loudly instead of silently rendering the wrong chip
+  return null;
 }
 
 /* ========= lane-level emotional media break (MP4 first, JPG fallback) ========= */
@@ -220,48 +245,27 @@ function usePrefersReducedMotion(): boolean {
 }
 
 function LaneMediaBreak({
-  laneKey,
+  media,
   dark,
   accentHalo,
 }: {
-  laneKey: ExploreKey;
+  media?: LaneMedia;
   dark: boolean;
   accentHalo: string;
 }) {
   const reducedMotion = usePrefersReducedMotion();
-
-  // ✅ show ONLY for structured lanes that need a media break
-  const shouldShowCareers =
-    (laneKey as string) === "forYou" ||
-    (laneKey as string) === "recommendations";
-  const shouldShowEducation = (laneKey as string) === "education";
-
   const [videoFailed, setVideoFailed] = React.useState(false);
   const [imageFailed, setImageFailed] = React.useState(false);
 
   React.useEffect(() => {
     setVideoFailed(false);
     setImageFailed(false);
-  }, [laneKey]);
+  }, [media?.mp4, media?.poster]);
 
-  if (!shouldShowCareers && !shouldShowEducation) return null;
+  if (!media?.mp4 && !media?.poster) return null;
 
-  // Careers assets
-  const careersMp4 = "/images/explore/careers/careers.mp4";
-  const careersPoster = "/images/explore/careers/careers.jpg";
-
-  // Education assets (MP4 first, JPG fallback)
-  const educationMp4 = "/images/education/education.mp4";
-  const educationPoster = "/images/education/education.jpg";
-
-  const wantsVideo =
-    (shouldShowCareers || shouldShowEducation) && !reducedMotion && !videoFailed;
-
-  const srcMp4 = shouldShowEducation ? educationMp4 : careersMp4;
-  const poster = shouldShowEducation ? educationPoster : careersPoster;
-
-  const showVideo = wantsVideo;
-  const showImage = !imageFailed;
+  const wantsVideo = Boolean(media?.mp4 && !reducedMotion && !videoFailed);
+  const poster = media?.poster;
 
   return (
     <div className="mt-3">
@@ -283,8 +287,7 @@ function LaneMediaBreak({
           }`}
         />
 
-        {/* ✅ MP4 fallback to JPG (Careers + Education) */}
-        {showVideo ? (
+        {wantsVideo ? (
           <video
             className="relative h-[140px] w-full object-cover sm:h-[160px] lg:h-[180px]"
             autoPlay
@@ -295,9 +298,9 @@ function LaneMediaBreak({
             poster={poster}
             onError={() => setVideoFailed(true)}
           >
-            <source src={srcMp4} type="video/mp4" />
+            <source src={media!.mp4!} type="video/mp4" />
           </video>
-        ) : showImage ? (
+        ) : poster && !imageFailed ? (
           <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
             <Image
               src={poster}
@@ -392,7 +395,9 @@ export default function ExplorePage() {
 
   React.useEffect(() => {
     const btn = tabRefs.current[String(activeKey)];
-    if (!btn) return;
+    const el = tabStripRef.current;
+    if (!btn || !el) return;
+
     btn.scrollIntoView({
       behavior: "smooth",
       inline: "center",
@@ -430,17 +435,11 @@ export default function ExplorePage() {
   );
 
   /**
-   * ✅ Detach these lanes so they match the Education structure:
+   * Detach structured lanes so they match the Education structure:
    * - The lane shell holds only header + media
    * - The 4 cards render OUTSIDE the shell (full-width, clearly separate)
    */
-  const detachContentFromShell =
-    (activeSection.key as string) === "education" ||
-    (activeSection.key as string) === "travel" ||
-    (activeSection.key as string) === "community" ||
-    (activeSection.key as string) === "hobbies" ||
-    (activeSection.key as string) === "recommendations" ||
-    (activeSection.key as string) === "forYou";
+  const detachContentFromShell = renderStructured;
 
   return (
     <AppChrome
@@ -522,19 +521,21 @@ export default function ExplorePage() {
               <div
                 ref={tabStripRef}
                 onWheel={onStripWheel}
-                className={`flex w-full gap-2 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory
+                className={`flex w-full gap-2 overflow-x-auto overscroll-x-contain scroll-smooth
                   [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
-                  ${canScroll.left ? "sm:pl-11" : ""} ${
-                  canScroll.right ? "sm:pr-11" : ""
-                }`}
+                  sm:px-11`}
+                style={{
+                  scrollPaddingLeft: 44,
+                  scrollPaddingRight: 44,
+                }}
               >
                 {sections.map((s) => {
                   const active = s.key === activeKey;
-                  const label = displayLabelForSection(s);
+                  const label = s.label;
                   const meta = metaForSectionKey(s.key);
 
                   const base =
-                    "group text-left transition active:scale-[0.99] select-none shrink-0 snap-start";
+                    "group text-left transition active:scale-[0.99] select-none shrink-0";
 
                   const shape = compactTabs
                     ? "rounded-full px-3 py-2"
@@ -620,6 +621,18 @@ export default function ExplorePage() {
                   />
                 </div>
               ) : null}
+
+              {canScroll.left ? (
+                <div className="pointer-events-none absolute left-0 top-0 h-full w-12 hidden sm:block">
+                  <div
+                    className={`h-full w-full ${
+                      dark
+                        ? "bg-gradient-to-r from-slate-950/55 to-transparent"
+                        : "bg-gradient-to-r from-white/70 to-transparent"
+                    }`}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -664,9 +677,9 @@ export default function ExplorePage() {
               />
             </div>
 
-            {/* ✅ emotional media break */}
+            {/* lane-level emotional media break (standardized: /images/<lane>/6.mp4 -> /images/<lane>/5.jpg) */}
             <LaneMediaBreak
-              laneKey={activeSection.key}
+              media={laneMeta.media}
               dark={dark}
               accentHalo={laneMeta.badgeHalo}
             />
@@ -677,7 +690,7 @@ export default function ExplorePage() {
             renderStructured ? (
               structuredChip ? (
                 (() => {
-                  const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
+                  const Renderer = RENDERERS[structuredChip.type];
                   return (
                     <Renderer
                       key={structuredChip.id}
@@ -700,7 +713,7 @@ export default function ExplorePage() {
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {activeSection.chips.map((chip: ExploreChip) => {
-                  const Renderer = RENDERERS[chip.type as ExploreChipType];
+                  const Renderer = RENDERERS[chip.type];
                   return <Renderer key={chip.id} chip={chip} dark={dark} />;
                 })}
               </div>
@@ -708,13 +721,13 @@ export default function ExplorePage() {
           ) : null}
         </div>
 
-        {/* ✅ Detached lanes: render content OUTSIDE the shell (Education structure) */}
+        {/* Detached lanes: render content OUTSIDE the shell (Education structure) */}
         {detachContentFromShell ? (
           <div className="mt-4 space-y-4">
             {renderStructured ? (
               structuredChip ? (
                 (() => {
-                  const Renderer = RENDERERS[structuredChip.type as ExploreChipType];
+                  const Renderer = RENDERERS[structuredChip.type];
                   return (
                     <Renderer
                       key={structuredChip.id}
@@ -731,13 +744,14 @@ export default function ExplorePage() {
                       : "border-black/10 bg-white text-slate-700"
                   }`}
                 >
-                  No content found for this lane yet.
+                  No content found for this lane yet. (Check that this lane’s
+                  chip.type matches the lane key.)
                 </div>
               )
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {activeSection.chips.map((chip: ExploreChip) => {
-                  const Renderer = RENDERERS[chip.type as ExploreChipType];
+                  const Renderer = RENDERERS[chip.type];
                   return <Renderer key={chip.id} chip={chip} dark={dark} />;
                 })}
               </div>

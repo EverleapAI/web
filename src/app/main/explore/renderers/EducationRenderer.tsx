@@ -27,12 +27,12 @@ import {
 
 /* =============================================================================
    Explore › EducationRenderer (Careers-structure parity)
-   UPDATE:
-   - Support `opportunities` buckets per card: local / national / online
-   - Add “Add to my Actions” for Tiny test + for each opportunity item
-   - Add an in-card media break right before “Real doors to walk through”
-   - ✅ LINT: remove unused imports/vars + suppress next/img warning for poster fallback
-   - ✅ WIDTH: remove max-width clamp so cards align with lane header card
+   - vertical stacked cards
+   - tap-to-expand
+   - Tiny Task block + Add to Actions
+   - Quick Check feedback
+   - opportunities buckets: local / national / online (+ Add to Actions)
+   - in-card media break before “Real doors to walk through”
 ============================================================================= */
 
 type EducationCard = {
@@ -42,6 +42,7 @@ type EducationCard = {
   icon?: string;
   href?: string;
   opportunities?: ExploreOpportunityGroup;
+  media?: { src?: string; alt?: string };
 };
 
 type NextMove = {
@@ -101,6 +102,17 @@ function asEducationArea(input: unknown): EducationArea {
     return { local, national, online };
   };
 
+  const toMedia = (
+    v: unknown
+  ): { src?: string; alt?: string } | undefined => {
+    if (!v || typeof v !== "object") return undefined;
+    const it = v as Record<string, unknown>;
+    const src = typeof it?.src === "string" ? it.src : undefined;
+    const alt = typeof it?.alt === "string" ? it.alt : undefined;
+    if (!src && !alt) return undefined;
+    return { src, alt };
+  };
+
   const toCards = (v: unknown): EducationCard[] | undefined => {
     if (!Array.isArray(v)) return undefined;
     const out: EducationCard[] = [];
@@ -112,8 +124,10 @@ function asEducationArea(input: unknown): EducationArea {
       const icon = typeof it?.icon === "string" ? it.icon : undefined;
       const href = typeof it?.href === "string" ? it.href : undefined;
       const opportunities = toOppGroup(it.opportunities);
+      const media = toMedia(it.media);
 
-      if (id && title) out.push({ id, title, short, icon, href, opportunities });
+      if (id && title)
+        out.push({ id, title, short, icon, href, opportunities, media });
     }
     return out;
   };
@@ -197,6 +211,8 @@ const EDU_ACCENTS: Accent[] = [
   },
 ];
 
+/* ---- Tiny Tasks ---- */
+
 type TinyTest = {
   title: string;
   steps: string[];
@@ -206,7 +222,7 @@ type TinyTest = {
 
 const EDU_TINY_TESTS: Record<string, TinyTest> = {
   "learn-to-code": {
-    title: "Tiny test: build something tiny that works",
+    title: "Tiny task: build something tiny that works",
     eta: "25–45 min",
     steps: [
       "Pick ONE tiny goal (a button that changes text, a page that saves a note).",
@@ -217,7 +233,7 @@ const EDU_TINY_TESTS: Record<string, TinyTest> = {
     tip: "Tip: your first win is “I made it work,” not “I’m a coder now.”",
   },
   "science-deep-dive": {
-    title: "Tiny test: go one layer deeper than everyone else",
+    title: "Tiny task: go one layer deeper than everyone else",
     eta: "20–35 min",
     steps: [
       "Pick one question you actually care about.",
@@ -228,7 +244,7 @@ const EDU_TINY_TESTS: Record<string, TinyTest> = {
     tip: "Tip: chase one question until you can explain it simply.",
   },
   "public-speaking": {
-    title: "Tiny test: do one micro-rep out loud",
+    title: "Tiny task: do one micro-rep out loud",
     eta: "15–25 min",
     steps: [
       "Pick a topic you know (game, hobby, class concept).",
@@ -239,7 +255,7 @@ const EDU_TINY_TESTS: Record<string, TinyTest> = {
     tip: "Tip: confidence shows up after reps — not before.",
   },
   "self-directed-micro-credentials": {
-    title: "Tiny test: pick a 7-day sprint + define your proof",
+    title: "Tiny task: pick a 7-day sprint + define your proof",
     eta: "15–25 min",
     steps: [
       "Pick ONE skill sprint (7 days) you’d actually do.",
@@ -254,7 +270,7 @@ const EDU_TINY_TESTS: Record<string, TinyTest> = {
 function tinyTestForTopic(topicId: string): TinyTest {
   return (
     EDU_TINY_TESTS[topicId] ?? {
-      title: "Tiny test: try one micro-skill",
+      title: "Tiny task: try one micro-skill",
       eta: "15–25 min",
       steps: [
         "Pick one tiny action you can finish today.",
@@ -265,6 +281,8 @@ function tinyTestForTopic(topicId: string): TinyTest {
     }
   );
 }
+
+/* ---- Feedback plumbing ---- */
 
 type PendingFeedback =
   | { rec: RecommendationItem; response: FeedbackResponse }
@@ -308,7 +326,14 @@ function areaSignature(area: EducationArea): string {
                 `${o.name}|${o.provider ?? ""}|${o.location ?? ""}|${o.url ?? ""}`
             )
             .join("~") || "";
-        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${c.short}~opp:${flat}`;
+
+        const mediaSig = c.media?.src
+          ? `|media:${c.media.src}|${c.media.alt ?? ""}`
+          : "";
+
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${
+          c.short
+        }~opp:${flat}${mediaSig}`;
       })
       .join("||");
 
@@ -333,7 +358,9 @@ function toRecFromEducationCard(
     domain: "education",
     title: String(c.title ?? "Learning path"),
     summary: String(c.short ?? ""),
-    why: signals.length ? signals.slice(0, 3) : ["A good next learning experiment."],
+    why: signals.length
+      ? signals.slice(0, 3)
+      : ["A good next learning experiment."],
     nextStep: area.hint ? String(area.hint) : undefined,
     tags,
     signals: undefined,
@@ -346,9 +373,7 @@ function toRecFromEducationCard(
   };
 }
 
-/* ---------------------------------------------------------------------------
-   Media helpers
---------------------------------------------------------------------------- */
+/* ---- Media helpers ---- */
 
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = React.useState(false);
@@ -365,76 +390,107 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-/**
- * In-card media break shown before “Real doors to walk through”.
- * Uses the lane assets for now.
- *
- * Primary: /images/education/education.mp4
- * Fallback: /images/education/education.jpg
- */
-function EducationCardMediaBreak({ dark }: { dark: boolean }) {
+function standardizedEducationCardImageSrc(slotIdx: number): string {
+  const n = Math.max(1, Math.min(4, slotIdx + 1));
+  return `/images/education/${n}.jpg`;
+}
+
+function SafeVideoOrImage({
+  mp4Src,
+  jpgSrc,
+  alt,
+  dark,
+}: {
+  mp4Src: string;
+  jpgSrc: string;
+  alt: string;
+  dark: boolean;
+}) {
   const reducedMotion = usePrefersReducedMotion();
 
   const [videoFailed, setVideoFailed] = React.useState(false);
   const [imageFailed, setImageFailed] = React.useState(false);
 
-  // static assets
-  const srcMp4 = "/images/education/education.mp4";
-  const poster = "/images/education/education.jpg";
-
   const showVideo = !reducedMotion && !videoFailed;
   const showImage = !imageFailed;
 
   return (
-    <div className="mt-4">
-      <div
-        className={`relative overflow-hidden rounded-2xl border ${
-          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-        }`}
-      >
-        {showVideo ? (
-          <video
-            className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster={poster}
-            onError={() => setVideoFailed(true)}
-          >
-            <source src={srcMp4} type="video/mp4" />
-          </video>
-        ) : showImage ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={poster}
-              alt=""
-              className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-              onError={() => setImageFailed(true)}
-            />
-          </>
-        ) : (
-          <div className="relative h-[120px] w-full sm:h-[140px] lg:h-[150px]" />
-        )}
-
-        <div
-          aria-hidden
-          className={`pointer-events-none absolute inset-0 ${
-            dark
-              ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
-              : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
-          }`}
+    <div
+      className={`relative overflow-hidden rounded-2xl border ${
+        dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+      }`}
+    >
+      {showVideo ? (
+        <video
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={jpgSrc}
+          onError={() => setVideoFailed(true)}
+        >
+          <source src={mp4Src} type="video/mp4" />
+        </video>
+      ) : showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={jpgSrc}
+          alt={alt}
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+          onError={() => setImageFailed(true)}
         />
-      </div>
+      ) : (
+        <div className="relative h-[120px] w-full sm:h-[140px] lg:h-[150px]" />
+      )}
+
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 ${
+          dark
+            ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
+            : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
+        }`}
+      />
     </div>
   );
 }
 
-/* ---------------------------------------------------------------------------
-   Actions helpers (stable IDs)
---------------------------------------------------------------------------- */
+function EducationCardMediaBreak({
+  dark,
+  slotIdx,
+  overrideSrc,
+  overrideAlt,
+}: {
+  dark: boolean;
+  slotIdx: number;
+  overrideSrc?: string;
+  overrideAlt?: string;
+}) {
+  // Standard for in-card break:
+  // prefer card image /images/education/<n>.jpg
+  // allow per-card override
+  // (Optional) no broken icon: hide if fails (handled by SafeVideoOrImage)
+  const jpgSrc = (overrideSrc ?? "").trim() || standardizedEducationCardImageSrc(slotIdx);
+  const alt = (overrideAlt ?? "").trim() || "";
+
+  // We keep the "video" version as the new folder convention:
+  // /images/education/6.mp4 fallback -> /images/education/5.jpg
+  // BUT per this renderer, this break is per-card, so we use:
+  // mp4: /images/education/6.mp4, poster fallback is 5.jpg,
+  // and when video isn't used, we show jpgSrc (card image).
+  const mp4Src = "/images/education/6.mp4";
+  const poster = "/images/education/5.jpg";
+
+  return (
+    <div className="mt-4">
+      <SafeVideoOrImage mp4Src={mp4Src} jpgSrc={jpgSrc || poster} alt={alt} dark={dark} />
+    </div>
+  );
+}
+
+/* ---- Action helpers ---- */
 
 function actionIdForTiny(topicId: string) {
   return `action.education.tiny.${topicId}`;
@@ -451,11 +507,9 @@ function actionIdForOpp(
   return `action.education.opp.${hashString(seed)}`;
 }
 
-/* ---------------------------------------------------------------------------
-   Opportunities UI
---------------------------------------------------------------------------- */
+/* ---- Opportunities UI ---- */
 
-type OppBucketKey = keyof ExploreOpportunityGroup; // "local" | "national" | "online"
+type OppBucketKey = keyof ExploreOpportunityGroup;
 
 type OppBucket = {
   key: OppBucketKey;
@@ -505,7 +559,9 @@ function OppItem({
         ) : null}
         {item.meta ? (
           <div
-            className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}
+            className={`mt-1 text-xs ${
+              dark ? "text-white/55" : "text-slate-600"
+            }`}
           >
             {item.meta}
           </div>
@@ -559,11 +615,15 @@ function OpportunitiesBlock({
   dark,
   topicId,
   onSaved,
+  slotIdx,
+  cardMedia,
 }: {
   opp?: ExploreOpportunityGroup;
   dark: boolean;
   topicId: string;
   onSaved: (actionId: string) => void;
+  slotIdx: number;
+  cardMedia?: { src?: string; alt?: string };
 }) {
   const buckets: OppBucket[] = OPP_BUCKETS.map((b) => ({
     ...b,
@@ -576,8 +636,12 @@ function OpportunitiesBlock({
 
   return (
     <div className="mt-4 lg:mt-5">
-      {/* ✅ Added media break before this section header */}
-      <EducationCardMediaBreak dark={dark} />
+      <EducationCardMediaBreak
+        dark={dark}
+        slotIdx={slotIdx}
+        overrideSrc={cardMedia?.src}
+        overrideAlt={cardMedia?.alt}
+      />
 
       <div
         className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
@@ -605,7 +669,11 @@ function OpportunitiesBlock({
                 {b.label}
               </span>
 
-              <div className={`text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+              <div
+                className={`text-xs ${
+                  dark ? "text-white/55" : "text-slate-600"
+                }`}
+              >
                 {b.items.length} option{b.items.length === 1 ? "" : "s"}
               </div>
             </div>
@@ -628,7 +696,9 @@ function OpportunitiesBlock({
                         id: aid,
                         kind: "opportunity",
                         title: item.name,
-                        detail: [item.provider, item.location].filter(Boolean).join(" • "),
+                        detail: [item.provider, item.location]
+                          .filter(Boolean)
+                          .join(" • "),
                         lane: "education",
                         topicId: String(topicId),
                         href: item.url ?? undefined,
@@ -643,7 +713,11 @@ function OpportunitiesBlock({
             </div>
 
             {b.items.length > 6 ? (
-              <div className={`text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+              <div
+                className={`text-xs ${
+                  dark ? "text-white/55" : "text-slate-600"
+                }`}
+              >
                 + {b.items.length - 6} more (we can show these in the deep dive)
               </div>
             ) : null}
@@ -654,9 +728,7 @@ function OpportunitiesBlock({
   );
 }
 
-/* ---------------------------------------------------------------------------
-   Renderer
---------------------------------------------------------------------------- */
+/* ---- Renderer ---- */
 
 export default function EducationRenderer({ chip, dark }: ExploreRendererProps) {
   const area = React.useMemo(() => asEducationArea(chip.area), [chip.area]);
@@ -665,20 +737,16 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-
-  // toast id (tiny or opp)
-  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
-    null
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [justSavedActionId, setJustSavedActionId] = React.useState<
+    string | null
+  >(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
-  // Re-render when Actions store changes (so Saved states update)
   const [, bump] = React.useState(0);
   React.useEffect(() => {
     const unsub = subscribeActionsStore(() => bump((v) => v + 1));
@@ -809,6 +877,29 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
+  function addTinyTaskAction(
+    topicId: string,
+    recId: string | undefined,
+    title: string,
+    detail: string
+  ) {
+    const id = actionIdForTiny(topicId);
+    if (hasAction(id)) return;
+
+    addAction({
+      id,
+      kind: "tiny_task",
+      title,
+      detail,
+      lane: "education",
+      topicId,
+      href: undefined,
+      recId,
+    });
+
+    toastSaved(id);
+  }
+
   return (
     <section className="space-y-3">
       {ack ? (
@@ -819,10 +910,14 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
+              className={`${
+                dark ? "text-slate-200" : "text-slate-800"
+              } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -852,7 +947,6 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
       ) : null}
 
       {cards.length ? (
-        // ✅ WIDTH FIX: removed lg:mx-auto lg:max-w-4xl so it matches lane shell width
         <div className="space-y-4 lg:space-y-5">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = EDU_ACCENTS[slotIdx] ?? EDU_ACCENTS[0];
@@ -886,12 +980,16 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
               <div
                 key={c.id}
                 className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                  dark
+                    ? "border-white/10 bg-white/5"
+                    : "border-slate-200 bg-white/80"
                 }`}
               >
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                    expanded
+                      ? "opacity-45 lg:opacity-35"
+                      : "opacity-85 lg:opacity-65"
                   }`}
                 />
                 <div
@@ -934,8 +1032,6 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                             #{n}
                           </span>
 
-                          
-
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
                           >
@@ -947,7 +1043,9 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                           <div className="mt-2">
                             <p
                               className={`text-sm lg:text-[0.95rem] ${
-                                dark ? "text-slate-100/85" : "text-slate-700"
+                                dark
+                                  ? "text-slate-100/85"
+                                  : "text-slate-700"
                               } line-clamp-2`}
                             >
                               {teaser[0]}
@@ -958,7 +1056,10 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                              <p
+                                key={i}
+                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                              >
                                 {p}
                               </p>
                             ))}
@@ -995,7 +1096,9 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
+                              dark
+                                ? "bg-white/5 text-white/80"
+                                : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -1010,7 +1113,10 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                            <p
+                              key={i}
+                              className={`text-sm lg:text-[0.95rem] ${muted}`}
+                            >
                               {p}
                             </p>
                           ))}
@@ -1022,258 +1128,218 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         dark={dark}
                         topicId={c.id}
                         onSaved={(aid) => toastSaved(aid)}
+                        slotIdx={slotIdx}
+                        cardMedia={c.media}
                       />
 
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-5 lg:mt-6">
                         <div
-                          className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                          className={`rounded-2xl border p-4 ${
+                            dark
+                              ? "border-white/10 bg-white/5"
+                              : "border-slate-200 bg-white/80"
                           }`}
                         >
-                          <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                              dark ? "opacity-16" : "opacity-10"
-                            }`}
-                            aria-hidden
-                          />
-                          <div
-                            className={`pointer-events-none absolute inset-0 ${
-                              dark ? "bg-slate-950/10" : "bg-white/20"
-                            }`}
-                            aria-hidden
-                          />
-
-                          <div className="relative">
-                            <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
                               <div
                                 className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                  dark ? "text-white/80" : "text-slate-700"
-                                }`}
-                              >
-                                Tiny test
-                              </div>
-
-                              <span
-                                className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
                                   dark
-                                    ? "border-white/10 bg-white/5 text-white/70"
-                                    : "border-slate-200 bg-white text-slate-700"
+                                    ? "text-slate-300/60"
+                                    : "text-slate-500"
                                 }`}
                               >
-                                <span aria-hidden>⏱</span> {tiny.eta}
-                              </span>
+                                Tiny task
+                              </div>
+                              <div
+                                className={`mt-1 text-sm font-semibold ${titleC}`}
+                              >
+                                {tiny.title}
+                              </div>
+                              <div
+                                className={`mt-1 text-xs ${
+                                  dark ? "text-white/55" : "text-slate-600"
+                                }`}
+                              >
+                                ETA: {tiny.eta}
+                              </div>
                             </div>
 
-                            <div className="mt-2">
-                              <div
-                                className={`text-sm font-semibold lg:text-[0.95rem] ${
-                                  dark ? "text-white/90" : "text-slate-900"
-                                }`}
-                              >
-                                Try this first — don’t overthink it:
-                              </div>
-                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
-                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
-                              </div>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => toggleSteps(c.id)}
+                              className={`${pillBase} ${pillNeutral}`}
+                            >
+                              {showSteps ? (
+                                <>
+                                  <ChevronUp className="h-4 w-4" />
+                                  Hide steps
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-4 w-4" />
+                                  Show steps
+                                </>
+                              )}
+                            </button>
+                          </div>
 
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleSteps(c.id)}
-                                className={`${pillBase} ${pillNeutral}`}
-                              >
-                                {showSteps ? (
-                                  <>
-                                    <ChevronUp className="h-4 w-4" />
-                                    Hide steps
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronDown className="h-4 w-4" />
-                                    Show steps
-                                  </>
-                                )}
-                              </button>
+                          {showSteps ? (
+                            <div className="mt-3 space-y-2">
+                              <ol className="space-y-2">
+                                {tiny.steps.map((s, idx) => (
+                                  <li
+                                    key={idx}
+                                    className={`flex gap-2 text-sm ${muted}`}
+                                  >
+                                    <span
+                                      className={`mt-[2px] inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[0.75rem] font-semibold ${
+                                        dark
+                                          ? "border-white/10 bg-white/5 text-white/75"
+                                          : "border-slate-200 bg-white text-slate-800"
+                                      }`}
+                                      aria-hidden
+                                    >
+                                      {idx + 1}
+                                    </span>
+                                    <span className="min-w-0">{s}</span>
+                                  </li>
+                                ))}
+                              </ol>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (tinySaved) return;
-
-                                  addAction({
-                                    id: tinyActionId,
-                                    kind: "tiny_task",
-                                    title: "Tiny test",
-                                    detail: `${tiny.eta} • ${tiny.title}`,
-                                    lane: "education",
-                                    topicId: c.id,
-                                    href: deepDiveHref,
-                                    recId: undefined,
-                                  });
-
-                                  toastSaved(tinyActionId);
-                                }}
-                                disabled={tinySaved}
-                                className={`${pillBase} ${
-                                  tinySaved
-                                    ? dark
-                                      ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
-                                      : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
-                                    : pillNeutral
-                                }`}
-                              >
-                                {tinySaved ? (
-                                  <>
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    Saved
-                                  </>
-                                ) : (
-                                  <>
-                                    <span aria-hidden>📁</span>
-                                    Add to my Actions
-                                  </>
-                                )}
-                              </button>
-                            </div>
-
-                            {tinyJustSaved ? (
-                              <div
-                                className={`mt-2 text-xs font-semibold ${
-                                  dark ? "text-white/70" : "text-slate-700"
-                                }`}
-                              >
-                                ✅ Added to Actions
-                              </div>
-                            ) : null}
-
-                            {showSteps ? (
-                              <div
-                                className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-                                }`}
-                              >
+                              {tiny.tip ? (
                                 <div
-                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
-                                >
-                                  {tiny.title}
-                                </div>
-
-                                <div className="mt-2 space-y-1.5 lg:space-y-2">
-                                  {tiny.steps.map((step, i) => (
-                                    <div key={i} className="flex items-start gap-2">
-                                      <span
-                                        className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
-                                          dark
-                                            ? "border-white/10 bg-white/5 text-white/70"
-                                            : "border-slate-200 bg-white text-slate-700"
-                                        }`}
-                                        aria-hidden
-                                      >
-                                        {i + 1}
-                                      </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                                        {step}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-
-                                <div
-                                  className={`mt-2 text-xs font-semibold ${
-                                    dark ? "text-white/55" : "text-slate-600"
+                                  className={`mt-2 rounded-xl border px-3 py-2 text-xs ${
+                                    dark
+                                      ? "border-white/10 bg-slate-950/35 text-white/70"
+                                      : "border-slate-200 bg-white text-slate-700"
                                   }`}
                                 >
-                                  Time: {tiny.eta}
+                                  {tiny.tip}
                                 </div>
+                              ) : null}
+                            </div>
+                          ) : null}
 
-                                {tiny.tip ? (
-                                  <div
-                                    className={`mt-2 text-xs ${
-                                      dark ? "text-white/55" : "text-slate-600"
-                                    }`}
-                                  >
-                                    {tiny.tip}
-                                  </div>
-                                ) : null}
-                              </div>
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                addTinyTaskAction(
+                                  c.id,
+                                  rec.recId,
+                                  `Tiny task: ${c.title}`,
+                                  tiny.title
+                                )
+                              }
+                              disabled={tinySaved}
+                              className={`${pillBase} ${
+                                tinySaved
+                                  ? dark
+                                    ? "border-white/10 bg-white/5 text-white/40 cursor-not-allowed"
+                                    : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
+                                  : pillNeutral
+                              }`}
+                            >
+                              {tinySaved ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  Added to Actions
+                                </>
+                              ) : (
+                                <>
+                                  <span aria-hidden>📌</span>
+                                  Add to my Actions
+                                </>
+                              )}
+                            </button>
+
+                            {tinyJustSaved ? (
+                              <span
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
+                                  dark
+                                    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                }`}
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                                Saved
+                              </span>
                             ) : null}
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 lg:mt-5">
+                      <div className="mt-5 lg:mt-6">
                         <div
-                          className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                            dark ? "text-slate-300/60" : "text-slate-500"
-                          }`}
-                        >
-                          Quick check on:{" "}
-                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
-                            {c.title}
-                          </span>
-                        </div>
-
-                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
-                          Be honest — we’ll adjust what you see next.
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${
-                              selected === "agree" ? pillSelected("agree") : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>👍</span>
-                            {selected === "agree" ? "This fits ✓" : "This fits"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${
-                              selected === "mixed" ? pillSelected("mixed") : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>🙂</span>
-                            {selected === "mixed" ? "Kinda ✓" : "Kinda"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${
-                              selected === "disagree" ? pillSelected("disagree") : pillNeutral
-                            }`}
-                          >
-                            <span aria-hidden>👎</span>
-                            {selected === "disagree" ? "Nope ✓" : "Nope"}
-                          </button>
-                        </div>
-
-                        <Link
-                          href={deepDiveHref}
-                          className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
+                          className={`rounded-2xl border p-4 ${
                             dark
-                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                              : "bg-emerald-600 text-white hover:bg-emerald-500"
+                              ? "border-white/10 bg-white/5"
+                              : "border-slate-200 bg-white/80"
                           }`}
                         >
-                          See real learning options <ArrowRight className="h-4 w-4" />
-                        </Link>
+                          <div
+                            className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
+                              dark ? "text-slate-300/60" : "text-slate-500"
+                            }`}
+                          >
+                            Quick check on {c.title}
+                          </div>
+                          <div className={`mt-1 text-sm ${muted}`}>
+                            Does this feel like a good direction to test next?
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "agree")}
+                              className={`${pillBase} ${
+                                selected === "agree"
+                                  ? pillSelected("agree")
+                                  : pillNeutral
+                              }`}
+                            >
+                              👍 Yes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "mixed")}
+                              className={`${pillBase} ${
+                                selected === "mixed"
+                                  ? pillSelected("mixed")
+                                  : pillNeutral
+                              }`}
+                            >
+                              🤔 Maybe
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openFeedback(rec, "disagree")}
+                              className={`${pillBase} ${
+                                selected === "disagree"
+                                  ? pillSelected("disagree")
+                                  : pillNeutral
+                              }`}
+                            >
+                              👎 Not me
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      {justSavedActionId ? (
-                        <div
-                          className={`mt-3 text-xs font-semibold ${
-                            dark ? "text-white/70" : "text-slate-700"
+                      <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <Link
+                          href={deepDiveHref}
+                          className={`${pillBase} ${
+                            dark
+                              ? "border-white/10 bg-white/5 text-white/85 hover:bg-white/10"
+                              : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
                           }`}
                         >
-                          ✅ Added to Actions
-                        </div>
-                      ) : null}
+                          Deep dive
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -1287,10 +1353,16 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>No education items yet</div>
+          <div className={`text-sm font-semibold ${titleC}`}>
+            No education items yet
+          </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">explore/content/education.ts</span>.
+            Add items to{" "}
+            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">
+              explore/content/education.ts
+            </span>
+            .
           </div>
         </div>
       )}

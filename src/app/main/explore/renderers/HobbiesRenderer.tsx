@@ -9,9 +9,25 @@ import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
 
 import FeedbackModal from "../components/FeedbackModal";
+import {
+  addAction,
+  hasAction,
+  subscribeActionsStore,
+} from "../state/actionsStore";
 
 /* =============================================================================
    Explore › HobbiesRenderer (Careers-structure parity with EducationRenderer)
+   - 4 cards, vertical list, strong per-card separation (no “one big shell” feel)
+   - Rank pill (#1–#4)
+   - Expand/collapse per card (one expanded at a time)
+   - Optional in-card VisualBreak image (safe image) before Tiny task
+   - Tiny task: collapsible steps + Add to Actions + saved ack (wired to actionsStore)
+   - Quick check: This fits / Kinda / Nope using FeedbackModal
+
+   Media standardization:
+   - In-card VisualBreak image defaults to /images/hobbies/<n>.jpg (n=1..4)
+   - Optional per-card override via card.media.src
+   - SafeImage behavior: never show broken image icon; hide on failure (optional fallback -> /images/hobbies/5.jpg)
 ============================================================================= */
 
 type HobbyCard = {
@@ -20,6 +36,7 @@ type HobbyCard = {
   short: string;
   icon?: string;
   href?: string;
+  media?: { src?: string; alt?: string };
 };
 
 type NextMove = {
@@ -44,6 +61,17 @@ function asHobbiesArea(input: unknown): HobbiesArea {
   const toStrArr = (v: unknown): string[] | undefined =>
     Array.isArray(v) ? v.map((x) => String(x)) : undefined;
 
+  const toMedia = (
+    v: unknown
+  ): { src?: string; alt?: string } | undefined => {
+    if (!v || typeof v !== "object") return undefined;
+    const it = v as Record<string, unknown>;
+    const src = typeof it?.src === "string" ? it.src : undefined;
+    const alt = typeof it?.alt === "string" ? it.alt : undefined;
+    if (!src && !alt) return undefined;
+    return { src, alt };
+  };
+
   const toCards = (v: unknown): HobbyCard[] | undefined => {
     if (!Array.isArray(v)) return undefined;
     const out: HobbyCard[] = [];
@@ -54,7 +82,8 @@ function asHobbiesArea(input: unknown): HobbiesArea {
       const short = typeof it?.short === "string" ? it.short : "";
       const icon = typeof it?.icon === "string" ? it.icon : undefined;
       const href = typeof it?.href === "string" ? it.href : undefined;
-      if (id && title) out.push({ id, title, short, icon, href });
+      const media = toMedia(it.media);
+      if (id && title) out.push({ id, title, short, icon, href, media });
     }
     return out;
   };
@@ -101,6 +130,44 @@ function splitSpokenParagraphs(input: string): string[] {
   return lines.length ? lines : [];
 }
 
+/**
+ * Turn plain URLs inside text into clickable links.
+ * (Keeps copy-authoring simple in hobbies.ts: "Explore: https://...")
+ */
+function renderTextWithLinks(text: string): React.ReactNode[] {
+  const s = String(text ?? "");
+  const urlRe = /(https?:\/\/[^\s)]+)(?![^<]*>)/g;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = urlRe.exec(s)) !== null) {
+    const url = match[1];
+    const start = match.index;
+    const end = start + url.length;
+
+    if (start > lastIndex) parts.push(s.slice(lastIndex, start));
+
+    parts.push(
+      <a
+        key={`${url}-${start}`}
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-4"
+      >
+        {url}
+      </a>
+    );
+
+    lastIndex = end;
+  }
+
+  if (lastIndex < s.length) parts.push(s.slice(lastIndex));
+  return parts.length ? parts : [s];
+}
+
 /* ---------- visuals ---------- */
 
 type Accent = {
@@ -139,18 +206,18 @@ const HOB_ACCENTS: Accent[] = [
   },
 ];
 
-/* ---------- tiny tests ---------- */
+/* ---------- tiny tasks ---------- */
 
-type TinyTest = {
+type TinyTask = {
   title: string;
   steps: string[];
   eta: string;
   tip?: string;
 };
 
-const HOB_TINY_TESTS: Record<string, TinyTest> = {
+const HOB_TINY_TASKS: Record<string, TinyTask> = {
   "creative-making": {
-    title: "Tiny test: make something imperfect on purpose",
+    title: "Tiny task: make something imperfect on purpose",
     eta: "20–30 min",
     steps: [
       "Pick a medium: sketch, notes app, Canva, clay, guitar, anything.",
@@ -158,10 +225,10 @@ const HOB_TINY_TESTS: Record<string, TinyTest> = {
       "When the timer ends, stop — even if it’s unfinished.",
       "Share it with one person or save it in a “Proof I Tried” folder.",
     ],
-    tip: "Tip: the goal is energy + momentum, not quality.",
+    tip: "The goal is energy + momentum, not quality.",
   },
   "movement-play": {
-    title: "Tiny test: move like you’re not being graded",
+    title: "Tiny task: move like you’re not being graded",
     eta: "10–20 min",
     steps: [
       "Pick one movement: dance, walk, shoot hoops, climb, stretch.",
@@ -169,10 +236,10 @@ const HOB_TINY_TESTS: Record<string, TinyTest> = {
       "Notice: do you feel lighter after?",
       "If yes, schedule the next 10-minute version.",
     ],
-    tip: "Tip: fun counts. Your brain remembers what feels good.",
+    tip: "Fun counts. Your brain remembers what feels good.",
   },
   "games-puzzles": {
-    title: "Tiny test: find your brain’s favorite flavor",
+    title: "Tiny task: find your brain’s favorite flavor",
     eta: "15–25 min",
     steps: [
       "Choose one: Wordle-style, chess puzzle, logic grid, strategy game round.",
@@ -180,10 +247,10 @@ const HOB_TINY_TESTS: Record<string, TinyTest> = {
       "Rate it: 🔥 / 🙂 / 😬",
       "If 🔥, try the same game again tomorrow.",
     ],
-    tip: "Tip: you’re not hunting “smart” — you’re hunting “absorbed.”",
+    tip: "You’re not hunting “smart” — you’re hunting “absorbed.”",
   },
   "collecting-curating": {
-    title: "Tiny test: curate a mini-collection with a theme",
+    title: "Tiny task: curate a mini-collection with a theme",
     eta: "15–30 min",
     steps: [
       "Pick a theme: ‘late-night calm,’ ‘ocean energy,’ ‘future me,’ etc.",
@@ -191,14 +258,14 @@ const HOB_TINY_TESTS: Record<string, TinyTest> = {
       "Arrange them so they feel like a vibe, not a list.",
       "Name it like a playlist title.",
     ],
-    tip: "Tip: taste is a skill — curating trains it.",
+    tip: "Taste is a skill — curating trains it.",
   },
 };
 
-function tinyTestForTopic(topicId: string): TinyTest {
+function tinyTaskForTopic(topicId: string): TinyTask {
   return (
-    HOB_TINY_TESTS[topicId] ?? {
-      title: "Tiny test: try a micro-version",
+    HOB_TINY_TASKS[topicId] ?? {
+      title: "Tiny task: try a micro-version",
       eta: "15–25 min",
       steps: [
         "Pick one tiny version you can finish today.",
@@ -241,10 +308,14 @@ function areaSignature(area: HobbiesArea): string {
   const payload =
     `hint:${hint}||signals:${signals.join("|")}||cards:` +
     cards
-      .map(
-        (c) =>
-          `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${c.short ?? ""}`
-      )
+      .map((c) => {
+        const mediaSig = c.media?.src
+          ? `|media:${c.media.src}|${c.media.alt ?? ""}`
+          : "";
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${
+          c.short ?? ""
+        }${mediaSig}`;
+      })
       .join("||");
 
   return hashString(payload);
@@ -268,7 +339,9 @@ function toRecFromHobbyCard(
     domain: "hobbies",
     title: String(c.title ?? "Hobby idea"),
     summary: String(c.short ?? ""),
-    why: signals.length ? signals.slice(0, 3) : ["A low-stakes energy experiment."],
+    why: signals.length
+      ? signals.slice(0, 3)
+      : ["A low-stakes energy experiment."],
     nextStep: area.hint ? String(area.hint) : undefined,
     tags,
     signals: undefined,
@@ -281,6 +354,96 @@ function toRecFromHobbyCard(
   };
 }
 
+/* ---------------------------------------------------------------------------
+   In-card VisualBreak (safe image, standardized paths)
+--------------------------------------------------------------------------- */
+
+function standardizedHobbyCardImageSrc(slotIdx: number): string {
+  const n = Math.max(1, Math.min(4, slotIdx + 1));
+  return `/images/hobbies/${n}.jpg`;
+}
+
+function SafeImage({
+  src,
+  alt,
+  className,
+  fallbackSrc,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  fallbackSrc?: string;
+}) {
+  const [failed, setFailed] = React.useState(false);
+  const [fallbackFailed, setFallbackFailed] = React.useState(false);
+
+  if (failed && (!fallbackSrc || fallbackFailed)) return null;
+
+  const useSrc = failed ? (fallbackSrc as string) : src;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={useSrc}
+      alt={alt}
+      className={className}
+      onError={() => {
+        if (!failed) setFailed(true);
+        else setFallbackFailed(true);
+      }}
+    />
+  );
+}
+
+function HobbyCardMediaBreak({
+  dark,
+  slotIdx,
+  overrideSrc,
+  overrideAlt,
+}: {
+  dark: boolean;
+  slotIdx: number;
+  overrideSrc?: string;
+  overrideAlt?: string;
+}) {
+  const primary =
+    (overrideSrc ?? "").trim() || standardizedHobbyCardImageSrc(slotIdx);
+  const fallback = "/images/hobbies/5.jpg";
+
+  return (
+    <div className="mt-4">
+      <div
+        className={`relative overflow-hidden rounded-2xl border ${
+          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+        }`}
+      >
+        <SafeImage
+          src={primary}
+          fallbackSrc={fallback}
+          alt={(overrideAlt ?? "").trim()}
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 ${
+            dark
+              ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
+              : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Actions helpers (stable IDs)
+--------------------------------------------------------------------------- */
+
+function actionIdForTiny(topicId: string) {
+  return `action.hobbies.tiny.${topicId}`;
+}
+
 export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   const area = React.useMemo(() => asHobbiesArea(chip.area), [chip.area]);
 
@@ -289,16 +452,25 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [savedTinyById, setSavedTinyById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+
+  const [justSavedActionId, setJustSavedActionId] = React.useState<
+    string | null
+  >(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
+
+  const [, bumpActions] = React.useState(0);
+  React.useEffect(() => {
+    const unsub = subscribeActionsStore(() => bumpActions((v) => v + 1));
+    return () => unsub();
+  }, []);
+
+  // Force re-render after localStorage feedback writes/clears (Quick check pills)
+  const [, bumpFeedback] = React.useState(0);
 
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
@@ -315,18 +487,19 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     setShowStepsById((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function onSaveTinyTest(topicId: string) {
-    setSavedTinyById((prev) => ({ ...prev, [topicId]: true }));
-    setJustSavedId(topicId);
+  function toastSaved(actionId: string) {
+    setJustSavedActionId(actionId);
     window.setTimeout(() => {
-      setJustSavedId((cur) => (cur === topicId ? null : cur));
+      setJustSavedActionId((cur) => (cur === actionId ? null : cur));
     }, 1400);
   }
 
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(`explore.hob.feedback.${recId}`);
+      const raw = window.localStorage.getItem(
+        `explore.hobbies.feedback.${recId}`
+      );
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -343,9 +516,10 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(
-        `explore.hob.feedback.${recId}`,
+        `explore.hobbies.feedback.${recId}`,
         JSON.stringify(payload)
       );
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -354,7 +528,8 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   function clearSelectedFor(recId: string) {
     if (typeof window === "undefined") return;
     try {
-      window.localStorage.removeItem(`explore.hob.feedback.${recId}`);
+      window.localStorage.removeItem(`explore.hobbies.feedback.${recId}`);
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -379,6 +554,8 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     reasons?: string[];
   }) {
     if (!pending) return;
+
+    setAck(null);
 
     setSelectedFor(pending.rec.recId, {
       response: payload.response,
@@ -440,7 +617,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
               } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -487,10 +666,12 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                 ? `/main/explore/hobbies/${encodeURIComponent(c.id)}`
                 : "/main/explore/hobbies";
 
-            const tiny = tinyTestForTopic(c.id);
+            const tiny = tinyTaskForTopic(c.id);
             const showSteps = Boolean(showStepsById[c.id]);
-            const tinySaved = Boolean(savedTinyById[c.id]);
-            const tinyJustSaved = justSavedId === c.id;
+
+            const tinyActionId = actionIdForTiny(c.id);
+            const tinySaved = hasAction(tinyActionId);
+            const tinyJustSaved = justSavedActionId === tinyActionId;
 
             const rec = toRecFromHobbyCard(c, area, runId);
             const selected = getSelectedFor(rec.recId);
@@ -500,13 +681,19 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
             return (
               <div
                 key={c.id}
-                className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                className={`relative overflow-hidden rounded-3xl border p-[1px] shadow-sm ${
+                  dark
+                    ? "border-white/10 bg-white/5 shadow-black/20"
+                    : "border-slate-200 bg-white/80 shadow-slate-200/60"
                 }`}
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
+                    a.halo
+                  } ${
+                    expanded
+                      ? "opacity-45 lg:opacity-35"
+                      : "opacity-85 lg:opacity-65"
                   }`}
                 />
                 <div
@@ -549,8 +736,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             #{n}
                           </span>
 
-                          
-
                           <div
                             className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
                           >
@@ -565,7 +750,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                                 dark ? "text-slate-100/85" : "text-slate-700"
                               } line-clamp-2`}
                             >
-                              {teaser[0]}
+                              {renderTextWithLinks(teaser[0])}
                             </p>
                           </div>
                         ) : null}
@@ -573,8 +758,11 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         {expanded && teaser.length ? (
                           <div className="mt-2 space-y-2">
                             {teaser.map((p, i) => (
-                              <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                                {p}
+                              <p
+                                key={i}
+                                className={`text-sm lg:text-[0.95rem] ${muted}`}
+                              >
+                                {renderTextWithLinks(p)}
                               </p>
                             ))}
                           </div>
@@ -590,9 +778,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         {!expanded ? (
                           <span className="relative h-full w-full">
                             <span
-                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                dark ? "opacity-55" : "opacity-50"
-                              }`}
+                              className={`absolute inset-0 bg-gradient-to-br ${
+                                a.rail
+                              } ${dark ? "opacity-55" : "opacity-50"}`}
                             />
                             <span
                               className={`absolute inset-0 ${
@@ -610,7 +798,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
+                              dark
+                                ? "bg-white/5 text-white/80"
+                                : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -625,23 +815,36 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                              {p}
+                            <p
+                              key={i}
+                              className={`text-sm lg:text-[0.95rem] ${muted}`}
+                            >
+                              {renderTextWithLinks(p)}
                             </p>
                           ))}
                         </div>
                       ) : null}
 
-                      <div className="mt-3 space-y-3">
+                      {/* Optional VisualBreak (safe image) */}
+                      <HobbyCardMediaBreak
+                        dark={dark}
+                        slotIdx={slotIdx}
+                        overrideSrc={c.media?.src}
+                        overrideAlt={c.media?.alt}
+                      />
+
+                      <div className="mt-4 lg:mt-5">
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                            dark
+                              ? "border-white/10 bg-white/5"
+                              : "border-slate-200 bg-white/80"
                           }`}
                         >
                           <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                              dark ? "opacity-16" : "opacity-10"
-                            }`}
+                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
+                              a.rail
+                            } ${dark ? "opacity-16" : "opacity-10"}`}
                             aria-hidden
                           />
                           <div
@@ -658,7 +861,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                                   dark ? "text-white/80" : "text-slate-700"
                                 }`}
                               >
-                                Tiny test
+                                Tiny task
                               </div>
 
                               <span
@@ -678,10 +881,13 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                                   dark ? "text-white/90" : "text-slate-900"
                                 }`}
                               >
-                                Try this first — don’t overthink it:
+                                Try this first — keep it small:
                               </div>
-                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
-                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
+                              <div
+                                className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
+                              >
+                                {tiny.steps?.[0] ??
+                                  "Try a super small version of it today."}
                               </div>
                             </div>
 
@@ -706,7 +912,22 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
                               <button
                                 type="button"
-                                onClick={() => onSaveTinyTest(c.id)}
+                                onClick={() => {
+                                  if (tinySaved) return;
+
+                                  addAction({
+                                    id: tinyActionId,
+                                    kind: "tiny_task",
+                                    title: "Tiny task",
+                                    detail: `${tiny.eta} • ${tiny.title}`,
+                                    lane: "hobbies",
+                                    topicId: c.id,
+                                    href: deepDiveHref,
+                                    recId: undefined,
+                                  });
+
+                                  toastSaved(tinyActionId);
+                                }}
                                 disabled={tinySaved}
                                 className={`${pillBase} ${
                                   tinySaved
@@ -743,16 +964,23 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             {showSteps ? (
                               <div
                                 className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                                  dark
+                                    ? "border-white/10 bg-white/5"
+                                    : "border-slate-200 bg-white/80"
                                 }`}
                               >
-                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                                <div
+                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
+                                >
                                   {tiny.title}
                                 </div>
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div key={i} className="flex items-start gap-2">
+                                    <div
+                                      key={i}
+                                      className="flex items-start gap-2"
+                                    >
                                       <span
                                         className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
                                           dark
@@ -763,7 +991,11 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                                       >
                                         {i + 1}
                                       </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
+                                      <div
+                                        className={`text-sm lg:text-[0.95rem] ${muted}`}
+                                      >
+                                        {step}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -777,7 +1009,11 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                                 </div>
 
                                 {tiny.tip ? (
-                                  <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                                  <div
+                                    className={`mt-2 text-xs ${
+                                      dark ? "text-white/55" : "text-slate-600"
+                                    }`}
+                                  >
                                     {tiny.tip}
                                   </div>
                                 ) : null}
@@ -794,12 +1030,20 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                           }`}
                         >
                           Quick check on:{" "}
-                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>
+                          <span
+                            className={`${
+                              dark ? "text-slate-200/90" : "text-slate-700"
+                            }`}
+                          >
                             {c.title}
                           </span>
                         </div>
 
-                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                        <div
+                          className={`mt-1 text-xs ${
+                            dark ? "text-white/55" : "text-slate-600"
+                          }`}
+                        >
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -808,7 +1052,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
                             className={`${pillBase} ${
-                              selected === "agree" ? pillSelected("agree") : pillNeutral
+                              selected === "agree"
+                                ? pillSelected("agree")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>👍</span>
@@ -819,7 +1065,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
                             className={`${pillBase} ${
-                              selected === "mixed" ? pillSelected("mixed") : pillNeutral
+                              selected === "mixed"
+                                ? pillSelected("mixed")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>🙂</span>
@@ -830,7 +1078,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
                             className={`${pillBase} ${
-                              selected === "disagree" ? pillSelected("disagree") : pillNeutral
+                              selected === "disagree"
+                                ? pillSelected("disagree")
+                                : pillNeutral
                             }`}
                           >
                             <span aria-hidden>👎</span>
@@ -862,10 +1112,16 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>No hobby ideas yet</div>
+          <div className={`text-sm font-semibold ${titleC}`}>
+            No hobby ideas yet
+          </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">explore/content/hobbies.ts</span>.
+            Add items to{" "}
+            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">
+              explore/content/hobbies.ts
+            </span>
+            .
           </div>
         </div>
       )}

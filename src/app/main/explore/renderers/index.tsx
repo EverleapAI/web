@@ -5,7 +5,7 @@ import type { ComponentType } from "react";
 
 import type { ExploreChipType, ExploreRendererProps } from "../content/types";
 
-import RecommendationsRenderer from "./RecommendationsRenderer";
+import CareersRenderer from "./CareersRenderer";
 import EducationRenderer from "./EducationRenderer";
 import TravelRenderer from "./TravelRenderer";
 import CommunityRenderer from "./CommunityRenderer";
@@ -20,7 +20,7 @@ export const RENDERERS: Record<
   ExploreChipType,
   ComponentType<ExploreRendererProps>
 > = {
-  recommendations: RecommendationsRenderer,
+  careers: CareersRenderer,
   education: EducationRenderer,
   travel: TravelRenderer,
   community: CommunityRenderer,

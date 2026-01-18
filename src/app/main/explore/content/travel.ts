@@ -5,6 +5,11 @@ import type { ExploreArea } from "./types";
  * Explore › Travel
  * Tone: life coach talking to an older teen.
  * Audio-ready: short, spoken paragraphs (use \n\n).
+ *
+ * Updated goal:
+ * - Travel = learning + cultural exchange (not just vacations)
+ * - Physical OR virtual, but always intellectually meaningful
+ * - 4 curated opportunities with real links
  */
 const travel: ExploreArea = {
   id: "travel",
@@ -14,74 +19,73 @@ const travel: ExploreArea = {
   href: "/main/explore/travel",
 
   headline: "Travel",
-  summary: "Escapes and experiences that match your tempo.",
-  hint: "Think in vibes, not itineraries.",
+  summary:
+    "Travel, but make it meaningful.\n\n" +
+    "This lane is about learning in the real world — languages, cultures, communities, and new ways of thinking.",
+  hint:
+    "Pick one doorway. Aim for growth, not perfection. Your best trip is the one that changes you a little.",
 
-  signals: ["weekend", "nature", "curious", "budget-aware"],
+  signals: ["curious", "global-minded", "culture", "learning-by-doing", "budget-aware"],
 
   nextMoves: [
     {
       id: "travel-1",
-      title: "Pick one vibe to try first",
-      blurb: "Not the perfect trip — just the next one.",
+      title: "Choose your learning style",
+      blurb:
+        "Do you want structure (program), immersion (live with locals), or connection (virtual exchange)?",
     },
     {
       id: "travel-2",
-      title: "Do a tiny plan",
-      blurb: "30 minutes of planning beats 3 hours of dreaming.",
+      title: "Run a tiny task this week",
+      blurb:
+        "Do one action that moves you closer — request info, shortlist countries, or join one virtual session.",
     },
   ],
 
   cards: [
     {
-      id: "coastal-weekend",
-      href: "/main/explore/travel/coastal-weekend",
-      icon: "🏖️",
-      title: "Coastal reset",
-      short:
-        "Beaches, walks, and slow mornings.\n\n" +
-        "If you want your brain to stop buzzing, pick a place where time moves softer.\n\n" +
-        "Your goal is simple: come home calmer than you left.",
-    },
-    {
-      id: "mountain-reset",
-      href: "/main/explore/travel/mountain-reset",
-      icon: "🏔️",
-      title: "Mountain reset",
-      short:
-        "Fresh air, hikes, and cozy nights.\n\n" +
-        "This vibe is for when you want space — physically and mentally.\n\n" +
-        "You don’t need to summit anything. You just need to breathe different air.",
-    },
-    {
-      id: "education-abroad",
-      href: "/main/explore/travel/education-abroad",
-      icon: "🎒",
-      title: "Learn abroad (EF-style programs)",
-      short:
-        "Travel, but with structure.\n\n" +
-        "Language immersion, guided programs, or a short course — you come back with a skill, not just photos.\n\n" +
-        "Perfect if you want adventure *and* a plan someone else already built.",
-    },
-    {
-      id: "work-abroad",
-      href: "/main/explore/travel/work-abroad",
+      id: "ef-gap-year",
+      href: "/main/explore/travel/ef-gap-year",
       icon: "🌍",
-      title: "Work in another country",
+      title: "EF Gap Year (structured travel + language + purpose)",
       short:
-        "This is travel with a purpose.\n\n" +
-        "Seasonal work, internships, volunteering, or exchange programs can be the easiest way to go somewhere new.\n\n" +
-        "The flex is: you build a story you can tell later — and you learn what you can handle.",
+        "A built-in plan for learning while you travel.\n\n" +
+        "You travel with a cohort, then settle into deeper immersion — often with language learning, internships, or service learning.\n\n" +
+        "If you want adventure *with scaffolding*, start here.\n\n" +
+        "Explore: https://efgapyear.com/",
     },
     {
-      id: "virtual-travel",
-      href: "/main/explore/travel/virtual-travel",
-      icon: "🛰️",
-      title: "Virtual travel (budget mode)",
+      id: "ciee-study-abroad",
+      href: "/main/explore/travel/ciee-study-abroad",
+      icon: "🎓",
+      title: "CIEE Study Abroad (earn credit + live like a local)",
       short:
-        "If money is tight, you can still explore.\n\n" +
-        "Virtual museum tours, street-view city walks, food videos + playlists — it’s a real mood shift.\n\n" +
-        "Use it to discover what places you actually want, before you spend.",
+        "Academic travel that actually counts.\n\n" +
+        "Choose a city, pick a program length (Jan / summer / semester), and learn through coursework + culture.\n\n" +
+        "Best if you want a real ‘I did this’ credential — not just memories.\n\n" +
+        "Browse programs: https://www.ciee.org/go-abroad/college-study-abroad/programs",
+    },
+    {
+      id: "au-pair-cultural-care",
+      href: "/main/explore/travel/au-pair-cultural-care",
+      icon: "🏡",
+      title: "Au Pair exchange (live inside another culture)",
+      short:
+        "Immersion mode: you live with a host family and learn a culture from the inside.\n\n" +
+        "Au pair programs are structured and supported — you’re not just visiting; you’re participating in real life.\n\n" +
+        "If you learn best by being ‘in it,’ this is a strong path.\n\n" +
+        "Learn more: https://www.culturalcare.com/the-au-pair-program/",
+    },
+    {
+      id: "soliya-virtual-exchange",
+      href: "/main/explore/travel/soliya-virtual-exchange",
+      icon: "🛰️",
+      title: "Virtual cultural exchange (global friends, real dialogue)",
+      short:
+        "Travel without flying — still counts.\n\n" +
+        "Join facilitated virtual exchange groups that build intercultural communication skills through real conversation across differences.\n\n" +
+        "Perfect if budget/time is tight, or you want to ‘test’ a region before going.\n\n" +
+        "Explore: https://soliya.net/",
     },
   ],
 };

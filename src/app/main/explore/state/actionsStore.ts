@@ -5,13 +5,25 @@
  * Explore › actionsStore
  * Purpose:
  * - A tiny, safe, client-only store for “Add to my Actions”.
- * - Works for both Education and Recommendations renderers.
  * - Persists to localStorage.
  *
- * This is intentionally simple: no external deps, no server calls.
+ * Notes:
+ * - Keep types broad enough to support multiple Explore lanes.
+ * - Backward compatible with previously saved items.
  */
 
 export type ActionKind = "tiny_task" | "opportunity";
+
+/** All supported lanes that may write Actions. */
+export type ActionLane =
+  | "careers"
+  | "education"
+  | "travel"
+  | "community"
+  | "hobbies"
+  // legacy / misc buckets kept for backward compatibility
+  | "recommendations"
+  | "explore";
 
 export type ActionItem = {
   id: string; // stable unique id
@@ -22,9 +34,9 @@ export type ActionItem = {
   detail?: string;
 
   // for grouping / filtering later
-  lane?: "education" | "recommendations" | "explore";
-  topicId?: string; // e.g. education card id ("learn-to-code")
-  recId?: string; // e.g. explore.recommendations.<lane>.v1
+  lane?: ActionLane;
+  topicId?: string; // e.g. education card id ("learnToCode") or travel card id ("ef-gap-year")
+  recId?: string; // e.g. explore.<lane>.<topic>.v1
 
   // deep link back into the UI if you want
   href?: string;
@@ -56,6 +68,18 @@ function safeParse<T>(raw: string | null): T | null {
   }
 }
 
+function isLane(v: unknown): v is ActionLane {
+  return (
+    v === "careers" ||
+    v === "education" ||
+    v === "travel" ||
+    v === "community" ||
+    v === "hobbies" ||
+    v === "recommendations" ||
+    v === "explore"
+  );
+}
+
 function normalizeState(input: unknown): ActionsState {
   const obj = (input ?? {}) as Record<string, unknown>;
 
@@ -76,17 +100,11 @@ function normalizeState(input: unknown): ActionsState {
         : null;
 
     const title = typeof item.title === "string" ? item.title : "";
-
     if (!id || !kind || !title) continue;
 
     const detail = typeof item.detail === "string" ? item.detail : undefined;
 
-    const lane =
-      item.lane === "education" ||
-      item.lane === "recommendations" ||
-      item.lane === "explore"
-        ? (item.lane as ActionItem["lane"])
-        : undefined;
+    const lane = isLane(item.lane) ? (item.lane as ActionLane) : undefined;
 
     const topicId = typeof item.topicId === "string" ? item.topicId : undefined;
     const recId = typeof item.recId === "string" ? item.recId : undefined;
@@ -191,21 +209,20 @@ export function clearActions(): void {
 }
 
 /**
- * Convenience builders
+ * Convenience builders (optional)
  */
 export function makeTinyTaskActionId(params: {
-  lane: "education" | "recommendations";
-  topicId: string; // education topicId OR rec laneId
+  lane: Exclude<ActionLane, "explore">;
+  topicId: string;
 }): string {
   return `action.${params.lane}.tiny.${params.topicId}`;
 }
 
 export function makeOpportunityActionId(params: {
-  lane: "education";
+  lane: "education" | "travel" | "community" | "hobbies" | "careers";
   topicId: string;
   name: string;
 }): string {
-  // Keep it stable but not too long
   const safe = params.name
     .toLowerCase()
     .trim()

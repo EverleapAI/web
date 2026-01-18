@@ -9,19 +9,28 @@ import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
 
 import FeedbackModal from "../components/FeedbackModal";
+import {
+  addAction,
+  hasAction,
+  subscribeActionsStore,
+} from "../state/actionsStore";
 
 /* =============================================================================
    Explore › TravelRenderer (Careers mobile structure)
    - Single vertical list
    - 4 cards, collapsed teaser, tap-to-expand
-   - Tiny Test block (toggle steps + Add to Actions placeholder + saved ack)
+   - Tiny task block (toggle steps + Add to Actions + saved ack)
    - Quick check per card (FeedbackModal)
-   - ✅ UPDATED: number marker pill (#1–#4) instead of emoji marker pill
+   - ✅ number marker pill (#1–#4) instead of emoji marker pill
 
-   Spacing fix (travel cards):
-   - Remove “double padding” between card shells (outer + inner)
-   - Normalize list spacing to match other lanes (tight on mobile, airy on lg)
-   - Ensure expanded content doesn’t add extra bottom gap
+   Updated for education-forward Travel lane:
+   - Cards: ef-gap-year, ciee-study-abroad, au-pair-cultural-care, soliya-virtual-exchange
+   - Tiny tests -> Tiny tasks (copy + data)
+
+   Media standardization:
+   - In-card VisualBreak image defaults to /images/travel/<n>.jpg (n=1..4)
+   - Optional per-card override via card.media.src
+   - SafeImage behavior: never show broken image icon; hide on failure (optional fallback -> /images/travel/5.jpg)
 ============================================================================= */
 
 type TravelCard = {
@@ -30,6 +39,7 @@ type TravelCard = {
   short: string;
   icon?: string;
   href?: string;
+  media?: { src?: string; alt?: string };
 };
 
 type NextMove = {
@@ -54,6 +64,17 @@ function asTravelArea(input: unknown): TravelArea {
   const toStrArr = (v: unknown): string[] | undefined =>
     Array.isArray(v) ? v.map((x) => String(x)) : undefined;
 
+  const toMedia = (
+    v: unknown
+  ): { src?: string; alt?: string } | undefined => {
+    if (!v || typeof v !== "object") return undefined;
+    const it = v as Record<string, unknown>;
+    const src = typeof it?.src === "string" ? it.src : undefined;
+    const alt = typeof it?.alt === "string" ? it.alt : undefined;
+    if (!src && !alt) return undefined;
+    return { src, alt };
+  };
+
   const toCards = (v: unknown): TravelCard[] | undefined => {
     if (!Array.isArray(v)) return undefined;
     const out: TravelCard[] = [];
@@ -64,7 +85,8 @@ function asTravelArea(input: unknown): TravelArea {
       const short = typeof it?.short === "string" ? it.short : "";
       const icon = typeof it?.icon === "string" ? it.icon : undefined;
       const href = typeof it?.href === "string" ? it.href : undefined;
-      if (id && title) out.push({ id, title, short, icon, href });
+      const media = toMedia(it.media);
+      if (id && title) out.push({ id, title, short, icon, href, media });
     }
     return out;
   };
@@ -116,6 +138,44 @@ function splitSpokenParagraphs(input: string): string[] {
   return lines.length ? lines : [];
 }
 
+/**
+ * Turn plain URLs inside text into clickable links.
+ * (Keeps copy-authoring simple in travel.ts: "Explore: https://...")
+ */
+function renderTextWithLinks(text: string): React.ReactNode[] {
+  const s = String(text ?? "");
+  const urlRe = /(https?:\/\/[^\s)]+)(?![^<]*>)/g;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = urlRe.exec(s)) !== null) {
+    const url = match[1];
+    const start = match.index;
+    const end = start + url.length;
+
+    if (start > lastIndex) parts.push(s.slice(lastIndex, start));
+
+    parts.push(
+      <a
+        key={`${url}-${start}`}
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-4"
+      >
+        {url}
+      </a>
+    );
+
+    lastIndex = end;
+  }
+
+  if (lastIndex < s.length) parts.push(s.slice(lastIndex));
+  return parts.length ? parts : [s];
+}
+
 type Accent = {
   rail: string;
   chip: string;
@@ -153,75 +213,64 @@ const TRAVEL_ACCENTS: Accent[] = [
   },
 ];
 
-type TinyTest = {
+type TinyTask = {
   title: string;
   steps: string[];
   eta: string;
   tip?: string;
 };
 
-const TRAVEL_TINY_TESTS: Record<string, TinyTest> = {
-  "coastal-weekend": {
-    title: "Tiny test: plan a micro coastal reset",
+const TRAVEL_TINY_TASKS: Record<string, TinyTask> = {
+  "ef-gap-year": {
+    title: "Tiny task: shortlist one EF-style program",
+    eta: "20–30 min",
+    steps: [
+      "Pick ONE region you’re curious about (Europe / Asia / LatAm).",
+      "Choose ONE growth focus: language, service, internship, or leadership.",
+      "Open the program site and save 2 options that feel real.",
+      "Write a 1-sentence why: “I’m doing this because ____.”",
+    ],
+    tip: "Keep it small: you’re choosing a *direction*, not a forever plan.",
+  },
+  "ciee-study-abroad": {
+    title: "Tiny task: find a program that actually counts",
     eta: "20–35 min",
     steps: [
-      "Pick one coastal town within 2–3 hours (drive or short flight).",
-      "Choose ONE anchor: sunrise walk, bookstore café, or beach loop.",
-      "Pick lodging *or* a day plan — not both.",
-      "Text one person: “Want to do this with me?” (or commit solo).",
+      "Pick a city you’d be proud to say out loud.",
+      "Choose a length: summer / semester / short term.",
+      "Save 2 programs and note what you’d study there.",
+      "Write the ‘proof’: credit, portfolio, language level, or internship.",
     ],
-    tip: "Tip: the win is “I booked / scheduled it,” not “I planned perfectly.”",
+    tip: "If you can name the outcome, it’s not just travel — it’s a strategy.",
   },
-  "mountain-reset": {
-    title: "Tiny test: pick your mountain version",
+  "au-pair-cultural-care": {
+    title: "Tiny task: test-fit the au pair lifestyle",
     eta: "20–35 min",
     steps: [
-      "Pick your goal: quiet cabin, trail day, or cozy town + views.",
-      "Choose one easy hike (or just a scenic walk).",
-      "Pick one ‘warm’ thing: hot drink spot, sauna, or fireplace vibe.",
-      "Decide the date window (even if it’s a maybe).",
+      "List your non-negotiables: hours, age group, country, independence level.",
+      "Write your ‘I’m great at’: 3 strengths (patience, cooking, tutoring, etc.).",
+      "Open the program site and read the eligibility + expectations.",
+      "Decide: “Would I like being part of a host family?” yes/maybe/no.",
     ],
-    tip: "Tip: mountains are for nervous systems, not achievements.",
+    tip: "Au pair is immersive — the win is clarity, even if it’s a ‘no.’",
   },
-  "education-abroad": {
-    title: "Tiny test: see if structured travel is your thing",
-    eta: "25–45 min",
-    steps: [
-      "Pick a country + one skill: language, art, cooking, coding, etc.",
-      "Search 2 program styles: guided immersion + short course format.",
-      "Write 3 constraints: budget, time window, comfort level (solo/with group).",
-      "Save 2 links and rank them: “more me” vs “less me.”",
-    ],
-    tip: "Tip: you’re not choosing forever — you’re testing your style.",
-  },
-  "work-abroad": {
-    title: "Tiny test: map one realistic way to work abroad",
-    eta: "25–45 min",
-    steps: [
-      "Pick a ‘container’: seasonal work, internship, volunteering, exchange.",
-      "Choose one country and one timeframe (summer / gap term / after grad).",
-      "Write a 5-line plan: what you’d do, where you’d live, how you’d afford it.",
-      "Find one community thread or guide and save it.",
-    ],
-    tip: "Tip: momentum starts when it becomes *a plan*, not a vibe.",
-  },
-  "virtual-travel": {
-    title: "Tiny test: travel your brain without spending money",
+  "soliya-virtual-exchange": {
+    title: "Tiny task: do a real cross-cultural conversation",
     eta: "15–25 min",
     steps: [
-      "Pick a city and a theme (food, museums, street life, architecture).",
-      "Do one street-view walk + one short local video.",
-      "Make a 5-song playlist that matches the city.",
-      "Write: “Would I actually go here?” yes/maybe/no — and why.",
+      "Pick one topic you care about: identity, education, future work, media.",
+      "Sign up / bookmark a virtual exchange option.",
+      "Do one session (or commit to a start date).",
+      "After: write 3 things you learned and 1 thing you’d ask next time.",
     ],
-    tip: "Tip: virtual travel is a scouting mission, not a compromise.",
+    tip: "Virtual exchange is travel for your worldview. It counts.",
   },
 };
 
-function tinyTestForTopic(topicId: string): TinyTest {
+function tinyTaskForTopic(topicId: string): TinyTask {
   return (
-    TRAVEL_TINY_TESTS[topicId] ?? {
-      title: "Tiny test: do one micro-explore",
+    TRAVEL_TINY_TASKS[topicId] ?? {
+      title: "Tiny task: do one micro-explore",
       eta: "15–25 min",
       steps: [
         "Pick one tiny action you can finish today.",
@@ -261,7 +310,14 @@ function areaSignature(area: TravelArea): string {
 
   const payload =
     `hint:${hint}||signals:${signals.join("|")}||cards:` +
-    cards.map((c) => `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}`).join("||");
+    cards
+      .map((c) => {
+        const mediaSig = c.media?.src
+          ? `|media:${c.media.src}|${c.media.alt ?? ""}`
+          : "";
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}${mediaSig}`;
+      })
+      .join("||");
 
   return hashString(payload);
 }
@@ -282,11 +338,11 @@ function toRecFromTravelCard(
     claimId: recId,
     source: "explore",
     domain: "travel",
-    title: String(c.title ?? "Travel vibe"),
+    title: String(c.title ?? "Travel"),
     summary: String(c.short ?? ""),
     why: signals.length
       ? signals.slice(0, 3)
-      : ["A travel experiment that matches your vibe."],
+      : ["A travel experiment that grows your worldview."],
     nextStep: area.hint ? String(area.hint) : undefined,
     tags,
     signals: undefined,
@@ -299,6 +355,96 @@ function toRecFromTravelCard(
   };
 }
 
+/* ---------------------------------------------------------------------------
+   In-card VisualBreak (safe image, standardized paths)
+--------------------------------------------------------------------------- */
+
+function standardizedTravelCardImageSrc(slotIdx: number): string {
+  const n = Math.max(1, Math.min(4, slotIdx + 1));
+  return `/images/travel/${n}.jpg`;
+}
+
+function SafeImage({
+  src,
+  alt,
+  className,
+  fallbackSrc,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  fallbackSrc?: string;
+}) {
+  const [failed, setFailed] = React.useState(false);
+  const [fallbackFailed, setFallbackFailed] = React.useState(false);
+
+  if (failed && (!fallbackSrc || fallbackFailed)) return null;
+
+  const useSrc = failed ? (fallbackSrc as string) : src;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={useSrc}
+      alt={alt}
+      className={className}
+      onError={() => {
+        if (!failed) setFailed(true);
+        else setFallbackFailed(true);
+      }}
+    />
+  );
+}
+
+function TravelCardMediaBreak({
+  dark,
+  slotIdx,
+  overrideSrc,
+  overrideAlt,
+}: {
+  dark: boolean;
+  slotIdx: number;
+  overrideSrc?: string;
+  overrideAlt?: string;
+}) {
+  const primary =
+    (overrideSrc ?? "").trim() || standardizedTravelCardImageSrc(slotIdx);
+  const fallback = "/images/travel/5.jpg";
+
+  return (
+    <div className="mt-4">
+      <div
+        className={`relative overflow-hidden rounded-2xl border ${
+          dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+        }`}
+      >
+        <SafeImage
+          src={primary}
+          fallbackSrc={fallback}
+          alt={(overrideAlt ?? "").trim()}
+          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 ${
+            dark
+              ? "bg-gradient-to-r from-slate-950/35 via-transparent to-slate-950/35"
+              : "bg-gradient-to-r from-white/25 via-transparent to-white/25"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Actions helpers (stable IDs)
+--------------------------------------------------------------------------- */
+
+function actionIdForTiny(topicId: string) {
+  return `action.travel.tiny.${topicId}`;
+}
+
 export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   const area = React.useMemo(() => asTravelArea(chip.area), [chip.area]);
 
@@ -306,17 +452,24 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-
   const [showStepsById, setShowStepsById] = React.useState<
     Record<string, boolean>
   >({});
-  const [savedTinyById, setSavedTinyById] = React.useState<
-    Record<string, boolean>
-  >({});
-  const [justSavedId, setJustSavedId] = React.useState<string | null>(null);
+
+  const [justSavedActionId, setJustSavedActionId] = React.useState<
+    string | null
+  >(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
+
+  const [, bumpFeedback] = React.useState(0);
+
+  const [, bump] = React.useState(0);
+  React.useEffect(() => {
+    const unsub = subscribeActionsStore(() => bump((v) => v + 1));
+    return () => unsub();
+  }, []);
 
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
@@ -333,11 +486,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
     setShowStepsById((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function onSaveTinyTest(topicId: string) {
-    setSavedTinyById((prev) => ({ ...prev, [topicId]: true }));
-    setJustSavedId(topicId);
+  function toastSaved(actionId: string) {
+    setJustSavedActionId(actionId);
     window.setTimeout(() => {
-      setJustSavedId((cur) => (cur === topicId ? null : cur));
+      setJustSavedActionId((cur) => (cur === actionId ? null : cur));
     }, 1400);
   }
 
@@ -366,6 +518,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
         `explore.travel.feedback.${recId}`,
         JSON.stringify(payload)
       );
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -375,6 +528,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.removeItem(`explore.travel.feedback.${recId}`);
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -400,7 +554,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   }) {
     if (!pending) return;
 
-    // ✅ ensure any prior ack doesn't linger
     setAck(null);
 
     setSelectedFor(pending.rec.recId, {
@@ -449,7 +602,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
   }
 
   return (
-    // ✅ IMPORTANT: section spacing should not stack with the lane shell in page.tsx
     <section className="space-y-4">
       {ack ? (
         <div
@@ -464,7 +616,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
               } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -494,7 +648,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
       ) : null}
 
       {cards.length ? (
-        // ✅ spacing fix: avoid “double vertical whitespace” (mobile tighter)
         <div className="space-y-4 lg:space-y-6">
           {cards.slice(0, 4).map((c, slotIdx) => {
             const a = TRAVEL_ACCENTS[slotIdx] ?? TRAVEL_ACCENTS[0];
@@ -512,10 +665,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                 ? `/main/explore/travel/${encodeURIComponent(c.id)}`
                 : "/main/explore/travel";
 
-            const tiny = tinyTestForTopic(c.id);
+            const tiny = tinyTaskForTopic(c.id);
             const showSteps = Boolean(showStepsById[c.id]);
-            const tinySaved = Boolean(savedTinyById[c.id]);
-            const tinyJustSaved = justSavedId === c.id;
+
+            const tinyActionId = actionIdForTiny(c.id);
+            const tinySaved = hasAction(tinyActionId);
+            const tinyJustSaved = justSavedActionId === tinyActionId;
 
             const rec = toRecFromTravelCard(c, area, runId);
             const selected = getSelectedFor(rec.recId);
@@ -532,8 +687,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                 }`}
               >
                 <div
-                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded ? "opacity-45 lg:opacity-35" : "opacity-75 lg:opacity-55"
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
+                    a.halo
+                  } ${
+                    expanded
+                      ? "opacity-45 lg:opacity-35"
+                      : "opacity-75 lg:opacity-55"
                   }`}
                 />
                 <div
@@ -545,7 +704,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
-                {/* ✅ spacing fix: reduce inner padding slightly and avoid adding extra bottom margin via nested blocks */}
                 <div
                   className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-6 ${
                     dark
@@ -566,7 +724,6 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {/* ✅ UPDATED: number marker pill (#1–#4) */}
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
                               dark
@@ -592,7 +749,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 dark ? "text-slate-100/85" : "text-slate-700"
                               } line-clamp-2`}
                             >
-                              {teaser[0]}
+                              {renderTextWithLinks(teaser[0])}
                             </p>
                           </div>
                         ) : null}
@@ -604,7 +761,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 key={i}
                                 className={`text-sm lg:text-[0.95rem] ${muted}`}
                               >
-                                {p}
+                                {renderTextWithLinks(p)}
                               </p>
                             ))}
                           </div>
@@ -620,9 +777,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         {!expanded ? (
                           <span className="relative h-full w-full">
                             <span
-                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                dark ? "opacity-55" : "opacity-50"
-                              }`}
+                              className={`absolute inset-0 bg-gradient-to-br ${
+                                a.rail
+                              } ${dark ? "opacity-55" : "opacity-50"}`}
                             />
                             <span
                               className={`absolute inset-0 ${
@@ -640,7 +797,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
+                              dark
+                                ? "bg-white/5 text-white/80"
+                                : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -659,22 +818,31 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                               key={i}
                               className={`text-sm lg:text-[0.95rem] ${muted}`}
                             >
-                              {p}
+                              {renderTextWithLinks(p)}
                             </p>
                           ))}
                         </div>
                       ) : null}
 
+                      <TravelCardMediaBreak
+                        dark={dark}
+                        slotIdx={slotIdx}
+                        overrideSrc={c.media?.src}
+                        overrideAlt={c.media?.alt}
+                      />
+
                       <div className="mt-4 lg:mt-5">
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                            dark
+                              ? "border-white/10 bg-white/5"
+                              : "border-slate-200 bg-white/80"
                           }`}
                         >
                           <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                              dark ? "opacity-16" : "opacity-10"
-                            }`}
+                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${
+                              a.rail
+                            } ${dark ? "opacity-16" : "opacity-10"}`}
                             aria-hidden
                           />
                           <div
@@ -691,7 +859,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                   dark ? "text-white/80" : "text-slate-700"
                                 }`}
                               >
-                                Tiny test
+                                Tiny task
                               </div>
 
                               <span
@@ -711,9 +879,11 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                   dark ? "text-white/90" : "text-slate-900"
                                 }`}
                               >
-                                Try this first — don’t overthink it:
+                                Start here — keep it small:
                               </div>
-                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
+                              <div
+                                className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
+                              >
                                 {tiny.steps?.[0] ??
                                   "Try a super small version of it today."}
                               </div>
@@ -740,7 +910,22 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
                               <button
                                 type="button"
-                                onClick={() => onSaveTinyTest(c.id)}
+                                onClick={() => {
+                                  if (tinySaved) return;
+
+                                  addAction({
+                                    id: tinyActionId,
+                                    kind: "tiny_task",
+                                    title: "Tiny task",
+                                    detail: `${tiny.eta} • ${tiny.title}`,
+                                    lane: "travel",
+                                    topicId: c.id,
+                                    href: deepDiveHref,
+                                    recId: undefined,
+                                  });
+
+                                  toastSaved(tinyActionId);
+                                }}
                                 disabled={tinySaved}
                                 className={`${pillBase} ${
                                   tinySaved
@@ -782,7 +967,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                     : "border-slate-200 bg-white/80"
                                 }`}
                               >
-                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>
+                                <div
+                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
+                                >
                                   {tiny.title}
                                 </div>
 
@@ -799,7 +986,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                       >
                                         {i + 1}
                                       </span>
-                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>
+                                      <div
+                                        className={`text-sm lg:text-[0.95rem] ${muted}`}
+                                      >
                                         {step}
                                       </div>
                                     </div>
@@ -904,6 +1093,16 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         >
                           Go deeper (real options) <ArrowRight className="h-4 w-4" />
                         </Link>
+
+                        {tinyJustSaved ? (
+                          <div
+                            className={`mt-3 text-xs font-semibold ${
+                              dark ? "text-white/70" : "text-slate-700"
+                            }`}
+                          >
+                            ✅ Added to Actions
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
@@ -918,10 +1117,12 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>No travel items yet</div>
+          <div className={`text-sm font-semibold ${titleC}`}>
+            No travel items yet
+          </div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to <span className="font-mono text-[0.9em]">cards[]</span>{" "}
-            in{" "}
+            Add items to{" "}
+            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
             <span className="font-mono text-[0.9em]">
               explore/content/travel.ts
             </span>

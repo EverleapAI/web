@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 
 /** Core lane/area ids (your 5 Explore facades) */
 export type ExploreAreaId =
-  | "recommendations"
+  | "careers"
   | "education"
   | "travel"
   | "community"
@@ -24,6 +24,22 @@ export type NextMove = {
   id: string;
   title: string;
   blurb: string;
+};
+
+/* ============================================================
+   Media conventions (Explore)
+   - Lane header media is standardized by folder:
+     /images/<lane>/6.mp4 (preferred) -> /images/<lane>/5.jpg (fallback)
+   - Card media is standardized by slot:
+     /images/<lane>/1.jpg .. /images/<lane>/4.jpg
+   - We store card-level media on the card data so renderers stay UI-only.
+   ============================================================ */
+
+export type CardMediaAsset = {
+  /** Public path, e.g. "/images/careers/1.jpg" */
+  src: string;
+  /** Accessibility alt text (optional; renderers may choose to ignore) */
+  alt?: string;
 };
 
 /* ============================================================
@@ -52,7 +68,7 @@ export type VisualBreak = {
 };
 
 /* ============================================================
-   NEW: Opportunity types (Education + future lanes)
+   Opportunity types (Education + future lanes)
    Curated, real-world “doors to walk through”.
    ============================================================ */
 
@@ -89,9 +105,6 @@ export type ExploreOpportunityGroup = {
 
 /**
  * Mini card used inside each ExploreArea.
- * NOTE:
- * - Recommendations is richer, but remains Explore-only.
- * - Layer 1 Careers uses `short` as the canonical narrative source.
  */
 export type MiniCard = {
   id: string;
@@ -112,20 +125,25 @@ export type MiniCard = {
   starterExperiment?: string;
 
   /**
-   * Recommendations-only (Layer 1 Careers)
+   * Careers-only (Layer 1 Careers)
    */
   why?: string[]; // card-specific reasons
   hint?: string; // micro nudge / next step
   tags?: string[]; // optional tags/signals
 
   /**
-   * ✅ Visual moment (Layer 1 Careers)
+   * Visual moment (Layer 1 Careers)
    */
   visualBreak?: VisualBreak;
 
   /**
-   * NEW: Curated opportunities (Education lane now; others later)
-   * Keep it small per bucket (3–6).
+   * Card-level media (standardized by lane folder)
+   * Example: "/images/travel/3.jpg"
+   */
+  cardMedia?: CardMediaAsset;
+
+  /**
+   * Curated opportunities (Education lane now; others later)
    */
   opportunities?: ExploreOpportunityGroup;
 

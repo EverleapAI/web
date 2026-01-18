@@ -1,4 +1,4 @@
-// src/app/main/explore/content/recommendations.ts
+// src/app/main/explore/content/careers.ts
 import type { ExploreArea } from "./types";
 
 /**
@@ -6,12 +6,12 @@ import type { ExploreArea } from "./types";
  * These are not job listings — they are identity experiments.
  * Tone: life coach talking to an older teen.
  */
-const recommendations: ExploreArea = {
-  id: "recommendations",
+const careers: ExploreArea = {
+  id: "careers",
   label: "Careers",
   chip: "Everleap suggestions",
   glowClass: "from-sky-400 via-indigo-500 to-slate-400",
-  href: "/main/explore/recommendations",
+  href: "/main/explore/careers",
 
   headline: "Careers",
   summary:
@@ -56,6 +56,10 @@ const recommendations: ExploreArea = {
         "Game design is choosing rules, rewards, and challenges so a player *feels* something: tension, curiosity, pride, chaos, flow.\n\n" +
         "If you’ve ever thought “this level is unfair” or “this is addictive” or “this is boring,” you’re already thinking like a designer.\n\n" +
         "Tiny task: pick a simple game and change ONE rule. Watch what happens.",
+      cardMedia: {
+        src: "/images/careers/1.jpg",
+        alt: "Game design scene",
+      },
       visualBreak: {
         asset: {
           src: "/images/explore/careers/4.jpg",
@@ -82,6 +86,10 @@ const recommendations: ExploreArea = {
         "Product and UX is about noticing what’s confusing or annoying — and making it better for real people.\n\n" +
         "If you like building things and you care how people experience them, this might be your lane.\n\n" +
         "Tiny test: pick an app you use, redesign one screen, and show it to two people. See what they say.",
+      cardMedia: {
+        src: "/images/careers/2.jpg",
+        alt: "Product and UX scene",
+      },
       visualBreak: {
         asset: {
           src: "/images/explore/careers/1.jpg",
@@ -108,6 +116,10 @@ const recommendations: ExploreArea = {
         "This path is about helping people through physical, mental, or emotional stuff — and actually making their day better.\n\n" +
         "If people come to you when they’re struggling, that’s not random.\n\n" +
         "Tiny test: talk to someone who works in a helping role and ask what makes the job feel worth it.",
+      cardMedia: {
+        src: "/images/careers/3.jpg",
+        alt: "Helping and support scene",
+      },
       visualBreak: {
         asset: {
           src: "/images/explore/careers/2.jpg",
@@ -134,6 +146,10 @@ const recommendations: ExploreArea = {
         "You might be teaching, running programs, or organizing groups so things actually work.\n\n" +
         "If you like helping people level up and hate wasted potential, this could be you.\n\n" +
         "Tiny test: help out with one group or program and notice what parts give you energy.",
+      cardMedia: {
+        src: "/images/careers/4.jpg",
+        alt: "Education and community scene",
+      },
       visualBreak: {
         asset: {
           src: "/images/explore/careers/3.jpg",
@@ -243,4 +259,4 @@ const recommendations: ExploreArea = {
   ],
 };
 
-export default recommendations;
+export default careers;

@@ -12,6 +12,10 @@ import type { ExploreArea } from "./types";
  * - NOW also includes curated “doors to walk through”:
  *   local (94901-ish) + national + online
  * - Deep dive pages can turn these into tactical “real world things to do”
+ *
+ * NOTE:
+ * Card `id` is the stable topic key used by renderers (Tiny Tests, Actions IDs, feedback IDs).
+ * Keep it aligned with the slug (kebab-case), even if `href` changes later.
  */
 const education: ExploreArea = {
   id: "education",
@@ -51,8 +55,9 @@ const education: ExploreArea = {
 
   cards: [
     {
-      // ✅ stable topic slug for /education/[topic]
+      // ✅ stable topic key (used by renderer + store)
       id: "learn-to-code",
+      // ✅ slug lives in href for routing
       href: "/main/explore/education/learn-to-code",
       icon: "💻",
       title: "Build-to-learn (coding + making)",

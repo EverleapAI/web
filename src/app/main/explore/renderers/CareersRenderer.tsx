@@ -1,4 +1,4 @@
-// src/app/main/explore/renderers/RecommendationsRenderer.tsx
+// src/app/main/explore/renderers/CareersRenderer.tsx
 "use client";
 
 import * as React from "react";
@@ -12,17 +12,20 @@ import type { FeedbackResponse, RecommendationItem } from "../content/contracts"
 import FeedbackModal from "../components/FeedbackModal";
 
 import {
-  createExploreBatchFromRecommendations,
+  // ✅ canonical careers naming (backed by neutral store primitives)
+  createExploreBatchFromCareers,
+  getAndMarkVisibleCareers,
+  getLatestFeedbackForCareer,
+  clearFeedbackForCareer,
+
+  // store core
   initializeExploreFeedbackStore,
   subscribeExploreFeedbackStore,
-  getAndMarkVisibleRecommendations,
   recordFeedback,
   shouldSuggestRecalibrate,
   requestRecalibration,
   getExploreFeedbackState,
   supersedeWithNewBatch,
-  getLatestFeedbackForRecommendation,
-  clearFeedbackForRecommendation,
 } from "../state/feedbackStore";
 
 type RecAccent = {
@@ -128,13 +131,13 @@ type ExploreRecommendationCard = {
   visualBreak?: VisualBreak;
 };
 
-type ExploreRecommendationsArea = {
+type ExploreCareersArea = {
   hint?: string;
   signals?: string[];
   cards?: ExploreRecommendationCard[];
 };
 
-function asRecommendationsArea(input: unknown): ExploreRecommendationsArea {
+function asCareersArea(input: unknown): ExploreCareersArea {
   const obj = (input ?? {}) as Record<string, unknown>;
 
   const toStrArr = (v: unknown): string[] | undefined =>
@@ -198,7 +201,7 @@ function hashString(input: string): string {
  * We include why/hint/tags AND visualBreak so the feedbackStore batch refreshes
  * when copy/visuals change (otherwise it can “stick”).
  */
-function areaSignature(area: ExploreRecommendationsArea): string {
+function areaSignature(area: ExploreCareersArea): string {
   const cards = Array.isArray(area.cards) ? area.cards : [];
   const payload =
     "cards:" +
@@ -221,9 +224,9 @@ function areaSignature(area: ExploreRecommendationsArea): string {
 
 function mapCardsToRecommendations(
   chipId: string,
-  area: ExploreRecommendationsArea,
+  area: ExploreCareersArea,
   runId: string
-): RecommendationItem[] {
+): (RecommendationItem & { visualBreak?: VisualBreak })[] {
   const generatedAt = nowIso();
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
@@ -232,7 +235,9 @@ function mapCardsToRecommendations(
 
   return cards.map((c, idx) => {
     const laneId = String(c.id ?? `lane_${idx}`);
-    const recId = `explore.recommendations.${laneId}.v1`;
+
+    // ✅ canonical prefix
+    const recId = `explore.careers.${laneId}.v1`;
 
     const cardWhy = Array.isArray(c.why)
       ? c.why.map((s) => String(s).trim()).filter(Boolean).slice(0, 3)
@@ -268,6 +273,7 @@ function mapCardsToRecommendations(
           : undefined,
       tags: cardTags.length ? cardTags : [],
 
+      // carry through for UI use
       visualBreak: c.visualBreak,
 
       signals: undefined,
@@ -277,13 +283,18 @@ function mapCardsToRecommendations(
       generationRunId: runId,
       generatedAt,
       model: "placeholder",
-    } as RecommendationItem & { visualBreak?: VisualBreak };
+    };
   });
 }
 
+/**
+ * ✅ FIX: recId is `explore.careers.${laneId}.v1`
+ * parts: [explore, careers, laneId, v1]
+ * laneId is index 2 (not 3).
+ */
 function laneIdFromRec(rec: RecommendationItem): string {
   const parts = rec.recId.split(".");
-  return parts.length >= 4 ? parts[2] : rec.recId;
+  return parts.length >= 3 ? parts[2] : rec.recId;
 }
 
 function splitSpokenParagraphs(input: string): string[] {
@@ -437,16 +448,76 @@ function teenCoachWhy(why: string[]): string {
   return `${clean(bits[0])} and ${clean(bits[1])}, this usually clicks.`;
 }
 
+function standardizedCareersCardImageSrc(slotIdx: number): string {
+  const n = Math.max(1, Math.min(4, slotIdx + 1));
+  return `/images/careers/${n}.jpg`;
+}
+
+function SafeImage({
+  src,
+  alt,
+  fallbackSrc,
+  className,
+  sizes,
+  priority,
+  loading,
+}: {
+  src: string;
+  alt: string;
+  fallbackSrc?: string;
+  className?: string;
+  sizes?: string;
+  priority?: boolean;
+  loading?: "lazy" | "eager";
+}) {
+  const [curSrc, setCurSrc] = React.useState<string>(src);
+  const [hidden, setHidden] = React.useState(false);
+
+  React.useEffect(() => {
+    setCurSrc(src);
+    setHidden(false);
+  }, [src]);
+
+  if (!curSrc || hidden) return null;
+
+  return (
+    <Image
+      src={curSrc}
+      alt={alt}
+      fill
+      sizes={sizes}
+      className={className}
+      priority={priority}
+      loading={loading}
+      unoptimized
+      onError={() => {
+        if (fallbackSrc && curSrc !== fallbackSrc) {
+          setCurSrc(fallbackSrc);
+          return;
+        }
+        setHidden(true);
+      }}
+    />
+  );
+}
+
 function VisualBreakBlock({
   visual,
   dark,
+  slotIdx,
+  fallbackSrc,
 }: {
-  visual: VisualBreak;
+  visual?: VisualBreak;
   dark: boolean;
+  slotIdx: number;
+  fallbackSrc?: string;
 }) {
-  const src = (visual?.asset?.src ?? "").trim();
-  const alt = String(visual?.asset?.alt ?? "").trim();
-  if (!src) return null;
+  const override = (visual?.asset?.src ?? "").trim();
+  const defaultSrc = standardizedCareersCardImageSrc(slotIdx);
+  const src = override || defaultSrc;
+
+  const altOverride = String(visual?.asset?.alt ?? "").trim();
+  const alt = altOverride || "Career visual";
 
   return (
     <div className="mt-3">
@@ -456,14 +527,13 @@ function VisualBreakBlock({
         }`}
       >
         <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
-          <Image
+          <SafeImage
             src={src}
+            fallbackSrc={fallbackSrc}
             alt={alt}
-            fill
             sizes="(max-width: 640px) 100vw, 640px"
             className="object-cover"
             loading="lazy"
-            unoptimized
           />
         </div>
       </div>
@@ -471,10 +541,7 @@ function VisualBreakBlock({
   );
 }
 
-export default function RecommendationsRenderer({
-  chip,
-  dark,
-}: ExploreRendererProps) {
+export default function CareersRenderer({ chip, dark }: ExploreRendererProps) {
   const [visible, setVisible] = React.useState<RecommendationItem[]>([]);
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
@@ -494,7 +561,7 @@ export default function RecommendationsRenderer({
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   React.useEffect(() => {
-    const areaNow = asRecommendationsArea(chip.area);
+    const areaNow = asCareersArea(chip.area);
     const sigNow = areaSignature(areaNow);
 
     const runId = `explore_${chip.id}_${sigNow}`;
@@ -503,18 +570,18 @@ export default function RecommendationsRenderer({
     const current = getExploreFeedbackState();
 
     if (current.batch && current.batch.generationRunId !== runId) {
-      const newBatch = createExploreBatchFromRecommendations(recs, runId);
+      const newBatch = createExploreBatchFromCareers(recs, runId);
       supersedeWithNewBatch(newBatch);
     } else if (!current.batch) {
-      const batch = createExploreBatchFromRecommendations(recs, runId);
+      const batch = createExploreBatchFromCareers(recs, runId);
       initializeExploreFeedbackStore(batch);
     }
 
     const unsub = subscribeExploreFeedbackStore(() => {
-      setVisible(getAndMarkVisibleRecommendations());
+      setVisible(getAndMarkVisibleCareers());
     });
 
-    setVisible(getAndMarkVisibleRecommendations());
+    setVisible(getAndMarkVisibleCareers());
     return () => unsub();
   }, [chip.id, chip.area]);
 
@@ -527,11 +594,11 @@ export default function RecommendationsRenderer({
   }
 
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
-    const existing = getLatestFeedbackForRecommendation(rec.recId);
+    const existing = getLatestFeedbackForCareer(rec.recId);
 
     if (existing && existing.response === response) {
-      clearFeedbackForRecommendation(rec.recId);
-      setVisible(getAndMarkVisibleRecommendations());
+      clearFeedbackForCareer(rec.recId);
+      setVisible(getAndMarkVisibleCareers());
       return;
     }
 
@@ -545,7 +612,7 @@ export default function RecommendationsRenderer({
   function handleRecalibrate() {
     setAck(null);
     requestRecalibration();
-    setVisible(getAndMarkVisibleRecommendations());
+    setVisible(getAndMarkVisibleCareers());
   }
 
   function submitModal(payload: {
@@ -565,12 +632,13 @@ export default function RecommendationsRenderer({
       setAck({
         kind: "comment_disagree",
         feedbackId: fb.feedbackId,
-        message: "Got it. Want me to tweak your next set based on what you wrote?",
+        message:
+          "Got it. Want me to tweak your next set based on what you wrote?",
       });
     }
 
     setPending(null);
-    setVisible(getAndMarkVisibleRecommendations());
+    setVisible(getAndMarkVisibleCareers());
   }
 
   function onSaveTinyTest(rec: RecommendationItem, laneId: string) {
@@ -710,13 +778,12 @@ export default function RecommendationsRenderer({
       ) : null}
 
       {visible.length ? (
-        // ✅ Full-width list so cards match the hero/header card width
         <div className="w-full space-y-5 lg:space-y-6">
           {visible.slice(0, 4).map((rec, slotIdx) => {
             const a = REC_ACCENTS[slotIdx] ?? REC_ACCENTS[0];
             const laneId = laneIdFromRec(rec);
 
-            const feedback = getLatestFeedbackForRecommendation(rec.recId);
+            const feedback = getLatestFeedbackForCareer(rec.recId);
             const selected = feedback?.response;
 
             const spoken = rec.summary ? splitSpokenParagraphs(rec.summary) : [];
@@ -736,7 +803,6 @@ export default function RecommendationsRenderer({
               .visualBreak;
 
             return (
-              // ✅ Single-shell card (no “outer layer” wrapper)
               <div
                 key={rec.recId}
                 className={`relative w-full overflow-hidden rounded-3xl border ${
@@ -745,22 +811,23 @@ export default function RecommendationsRenderer({
                     : "border-slate-200 shadow-[0_14px_40px_rgba(2,6,23,0.08)]"
                 }`}
               >
-                {/* Halo wash (kept subtle so cards don't blend) */}
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${
                     a.halo
-                  } ${expanded ? "opacity-40 lg:opacity-32" : "opacity-42 lg:opacity-36"}`}
-                />
-
-                {/* Top cap for separation */}
-                <div
-                  aria-hidden
-                  className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${a.cap} ${
-                    dark ? "opacity-35" : "opacity-50"
+                  } ${
+                    expanded
+                      ? "opacity-40 lg:opacity-32"
+                      : "opacity-42 lg:opacity-36"
                   }`}
                 />
 
-                {/* Accent rail */}
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${
+                    a.cap
+                  } ${dark ? "opacity-35" : "opacity-50"}`}
+                />
+
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[72%] ${
@@ -770,10 +837,15 @@ export default function RecommendationsRenderer({
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
-                {/* Surface */}
                 <div
                   className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                    dark ? (expanded ? "bg-slate-950/26" : a.surfaceDark) : expanded ? "bg-white/75" : a.surfaceLight
+                    dark
+                      ? expanded
+                        ? "bg-slate-950/26"
+                        : a.surfaceDark
+                      : expanded
+                      ? "bg-white/75"
+                      : a.surfaceLight
                   }`}
                 >
                   <button
@@ -804,7 +876,9 @@ export default function RecommendationsRenderer({
                           <div className="mt-2">
                             <p
                               className={`text-sm lg:text-[0.95rem] ${
-                                dark ? "text-slate-100/85" : "text-slate-700"
+                                dark
+                                  ? "text-slate-100/85"
+                                  : "text-slate-700"
                               } line-clamp-2`}
                             >
                               {teaser[0]}
@@ -894,9 +968,12 @@ export default function RecommendationsRenderer({
                           {teenCoachWhy(rec.why)}
                         </p>
 
-                        {visualBreak ? (
-                          <VisualBreakBlock visual={visualBreak} dark={dark} />
-                        ) : null}
+                        <VisualBreakBlock
+                          visual={visualBreak}
+                          dark={dark}
+                          slotIdx={slotIdx}
+                          fallbackSrc="/images/careers/5.jpg"
+                        />
 
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
@@ -1026,7 +1103,10 @@ export default function RecommendationsRenderer({
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div key={i} className="flex items-start gap-2">
+                                    <div
+                                      key={i}
+                                      className="flex items-start gap-2"
+                                    >
                                       <span
                                         className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
                                           dark
@@ -1149,14 +1229,12 @@ export default function RecommendationsRenderer({
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>
-            No recommendations yet
-          </div>
+          <div className={`text-sm font-semibold ${titleC}`}>No careers yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
             Add items to{" "}
             <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
             <span className="font-mono text-[0.9em]">
-              explore/content/recommendations.ts
+              explore/content/careers.ts
             </span>
             .
           </div>

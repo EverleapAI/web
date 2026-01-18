@@ -1,19 +1,18 @@
+// src/app/main/explore/state/feedbackStore.ts
 "use client";
 
 /**
  * Explore feedback store (module store, persisted)
- * Satisfies RecommendationsRenderer.tsx imports:
- *  - createExploreBatchFromRecommendations
- *  - initializeExploreFeedbackStore
- *  - subscribeExploreFeedbackStore
- *  - getAndMarkVisibleRecommendations
- *  - recordFeedback
- *  - shouldSuggestRecalibrate
- *  - requestRecalibration
- *  - getExploreFeedbackState
- *  - supersedeWithNewBatch
  *
- * Adds (for locked pill + toggle-reset UX):
+ * ✅ Canonical API additions (Careers-first, neutral naming):
+ *  - createExploreBatchFromCareers
+ *  - getAndMarkVisibleCareers
+ *  - getLatestFeedbackForCareer
+ *  - clearFeedbackForCareer
+ *
+ * ✅ Back-compat maintained (do not break existing imports):
+ *  - createExploreBatchFromRecommendations
+ *  - getAndMarkVisibleRecommendations
  *  - getLatestFeedbackForRecommendation
  *  - clearFeedbackForRecommendation
  *
@@ -45,6 +44,8 @@ export type ExploreBatch = {
   createdAt: string; // ISO
   status: ExploreBatchStatus;
 
+  // NOTE: Keeping storage schema stable for now.
+  // Later we can migrate "recommendations" -> "items" with a version bump.
   recommendations: RecommendationItem[];
 
   // Tracking
@@ -71,6 +72,10 @@ function safeRead(): ExploreFeedbackState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ExploreFeedbackState;
     if (!parsed || typeof parsed !== "object") return null;
+
+    // Optional future hardening hook:
+    // If we ever migrate storage shape, do it here.
+
     return parsed;
   } catch {
     return null;
@@ -135,80 +140,13 @@ function listEquals(a: string[], b: string[]) {
 }
 
 /* ============================================================================
-   New helpers (for locked pill / toggle reset)
+   Canonical neutral helpers (items, not "recommendations")
+   - These are internal primitives.
+   - Public API below exposes Careers-first names + back-compat names.
 ============================================================================ */
 
-/**
- * Returns the most recent (and in practice: the only) feedback for a recId.
- * Safe for renderer usage.
- */
-export function getLatestFeedbackForRecommendation(
-  recId: string
-): ExploreFeedback | null {
-  const b = state.batch;
-  if (!b) return null;
-
-  // There should be at most 1 entry per recId after recordFeedback(),
-  // but we defensively pick the latest.
-  const matches = b.feedback.filter((f) => f.recId === recId);
-  if (!matches.length) return null;
-
-  let latest = matches[0];
-  for (let i = 1; i < matches.length; i++) {
-    if (matches[i].createdAt > latest.createdAt) latest = matches[i];
-  }
-  return latest;
-}
-
-/**
- * Clears stored feedback for a recommendation.
- * Does NOT change seenRecIds (we still consider it "seen").
- * Returns true if something was removed.
- */
-export function clearFeedbackForRecommendation(recId: string): boolean {
-  const b = state.batch;
-  if (!b) return false;
-
-  const hadAny = b.feedback.some((f) => f.recId === recId);
-  if (!hadAny) return false;
-
-  setState((prev) => {
-    const batch = prev.batch;
-    if (!batch) return prev;
-
-    const nextFeedback = batch.feedback.filter((f) => f.recId !== recId);
-
-    // If nothing changes, avoid emit
-    if (nextFeedback.length === batch.feedback.length) return prev;
-
-    return {
-      batch: {
-        ...batch,
-        feedback: nextFeedback,
-      },
-    };
-  });
-
-  return true;
-}
-
-/* ============================================================================
-   Public API (used by renderer)
-============================================================================ */
-
-export function getExploreFeedbackState(): ExploreFeedbackState {
-  return state;
-}
-
-export function subscribeExploreFeedbackStore(cb: Listener) {
-  listeners.add(cb);
-  return () => {
-    listeners.delete(cb);
-  };
-}
-
-export function createExploreBatchFromRecommendations(
-  recs: RecommendationItem[],
+function createExploreBatchFromItems(
+  items: RecommendationItem[],
   generationRunId: string
 ): ExploreBatch {
   return {
@@ -216,49 +154,17 @@ export function createExploreBatchFromRecommendations(
     generationRunId,
     createdAt: nowIso(),
     status: "active",
-    recommendations: recs,
+    recommendations: items,
     seenRecIds: [],
     feedback: [],
   };
 }
 
-export function initializeExploreFeedbackStore(batch: ExploreBatch) {
-  setState(() => ({ batch }));
-}
-
-export function supersedeWithNewBatch(batch: ExploreBatch) {
-  // Replace everything; treat as a brand new run.
-  setState(() => ({ batch }));
-}
-
 /**
- * Compute which recommendations should be visible now (up to 4),
- * preferring unseen. This does NOT mutate store.
- */
-function computeVisible(batch: ExploreBatch): RecommendationItem[] {
-  const all = batch.recommendations ?? [];
-  if (!all.length) return [];
-
-  const seen = new Set(batch.seenRecIds);
-  const unseen = all.filter((r) => !seen.has(r.recId));
-
-  if (unseen.length >= 4) return unseen.slice(0, 4);
-  if (unseen.length > 0) {
-    const fillers = all
-      .filter((r) => !unseen.includes(r))
-      .slice(0, 4 - unseen.length);
-    return [...unseen, ...fillers];
-  }
-
-  // If everything seen, keep stable first 4
-  return all.slice(0, 4);
-}
-
-/**
- * Returns up to 4 recommendations to show and marks them as seen.
+ * Returns up to 4 items to show and marks them as seen.
  * IDEMPOTENT: if nothing changes, no emit.
  */
-export function getAndMarkVisibleRecommendations(): RecommendationItem[] {
+function getAndMarkVisibleItems(): RecommendationItem[] {
   const b = state.batch;
   if (!b) return [];
 
@@ -303,7 +209,10 @@ export function getAndMarkVisibleRecommendations(): RecommendationItem[] {
     if (batch.batchId !== b.batchId) return prev;
 
     // Avoid emitting if somehow equal
-    if (listEquals(batch.seenRecIds, orderedNextSeen) && batch.status === nextStatus) {
+    if (
+      listEquals(batch.seenRecIds, orderedNextSeen) &&
+      batch.status === nextStatus
+    ) {
       return prev;
     }
 
@@ -320,7 +229,143 @@ export function getAndMarkVisibleRecommendations(): RecommendationItem[] {
 }
 
 /**
- * Record feedback for a given recommendation.
+ * Returns the most recent (and in practice: the only) feedback for a recId.
+ * Safe for renderer usage.
+ */
+function getLatestFeedbackForItem(recId: string): ExploreFeedback | null {
+  const b = state.batch;
+  if (!b) return null;
+
+  // There should be at most 1 entry per recId after recordFeedback(),
+  // but we defensively pick the latest.
+  const matches = b.feedback.filter((f) => f.recId === recId);
+  if (!matches.length) return null;
+
+  let latest = matches[0];
+  for (let i = 1; i < matches.length; i++) {
+    if (matches[i].createdAt > latest.createdAt) latest = matches[i];
+  }
+  return latest;
+}
+
+/**
+ * Clears stored feedback for an item.
+ * Does NOT change seenRecIds (we still consider it "seen").
+ * Returns true if something was removed.
+ */
+function clearFeedbackForItem(recId: string): boolean {
+  const b = state.batch;
+  if (!b) return false;
+
+  const hadAny = b.feedback.some((f) => f.recId === recId);
+  if (!hadAny) return false;
+
+  setState((prev) => {
+    const batch = prev.batch;
+    if (!batch) return prev;
+
+    const nextFeedback = batch.feedback.filter((f) => f.recId !== recId);
+
+    // If nothing changes, avoid emit
+    if (nextFeedback.length === batch.feedback.length) return prev;
+
+    return {
+      batch: {
+        ...batch,
+        feedback: nextFeedback,
+      },
+    };
+  });
+
+  return true;
+}
+
+/* ============================================================================
+   Public API (used by renderer)
+============================================================================ */
+
+export function getExploreFeedbackState(): ExploreFeedbackState {
+  return state;
+}
+
+export function subscribeExploreFeedbackStore(cb: Listener) {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+
+/**
+ * Back-compat export (kept): Recommendations naming
+ * (Internally delegates to neutral items primitive)
+ */
+export function createExploreBatchFromRecommendations(
+  recs: RecommendationItem[],
+  generationRunId: string
+): ExploreBatch {
+  return createExploreBatchFromItems(recs, generationRunId);
+}
+
+/**
+ * ✅ Canonical export: Careers naming (delegates to same primitive)
+ * This lets Explore be "careers-canonical" without changing storage schema yet.
+ */
+export function createExploreBatchFromCareers(
+  items: RecommendationItem[],
+  generationRunId: string
+): ExploreBatch {
+  return createExploreBatchFromItems(items, generationRunId);
+}
+
+export function initializeExploreFeedbackStore(batch: ExploreBatch) {
+  setState(() => ({ batch }));
+}
+
+export function supersedeWithNewBatch(batch: ExploreBatch) {
+  // Replace everything; treat as a brand new run.
+  setState(() => ({ batch }));
+}
+
+/**
+ * Compute which recommendations should be visible now (up to 4),
+ * preferring unseen. This does NOT mutate store.
+ */
+function computeVisible(batch: ExploreBatch): RecommendationItem[] {
+  const all = batch.recommendations ?? [];
+  if (!all.length) return [];
+
+  const seen = new Set(batch.seenRecIds);
+  const unseen = all.filter((r) => !seen.has(r.recId));
+
+  if (unseen.length >= 4) return unseen.slice(0, 4);
+  if (unseen.length > 0) {
+    const fillers = all
+      .filter((r) => !unseen.includes(r))
+      .slice(0, 4 - unseen.length);
+    return [...unseen, ...fillers];
+  }
+
+  // If everything seen, keep stable first 4
+  return all.slice(0, 4);
+}
+
+/**
+ * Back-compat export (kept): Recommendations naming
+ * (Internally delegates to neutral items primitive)
+ */
+export function getAndMarkVisibleRecommendations(): RecommendationItem[] {
+  return getAndMarkVisibleItems();
+}
+
+/**
+ * ✅ Canonical export: Careers naming
+ */
+export function getAndMarkVisibleCareers(): RecommendationItem[] {
+  return getAndMarkVisibleItems();
+}
+
+/**
+ * Record feedback for a given item.
  * - Ensures only ONE feedback entry per recId (replaces any previous one)
  * - Ensures that rec is marked seen
  * - May transition to exhausted if everything is now seen
@@ -356,7 +401,9 @@ export function recordFeedback(input: {
     if (!hadRec) seenSet.add(input.rec.recId);
 
     // Keep order stable
-    const nextSeen = hadRec ? batch.seenRecIds : [...batch.seenRecIds, input.rec.recId];
+    const nextSeen = hadRec
+      ? batch.seenRecIds
+      : [...batch.seenRecIds, input.rec.recId];
 
     let nextStatus: ExploreBatchStatus = batch.status;
 
@@ -417,4 +464,38 @@ export function requestRecalibration() {
       },
     };
   });
+}
+
+/* ============================================================================
+   Back-compat + Canonical helpers (locked pill / toggle reset)
+============================================================================ */
+
+/**
+ * Back-compat export (kept): Recommendations naming
+ */
+export function getLatestFeedbackForRecommendation(
+  recId: string
+): ExploreFeedback | null {
+  return getLatestFeedbackForItem(recId);
+}
+
+/**
+ * ✅ Canonical export: Careers naming
+ */
+export function getLatestFeedbackForCareer(recId: string): ExploreFeedback | null {
+  return getLatestFeedbackForItem(recId);
+}
+
+/**
+ * Back-compat export (kept): Recommendations naming
+ */
+export function clearFeedbackForRecommendation(recId: string): boolean {
+  return clearFeedbackForItem(recId);
+}
+
+/**
+ * ✅ Canonical export: Careers naming
+ */
+export function clearFeedbackForCareer(recId: string): boolean {
+  return clearFeedbackForItem(recId);
 }
