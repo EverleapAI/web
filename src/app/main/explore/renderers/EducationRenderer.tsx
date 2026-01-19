@@ -1,6 +1,8 @@
 // src/app/main/explore/renderers/EducationRenderer.tsx
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -28,15 +30,19 @@ import { addAction, hasAction, subscribeActionsStore } from "../state/actionsSto
    - No-jump expand/collapse (anchor capture/restore)
    - Only one card expanded
    - Collapsed shows 1 teaser paragraph + “Tap to expand”
-   - Expanded order:
-       1) Expanded copy
-       2) Go deeper CTA
-       3) Media
-       4) Tiny task block
-       5) Quick check
-       6) Collapse button
+   - Expanded order (UPDATED for density):
+       1) Header (title area)
+       2) Media (immediately after header)
+       3) Expanded copy
+       4) Go deeper CTA
+       5) Tiny task block
+       6) Quick check
+       7) Collapse button
    - Dim sibling cards when one is expanded (opacity + saturate)
    - Safe media: never show broken icons; tolerate network issues
+   - JPG ONLY (NO MP4)
+   - NEW: notify parent when any card is expanded (for lane header auto-collapse)
+   - NEW: allow parent to force-collapse all cards (e.g., when header expands)
 ============================================================================= */
 
 type EducationCard = {
@@ -69,7 +75,7 @@ type EducationArea = {
    * If absent, renderer falls back safely to /images/education defaults.
    */
   mediaBasePath?: string;
-  headerMedia?: { mp4?: string; jpg?: string; alt?: string };
+  headerMedia?: { jpg?: string; alt?: string };
 };
 
 function asEducationArea(input: unknown): EducationArea {
@@ -113,9 +119,7 @@ function asEducationArea(input: unknown): EducationArea {
     return { local, national, online };
   };
 
-  const toMedia = (
-    v: unknown
-  ): { src?: string; alt?: string } | undefined => {
+  const toMedia = (v: unknown): { src?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
     const src = typeof it?.src === "string" ? it.src : undefined;
@@ -137,8 +141,7 @@ function asEducationArea(input: unknown): EducationArea {
       const opportunities = toOppGroup(it.opportunities);
       const media = toMedia(it.media);
 
-      if (id && title)
-        out.push({ id, title, short, icon, href, opportunities, media });
+      if (id && title) out.push({ id, title, short, icon, href, opportunities, media });
     }
     return out;
   };
@@ -156,16 +159,13 @@ function asEducationArea(input: unknown): EducationArea {
     return out;
   };
 
-  const toHeaderMedia = (
-    v: unknown
-  ): { mp4?: string; jpg?: string; alt?: string } | undefined => {
+  const toHeaderMedia = (v: unknown): { jpg?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
-    const mp4 = typeof it?.mp4 === "string" ? it.mp4 : undefined;
     const jpg = typeof it?.jpg === "string" ? it.jpg : undefined;
     const alt = typeof it?.alt === "string" ? it.alt : undefined;
-    if (!mp4 && !jpg && !alt) return undefined;
-    return { mp4, jpg, alt };
+    if (!jpg && !alt) return undefined;
+    return { jpg, alt };
   };
 
   return {
@@ -176,8 +176,7 @@ function asEducationArea(input: unknown): EducationArea {
     signals: toStrArr(obj.signals),
     cards: toCards(obj.cards),
     nextMoves: toMoves(obj.nextMoves),
-    mediaBasePath:
-      typeof obj.mediaBasePath === "string" ? obj.mediaBasePath : undefined,
+    mediaBasePath: typeof obj.mediaBasePath === "string" ? obj.mediaBasePath : undefined,
     headerMedia: toHeaderMedia(obj.headerMedia),
   };
 }
@@ -211,15 +210,13 @@ const EDU_ACCENTS: Accent[] = [
   {
     rail: "from-amber-300 via-orange-300 to-rose-300",
     chip: "bg-amber-300/15 text-amber-100 border-amber-200/20",
-    ctaDark:
-      "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
+    ctaDark: "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
     halo: "from-amber-500/12 via-orange-400/7 to-rose-500/7",
   },
   {
     rail: "from-emerald-300 via-teal-300 to-sky-300",
     chip: "bg-emerald-300/15 text-emerald-100 border-emerald-200/20",
-    ctaDark:
-      "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
+    ctaDark: "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
     halo: "from-emerald-500/11 via-teal-400/7 to-sky-500/7",
   },
   {
@@ -231,8 +228,7 @@ const EDU_ACCENTS: Accent[] = [
   {
     rail: "from-violet-300 via-fuchsia-300 to-sky-300",
     chip: "bg-violet-300/15 text-violet-100 border-violet-200/20",
-    ctaDark:
-      "bg-violet-300 text-slate-950 hover:bg-violet-200 shadow-violet-300/25",
+    ctaDark: "bg-violet-300 text-slate-950 hover:bg-violet-200 shadow-violet-300/25",
     halo: "from-violet-500/11 via-fuchsia-400/7 to-sky-500/7",
   },
 ];
@@ -310,13 +306,9 @@ function tinyTestForTopic(topicId: string): TinyTest {
 
 /* ---- Feedback plumbing ---- */
 
-type PendingFeedback =
-  | { rec: RecommendationItem; response: FeedbackResponse }
-  | null;
+type PendingFeedback = { rec: RecommendationItem; response: FeedbackResponse } | null;
 
-type AckState =
-  | { kind: "comment_disagree"; feedbackId: string; message: string }
-  | null;
+type AckState = { kind: "comment_disagree"; feedbackId: string; message: string } | null;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -353,24 +345,16 @@ function areaSignature(area: EducationArea): string {
             )
             .join("~") || "";
 
-        const mediaSig = c.media?.src
-          ? `|media:${c.media.src}|${c.media.alt ?? ""}`
-          : "";
+        const mediaSig = c.media?.src ? `|media:${c.media.src}|${c.media.alt ?? ""}` : "";
 
-        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${
-          c.short
-        }~opp:${flat}${mediaSig}`;
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.href ?? ""}~${c.short}~opp:${flat}${mediaSig}`;
       })
       .join("||");
 
   return hashString(payload);
 }
 
-function toRecFromEducationCard(
-  c: EducationCard,
-  area: EducationArea,
-  runId: string
-): RecommendationItem {
+function toRecFromEducationCard(c: EducationCard, area: EducationArea, runId: string): RecommendationItem {
   const generatedAt = nowIso();
   const signals = Array.isArray(area.signals) ? area.signals : [];
   const tags = signals.map((s) => s.trim()).filter(Boolean);
@@ -384,9 +368,7 @@ function toRecFromEducationCard(
     domain: "education",
     title: String(c.title ?? "Learning path"),
     summary: String(c.short ?? ""),
-    why: signals.length
-      ? signals.slice(0, 3)
-      : ["A good next learning experiment."],
+    why: signals.length ? signals.slice(0, 3) : ["A good next learning experiment."],
     nextStep: area.hint ? String(area.hint) : undefined,
     tags,
     signals: undefined,
@@ -401,26 +383,8 @@ function toRecFromEducationCard(
 
 /* ---- Motion / Anchor helpers (no-jump expand) ---- */
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(Boolean(mq.matches));
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
-
 function useStableExpandAnchoring() {
-  const pendingRef = React.useRef<{
-    anchorId: string;
-    anchorTop: number;
-  } | null>(null);
+  const pendingRef = React.useRef<{ anchorId: string; anchorTop: number } | null>(null);
 
   const capture = React.useCallback((anchorId: string) => {
     if (typeof window === "undefined") return;
@@ -470,17 +434,14 @@ function normalizeBasePath(p: string): string {
   return raw.endsWith("/") ? raw.slice(0, -1) : raw;
 }
 
-type SafeMediaProps = {
-  mp4Src?: string;
+type SafeImageProps = {
   jpgCandidates: string[];
   alt: string;
   dark: boolean;
   className?: string;
 };
 
-function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaProps) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [videoFailed, setVideoFailed] = React.useState(false);
+function SafeImage({ jpgCandidates, alt, dark, className }: SafeImageProps) {
   const [imgIdx, setImgIdx] = React.useState(0);
 
   const candidates = React.useMemo(() => {
@@ -492,13 +453,13 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
     return out;
   }, [jpgCandidates]);
 
+  // ✅ Reset to first candidate when the candidates list changes (hooks-lint safe)
+  const candidatesKey = React.useMemo(() => candidates.join("|"), [candidates]);
+  React.useEffect(() => {
+    setImgIdx(0);
+  }, [candidatesKey]);
+
   const currentImg = candidates[imgIdx] ?? "";
-
-  const showVideo = Boolean(mp4Src && !reducedMotion && !videoFailed);
-
-  const onVideoTrouble = React.useCallback(() => {
-    setVideoFailed(true);
-  }, []);
 
   return (
     <div
@@ -506,22 +467,7 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
         dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
       } ${className ?? ""}`}
     >
-      {showVideo ? (
-        <video
-          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={currentImg || undefined}
-          onError={onVideoTrouble}
-          onStalled={onVideoTrouble}
-          onAbort={onVideoTrouble}
-        >
-          <source src={mp4Src} type="video/mp4" />
-        </video>
-      ) : currentImg ? (
+      {currentImg ? (
         <img
           src={currentImg}
           alt={alt}
@@ -562,20 +508,15 @@ function EducationCardMediaBreak({
   const slot = clamp1to4(slotIdx + 1);
   const slotJpg = `${base}/${slot}.jpg`;
 
-  const poster = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
-  const mp4Src = (area.headerMedia?.mp4 ?? "").trim() || `${base}/6.mp4`;
+  const headerJpg = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
 
-  const imgCandidates = [
-    (overrideSrc ?? "").trim(),
-    slotJpg,
-    poster,
-  ];
-
-  const alt = (overrideAlt ?? "").trim() || "";
+  const imgCandidates = [(overrideSrc ?? "").trim(), slotJpg, headerJpg];
+  const altText =
+    (overrideAlt ?? "").trim() || (area.headerMedia?.alt ?? "").trim() || "Education visual";
 
   return (
-    <div className="mt-4" style={{ overflowAnchor: "none" }}>
-      <SafeMedia mp4Src={mp4Src} jpgCandidates={imgCandidates} alt={alt} dark={dark} />
+    <div className="mt-3" style={{ overflowAnchor: "none" }}>
+      <SafeImage jpgCandidates={imgCandidates} alt={altText} dark={dark} />
     </div>
   );
 }
@@ -586,14 +527,8 @@ function actionIdForTiny(topicId: string) {
   return `action.education.tiny.${topicId}`;
 }
 
-function actionIdForOpp(
-  topicId: string,
-  bucket: string,
-  item: ExploreOpportunity
-) {
-  const seed = `${topicId}|${bucket}|${item.name}|${item.provider ?? ""}|${
-    item.location ?? ""
-  }|${item.url ?? ""}`;
+function actionIdForOpp(topicId: string, bucket: string, item: ExploreOpportunity) {
+  const seed = `${topicId}|${bucket}|${item.name}|${item.provider ?? ""}|${item.location ?? ""}|${item.url ?? ""}`;
   return `action.education.opp.${hashString(seed)}`;
 }
 
@@ -647,20 +582,13 @@ function OppItem({
         {sub ? <div className={`mt-0.5 text-xs ${muted}`}>{sub}</div> : null}
         {item.note ? <div className={`mt-1 text-sm ${muted}`}>{item.note}</div> : null}
         {item.meta ? (
-          <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
-            {item.meta}
-          </div>
+          <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>{item.meta}</div>
         ) : null}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {item.url && item.url.trim().length ? (
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
-            className={`${pillBase} ${pillNeutral}`}
-          >
+          <a href={item.url} target="_blank" rel="noreferrer" className={`${pillBase} ${pillNeutral}`}>
             <ExternalLink className="h-4 w-4" />
             Open
           </a>
@@ -717,11 +645,7 @@ function OpportunitiesBlock({
 
   return (
     <div className="mt-4 lg:mt-5" style={{ overflowAnchor: "none" }}>
-      <div
-        className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-          dark ? "text-slate-300/60" : "text-slate-500"
-        }`}
-      >
+      <div className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${dark ? "text-slate-300/60" : "text-slate-500"}`}>
         Real doors to walk through
       </div>
       <div className={`mt-1 text-xs ${muted}`}>
@@ -734,9 +658,7 @@ function OpportunitiesBlock({
             <div className="flex items-center gap-2">
               <span
                 className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                  dark
-                    ? "border-white/10 bg-white/5 text-white/75"
-                    : "border-slate-200 bg-white text-slate-800"
+                  dark ? "border-white/10 bg-white/5 text-white/75" : "border-slate-200 bg-white text-slate-800"
                 }`}
               >
                 <span aria-hidden>{b.emoji}</span>
@@ -794,19 +716,29 @@ function OpportunitiesBlock({
 
 /* ---- Renderer ---- */
 
-export default function EducationRenderer({ chip, dark }: ExploreRendererProps) {
+type EducationRendererExtraProps = {
+  onAnyCardExpandedChange?: (expanded: boolean) => void;
+  /**
+   * Incrementing signal from parent to force-collapse all cards.
+   * (Used when lane header expands so cards don’t remain open underneath.)
+   */
+  collapseAllNonce?: number;
+};
+
+export default function EducationRenderer({
+  chip,
+  dark,
+  onAnyCardExpandedChange,
+  collapseAllNonce,
+}: ExploreRendererProps & EducationRendererExtraProps) {
   const area = React.useMemo(() => asEducationArea(chip.area), [chip.area]);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
-    null
-  );
+  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>({});
+  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
@@ -819,6 +751,9 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     return () => unsub();
   }, []);
 
+  // ✅ feedback UI re-render bump (since selected state is in localStorage)
+  const [, bumpFeedback] = React.useState(0);
+
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
   const runId = React.useMemo(() => {
@@ -829,6 +764,33 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
   React.useEffect(() => {
     restore();
   }, [expandedId, restore]);
+
+  // NEW: notify parent (ExplorePage) so lane header can auto-collapse image.
+  const anyExpanded = Boolean(expandedId);
+  React.useEffect(() => {
+    onAnyCardExpandedChange?.(anyExpanded);
+  }, [anyExpanded, onAnyCardExpandedChange]);
+
+  // NEW: parent can force-collapse all open cards (no-jump) via an incrementing nonce.
+  const lastCollapseNonceRef = React.useRef<number | undefined>(undefined);
+  React.useEffect(() => {
+    if (collapseAllNonce == null) return;
+
+    const prev = lastCollapseNonceRef.current;
+    lastCollapseNonceRef.current = collapseAllNonce;
+
+    // Ignore first mount / no change
+    if (prev === undefined || prev === collapseAllNonce) return;
+
+    if (!expandedId) return;
+
+    // Capture current expanded card anchor so collapsing does not jump upward.
+    const anchorId = `edu-card-anchor-${expandedId}`;
+    capture(anchorId);
+
+    setExpandedId(null);
+    // Keep steps state as-is; it will re-open with the same preference per card.
+  }, [collapseAllNonce, expandedId, capture]);
 
   function toggleExpanded(id: string) {
     const anchorId = `edu-card-anchor-${id}`;
@@ -860,21 +822,24 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     }
   }
 
-  function setSelectedFor(
-    recId: string,
-    payload: { response: FeedbackResponse; comment: string | null }
-  ) {
+  function setSelectedFor(recId: string, payload: { response: FeedbackResponse; comment: string | null }) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(`explore.edu.feedback.${recId}`, JSON.stringify(payload));
-    } catch {}
+      bumpFeedback((v) => v + 1);
+    } catch {
+      // ignore
+    }
   }
 
   function clearSelectedFor(recId: string) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.removeItem(`explore.edu.feedback.${recId}`);
-    } catch {}
+      bumpFeedback((v) => v + 1);
+    } catch {
+      // ignore
+    }
   }
 
   function openFeedback(rec: RecommendationItem, response: FeedbackResponse) {
@@ -890,11 +855,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     setPending(null);
   }
 
-  function submitModal(payload: {
-    response: FeedbackResponse;
-    comment: string | null;
-    reasons?: string[];
-  }) {
+  function submitModal(payload: { response: FeedbackResponse; comment: string | null; reasons?: string[] }) {
     if (!pending) return;
 
     setSelectedFor(pending.rec.recId, {
@@ -938,12 +899,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
-  function addTinyTaskAction(
-    topicId: string,
-    recId: string | undefined,
-    title: string,
-    detail: string
-  ) {
+  function addTinyTaskAction(topicId: string, recId: string | undefined, title: string, detail: string) {
     const id = actionIdForTiny(topicId);
     if (hasAction(id)) return;
 
@@ -961,8 +917,6 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
     toastSaved(id);
   }
 
-  const anyExpanded = Boolean(expandedId);
-
   return (
     <section className="space-y-3">
       {ack ? (
@@ -973,9 +927,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
           style={{ overflowAnchor: "none" }}
         >
           <div className="flex items-start gap-3">
-            <CheckCircle2
-              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
-            />
+            <CheckCircle2 className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`} />
             <div className="min-w-0 flex-1">
               <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
@@ -993,11 +945,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                   Recalibrate
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setAck(null)}
-                  className={`${pillBase} ${pillNeutral}`}
-                >
+                <button type="button" onClick={() => setAck(null)} className={`${pillBase} ${pillNeutral}`}>
                   Dismiss
                 </button>
               </div>
@@ -1036,7 +984,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
             const n = slotIdx + 1;
 
             const siblingDim =
-              anyExpanded && !expanded ? "opacity-70 saturate-50" : "opacity-100 saturate-100";
+              anyExpanded && !expanded ? "opacity-[0.88] saturate-[0.92]" : "opacity-100 saturate-100";
 
             const anchorId = `edu-card-anchor-${c.id}`;
 
@@ -1049,10 +997,12 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                 style={{ overflowAnchor: "none" }}
               >
                 <div id={anchorId} className="h-0 w-0" aria-hidden />
+
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
                     expanded ? "opacity-45 lg:opacity-35" : "opacity-85 lg:opacity-65"
                   }`}
+                  aria-hidden
                 />
                 <div
                   aria-hidden
@@ -1063,13 +1013,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
 
                 <div
                   className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                    dark
-                      ? expanded
-                        ? "bg-slate-950/25"
-                        : "bg-slate-950/22"
-                      : expanded
-                      ? "bg-white/70"
-                      : "bg-white/65"
+                    dark ? (expanded ? "bg-slate-950/25" : "bg-slate-950/22") : expanded ? "bg-white/70" : "bg-white/65"
                   }`}
                   style={{ overflowAnchor: "none" }}
                 >
@@ -1084,9 +1028,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark
-                                ? "border-white/10 bg-white/5 text-white/80"
-                                : "border-slate-200 bg-white text-slate-800"
+                              dark ? "border-white/10 bg-white/5 text-white/80" : "border-slate-200 bg-white text-slate-800"
                             }`}
                             aria-hidden
                           >
@@ -1100,25 +1042,27 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
 
                         {!expanded && (teaserOne[0] ?? "").trim().length ? (
                           <div className="mt-2">
-                            <p
-                              className={`text-sm lg:text-[0.95rem] ${
-                                dark ? "text-slate-100/85" : "text-slate-700"
-                              } line-clamp-2`}
-                            >
+                            <p className={`text-sm lg:text-[0.95rem] ${dark ? "text-slate-100/85" : "text-slate-700"} line-clamp-2`}>
                               {teaserOne[0]}
                             </p>
-                            <div
-                              className={`mt-2 text-xs font-semibold ${
-                                dark ? "text-white/55" : "text-slate-600"
-                              }`}
-                            >
+                            <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
                               Tap to expand
                             </div>
                           </div>
                         ) : null}
 
+                        {expanded ? (
+                          <EducationCardMediaBreak
+                            dark={dark}
+                            slotIdx={slotIdx}
+                            area={area}
+                            overrideSrc={c.media?.src}
+                            overrideAlt={c.media?.alt}
+                          />
+                        ) : null}
+
                         {expanded && spoken.length ? (
-                          <div className="mt-2 space-y-2">
+                          <div className="mt-3 space-y-2">
                             {spoken.map((p, i) => (
                               <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                                 {p}
@@ -1136,26 +1080,14 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                       >
                         {!expanded ? (
                           <span className="relative h-full w-full">
-                            <span
-                              className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                dark ? "opacity-55" : "opacity-50"
-                              }`}
-                            />
+                            <span className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${dark ? "opacity-55" : "opacity-50"}`} />
                             <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
-                            <span
-                              className={`relative flex h-full w-full items-center justify-center ${
-                                dark ? "text-white" : "text-slate-900"
-                              }`}
-                            >
+                            <span className={`relative flex h-full w-full items-center justify-center ${dark ? "text-white" : "text-slate-900"}`}>
                               <ChevronDown className="h-4 w-4" />
                             </span>
                           </span>
                         ) : (
-                          <span
-                            className={`flex h-full w-full items-center justify-center ${
-                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
-                            }`}
-                          >
+                          <span className={`flex h-full w-full items-center justify-center ${dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"}`}>
                             <ChevronUp className="h-4 w-4" />
                           </span>
                         )}
@@ -1165,14 +1097,12 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
 
                   {expanded ? (
                     <div className="mt-4 lg:mt-5" style={{ overflowAnchor: "none" }}>
-                      {/* 2) Go deeper CTA */}
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {/* 4) Go deeper CTA */}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         <Link
                           href={deepDiveHref}
                           className={`${pillBase} ${
-                            dark
-                              ? "border-white/10 bg-white/5 text-white/85 hover:bg-white/10"
-                              : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                            dark ? "border-white/10 bg-white/5 text-white/85 hover:bg-white/10" : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
                           }`}
                         >
                           Go deeper
@@ -1180,16 +1110,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         </Link>
                       </div>
 
-                      {/* 3) Media */}
-                      <EducationCardMediaBreak
-                        dark={dark}
-                        slotIdx={slotIdx}
-                        area={area}
-                        overrideSrc={c.media?.src}
-                        overrideAlt={c.media?.alt}
-                      />
-
-                      {/* Extra content (doors) after media */}
+                      {/* (Optional) Opportunities block */}
                       <OpportunitiesBlock
                         opp={c.opportunities}
                         dark={dark}
@@ -1197,33 +1118,19 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         onSaved={(aid) => toastSaved(aid)}
                       />
 
-                      {/* 4) Tiny task block */}
+                      {/* 5) Tiny task block */}
                       <div className="mt-5 lg:mt-6" style={{ overflowAnchor: "none" }}>
-                        <div
-                          className={`rounded-2xl border p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-                          }`}
-                        >
+                        <div className={`rounded-2xl border p-4 ${dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}>
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div
-                                className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                  dark ? "text-slate-300/60" : "text-slate-500"
-                                }`}
-                              >
+                              <div className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${dark ? "text-slate-300/60" : "text-slate-500"}`}>
                                 Tiny task
                               </div>
                               <div className={`mt-1 text-sm font-semibold ${titleC}`}>{tiny.title}</div>
-                              <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
-                                ETA: {tiny.eta}
-                              </div>
+                              <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>ETA: {tiny.eta}</div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => toggleSteps(c.id)}
-                              className={`${pillBase} ${pillNeutral}`}
-                            >
+                            <button type="button" onClick={() => toggleSteps(c.id)} className={`${pillBase} ${pillNeutral}`}>
                               {showSteps ? (
                                 <>
                                   <ChevronUp className="h-4 w-4" />
@@ -1245,9 +1152,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                                   <li key={idx} className={`flex gap-2 text-sm ${muted}`}>
                                     <span
                                       className={`mt-[2px] inline-flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[0.75rem] font-semibold ${
-                                        dark
-                                          ? "border-white/10 bg-white/5 text-white/75"
-                                          : "border-slate-200 bg-white text-slate-800"
+                                        dark ? "border-white/10 bg-white/5 text-white/75" : "border-slate-200 bg-white text-slate-800"
                                       }`}
                                       aria-hidden
                                     >
@@ -1259,13 +1164,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                               </ol>
 
                               {tiny.tip ? (
-                                <div
-                                  className={`mt-2 rounded-xl border px-3 py-2 text-xs ${
-                                    dark
-                                      ? "border-white/10 bg-slate-950/35 text-white/70"
-                                      : "border-slate-200 bg-white text-slate-700"
-                                  }`}
-                                >
+                                <div className={`mt-2 rounded-xl border px-3 py-2 text-xs ${dark ? "border-white/10 bg-slate-950/35 text-white/70" : "border-slate-200 bg-white text-slate-700"}`}>
                                   {tiny.tip}
                                 </div>
                               ) : null}
@@ -1275,9 +1174,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                           <div className="mt-4 flex flex-wrap items-center gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                addTinyTaskAction(c.id, rec.recId, `Tiny task: ${c.title}`, tiny.title)
-                              }
+                              onClick={() => addTinyTaskAction(c.id, rec.recId, `Tiny task: ${c.title}`, tiny.title)}
                               disabled={tinySaved}
                               className={`${pillBase} ${
                                 tinySaved
@@ -1301,13 +1198,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                             </button>
 
                             {tinyJustSaved ? (
-                              <span
-                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
-                                  dark
-                                    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50"
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
-                                }`}
-                              >
+                              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${dark ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-50" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
                                 <CheckCircle2 className="h-4 w-4" />
                                 Saved
                               </span>
@@ -1316,63 +1207,31 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
                         </div>
                       </div>
 
-                      {/* 5) Quick check */}
+                      {/* 6) Quick check */}
                       <div className="mt-5 lg:mt-6" style={{ overflowAnchor: "none" }}>
-                        <div
-                          className={`rounded-2xl border p-4 ${
-                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-                          }`}
-                        >
-                          <div
-                            className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                              dark ? "text-slate-300/60" : "text-slate-500"
-                            }`}
-                          >
+                        <div className={`rounded-2xl border p-4 ${dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}>
+                          <div className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${dark ? "text-slate-300/60" : "text-slate-500"}`}>
                             Quick check on {c.title}
                           </div>
-                          <div className={`mt-1 text-sm ${muted}`}>
-                            Does this feel like a good direction to test next?
-                          </div>
+                          <div className={`mt-1 text-sm ${muted}`}>Does this feel like a good direction to test next?</div>
 
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openFeedback(rec, "agree")}
-                              className={`${pillBase} ${
-                                selected === "agree" ? pillSelected("agree") : pillNeutral
-                              }`}
-                            >
+                            <button type="button" onClick={() => openFeedback(rec, "agree")} className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}>
                               👍 Yes
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => openFeedback(rec, "mixed")}
-                              className={`${pillBase} ${
-                                selected === "mixed" ? pillSelected("mixed") : pillNeutral
-                              }`}
-                            >
+                            <button type="button" onClick={() => openFeedback(rec, "mixed")} className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}>
                               🤔 Maybe
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => openFeedback(rec, "disagree")}
-                              className={`${pillBase} ${
-                                selected === "disagree" ? pillSelected("disagree") : pillNeutral
-                              }`}
-                            >
+                            <button type="button" onClick={() => openFeedback(rec, "disagree")} className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}>
                               👎 Not me
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* 6) Collapse button at bottom */}
+                      {/* 7) Collapse */}
                       <div className="mt-5 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleExpanded(c.id)}
-                          className={`${pillBase} ${pillNeutral}`}
-                        >
+                        <button type="button" onClick={() => toggleExpanded(c.id)} className={`${pillBase} ${pillNeutral}`}>
                           <ChevronUp className="h-4 w-4" />
                           Collapse
                         </button>
@@ -1386,9 +1245,7 @@ export default function EducationRenderer({ chip, dark }: ExploreRendererProps) 
         </div>
       ) : (
         <div
-          className={`rounded-2xl border p-5 ${
-            dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
-          }`}
+          className={`rounded-2xl border p-5 ${dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"}`}
           style={{ overflowAnchor: "none" }}
         >
           <div className={`text-sm font-semibold ${titleC}`}>No education items yet</div>

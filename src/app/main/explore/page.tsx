@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -106,8 +106,7 @@ function headerCopyForKey(
 /* ========= Explore tab config ========= */
 
 type LaneMedia = {
-  mp4?: string;
-  poster?: string;
+  jpg?: string;
 };
 
 type TabMeta = {
@@ -115,7 +114,7 @@ type TabMeta = {
   badgeIcon: string;
   badgeHalo: string;
   badgeText: string;
-  media?: LaneMedia; // optional lane-level emotional break (MP4 first, JPG fallback)
+  media?: LaneMedia; // optional lane-level emotional break (JPG only)
 };
 
 function laneMediaForKey(key: ExploreKey): LaneMedia | undefined {
@@ -126,8 +125,7 @@ function laneMediaForKey(key: ExploreKey): LaneMedia | undefined {
     case "community":
     case "hobbies":
       return {
-        mp4: `/images/${key}/6.mp4`,
-        poster: `/images/${key}/5.jpg`,
+        jpg: `/images/${key}/5.jpg`,
       };
     default:
       return undefined;
@@ -227,22 +225,7 @@ function preferredStructuredChip(section: ExploreSection): ExploreChip | null {
   return null;
 }
 
-/* ========= lane-level emotional media break (MP4 first, JPG fallback) ========= */
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(Boolean(mq.matches));
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
+/* ========= lane-level emotional media break (JPG only) ========= */
 
 function LaneMediaBreak({
   media,
@@ -253,22 +236,16 @@ function LaneMediaBreak({
   dark: boolean;
   accentHalo: string;
 }) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [videoFailed, setVideoFailed] = React.useState(false);
   const [imageFailed, setImageFailed] = React.useState(false);
 
   React.useEffect(() => {
-    setVideoFailed(false);
     setImageFailed(false);
-  }, [media?.mp4, media?.poster]);
+  }, [media?.jpg]);
 
-  if (!media?.mp4 && !media?.poster) return null;
-
-  const wantsVideo = Boolean(media?.mp4 && !reducedMotion && !videoFailed);
-  const poster = media?.poster;
+  if (!media?.jpg) return null;
 
   return (
-    <div className="mt-3">
+    <div className="mt-3" style={{ overflowAnchor: "none" }}>
       <div
         className={`relative overflow-hidden rounded-2xl border ${
           dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
@@ -287,23 +264,10 @@ function LaneMediaBreak({
           }`}
         />
 
-        {wantsVideo ? (
-          <video
-            className="relative h-[140px] w-full object-cover sm:h-[160px] lg:h-[180px]"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster={poster}
-            onError={() => setVideoFailed(true)}
-          >
-            <source src={media!.mp4!} type="video/mp4" />
-          </video>
-        ) : poster && !imageFailed ? (
+        {!imageFailed ? (
           <div className="relative h-[140px] w-full sm:h-[160px] lg:h-[180px]">
             <Image
-              src={poster}
+              src={media.jpg}
               alt=""
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
@@ -435,11 +399,89 @@ export default function ExplorePage() {
   );
 
   /**
-   * Detach structured lanes so they match the Education structure:
-   * - The lane shell holds only header + media
+   * Detach structured lanes:
+   * - The lane shell holds header only
    * - The 4 cards render OUTSIDE the shell (full-width, clearly separate)
    */
   const detachContentFromShell = renderStructured;
+
+  /* ========= Collapsible lane header media ========= */
+  const [headerExpandedByKey, setHeaderExpandedByKey] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [collapseAllNonceByKey, setCollapseAllNonceByKey] = React.useState<
+    Record<string, number>
+  >({});
+
+  const activeLaneKeyStr = String(activeSection.key);
+  const headerExpanded = Boolean(headerExpandedByKey[activeLaneKeyStr]);
+
+  // Track if any card is expanded (ref-only; avoids render loops)
+  const anyCardExpandedRef = React.useRef<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    // DEFAULT: header expanded (image shown) per lane unless user already touched it
+    setHeaderExpandedByKey((prev) => {
+      const k = String(activeSection.key);
+      if (Object.prototype.hasOwnProperty.call(prev, k)) return prev;
+      return { ...prev, [k]: true };
+    });
+
+    // init nonce holder
+    setCollapseAllNonceByKey((prev) => {
+      const k = String(activeSection.key);
+      if (Object.prototype.hasOwnProperty.call(prev, k)) return prev;
+      return { ...prev, [k]: 0 };
+    });
+
+    // init expanded tracker
+    const k = String(activeSection.key);
+    if (anyCardExpandedRef.current[k] === undefined) {
+      anyCardExpandedRef.current[k] = false;
+    }
+  }, [activeSection.key]);
+
+  function requestCollapseAllCards() {
+    setCollapseAllNonceByKey((prev) => ({
+      ...prev,
+      [activeLaneKeyStr]: (prev[activeLaneKeyStr] ?? 0) + 1,
+    }));
+  }
+
+  // Called by structured renderer(s) when any card expands/collapses.
+  const onAnyCardExpandedChange = React.useCallback(
+    (expanded: boolean) => {
+      const k = activeLaneKeyStr;
+      anyCardExpandedRef.current[k] = expanded;
+
+      // Auto-collapse header image when a card opens (keep header text).
+      if (expanded && headerExpandedByKey[k]) {
+        setHeaderExpandedByKey((prev) => {
+          if (!prev[k]) return prev;
+          return { ...prev, [k]: false };
+        });
+      }
+    },
+    [activeLaneKeyStr, headerExpandedByKey]
+  );
+
+  function toggleHeaderExpanded() {
+    const k = activeLaneKeyStr;
+    const currentlyExpanded = Boolean(headerExpandedByKey[k]);
+    const next = !currentlyExpanded;
+
+    // If opening header media while a card is open, collapse cards AND open header in same tap.
+    if (next && anyCardExpandedRef.current[k]) {
+      requestCollapseAllCards();
+    }
+
+    setHeaderExpandedByKey((prev) => ({
+      ...prev,
+      [k]: next,
+    }));
+  }
+
+  const collapseAllNonceForLane = collapseAllNonceByKey[activeLaneKeyStr] ?? 0;
 
   return (
     <AppChrome
@@ -637,65 +679,161 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Lane shell (header-only when detached lanes) */}
+        {/* Lane shell (header + optional media) */}
         <div
           className={`mt-4 rounded-3xl border p-4 shadow-sm ${
             dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
           }`}
+          style={{ overflowAnchor: "none" }}
         >
-          {/* Lane header */}
-          <div className="mb-3">
-            <div
-              className={`text-[0.7rem] font-semibold uppercase tracking-[0.28em] ${
-                dark ? "text-white/80" : "text-slate-700"
-              }`}
-            >
-              {laneKicker}
-            </div>
+          {/* Lane header row + toggle */}
+          <button
+            type="button"
+            onClick={toggleHeaderExpanded}
+            className="w-full text-left"
+            aria-expanded={headerExpanded}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div
+                  className={`text-[0.7rem] font-semibold uppercase tracking-[0.28em] ${
+                    dark ? "text-white/80" : "text-slate-700"
+                  }`}
+                >
+                  {laneKicker}
+                </div>
 
-            <div
-              className={`mt-1 text-base font-semibold ${
-                dark ? "text-white" : "text-slate-900"
-              }`}
-            >
-              {headline}
-            </div>
+                <div
+                  className={`mt-1 text-base font-semibold ${
+                    dark ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {headline}
+                </div>
 
-            <div
-              className={`mt-1 text-sm ${
-                dark ? "text-white/70" : "text-slate-600"
-              }`}
-            >
-              {supportLine}
-            </div>
+                <div
+                  className={`mt-1 text-sm ${
+                    dark ? "text-white/70" : "text-slate-600"
+                  }`}
+                >
+                  {supportLine}
+                </div>
 
-            <div className="mt-3 h-[2px] w-28 overflow-hidden rounded-full">
-              <div
-                className={`h-full w-full ${laneAccent} ${
-                  dark ? "opacity-65" : "opacity-45"
+                {!headerExpanded ? (
+                  <div
+                    className={`mt-2 text-xs font-semibold ${
+                      dark ? "text-white/55" : "text-slate-600"
+                    }`}
+                  >
+                    Tap to expand
+                  </div>
+                ) : null}
+
+                <div className="mt-3 h-[2px] w-28 overflow-hidden rounded-full">
+                  <div
+                    className={`h-full w-full ${laneAccent} ${
+                      dark ? "opacity-65" : "opacity-45"
+                    }`}
+                  />
+                </div>
+
+                {!headerExpanded ? (
+                  <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full">
+                    <div
+                      className={`h-full w-full ${laneAccent} ${
+                        dark ? "opacity-30" : "opacity-22"
+                      }`}
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              <span
+                className={`mt-1 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border ${
+                  dark ? "border-white/10" : "border-slate-200"
                 }`}
-              />
+                aria-hidden
+              >
+                {headerExpanded ? (
+                  <span
+                    className={`flex h-full w-full items-center justify-center ${
+                      dark
+                        ? "bg-white/5 text-white/80"
+                        : "bg-white text-slate-800"
+                    }`}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </span>
+                ) : (
+                  <span className="relative h-full w-full">
+                    <span
+                      className={`absolute inset-0 ${laneAccent} ${
+                        dark ? "opacity-55" : "opacity-45"
+                      }`}
+                    />
+                    <span
+                      className={`absolute inset-0 ${
+                        dark ? "bg-slate-950/25" : "bg-white/20"
+                      }`}
+                    />
+                    <span
+                      className={`relative flex h-full w-full items-center justify-center ${
+                        dark ? "text-white" : "text-slate-900"
+                      }`}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </span>
+                  </span>
+                )}
+              </span>
             </div>
+          </button>
 
-            {/* lane-level emotional media break (standardized: /images/<lane>/6.mp4 -> /images/<lane>/5.jpg) */}
-            <LaneMediaBreak
-              media={laneMeta.media}
-              dark={dark}
-              accentHalo={laneMeta.badgeHalo}
-            />
-          </div>
+          {/* Collapsible content (header media) */}
+          {headerExpanded ? (
+            <div className="mt-3" style={{ overflowAnchor: "none" }}>
+              <LaneMediaBreak
+                media={laneMeta.media}
+                dark={dark}
+                accentHalo={laneMeta.badgeHalo}
+              />
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleHeaderExpanded}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition active:scale-95 ${
+                    dark
+                      ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                      : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                  }`}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                  Collapse
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* Lane content (keep inside shell only when NOT detached) */}
           {!detachContentFromShell ? (
             renderStructured ? (
               structuredChip ? (
                 (() => {
-                  const Renderer = RENDERERS[structuredChip.type];
+                  const Renderer =
+                    RENDERERS[structuredChip.type] as React.ComponentType<{
+                      chip: ExploreChip;
+                      dark: boolean;
+                      onAnyCardExpandedChange?: (expanded: boolean) => void;
+                      collapseAllNonce?: number;
+                    }>;
                   return (
                     <Renderer
                       key={structuredChip.id}
                       chip={structuredChip}
                       dark={dark}
+                      onAnyCardExpandedChange={onAnyCardExpandedChange}
+                      collapseAllNonce={collapseAllNonceForLane}
                     />
                   );
                 })()
@@ -721,18 +859,26 @@ export default function ExplorePage() {
           ) : null}
         </div>
 
-        {/* Detached lanes: render content OUTSIDE the shell (Education structure) */}
+        {/* Detached lanes: render content OUTSIDE the shell */}
         {detachContentFromShell ? (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4" style={{ overflowAnchor: "none" }}>
             {renderStructured ? (
               structuredChip ? (
                 (() => {
-                  const Renderer = RENDERERS[structuredChip.type];
+                  const Renderer =
+                    RENDERERS[structuredChip.type] as React.ComponentType<{
+                      chip: ExploreChip;
+                      dark: boolean;
+                      onAnyCardExpandedChange?: (expanded: boolean) => void;
+                      collapseAllNonce?: number;
+                    }>;
                   return (
                     <Renderer
                       key={structuredChip.id}
                       chip={structuredChip}
                       dark={dark}
+                      onAnyCardExpandedChange={onAnyCardExpandedChange}
+                      collapseAllNonce={collapseAllNonceForLane}
                     />
                   );
                 })()

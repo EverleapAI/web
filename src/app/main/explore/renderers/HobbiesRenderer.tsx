@@ -1,6 +1,8 @@
 // src/app/main/explore/renderers/HobbiesRenderer.tsx
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
@@ -9,7 +11,11 @@ import type { ExploreRendererProps } from "../content/types";
 import type { FeedbackResponse, RecommendationItem } from "../content/contracts";
 
 import FeedbackModal from "../components/FeedbackModal";
-import { addAction, hasAction, subscribeActionsStore } from "../state/actionsStore";
+import {
+  addAction,
+  hasAction,
+  subscribeActionsStore,
+} from "../state/actionsStore";
 
 /* =============================================================================
    Explore › HobbiesRenderer (Careers structure parity)
@@ -22,16 +28,17 @@ import { addAction, hasAction, subscribeActionsStore } from "../state/actionsSto
    - Expanded order:
        1) Expanded copy
        2) Go deeper CTA
-       3) Media (VisualBreak / card image)
+       3) Media (card image)
        4) Tiny task block
        5) Quick check
        6) Collapse button at bottom
    - Dim sibling cards when one is expanded (opacity + saturate)
    - Media standardization:
-       header media (in content): /images/hobbies/6.mp4 fallback /images/hobbies/5.jpg
+       header media (handled in page.tsx): /images/hobbies/5.jpg
        card images: /images/hobbies/1.jpg..4.jpg by slot order
        paths live in TS content when provided; renderer supplies safe defaults
    - Safe media behavior: never show broken icons; tolerate network issues
+   - NO MP4 anywhere
 ============================================================================= */
 
 type HobbyCard = {
@@ -63,7 +70,7 @@ type HobbiesArea = {
    * If absent, renderer falls back safely to /images/hobbies defaults.
    */
   mediaBasePath?: string;
-  headerMedia?: { mp4?: string; jpg?: string; alt?: string };
+  headerMedia?: { jpg?: string; alt?: string };
 };
 
 function asHobbiesArea(input: unknown): HobbiesArea {
@@ -83,14 +90,13 @@ function asHobbiesArea(input: unknown): HobbiesArea {
 
   const toHeaderMedia = (
     v: unknown
-  ): { mp4?: string; jpg?: string; alt?: string } | undefined => {
+  ): { jpg?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
-    const mp4 = typeof it?.mp4 === "string" ? it.mp4 : undefined;
     const jpg = typeof it?.jpg === "string" ? it.jpg : undefined;
     const alt = typeof it?.alt === "string" ? it.alt : undefined;
-    if (!mp4 && !jpg && !alt) return undefined;
-    return { mp4, jpg, alt };
+    if (!jpg && !alt) return undefined;
+    return { jpg, alt };
   };
 
   const toCards = (v: unknown): HobbyCard[] | undefined => {
@@ -378,22 +384,7 @@ function toRecFromHobbyCard(
   };
 }
 
-/* ---- Motion / Anchor helpers (no-jump expand) ---- */
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(Boolean(mq.matches));
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
+/* ---- Anchor helpers (no-jump expand) ---- */
 
 function useStableExpandAnchoring() {
   const pendingRef = React.useRef<{
@@ -424,7 +415,11 @@ function useStableExpandAnchoring() {
       const rect = el.getBoundingClientRect();
       const delta = rect.top - pending.anchorTop;
       if (Math.abs(delta) > 0.5) {
-        window.scrollTo({ top: window.scrollY + delta, left: 0, behavior: "auto" });
+        window.scrollTo({
+          top: window.scrollY + delta,
+          left: 0,
+          behavior: "auto",
+        });
       }
     };
 
@@ -437,7 +432,7 @@ function useStableExpandAnchoring() {
   return { capture, restore };
 }
 
-/* ---- Media helpers (Safe media, standardized paths) ---- */
+/* ---- Media helpers (Safe images, standardized paths) ---- */
 
 function clamp1to4(n: number): number {
   return Math.max(1, Math.min(4, n));
@@ -449,17 +444,14 @@ function normalizeBasePath(p: string): string {
   return raw.endsWith("/") ? raw.slice(0, -1) : raw;
 }
 
-type SafeMediaProps = {
-  mp4Src?: string;
+type SafeImageProps = {
   jpgCandidates: string[];
   alt: string;
   dark: boolean;
   className?: string;
 };
 
-function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaProps) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [videoFailed, setVideoFailed] = React.useState(false);
+function SafeImage({ jpgCandidates, alt, dark, className }: SafeImageProps) {
   const [imgIdx, setImgIdx] = React.useState(0);
 
   const candidates = React.useMemo(() => {
@@ -471,13 +463,14 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
     return out;
   }, [jpgCandidates]);
 
+  // ✅ Fix hooks lint: extract complex dep to a statically-checkable variable
+  const candidatesKey = React.useMemo(() => candidates.join("|"), [candidates]);
+
+  React.useEffect(() => {
+    setImgIdx(0);
+  }, [candidatesKey]);
+
   const currentImg = candidates[imgIdx] ?? "";
-
-  const showVideo = Boolean(mp4Src && !reducedMotion && !videoFailed);
-
-  const onVideoTrouble = React.useCallback(() => {
-    setVideoFailed(true);
-  }, []);
 
   return (
     <div
@@ -485,24 +478,8 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
         dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
       } ${className ?? ""}`}
     >
-      {showVideo ? (
-        <video
-          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={currentImg || undefined}
-          onError={onVideoTrouble}
-          onStalled={onVideoTrouble}
-          onAbort={onVideoTrouble}
-        >
-          <source src={mp4Src} type="video/mp4" />
-        </video>
-      ) : currentImg ? (
+      {currentImg ? (
         <img
-          // eslint-disable-next-line @next/next/no-img-element
           src={currentImg}
           alt={alt}
           className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
@@ -542,15 +519,22 @@ function HobbyCardMediaBreak({
   const slot = clamp1to4(slotIdx + 1);
   const slotJpg = `${base}/${slot}.jpg`;
 
-  const poster = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
-  const mp4Src = (area.headerMedia?.mp4 ?? "").trim() || `${base}/6.mp4`;
+  const headerJpg = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
 
-  const imgCandidates = [(overrideSrc ?? "").trim(), slotJpg, poster];
-  const alt = (overrideAlt ?? "").trim() || "";
+  const imgCandidates = [
+    (overrideSrc ?? "").trim(),
+    slotJpg,
+    headerJpg,
+  ].filter(Boolean);
+
+  const altText =
+    (overrideAlt ?? "").trim() ||
+    (area.headerMedia?.alt ?? "").trim() ||
+    "Hobbies visual";
 
   return (
     <div className="mt-4" style={{ overflowAnchor: "none" }}>
-      <SafeMedia mp4Src={mp4Src} jpgCandidates={imgCandidates} alt={alt} dark={dark} />
+      <SafeImage jpgCandidates={imgCandidates} alt={altText} dark={dark} />
     </div>
   );
 }
@@ -563,19 +547,34 @@ function actionIdForTiny(topicId: string) {
   return `action.hobbies.tiny.${topicId}`;
 }
 
-export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
+/* ---------------------------------------------------------------------------
+   Renderer
+--------------------------------------------------------------------------- */
+
+export default function HobbiesRenderer(props: ExploreRendererProps) {
+  const { chip, dark } = props;
+
+  // Page-level contract (not yet typed in ExploreRendererProps in this repo)
+  const collapseAllNonce = (props as unknown as { collapseAllNonce?: number })
+    .collapseAllNonce;
+  const onAnyCardExpandedChange = (
+    props as unknown as {
+      onAnyCardExpandedChange?: (expanded: boolean) => void;
+    }
+  ).onAnyCardExpandedChange;
+
   const area = React.useMemo(() => asHobbiesArea(chip.area), [chip.area]);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
-    null
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [justSavedActionId, setJustSavedActionId] = React.useState<
+    string | null
+  >(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
@@ -588,6 +587,8 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     return () => unsub();
   }, []);
 
+  const [, bumpFeedback] = React.useState(0);
+
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
   const runId = React.useMemo(() => {
@@ -598,6 +599,17 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   React.useEffect(() => {
     restore();
   }, [expandedId, restore]);
+
+  React.useEffect(() => {
+    if (!collapseAllNonce) return;
+    setExpandedId(null);
+  }, [collapseAllNonce]);
+
+  // ✅ Fix hooks lint by extracting boolean into a stable variable
+  const anyExpanded = Boolean(expandedId);
+  React.useEffect(() => {
+    onAnyCardExpandedChange?.(anyExpanded);
+  }, [anyExpanded, onAnyCardExpandedChange]);
 
   function toggleExpanded(id: string) {
     const anchorId = `hobbies-card-anchor-${id}`;
@@ -619,7 +631,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(`explore.hobbies.feedback.${recId}`);
+      const raw = window.localStorage.getItem(
+        `explore.hobbies.feedback.${recId}`
+      );
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -639,6 +653,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
         `explore.hobbies.feedback.${recId}`,
         JSON.stringify(payload)
       );
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -648,6 +663,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     if (typeof window === "undefined") return;
     try {
       window.localStorage.removeItem(`explore.hobbies.feedback.${recId}`);
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -720,8 +736,6 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
-  const anyExpanded = Boolean(expandedId);
-
   return (
     <section className="space-y-4">
       {ack ? (
@@ -738,7 +752,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
               } mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
+              <div className={`text-sm font-semibold ${titleC}`}>
+                Okay — noted
+              </div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -797,7 +813,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
             const n = slotIdx + 1;
 
             const siblingDim =
-              anyExpanded && !expanded ? "opacity-70 saturate-50" : "opacity-100 saturate-100";
+              anyExpanded && !expanded
+                ? "opacity-[0.88] saturate-[0.92]"
+                : "opacity-100 saturate-100";
 
             const anchorId = `hobbies-card-anchor-${c.id}`;
 
@@ -815,18 +833,14 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
 
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded
-                      ? "opacity-45 lg:opacity-35"
-                      : "opacity-85 lg:opacity-65"
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-75 lg:opacity-55"
                   }`}
                   aria-hidden
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded
-                      ? "w-[3px] opacity-70 lg:opacity-55"
-                      : "w-[4px] opacity-90 lg:opacity-70"
+                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-85 lg:opacity-65"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
@@ -862,7 +876,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                             #{n}
                           </span>
 
-                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
+                          <div
+                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
+                          >
                             <span className="truncate">{c.title}</span>
                           </div>
                         </div>
@@ -870,9 +886,9 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                         {!expanded && (teaserOne[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
-                              className={`text-sm lg:text-[0.95rem] ${
+                              className={`line-clamp-2 text-sm lg:text-[0.95rem] ${
                                 dark ? "text-slate-100/85" : "text-slate-700"
-                              } line-clamp-2`}
+                              }`}
                             >
                               {renderTextWithLinks(teaserOne[0])}
                             </p>
@@ -978,8 +994,14 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                               >
                                 Tiny task
                               </div>
-                              <div className={`mt-1 text-sm font-semibold ${titleC}`}>{tiny.title}</div>
-                              <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                              <div className={`mt-1 text-sm font-semibold ${titleC}`}>
+                                {tiny.title}
+                              </div>
+                              <div
+                                className={`mt-1 text-xs ${
+                                  dark ? "text-white/55" : "text-slate-600"
+                                }`}
+                              >
                                 ETA: {tiny.eta}
                               </div>
                             </div>
@@ -1135,9 +1157,7 @@ export default function HobbiesRenderer({ chip, dark }: ExploreRendererProps) {
                               type="button"
                               onClick={() => openFeedback(rec, "disagree")}
                               className={`${pillBase} ${
-                                selected === "disagree"
-                                  ? pillSelected("disagree")
-                                  : pillNeutral
+                                selected === "disagree" ? pillSelected("disagree") : pillNeutral
                               }`}
                             >
                               👎 Not me

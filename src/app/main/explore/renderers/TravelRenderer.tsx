@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 
 import type { ExploreRendererProps } from "../content/types";
@@ -22,16 +23,17 @@ import { addAction, hasAction, subscribeActionsStore } from "../state/actionsSto
    - Expanded order:
        1) Expanded copy
        2) Go deeper CTA
-       3) Media (VisualBreak / card image)
+       3) Media (card image)
        4) Tiny task block
        5) Quick check
        6) Collapse button at bottom
    - Dim sibling cards when one is expanded (opacity + saturate)
    - Media standardization:
-       header media (in content): /images/travel/6.mp4 fallback /images/travel/5.jpg
+       header media (handled in page.tsx): /images/travel/5.jpg
        card images: /images/travel/1.jpg..4.jpg by slot order
        paths live in TS content when provided; renderer supplies safe defaults
    - Safe media behavior: never show broken icons; tolerate network issues
+   - NO MP4 anywhere
 ============================================================================= */
 
 type TravelCard = {
@@ -63,7 +65,7 @@ type TravelArea = {
    * If absent, renderer falls back safely to /images/travel defaults.
    */
   mediaBasePath?: string;
-  headerMedia?: { mp4?: string; jpg?: string; alt?: string };
+  headerMedia?: { jpg?: string; alt?: string };
 };
 
 function asTravelArea(input: unknown): TravelArea {
@@ -83,14 +85,13 @@ function asTravelArea(input: unknown): TravelArea {
 
   const toHeaderMedia = (
     v: unknown
-  ): { mp4?: string; jpg?: string; alt?: string } | undefined => {
+  ): { jpg?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
-    const mp4 = typeof it?.mp4 === "string" ? it.mp4 : undefined;
     const jpg = typeof it?.jpg === "string" ? it.jpg : undefined;
     const alt = typeof it?.alt === "string" ? it.alt : undefined;
-    if (!mp4 && !jpg && !alt) return undefined;
-    return { mp4, jpg, alt };
+    if (!jpg && !alt) return undefined;
+    return { jpg, alt };
   };
 
   const toCards = (v: unknown): TravelCard[] | undefined => {
@@ -376,22 +377,7 @@ function toRecFromTravelCard(
   };
 }
 
-/* ---- Motion / Anchor helpers (no-jump expand) ---- */
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(Boolean(mq.matches));
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
+/* ---- Anchor helpers (no-jump expand) ---- */
 
 function useStableExpandAnchoring() {
   const pendingRef = React.useRef<{
@@ -422,7 +408,11 @@ function useStableExpandAnchoring() {
       const rect = el.getBoundingClientRect();
       const delta = rect.top - pending.anchorTop;
       if (Math.abs(delta) > 0.5) {
-        window.scrollTo({ top: window.scrollY + delta, left: 0, behavior: "auto" });
+        window.scrollTo({
+          top: window.scrollY + delta,
+          left: 0,
+          behavior: "auto",
+        });
       }
     };
 
@@ -435,7 +425,7 @@ function useStableExpandAnchoring() {
   return { capture, restore };
 }
 
-/* ---- Media helpers (Safe media, standardized paths) ---- */
+/* ---- Media helpers (Safe images, standardized paths) ---- */
 
 function clamp1to4(n: number): number {
   return Math.max(1, Math.min(4, n));
@@ -447,17 +437,14 @@ function normalizeBasePath(p: string): string {
   return raw.endsWith("/") ? raw.slice(0, -1) : raw;
 }
 
-type SafeMediaProps = {
-  mp4Src?: string;
+type SafeImageProps = {
   jpgCandidates: string[];
   alt: string;
   dark: boolean;
   className?: string;
 };
 
-function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaProps) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [videoFailed, setVideoFailed] = React.useState(false);
+function SafeImage({ jpgCandidates, alt, dark, className }: SafeImageProps) {
   const [imgIdx, setImgIdx] = React.useState(0);
 
   const candidates = React.useMemo(() => {
@@ -469,13 +456,13 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
     return out;
   }, [jpgCandidates]);
 
+  const candidatesKey = React.useMemo(() => candidates.join("|"), [candidates]);
+
+  React.useEffect(() => {
+    setImgIdx(0);
+  }, [candidatesKey]);
+
   const currentImg = candidates[imgIdx] ?? "";
-
-  const showVideo = Boolean(mp4Src && !reducedMotion && !videoFailed);
-
-  const onVideoTrouble = React.useCallback(() => {
-    setVideoFailed(true);
-  }, []);
 
   return (
     <div
@@ -483,28 +470,16 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
         dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
       } ${className ?? ""}`}
     >
-      {showVideo ? (
-        <video
-          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={currentImg || undefined}
-          onError={onVideoTrouble}
-          onStalled={onVideoTrouble}
-          onAbort={onVideoTrouble}
-        >
-          <source src={mp4Src} type="video/mp4" />
-        </video>
-      ) : currentImg ? (
-        <img
-          // eslint-disable-next-line @next/next/no-img-element
+      {currentImg ? (
+        <Image
           src={currentImg}
           alt={alt}
+          width={1600}
+          height={600}
           className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
           onError={() => setImgIdx((i) => i + 1)}
+          unoptimized
+          priority={false}
         />
       ) : (
         <div className="relative h-[120px] w-full sm:h-[140px] lg:h-[150px]" />
@@ -540,15 +515,21 @@ function TravelCardMediaBreak({
   const slot = clamp1to4(slotIdx + 1);
   const slotJpg = `${base}/${slot}.jpg`;
 
-  const poster = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
-  const mp4Src = (area.headerMedia?.mp4 ?? "").trim() || `${base}/6.mp4`;
+  const headerJpg = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
 
-  const imgCandidates = [(overrideSrc ?? "").trim(), slotJpg, poster];
-  const alt = (overrideAlt ?? "").trim() || "";
+  const imgCandidates = [
+    (overrideSrc ?? "").trim(),
+    slotJpg,
+    headerJpg,
+  ].filter(Boolean);
+  const alt =
+    (overrideAlt ?? "").trim() ||
+    (area.headerMedia?.alt ?? "").trim() ||
+    "Travel visual";
 
   return (
     <div className="mt-4" style={{ overflowAnchor: "none" }}>
-      <SafeMedia mp4Src={mp4Src} jpgCandidates={imgCandidates} alt={alt} dark={dark} />
+      <SafeImage jpgCandidates={imgCandidates} alt={alt} dark={dark} />
     </div>
   );
 }
@@ -561,16 +542,25 @@ function actionIdForTiny(topicId: string) {
 
 /* ---- Renderer ---- */
 
-export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
+export default function TravelRenderer(props: ExploreRendererProps) {
+  const { chip, dark } = props;
+
+  // Page-level contract (not yet typed in ExploreRendererProps in this repo)
+  const collapseAllNonce = (props as unknown as { collapseAllNonce?: number })
+    .collapseAllNonce;
+  const onAnyCardExpandedChange = (
+    props as unknown as { onAnyCardExpandedChange?: (expanded: boolean) => void }
+  ).onAnyCardExpandedChange;
+
   const area = React.useMemo(() => asTravelArea(chip.area), [chip.area]);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
 
   const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
     null
@@ -591,14 +581,23 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
   const cards = Array.isArray(area.cards) ? area.cards : [];
 
+  const areaSig = React.useMemo(() => areaSignature(area), [area]);
   const runId = React.useMemo(() => {
-    const sig = areaSignature(area);
-    return `explore_${chip.id}_${sig}`;
-  }, [chip.id, area]);
+    return `explore_${chip.id}_${areaSig}`;
+  }, [chip.id, areaSig]);
 
   React.useEffect(() => {
     restore();
   }, [expandedId, restore]);
+
+  React.useEffect(() => {
+    if (!collapseAllNonce) return;
+    setExpandedId(null);
+  }, [collapseAllNonce]);
+
+  React.useEffect(() => {
+    onAnyCardExpandedChange?.(Boolean(expandedId));
+  }, [expandedId, onAnyCardExpandedChange]);
 
   function toggleExpanded(id: string) {
     const anchorId = `travel-card-anchor-${id}`;
@@ -736,14 +735,10 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
         >
           <div className="flex items-start gap-3">
             <CheckCircle2
-              className={`${
-                dark ? "text-slate-200" : "text-slate-800"
-              } mt-0.5 h-5 w-5`}
+              className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`}
             />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Okay — noted
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -802,7 +797,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
             const n = slotIdx + 1;
 
             const siblingDim =
-              anyExpanded && !expanded ? "opacity-70 saturate-50" : "opacity-100 saturate-100";
+              anyExpanded && !expanded
+                ? "opacity-[0.88] saturate-[0.92]"
+                : "opacity-100 saturate-100";
 
             const anchorId = `travel-card-anchor-${c.id}`;
 
@@ -820,17 +817,13 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
 
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded
-                      ? "opacity-45 lg:opacity-35"
-                      : "opacity-75 lg:opacity-55"
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-75 lg:opacity-55"
                   }`}
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded
-                      ? "w-[3px] opacity-70 lg:opacity-55"
-                      : "w-[4px] opacity-85 lg:opacity-65"
+                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-85 lg:opacity-65"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
@@ -866,9 +859,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                             #{n}
                           </span>
 
-                          <div
-                            className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
-                          >
+                          <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
                             <span className="truncate">{c.title}</span>
                           </div>
                         </div>
@@ -876,9 +867,9 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         {!expanded && (teaserOne[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
-                              className={`text-sm lg:text-[0.95rem] ${
+                              className={`line-clamp-2 text-sm lg:text-[0.95rem] ${
                                 dark ? "text-slate-100/85" : "text-slate-700"
-                              } line-clamp-2`}
+                              }`}
                             >
                               {renderTextWithLinks(teaserOne[0])}
                             </p>
@@ -916,11 +907,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                                 dark ? "opacity-55" : "opacity-50"
                               }`}
                             />
-                            <span
-                              className={`absolute inset-0 ${
-                                dark ? "bg-slate-950/25" : "bg-white/20"
-                              }`}
-                            />
+                            <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/20"}`} />
                             <span
                               className={`relative flex h-full w-full items-center justify-center ${
                                 dark ? "text-white" : "text-slate-900"
@@ -932,9 +919,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark
-                                ? "bg-white/5 text-white/80"
-                                : "bg-white text-slate-800"
+                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -1125,9 +1110,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                               type="button"
                               onClick={() => openFeedback(rec, "agree")}
                               className={`${pillBase} ${
-                                selected === "agree"
-                                  ? pillSelected("agree")
-                                  : pillNeutral
+                                selected === "agree" ? pillSelected("agree") : pillNeutral
                               }`}
                             >
                               👍 Yes
@@ -1136,9 +1119,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                               type="button"
                               onClick={() => openFeedback(rec, "mixed")}
                               className={`${pillBase} ${
-                                selected === "mixed"
-                                  ? pillSelected("mixed")
-                                  : pillNeutral
+                                selected === "mixed" ? pillSelected("mixed") : pillNeutral
                               }`}
                             >
                               🤔 Maybe
@@ -1147,9 +1128,7 @@ export default function TravelRenderer({ chip, dark }: ExploreRendererProps) {
                               type="button"
                               onClick={() => openFeedback(rec, "disagree")}
                               className={`${pillBase} ${
-                                selected === "disagree"
-                                  ? pillSelected("disagree")
-                                  : pillNeutral
+                                selected === "disagree" ? pillSelected("disagree") : pillNeutral
                               }`}
                             >
                               👎 Not me

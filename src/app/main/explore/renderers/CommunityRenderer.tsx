@@ -1,6 +1,8 @@
 // src/app/main/explore/renderers/CommunityRenderer.tsx
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
@@ -22,16 +24,17 @@ import { addAction, hasAction, subscribeActionsStore } from "../state/actionsSto
    - Expanded order:
        1) Expanded copy
        2) Go deeper CTA
-       3) Media (VisualBreak / card image)
+       3) Media (card image)
        4) Tiny task block
        5) Quick check
        6) Collapse button at bottom
    - Dim sibling cards when one is expanded (opacity + saturate)
    - Media standardization:
-       header media (in content): /images/community/6.mp4 fallback /images/community/5.jpg
+       header media (handled in page.tsx): /images/community/5.jpg
        card images: /images/community/1.jpg..4.jpg by slot order
        paths live in TS content when provided; renderer supplies safe defaults
    - Safe media behavior: never show broken icons; tolerate network issues
+   - NO MP4 anywhere
 ============================================================================= */
 
 type CommunityCard = {
@@ -63,7 +66,7 @@ type CommunityArea = {
    * If absent, renderer falls back safely to /images/community defaults.
    */
   mediaBasePath?: string;
-  headerMedia?: { mp4?: string; jpg?: string; alt?: string };
+  headerMedia?: { jpg?: string; alt?: string };
 };
 
 function asCommunityArea(input: unknown): CommunityArea {
@@ -83,14 +86,13 @@ function asCommunityArea(input: unknown): CommunityArea {
 
   const toHeaderMedia = (
     v: unknown
-  ): { mp4?: string; jpg?: string; alt?: string } | undefined => {
+  ): { jpg?: string; alt?: string } | undefined => {
     if (!v || typeof v !== "object") return undefined;
     const it = v as Record<string, unknown>;
-    const mp4 = typeof it?.mp4 === "string" ? it.mp4 : undefined;
     const jpg = typeof it?.jpg === "string" ? it.jpg : undefined;
     const alt = typeof it?.alt === "string" ? it.alt : undefined;
-    if (!mp4 && !jpg && !alt) return undefined;
-    return { mp4, jpg, alt };
+    if (!jpg && !alt) return undefined;
+    return { jpg, alt };
   };
 
   const toCards = (v: unknown): CommunityCard[] | undefined => {
@@ -215,8 +217,7 @@ const COM_ACCENTS: Accent[] = [
   {
     rail: "from-rose-300 via-pink-300 to-amber-300",
     chip: "bg-rose-300/15 text-rose-100 border-rose-200/20",
-    ctaDark:
-      "bg-rose-300 text-slate-950 hover:bg-rose-200 shadow-rose-300/25",
+    ctaDark: "bg-rose-300 text-slate-950 hover:bg-rose-200 shadow-rose-300/25",
     halo: "from-rose-500/11 via-pink-400/7 to-amber-500/7",
   },
   {
@@ -337,7 +338,9 @@ function areaSignature(area: CommunityArea): string {
         const mediaSig = c.media?.src
           ? `|media:${c.media.src}|${c.media.alt ?? ""}`
           : "";
-        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~${c.href ?? ""}${mediaSig}`;
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~${
+          c.href ?? ""
+        }${mediaSig}`;
       })
       .join("||");
 
@@ -375,28 +378,12 @@ function toRecFromCommunityCard(
   };
 }
 
-/* ---- Motion / Anchor helpers (no-jump expand) ---- */
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(Boolean(mq.matches));
-    onChange();
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
+/* ---- Anchor helpers (no-jump expand) ---- */
 
 function useStableExpandAnchoring() {
-  const pendingRef = React.useRef<{
-    anchorId: string;
-    anchorTop: number;
-  } | null>(null);
+  const pendingRef = React.useRef<{ anchorId: string; anchorTop: number } | null>(
+    null
+  );
 
   const capture = React.useCallback((anchorId: string) => {
     if (typeof window === "undefined") return;
@@ -421,7 +408,11 @@ function useStableExpandAnchoring() {
       const rect = el.getBoundingClientRect();
       const delta = rect.top - pending.anchorTop;
       if (Math.abs(delta) > 0.5) {
-        window.scrollTo({ top: window.scrollY + delta, left: 0, behavior: "auto" });
+        window.scrollTo({
+          top: window.scrollY + delta,
+          left: 0,
+          behavior: "auto",
+        });
       }
     };
 
@@ -434,7 +425,7 @@ function useStableExpandAnchoring() {
   return { capture, restore };
 }
 
-/* ---- Media helpers (Safe media, standardized paths) ---- */
+/* ---- Media helpers (Safe images, standardized paths) ---- */
 
 function clamp1to4(n: number): number {
   return Math.max(1, Math.min(4, n));
@@ -446,17 +437,14 @@ function normalizeBasePath(p: string): string {
   return raw.endsWith("/") ? raw.slice(0, -1) : raw;
 }
 
-type SafeMediaProps = {
-  mp4Src?: string;
+type SafeImageProps = {
   jpgCandidates: string[];
   alt: string;
   dark: boolean;
   className?: string;
 };
 
-function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaProps) {
-  const reducedMotion = usePrefersReducedMotion();
-  const [videoFailed, setVideoFailed] = React.useState(false);
+function SafeImage({ jpgCandidates, alt, dark, className }: SafeImageProps) {
   const [imgIdx, setImgIdx] = React.useState(0);
 
   const candidates = React.useMemo(() => {
@@ -468,13 +456,14 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
     return out;
   }, [jpgCandidates]);
 
+  // ✅ Fix hooks lint: extract complex dep to a statically-checkable variable
+  const candidatesKey = React.useMemo(() => candidates.join("|"), [candidates]);
+
+  React.useEffect(() => {
+    setImgIdx(0);
+  }, [candidatesKey]);
+
   const currentImg = candidates[imgIdx] ?? "";
-
-  const showVideo = Boolean(mp4Src && !reducedMotion && !videoFailed);
-
-  const onVideoTrouble = React.useCallback(() => {
-    setVideoFailed(true);
-  }, []);
 
   return (
     <div
@@ -482,24 +471,8 @@ function SafeMedia({ mp4Src, jpgCandidates, alt, dark, className }: SafeMediaPro
         dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
       } ${className ?? ""}`}
     >
-      {showVideo ? (
-        <video
-          className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster={currentImg || undefined}
-          onError={onVideoTrouble}
-          onStalled={onVideoTrouble}
-          onAbort={onVideoTrouble}
-        >
-          <source src={mp4Src} type="video/mp4" />
-        </video>
-      ) : currentImg ? (
+      {currentImg ? (
         <img
-          // eslint-disable-next-line @next/next/no-img-element
           src={currentImg}
           alt={alt}
           className="relative h-[120px] w-full object-cover sm:h-[140px] lg:h-[150px]"
@@ -539,49 +512,65 @@ function CommunityCardMediaBreak({
   const slot = clamp1to4(slotIdx + 1);
   const slotJpg = `${base}/${slot}.jpg`;
 
-  const poster = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
-  const mp4Src = (area.headerMedia?.mp4 ?? "").trim() || `${base}/6.mp4`;
+  const headerJpg = (area.headerMedia?.jpg ?? "").trim() || `${base}/5.jpg`;
 
-  const imgCandidates = [(overrideSrc ?? "").trim(), slotJpg, poster];
-  const alt = (overrideAlt ?? "").trim() || "";
+  const imgCandidates = [
+    (overrideSrc ?? "").trim(),
+    slotJpg,
+    headerJpg,
+  ].filter(Boolean);
+
+  const altText =
+    (overrideAlt ?? "").trim() ||
+    (area.headerMedia?.alt ?? "").trim() ||
+    "Community visual";
 
   return (
     <div className="mt-4" style={{ overflowAnchor: "none" }}>
-      <SafeMedia mp4Src={mp4Src} jpgCandidates={imgCandidates} alt={alt} dark={dark} />
+      <SafeImage jpgCandidates={imgCandidates} alt={altText} dark={dark} />
     </div>
   );
 }
 
-/* ---------------------------------------------------------------------------
-   Actions helpers (stable IDs)
---------------------------------------------------------------------------- */
+/* ---- Actions helpers (stable IDs) ---- */
 
 function actionIdForTiny(topicId: string) {
   return `action.community.tiny.${topicId}`;
 }
 
-/* ---------------------------------------------------------------------------
-   Renderer
---------------------------------------------------------------------------- */
+/* ---- Renderer ---- */
 
-export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) {
+export default function CommunityRenderer(props: ExploreRendererProps) {
+  const { chip, dark } = props;
+
+  // Page-level contract (not yet typed in ExploreRendererProps in this repo)
+  const collapseAllNonce = (props as unknown as { collapseAllNonce?: number })
+    .collapseAllNonce;
+  const onAnyCardExpandedChange = (
+    props as unknown as {
+      onAnyCardExpandedChange?: (expanded: boolean) => void;
+    }
+  ).onAnyCardExpandedChange;
+
   const area = React.useMemo(() => asCommunityArea(chip.area), [chip.area]);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
   const muted = dark ? "text-slate-300/90" : "text-slate-600";
 
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
-  const [showStepsById, setShowStepsById] = React.useState<Record<string, boolean>>(
-    {}
-  );
-  const [justSavedActionId, setJustSavedActionId] = React.useState<string | null>(
-    null
-  );
+  const [showStepsById, setShowStepsById] = React.useState<
+    Record<string, boolean>
+  >({});
+  const [justSavedActionId, setJustSavedActionId] = React.useState<
+    string | null
+  >(null);
 
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
   const { capture, restore } = useStableExpandAnchoring();
+
+  const [, bumpFeedback] = React.useState(0);
 
   const [, bump] = React.useState(0);
   React.useEffect(() => {
@@ -599,6 +588,17 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   React.useEffect(() => {
     restore();
   }, [expandedId, restore]);
+
+  React.useEffect(() => {
+    if (!collapseAllNonce) return;
+    setExpandedId(null);
+  }, [collapseAllNonce]);
+
+  // ✅ Fix hooks lint by extracting boolean into a stable variable
+  const anyExpanded = Boolean(expandedId);
+  React.useEffect(() => {
+    onAnyCardExpandedChange?.(anyExpanded);
+  }, [anyExpanded, onAnyCardExpandedChange]);
 
   function toggleExpanded(id: string) {
     const anchorId = `community-card-anchor-${id}`;
@@ -620,7 +620,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
   function getSelectedFor(recId: string): FeedbackResponse | null {
     if (typeof window === "undefined") return null;
     try {
-      const raw = window.localStorage.getItem(`explore.community.feedback.${recId}`);
+      const raw = window.localStorage.getItem(
+        `explore.community.feedback.${recId}`
+      );
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { response?: FeedbackResponse } | null;
       const r = parsed?.response;
@@ -640,6 +642,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
         `explore.community.feedback.${recId}`,
         JSON.stringify(payload)
       );
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -649,6 +652,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
     if (typeof window === "undefined") return;
     try {
       window.localStorage.removeItem(`explore.community.feedback.${recId}`);
+      bumpFeedback((v) => v + 1);
     } catch {
       // ignore
     }
@@ -681,15 +685,11 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       comment: payload.comment,
     });
 
-    if (
-      payload.response === "disagree" &&
-      (payload.comment?.trim() ?? "").length
-    ) {
+    if (payload.response === "disagree" && (payload.comment?.trim() ?? "").length) {
       setAck({
         kind: "comment_disagree",
         feedbackId: pending.rec.recId,
-        message:
-          "Got it. Want me to tweak what you see next based on what you wrote?",
+        message: "Got it. Want me to tweak what you see next based on what you wrote?",
       });
     }
 
@@ -720,8 +720,6 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
       return "border-amber-200 bg-amber-50 text-amber-900 ring-2 ring-amber-200/60";
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
-
-  const anyExpanded = Boolean(expandedId);
 
   return (
     <section className="space-y-4">
@@ -800,7 +798,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
             const n = slotIdx + 1;
 
             const siblingDim =
-              anyExpanded && !expanded ? "opacity-70 saturate-50" : "opacity-100 saturate-100";
+              anyExpanded && !expanded
+                ? "opacity-[0.88] saturate-[0.92]"
+                : "opacity-100 saturate-100";
 
             const anchorId = `community-card-anchor-${c.id}`;
 
@@ -818,18 +818,14 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
 
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded
-                      ? "opacity-45 lg:opacity-35"
-                      : "opacity-85 lg:opacity-65"
+                    expanded ? "opacity-45 lg:opacity-35" : "opacity-75 lg:opacity-55"
                   }`}
                   aria-hidden
                 />
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[70%] ${
-                    expanded
-                      ? "w-[3px] opacity-70 lg:opacity-55"
-                      : "w-[4px] opacity-90 lg:opacity-70"
+                    expanded ? "w-[3px] opacity-70 lg:opacity-55" : "w-[4px] opacity-85 lg:opacity-65"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
@@ -875,9 +871,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                         {!expanded && (teaserOne[0] ?? "").trim().length ? (
                           <div className="mt-2">
                             <p
-                              className={`text-sm lg:text-[0.95rem] ${
+                              className={`line-clamp-2 text-sm lg:text-[0.95rem] ${
                                 dark ? "text-slate-100/85" : "text-slate-700"
-                              } line-clamp-2`}
+                              }`}
                             >
                               {renderTextWithLinks(teaserOne[0])}
                             </p>
@@ -931,9 +927,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                         ) : (
                           <span
                             className={`flex h-full w-full items-center justify-center ${
-                              dark
-                                ? "bg-white/5 text-white/80"
-                                : "bg-white text-slate-800"
+                              dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"
                             }`}
                           >
                             <ChevronUp className="h-4 w-4" />
@@ -985,7 +979,9 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               >
                                 Tiny task
                               </div>
-                              <div className={`mt-1 text-sm font-semibold ${titleC}`}>{tiny.title}</div>
+                              <div className={`mt-1 text-sm font-semibold ${titleC}`}>
+                                {tiny.title}
+                              </div>
                               <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
                                 ETA: {tiny.eta}
                               </div>
@@ -1124,9 +1120,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               type="button"
                               onClick={() => openFeedback(rec, "agree")}
                               className={`${pillBase} ${
-                                selected === "agree"
-                                  ? pillSelected("agree")
-                                  : pillNeutral
+                                selected === "agree" ? pillSelected("agree") : pillNeutral
                               }`}
                             >
                               👍 Yes
@@ -1135,9 +1129,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               type="button"
                               onClick={() => openFeedback(rec, "mixed")}
                               className={`${pillBase} ${
-                                selected === "mixed"
-                                  ? pillSelected("mixed")
-                                  : pillNeutral
+                                selected === "mixed" ? pillSelected("mixed") : pillNeutral
                               }`}
                             >
                               🤔 Maybe
@@ -1146,9 +1138,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
                               type="button"
                               onClick={() => openFeedback(rec, "disagree")}
                               className={`${pillBase} ${
-                                selected === "disagree"
-                                  ? pillSelected("disagree")
-                                  : pillNeutral
+                                selected === "disagree" ? pillSelected("disagree") : pillNeutral
                               }`}
                             >
                               👎 Not me
@@ -1182,9 +1172,7 @@ export default function CommunityRenderer({ chip, dark }: ExploreRendererProps) 
           }`}
           style={{ overflowAnchor: "none" }}
         >
-          <div className={`text-sm font-semibold ${titleC}`}>
-            No community items yet
-          </div>
+          <div className={`text-sm font-semibold ${titleC}`}>No community items yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
             Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
             <span className="font-mono text-[0.9em]">explore/content/community.ts</span>.
