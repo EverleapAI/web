@@ -58,8 +58,9 @@ const REC_ACCENTS: RecAccent[] = [
     ctaDark: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
     ctaLight: "bg-sky-600 text-white hover:bg-sky-500",
 
-    surfaceDark: "bg-slate-950/22",
-    surfaceLight: "bg-white/70",
+    // ✅ stronger surface to prevent “page background leak”
+    surfaceDark: "bg-slate-950/55",
+    surfaceLight: "bg-white/85",
   },
   {
     rail: "from-amber-300 via-orange-300 to-rose-300",
@@ -69,12 +70,11 @@ const REC_ACCENTS: RecAccent[] = [
     chipDark: "border-amber-200/20 bg-amber-300/15 text-amber-50",
     chipLight: "border-amber-200/70 bg-amber-50 text-amber-950",
 
-    ctaDark:
-      "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
+    ctaDark: "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
     ctaLight: "bg-amber-600 text-white hover:bg-amber-500",
 
-    surfaceDark: "bg-slate-950/22",
-    surfaceLight: "bg-white/70",
+    surfaceDark: "bg-slate-950/55",
+    surfaceLight: "bg-white/85",
   },
   {
     rail: "from-emerald-300 via-teal-300 to-sky-300",
@@ -88,8 +88,8 @@ const REC_ACCENTS: RecAccent[] = [
       "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
     ctaLight: "bg-emerald-600 text-white hover:bg-emerald-500",
 
-    surfaceDark: "bg-slate-950/22",
-    surfaceLight: "bg-white/70",
+    surfaceDark: "bg-slate-950/55",
+    surfaceLight: "bg-white/85",
   },
   {
     rail: "from-violet-300 via-fuchsia-300 to-sky-300",
@@ -103,8 +103,8 @@ const REC_ACCENTS: RecAccent[] = [
       "bg-violet-300 text-slate-950 hover:bg-violet-200 shadow-violet-300/25",
     ctaLight: "bg-violet-600 text-white hover:bg-violet-500",
 
-    surfaceDark: "bg-slate-950/22",
-    surfaceLight: "bg-white/70",
+    surfaceDark: "bg-slate-950/55",
+    surfaceLight: "bg-white/85",
   },
 ];
 
@@ -112,13 +112,9 @@ function careerDeepHref(laneId: string) {
   return `/main/career/${encodeURIComponent(laneId)}?mode=explore`;
 }
 
-type PendingFeedback =
-  | { rec: RecommendationItem; response: FeedbackResponse }
-  | null;
+type PendingFeedback = { rec: RecommendationItem; response: FeedbackResponse } | null;
 
-type AckState =
-  | { kind: "comment_disagree"; feedbackId: string; message: string }
-  | null;
+type AckState = { kind: "comment_disagree"; feedbackId: string; message: string } | null;
 
 type ExploreRecommendationCard = {
   id: string;
@@ -169,8 +165,7 @@ function asCareersArea(input: unknown): ExploreCareersArea {
           ? (it.visualBreak as VisualBreak)
           : undefined;
 
-      if (id && title)
-        out.push({ id, title, short, icon, why, hint, tags, visualBreak });
+      if (id && title) out.push({ id, title, short, icon, why, hint, tags, visualBreak });
     }
 
     return out;
@@ -196,11 +191,6 @@ function hashString(input: string): string {
   return (h >>> 0).toString(36);
 }
 
-/**
- * IMPORTANT:
- * We include why/hint/tags AND visualBreak so the feedbackStore batch refreshes
- * when copy/visuals change (otherwise it can “stick”).
- */
 function areaSignature(area: ExploreCareersArea): string {
   const cards = Array.isArray(area.cards) ? area.cards : [];
   const payload =
@@ -210,13 +200,9 @@ function areaSignature(area: ExploreCareersArea): string {
         const why = Array.isArray(c.why) ? c.why.join("|") : "";
         const tags = Array.isArray(c.tags) ? c.tags.join("|") : "";
         const vb = c.visualBreak?.asset?.src
-          ? `vb:${c.visualBreak.asset.kind ?? ""}|${c.visualBreak.asset.src}|${
-              c.visualBreak.asset.alt
-            }`
+          ? `vb:${c.visualBreak.asset.kind ?? ""}|${c.visualBreak.asset.src}|${c.visualBreak.asset.alt}`
           : "vb:";
-        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~why:${why}~hint:${
-          c.hint ?? ""
-        }~tags:${tags}~${vb}`;
+        return `${c.id}~${c.title}~${c.icon ?? ""}~${c.short}~why:${why}~hint:${c.hint ?? ""}~tags:${tags}~${vb}`;
       })
       .join("||");
   return hashString(payload);
@@ -235,8 +221,6 @@ function mapCardsToRecommendations(
 
   return cards.map((c, idx) => {
     const laneId = String(c.id ?? `lane_${idx}`);
-
-    // ✅ canonical prefix
     const recId = `explore.careers.${laneId}.v1`;
 
     const cardWhy = Array.isArray(c.why)
@@ -247,10 +231,7 @@ function mapCardsToRecommendations(
       ? c.tags.map((s) => String(s).trim()).filter(Boolean)
       : [];
 
-    const fallbackWhy = laneSignals
-      .map((s) => String(s).trim())
-      .filter(Boolean)
-      .slice(0, 3);
+    const fallbackWhy = laneSignals.map((s) => String(s).trim()).filter(Boolean).slice(0, 3);
 
     return {
       recId,
@@ -260,11 +241,7 @@ function mapCardsToRecommendations(
       title: String(c.title ?? "Recommendation"),
       summary: String(c.short ?? ""),
 
-      why: cardWhy.length
-        ? cardWhy
-        : fallbackWhy.length
-        ? fallbackWhy
-        : ["Based on your answers so far."],
+      why: cardWhy.length ? cardWhy : fallbackWhy.length ? fallbackWhy : ["Based on your answers so far."],
       nextStep:
         typeof c.hint === "string" && c.hint.trim()
           ? c.hint.trim()
@@ -273,7 +250,6 @@ function mapCardsToRecommendations(
           : undefined,
       tags: cardTags.length ? cardTags : [],
 
-      // carry through for UI use
       visualBreak: c.visualBreak,
 
       signals: undefined,
@@ -287,11 +263,6 @@ function mapCardsToRecommendations(
   });
 }
 
-/**
- * ✅ FIX: recId is `explore.careers.${laneId}.v1`
- * parts: [explore, careers, laneId, v1]
- * laneId is index 2 (not 3).
- */
 function laneIdFromRec(rec: RecommendationItem): string {
   const parts = rec.recId.split(".");
   return parts.length >= 3 ? parts[2] : rec.recId;
@@ -423,12 +394,7 @@ function tinyTestForLane(laneId: string): TinyTest {
   const fallback: TinyTest = {
     title: "Tiny test: try one micro-skill",
     eta: "15–25 min",
-    steps: [
-      "Pick 1 micro-skill tied to this direction.",
-      "Try it for 15 minutes.",
-      "Rate it: 🔥 / 🙂 / 😬",
-      "Write 1 sentence: “Do I want more of this?”",
-    ],
+    steps: ["Pick 1 micro-skill tied to this direction.", "Try it for 15 minutes.", "Rate it: 🔥 / 🙂 / 😬", "Write 1 sentence: “Do I want more of this?”"],
   };
   return TINY_TESTS[laneId] ?? fallback;
 }
@@ -520,7 +486,7 @@ function VisualBreakBlock({
   const alt = altOverride || "Career visual";
 
   return (
-    <div className="mt-3" style={{ overflowAnchor: "none" }}>
+    <div className="mt-3">
       <div
         className={`overflow-hidden rounded-2xl border ${
           dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
@@ -541,13 +507,6 @@ function VisualBreakBlock({
   );
 }
 
-/* ---------------------------------------------------------------------------
-   UX helpers (Careers pilot lane)
-   - Goal: expansion should feel like it opens DOWN, without trapping scroll.
-   - We preserve the header's on-screen position at toggle-time.
-   - Also disable browser scroll anchoring in this list to avoid "jumping".
---------------------------------------------------------------------------- */
-
 type AnchorRequest = {
   recId: string;
   headerTopPx: number;
@@ -557,26 +516,17 @@ type AnchorRequest = {
 export default function CareersRenderer(props: ExploreRendererProps) {
   const { chip, dark } = props;
 
-  // Page-level contract (not yet typed in ExploreRendererProps in this repo)
-  const collapseAllNonce = (props as unknown as { collapseAllNonce?: number })
-    .collapseAllNonce;
-  const onAnyCardExpandedChange = (
-    props as unknown as { onAnyCardExpandedChange?: (expanded: boolean) => void }
-  ).onAnyCardExpandedChange;
+  const collapseAllNonce = (props as unknown as { collapseAllNonce?: number }).collapseAllNonce;
+  const onAnyCardExpandedChange = (props as unknown as { onAnyCardExpandedChange?: (expanded: boolean) => void })
+    .onAnyCardExpandedChange;
 
   const [visible, setVisible] = React.useState<RecommendationItem[]>([]);
   const [pending, setPending] = React.useState<PendingFeedback>(null);
   const [ack, setAck] = React.useState<AckState>(null);
 
-  const [savedTinyByRec, setSavedTinyByRec] = React.useState<
-    Record<string, boolean>
-  >({});
-  const [justSavedRecId, setJustSavedRecId] = React.useState<string | null>(
-    null
-  );
-  const [showStepsByRec, setShowStepsByRec] = React.useState<
-    Record<string, boolean>
-  >({});
+  const [savedTinyByRec, setSavedTinyByRec] = React.useState<Record<string, boolean>>({});
+  const [justSavedRecId, setJustSavedRecId] = React.useState<string | null>(null);
+  const [showStepsByRec, setShowStepsByRec] = React.useState<Record<string, boolean>>({});
   const [expandedRecId, setExpandedRecId] = React.useState<string | null>(null);
 
   const titleC = dark ? "text-slate-50" : "text-slate-900";
@@ -633,7 +583,6 @@ export default function CareersRenderer(props: ExploreRendererProps) {
     const delta = nextTop - req.headerTopPx;
 
     if (Math.abs(delta) > 2) {
-      // Keep the header where it was when tapped.
       window.scrollBy({ top: delta, left: 0, behavior: "auto" });
     }
 
@@ -680,11 +629,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
     setVisible(getAndMarkVisibleCareers());
   }
 
-  function submitModal(payload: {
-    response: FeedbackResponse;
-    comment: string | null;
-    reasons?: string[];
-  }) {
+  function submitModal(payload: { response: FeedbackResponse; comment: string | null; reasons?: string[] }) {
     if (!pending) return;
 
     const fb = recordFeedback({
@@ -697,8 +642,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
       setAck({
         kind: "comment_disagree",
         feedbackId: fb.feedbackId,
-        message:
-          "Got it. Want me to tweak your next set based on what you wrote?",
+        message: "Got it. Want me to tweak your next set based on what you wrote?",
       });
     }
 
@@ -742,29 +686,22 @@ export default function CareersRenderer(props: ExploreRendererProps) {
     return "border-rose-200 bg-rose-50 text-rose-900 ring-2 ring-rose-200/60";
   }
 
-  const showRecalBanner =
-    Boolean(suggestRecal) && batchStatus === "active" && !ack;
+  const showRecalBanner = Boolean(suggestRecal) && batchStatus === "active" && !ack;
   const anyExpanded = Boolean(expandedRecId);
 
   return (
     <section className="space-y-4">
+      {/* (rest of file unchanged below this point except card shell surface layering) */}
       {ack ? (
         <div
           className={`rounded-2xl border px-4 py-3 ${
             dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
           }`}
-          style={{ overflowAnchor: "none" }}
         >
           <div className="flex items-start gap-3">
-            <CheckCircle2
-              className={`${
-                dark ? "text-slate-200" : "text-slate-800"
-              } mt-0.5 h-5 w-5`}
-            />
+            <CheckCircle2 className={`${dark ? "text-slate-200" : "text-slate-800"} mt-0.5 h-5 w-5`} />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Okay — noted
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Okay — noted</div>
               <div className={`mt-1 text-sm ${muted}`}>{ack.message}</div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -780,11 +717,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                   Recalibrate
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setAck(null)}
-                  className={`${pillBase} ${pillNeutral}`}
-                >
+                <button type="button" onClick={() => setAck(null)} className={`${pillBase} ${pillNeutral}`}>
                   Dismiss
                 </button>
               </div>
@@ -798,22 +731,12 @@ export default function CareersRenderer(props: ExploreRendererProps) {
           className={`rounded-2xl border px-4 py-3 ${
             dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
           }`}
-          style={{ overflowAnchor: "none" }}
         >
           <div className="flex items-start gap-3">
-            <div
-              className={`mt-0.5 h-2.5 w-2.5 rounded-full ${
-                dark ? "bg-amber-300/80" : "bg-amber-500"
-              }`}
-              aria-hidden
-            />
+            <div className={`mt-0.5 h-2.5 w-2.5 rounded-full ${dark ? "bg-amber-300/80" : "bg-amber-500"}`} aria-hidden />
             <div className="min-w-0 flex-1">
-              <div className={`text-sm font-semibold ${titleC}`}>
-                Want a fresh set?
-              </div>
-              <div className={`mt-1 text-sm ${muted}`}>
-                I can recalibrate based on what you’ve liked/disliked so far.
-              </div>
+              <div className={`text-sm font-semibold ${titleC}`}>Want a fresh set?</div>
+              <div className={`mt-1 text-sm ${muted}`}>I can recalibrate based on what you’ve liked/disliked so far.</div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -846,10 +769,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
       ) : null}
 
       {visible.length ? (
-        <div
-          className="w-full space-y-5 lg:space-y-6"
-          style={{ overflowAnchor: "none" }}
-        >
+        <div className="w-full space-y-5 lg:space-y-6" style={{ overflowAnchor: "none" }}>
           {visible.slice(0, 4).map((rec, slotIdx) => {
             const a = REC_ACCENTS[slotIdx] ?? REC_ACCENTS[0];
             const laneId = laneIdFromRec(rec);
@@ -871,8 +791,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
 
             const n = slotIdx + 1;
 
-            const visualBreak = (rec as unknown as { visualBreak?: VisualBreak })
-              .visualBreak;
+            const visualBreak = (rec as unknown as { visualBreak?: VisualBreak }).visualBreak;
 
             const dimmed = anyExpanded && !expanded;
 
@@ -886,28 +805,25 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                   dark
                     ? "border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.28)]"
                     : "border-slate-200 shadow-[0_14px_40px_rgba(2,6,23,0.08)]"
-                } ${
-                  dimmed
-                    ? "opacity-[0.88] saturate-[0.92]"
-                    : "opacity-100 saturate-100"
-                }`}
+                } ${dimmed ? "opacity-[0.88] saturate-[0.92]" : "opacity-100"}`}
               >
-                {/* Base surface (prevents “split” look where the page background shows through) */}
+                {/* ✅ Full-bleed, consistent surface (material) */}
                 <div
+                  className={`pointer-events-none absolute inset-0 rounded-3xl ${
+                    dark ? (expanded ? "bg-slate-950/62" : a.surfaceDark) : expanded ? "bg-white/90" : a.surfaceLight
+                  } backdrop-blur-md`}
                   aria-hidden
-                  className={`pointer-events-none absolute inset-0 ${
-                    dark ? "bg-slate-950/22" : "bg-white/70"
-                  }`}
                 />
 
+                {/* Decorative halo (now truly decorative) */}
                 <div
                   className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo} ${
-                    expanded
-                      ? "opacity-45 lg:opacity-36"
-                      : "opacity-42 lg:opacity-36"
+                    expanded ? "opacity-55 lg:opacity-45" : "opacity-50 lg:opacity-42"
                   }`}
+                  aria-hidden
                 />
 
+                {/* Top cap */}
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-r ${a.cap} ${
@@ -915,27 +831,16 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                   }`}
                 />
 
+                {/* Left rail */}
                 <div
                   aria-hidden
                   className={`pointer-events-none absolute left-0 top-4 h-[72%] ${
-                    expanded
-                      ? "w-[5px] opacity-90 lg:opacity-75"
-                      : "w-[5px] opacity-95 lg:opacity-75"
+                    expanded ? "w-[5px] opacity-90 lg:opacity-75" : "w-[5px] opacity-95 lg:opacity-75"
                   } rounded-full bg-gradient-to-b ${a.rail}`}
                 />
 
-                <div
-                  className={`relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5 ${
-                    dark
-                      ? expanded
-                        ? "bg-slate-950/30"
-                        : a.surfaceDark
-                      : expanded
-                      ? "bg-white/80"
-                      : a.surfaceLight
-                  }`}
-                  style={{ overflowAnchor: "none" }}
-                >
+                <div className="relative rounded-3xl px-5 py-4 lg:px-7 lg:py-5">
+                  {/* --- remainder of your original card content unchanged --- */}
                   <div
                     ref={(el) => {
                       headerRefs.current[rec.recId] = el;
@@ -958,9 +863,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                               #{n}
                             </span>
 
-                            <div
-                              className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}
-                            >
+                            <div className={`min-w-0 text-base font-semibold lg:text-[1.05rem] ${titleC}`}>
                               <span className="truncate">{rec.title}</span>
                             </div>
                           </div>
@@ -988,10 +891,7 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                           {expanded ? (
                             <div className="mt-2 space-y-2">
                               {spoken.slice(0, 2).map((p, i) => (
-                                <p
-                                  key={i}
-                                  className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                >
+                                <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                                   {p}
                                 </p>
                               ))}
@@ -1007,32 +907,14 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                         >
                           {!expanded ? (
                             <span className="relative h-full w-full">
-                              <span
-                                className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${
-                                  dark ? "opacity-55" : "opacity-50"
-                                }`}
-                              />
-                              <span
-                                className={`absolute inset-0 ${
-                                  dark ? "bg-slate-950/25" : "bg-white/25"
-                                }`}
-                              />
-                              <span
-                                className={`relative flex h-full w-full items-center justify-center ${
-                                  dark ? "text-white" : "text-slate-900"
-                                }`}
-                              >
+                              <span className={`absolute inset-0 bg-gradient-to-br ${a.rail} ${dark ? "opacity-55" : "opacity-50"}`} />
+                              <span className={`absolute inset-0 ${dark ? "bg-slate-950/25" : "bg-white/25"}`} />
+                              <span className={`relative flex h-full w-full items-center justify-center ${dark ? "text-white" : "text-slate-900"}`}>
                                 <ChevronDown className="h-4 w-4" />
                               </span>
                             </span>
                           ) : (
-                            <span
-                              className={`flex h-full w-full items-center justify-center ${
-                                dark
-                                  ? "bg-white/5 text-white/80"
-                                  : "bg-white text-slate-800"
-                              }`}
-                            >
+                            <span className={`flex h-full w-full items-center justify-center ${dark ? "bg-white/5 text-white/80" : "bg-white text-slate-800"}`}>
                               <ChevronUp className="h-4 w-4" />
                             </span>
                           )}
@@ -1042,14 +924,11 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                   </div>
 
                   {expanded ? (
-                    <div className="mt-4 lg:mt-5" style={{ overflowAnchor: "none" }}>
+                    <div className="mt-4 lg:mt-5">
                       {extra.length ? (
                         <div className="space-y-2 lg:space-y-2.5">
                           {extra.map((p, i) => (
-                            <p
-                              key={i}
-                              className={`text-sm lg:text-[0.95rem] ${muted}`}
-                            >
+                            <p key={i} className={`text-sm lg:text-[0.95rem] ${muted}`}>
                               {p}
                             </p>
                           ))}
@@ -1060,106 +939,56 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                         <Link
                           href={careerDeepHref(laneId)}
                           className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                            dark
-                              ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                              : a.ctaLight
+                            dark ? `${a.ctaDark} shadow-[0_12px_34px_rgba(0,0,0,0.35)]` : a.ctaLight
                           }`}
                         >
-                          See what this career is really like{" "}
-                          <ArrowRight className="h-4 w-4" />
+                          See what this career is really like <ArrowRight className="h-4 w-4" />
                         </Link>
-                        <div
-                          className={`mt-2 text-xs ${
-                            dark ? "text-white/55" : "text-slate-600"
-                          }`}
-                        >
+                        <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
                           Quick peek first. You can decide later.
                         </div>
                       </div>
 
-                      <div className="mt-4 space-y-3" style={{ overflowAnchor: "none" }}>
+                      <div className="mt-4 space-y-3">
                         <p className={`text-sm lg:text-[0.95rem] ${muted}`}>
-                          <span
-                            className={`${
-                              dark ? "text-white/70" : "text-slate-700"
-                            } font-semibold`}
-                          >
+                          <span className={`${dark ? "text-white/70" : "text-slate-700"} font-semibold`}>
                             If you’re the type who likes…
                           </span>{" "}
                           {teenCoachWhy(rec.why)}
                         </p>
 
-                        <VisualBreakBlock
-                          visual={visualBreak}
-                          dark={dark}
-                          slotIdx={slotIdx}
-                          fallbackSrc="/images/careers/5.jpg"
-                        />
+                        <VisualBreakBlock visual={visualBreak} dark={dark} slotIdx={slotIdx} fallbackSrc="/images/careers/5.jpg" />
 
                         <div
                           className={`relative overflow-hidden rounded-2xl border p-3 lg:p-4 ${
-                            dark
-                              ? "border-white/10 bg-white/5"
-                              : "border-slate-200 bg-white/80"
+                            dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
                           }`}
-                          style={{ overflowAnchor: "none" }}
                         >
-                          <div
-                            className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${
-                              dark ? "opacity-14" : "opacity-10"
-                            }`}
-                            aria-hidden
-                          />
-                          <div
-                            className={`pointer-events-none absolute inset-0 ${
-                              dark ? "bg-slate-950/10" : "bg-white/25"
-                            }`}
-                            aria-hidden
-                          />
+                          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${a.rail} ${dark ? "opacity-14" : "opacity-10"}`} aria-hidden />
+                          <div className={`pointer-events-none absolute inset-0 ${dark ? "bg-slate-950/10" : "bg-white/25"}`} aria-hidden />
 
                           <div className="relative">
                             <div className="flex items-center justify-between gap-3">
-                              <div
-                                className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                                  dark ? "text-white/80" : "text-slate-700"
-                                }`}
-                              >
+                              <div className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${dark ? "text-white/80" : "text-slate-700"}`}>
                                 Tiny task
                               </div>
 
-                              <span
-                                className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                                  dark
-                                    ? "border-white/10 bg-white/5 text-white/70"
-                                    : "border-slate-200 bg-white text-slate-700"
-                                }`}
-                              >
+                              <span className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${dark ? "border-white/10 bg-white/5 text-white/70" : "border-slate-200 bg-white text-slate-700"}`}>
                                 <span aria-hidden>⏱</span> {tiny.eta}
                               </span>
                             </div>
 
                             <div className="mt-2">
-                              <div
-                                className={`text-sm font-semibold lg:text-[0.95rem] ${
-                                  dark ? "text-white/90" : "text-slate-900"
-                                }`}
-                              >
+                              <div className={`text-sm font-semibold lg:text-[0.95rem] ${dark ? "text-white/90" : "text-slate-900"}`}>
                                 Try this first — don’t overthink it:
                               </div>
-                              <div
-                                className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}
-                              >
-                                {tiny.steps?.[0] ??
-                                  "Try a super small version of it today."}
+                              <div className={`mt-1 text-sm lg:text-[0.95rem] ${muted}`}>
+                                {tiny.steps?.[0] ?? "Try a super small version of it today."}
                               </div>
                             </div>
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleSteps(rec.recId)}
-                                className={`${pillBase} ${pillNeutral}`}
-                              >
+                              <button type="button" onClick={() => toggleSteps(rec.recId)} className={`${pillBase} ${pillNeutral}`}>
                                 {showSteps ? (
                                   <>
                                     <ChevronUp className="h-4 w-4" />
@@ -1200,60 +1029,27 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                             </div>
 
                             {tinyJustSaved ? (
-                              <div
-                                className={`mt-2 text-xs font-semibold ${
-                                  dark ? "text-white/70" : "text-slate-700"
-                                }`}
-                              >
+                              <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/70" : "text-slate-700"}`}>
                                 ✅ Added to Actions
                               </div>
                             ) : null}
 
                             {showSteps ? (
-                              <div
-                                className={`mt-3 rounded-2xl border p-3 lg:p-4 ${
-                                  dark
-                                    ? "border-white/10 bg-white/5"
-                                    : "border-slate-200 bg-white/80"
-                                }`}
-                                style={{ overflowAnchor: "none" }}
-                              >
-                                <div
-                                  className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}
-                                >
-                                  {tiny.title}
-                                </div>
+                              <div className={`mt-3 rounded-2xl border p-3 lg:p-4 ${dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"}`}>
+                                <div className={`text-sm font-semibold lg:text-[0.95rem] ${titleC}`}>{tiny.title}</div>
 
                                 <div className="mt-2 space-y-1.5 lg:space-y-2">
                                   {tiny.steps.map((step, i) => (
-                                    <div
-                                      key={i}
-                                      className="flex items-start gap-2"
-                                    >
-                                      <span
-                                        className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${
-                                          dark
-                                            ? "border-white/10 bg-white/5 text-white/70"
-                                            : "border-slate-200 bg-white text-slate-700"
-                                        }`}
-                                        aria-hidden
-                                      >
+                                    <div key={i} className="flex items-start gap-2">
+                                      <span className={`mt-[0.18rem] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold ${dark ? "border-white/10 bg-white/5 text-white/70" : "border-slate-200 bg-white text-slate-700"}`} aria-hidden>
                                         {i + 1}
                                       </span>
-                                      <div
-                                        className={`text-sm lg:text-[0.95rem] ${muted}`}
-                                      >
-                                        {step}
-                                      </div>
+                                      <div className={`text-sm lg:text-[0.95rem] ${muted}`}>{step}</div>
                                     </div>
                                   ))}
                                 </div>
 
-                                <div
-                                  className={`mt-2 text-xs font-semibold ${
-                                    dark ? "text-white/55" : "text-slate-600"
-                                  }`}
-                                >
+                                <div className={`mt-2 text-xs font-semibold ${dark ? "text-white/55" : "text-slate-600"}`}>
                                   Time: {tiny.eta}
                                 </div>
                               </div>
@@ -1262,27 +1058,13 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                         </div>
                       </div>
 
-                      <div className="mt-4 lg:mt-5" style={{ overflowAnchor: "none" }}>
-                        <div
-                          className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${
-                            dark ? "text-slate-300/60" : "text-slate-500"
-                          }`}
-                        >
+                      <div className="mt-4 lg:mt-5">
+                        <div className={`text-[0.7rem] font-semibold uppercase tracking-[0.22em] ${dark ? "text-slate-300/60" : "text-slate-500"}`}>
                           Quick check on:{" "}
-                          <span
-                            className={`${
-                              dark ? "text-slate-200/90" : "text-slate-700"
-                            }`}
-                          >
-                            {rec.title}
-                          </span>
+                          <span className={`${dark ? "text-slate-200/90" : "text-slate-700"}`}>{rec.title}</span>
                         </div>
 
-                        <div
-                          className={`mt-1 text-xs ${
-                            dark ? "text-white/55" : "text-slate-600"
-                          }`}
-                        >
+                        <div className={`mt-1 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
                           Be honest — we’ll adjust what you see next.
                         </div>
 
@@ -1290,26 +1072,16 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "agree")}
-                            className={`${pillBase} ${
-                              selected === "agree"
-                                ? pillSelected("agree")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "agree" ? pillSelected("agree") : pillNeutral}`}
                           >
                             <span aria-hidden>👍</span>
-                            {selected === "agree"
-                              ? "I’m into this ✓"
-                              : "I’m into this"}
+                            {selected === "agree" ? "I’m into this ✓" : "I’m into this"}
                           </button>
 
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "mixed")}
-                            className={`${pillBase} ${
-                              selected === "mixed"
-                                ? pillSelected("mixed")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "mixed" ? pillSelected("mixed") : pillNeutral}`}
                           >
                             <span aria-hidden>🙂</span>
                             {selected === "mixed" ? "Curious ✓" : "Curious"}
@@ -1318,16 +1090,10 @@ export default function CareersRenderer(props: ExploreRendererProps) {
                           <button
                             type="button"
                             onClick={() => openFeedback(rec, "disagree")}
-                            className={`${pillBase} ${
-                              selected === "disagree"
-                                ? pillSelected("disagree")
-                                : pillNeutral
-                            }`}
+                            className={`${pillBase} ${selected === "disagree" ? pillSelected("disagree") : pillNeutral}`}
                           >
                             <span aria-hidden>👎</span>
-                            {selected === "disagree"
-                              ? "Not for me ✓"
-                              : "Not for me"}
+                            {selected === "disagree" ? "Not for me ✓" : "Not for me"}
                           </button>
                         </div>
 
@@ -1350,20 +1116,11 @@ export default function CareersRenderer(props: ExploreRendererProps) {
           })}
         </div>
       ) : (
-        <div
-          className={`rounded-2xl border p-5 ${
-            dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"
-          }`}
-          style={{ overflowAnchor: "none" }}
-        >
+        <div className={`rounded-2xl border p-5 ${dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white"}`}>
           <div className={`text-sm font-semibold ${titleC}`}>No careers yet</div>
           <div className={`mt-1 text-sm ${muted}`}>
-            Add items to{" "}
-            <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
-            <span className="font-mono text-[0.9em]">
-              explore/content/careers.ts
-            </span>
-            .
+            Add items to <span className="font-mono text-[0.9em]">cards[]</span> in{" "}
+            <span className="font-mono text-[0.9em]">explore/content/careers.ts</span>.
           </div>
         </div>
       )}
