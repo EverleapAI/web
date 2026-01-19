@@ -57,22 +57,7 @@ export type DeepDive = {
   sections: DeepDiveSection[];
 };
 
-export type CareerSuggestionId =
-  | "productUx"
-  | "healthHumanSupport"
-  | "educationCommunityPrograms"
-  | "independentBuilder"; // ✅ must match StepperLaneId
-
-export type CareerSuggestion = {
-  id: CareerSuggestionId;
-  title: string;
-  why: string;
-  starterExperiment: string;
-  bestFor: string;
-};
-
 export type YouMapAreaId =
-  | "career"
   | "motivations"
   | "strengths"
   | "skills"
@@ -99,6 +84,5 @@ export type YouMapArea = {
   nextMoves: NextMove[];
   deepDive: DeepDive;
 
-  careerSuggestions?: CareerSuggestion[];
   cards: TraitCard[];
 };

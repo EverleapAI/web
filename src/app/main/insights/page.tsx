@@ -1,8 +1,8 @@
+// CHUNK 1/2
 // src/app/main/insights/page.tsx
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -25,7 +25,6 @@ import {
 
 import {
   INSIGHTS_AREAS,
-  type CareerSuggestion,
   type TraitCard,
   type TraitCardVariant,
 } from "./insightsContent";
@@ -58,7 +57,6 @@ export default function InsightsPage() {
 
   // Context toggles
   const [whyOpen, setWhyOpen] = React.useState(false);
-  const [recContextOpen, setRecContextOpen] = React.useState(false);
   const [laneContextOpen, setLaneContextOpen] = React.useState(false);
 
   // Deep dive modal
@@ -73,7 +71,7 @@ export default function InsightsPage() {
     areaId: string;
     areaLabel: string;
     rating: FeedbackRating;
-    source: "page" | "deep" | "recommendation_pick";
+    source: "page" | "deep";
   } | null>(null);
   const guideInputRef = React.useRef<HTMLTextAreaElement | null>(null);
 
@@ -91,15 +89,11 @@ export default function InsightsPage() {
   const areaParam = searchParams?.get("area") ?? "";
   React.useEffect(() => {
     if (!areaParam) return;
-
-    const idx = INSIGHTS_AREAS.findIndex((a) =>
-      a.id === "career" ? areaParam === "career" : areaParam === a.id
-    );
+    const idx = INSIGHTS_AREAS.findIndex((a) => areaParam === a.id);
     if (idx >= 0) setActiveIndex(idx);
   }, [areaParam]);
 
   const activeArea = INSIGHTS_AREAS[activeIndex];
-  const isRecommendations = activeArea.id === "career";
 
   const sectionLabelClass = dark
     ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/60"
@@ -139,12 +133,12 @@ export default function InsightsPage() {
 
   function goToArea(nextIndex: number) {
     setWhyOpen(false);
-    setRecContextOpen(false);
     setLaneContextOpen(false);
     setActiveIndex(nextIndex);
 
     // Keep URL in sync (nice for refresh/share)
-    const id = INSIGHTS_AREAS[nextIndex]?.id ?? "career";
+    const id =
+      INSIGHTS_AREAS[nextIndex]?.id ?? INSIGHTS_AREAS[0]?.id ?? "motivations";
     router.replace(`/main/insights?area=${encodeURIComponent(id)}`);
   }
 
@@ -187,33 +181,6 @@ export default function InsightsPage() {
     window.setTimeout(() => guideInputRef.current?.focus(), 50);
   }
 
-  function openRecommendationGuide(c: CareerSuggestion) {
-    const ctx = {
-      areaId: activeArea.id,
-      areaLabel: activeArea.label,
-      rating: "somewhat" as FeedbackRating,
-      source: "recommendation_pick" as const,
-    };
-
-    setGuideCtx(ctx);
-
-    const seed: GuideMsg[] = [
-      {
-        role: "guide",
-        text:
-          `Ok cool.\n\nYou picked **${c.title}**.\n\n` +
-          `Quick 3-day test:\n${c.starterExperiment}\n\n` +
-          `When could you do the *first step* — today or tomorrow?`,
-      },
-    ];
-
-    setGuideMsgs(seed);
-    setGuideDraft("");
-    setGuideOpen(true);
-
-    window.setTimeout(() => guideInputRef.current?.focus(), 50);
-  }
-
   function closeGuide() {
     setGuideOpen(false);
   }
@@ -226,9 +193,7 @@ export default function InsightsPage() {
     setGuideDraft("");
 
     const followUp =
-      guideCtx?.source === "recommendation_pick"
-        ? "Nice. What would make this test feel *easy*—time, place, or who you do it with?"
-        : guideCtx?.rating === "nope"
+      guideCtx?.rating === "nope"
         ? "Got it. What’s the *truer* pattern for you (and when does it show up most)?"
         : guideCtx?.rating === "somewhat"
         ? "Helpful. Which part should I tone down or flip, and what’s the better version?"
@@ -287,40 +252,6 @@ export default function InsightsPage() {
     "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10";
   const feedbackButtonLight =
     "border-slate-200 bg-white/85 text-slate-800 hover:bg-white";
-
-  /* ============================================================
-     Recommendations styling (LOCKED)
-     ============================================================ */
-
-  const careerDeepHref = (id: CareerSuggestion["id"]) =>
-    `/main/career/${id}?mode=explore`;
-
-  const recAccents = [
-    {
-      rail: "from-sky-300 via-cyan-300 to-indigo-300",
-      chip: "bg-sky-300/15 text-sky-100 border-sky-200/20",
-      cta: "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-sky-300/25",
-      halo: "from-sky-500/18 via-cyan-400/10 to-indigo-500/10",
-    },
-    {
-      rail: "from-emerald-300 via-teal-300 to-sky-300",
-      chip: "bg-emerald-300/15 text-emerald-100 border-emerald-200/20",
-      cta: "bg-emerald-300 text-slate-950 hover:bg-emerald-200 shadow-emerald-300/25",
-      halo: "from-emerald-500/16 via-teal-400/10 to-sky-500/10",
-    },
-    {
-      rail: "from-amber-300 via-orange-300 to-rose-300",
-      chip: "bg-amber-300/15 text-amber-100 border-amber-200/20",
-      cta: "bg-amber-300 text-slate-950 hover:bg-amber-200 shadow-amber-300/25",
-      halo: "from-amber-500/16 via-orange-400/10 to-rose-500/10",
-    },
-    {
-      rail: "from-violet-300 via-fuchsia-300 to-sky-300",
-      chip: "bg-violet-300/15 text-violet-100 border-violet-200/20",
-      cta: "bg-violet-300 text-slate-950 hover:bg-violet-200 shadow-violet-300/25",
-      halo: "from-violet-500/16 via-fuchsia-400/10 to-sky-500/10",
-    },
-  ] as const;
 
   /* ============================================================
      Trait card rendering (supports your variants)
@@ -479,7 +410,8 @@ export default function InsightsPage() {
               </div>
             ) : null}
 
-            {c.variant === "story" && (card.story?.lead || card.story?.beats?.length) ? (
+            {c.variant === "story" &&
+            (card.story?.lead || card.story?.beats?.length) ? (
               <div
                 className={`mt-3 overflow-hidden rounded-2xl border ${
                   dark ? "border-white/10" : "border-slate-200"
@@ -546,7 +478,8 @@ export default function InsightsPage() {
               </div>
             ) : null}
 
-            {c.variant === "warning" && (card.warning?.text || card.warning?.bullets?.length) ? (
+            {c.variant === "warning" &&
+            (card.warning?.text || card.warning?.bullets?.length) ? (
               <div
                 className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
                   dark
@@ -866,9 +799,7 @@ export default function InsightsPage() {
                       {activeArea.summary}
                     </span>
                   </div>
-                  <div className={`mt-2 ${pageTextMutedClass}`}>
-                    {activeArea.hint}
-                  </div>
+                  <div className={`mt-2 ${pageTextMutedClass}`}>{activeArea.hint}</div>
                   <div className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}>
                     {activeArea.coachRead}
                   </div>
@@ -887,9 +818,7 @@ export default function InsightsPage() {
                   >
                     What I’m basing this on
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        whyOpen ? "rotate-180" : ""
-                      }`}
+                      className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
@@ -912,6 +841,8 @@ export default function InsightsPage() {
       </section>
     );
   }
+// CHUNK 2/2
+// src/app/main/insights/page.tsx
 
   /* ============================================================
      Render
@@ -1049,283 +980,7 @@ export default function InsightsPage() {
           {/* =========================
              LANE CONTENT
              ========================= */}
-          {isRecommendations ? (
-            // ==========================================================
-            // RECOMMENDATIONS (LOCKED — DO NOT CHANGE)
-            // ==========================================================
-            <section className="mb-5">
-              <div
-                className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
-              >
-                <div className="pointer-events-none absolute inset-0">
-                  <div
-                    className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
-                  />
-                  <div
-                    className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
-                  />
-                </div>
-
-                <div className="relative">
-                  <div className={sectionLabelClass}>Recommendations</div>
-                  <div className="mt-2 max-w-2xl">
-                    <div
-                      className={`text-lg font-semibold ${
-                        dark ? "text-slate-50" : "text-slate-900"
-                      }`}
-                    >
-                      4 Everleap recommendations for you
-                    </div>
-                    <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
-                      Not a forever decision. Pick one lane, run a tiny test,
-                      then adjust.
-                    </div>
-                  </div>
-
-                  {activeArea.careerSuggestions?.length ? (
-                    <div className="mt-5 space-y-3">
-                      {activeArea.careerSuggestions.slice(0, 4).map((c, idx) => {
-                        const a = recAccents[idx] ?? recAccents[0];
-                        return (
-                          <div
-                            key={c.id}
-                            className={`
-                              relative overflow-hidden rounded-3xl border p-[1px]
-                              ${
-                                dark
-                                  ? "border-white/10 bg-white/5"
-                                  : "border-slate-200 bg-white/80"
-                              }
-                            `}
-                          >
-                            <div
-                              className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${a.halo}`}
-                            />
-
-                            <div
-                              aria-hidden
-                              className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full bg-gradient-to-b ${a.rail} opacity-90`}
-                            />
-
-                            <div
-                              className={`relative rounded-3xl px-5 py-4 ${
-                                dark ? "bg-slate-950/35" : "bg-white/70"
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                                      dark
-                                        ? `border-white/10 ${a.chip}`
-                                        : "border-slate-200 bg-white text-slate-800"
-                                    }`}
-                                  >
-                                    #{idx + 1}
-                                  </span>
-                                  <div
-                                    className={`text-base font-semibold ${
-                                      dark ? "text-slate-50" : "text-slate-900"
-                                    }`}
-                                  >
-                                    {c.title}
-                                  </div>
-                                </div>
-
-                                <div className={`mt-2 text-sm ${pageTextMutedClass}`}>
-                                  {c.why}
-                                </div>
-
-                                <div
-                                  className={`mt-2 text-xs ${
-                                    dark ? "text-slate-300/70" : "text-slate-600/80"
-                                  }`}
-                                >
-                                  <span className="font-semibold">Best if:</span>{" "}
-                                  {c.bestFor}
-                                </div>
-
-                                <div
-                                  className={`mt-3 text-xs ${
-                                    dark ? "text-slate-200/80" : "text-slate-700"
-                                  }`}
-                                >
-                                  <span className="font-semibold">3-day test:</span>{" "}
-                                  {c.starterExperiment}
-                                </div>
-                              </div>
-
-                              <div className="mt-4 flex flex-wrap items-center gap-2">
-                                <Link
-                                  href={careerDeepHref(c.id)}
-                                  className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-lg transition active:scale-95 ${
-                                    dark
-                                      ? `${a.cta} shadow-[0_12px_34px_rgba(0,0,0,0.35)]`
-                                      : "bg-sky-600 text-white hover:bg-sky-500"
-                                  }`}
-                                >
-                                  Dive deeper <ArrowRight className="h-4 w-4" />
-                                </Link>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openRecommendationGuide(c)}
-                                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                                    dark
-                                      ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                                  }`}
-                                >
-                                  Try this
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openGuide("somewhat", "page")}
-                                  className={`ml-auto text-xs font-semibold ${
-                                    dark
-                                      ? "text-slate-200/70 hover:text-slate-50"
-                                      : "text-slate-700/70 hover:text-slate-900"
-                                  }`}
-                                  title="Tell Everleap what to change about these picks"
-                                >
-                                  React to these
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-
-                  <div className="mt-6">
-                    <div
-                      className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
-                    >
-                      Quick check
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openGuide("mostly", "page")}
-                        className={`${feedbackButtonBase} ${
-                          dark ? feedbackButtonDark : feedbackButtonLight
-                        }`}
-                      >
-                        👍 These fit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openGuide("somewhat", "page")}
-                        className={`${feedbackButtonBase} ${
-                          dark ? feedbackButtonDark : feedbackButtonLight
-                        }`}
-                      >
-                        😐 Kinda
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openGuide("nope", "page")}
-                        className={`${feedbackButtonBase} ${
-                          dark ? feedbackButtonDark : feedbackButtonLight
-                        }`}
-                      >
-                        👎 Nope
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setRecContextOpen((o) => !o)}
-                      className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-                        dark
-                          ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                          : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                      }`}
-                      aria-expanded={recContextOpen}
-                    >
-                      More context
-                      <ChevronDown
-                        className={`h-4 w-4 transition-transform ${
-                          recContextOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={openDeepDive}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/35 transition hover:bg-amber-200 active:scale-95"
-                    >
-                      Go deeper <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {recContextOpen ? (
-                    <div className="mt-4 space-y-4">
-                      <div
-                        className={`rounded-2xl border px-4 py-3 text-sm ${
-                          dark
-                            ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
-                            : "border-slate-200 bg-white/80 text-slate-700"
-                        }`}
-                      >
-                        <div className="font-semibold">What I’m noticing</div>
-                        <div className={`mt-2 ${pageTextMutedClass}`}>
-                          <span className={dark ? "text-slate-100" : "text-slate-900"}>
-                            {activeArea.summary}
-                          </span>
-                        </div>
-                        <div className={`mt-2 ${pageTextMutedClass}`}>
-                          {activeArea.hint}
-                        </div>
-                        <div className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}>
-                          {activeArea.coachRead}
-                        </div>
-                      </div>
-
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setWhyOpen((o) => !o)}
-                          className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                            dark
-                              ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                              : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                          }`}
-                          aria-expanded={whyOpen}
-                        >
-                          What I’m basing this on
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${
-                              whyOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {whyOpen ? (
-                          <div
-                            className={`relative mt-3 rounded-2xl border px-4 py-3 text-sm ${
-                              dark
-                                ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
-                                : "border-slate-200 bg-white/80 text-slate-700"
-                            }`}
-                          >
-                            {activeArea.about}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-          ) : (
-            <LaneCard />
-          )}
+          <LaneCard />
         </main>
 
         <BottomNav />
@@ -1388,20 +1043,6 @@ export default function InsightsPage() {
                           👎 Not really
                         </button>
                       </div>
-
-                      {activeArea.id === "career" && activeArea.careerSuggestions?.length ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {activeArea.careerSuggestions.slice(0, 4).map((c) => (
-                            <Link
-                              key={c.id}
-                              href={careerDeepHref(c.id)}
-                              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
-                            >
-                              {c.id.toUpperCase()} <ArrowRight className="h-3 w-3" />
-                            </Link>
-                          ))}
-                        </div>
-                      ) : null}
                     </div>
 
                     <button
@@ -1481,10 +1122,7 @@ export default function InsightsPage() {
                       </div>
                       {guideCtx ? (
                         <div className="mt-1 text-sm text-slate-300/85">
-                          {guideCtx.areaLabel}
-                          {guideCtx.source === "recommendation_pick"
-                            ? " • picked a lane"
-                            : ` • ${labelForRating(guideCtx.rating)}`}
+                          {guideCtx.areaLabel} • {labelForRating(guideCtx.rating)}
                         </div>
                       ) : null}
                     </div>
