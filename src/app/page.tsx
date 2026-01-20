@@ -43,18 +43,52 @@ export default function HomePage() {
     };
   }, []);
 
-  // Autoplay attempt
+  // Autoplay attempt (iOS-friendly: retry after metadata)
   React.useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
     if (!videoError) {
       v.muted = true;
-      v.play().catch(() => {});
-    } else {
-      v.pause();
+
+      const tryPlay = () => {
+        // iOS sometimes requires multiple attempts; ignore failures silently.
+        v.play().catch(() => {});
+      };
+
+      tryPlay();
+
+      const onMeta = () => {
+        // metadata is the most reliable iOS event that indicates the file is loaded
+        setVideoReady(true);
+        tryPlay();
+      };
+
+      v.addEventListener("loadedmetadata", onMeta);
+
+      return () => {
+        v.removeEventListener("loadedmetadata", onMeta);
+      };
     }
+
+    v.pause();
   }, [videoError]);
+
+  // Failsafe: if iOS never fires canplay/loadeddata, don't keep video invisible forever
+  React.useEffect(() => {
+    if (videoError) return;
+    if (videoReady) return;
+
+    const t = window.setTimeout(() => {
+      const v = videoRef.current;
+      if (!v) return;
+
+      // If the browser has ANY data, show it.
+      if (v.readyState >= 1) setVideoReady(true);
+    }, 1200);
+
+    return () => window.clearTimeout(t);
+  }, [videoError, videoReady]);
 
   const shouldRenderVideo = !videoError;
 
@@ -94,22 +128,21 @@ export default function HomePage() {
             loop
             playsInline
             preload="metadata"
+            // iOS: metadata is the reliable early signal
+            onLoadedMetadata={() => setVideoReady(true)}
             onLoadedData={() => setVideoReady(true)}
             onCanPlay={() => setVideoReady(true)}
             onError={() => setVideoError(true)}
             aria-hidden
           >
-            {/* Best compression first */}
             <source src="/video/home.webm" type="video/webm" />
 
-            {/* Mobile friendly */}
             <source
               src="/video/home_1080.mp4"
               type="video/mp4"
               media="(max-width: 900px)"
             />
 
-            {/* Canonical master */}
             <source src="/video/home.mp4" type="video/mp4" />
           </video>
         )}
