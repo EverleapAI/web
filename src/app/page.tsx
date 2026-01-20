@@ -183,7 +183,7 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
       </h1>
 
       <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 md:text-base">
-        Big dreams start with small conversations. Let’s begin.
+        Big dreams start with small conversations.
       </p>
 
       <div className="mt-7 flex justify-center md:mt-8">
