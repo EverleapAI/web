@@ -4,14 +4,34 @@ import * as React from "react";
 import Link from "next/link";
 import BrandBadge from "@/components/site/BrandBadge";
 
+type HeroVariant = "boy" | "girl";
+
+const HERO_VARIANTS: { key: HeroVariant; src: string }[] = [
+  { key: "boy", src: "/video/homeBoy.mp4" },
+  { key: "girl", src: "/video/homeGirl.mp4" },
+];
+
+function pickHeroVariant(): HeroVariant {
+  return Math.random() < 0.5 ? "boy" : "girl";
+}
+
 export default function HomePage() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [motionOk, setMotionOk] = React.useState(true);
   const [videoError, setVideoError] = React.useState(false);
 
+  // Hydration-safe: don't randomize during SSR. Pick once after mount.
+  const [hero, setHero] = React.useState<HeroVariant | null>(null);
+  React.useEffect(() => {
+    setHero(pickHeroVariant());
+  }, []);
+
   // Auth gate (backed by middleware + /api/auth-check).
   // null = checking, false = not authed, true = authed
   const [authed, setAuthed] = React.useState<boolean | null>(null);
+
+  const heroSrc =
+    HERO_VARIANTS.find((h) => h.key === hero)?.src ?? HERO_VARIANTS[0].src;
 
   // Respect prefers-reduced-motion
   React.useEffect(() => {
@@ -23,10 +43,7 @@ export default function HomePage() {
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  // Check whether the visitor is already authenticated.
-  // IMPORTANT: This requires you to create:
-  //   src/app/api/auth-check/route.ts  (simple GET that returns 200 JSON)
-  // And to protect the site with middleware Basic Auth.
+  // Check whether the visitor is already authenticated
   React.useEffect(() => {
     let alive = true;
 
@@ -45,27 +62,28 @@ export default function HomePage() {
     };
   }, []);
 
-  // Try to autoplay if allowed (and if we're not showing the auth overlay)
+  // Try to autoplay if allowed
   React.useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
-    // If we’re showing the overlay, we can still let the video run (looks nice),
-    // but we’ll pause if reduced motion is requested or video errored.
-    if (motionOk && !videoError) {
+    if (motionOk && hero && !videoError) {
       v.muted = true; // required for autoplay
       v.play().catch(() => {});
     } else {
       v.pause();
     }
-  }, [motionOk, videoError]);
+  }, [motionOk, hero, videoError]);
+
+  const shouldRenderVideo = motionOk && !videoError && hero !== null;
 
   return (
     <div className="relative flex min-h-[100svh] flex-col bg-app">
       {/* Background video */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        {!videoError && (
+        {shouldRenderVideo && (
           <video
+            key={hero}
             ref={videoRef}
             className="h-full w-full object-cover"
             autoPlay
@@ -76,7 +94,7 @@ export default function HomePage() {
             onError={() => setVideoError(true)}
             aria-hidden
           >
-            <source src="/video/background.mp4" type="video/mp4" />
+            <source src={heroSrc} type="video/mp4" />
           </video>
         )}
 
@@ -90,37 +108,33 @@ export default function HomePage() {
       {/* Centered hero card */}
       <main className="relative z-10 flex flex-1 items-center justify-center px-4">
         <section className="w-full max-w-3xl">
-          {/* If NOT authenticated, show a “lock screen” overlay card on top of the video */}
           {authed === false ? (
             <AuthOverlay />
           ) : (
-            <div className="w-full rounded-3xl border border-white/12 bg-slate-950/70 px-6 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.8)] backdrop-blur-md md:px-8 md:py-10">
+            <div className="w-full rounded-3xl border border-white/10 bg-slate-950/58 px-6 py-7 text-center shadow-[0_18px_70px_rgba(0,0,0,0.72)] backdrop-blur-lg md:px-8 md:py-10">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-sky-200/80">
-                Everleap · Your guide
+                Everleap · figure stuff out
               </p>
 
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                Let&apos;s talk about what&apos;s next for you.
+                Understand yourself. Explore what fits.
               </h1>
 
-              <p className="mt-4 mx-auto max-w-xl text-sm text-white/85 md:text-base">
+              <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 md:text-base">
                 Big dreams start with small conversations. Let’s begin.
               </p>
 
               <div className="mt-7 flex justify-center md:mt-8">
                 <Link
                   href="/consent"
-                  className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/5 px-6 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition hover:bg-white/10 active:scale-[0.99]"
+                  className="inline-flex items-center justify-center rounded-full border border-white/35 bg-white/10 px-6 py-2.5 text-sm font-medium text-white shadow-sm ring-1 ring-white/15 backdrop-blur-sm transition hover:-translate-y-[1px] hover:bg-white/14 hover:shadow-md active:translate-y-0 active:scale-[0.99]"
                 >
-                  Start talking to Everleap
+                  Start talking
                 </Link>
               </div>
 
-              {/* While auth status is still being checked, keep things subtle */}
               {authed === null && (
-                <p className="mt-5 text-xs text-white/55">
-                  Checking access…
-                </p>
+                <p className="mt-5 text-xs text-white/55">Checking access…</p>
               )}
             </div>
           )}
@@ -131,10 +145,6 @@ export default function HomePage() {
 }
 
 function AuthOverlay() {
-  // NOTE:
-  // This UI does NOT handle credentials itself (do NOT put passwords in React).
-  // Real protection is done by Basic Auth in middleware (server-side).
-  // Clicking Sign in forces a reload; the browser will prompt for username/password.
   return (
     <div className="w-full rounded-3xl border border-white/14 bg-slate-950/75 px-6 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.85)] backdrop-blur-md md:px-8 md:py-10">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-sky-200/80">
@@ -145,7 +155,7 @@ function AuthOverlay() {
         Authorized access only
       </h1>
 
-      <p className="mt-4 mx-auto max-w-xl text-sm text-white/80 md:text-base">
+      <p className="mx-auto mt-4 max-w-xl text-sm text-white/80 md:text-base">
         This preview is currently locked. Please sign in to continue.
       </p>
 
@@ -159,8 +169,8 @@ function AuthOverlay() {
         </button>
 
         <p className="text-xs text-white/55">
-          If you don’t see a login prompt, your browser may have cached credentials.
-          Try a hard refresh or open a private window.
+          If you don’t see a login prompt, your browser may have cached
+          credentials. Try a hard refresh or open a private window.
         </p>
       </div>
     </div>
