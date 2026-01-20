@@ -17,7 +17,6 @@ function pickHeroVariant(): HeroVariant {
 
 export default function HomePage() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
-  const [motionOk, setMotionOk] = React.useState(true);
   const [videoError, setVideoError] = React.useState(false);
 
   // Hydration-safe: don't randomize during SSR. Pick once after mount.
@@ -32,16 +31,6 @@ export default function HomePage() {
 
   const heroSrc =
     HERO_VARIANTS.find((h) => h.key === hero)?.src ?? HERO_VARIANTS[0].src;
-
-  // Respect prefers-reduced-motion
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const apply = () => setMotionOk(!mq.matches);
-    apply();
-    mq.addEventListener?.("change", apply);
-    return () => mq.removeEventListener?.("change", apply);
-  }, []);
 
   // Check whether the visitor is already authenticated
   React.useEffect(() => {
@@ -62,20 +51,34 @@ export default function HomePage() {
     };
   }, []);
 
-  // Try to autoplay if allowed
+  // Autoplay attempt (best-effort).
   React.useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
 
-    if (motionOk && hero && !videoError) {
-      v.muted = true; // required for autoplay
+    if (!videoError && hero) {
+      v.muted = true;
       v.play().catch(() => {});
     } else {
       v.pause();
     }
-  }, [motionOk, hero, videoError]);
+  }, [videoError, hero]);
 
-  const shouldRenderVideo = motionOk && !videoError && hero !== null;
+  const shouldRenderVideo = !videoError && hero !== null;
+
+  // Mobile reframing (gentle). We'll rely more on the card moving aside.
+  const objectPos =
+    hero === "boy"
+      ? "object-[30%_45%]"
+      : hero === "girl"
+        ? "object-[70%_45%]"
+        : "";
+
+  // Mobile: dock the card away from the subject so they stay visible.
+  // - Boy is typically left → card right (ml-auto)
+  // - Girl is typically right → card left (mr-auto)
+  const mobileCardSideClass =
+    hero === "boy" ? "ml-auto" : hero === "girl" ? "mr-auto" : "mx-auto";
 
   return (
     <div className="relative flex min-h-[100svh] flex-col bg-app">
@@ -85,7 +88,15 @@ export default function HomePage() {
           <video
             key={hero}
             ref={videoRef}
-            className="h-full w-full object-cover"
+            className={[
+              "h-full w-full object-cover",
+              objectPos,
+              "md:object-center",
+              // Respect reduced motion without JS
+              "motion-reduce:hidden",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             autoPlay
             muted
             loop
@@ -98,6 +109,11 @@ export default function HomePage() {
           </video>
         )}
 
+        {/* Reduced-motion fallback (no motion). */}
+        <div className="absolute inset-0 hidden motion-reduce:block">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/65" />
+        </div>
+
         {/* Top + bottom scrims for readability */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-24 top-scrim" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/75 via-black/40 to-transparent" />
@@ -105,13 +121,25 @@ export default function HomePage() {
 
       <BrandBadge />
 
-      {/* Centered hero card */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4">
+      {/* Hero card: mobile bottom + side-docked; md+ centered */}
+      <main className="relative z-10 flex flex-1 items-end justify-center px-4 pb-14 md:items-center md:pb-0">
         <section className="w-full max-w-3xl">
           {authed === false ? (
             <AuthOverlay />
           ) : (
-            <div className="w-full rounded-3xl border border-white/10 bg-slate-950/58 px-6 py-7 text-center shadow-[0_18px_70px_rgba(0,0,0,0.72)] backdrop-blur-lg md:px-8 md:py-10">
+            <div
+              className={[
+                // Mobile: narrower and side-docked so we don't cover the subject
+                "w-full max-w-[26rem]",
+                mobileCardSideClass,
+                // md+: go back to centered, full-width within max-w-3xl
+                "md:mx-auto md:max-w-none",
+                // Card styling
+                "rounded-3xl border border-white/10 bg-slate-950/58 px-6 py-7 text-center",
+                "shadow-[0_18px_70px_rgba(0,0,0,0.72)] backdrop-blur-lg",
+                "md:px-8 md:py-10",
+              ].join(" ")}
+            >
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-sky-200/80">
                 Everleap · figure stuff out
               </p>
