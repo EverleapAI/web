@@ -214,7 +214,7 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
       </h1>
 
       <p className="mx-auto mt-3 max-w-[26rem] text-sm text-white/85">
-        Big dreams start with small conversations. Let’s begin.
+        Big dreams start with small conversations.
       </p>
 
       <div className="mt-5 flex justify-center">
