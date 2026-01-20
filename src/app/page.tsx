@@ -5,11 +5,23 @@ import Link from "next/link";
 import Image from "next/image";
 import BrandBadge from "@/components/site/BrandBadge";
 
+type Phase = "boy" | "girl";
+
 export default function HomePage() {
-  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const boyRef = React.useRef<HTMLVideoElement>(null);
+  const girlRef = React.useRef<HTMLVideoElement>(null);
 
   const [videoError, setVideoError] = React.useState(false);
-  const [videoReady, setVideoReady] = React.useState(false);
+
+  const [boyReady, setBoyReady] = React.useState(false);
+  const [girlReady, setGirlReady] = React.useState(false);
+
+  const [phase, setPhase] = React.useState<Phase>("boy");
+
+  // Guard so we don’t retrigger fade repeatedly during timeupdate
+  const fadingRef = React.useRef(false);
+
+  const FADE_S = 1.4;
 
   // Breakpoint detector (md = 768px)
   const [isDesktop, setIsDesktop] = React.useState(false);
@@ -43,35 +55,132 @@ export default function HomePage() {
     };
   }, []);
 
-  // Autoplay attempt (iOS friendly)
-  React.useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-
-    if (!videoError) {
-      v.muted = true;
-
-      const tryPlay = () => v.play().catch(() => {});
-
-      tryPlay();
-
-      const onMeta = () => {
-        setVideoReady(true);
-        tryPlay();
-      };
-
-      v.addEventListener("loadedmetadata", onMeta);
-      return () => v.removeEventListener("loadedmetadata", onMeta);
-    }
-
-    v.pause();
-  }, [videoError]);
-
-  const shouldRenderVideo = !videoError;
-
   // Mobile crop (approved)
   const mobileObjectPosition = "18% 52%";
   const effectiveObjectPosition = isDesktop ? "50% 50%" : mobileObjectPosition;
+
+  const safePlay = React.useCallback((v: HTMLVideoElement | null) => {
+    if (!v) return;
+    try {
+      v.muted = true;
+      const p = v.play();
+      if (p && typeof (p as Promise<void>).catch === "function") {
+        (p as Promise<void>).catch(() => {});
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  const safePause = React.useCallback((v: HTMLVideoElement | null) => {
+    if (!v) return;
+    try {
+      v.pause();
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  const safeReset = React.useCallback((v: HTMLVideoElement | null) => {
+    if (!v) return;
+    try {
+      v.currentTime = 0;
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  const startFadeTo = React.useCallback(
+    (next: Phase) => {
+      if (videoError) return;
+      if (fadingRef.current) return;
+
+      const boy = boyRef.current;
+      const girl = girlRef.current;
+      if (!boy || !girl) return;
+
+      const fromV = phase === "boy" ? boy : girl;
+      const toV = next === "boy" ? boy : girl;
+
+      fadingRef.current = true;
+
+      // Ensure target is ready to play from start
+      safeReset(toV);
+      safePlay(toV);
+
+      // Trigger CSS crossfade
+      setPhase(next);
+
+      // After fade duration, pause/reset the previous and clear fading flag
+      window.setTimeout(() => {
+        safePause(fromV);
+        safeReset(fromV);
+        fadingRef.current = false;
+      }, Math.round(FADE_S * 1000));
+    },
+    [FADE_S, phase, safePause, safePlay, safeReset, videoError]
+  );
+
+  // Initial kickoff once we have at least the boy element mounted
+  React.useEffect(() => {
+    if (videoError) return;
+    const boy = boyRef.current;
+    const girl = girlRef.current;
+    if (!boy || !girl) return;
+
+    // Prime both for autoplay behavior
+    boy.muted = true;
+    girl.muted = true;
+
+    // Start on boy
+    setPhase("boy");
+    safeReset(girl);
+    safePause(girl);
+    safePlay(boy);
+  }, [safePause, safePlay, safeReset, videoError]);
+
+  // Shared handler: if a clip is close to its end, fade to the other
+  const handleTimeUpdate = React.useCallback(
+    (who: Phase) => {
+      if (videoError) return;
+      if (fadingRef.current) return;
+      if (phase !== who) return; // only drive transitions off the currently visible clip
+
+      const v = who === "boy" ? boyRef.current : girlRef.current;
+      if (!v) return;
+
+      const d = v.duration;
+      const t = v.currentTime;
+
+      // duration can be NaN/Infinity early; ignore until valid
+      if (!Number.isFinite(d) || d <= 0) return;
+
+      // Trigger when we’re within FADE_S of the end
+      if (t >= d - FADE_S) {
+        startFadeTo(who === "boy" ? "girl" : "boy");
+      }
+    },
+    [FADE_S, phase, startFadeTo, videoError]
+  );
+
+  // Hard fallback if a clip ends before timeupdate triggers (Safari quirks)
+  const handleEnded = React.useCallback(
+    (who: Phase) => {
+      if (videoError) return;
+
+      // If we somehow reached ended without fading, switch immediately
+      if (phase === who) {
+        startFadeTo(who === "boy" ? "girl" : "boy");
+      }
+    },
+    [phase, startFadeTo, videoError]
+  );
+
+  const shouldRenderVideo = !videoError;
+  const anyReady = boyReady || girlReady;
+
+  const boyOpacity = anyReady ? (phase === "boy" ? "opacity-100" : "opacity-0") : "opacity-0";
+  const girlOpacity = anyReady ? (phase === "girl" ? "opacity-100" : "opacity-0") : "opacity-0";
 
   return (
     <div className="relative flex min-h-[100svh] flex-col bg-app">
@@ -89,44 +198,61 @@ export default function HomePage() {
           style={{ objectPosition: effectiveObjectPosition }}
         />
 
-        {/* Video — ONLY home.mp4, nothing else */}
+        {/* Videos — crossfaded in code */}
         {shouldRenderVideo && (
-          <video
-            ref={videoRef}
-            poster="/video/home.jpg"
-            className={[
-              "absolute inset-0 h-full w-full object-cover transition-opacity duration-700",
-              videoReady ? "opacity-100" : "opacity-0",
-              "motion-reduce:hidden",
-            ].join(" ")}
-            style={{ objectPosition: effectiveObjectPosition }}
-            autoPlay
-            muted
-            playsInline
-            preload="metadata"
-            onLoadedMetadata={() => setVideoReady(true)}
-            onLoadedData={() => setVideoReady(true)}
-            onCanPlay={() => setVideoReady(true)}
-            onError={() => setVideoError(true)}
-            onEnded={() => {
-              const v = videoRef.current;
-              if (!v) return;
+          <>
+            {/* BOY */}
+            <video
+              ref={boyRef}
+              poster="/video/home.jpg"
+              className={[
+                "absolute inset-0 h-full w-full object-cover transition-opacity",
+                "duration-[1400ms]",
+                boyOpacity,
+                "motion-reduce:hidden",
+              ].join(" ")}
+              style={{ objectPosition: effectiveObjectPosition }}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              onLoadedMetadata={() => setBoyReady(true)}
+              onLoadedData={() => setBoyReady(true)}
+              onCanPlay={() => setBoyReady(true)}
+              onTimeUpdate={() => handleTimeUpdate("boy")}
+              onEnded={() => handleEnded("boy")}
+              onError={() => setVideoError(true)}
+              aria-hidden
+            >
+              <source src="/video/homeBoy.mp4" type="video/mp4" />
+            </video>
 
-              // Manual loop for Safari safety
-              try {
-                v.currentTime = 0;
-                const p = v.play();
-                if (p && typeof (p as Promise<void>).catch === "function") {
-                  (p as Promise<void>).catch(() => {});
-                }
-              } catch {
-                // no-op
-              }
-            }}
-            aria-hidden
-          >
-            <source src="/video/home.mp4" type="video/mp4" />
-          </video>
+            {/* GIRL */}
+            <video
+              ref={girlRef}
+              poster="/video/home.jpg"
+              className={[
+                "absolute inset-0 h-full w-full object-cover transition-opacity",
+                "duration-[1400ms]",
+                girlOpacity,
+                "motion-reduce:hidden",
+              ].join(" ")}
+              style={{ objectPosition: effectiveObjectPosition }}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              onLoadedMetadata={() => setGirlReady(true)}
+              onLoadedData={() => setGirlReady(true)}
+              onCanPlay={() => setGirlReady(true)}
+              onTimeUpdate={() => handleTimeUpdate("girl")}
+              onEnded={() => handleEnded("girl")}
+              onError={() => setVideoError(true)}
+              aria-hidden
+            >
+              <source src="/video/homeGirl.mp4" type="video/mp4" />
+            </video>
+          </>
         )}
 
         {/* Reduced-motion overlay */}
@@ -134,9 +260,12 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/65" />
         </div>
 
-        {/* Scrims */}
+        {/* Scrims (strengthen desktop separation without affecting mobile) */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-24 top-scrim" />
+        {/* Base scrim (keeps your current mobile look) */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/80 via-black/45 to-transparent md:h-64" />
+        {/* Desktop-only vignette to keep the subject from getting “lost” behind the card */}
+        <div className="pointer-events-none absolute inset-0 hidden md:block bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
       </div>
 
       <BrandBadge />
@@ -146,22 +275,14 @@ export default function HomePage() {
         {/* Desktop/tablet centered card */}
         <div className="hidden flex-1 items-center justify-center px-4 md:flex">
           <section className="w-full max-w-3xl">
-            {authed === false ? (
-              <AuthOverlay />
-            ) : (
-              <DesktopHeroCard authed={authed} />
-            )}
+            {authed === false ? <AuthOverlay /> : <DesktopHeroCard authed={authed} />}
           </section>
         </div>
 
         {/* Mobile bottom sheet */}
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 md:hidden">
           <section className="pointer-events-auto px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
-            {authed === false ? (
-              <AuthOverlay />
-            ) : (
-              <MobileBottomSheet authed={authed} />
-            )}
+            {authed === false ? <AuthOverlay /> : <MobileBottomSheet authed={authed} />}
           </section>
         </div>
       </main>
@@ -169,7 +290,7 @@ export default function HomePage() {
   );
 }
 
-/* ---- cards unchanged ---- */
+/* ---- cards unchanged (except tiny desktop typography nudge) ---- */
 
 function DesktopHeroCard({ authed }: { authed: boolean | null }) {
   return (
@@ -178,11 +299,11 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
         Everleap · figure stuff out
       </p>
 
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-[2.15rem]">
         Understand yourself. Explore what fits.
       </h1>
 
-      <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 md:text-base">
+      <p className="mx-auto mt-4 max-w-xl text-sm text-white/90 md:text-base">
         Big dreams start with small conversations.
       </p>
 
@@ -195,9 +316,7 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
         </Link>
       </div>
 
-      {authed === null && (
-        <p className="mt-5 text-xs text-white/55">Checking access…</p>
-      )}
+      {authed === null && <p className="mt-5 text-xs text-white/55">Checking access…</p>}
     </div>
   );
 }
@@ -226,9 +345,7 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
         </Link>
       </div>
 
-      {authed === null && (
-        <p className="mt-4 text-xs text-white/55">Checking access…</p>
-      )}
+      {authed === null && <p className="mt-4 text-xs text-white/55">Checking access…</p>}
     </div>
   );
 }
@@ -258,8 +375,8 @@ function AuthOverlay() {
         </button>
 
         <p className="text-xs text-white/55">
-          If you don’t see a login prompt, your browser may have cached
-          credentials. Try a hard refresh or open a private window.
+          If you don’t see a login prompt, your browser may have cached credentials. Try a hard refresh
+          or open a private window.
         </p>
       </div>
     </div>
