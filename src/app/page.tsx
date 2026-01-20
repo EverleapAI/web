@@ -77,7 +77,7 @@ export default function HomePage() {
     <div className="relative flex min-h-[100svh] flex-col bg-app">
       {/* ===== BACKGROUND LAYER ===== */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        {/* Poster */}
+        {/* Poster (always present as base layer) */}
         <Image
           src="/video/home.jpg"
           alt=""
@@ -89,7 +89,7 @@ export default function HomePage() {
           style={{ objectPosition: effectiveObjectPosition }}
         />
 
-        {/* Video with WebM + MP4 fallback (Safari-safe) */}
+        {/* Video — ONLY home.mp4, nothing else */}
         {shouldRenderVideo && (
           <video
             ref={videoRef}
@@ -102,16 +102,29 @@ export default function HomePage() {
             style={{ objectPosition: effectiveObjectPosition }}
             autoPlay
             muted
-            loop
             playsInline
             preload="metadata"
             onLoadedMetadata={() => setVideoReady(true)}
             onLoadedData={() => setVideoReady(true)}
             onCanPlay={() => setVideoReady(true)}
             onError={() => setVideoError(true)}
+            onEnded={() => {
+              const v = videoRef.current;
+              if (!v) return;
+
+              // Manual loop for Safari safety
+              try {
+                v.currentTime = 0;
+                const p = v.play();
+                if (p && typeof (p as Promise<void>).catch === "function") {
+                  (p as Promise<void>).catch(() => {});
+                }
+              } catch {
+                // no-op
+              }
+            }}
             aria-hidden
           >
-            <source src="/video/home.webm" type="video/webm" />
             <source src="/video/home.mp4" type="video/mp4" />
           </video>
         )}
