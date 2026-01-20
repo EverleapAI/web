@@ -5,28 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import BrandBadge from "@/components/site/BrandBadge";
 
-type HeroVariant = "boy" | "girl";
-
-const HERO_VARIANTS: { key: HeroVariant; src: string }[] = [
-  { key: "boy", src: "/video/homeBoy.mp4" },
-  { key: "girl", src: "/video/homeGirl.mp4" },
-];
-
-function pickHeroVariant(): HeroVariant {
-  return Math.random() < 0.5 ? "boy" : "girl";
-}
-
 export default function HomePage() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
   const [videoError, setVideoError] = React.useState(false);
   const [videoReady, setVideoReady] = React.useState(false);
-
-  // Pick once after mount
-  const [hero, setHero] = React.useState<HeroVariant | null>(null);
-  React.useEffect(() => {
-    setHero(pickHeroVariant());
-  }, []);
 
   // Breakpoint detector (md = 768px)
   const [isDesktop, setIsDesktop] = React.useState(false);
@@ -41,9 +24,6 @@ export default function HomePage() {
 
   // Auth gate
   const [authed, setAuthed] = React.useState<boolean | null>(null);
-
-  const heroSrc =
-    HERO_VARIANTS.find((h) => h.key === hero)?.src ?? HERO_VARIANTS[0].src;
 
   React.useEffect(() => {
     let alive = true;
@@ -68,19 +48,18 @@ export default function HomePage() {
     const v = videoRef.current;
     if (!v) return;
 
-    if (!videoError && hero) {
+    if (!videoError) {
       v.muted = true;
       v.play().catch(() => {});
     } else {
       v.pause();
     }
-  }, [videoError, hero]);
+  }, [videoError]);
 
-  const shouldRenderVideo = !videoError && hero !== null;
+  const shouldRenderVideo = !videoError;
 
-  // ✅ Mobile crop (what you approved)
+  // Mobile crop (approved)
   const mobileObjectPosition = "18% 52%";
-  // ✅ Desktop crop should be centered so subject stays out from behind the card
   const effectiveObjectPosition = isDesktop ? "50% 50%" : mobileObjectPosition;
 
   return (
@@ -99,10 +78,9 @@ export default function HomePage() {
           style={{ objectPosition: effectiveObjectPosition }}
         />
 
-        {/* Video */}
+        {/* Video with WebM + MP4 fallbacks */}
         {shouldRenderVideo && (
           <video
-            key={hero}
             ref={videoRef}
             poster="/video/home.jpg"
             className={[
@@ -121,7 +99,18 @@ export default function HomePage() {
             onError={() => setVideoError(true)}
             aria-hidden
           >
-            <source src={heroSrc} type="video/mp4" />
+            {/* Best compression first */}
+            <source src="/video/home.webm" type="video/webm" />
+
+            {/* Mobile friendly */}
+            <source
+              src="/video/home_1080.mp4"
+              type="video/mp4"
+              media="(max-width: 900px)"
+            />
+
+            {/* Canonical master */}
+            <source src="/video/home.mp4" type="video/mp4" />
           </video>
         )}
 
