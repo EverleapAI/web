@@ -88,7 +88,8 @@ type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 type VoiceTarget = "name" | "zip" | "activitiesOther";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-const RETORT_MS = 4000;
+const RETORT_MS_DEFAULT = 5000;
+const RETORT_MS_FUN = 6000;
 
 /* ============================================================
    Copy (minimal)
@@ -176,6 +177,10 @@ function joinNatural(list: string[]) {
   if (clean.length === 1) return clean[0]!;
   if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
   return `${clean.slice(0, -1).join(", ")}, and ${clean[clean.length - 1]}`;
+}
+
+function getRetortMs(fromStep: StepId) {
+  return fromStep === "fun" ? RETORT_MS_FUN : RETORT_MS_DEFAULT;
 }
 
 /* ============================================================
@@ -344,7 +349,9 @@ function MinimalTextarea({
           onClick={onSubmit}
           disabled={!canSubmit}
           className={`h-10 w-10 rounded-full transition active:scale-95 ${
-            canSubmit ? "bg-white/80 text-black hover:bg-white" : "bg-white/10 text-white/35 cursor-not-allowed"
+            canSubmit
+              ? "bg-white/80 text-black hover:bg-white"
+              : "bg-white/10 text-white/35 cursor-not-allowed"
           }`}
           aria-label="Send"
           title="Send"
@@ -490,25 +497,24 @@ function buildRetort(args: {
   }
 
   if (fromStep === "fun") {
-    // Make it playful + "smart hint" + a wink about speed (vibe, not destiny)
     const quick = typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
     const slow = typeof funLatencyMs === "number" && funLatencyMs >= 1800;
 
     const tempoTag = quick ? "Fast pick." : slow ? "Considered pick." : "";
 
     if (funChoice === "dog") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Dog energy: warm-signal, loyal-core. You probably read people’s moods before they speak. (Vibe, not destiny.)`;
+      return `${tempoTag ? `${tempoTag} ` : ""}Dog energy: warm-signal, loyal-core. You probably read people’s moods before they speak. It’s a vibe, not destiny.`;
     }
     if (funChoice === "cat") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Cat energy: independent mind, high standards. You spot patterns and nonsense pretty quickly. (Vibe, not destiny.)`;
+      return `${tempoTag ? `${tempoTag} ` : ""}Cat energy: independent mind, high standards. You spot patterns and nonsense pretty quickly. It’s a vibe, not destiny.`;
     }
     if (funChoice === "bearded_dragon") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Bearded dragon energy: calm confidence + original taste. You’re not here for generic options. (Vibe, not destiny.)`;
+      return `${tempoTag ? `${tempoTag} ` : ""}Bearded dragon energy: calm confidence + original taste. You’re not here for generic options. It’s a vibe, not destiny.`;
     }
     if (funChoice === "rock") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Rock energy: minimalist focus, unshakeable calm. You’d rather be solid than loud. (Vibe, not destiny.)`;
+      return `${tempoTag ? `${tempoTag} ` : ""}Rock energy: minimalist focus, unshakeable calm. You’d rather be solid than loud. It’s a vibe, not destiny.`;
     }
-    return "Nice pick. (Vibe, not destiny.)";
+    return "Nice pick. It’s a vibe, not destiny.";
   }
 
   return "Perfect. That gives me enough to keep going.";
@@ -713,6 +719,10 @@ export default function OnboardingPage() {
   // Fun "how did you pick" (speed hint)
   const funShownAtRef = React.useRef<number | null>(null);
 
+  // PostPlans & Activities auto-submit debounce
+  const postPlansAutoTimerRef = React.useRef<number | null>(null);
+  const activitiesAutoTimerRef = React.useRef<number | null>(null);
+
   // Persist (optional)
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -752,10 +762,26 @@ export default function OnboardingPage() {
     }
   }
 
+  function clearPostPlansAutoTimer() {
+    if (postPlansAutoTimerRef.current) {
+      window.clearTimeout(postPlansAutoTimerRef.current);
+      postPlansAutoTimerRef.current = null;
+    }
+  }
+
+  function clearActivitiesAutoTimer() {
+    if (activitiesAutoTimerRef.current) {
+      window.clearTimeout(activitiesAutoTimerRef.current);
+      activitiesAutoTimerRef.current = null;
+    }
+  }
+
   // Cleanup
   React.useEffect(() => {
     return () => {
       clearRetortTimer();
+      clearPostPlansAutoTimer();
+      clearActivitiesAutoTimer();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -768,6 +794,9 @@ export default function OnboardingPage() {
 
   // On step change: stop listening, reset draft, unlock
   React.useEffect(() => {
+    clearPostPlansAutoTimer();
+    clearActivitiesAutoTimer();
+
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -965,6 +994,8 @@ export default function OnboardingPage() {
     setRetortText(t);
     setScreenMode("retort");
 
+    const waitMs = getRetortMs(fromStep);
+
     retortTimerRef.current = window.setTimeout(() => {
       clearRetortTimer();
       setRetortText(null);
@@ -972,7 +1003,7 @@ export default function OnboardingPage() {
       setScreenMode("question");
       goNextStep();
       advanceLockRef.current = false;
-    }, RETORT_MS);
+    }, waitMs);
   }
 
   function showFunRetortThenCompletion(choice: FunChoice) {
@@ -1008,7 +1039,7 @@ export default function OnboardingPage() {
       // Final flow: fun retort -> completion -> summary
       setScreenMode("completion");
       advanceLockRef.current = false;
-    }, RETORT_MS);
+    }, getRetortMs("fun"));
   }
 
   function skipRetort() {
@@ -1095,24 +1126,21 @@ export default function OnboardingPage() {
   }
 
   function togglePostPlan(key: PostPlanKey) {
-    if (key === "no_idea") {
-      setPostPlans((prev) => (prev.includes("no_idea") ? [] : ["no_idea"]));
-      return;
-    }
     setPostPlans((prev) => {
+      if (key === "no_idea") return prev.includes("no_idea") ? [] : ["no_idea"];
+
       const cleaned = prev.filter((k) => k !== "no_idea");
       return toggleInList(cleaned as PostPlanKey[], key);
     });
   }
 
-  function submitPostPlans() {
+  function submitPostPlans(snapshot: PostPlanKey[]) {
     if (!lockAdvance()) return;
-    if (postPlans.length <= 0) {
+    if (snapshot.length <= 0) {
       advanceLockRef.current = false;
       return;
     }
-    // Snapshot selection for explicitly referenced retort.
-    void showRetortThenAdvance("postPlans", { postPlans: [...postPlans] });
+    void showRetortThenAdvance("postPlans", { postPlans: [...snapshot] });
     unlockAdvanceSoon();
   }
 
@@ -1124,29 +1152,28 @@ export default function OnboardingPage() {
     }
   }
 
-  function submitActivities() {
+  function submitActivities(snapshot: ActivityKey[], otherText?: string) {
     if (!lockAdvance()) return;
 
-    if (activities.length <= 0) {
+    if (snapshot.length <= 0) {
       advanceLockRef.current = false;
       return;
     }
 
-    if (activities.includes("other")) {
-      const otherText = draft.trim();
-      setActivitiesOther(otherText);
+    if (snapshot.includes("other")) {
+      const text = (otherText ?? draft).trim();
+      setActivitiesOther(text);
       setDraft("");
 
-      // Snapshot both activities + otherText so retort reflects what they just wrote.
       void showRetortThenAdvance("activities", {
-        activities: [...activities],
-        activitiesOther: otherText,
+        activities: [...snapshot],
+        activitiesOther: text,
       });
       unlockAdvanceSoon();
       return;
     }
 
-    void showRetortThenAdvance("activities", { activities: [...activities] });
+    void showRetortThenAdvance("activities", { activities: [...snapshot] });
     unlockAdvanceSoon();
   }
 
@@ -1165,6 +1192,50 @@ export default function OnboardingPage() {
     setScreenMode("question");
     setStepIndex(STEPS.indexOf("summary"));
   }
+
+  // Auto-submit (no continue buttons)
+  React.useEffect(() => {
+    if (stepId !== "postPlans") return;
+    if (screenMode !== "question") return;
+
+    clearPostPlansAutoTimer();
+
+    const snapshot = [...postPlans];
+    if (snapshot.length <= 0) return;
+
+    // If "Not sure yet" is selected, submit immediately.
+    if (snapshot.includes("no_idea")) {
+      submitPostPlans(snapshot);
+      return;
+    }
+
+    postPlansAutoTimerRef.current = window.setTimeout(() => {
+      submitPostPlans(snapshot);
+    }, 700);
+
+    return () => clearPostPlansAutoTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId, screenMode, postPlans]);
+
+  React.useEffect(() => {
+    if (stepId !== "activities") return;
+    if (screenMode !== "question") return;
+
+    clearActivitiesAutoTimer();
+
+    const snapshot = [...activities];
+    if (snapshot.length <= 0) return;
+
+    // If "other" is selected, submission happens via the textarea send button.
+    if (snapshot.includes("other")) return;
+
+    activitiesAutoTimerRef.current = window.setTimeout(() => {
+      submitActivities(snapshot);
+    }, 700);
+
+    return () => clearActivitiesAutoTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepId, screenMode, activities]);
 
   /* ============================================================
      Render helpers
@@ -1356,8 +1427,6 @@ export default function OnboardingPage() {
   }
 
   function renderPostPlans() {
-    const canContinue = postPlans.length > 0;
-
     return (
       <div className="flex min-h-[60svh] items-center">
         <div className="w-full">
@@ -1397,22 +1466,6 @@ export default function OnboardingPage() {
             />
 
             <EndOfAnswersLine />
-
-            <div className="mt-8 flex items-center justify-between">
-              <div className="text-xs text-white/35">{canContinue ? "" : "Pick at least one to continue."}</div>
-              <button
-                type="button"
-                onClick={submitPostPlans}
-                disabled={!canContinue}
-                className={`text-sm font-semibold transition ${
-                  canContinue ? "text-white/85 hover:text-white" : "text-white/30 cursor-not-allowed"
-                }`}
-                aria-label="Continue"
-                title="Continue"
-              >
-                → Continue
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -1469,7 +1522,7 @@ export default function OnboardingPage() {
                 <MinimalTextarea
                   value={draft}
                   onChange={setDraft}
-                  onSubmit={submitActivities}
+                  onSubmit={() => submitActivities([...activities], draft)}
                   canSubmit={true}
                   textareaRef={textareaRef}
                   showMic
@@ -1479,20 +1532,8 @@ export default function OnboardingPage() {
                 />
               </div>
             ) : (
-              <div className="mt-8 flex items-center justify-between">
-                <div className="text-xs text-white/35">{hasSelection ? "" : "Pick at least one to continue."}</div>
-                <button
-                  type="button"
-                  onClick={submitActivities}
-                  disabled={!hasSelection}
-                  className={`text-sm font-semibold transition ${
-                    hasSelection ? "text-white/85 hover:text-white" : "text-white/30 cursor-not-allowed"
-                  }`}
-                  aria-label="Continue"
-                  title="Continue"
-                >
-                  → Continue
-                </button>
+              <div className="mt-6 text-xs text-white/35">
+                {hasSelection ? "" : "Pick at least one to continue."}
               </div>
             )}
           </div>

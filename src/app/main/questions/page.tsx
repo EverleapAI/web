@@ -9,7 +9,7 @@ import type { SpotlightThemeId, GradientLevel } from "@/theme/everleapVisuals";
 
 export default function QuestionsPage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
+  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
 
   return (
     <AppChrome
@@ -18,10 +18,10 @@ export default function QuestionsPage() {
       gradientLevel={gradientLevel}
       setGradientLevel={setGradientLevel}
       orbSource="questions_orb"
-      ambientCap={0.35}
+      ambientCap={0.22}
     >
       <div className="relative flex min-h-[100svh] flex-col">
-        <main className="relative z-10 flex-1 pb-24">
+        <main className="relative z-10 flex-1">
           <QuestionFlow />
         </main>
         <BottomNav />
