@@ -678,12 +678,23 @@ export default function QuestionFlow() {
 
   return (
     <div className="mx-auto w-full max-w-[980px] px-6 pt-10 pb-24">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-[120px]">
+      {/* Mobile: Everleap + Back on one row, progress wraps below. Desktop: 3-column header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex items-center justify-between sm:block min-w-0 sm:min-w-[120px]">
           <div className="text-sm font-semibold text-white/80">Everleap</div>
+
+          <button
+            type="button"
+            onClick={goBack}
+            className="text-sm font-semibold text-white/60 hover:text-white transition sm:hidden"
+            aria-label="Back"
+            title="Back"
+          >
+            Back
+          </button>
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <ProgressNumbers
             current={index}
             total={TOTAL}
@@ -693,7 +704,7 @@ export default function QuestionFlow() {
           />
         </div>
 
-        <div className="min-w-[120px] flex justify-end">
+        <div className="hidden sm:flex min-w-0 sm:min-w-[120px] justify-end">
           <button
             type="button"
             onClick={goBack}
@@ -826,7 +837,11 @@ export default function QuestionFlow() {
                               : "Voice input"
                         }
                       >
-                        {isListening ? <MicOff className="mx-auto h-4 w-4" /> : <Mic className="mx-auto h-4 w-4" />}
+                        {isListening ? (
+                          <MicOff className="mx-auto h-4 w-4" />
+                        ) : (
+                          <Mic className="mx-auto h-4 w-4" />
+                        )}
                       </button>
 
                       <button
