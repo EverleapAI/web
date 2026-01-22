@@ -6,20 +6,20 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Send, ArrowRight, ArrowLeft } from "lucide-react";
+import { Mic, MicOff, Send } from "lucide-react";
 
-import BrandBadge from "@/components/site/BrandBadge";
-import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
 import { AppChrome } from "@/components/site/AppChrome";
+import { OnboardingFooterNav } from "@/components/site/OnboardingFooterNav";
 
 import {
   INSIGHTS_THEMES,
   GRADIENT_CONFIGS,
   getPageBackgroundImage,
-  isDarkTheme,
   type SpotlightThemeId,
   type GradientLevel,
 } from "@/theme/everleapVisuals";
+
+import { normalizeZip, stateFullName, lookupZipPlace } from "./zipLookup";
 
 /**
  * Speech types
@@ -36,13 +36,14 @@ declare global {
 }
 
 /* ============================================================
-   Types & constants
+   Types
    ============================================================ */
 
 type StepId =
   | "welcome"
   | "name"
   | "situation"
+  | "zip"
   | "certainty"
   | "postPlans"
   | "activities"
@@ -53,12 +54,15 @@ const STEPS: StepId[] = [
   "welcome",
   "name",
   "situation",
+  "zip",
   "certainty",
   "postPlans",
   "activities",
   "fun",
   "summary",
 ];
+
+type ScreenMode = "question" | "retort" | "completion";
 
 type Situation = "high_school" | "young_adult" | null;
 type Certainty = "strong" | "kinda" | "no_clue" | null;
@@ -79,29 +83,69 @@ type ActivityKey =
   | "job"
   | "other";
 
-type FunChoice = "cat" | "dog" | null;
+type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 
-type BadgeId = "onboarding" | "motivations" | "strengths" | "skills";
+type VoiceTarget = "name" | "zip" | "activitiesOther";
 
-type VoiceTarget = "name" | "activitiesOther";
-
-const STORAGE_KEY = "everleapOnboarding_v1";
-const BADGES_KEY = "everleapBadges_v1";
-
-const TYPE_SPEED_MS = 28;
-
-const pillClass =
-  "mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60";
+const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
+const RETORT_MS = 4000;
 
 /* ============================================================
-   Small helpers
+   Copy (minimal)
    ============================================================ */
+
+const STEP_META: Record<
+  Exclude<StepId, "summary">,
+  { kicker: string; title: string; micro?: string }
+> = {
+  welcome: {
+    kicker: "Everleap",
+    title: "Welcome to Everleap!",
+    micro:
+      "I’ll ask a few questions to understand you and where you’re headed.\nThis isn’t a test — just a conversation to shape what comes next.",
+  },
+  name: {
+    kicker: "Everleap · Getting to know you",
+    title: "What name do you like to be called?",
+  },
+  situation: {
+    kicker: "Everleap · Your world",
+    title: "Which best describes where you’re at right now?",
+  },
+  zip: {
+    kicker: "Everleap · Local",
+    title: "What’s your zip code?",
+    micro: "Optional — later I can match local opportunities near you.",
+  },
+  certainty: {
+    kicker: "Everleap · What’s next",
+    title: "Do you have a sense of what comes next?",
+    micro: "All three are completely okay.",
+  },
+  postPlans: {
+    kicker: "Everleap · Possibilities",
+    title: "What are you considering after high school?",
+    micro: "Pick what feels true. You can choose more than one.",
+  },
+  activities: {
+    kicker: "Everleap · Outside school",
+    title: "What do you do outside of school?",
+    micro: "Pick anything that fits.",
+  },
+  fun: {
+    kicker: "Everleap · One fun question",
+    title: "Pick one.",
+  },
+};
+
+function clampInt(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 
 function toggleInList<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-/** same heuristic you used elsewhere */
 function isMeaningfulText(value: string): boolean {
   const trimmed = value.trim();
   if (trimmed.length < 3) return false;
@@ -118,184 +162,240 @@ function isMeaningfulText(value: string): boolean {
   return true;
 }
 
-/* ============================================================
-   Typing hook (same pattern as questions)
-   ============================================================ */
+function firstName(raw: string) {
+  const cleaned = raw.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+  // take the first "word" and strip odd punctuation at edges
+  const first = cleaned.split(" ")[0] ?? "";
+  return first.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+}
 
-function useTypewriter(text: string, speedMs: number, enabled: boolean) {
-  const [out, setOut] = React.useState("");
-  const timerRef = React.useRef<number | null>(null);
-
-  React.useEffect(() => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-
-    if (!enabled) {
-      setOut(text);
-      return;
-    }
-
-    let cancelled = false;
-    let i = 0;
-    setOut("");
-
-    const tick = () => {
-      if (cancelled) return;
-      i += 1;
-      setOut(text.slice(0, i));
-      if (i < text.length) {
-        timerRef.current = window.setTimeout(tick, speedMs);
-      }
-    };
-
-    timerRef.current = window.setTimeout(tick, 120);
-
-    return () => {
-      cancelled = true;
-      if (timerRef.current) {
-        window.clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [text, speedMs, enabled]);
-
-  const done = out.length >= text.length;
-  return { typed: out, done };
+function joinNatural(list: string[]) {
+  const clean = list.map((s) => s.trim()).filter(Boolean);
+  if (clean.length === 0) return "";
+  if (clean.length === 1) return clean[0]!;
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(", ")}, and ${clean[clean.length - 1]}`;
 }
 
 /* ============================================================
-   Stable QuestionShell component (MUST be outside page component)
+   Minimal UI atoms
    ============================================================ */
 
-type QuestionShellProps = {
-  pill: string;
-  prompt: string;
-
-  micTarget?: VoiceTarget;
-  isListening: boolean;
-  speechSupported: boolean;
-  onToggleMic?: (target: VoiceTarget) => void;
-
-  draft?: string;
-  setDraft?: (v: string) => void;
-  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
-
-  onSubmit?: () => void;
-  canSubmit?: boolean;
-
-  typingEnabled?: boolean;
-  children?: React.ReactNode;
-};
-
-function QuestionShell(props: QuestionShellProps) {
-  const typingEnabled = props.typingEnabled ?? true;
-  const { typed, done } = useTypewriter(props.prompt, TYPE_SPEED_MS, typingEnabled);
-
-  const showInput = typeof props.onSubmit === "function";
-  const draft = props.draft ?? "";
-  const canSubmit = props.canSubmit ?? false;
-
+function ProgressDots({ current, total }: { current: number; total: number }) {
+  const filled = clampInt(current + 1, 1, total);
   return (
-    <div className="flex flex-col items-center">
-      <div className={pillClass}>{props.pill}</div>
+    <div
+      className="flex items-center justify-center gap-2"
+      aria-label={`Step ${filled} of ${total}`}
+    >
+      {Array.from({ length: total }).map((_, i) => {
+        const on = i < filled;
+        return (
+          <span
+            key={i}
+            className={`h-[6px] w-[14px] rounded-full transition ${
+              on ? "bg-white/70" : "bg-white/18"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
-      <h1 className="text-center text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
-        {typed}
-        {!done && (
-          <span className="ml-1 inline-block h-[1em] w-[0.55ch] translate-y-[0.08em] animate-pulse rounded-sm bg-white/40" />
-        )}
-      </h1>
+function MinimalTopLeftBrand({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-3 text-white/85 hover:text-white transition"
+      aria-label="Go to landing page"
+      title="Everleap"
+    >
+      <span className="grid h-10 w-10 place-items-center rounded-full border border-white/18 bg-white/6 text-xs font-semibold">
+        EL
+      </span>
+      <span className="text-sm font-semibold tracking-wide">Everleap</span>
+    </button>
+  );
+}
 
-      {props.micTarget ? (
-        <div className="mt-7 flex items-center justify-center">
+function MinimalBack({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-2 text-sm font-semibold text-white/75 hover:text-white/90 transition"
+      aria-label="Back"
+      title="Back"
+    >
+      <span aria-hidden="true">←</span>
+      Back
+    </button>
+  );
+}
+
+function ChoiceRowText({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick} className="group block w-full py-3 text-left">
+      <div
+        className={`text-[16px] leading-7 transition ${
+          selected
+            ? "text-white font-semibold"
+            : "text-white/70 group-hover:text-white/85 font-normal"
+        }`}
+      >
+        {label}
+      </div>
+    </button>
+  );
+}
+
+function EndOfAnswersLine() {
+  return <div className="mt-2 h-px w-full bg-white/12" aria-hidden="true" />;
+}
+
+function MinimalTextarea({
+  value,
+  onChange,
+  onSubmit,
+  canSubmit,
+  placeholder,
+  textareaRef,
+  showMic,
+  isListening,
+  speechSupported,
+  onToggleMic,
+  inputMode,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  placeholder?: string;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  showMic?: boolean;
+  isListening?: boolean;
+  speechSupported?: boolean;
+  onToggleMic?: () => void;
+  inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
+}) {
+  return (
+    <div className="mt-7 w-full max-w-2xl">
+      <div className="flex items-end gap-3">
+        <div className="flex-1 border-b border-white/18 focus-within:border-white/40 transition">
+          <textarea
+            ref={textareaRef}
+            value={value}
+            inputMode={inputMode}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmit();
+              }
+            }}
+            rows={2}
+            placeholder={placeholder ?? ""}
+            className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/90 placeholder:text-white/30 outline-none"
+          />
+        </div>
+
+        {showMic ? (
           <button
             type="button"
-            onClick={() => props.onToggleMic?.(props.micTarget!)}
-            disabled={!props.speechSupported}
-            className={`
-              inline-flex h-12 w-12 items-center justify-center rounded-full border
-              transition active:scale-95
-              ${
-                props.isListening
-                  ? "border-rose-300/80 bg-rose-500/20 text-rose-100 shadow-[0_0_38px_rgba(244,63,94,0.35)]"
-                  : "border-sky-300/70 bg-slate-900/40 text-slate-100 shadow-[0_0_34px_rgba(56,189,248,0.22)] hover:bg-slate-900/55"
-              }
-              ${!props.speechSupported ? "opacity-40 cursor-not-allowed" : ""}
-            `}
-            aria-label={props.isListening ? "Stop voice input" : "Start voice input"}
+            onClick={onToggleMic}
+            disabled={!speechSupported}
+            className={`h-10 w-10 rounded-full border transition active:scale-95 ${
+              !speechSupported
+                ? "border-white/10 bg-white/5 text-white/30 cursor-not-allowed"
+                : isListening
+                ? "border-white/35 bg-white/10 text-white"
+                : "border-white/18 bg-white/6 text-white/80 hover:bg-white/10"
+            }`}
+            aria-label={isListening ? "Stop voice input" : "Start voice input"}
             title={
-              !props.speechSupported
+              !speechSupported
                 ? "Voice not supported"
-                : props.isListening
-                  ? "Listening…"
-                  : "Talk instead of typing"
+                : isListening
+                ? "Listening…"
+                : "Voice input"
             }
           >
-            {props.isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            {isListening ? (
+              <MicOff className="mx-auto h-4 w-4" />
+            ) : (
+              <Mic className="mx-auto h-4 w-4" />
+            )}
           </button>
-        </div>
-      ) : null}
+        ) : null}
 
-      {props.children}
-
-      {showInput ? (
-        <div className="mt-8 w-full max-w-3xl">
-          <div className="relative rounded-[34px] bg-gradient-to-r from-sky-400/70 via-fuchsia-500/65 to-amber-300/65 p-[1px]">
-            <div className="relative flex items-end gap-3 rounded-[34px] bg-slate-950/65 px-4 py-4 sm:px-6 sm:py-5">
-              <textarea
-                ref={props.textareaRef}
-                value={draft}
-                onChange={(e) => props.setDraft?.(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    props.onSubmit?.();
-                  }
-                }}
-                rows={3}
-                placeholder=""
-                className="
-                  min-h-[84px] flex-1 resize-none bg-transparent
-                  text-base text-slate-50 placeholder:text-slate-400/70
-                  outline-none
-                "
-              />
-
-              <div className="flex items-center gap-2 pb-1">
-                <button
-                  type="button"
-                  onClick={props.onSubmit}
-                  disabled={!canSubmit}
-                  className={`
-                    inline-flex h-11 w-11 items-center justify-center rounded-full
-                    transition active:scale-95
-                    ${
-                      canSubmit
-                        ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
-                        : "bg-white/10 text-slate-200/50 cursor-not-allowed"
-                    }
-                  `}
-                  aria-label="Submit"
-                  title="Submit"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className={`h-10 w-10 rounded-full transition active:scale-95 ${
+            canSubmit ? "bg-white/80 text-black hover:bg-white" : "bg-white/10 text-white/35 cursor-not-allowed"
+          }`}
+          aria-label="Send"
+          title="Send"
+        >
+          <Send className="mx-auto h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
 
 /* ============================================================
-   Insight summary helper
+   Retorts (meaningful, tied to last answer; no visible "Continue")
    ============================================================ */
 
-function buildInsight(options: {
+function postPlanLabel(k: PostPlanKey): string {
+  switch (k) {
+    case "job":
+      return "a job";
+    case "four_year":
+      return "four-year college";
+    case "associates":
+      return "community / two-year college";
+    case "credential":
+      return "a trade / credential program";
+    case "military":
+      return "the military";
+    case "no_idea":
+      return "not sure yet";
+  }
+}
+
+function activityLabel(k: ActivityKey): string {
+  switch (k) {
+    case "sports":
+      return "sports / training";
+    case "visual_arts":
+      return "art / design";
+    case "performing_arts":
+      return "music / dance / theater";
+    case "volunteer":
+      return "volunteering";
+    case "job":
+      return "working a job";
+    case "other":
+      return "other";
+  }
+}
+
+function buildRetort(args: {
+  fromStep: StepId;
   name: string;
   situation: Situation;
   certainty: Certainty;
@@ -303,165 +403,317 @@ function buildInsight(options: {
   activities: ActivityKey[];
   activitiesOther: string;
   funChoice: FunChoice;
+  zip5: string;
+  zipPlaceLabel: string | null;
+  funLatencyMs?: number | null;
 }) {
-  const { name, situation, certainty, postPlans, activities, activitiesOther, funChoice } = options;
+  const {
+    fromStep,
+    name,
+    situation,
+    certainty,
+    postPlans,
+    activities,
+    activitiesOther,
+    funChoice,
+    zip5,
+    zipPlaceLabel,
+    funLatencyMs,
+  } = args;
+
+  const n = firstName(name);
+
+  if (fromStep === "name") {
+    // Name usage allowed only here + summary header.
+    return n ? `Welcome, ${n}.` : "Welcome.";
+  }
+
+  if (fromStep === "situation") {
+    if (situation === "high_school") {
+      return "Got it — high school. That helps me keep options wide, practical, and low-pressure.";
+    }
+    if (situation === "young_adult") {
+      return "Got it — young adult. That helps me focus on steps that turn ideas into real momentum.";
+    }
+    return "Got it. That helps me choose the right pace — explore broadly, then narrow fast.";
+  }
+
+  if (fromStep === "zip") {
+    // Deterministic: never “generic” for a valid zip.
+    // If lookup succeeds, use city/state. If not, still reference the zip itself.
+    if (!zip5) {
+      return "Totally optional — no problem. Even without it, I can still tailor good next steps.";
+    }
+    if (zipPlaceLabel) {
+      return `Love it — ${zipPlaceLabel}. That’ll help a lot for future recommendations for you.`;
+    }
+    return `Love it — ${zip5}. That’ll help a lot for future recommendations for you.`;
+  }
+
+  if (fromStep === "certainty") {
+    if (certainty === "strong") {
+      return "Nice — feeling pretty sure means we can move faster, then sanity-check with a couple quick experiments.";
+    }
+    if (certainty === "kinda") {
+      return "Perfect — having some ideas is enough. We’ll narrow by testing what gives you energy and what actually fits.";
+    }
+    if (certainty === "no_clue") {
+      return "Completely normal. Not knowing yet is useful data — it means we should surface better options fast.";
+    }
+    return "Got it. We’ll match the pace to where you’re at — no pressure to be certain.";
+  }
+
+  if (fromStep === "postPlans") {
+    if (postPlans.includes("no_idea")) {
+      return "Noted — not sure yet. That’s a smart starting point: explore without committing, and learn fast.";
+    }
+
+    const labels = postPlans.map(postPlanLabel);
+    const listText = joinNatural(labels);
+
+    if (postPlans.length >= 3) {
+      return `Nice — you’re considering ${listText}. Having a few real options helps us compare quickly and test what’s worth pursuing first.`;
+    }
+
+    return `Good — you’re considering ${listText}. That’s enough direction to build a tight first set of recommendations.`;
+  }
+
+  if (fromStep === "activities") {
+    const labels = activities.map(activityLabel);
+    const listText = joinNatural(labels);
+
+    if (activities.includes("other") && isMeaningfulText(activitiesOther)) {
+      return `Love it — ${listText}. The extra detail helps me keep recommendations realistic and actually matched to your life.`;
+    }
+
+    return `Nice — ${listText}. How you spend time is one of the strongest signals for what will (and won’t) fit.`;
+  }
+
+  if (fromStep === "fun") {
+    // Make it playful + "smart hint" + a wink about speed (vibe, not destiny)
+    const quick = typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
+    const slow = typeof funLatencyMs === "number" && funLatencyMs >= 1800;
+
+    const tempoTag = quick ? "Fast pick." : slow ? "Considered pick." : "";
+
+    if (funChoice === "dog") {
+      return `${tempoTag ? `${tempoTag} ` : ""}Dog energy: warm-signal, loyal-core. You probably read people’s moods before they speak. (Vibe, not destiny.)`;
+    }
+    if (funChoice === "cat") {
+      return `${tempoTag ? `${tempoTag} ` : ""}Cat energy: independent mind, high standards. You spot patterns and nonsense pretty quickly. (Vibe, not destiny.)`;
+    }
+    if (funChoice === "bearded_dragon") {
+      return `${tempoTag ? `${tempoTag} ` : ""}Bearded dragon energy: calm confidence + original taste. You’re not here for generic options. (Vibe, not destiny.)`;
+    }
+    if (funChoice === "rock") {
+      return `${tempoTag ? `${tempoTag} ` : ""}Rock energy: minimalist focus, unshakeable calm. You’d rather be solid than loud. (Vibe, not destiny.)`;
+    }
+    return "Nice pick. (Vibe, not destiny.)";
+  }
+
+  return "Perfect. That gives me enough to keep going.";
+}
+
+/* ============================================================
+   Completion transition
+   ============================================================ */
+
+function CompletionTransition({ onDone }: { onDone: () => void }) {
+  React.useEffect(() => {
+    const t = window.setTimeout(onDone, 1200);
+    return () => window.clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div className="flex w-full flex-col items-center justify-center py-10">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="flex items-center justify-center"
+      >
+        <motion.div className="flex items-center gap-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0.55, scale: 1, x: 0 }}
+              animate={{
+                opacity: i === 3 ? 0.9 : 0.25,
+                scale: i === 3 ? 1.1 : 0.9,
+                x: (3 - i) * 8,
+              }}
+              transition={{ duration: 0.45, ease: "easeInOut" }}
+              className="h-[6px] w-[6px] rounded-full bg-white/70"
+              aria-hidden="true"
+            />
+          ))}
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        initial={{ width: 0, opacity: 0 }}
+        animate={{ width: "48%", opacity: 0.75 }}
+        transition={{ duration: 0.75, ease: "easeInOut", delay: 0.35 }}
+        className="mt-6 h-px rounded-full bg-white/70 shadow-[0_0_18px_rgba(255,255,255,0.25)]"
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
+/* ============================================================
+   Summary (always “you”, references all answers)
+   ============================================================ */
+
+function buildInsight(options: {
+  situation: Situation;
+  certainty: Certainty;
+  postPlans: PostPlanKey[];
+  activities: ActivityKey[];
+  activitiesOther: string;
+  funChoice: FunChoice;
+  zip5: string;
+}) {
+  const { situation, certainty, postPlans, activities, activitiesOther, funChoice, zip5 } = options;
 
   const parts: string[] = [];
-  const cleanedName = name.trim();
-  const you = cleanedName ? `${cleanedName}, ` : "";
 
   if (situation === "high_school") {
-    if (certainty === "strong") {
-      parts.push(
-        `${you}you’re in high school and already have a strong idea of where you want to go next. That focus gives you a real head start.`
-      );
-    } else if (certainty === "kinda") {
-      parts.push(
-        `${you}you’re in high school with some ideas about your future, but you’re still exploring—which is exactly where most people are at this stage.`
-      );
-    } else if (certainty === "no_clue") {
-      parts.push(
-        `${you}you’re in high school and honest about not knowing what comes next. That honesty is actually one of the best places to begin.`
-      );
-    } else {
-      parts.push(`${you}you’re in high school and taking a moment to think about what’s next.`);
-    }
+    if (certainty === "strong") parts.push("You’re in high school and you’ve got a pretty clear direction.");
+    else if (certainty === "kinda") parts.push("You’re in high school with a few ideas — enough to start testing what fits.");
+    else if (certainty === "no_clue")
+      parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
+    else parts.push("You’re in high school and taking a moment to think about what comes next.");
   } else if (situation === "young_adult") {
-    if (certainty === "strong") {
-      parts.push(
-        `${you}you’re a young adult with a clear sense of direction, which puts you in a great spot to start turning plans into real moves.`
-      );
-    } else if (certainty === "kinda") {
-      parts.push(
-        `${you}you’re a young adult with a few ideas, still sorting out which path fits best—and that kind of exploration is completely normal.`
-      );
-    } else if (certainty === "no_clue") {
-      parts.push(
-        `${you}you’re a young adult who isn’t sure yet what comes next, and that’s more common than people admit. Everleap is built for exactly this moment.`
-      );
-    } else {
-      parts.push(`${you}you’re a young adult pausing long enough to reflect, which already helps.`);
-    }
+    if (certainty === "strong") parts.push("You’re a young adult with clear direction — a great place to turn plans into moves.");
+    else if (certainty === "kinda") parts.push("You’re a young adult with some ideas — enough to narrow things quickly.");
+    else if (certainty === "no_clue") parts.push("You’re a young adult and you’re not sure yet what’s next — we can work with that.");
+    else parts.push("You’re a young adult taking a pause to figure out what fits.");
   } else {
-    parts.push(`${you}you’re taking a moment to step back and look at where you are and where you might go next.`);
+    parts.push("You’re taking a moment to step back and look at what comes next.");
   }
 
   if (postPlans.length > 0) {
-    const mapped: string[] = [];
-    if (postPlans.includes("job")) mapped.push("getting a job and building real-world experience");
-    if (postPlans.includes("associates")) mapped.push("community or two-year college options");
-    if (postPlans.includes("credential")) mapped.push("shorter training or credential programs");
-    if (postPlans.includes("military")) mapped.push("a path through the military");
-    if (postPlans.includes("four_year")) mapped.push("a four-year college path");
-    if (postPlans.includes("no_idea")) mapped.push("different possibilities without one clear lane yet");
+    if (postPlans.includes("no_idea")) {
+      parts.push("You’re keeping options open right now — so we’ll explore without forcing a single lane.");
+    } else {
+      const mapped: string[] = [];
+      if (postPlans.includes("job")) mapped.push("building experience through work");
+      if (postPlans.includes("four_year")) mapped.push("a four-year college path");
+      if (postPlans.includes("associates")) mapped.push("community or two-year options");
+      if (postPlans.includes("credential")) mapped.push("trade or credential programs");
+      if (postPlans.includes("military")) mapped.push("a path through the military");
 
-    if (mapped.length > 0) {
-      const last = mapped.pop();
-      const listText = mapped.length === 0 ? last : mapped.join(", ") + (last ? `, and ${last}` : "");
-      parts.push(`Right now you’re open to ${listText}, which gives you several directions you can test.`);
+      if (mapped.length > 0) {
+        const last = mapped.pop();
+        const listText = mapped.length ? `${mapped.join(", ")}, and ${last}` : last!;
+        parts.push(`You’re considering ${listText}. That’s enough to build a few solid options and test them fast.`);
+      }
     }
   }
 
   if (activities.length > 0 || isMeaningfulText(activitiesOther)) {
     const act: string[] = [];
-    if (activities.includes("sports")) act.push("sports and physical activity");
-    if (activities.includes("visual_arts")) act.push("visual or creative arts");
-    if (activities.includes("performing_arts")) act.push("performing arts");
-    if (activities.includes("volunteer")) act.push("volunteering or helping others");
-    if (activities.includes("job")) act.push("working a job outside of school");
+    if (activities.includes("sports")) act.push("sports or training");
+    if (activities.includes("visual_arts")) act.push("art or design");
+    if (activities.includes("performing_arts")) act.push("music, dance, or theater");
+    if (activities.includes("volunteer")) act.push("volunteering");
+    if (activities.includes("job")) act.push("working a job");
 
-    const last = act.pop();
-    const listText = act.length === 0 ? last : act.join(", ") + (last ? `, and ${last}` : "");
-    if (listText) parts.push(`Outside of school, you’re investing time in ${listText}.`);
+    if (act.length) {
+      const last = act.pop();
+      const listText = act.length ? `${act.join(", ")}, and ${last}` : last!;
+      parts.push(`Outside of school, you’re spending time on ${listText}. That’s a strong signal about how you like to learn and work.`);
+    }
 
     if (isMeaningfulText(activitiesOther)) {
-      parts.push("Those extra details you shared will help Everleap shape more personalized ideas over time.");
+      parts.push("The extra detail you shared helps tighten the fit even more.");
     }
   }
 
-  let closing =
-    "This is just your starting point. As you keep answering questions, Everleap will get better at spotting patterns and suggesting paths that actually fit you.";
+  if (zip5) {
+    parts.push("I’ll keep local opportunities in mind when I suggest next steps.");
+  }
 
-  if (funChoice === "cat") closing += " Also, cat person noted.";
-  if (funChoice === "dog") closing += " Also, dog person energy noted.";
+  if (funChoice === "dog") parts.push("Also: dog energy. Noted.");
+  if (funChoice === "cat") parts.push("Also: cat energy. Noted.");
+  if (funChoice === "bearded_dragon") parts.push("Also: bearded dragon energy. Respect.");
+  if (funChoice === "rock") parts.push("Also: rock. Iconic.");
 
-  parts.push(closing);
+  parts.push("This is just a starting point — enough to generate good first options, then improve with a few more questions later.");
+
   return parts.join(" ");
-}
-
-/* ============================================================
-   Badges
-   ============================================================ */
-
-function BadgeTile({
-  label,
-  imgSrc,
-  dimmed,
-}: {
-  label: string;
-  imgSrc: string;
-  dimmed?: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-2" style={{ opacity: dimmed ? 0.35 : 1 }}>
-      <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35 shadow-sm backdrop-blur-xl">
-        <Image src={imgSrc} alt={label} fill sizes="80px" className="object-contain p-3" />
-      </div>
-      <div className="text-xs font-medium text-white/70">{label}</div>
-    </div>
-  );
 }
 
 /* ============================================================
    Page
    ============================================================ */
 
+type RetortOverrides = Partial<{
+  name: string;
+  situation: Situation;
+  certainty: Certainty;
+  postPlans: PostPlanKey[];
+  activities: ActivityKey[];
+  activitiesOther: string;
+  funChoice: FunChoice;
+  zip5: string;
+  zipPlaceLabel: string | null;
+  funLatencyMs: number | null;
+}>;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
 
-  // Shared AppChrome visual state
+  // AppChrome visuals (keep minimal)
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
+  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
 
   const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[3];
+  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[1];
 
   const pageBgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
   const pageBgStyle: CSSProperties = pageBgImage ? { backgroundImage: pageBgImage } : {};
-  const dark = isDarkTheme(themeId);
 
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
-  const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
-
-  // State
+  // Step state
   const [stepIndex, setStepIndex] = React.useState(0);
   const stepId = STEPS[stepIndex];
 
+  // Screen mode state machine
+  const [screenMode, setScreenMode] = React.useState<ScreenMode>("question");
+  const [retortText, setRetortText] = React.useState<string | null>(null);
+  const [retortFromStep, setRetortFromStep] = React.useState<StepId | null>(null);
+
+  const retortTimerRef = React.useRef<number | null>(null);
+  const advanceLockRef = React.useRef(false);
+
+  // Answers
   const [name, setName] = React.useState("");
   const [situation, setSituation] = React.useState<Situation>(null);
+  const [zip, setZip] = React.useState(""); // stored normalized 5 digits or ""
   const [certainty, setCertainty] = React.useState<Certainty>(null);
   const [postPlans, setPostPlans] = React.useState<PostPlanKey[]>([]);
   const [activities, setActivities] = React.useState<ActivityKey[]>([]);
   const [activitiesOther, setActivitiesOther] = React.useState("");
   const [funChoice, setFunChoice] = React.useState<FunChoice>(null);
 
-  // "Questions" style input state
+  // Input draft (reused for text steps)
   const [draft, setDraft] = React.useState("");
 
   // Speech
   const [isListening, setIsListening] = React.useState(false);
   const [speechSupported, setSpeechSupported] = React.useState(true);
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
-  const lastFinalRef = React.useRef<string>(""); // dedupe final chunks
+  const lastFinalRef = React.useRef<string>("");
   const activeTargetRef = React.useRef<VoiceTarget | null>(null);
-
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
-  // Persist onboarding state
+  // Fun "how did you pick" (speed hint)
+  const funShownAtRef = React.useRef<number | null>(null);
+
+  // Persist (optional)
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -471,6 +723,7 @@ export default function OnboardingPage() {
           stepIndex,
           name,
           situation,
+          zip,
           certainty,
           postPlans,
           activities,
@@ -481,19 +734,28 @@ export default function OnboardingPage() {
     } catch {
       // ignore
     }
-  }, [stepIndex, name, situation, certainty, postPlans, activities, activitiesOther, funChoice]);
+  }, [stepIndex, name, situation, zip, certainty, postPlans, activities, activitiesOther, funChoice]);
 
   // Speech supported
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const SpeechRec =
-      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
+
+  function clearRetortTimer() {
+    if (retortTimerRef.current) {
+      window.clearTimeout(retortTimerRef.current);
+      retortTimerRef.current = null;
+    }
+  }
 
   // Cleanup
   React.useEffect(() => {
     return () => {
+      clearRetortTimer();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -504,7 +766,7 @@ export default function OnboardingPage() {
     };
   }, []);
 
-  // Stop listening when step changes
+  // On step change: stop listening, reset draft, unlock
   React.useEffect(() => {
     if (recognitionRef.current) {
       try {
@@ -516,14 +778,36 @@ export default function OnboardingPage() {
     setIsListening(false);
     lastFinalRef.current = "";
     activeTargetRef.current = null;
-  }, [stepId]);
+    setDraft("");
+    advanceLockRef.current = false;
+
+    // Mark when the fun screen becomes visible (for latency hint)
+    if (stepId === "fun" && screenMode === "question") {
+      funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
+    } else {
+      funShownAtRef.current = null;
+    }
+  }, [stepId, screenMode]);
+
+  function lockAdvance(): boolean {
+    if (advanceLockRef.current) return false;
+    advanceLockRef.current = true;
+    return true;
+  }
+
+  function unlockAdvanceSoon() {
+    window.setTimeout(() => {
+      advanceLockRef.current = false;
+    }, 0);
+  }
 
   function getOrCreateRecognition(): SpeechRecognition | null {
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
 
-    const SpeechRec =
-      (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
     if (!SpeechRec) return null;
 
     const rec = new SpeechRec();
@@ -544,18 +828,16 @@ export default function OnboardingPage() {
 
       const cleaned = finalChunk.trim();
       if (!cleaned) return;
-
       if (cleaned === lastFinalRef.current) return;
       lastFinalRef.current = cleaned;
 
       const target = activeTargetRef.current;
+      if (!target) return;
 
-      if (target === "name" || target === "activitiesOther") {
-        setDraft((prev) => {
-          const base = prev.trim();
-          return base ? `${base} ${cleaned}` : cleaned;
-        });
-      }
+      setDraft((prev) => {
+        const base = prev.trim();
+        return base ? `${base} ${cleaned}` : cleaned;
+      });
     };
 
     rec.onerror = () => setIsListening(false);
@@ -577,7 +859,6 @@ export default function OnboardingPage() {
 
   function toggleMic(target: VoiceTarget) {
     textareaRef.current?.focus();
-    setDraft("");
     lastFinalRef.current = "";
     activeTargetRef.current = target;
 
@@ -597,470 +878,732 @@ export default function OnboardingPage() {
     }
   }
 
-  function goNext() {
-    setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
-  }
-
-  function goBack() {
-    setDraft("");
-    setStepIndex((i) => {
-      if (i <= 0) return 0;
-      return i - 1;
-    });
+  function goLanding() {
+    clearRetortTimer();
+    router.push("/");
   }
 
   function exitOnboarding() {
-    // If user came from consent flow, go back there.
+    clearRetortTimer();
     if (from === "consent") {
       router.push("/consent");
       return;
     }
-    // Otherwise, safest fallback
     router.push("/");
   }
 
-  function markOnboardingBadge() {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(BADGES_KEY);
-      const existing = raw ? (JSON.parse(raw) as Partial<Record<BadgeId, boolean>>) : {};
-      window.localStorage.setItem(BADGES_KEY, JSON.stringify({ ...existing, onboarding: true }));
-    } catch {
-      // ignore
+  function canGoBack() {
+    return stepIndex > 0 && screenMode !== "completion";
+  }
+
+  function goBack() {
+    if (screenMode === "retort") {
+      clearRetortTimer();
+      setRetortText(null);
+      setRetortFromStep(null);
+      setScreenMode("question");
+      advanceLockRef.current = false;
+      return;
     }
+
+    clearRetortTimer();
+    setScreenMode("question");
+    setStepIndex((i) => Math.max(0, i - 1));
   }
 
-  const didMarkSummaryRef = React.useRef(false);
-  React.useEffect(() => {
-    if (stepId !== "summary") return;
-    if (didMarkSummaryRef.current) return;
-    didMarkSummaryRef.current = true;
-    markOnboardingBadge();
-  }, [stepId]);
-
-  const canShowBack = stepIndex > 0;
-
-  /* ============================================================
-     Steps
-     ============================================================ */
-
-  function renderWelcome() {
-    const prompt =
-      "You are starting a journey to better understand yourself and your path in life. Think of me as a college & career counselor and life coach all in one. This is a conversation — not a test. Answer as honestly as you can. The more you share, the more you will learn, and the more I can provide guidance and insights to you. No right or wrong answers here.";
-
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Everleap" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={goNext}
-              className="
-                inline-flex items-center gap-2 rounded-full
-                border border-sky-300/80 bg-sky-400/90 px-6 py-2.5
-                text-sm font-semibold text-slate-950
-                shadow-[0_0_35px_rgba(56,189,248,0.9)]
-                transition hover:bg-sky-300 active:scale-95
-              "
-            >
-              Let’s go <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </QuestionShell>
-      </div>
-    );
+  function goNextStep() {
+    setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
 
-  function submitName() {
-    const text = draft.trim();
-    if (!text) return;
-    setName(text);
-    setDraft("");
-    goNext();
+  async function showRetortThenAdvance(fromStep: StepId, overrides?: RetortOverrides) {
+    if (fromStep === "welcome") {
+      setScreenMode("question");
+      goNextStep();
+      return;
+    }
+
+    clearRetortTimer();
+
+    // IMPORTANT:
+    // Use snapshot overrides so retorts reflect the *just-submitted* value,
+    // not potentially stale React state.
+    const effectiveName = overrides?.name ?? name;
+    const effectiveSituation = overrides?.situation ?? situation;
+    const effectiveCertainty = overrides?.certainty ?? certainty;
+    const effectivePostPlans = overrides?.postPlans ?? postPlans;
+    const effectiveActivities = overrides?.activities ?? activities;
+    const effectiveActivitiesOther = overrides?.activitiesOther ?? activitiesOther;
+    const effectiveFunChoice = overrides?.funChoice ?? funChoice;
+    const effectiveFunLatencyMs = overrides?.funLatencyMs ?? null;
+
+    // Zip: only do lookup when we're actually rendering the ZIP retort.
+    const zip5 = typeof overrides?.zip5 === "string" ? overrides.zip5 : normalizeZip(zip);
+
+    let zipPlaceLabel: string | null =
+      "zipPlaceLabel" in (overrides ?? {}) ? (overrides?.zipPlaceLabel ?? null) : null;
+
+    if (fromStep === "zip" && zip5 && !("zipPlaceLabel" in (overrides ?? {}))) {
+      const place = await lookupZipPlace(zip5);
+      zipPlaceLabel = place ? `${place.city}, ${stateFullName(place.state)}` : null;
+    }
+
+    const t = buildRetort({
+      fromStep,
+      name: effectiveName,
+      situation: effectiveSituation,
+      certainty: effectiveCertainty,
+      postPlans: effectivePostPlans,
+      activities: effectiveActivities,
+      activitiesOther: effectiveActivitiesOther,
+      funChoice: effectiveFunChoice,
+      zip5,
+      zipPlaceLabel,
+      funLatencyMs: effectiveFunLatencyMs,
+    });
+
+    setRetortFromStep(fromStep);
+    setRetortText(t);
+    setScreenMode("retort");
+
+    retortTimerRef.current = window.setTimeout(() => {
+      clearRetortTimer();
+      setRetortText(null);
+      setRetortFromStep(null);
+      setScreenMode("question");
+      goNextStep();
+      advanceLockRef.current = false;
+    }, RETORT_MS);
   }
 
-  function renderName() {
-    return (
-      <QuestionShell
-        pill="Onboarding"
-        prompt="What name do you go by?"
-        micTarget="name"
-        isListening={isListening}
-        speechSupported={speechSupported}
-        onToggleMic={toggleMic}
-        draft={draft}
-        setDraft={setDraft}
-        textareaRef={textareaRef}
-        onSubmit={submitName}
-        canSubmit={Boolean(draft.trim())}
-      />
-    );
-  }
+  function showFunRetortThenCompletion(choice: FunChoice) {
+    clearRetortTimer();
 
-  function renderSituation() {
-    const prompt = name.trim()
-      ? `Ok cool, ${name.trim()}. Which of these best describes your situation?`
-      : "Ok cool. Which of these best describes your situation?";
+    const start = funShownAtRef.current;
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const latency = typeof start === "number" ? Math.max(0, Math.round(now - start)) : null;
 
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 w-full max-w-3xl space-y-3">
-            {[
-              { key: "high_school" as const, label: "I'm a high school student" },
-              { key: "young_adult" as const, label: "I'm a young adult (18–24 years old)" },
-            ].map((opt) => {
-              const active = situation === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => {
-                    setSituation(opt.key);
-                    goNext();
-                  }}
-                  className={`
-                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                    transition shadow-sm
-                    ${
-                      active
-                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
-                    }
-                  `}
-                >
-                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </QuestionShell>
-      </div>
-    );
-  }
-
-  function renderCertainty() {
-    const prompt = "Do you know what you are going to do after high school?";
-
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 w-full max-w-3xl space-y-3">
-            {[
-              { key: "strong" as const, label: "Strong idea" },
-              { key: "kinda" as const, label: "Kind of" },
-              { key: "no_clue" as const, label: "No clue" },
-            ].map((opt) => {
-              const active = certainty === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => {
-                    setCertainty(opt.key);
-                    goNext();
-                  }}
-                  className={`
-                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                    transition shadow-sm
-                    ${
-                      active
-                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
-                    }
-                  `}
-                >
-                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </QuestionShell>
-      </div>
-    );
-  }
-
-  function renderPostPlans() {
-    const prompt = "What are you considering after high school? (Pick more than one.)";
-
-    const options: { key: PostPlanKey; label: string }[] = [
-      { key: "job", label: "Get a job" },
-      { key: "associates", label: "Associate’s degree" },
-      { key: "credential", label: "Credential program" },
-      { key: "military", label: "Join military" },
-      { key: "four_year", label: "Four-year college" },
-      { key: "no_idea", label: "No idea" },
-    ];
-
-    const canContinue = postPlans.length > 0;
-
-    const handleToggle = (key: PostPlanKey) => {
-      if (key === "no_idea") {
-        setPostPlans((prev) => (prev.includes("no_idea") ? [] : ["no_idea"]));
-        return;
-      }
-      setPostPlans((prev) => {
-        const cleaned = prev.filter((k) => k !== "no_idea");
-        return toggleInList(cleaned as PostPlanKey[], key);
-      });
-    };
-
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 w-full max-w-3xl space-y-3">
-            {options.map((opt) => {
-              const active = postPlans.includes(opt.key);
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => handleToggle(opt.key)}
-                  className={`
-                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                    transition shadow-sm
-                    ${
-                      active
-                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
-                    }
-                  `}
-                >
-                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
-                </button>
-              );
-            })}
-
-            <div className="pt-4 flex justify-center">
-              <button
-                type="button"
-                onClick={goNext}
-                disabled={!canContinue}
-                className={`
-                  inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold
-                  transition active:scale-95
-                  ${
-                    canContinue
-                      ? "border border-sky-300/80 bg-sky-400/90 text-slate-950 shadow-[0_0_35px_rgba(56,189,248,0.9)] hover:bg-sky-300"
-                      : "border border-white/10 bg-white/5 text-slate-200/40 cursor-not-allowed"
-                  }
-                `}
-              >
-                Continue <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </QuestionShell>
-      </div>
-    );
-  }
-
-  function submitActivitiesOther() {
-    const text = draft.trim();
-    if (activities.includes("other")) setActivitiesOther(text);
-    setDraft("");
-    goNext();
-  }
-
-  function renderActivities() {
-    const prompt = "What kind of things do you do outside of school?";
-
-    const options: { key: ActivityKey; label: string }[] = [
-      { key: "sports", label: "Sports" },
-      { key: "visual_arts", label: "Visual arts" },
-      { key: "performing_arts", label: "Performing arts" },
-      { key: "volunteer", label: "Volunteer" },
-      { key: "job", label: "Have a job" },
-      { key: "other", label: "Other" },
-    ];
-
-    const hasSelection = activities.length > 0;
-
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 w-full max-w-3xl space-y-3">
-            {options.map((opt) => {
-              const active = activities.includes(opt.key);
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setActivities((prev) => toggleInList(prev, opt.key))}
-                  className={`
-                    flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left
-                    transition shadow-sm
-                    ${
-                      active
-                        ? "border-sky-300/80 bg-slate-900/90 shadow-[0_0_30px_rgba(56,189,248,0.9)]"
-                        : "border-white/10 bg-slate-950/35 hover:border-sky-300/70 hover:bg-slate-900/55"
-                    }
-                  `}
-                >
-                  <span className="text-sm text-slate-100 md:text-base">{opt.label}</span>
-                </button>
-              );
-            })}
-
-            {activities.includes("other") ? (
-              <div className="pt-6">
-                <QuestionShell
-                  pill="Onboarding"
-                  prompt="Share more details (optional)"
-                  micTarget="activitiesOther"
-                  isListening={isListening}
-                  speechSupported={speechSupported}
-                  onToggleMic={toggleMic}
-                  draft={draft}
-                  setDraft={setDraft}
-                  textareaRef={textareaRef}
-                  onSubmit={submitActivitiesOther}
-                  canSubmit={true}
-                />
-              </div>
-            ) : (
-              <div className="pt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={!hasSelection}
-                  className={`
-                    inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold
-                    transition active:scale-95
-                    ${
-                      hasSelection
-                        ? "border border-sky-300/80 bg-sky-400/90 text-slate-950 shadow-[0_0_35px_rgba(56,189,248,0.9)] hover:bg-sky-300"
-                        : "border border-white/10 bg-white/5 text-slate-200/40 cursor-not-allowed"
-                    }
-                  `}
-                >
-                  Continue <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        </QuestionShell>
-      </div>
-    );
-  }
-
-  function renderFun() {
-    const prompt = "Last one — just for fun. Which is best?";
-
-    return (
-      <div className="space-y-8">
-        <QuestionShell pill="Onboarding" prompt={prompt} isListening={isListening} speechSupported={speechSupported}>
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 w-full max-w-3xl">
-            <button
-              type="button"
-              onClick={() => {
-                setFunChoice("cat");
-                goNext();
-              }}
-              className="
-                group flex flex-col items-center justify-center rounded-2xl border
-                border-white/10 bg-slate-950/35 p-2
-                shadow-[0_18px_55px_rgba(0,0,0,0.85)]
-                transition hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
-              "
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-                <Image
-                  src="/onboarding-fun-cat.jpg"
-                  alt="Cat selfie"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFunChoice("dog");
-                goNext();
-              }}
-              className="
-                group flex flex-col items-center justify-center rounded-2xl border
-                border-white/10 bg-slate-950/35 p-2
-                shadow-[0_18px_55px_rgba(0,0,0,0.85)]
-                transition hover:border-sky-300/80 hover:shadow-[0_0_40px_rgba(56,189,248,0.9)]
-              "
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
-                <Image
-                  src="/onboarding-fun-dog.jpg"
-                  alt="Dog selfie"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover"
-                />
-              </div>
-            </button>
-          </div>
-        </QuestionShell>
-      </div>
-    );
-  }
-
-  function renderSummary() {
-    const insight = buildInsight({
+    const t = buildRetort({
+      fromStep: "fun",
       name,
       situation,
       certainty,
       postPlans,
       activities,
       activitiesOther,
-      funChoice,
+      funChoice: choice,
+      zip5: normalizeZip(zip),
+      zipPlaceLabel: null,
+      funLatencyMs: latency,
     });
 
+    setRetortFromStep("fun");
+    setRetortText(t);
+    setScreenMode("retort");
+
+    retortTimerRef.current = window.setTimeout(() => {
+      clearRetortTimer();
+      setRetortText(null);
+      setRetortFromStep(null);
+
+      // Final flow: fun retort -> completion -> summary
+      setScreenMode("completion");
+      advanceLockRef.current = false;
+    }, RETORT_MS);
+  }
+
+  function skipRetort() {
+    if (screenMode !== "retort") return;
+    if (!lockAdvance()) return;
+
+    // If this is the final fun retort, skip should go to completion (not next step).
+    if (retortFromStep === "fun") {
+      clearRetortTimer();
+      setRetortText(null);
+      setRetortFromStep(null);
+      setScreenMode("completion");
+      unlockAdvanceSoon();
+      return;
+    }
+
+    clearRetortTimer();
+    setRetortText(null);
+    setRetortFromStep(null);
+    setScreenMode("question");
+    goNextStep();
+
+    unlockAdvanceSoon();
+  }
+
+  /* ============================================================
+     Handlers
+     ============================================================ */
+
+  function onWelcomeNext() {
+    if (!lockAdvance()) return;
+    void showRetortThenAdvance("welcome");
+    unlockAdvanceSoon();
+  }
+
+  function submitName() {
+    if (!lockAdvance()) return;
+    const text = draft.trim();
+    if (!text) {
+      advanceLockRef.current = false;
+      return;
+    }
+    setName(text);
+    setDraft("");
+    // Use snapshot value so retort never misses the name.
+    void showRetortThenAdvance("name", { name: text });
+    unlockAdvanceSoon();
+  }
+
+  function chooseSituation(v: Situation) {
+    if (!lockAdvance()) return;
+    setSituation(v);
+    // Snapshot for immediate, specific retort.
+    void showRetortThenAdvance("situation", { situation: v });
+    unlockAdvanceSoon();
+  }
+
+  function submitZip() {
+    if (!lockAdvance()) return;
+
+    const normalized = normalizeZip(draft);
+    setZip(normalized);
+    setDraft("");
+
+    // Snapshot zip so retort never uses stale zip state.
+    void showRetortThenAdvance("zip", { zip5: normalized });
+    unlockAdvanceSoon();
+  }
+
+  function skipZip() {
+    if (!lockAdvance()) return;
+    setZip("");
+    setDraft("");
+    // Explicitly mark skipped.
+    void showRetortThenAdvance("zip", { zip5: "" });
+    unlockAdvanceSoon();
+  }
+
+  function chooseCertainty(v: Certainty) {
+    if (!lockAdvance()) return;
+    setCertainty(v);
+    void showRetortThenAdvance("certainty", { certainty: v });
+    unlockAdvanceSoon();
+  }
+
+  function togglePostPlan(key: PostPlanKey) {
+    if (key === "no_idea") {
+      setPostPlans((prev) => (prev.includes("no_idea") ? [] : ["no_idea"]));
+      return;
+    }
+    setPostPlans((prev) => {
+      const cleaned = prev.filter((k) => k !== "no_idea");
+      return toggleInList(cleaned as PostPlanKey[], key);
+    });
+  }
+
+  function submitPostPlans() {
+    if (!lockAdvance()) return;
+    if (postPlans.length <= 0) {
+      advanceLockRef.current = false;
+      return;
+    }
+    // Snapshot selection for explicitly referenced retort.
+    void showRetortThenAdvance("postPlans", { postPlans: [...postPlans] });
+    unlockAdvanceSoon();
+  }
+
+  function toggleActivity(key: ActivityKey) {
+    setActivities((prev) => toggleInList(prev, key));
+    if (key === "other" && activities.includes("other")) {
+      setActivitiesOther("");
+      setDraft("");
+    }
+  }
+
+  function submitActivities() {
+    if (!lockAdvance()) return;
+
+    if (activities.length <= 0) {
+      advanceLockRef.current = false;
+      return;
+    }
+
+    if (activities.includes("other")) {
+      const otherText = draft.trim();
+      setActivitiesOther(otherText);
+      setDraft("");
+
+      // Snapshot both activities + otherText so retort reflects what they just wrote.
+      void showRetortThenAdvance("activities", {
+        activities: [...activities],
+        activitiesOther: otherText,
+      });
+      unlockAdvanceSoon();
+      return;
+    }
+
+    void showRetortThenAdvance("activities", { activities: [...activities] });
+    unlockAdvanceSoon();
+  }
+
+  function chooseFun(choice: FunChoice) {
+    if (!lockAdvance()) return;
+
+    setFunChoice(choice);
+
+    // Final retort beat: animal choice -> fun retort -> completion transition -> summary
+    showFunRetortThenCompletion(choice);
+
+    unlockAdvanceSoon();
+  }
+
+  function completionDone() {
+    setScreenMode("question");
+    setStepIndex(STEPS.indexOf("summary"));
+  }
+
+  /* ============================================================
+     Render helpers
+     ============================================================ */
+
+  const meta = stepId !== "summary" ? STEP_META[stepId] : null;
+
+  function Kicker() {
+    if (!meta?.kicker) return null;
     return (
-      <div className="space-y-10">
-        <div className="flex flex-wrap items-center justify-center gap-6">
-          <BadgeTile label="Onboarding" imgSrc="/onboarding.png" dimmed={false} />
-          <BadgeTile label="Motivations" imgSrc="/motivations.png" dimmed />
-          <BadgeTile label="Strengths" imgSrc="/strengths.png" dimmed />
-          <BadgeTile label="Skills" imgSrc="/skills.png" dimmed />
-        </div>
+      <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
+        {meta.kicker}
+      </div>
+    );
+  }
 
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-3xl">
-            {name.trim() ? `Nice work, ${name.trim()}!` : "Nice work!"}
-          </h1>
-          <p className="mt-2 text-sm text-slate-200/90 md:text-base">
-            Here’s one quick insight from what you shared:
+  function TitleBlock({ title, micro }: { title: string; micro?: string }) {
+    // Static titles: prevents “retyping”/re-animating on click/mic/typing.
+    return (
+      <div className="max-w-3xl">
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          {title}
+        </h1>
+        {micro ? (
+          <p className="mt-4 text-[15px] leading-7 text-white/60 max-w-2xl whitespace-pre-line">
+            {micro}
           </p>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-slate-950/35 px-6 py-6 shadow-[0_22px_70px_rgba(0,0,0,0.9)] backdrop-blur-xl">
-          <p className="text-sm leading-relaxed text-slate-100 md:text-base">{insight}</p>
-        </div>
-
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => router.push("/login")}
-            className="
-              inline-flex items-center gap-2 rounded-full
-              border border-sky-300/80 bg-sky-400/90 px-6 py-2.5
-              text-sm font-semibold text-slate-950
-              shadow-[0_0_35px_rgba(56,189,248,0.9)]
-              transition hover:bg-sky-300 active:scale-95
-            "
-          >
-            Join Everleap!
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
+        ) : null}
       </div>
     );
   }
 
   /* ============================================================
-     Render
+     Screens
      ============================================================ */
+
+  function renderRetort() {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={skipRetort}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") skipRetort();
+        }}
+        className="cursor-pointer select-none"
+        aria-label="Tap to continue"
+        title="Tap to continue"
+      >
+        <div className="max-w-3xl pt-6">
+          <div className="text-xl sm:text-2xl leading-9 text-white/88">{retortText}</div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderWelcome() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div>
+          <Kicker />
+          <TitleBlock title={STEP_META.welcome.title} micro={STEP_META.welcome.micro} />
+          <div className="mt-10">
+            <button
+              type="button"
+              onClick={onWelcomeNext}
+              className="text-sm font-semibold text-white/80 hover:text-white transition"
+              aria-label="Start"
+              title="Start"
+            >
+              → Start
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderName() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.name.title} />
+          <MinimalTextarea
+            value={draft}
+            onChange={setDraft}
+            onSubmit={submitName}
+            canSubmit={Boolean(draft.trim())}
+            textareaRef={textareaRef}
+            showMic
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onToggleMic={() => toggleMic("name")}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderSituation() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.situation.title} />
+          <div className="mt-10 max-w-2xl">
+            <ChoiceRowText
+              label="I’m in high school"
+              selected={situation === "high_school"}
+              onClick={() => chooseSituation("high_school")}
+            />
+            <ChoiceRowText
+              label="I’m a young adult (18–24)"
+              selected={situation === "young_adult"}
+              onClick={() => chooseSituation("young_adult")}
+            />
+            <EndOfAnswersLine />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderZip() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.zip.title} micro={STEP_META.zip.micro} />
+
+          <MinimalTextarea
+            value={draft}
+            onChange={setDraft}
+            onSubmit={submitZip}
+            canSubmit={true}
+            placeholder="Zip (optional)"
+            textareaRef={textareaRef}
+            showMic
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onToggleMic={() => toggleMic("zip")}
+            inputMode="numeric"
+          />
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={skipZip}
+              className="text-sm font-semibold text-white/55 hover:text-white/75 transition"
+              aria-label="Skip zip"
+              title="Skip"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderCertainty() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.certainty.title} micro={STEP_META.certainty.micro} />
+          <div className="mt-10 max-w-2xl">
+            <ChoiceRowText
+              label="I feel pretty sure"
+              selected={certainty === "strong"}
+              onClick={() => chooseCertainty("strong")}
+            />
+            <ChoiceRowText
+              label="I have some ideas"
+              selected={certainty === "kinda"}
+              onClick={() => chooseCertainty("kinda")}
+            />
+            <ChoiceRowText
+              label="I honestly don’t know yet"
+              selected={certainty === "no_clue"}
+              onClick={() => chooseCertainty("no_clue")}
+            />
+            <EndOfAnswersLine />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderPostPlans() {
+    const canContinue = postPlans.length > 0;
+
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.postPlans.title} micro={STEP_META.postPlans.micro} />
+
+          <div className="mt-10 max-w-3xl">
+            <ChoiceRowText
+              label="Get a job"
+              selected={postPlans.includes("job")}
+              onClick={() => togglePostPlan("job")}
+            />
+            <ChoiceRowText
+              label="Four-year college"
+              selected={postPlans.includes("four_year")}
+              onClick={() => togglePostPlan("four_year")}
+            />
+            <ChoiceRowText
+              label="Community / two-year college"
+              selected={postPlans.includes("associates")}
+              onClick={() => togglePostPlan("associates")}
+            />
+            <ChoiceRowText
+              label="Trade / credential program"
+              selected={postPlans.includes("credential")}
+              onClick={() => togglePostPlan("credential")}
+            />
+            <ChoiceRowText
+              label="Military"
+              selected={postPlans.includes("military")}
+              onClick={() => togglePostPlan("military")}
+            />
+            <ChoiceRowText
+              label="Not sure yet"
+              selected={postPlans.includes("no_idea")}
+              onClick={() => togglePostPlan("no_idea")}
+            />
+
+            <EndOfAnswersLine />
+
+            <div className="mt-8 flex items-center justify-between">
+              <div className="text-xs text-white/35">{canContinue ? "" : "Pick at least one to continue."}</div>
+              <button
+                type="button"
+                onClick={submitPostPlans}
+                disabled={!canContinue}
+                className={`text-sm font-semibold transition ${
+                  canContinue ? "text-white/85 hover:text-white" : "text-white/30 cursor-not-allowed"
+                }`}
+                aria-label="Continue"
+                title="Continue"
+              >
+                → Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderActivities() {
+    const hasSelection = activities.length > 0;
+    const wantsOther = activities.includes("other");
+
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.activities.title} micro={STEP_META.activities.micro} />
+
+          <div className="mt-10 max-w-3xl">
+            <ChoiceRowText
+              label="Sports / training"
+              selected={activities.includes("sports")}
+              onClick={() => toggleActivity("sports")}
+            />
+            <ChoiceRowText
+              label="Art / design"
+              selected={activities.includes("visual_arts")}
+              onClick={() => toggleActivity("visual_arts")}
+            />
+            <ChoiceRowText
+              label="Music / dance / theater"
+              selected={activities.includes("performing_arts")}
+              onClick={() => toggleActivity("performing_arts")}
+            />
+            <ChoiceRowText
+              label="Volunteering / helping out"
+              selected={activities.includes("volunteer")}
+              onClick={() => toggleActivity("volunteer")}
+            />
+            <ChoiceRowText
+              label="Working a job"
+              selected={activities.includes("job")}
+              onClick={() => toggleActivity("job")}
+            />
+            <ChoiceRowText
+              label="Other"
+              selected={activities.includes("other")}
+              onClick={() => toggleActivity("other")}
+            />
+
+            <EndOfAnswersLine />
+
+            {wantsOther ? (
+              <div className="mt-6">
+                <div className="text-sm text-white/60">What’s “other”?</div>
+                <MinimalTextarea
+                  value={draft}
+                  onChange={setDraft}
+                  onSubmit={submitActivities}
+                  canSubmit={true}
+                  textareaRef={textareaRef}
+                  showMic
+                  isListening={isListening}
+                  speechSupported={speechSupported}
+                  onToggleMic={() => toggleMic("activitiesOther")}
+                />
+              </div>
+            ) : (
+              <div className="mt-8 flex items-center justify-between">
+                <div className="text-xs text-white/35">{hasSelection ? "" : "Pick at least one to continue."}</div>
+                <button
+                  type="button"
+                  onClick={submitActivities}
+                  disabled={!hasSelection}
+                  className={`text-sm font-semibold transition ${
+                    hasSelection ? "text-white/85 hover:text-white" : "text-white/30 cursor-not-allowed"
+                  }`}
+                  aria-label="Continue"
+                  title="Continue"
+                >
+                  → Continue
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fun images (no nested animals folder)
+  // Expected:
+  //  public/onboarding/dog.jpg
+  //  public/onboarding/cat.jpg
+  //  public/onboarding/bearded-dragon.jpg
+  //  public/onboarding/rock.jpg
+  const FUN_OPTIONS: { key: Exclude<FunChoice, null>; src: string; alt: string }[] = [
+    { key: "dog", src: "/onboarding/dog.jpg", alt: "Dog" },
+    { key: "cat", src: "/onboarding/cat.jpg", alt: "Cat" },
+    { key: "bearded_dragon", src: "/onboarding/bearded-dragon.jpg", alt: "Bearded dragon" },
+    { key: "rock", src: "/onboarding/rock.jpg", alt: "Rock" },
+  ];
+
+  function renderFun() {
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <Kicker />
+          <TitleBlock title={STEP_META.fun.title} />
+
+          <div className="mt-10 grid max-w-4xl grid-cols-2 gap-5 sm:grid-cols-4">
+            {FUN_OPTIONS.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => chooseFun(o.key)}
+                className="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/5 transition hover:border-white/25 hover:bg-white/8 active:scale-[0.99]"
+                aria-label={o.alt}
+                title={o.alt}
+              >
+                <div className="relative h-[200px] w-full sm:h-[260px]">
+                  <Image
+                    src={o.src}
+                    alt={o.alt}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 320px"
+                    className="object-cover transition group-hover:scale-[1.02]"
+                    priority={o.key === "dog"}
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"
+                  />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderSummary() {
+    const zip5 = normalizeZip(zip);
+    const insight = buildInsight({
+      situation,
+      certainty,
+      postPlans,
+      activities,
+      activitiesOther,
+      funChoice,
+      zip5,
+    });
+
+    const n = firstName(name);
+
+    return (
+      <div className="flex min-h-[60svh] items-center">
+        <div className="w-full">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
+              Everleap
+            </div>
+
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              {n ? `Here’s your starting point, ${n}.` : "Here’s a strong starting point."}
+            </h1>
+
+            <p className="mt-6 text-[15px] leading-7 text-white/75">{insight}</p>
+
+            <div className="mt-10">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="text-sm font-semibold text-white/85 hover:text-white transition"
+                aria-label="Join Everleap"
+                title="Join Everleap"
+              >
+                → Join Everleap
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const screenKey =
+    screenMode === "retort"
+      ? `retort_${retortFromStep ?? stepId}`
+      : screenMode === "completion"
+      ? "completion"
+      : stepId;
 
   return (
     <AppChrome
@@ -1069,87 +1612,86 @@ export default function OnboardingPage() {
       gradientLevel={gradientLevel}
       setGradientLevel={setGradientLevel}
       orbSource="onboarding_orb"
-      ambientCap={0.35}
+      ambientCap={0.22}
     >
-      <div className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`} style={pageBgStyle}>
+      <div className={`relative min-h-[100svh] ${theme.pageBgBaseClass}`} style={pageBgStyle}>
+        {/* minimal ambient */}
         {gradientLevel > 0 && (
-          <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity }}>
-            <div className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
-            <div className={`absolute top-40 right-[-32px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`} />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ opacity: gradient.ambientOpacity * 0.4 }}
+          >
+            <div className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
+            <div
+              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+              style={{ opacity: 0.32 }}
+            />
           </div>
         )}
 
-        <BrandBadge />
-
-        <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
-          <div className="w-full max-w-5xl -translate-y-6">
-            <section className="w-full">
-              <div className={`w-full rounded-3xl border px-6 py-6 md:px-8 md:py-7 ${cardSurface}`}>
-                {/* Top row: Back + progress */}
-                <div className="mb-5 flex items-center justify-between">
-                  <div>
-                    {canShowBack ? (
-                      <button
-                        type="button"
-                        onClick={goBack}
-                        className="
-                          inline-flex items-center gap-2 rounded-full
-                          border border-white/10 bg-white/5 px-3 py-1.5
-                          text-xs font-semibold text-white/80
-                          transition hover:bg-white/10 active:scale-95
-                        "
-                        aria-label="Go back"
-                        title="Back"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={exitOnboarding}
-                        className="
-                          inline-flex items-center gap-2 rounded-full
-                          border border-white/10 bg-white/5 px-3 py-1.5
-                          text-xs font-semibold text-white/70
-                          transition hover:bg-white/10 active:scale-95
-                        "
-                        aria-label="Exit onboarding"
-                        title="Exit"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Exit
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="text-[0.72rem] font-semibold tracking-[0.18em] text-white/45">
-                    STEP {Math.min(stepIndex + 1, STEPS.length)} OF {STEPS.length}
-                  </div>
-
-                  <div className="w-[70px]" />
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={stepId}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.28, ease: "easeOut" }}
-                  >
-                    {stepId === "welcome" && renderWelcome()}
-                    {stepId === "name" && renderName()}
-                    {stepId === "situation" && renderSituation()}
-                    {stepId === "certainty" && renderCertainty()}
-                    {stepId === "postPlans" && renderPostPlans()}
-                    {stepId === "activities" && renderActivities()}
-                    {stepId === "fun" && renderFun()}
-                    {stepId === "summary" && renderSummary()}
-                  </motion.div>
-                </AnimatePresence>
+        <main className="relative z-10">
+          <div className="mx-auto w-full max-w-[980px] px-6 pb-24 pt-10">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-6">
+                <MinimalTopLeftBrand onClick={goLanding} />
               </div>
-            </section>
+
+              <div className="flex flex-col items-center gap-2">
+                <ProgressDots current={stepIndex} total={STEPS.length} />
+              </div>
+
+              <div className="min-w-[120px] flex justify-end">
+                {canGoBack() ? (
+                  <MinimalBack onClick={goBack} />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={exitOnboarding}
+                    className="text-sm font-semibold text-white/55 hover:text-white/80 transition"
+                    aria-label="Exit onboarding"
+                    title="Exit"
+                  >
+                    Exit
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-10">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={screenKey}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                >
+                  {screenMode === "retort" ? (
+                    renderRetort()
+                  ) : screenMode === "completion" ? (
+                    <CompletionTransition onDone={completionDone} />
+                  ) : stepId === "welcome" ? (
+                    renderWelcome()
+                  ) : stepId === "name" ? (
+                    renderName()
+                  ) : stepId === "situation" ? (
+                    renderSituation()
+                  ) : stepId === "zip" ? (
+                    renderZip()
+                  ) : stepId === "certainty" ? (
+                    renderCertainty()
+                  ) : stepId === "postPlans" ? (
+                    renderPostPlans()
+                  ) : stepId === "activities" ? (
+                    renderActivities()
+                  ) : stepId === "fun" ? (
+                    renderFun()
+                  ) : (
+                    renderSummary()
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         </main>
 
