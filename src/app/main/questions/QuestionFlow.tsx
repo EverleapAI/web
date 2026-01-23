@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mic, MicOff, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
    ============================================================ */
 
 type Category = "motivations" | "strengths" | "skills";
+type CategoryLabel = "Motivations" | "Strengths" | "Skills";
 
 type QA = {
   id: string;
@@ -34,16 +35,12 @@ declare global {
    Constants
    ============================================================ */
 
-const TOTAL = 15;
-
-const STORAGE_KEY_V1 = "everleap.story.answers.v1";
-const STORAGE_KEY = "everleap.story.answers.v2";
-const RESET_FLAG = "everleap.story.reset.v2.session";
-
+const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 const ONBOARDING_KEY = "everleapOnboarding_v1";
 
 /* ============================================================
    Questions (5 + 5 + 5)
+   Category-scoped IDs
    ============================================================ */
 
 const MOTIVATIONS_5 = [
@@ -70,19 +67,19 @@ const SKILLS_5 = [
   "If you could get really good at one thing, what would you pick?",
 ];
 
-const QUESTIONS: QA[] = [
+const QUESTIONS_ALL: QA[] = [
   ...MOTIVATIONS_5.map((q, i) => ({
-    id: `q_${i + 1}`,
+    id: `motivations_${i + 1}`,
     category: "motivations" as const,
     question: q,
   })),
   ...STRENGTHS_5.map((q, i) => ({
-    id: `q_${i + 6}`,
+    id: `strengths_${i + 1}`,
     category: "strengths" as const,
     question: q,
   })),
   ...SKILLS_5.map((q, i) => ({
-    id: `q_${i + 11}`,
+    id: `skills_${i + 1}`,
     category: "skills" as const,
     question: q,
   })),
@@ -95,7 +92,7 @@ const QUESTIONS: QA[] = [
 function loadSaved(): Record<string, Saved> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY_V3);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return {};
@@ -110,7 +107,7 @@ function saveOne(id: string, payload: Saved) {
   const current = loadSaved();
   current[id] = payload;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    window.localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(current));
   } catch {
     // ignore
   }
@@ -151,193 +148,183 @@ function firstName(raw: string) {
   return first.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
 }
 
-function isAnswered(saved: Saved | undefined) {
-  const a = saved?.answer?.trim();
-  return Boolean(a);
+/* ============================================================
+   Category helpers
+   ============================================================ */
+
+function normalizeCategory(raw: string | null): Category {
+  const v = (raw ?? "").toLowerCase().trim();
+  if (v === "motivations") return "motivations";
+  if (v === "strengths") return "strengths";
+  if (v === "skills") return "skills";
+  return "motivations";
+}
+
+function labelForCategory(cat: Category): CategoryLabel {
+  if (cat === "motivations") return "Motivations";
+  if (cat === "strengths") return "Strengths";
+  return "Skills";
+}
+
+function safeReturnTo(raw: string | null): string {
+  const v = (raw ?? "").trim();
+  if (!v) return "/main/home";
+  if (!v.startsWith("/")) return "/main/home";
+  if (v.startsWith("//")) return "/main/home";
+  return v;
 }
 
 /* ============================================================
-   Summary builder (final screen)
+   Completion copy (short + minimalist)
+   - Use "you" (never name)
+   - Remove "You can always refine this later."
    ============================================================ */
 
-function takeFirstMeaningful(saved: Record<string, Saved>, ids: string[], max: number) {
-  const out: string[] = [];
-  for (const id of ids) {
-    const a = saved[id]?.answer?.trim();
-    if (a) out.push(a);
-    if (out.length >= max) break;
+function completionCopy(cat: Category, _label: CategoryLabel) {
+  if (cat === "motivations") {
+    return [
+      "This gives us a clear starting point for how you function day to day — what supports energy and focus, and what tends to drain it.",
+      "That’s how Everleap avoids generic advice. We’ll recommend options that fit your rhythm and real life, not just what sounds good on paper.",
+      "Next, we’ll turn this into a few practical possibilities and small experiments to test what actually fits.",
+    ];
   }
-  return out;
-}
 
-function buildFinalSummary(saved: Record<string, Saved>) {
-  const motIds = ["q_1", "q_2", "q_3", "q_4", "q_5"];
-  const strIds = ["q_6", "q_7", "q_8", "q_9", "q_10"];
-  const sklIds = ["q_11", "q_12", "q_13", "q_14", "q_15"];
+  if (cat === "strengths") {
+    return [
+      "This helps us understand how you tend to show up at your best, and the kinds of situations where your strengths come through naturally.",
+      "From here, Everleap can focus recommendations on roles, projects, and communities where those strengths are likely to be used — not overlooked.",
+      "We’ll suggest a few low-pressure ways to validate fit.",
+    ];
+  }
 
-  const mot = takeFirstMeaningful(saved, motIds, 2);
-  const str = takeFirstMeaningful(saved, strIds, 2);
-  const skl = takeFirstMeaningful(saved, sklIds, 2);
-
-  const parts: string[] = [];
-
-  if (mot.length) parts.push(`Motivations: ${mot.length === 1 ? mot[0] : `${mot[0]} / ${mot[1]}`}.`);
-  else parts.push("Motivations: you left some blanks — totally fine.");
-
-  if (str.length) parts.push(`Strengths: ${str.length === 1 ? str[0] : `${str[0]} / ${str[1]}`}.`);
-  else parts.push("Strengths: we’ll learn that with time — no problem.");
-
-  if (skl.length) parts.push(`Skills: ${skl.length === 1 ? skl[0] : `${skl[0]} / ${skl[1]}`}.`);
-  else parts.push("Skills: we can refine this later — you’re not behind.");
-
-  parts.push("This is a starting snapshot — enough for your first Insights.");
-  return parts.join(" ");
+  // skills
+  return [
+    "This gives us a practical picture of where you want to grow, and how that growth might realistically happen.",
+    "From here, Everleap will recommend skill paths and next steps that are doable, not overwhelming — built around momentum, not pressure.",
+    "This is a starting point, and we’ll refine as you go.",
+  ];
 }
 
 /* ============================================================
    UI atoms
    ============================================================ */
 
-function ProgressNumbers({
+function CategoryPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-white/15 bg-white/6 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/70">
+      {label}
+    </span>
+  );
+}
+
+function ProgressDashes({
   current,
   total,
-  canJump,
-  isBold,
-  onJump,
+  isDone,
 }: {
   current: number;
   total: number;
-  canJump: (i: number) => boolean;
-  isBold: (i: number) => boolean;
-  onJump: (i: number) => void;
+  isDone: (i: number) => boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2" aria-label="Progress">
+    <div className="flex items-center justify-center gap-2" aria-label="Progress">
       {Array.from({ length: total }).map((_, i) => {
         const active = i === current;
-        const enabled = canJump(i);
-        const bold = isBold(i);
+        const done = isDone(i);
 
         return (
-          <button
+          <span
             key={i}
-            type="button"
-            onClick={() => onJump(i)}
-            disabled={!enabled}
-            className={`h-7 min-w-[28px] rounded-full px-2 text-xs transition ${
-              active
-                ? "bg-white/80 text-black"
-                : enabled
-                  ? "bg-white/10 text-white/75 hover:bg-white/16"
-                  : "bg-white/6 text-white/25 cursor-not-allowed"
-            } ${bold ? "font-extrabold" : "font-semibold"}`}
-            aria-label={`Question ${i + 1}`}
-            title={enabled ? `Go to question ${i + 1}` : `Question ${i + 1} (not answered yet)`}
-          >
-            {i + 1}
-          </button>
+            aria-hidden="true"
+            className={[
+              "rounded-full transition",
+              active ? "h-[10px] w-8 bg-white/70" : "h-[8px] w-7",
+              !active && done ? "bg-white/35" : "",
+              !active && !done ? "bg-white/12" : "",
+            ].join(" ")}
+          />
         );
       })}
     </div>
   );
 }
 
-function MiniCelebrateLine() {
+function PauseLine({ show }: { show: boolean }) {
   return (
-    <div className="mt-8 flex flex-col items-center" aria-hidden="true">
-      <div className="flex items-center gap-2">
-        {Array.from({ length: 7 }).map((_, i) => {
-          const on = i === 3;
-          return (
-            <span
-              key={i}
-              className={`h-[6px] w-[6px] rounded-full ${on ? "bg-white/70" : "bg-white/18"}`}
-            />
-          );
-        })}
-      </div>
-      <div className="mt-6 h-px w-40 rounded-full bg-white/20" />
-    </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: show ? 1 : 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      aria-hidden="true"
+      className="mt-8"
+    >
+      <div className="h-px w-44 rounded-full bg-white/18" />
+    </motion.div>
   );
-}
-
-/* ============================================================
-   Section helpers
-   ============================================================ */
-
-function sectionLabel(cat: Category) {
-  if (cat === "motivations") return "Motivations";
-  if (cat === "strengths") return "Strengths";
-  return "Skills";
-}
-
-function sectionBody(cat: Category) {
-  if (cat === "motivations") return "Next up: Strengths. This helps us understand what brings out your best.";
-  if (cat === "strengths") return "Next up: Skills. This helps us spot where you’ll grow the fastest.";
-  return "You’re done. Next we’ll show a few early insights from what you shared.";
 }
 
 /* ============================================================
    Component
    ============================================================ */
 
-type ScreenMode = "question" | "section" | "final";
-
-type SectionState = {
-  finished: Category;
-  nextIndex: number;
-};
-
-type NavIntent = "forward" | "back_or_jump";
+type ScreenMode = "question" | "final";
 
 export default function QuestionFlow() {
   const router = useRouter();
+  const params = useSearchParams();
+
+  const category = normalizeCategory(params?.get("cat"));
+  const categoryLabel = labelForCategory(category);
+  const returnTo = safeReturnTo(params?.get("returnTo"));
+
+  const questions = React.useMemo(() => {
+    return QUESTIONS_ALL.filter((q) => q.category === category);
+  }, [category]);
+
+  const total = questions.length;
 
   const [name, setName] = React.useState("");
   const [index, setIndex] = React.useState(0);
   const [draft, setDraft] = React.useState("");
-
   const [screenMode, setScreenMode] = React.useState<ScreenMode>("question");
-  const [section, setSection] = React.useState<SectionState | null>(null);
-
   const [savedMap, setSavedMap] = React.useState<Record<string, Saved>>({});
 
-  const q = QUESTIONS[index] ?? QUESTIONS[0];
+  const q = questions[index] ?? questions[0];
 
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
-  // If user jumps back via progress, we remember where they came from.
-  const originIndexRef = React.useRef<number | null>(null);
+  /* ---------------- Focus helper ---------------- */
 
-  // Controls whether we hydrate prior answer or force blank.
-  const navIntentRef = React.useRef<NavIntent>("forward");
+  function focusAnswer(opts?: { select?: boolean }) {
+    const el = textareaRef.current;
+    if (!el) return;
+    try {
+      el.focus();
+      if (opts?.select) {
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+      }
+    } catch {
+      // ignore
+    }
+  }
 
-  // Speech
+  /* ---------------- Speech ---------------- */
+
   const [isListening, setIsListening] = React.useState(false);
   const [speechSupported, setSpeechSupported] = React.useState(true);
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const lastFinalRef = React.useRef<string>("");
 
+  /* ---------------- Completion beat state ---------------- */
+
+  const [showPauseLine, setShowPauseLine] = React.useState(false);
+  const [ctaReady, setCtaReady] = React.useState(false);
+
   React.useEffect(() => {
     setName(readNameFromOnboarding());
   }, []);
 
-  // Reset local data ONCE per session
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const already = window.sessionStorage.getItem(RESET_FLAG);
-      if (!already) {
-        window.localStorage.removeItem(STORAGE_KEY_V1);
-        window.localStorage.removeItem(STORAGE_KEY);
-        window.sessionStorage.setItem(RESET_FLAG, "1");
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Speech supported
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
@@ -354,27 +341,32 @@ export default function QuestionFlow() {
 
   React.useEffect(() => {
     refreshSaved();
-
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) refreshSaved();
+      if (e.key === STORAGE_KEY_V3) refreshSaved();
     };
-
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refreshSaved);
-
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refreshSaved);
     };
   }, []);
 
+  React.useEffect(() => {
+    setIndex(0);
+    setDraft("");
+    setScreenMode("question");
+    setShowPauseLine(false);
+    setCtaReady(false);
+    window.setTimeout(() => focusAnswer(), 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
   function stopListening() {
     if (!recognitionRef.current) return;
     try {
       recognitionRef.current.stop();
-    } catch {
-      // ignore
-    }
+    } catch {}
     setIsListening(false);
   }
 
@@ -395,23 +387,16 @@ export default function QuestionFlow() {
 
     rec.onresult = (event: SpeechRecognitionEvent) => {
       let finalChunk = "";
-
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const res = event.results[i];
         const t = (res?.[0]?.transcript ?? "").trim();
         if (!t) continue;
         if (res.isFinal) finalChunk += (finalChunk ? " " : "") + t;
       }
-
       const cleaned = finalChunk.trim();
-      if (!cleaned) return;
-      if (cleaned === lastFinalRef.current) return;
+      if (!cleaned || cleaned === lastFinalRef.current) return;
       lastFinalRef.current = cleaned;
-
-      setDraft((prev) => {
-        const base = prev.trim();
-        return base ? `${base} ${cleaned}` : cleaned;
-      });
+      setDraft((prev) => (prev.trim() ? `${prev.trim()} ${cleaned}` : cleaned));
     };
 
     rec.onerror = () => setIsListening(false);
@@ -422,17 +407,14 @@ export default function QuestionFlow() {
   }
 
   function toggleMic() {
-    textareaRef.current?.focus();
+    focusAnswer();
     lastFinalRef.current = "";
-
     if (isListening) {
       stopListening();
       return;
     }
-
     const rec = getOrCreateRecognition();
     if (!rec) return;
-
     try {
       setIsListening(true);
       rec.start();
@@ -441,120 +423,80 @@ export default function QuestionFlow() {
     }
   }
 
-  // Cleanup
   React.useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
+        } catch {}
       }
     };
   }, []);
 
-  // When question changes and we're in question mode:
-  // - forward nav forces blank
-  // - back/jump hydrates saved answer
   React.useEffect(() => {
-    if (screenMode !== "question") return;
+    if (!q || screenMode !== "question") return;
+    stopListening();
+    lastFinalRef.current = "";
+    const s = loadSaved()[q.id];
+    setDraft((s?.answer ?? "").trim());
+    window.setTimeout(() => focusAnswer(), 0);
+  }, [q?.id, screenMode]);
 
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
+  React.useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible" && screenMode === "question") {
+        window.setTimeout(() => focusAnswer(), 0);
       }
-    }
-    setIsListening(false);
-    lastFinalRef.current = "";
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
+    };
+  }, [screenMode]);
 
-    const intent = navIntentRef.current;
-
-    if (intent === "forward") {
-      setDraft("");
-    } else {
-      const s = loadSaved()[q.id];
-      const nextDraft = (s?.answer ?? "").trim();
-      setDraft(nextDraft);
-    }
-  }, [q.id, screenMode]);
-
-  function hardClearDraftForForward() {
-    setDraft("");
-    lastFinalRef.current = "";
+  function exitNow() {
+    stopListening();
+    router.push(returnTo);
   }
 
-  function sectionForBoundary(nextIndex: number): SectionState | null {
-    // Called only for main forward flow; not for jump-edit returns.
-    if (nextIndex === 5) return { finished: "motivations", nextIndex };
-    if (nextIndex === 10) return { finished: "strengths", nextIndex };
-    if (nextIndex === 15) return { finished: "skills", nextIndex };
-    return null;
+  function isDoneDash(i: number) {
+    const id = questions[i]?.id;
+    if (!id) return false;
+    const s = savedMap[id];
+    return Boolean(s && (s.skipped || (s.answer && s.answer.trim())));
   }
 
   function completeAndAdvance(opts: { skipped: boolean }) {
-    const isEditingJump = originIndexRef.current !== null;
-
+    if (!q) return;
     const text = draft.trim();
 
     if (!opts.skipped) {
       if (!text) return;
-
       if (!isMeaningfulText(text)) {
         setDraft("");
-        textareaRef.current?.focus();
+        focusAnswer();
         return;
       }
     }
 
-    // Save
-    if (opts.skipped) saveOne(q.id, { answer: undefined, skipped: true });
+    if (opts.skipped) saveOne(q.id, { skipped: true });
     else saveOne(q.id, { answer: text, skipped: false });
 
     refreshSaved();
     stopListening();
+    setDraft("");
 
-    // If they jumped back from some origin, return to origin (no congrats screens)
-    if (isEditingJump) {
-      const origin = originIndexRef.current!;
-      originIndexRef.current = null;
-
-      navIntentRef.current = "back_or_jump";
-      setScreenMode("question");
-      setSection(null);
-      setIndex(origin);
-
-      window.setTimeout(() => textareaRef.current?.focus(), 50);
-      return;
-    }
-
-    // Main forward flow
     const nextIndex = index + 1;
-
-    // Always blank on forward
-    navIntentRef.current = "forward";
-    hardClearDraftForForward();
-
-    const boundary = sectionForBoundary(nextIndex);
-
-    if (boundary) {
-      setScreenMode("section");
-      setSection(boundary);
-      return;
-    }
-
-    if (nextIndex >= TOTAL) {
+    if (nextIndex >= total) {
       setScreenMode("final");
-      setSection(null);
       return;
     }
 
-    setScreenMode("question");
-    setSection(null);
     setIndex(nextIndex);
-    window.setTimeout(() => textareaRef.current?.focus(), 50);
+    setScreenMode("question");
+    window.setTimeout(() => focusAnswer(), 50);
   }
 
   function submit() {
@@ -565,154 +507,68 @@ export default function QuestionFlow() {
     completeAndAdvance({ skipped: true });
   }
 
-  function canJump(i: number) {
-    const id = QUESTIONS[i]?.id;
-    if (!id) return false;
-    if (i === index && screenMode === "question") return true;
+  const screenKey = screenMode === "final" ? `final_${category}` : q?.id ?? "q";
 
-    const s = savedMap[id];
-    return Boolean(s && (s.skipped || (s.answer && s.answer.trim())));
-  }
+  React.useEffect(() => {
+    if (total === 0) router.push(returnTo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total]);
 
-  function isBoldIndex(i: number) {
-    const id = QUESTIONS[i]?.id;
-    if (!id) return false;
-    return isAnswered(savedMap[id]);
-  }
-
-  function jumpTo(i: number) {
-    if (!canJump(i)) return;
-
-    // Record origin only when leaving a live question screen.
-    if (screenMode === "question" && originIndexRef.current === null && i !== index) {
-      originIndexRef.current = index;
-    }
-
-    stopListening();
-    setIsListening(false);
-    lastFinalRef.current = "";
-
-    navIntentRef.current = "back_or_jump";
-    setSection(null);
-    setScreenMode("question");
-    setIndex(i);
-
-    window.setTimeout(() => textareaRef.current?.focus(), 50);
-  }
-
-  function goBack() {
-    stopListening();
-    setIsListening(false);
-    lastFinalRef.current = "";
-
-    // If we're editing a jump-back question, "Back" should return to origin.
-    if (originIndexRef.current !== null) {
-      const origin = originIndexRef.current!;
-      originIndexRef.current = null;
-
-      navIntentRef.current = "back_or_jump";
-      setSection(null);
-      setScreenMode("question");
-      setIndex(origin);
+  // Quiet beat timing on completion screen:
+  // - show line shortly after render
+  // - enable CTA after ~3s total dwell
+  React.useEffect(() => {
+    if (screenMode !== "final") {
+      setShowPauseLine(false);
+      setCtaReady(false);
       return;
     }
 
-    if (screenMode === "final") {
-      navIntentRef.current = "back_or_jump";
-      setScreenMode("question");
-      setSection(null);
-      setIndex(Math.max(0, TOTAL - 1));
-      return;
-    }
+    setShowPauseLine(false);
+    setCtaReady(false);
 
-    if (screenMode === "section" && section) {
-      const prevIndex = Math.max(0, section.nextIndex - 1);
-      navIntentRef.current = "back_or_jump";
-      setScreenMode("question");
-      setSection(null);
-      setIndex(prevIndex);
-      return;
-    }
+    const t1 = window.setTimeout(() => setShowPauseLine(true), 450);
+    const t2 = window.setTimeout(() => setCtaReady(true), 3000);
 
-    navIntentRef.current = "back_or_jump";
-    setScreenMode("question");
-    setSection(null);
-    setIndex((prev) => Math.max(0, prev - 1));
-  }
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [screenMode, category]);
 
-  function continueSection() {
-    if (!section) return;
-
-    stopListening();
-    setIsListening(false);
-    lastFinalRef.current = "";
-
-    const finished = section.finished;
-
-    if (finished === "skills") {
-      setSection(null);
-      setScreenMode("final");
-      return;
-    }
-
-    navIntentRef.current = "forward";
-    hardClearDraftForForward();
-
-    setScreenMode("question");
-    setIndex(section.nextIndex);
-    setSection(null);
-
-    window.setTimeout(() => textareaRef.current?.focus(), 50);
-  }
-
-  const screenKey =
-    screenMode === "section"
-      ? `section_${section?.finished ?? "x"}`
-      : screenMode === "final"
-        ? "final"
-        : q.id;
-
-  /* ============================================================
-     Render
-     ============================================================ */
+  const completionParagraphs = React.useMemo(() => {
+    return completionCopy(category, categoryLabel);
+  }, [category, categoryLabel]);
 
   return (
     <div className="mx-auto w-full max-w-[980px] px-6 pt-10 pb-24">
-      {/* Mobile: Everleap + Back on one row, progress wraps below. Desktop: 3-column header */}
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="flex items-center justify-between sm:block min-w-0 sm:min-w-[120px]">
+        <div className="flex items-center justify-between sm:block min-w-0 sm:min-w-[160px]">
           <div className="text-sm font-semibold text-white/80">Everleap</div>
-
           <button
             type="button"
-            onClick={goBack}
+            onClick={exitNow}
             className="text-sm font-semibold text-white/60 hover:text-white transition sm:hidden"
-            aria-label="Back"
-            title="Back"
           >
-            Back
+            Exit
           </button>
         </div>
 
         <div className="flex-1 min-w-0">
-          <ProgressNumbers
-            current={index}
-            total={TOTAL}
-            canJump={canJump}
-            isBold={isBoldIndex}
-            onJump={jumpTo}
-          />
+          <div className="flex flex-col items-center gap-3">
+            <ProgressDashes current={index} total={total} isDone={isDoneDash} />
+            <CategoryPill label={categoryLabel} />
+          </div>
         </div>
 
-        <div className="hidden sm:flex min-w-0 sm:min-w-[120px] justify-end">
+        <div className="hidden sm:flex min-w-0 sm:min-w-[160px] justify-end">
           <button
             type="button"
-            onClick={goBack}
+            onClick={exitNow}
             className="text-sm font-semibold text-white/60 hover:text-white transition"
-            aria-label="Back"
-            title="Back"
           >
-            Back
+            Exit
           </button>
         </div>
       </div>
@@ -726,76 +582,55 @@ export default function QuestionFlow() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            {screenMode === "section" && section ? (
+            {screenMode === "final" ? (
               <div className="flex min-h-[60svh] items-center">
                 <div className="w-full max-w-3xl">
                   <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-                    Everleap · Story
-                  </div>
-
-                  <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                    {sectionLabel(section.finished)} complete.
-                  </h1>
-
-                  <p className="mt-4 text-[15px] leading-7 text-white/65 max-w-2xl">
-                    {sectionBody(section.finished)}
-                  </p>
-
-                  <MiniCelebrateLine />
-
-                  <div className="mt-10">
-                    <button
-                      type="button"
-                      onClick={continueSection}
-                      className="text-sm font-semibold text-white/85 hover:text-white transition"
-                      aria-label="Continue"
-                      title="Continue"
-                    >
-                      → Continue
-                    </button>
-                  </div>
-
-                  <div className="mt-6 text-[11px] text-white/40">You can revise answers anytime.</div>
-                </div>
-              </div>
-            ) : screenMode === "final" ? (
-              <div className="flex min-h-[60svh] items-center">
-                <div className="w-full max-w-3xl">
-                  <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-                    Everleap
+                    Everleap · {categoryLabel}
                   </div>
 
                   <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                    {firstName(name) ? `You did it, ${firstName(name)}.` : "You did it."}
+                    {firstName(name) ? `${categoryLabel} done, ${firstName(name)}.` : `${categoryLabel} done.`}
                   </h1>
 
-                  <p className="mt-6 text-[15px] leading-7 text-white/75">
-                    {buildFinalSummary(savedMap)}
-                  </p>
-
-                  <MiniCelebrateLine />
-
-                  <div className="mt-10">
-                    <button
-                      type="button"
-                      onClick={() => router.push("/main/insights")}
-                      className="text-sm font-semibold text-white/85 hover:text-white transition"
-                      aria-label="See my insights"
-                      title="See my insights"
-                    >
-                      → See my insights
-                    </button>
+                  <div className="mt-6 max-w-2xl space-y-4">
+                    {completionParagraphs.map((p, i) => (
+                      <p key={i} className="text-[15px] leading-7 text-white/75">
+                        {p}
+                      </p>
+                    ))}
                   </div>
 
-                  <div className="mt-6 text-[11px] text-white/40">You can refine answers later.</div>
+                  {/* quiet beat */}
+                  <PauseLine show={showPauseLine} />
+
+                  <div className="mt-8">
+                    <button
+                      type="button"
+                      onClick={exitNow}
+                      disabled={!ctaReady}
+                      className={`text-sm font-semibold transition ${
+                        ctaReady ? "text-white/85 hover:text-white" : "text-white/35 cursor-not-allowed"
+                      }`}
+                    >
+                      → Return
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[60svh] items-center">
+              <div
+                className="flex min-h-[60svh] items-center"
+                onPointerDown={(e) => {
+                  const t = e.target as HTMLElement | null;
+                  if (t?.closest("button,a,input,textarea,select")) return;
+                  focusAnswer();
+                }}
+              >
                 <div className="w-full">
                   <div className="max-w-3xl">
                     <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                      {q.question}
+                      {q?.question ?? ""}
                     </h1>
                   </div>
 
@@ -813,7 +648,7 @@ export default function QuestionFlow() {
                             }
                           }}
                           rows={2}
-                          className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/90 placeholder:text-white/30 outline-none"
+                          className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/90 outline-none"
                         />
                       </div>
 
@@ -828,20 +663,8 @@ export default function QuestionFlow() {
                               ? "border-white/35 bg-white/10 text-white"
                               : "border-white/18 bg-white/6 text-white/80 hover:bg-white/10"
                         }`}
-                        aria-label={isListening ? "Stop voice input" : "Start voice input"}
-                        title={
-                          !speechSupported
-                            ? "Voice not supported"
-                            : isListening
-                              ? "Listening…"
-                              : "Voice input"
-                        }
                       >
-                        {isListening ? (
-                          <MicOff className="mx-auto h-4 w-4" />
-                        ) : (
-                          <Mic className="mx-auto h-4 w-4" />
-                        )}
+                        {isListening ? <MicOff className="mx-auto h-4 w-4" /> : <Mic className="mx-auto h-4 w-4" />}
                       </button>
 
                       <button
@@ -853,8 +676,6 @@ export default function QuestionFlow() {
                             ? "bg-white/80 text-black hover:bg-white"
                             : "bg-white/10 text-white/35 cursor-not-allowed"
                         }`}
-                        aria-label="Send"
-                        title="Send"
                       >
                         <Send className="mx-auto h-4 w-4" />
                       </button>
@@ -862,11 +683,9 @@ export default function QuestionFlow() {
 
                     <div className="mt-6 flex items-center justify-between text-sm text-white/60">
                       <button type="button" onClick={skip} className="hover:text-white/80 transition">
-                        I’m not sure
-                      </button>
-                      <button type="button" onClick={skip} className="hover:text-white/80 transition">
                         Skip for now
                       </button>
+                      <span aria-hidden="true" />
                     </div>
                   </div>
                 </div>

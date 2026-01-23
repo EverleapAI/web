@@ -88,8 +88,10 @@ type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 type VoiceTarget = "name" | "zip" | "activitiesOther";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-const RETORT_MS_DEFAULT = 5000;
-const RETORT_MS_FUN = 6000;
+
+// Retort timing (3 seconds everywhere)
+const RETORT_MS_DEFAULT = 3000;
+const RETORT_MS_FUN = 3000;
 
 /* ============================================================
    Copy (minimal)
@@ -166,7 +168,6 @@ function isMeaningfulText(value: string): boolean {
 function firstName(raw: string) {
   const cleaned = raw.trim().replace(/\s+/g, " ");
   if (!cleaned) return "";
-  // take the first "word" and strip odd punctuation at edges
   const first = cleaned.split(" ")[0] ?? "";
   return first.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
 }
@@ -190,18 +191,13 @@ function getRetortMs(fromStep: StepId) {
 function ProgressDots({ current, total }: { current: number; total: number }) {
   const filled = clampInt(current + 1, 1, total);
   return (
-    <div
-      className="flex items-center justify-center gap-2"
-      aria-label={`Step ${filled} of ${total}`}
-    >
+    <div className="flex items-center justify-center gap-2" aria-label={`Step ${filled} of ${total}`}>
       {Array.from({ length: total }).map((_, i) => {
         const on = i < filled;
         return (
           <span
             key={i}
-            className={`h-[6px] w-[14px] rounded-full transition ${
-              on ? "bg-white/70" : "bg-white/18"
-            }`}
+            className={`h-[6px] w-[14px] rounded-full transition ${on ? "bg-white/70" : "bg-white/18"}`}
           />
         );
       })}
@@ -254,9 +250,7 @@ function ChoiceRowText({
     <button type="button" onClick={onClick} className="group block w-full py-3 text-left">
       <div
         className={`text-[16px] leading-7 transition ${
-          selected
-            ? "text-white font-semibold"
-            : "text-white/70 group-hover:text-white/85 font-normal"
+          selected ? "text-white font-semibold" : "text-white/70 group-hover:text-white/85 font-normal"
         }`}
       >
         {label}
@@ -328,19 +322,9 @@ function MinimalTextarea({
                 : "border-white/18 bg-white/6 text-white/80 hover:bg-white/10"
             }`}
             aria-label={isListening ? "Stop voice input" : "Start voice input"}
-            title={
-              !speechSupported
-                ? "Voice not supported"
-                : isListening
-                ? "Listening…"
-                : "Voice input"
-            }
+            title={!speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Voice input"}
           >
-            {isListening ? (
-              <MicOff className="mx-auto h-4 w-4" />
-            ) : (
-              <Mic className="mx-auto h-4 w-4" />
-            )}
+            {isListening ? <MicOff className="mx-auto h-4 w-4" /> : <Mic className="mx-auto h-4 w-4" />}
           </button>
         ) : null}
 
@@ -349,9 +333,7 @@ function MinimalTextarea({
           onClick={onSubmit}
           disabled={!canSubmit}
           className={`h-10 w-10 rounded-full transition active:scale-95 ${
-            canSubmit
-              ? "bg-white/80 text-black hover:bg-white"
-              : "bg-white/10 text-white/35 cursor-not-allowed"
+            canSubmit ? "bg-white/80 text-black hover:bg-white" : "bg-white/10 text-white/35 cursor-not-allowed"
           }`}
           aria-label="Send"
           title="Send"
@@ -359,6 +341,33 @@ function MinimalTextarea({
           <Send className="mx-auto h-4 w-4" />
         </button>
       </div>
+    </div>
+  );
+}
+
+function MinimalContinue({
+  onClick,
+  disabled,
+  label,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  label?: string;
+}) {
+  return (
+    <div className="mt-10">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={Boolean(disabled)}
+        className={`text-sm font-semibold transition ${
+          disabled ? "text-white/35 cursor-not-allowed" : "text-white/80 hover:text-white"
+        }`}
+        aria-label={label ?? "Continue"}
+        title={label ?? "Continue"}
+      >
+        → {label ?? "Continue"}
+      </button>
     </div>
   );
 }
@@ -431,7 +440,6 @@ function buildRetort(args: {
   const n = firstName(name);
 
   if (fromStep === "name") {
-    // Name usage allowed only here + summary header.
     return n ? `Welcome, ${n}.` : "Welcome.";
   }
 
@@ -446,8 +454,6 @@ function buildRetort(args: {
   }
 
   if (fromStep === "zip") {
-    // Deterministic: never “generic” for a valid zip.
-    // If lookup succeeds, use city/state. If not, still reference the zip itself.
     if (!zip5) {
       return "Totally optional — no problem. Even without it, I can still tailor good next steps.";
     }
@@ -587,8 +593,7 @@ function buildInsight(options: {
   if (situation === "high_school") {
     if (certainty === "strong") parts.push("You’re in high school and you’ve got a pretty clear direction.");
     else if (certainty === "kinda") parts.push("You’re in high school with a few ideas — enough to start testing what fits.");
-    else if (certainty === "no_clue")
-      parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
+    else if (certainty === "no_clue") parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
     else parts.push("You’re in high school and taking a moment to think about what comes next.");
   } else if (situation === "young_adult") {
     if (certainty === "strong") parts.push("You’re a young adult with clear direction — a great place to turn plans into moves.");
@@ -668,6 +673,11 @@ type RetortOverrides = Partial<{
   funLatencyMs: number | null;
 }>;
 
+// Tiny deterministic overrides for known zips (keeps demos feeling “smart”)
+const ZIP_OVERRIDES: Record<string, { city: string; state: string }> = {
+  "94901": { city: "San Rafael", state: "CA" },
+};
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -695,6 +705,9 @@ export default function OnboardingPage() {
   const retortTimerRef = React.useRef<number | null>(null);
   const advanceLockRef = React.useRef(false);
 
+  // Retort token so async ZIP lookup can safely update the same retort screen only if still relevant
+  const retortTokenRef = React.useRef<string | null>(null);
+
   // Answers
   const [name, setName] = React.useState("");
   const [situation, setSituation] = React.useState<Situation>(null);
@@ -719,9 +732,82 @@ export default function OnboardingPage() {
   // Fun "how did you pick" (speed hint)
   const funShownAtRef = React.useRef<number | null>(null);
 
-  // PostPlans & Activities auto-submit debounce
-  const postPlansAutoTimerRef = React.useRef<number | null>(null);
-  const activitiesAutoTimerRef = React.useRef<number | null>(null);
+  // Reset EVERYTHING when onboarding mounts (fresh conversation every time)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    // Hard reset local state
+    setStepIndex(0);
+    setScreenMode("question");
+    setRetortText(null);
+    setRetortFromStep(null);
+    retortTokenRef.current = null;
+    advanceLockRef.current = false;
+
+    setName("");
+    setSituation(null);
+    setZip("");
+    setCertainty(null);
+    setPostPlans([]);
+    setActivities([]);
+    setActivitiesOther("");
+    setFunChoice(null);
+    setDraft("");
+
+    // stop any mic in progress
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+    setIsListening(false);
+    lastFinalRef.current = "";
+    activeTargetRef.current = null;
+    funShownAtRef.current = null;
+
+    // focus after first paint
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Speech supported
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
+    setSpeechSupported(Boolean(SpeechRec));
+  }, []);
+
+  function clearRetortTimer() {
+    if (retortTimerRef.current) {
+      window.clearTimeout(retortTimerRef.current);
+      retortTimerRef.current = null;
+    }
+  }
+
+  // Cleanup
+  React.useEffect(() => {
+    return () => {
+      clearRetortTimer();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, []);
 
   // Persist (optional)
   React.useEffect(() => {
@@ -746,57 +832,8 @@ export default function OnboardingPage() {
     }
   }, [stepIndex, name, situation, zip, certainty, postPlans, activities, activitiesOther, funChoice]);
 
-  // Speech supported
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-      | SpeechRecognitionConstructor
-      | undefined;
-    setSpeechSupported(Boolean(SpeechRec));
-  }, []);
-
-  function clearRetortTimer() {
-    if (retortTimerRef.current) {
-      window.clearTimeout(retortTimerRef.current);
-      retortTimerRef.current = null;
-    }
-  }
-
-  function clearPostPlansAutoTimer() {
-    if (postPlansAutoTimerRef.current) {
-      window.clearTimeout(postPlansAutoTimerRef.current);
-      postPlansAutoTimerRef.current = null;
-    }
-  }
-
-  function clearActivitiesAutoTimer() {
-    if (activitiesAutoTimerRef.current) {
-      window.clearTimeout(activitiesAutoTimerRef.current);
-      activitiesAutoTimerRef.current = null;
-    }
-  }
-
-  // Cleanup
-  React.useEffect(() => {
-    return () => {
-      clearRetortTimer();
-      clearPostPlansAutoTimer();
-      clearActivitiesAutoTimer();
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, []);
-
   // On step change: stop listening, reset draft, unlock
   React.useEffect(() => {
-    clearPostPlansAutoTimer();
-    clearActivitiesAutoTimer();
-
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -810,7 +847,6 @@ export default function OnboardingPage() {
     setDraft("");
     advanceLockRef.current = false;
 
-    // Mark when the fun screen becomes visible (for latency hint)
     if (stepId === "fun" && screenMode === "question") {
       funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
     } else {
@@ -931,6 +967,7 @@ export default function OnboardingPage() {
       setRetortText(null);
       setRetortFromStep(null);
       setScreenMode("question");
+      retortTokenRef.current = null;
       advanceLockRef.current = false;
       return;
     }
@@ -944,6 +981,10 @@ export default function OnboardingPage() {
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
 
+  function makeToken(fromStep: StepId) {
+    return `${fromStep}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+  }
+
   async function showRetortThenAdvance(fromStep: StepId, overrides?: RetortOverrides) {
     if (fromStep === "welcome") {
       setScreenMode("question");
@@ -953,9 +994,6 @@ export default function OnboardingPage() {
 
     clearRetortTimer();
 
-    // IMPORTANT:
-    // Use snapshot overrides so retorts reflect the *just-submitted* value,
-    // not potentially stale React state.
     const effectiveName = overrides?.name ?? name;
     const effectiveSituation = overrides?.situation ?? situation;
     const effectiveCertainty = overrides?.certainty ?? certainty;
@@ -965,18 +1003,22 @@ export default function OnboardingPage() {
     const effectiveFunChoice = overrides?.funChoice ?? funChoice;
     const effectiveFunLatencyMs = overrides?.funLatencyMs ?? null;
 
-    // Zip: only do lookup when we're actually rendering the ZIP retort.
     const zip5 = typeof overrides?.zip5 === "string" ? overrides.zip5 : normalizeZip(zip);
 
+    // Build a first retort immediately (fast), then refine in-place if ZIP lookup returns
     let zipPlaceLabel: string | null =
       "zipPlaceLabel" in (overrides ?? {}) ? (overrides?.zipPlaceLabel ?? null) : null;
 
-    if (fromStep === "zip" && zip5 && !("zipPlaceLabel" in (overrides ?? {}))) {
-      const place = await lookupZipPlace(zip5);
-      zipPlaceLabel = place ? `${place.city}, ${stateFullName(place.state)}` : null;
+    // Known deterministic overrides first
+    if (fromStep === "zip" && zip5 && !zipPlaceLabel) {
+      const o = ZIP_OVERRIDES[zip5];
+      if (o) zipPlaceLabel = `${o.city}, ${stateFullName(o.state)}`;
     }
 
-    const t = buildRetort({
+    const token = makeToken(fromStep);
+    retortTokenRef.current = token;
+
+    const t0 = buildRetort({
       fromStep,
       name: effectiveName,
       situation: effectiveSituation,
@@ -991,8 +1033,40 @@ export default function OnboardingPage() {
     });
 
     setRetortFromStep(fromStep);
-    setRetortText(t);
+    setRetortText(t0);
     setScreenMode("retort");
+
+    // Async refine only for zip retort (same screen), if we don't already have a place label
+    if (fromStep === "zip" && zip5 && !zipPlaceLabel && retortTokenRef.current === token) {
+      try {
+        const place = await lookupZipPlace(zip5);
+        const resolved = place ? `${place.city}, ${stateFullName(place.state)}` : null;
+
+        // If lookup missed but override exists, still use override (handled above); otherwise resolved may be null.
+        if (resolved && retortTokenRef.current === token && screenMode !== "completion") {
+          const t1 = buildRetort({
+            fromStep,
+            name: effectiveName,
+            situation: effectiveSituation,
+            certainty: effectiveCertainty,
+            postPlans: effectivePostPlans,
+            activities: effectiveActivities,
+            activitiesOther: effectiveActivitiesOther,
+            funChoice: effectiveFunChoice,
+            zip5,
+            zipPlaceLabel: resolved,
+            funLatencyMs: effectiveFunLatencyMs,
+          });
+
+          // Only update if we're still on the same retort
+          if (retortTokenRef.current === token && retortFromStep === "zip") {
+            setRetortText(t1);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     const waitMs = getRetortMs(fromStep);
 
@@ -1001,6 +1075,7 @@ export default function OnboardingPage() {
       setRetortText(null);
       setRetortFromStep(null);
       setScreenMode("question");
+      retortTokenRef.current = null;
       goNextStep();
       advanceLockRef.current = false;
     }, waitMs);
@@ -1027,6 +1102,9 @@ export default function OnboardingPage() {
       funLatencyMs: latency,
     });
 
+    const token = makeToken("fun");
+    retortTokenRef.current = token;
+
     setRetortFromStep("fun");
     setRetortText(t);
     setScreenMode("retort");
@@ -1035,8 +1113,8 @@ export default function OnboardingPage() {
       clearRetortTimer();
       setRetortText(null);
       setRetortFromStep(null);
+      retortTokenRef.current = null;
 
-      // Final flow: fun retort -> completion -> summary
       setScreenMode("completion");
       advanceLockRef.current = false;
     }, getRetortMs("fun"));
@@ -1046,11 +1124,11 @@ export default function OnboardingPage() {
     if (screenMode !== "retort") return;
     if (!lockAdvance()) return;
 
-    // If this is the final fun retort, skip should go to completion (not next step).
     if (retortFromStep === "fun") {
       clearRetortTimer();
       setRetortText(null);
       setRetortFromStep(null);
+      retortTokenRef.current = null;
       setScreenMode("completion");
       unlockAdvanceSoon();
       return;
@@ -1059,6 +1137,7 @@ export default function OnboardingPage() {
     clearRetortTimer();
     setRetortText(null);
     setRetortFromStep(null);
+    retortTokenRef.current = null;
     setScreenMode("question");
     goNextStep();
 
@@ -1084,7 +1163,6 @@ export default function OnboardingPage() {
     }
     setName(text);
     setDraft("");
-    // Use snapshot value so retort never misses the name.
     void showRetortThenAdvance("name", { name: text });
     unlockAdvanceSoon();
   }
@@ -1092,7 +1170,6 @@ export default function OnboardingPage() {
   function chooseSituation(v: Situation) {
     if (!lockAdvance()) return;
     setSituation(v);
-    // Snapshot for immediate, specific retort.
     void showRetortThenAdvance("situation", { situation: v });
     unlockAdvanceSoon();
   }
@@ -1104,7 +1181,6 @@ export default function OnboardingPage() {
     setZip(normalized);
     setDraft("");
 
-    // Snapshot zip so retort never uses stale zip state.
     void showRetortThenAdvance("zip", { zip5: normalized });
     unlockAdvanceSoon();
   }
@@ -1113,7 +1189,6 @@ export default function OnboardingPage() {
     if (!lockAdvance()) return;
     setZip("");
     setDraft("");
-    // Explicitly mark skipped.
     void showRetortThenAdvance("zip", { zip5: "" });
     unlockAdvanceSoon();
   }
@@ -1128,19 +1203,19 @@ export default function OnboardingPage() {
   function togglePostPlan(key: PostPlanKey) {
     setPostPlans((prev) => {
       if (key === "no_idea") return prev.includes("no_idea") ? [] : ["no_idea"];
-
       const cleaned = prev.filter((k) => k !== "no_idea");
       return toggleInList(cleaned as PostPlanKey[], key);
     });
   }
 
-  function submitPostPlans(snapshot: PostPlanKey[]) {
+  function continuePostPlans() {
     if (!lockAdvance()) return;
+    const snapshot = [...postPlans];
     if (snapshot.length <= 0) {
       advanceLockRef.current = false;
       return;
     }
-    void showRetortThenAdvance("postPlans", { postPlans: [...snapshot] });
+    void showRetortThenAdvance("postPlans", { postPlans: snapshot });
     unlockAdvanceSoon();
   }
 
@@ -1152,39 +1227,36 @@ export default function OnboardingPage() {
     }
   }
 
-  function submitActivities(snapshot: ActivityKey[], otherText?: string) {
+  function continueActivities(optionalOther?: string) {
     if (!lockAdvance()) return;
 
+    const snapshot = [...activities];
     if (snapshot.length <= 0) {
       advanceLockRef.current = false;
       return;
     }
 
     if (snapshot.includes("other")) {
-      const text = (otherText ?? draft).trim();
+      const text = (typeof optionalOther === "string" ? optionalOther : draft).trim();
       setActivitiesOther(text);
       setDraft("");
 
       void showRetortThenAdvance("activities", {
-        activities: [...snapshot],
+        activities: snapshot,
         activitiesOther: text,
       });
       unlockAdvanceSoon();
       return;
     }
 
-    void showRetortThenAdvance("activities", { activities: [...snapshot] });
+    void showRetortThenAdvance("activities", { activities: snapshot });
     unlockAdvanceSoon();
   }
 
   function chooseFun(choice: FunChoice) {
     if (!lockAdvance()) return;
-
     setFunChoice(choice);
-
-    // Final retort beat: animal choice -> fun retort -> completion transition -> summary
     showFunRetortThenCompletion(choice);
-
     unlockAdvanceSoon();
   }
 
@@ -1192,50 +1264,6 @@ export default function OnboardingPage() {
     setScreenMode("question");
     setStepIndex(STEPS.indexOf("summary"));
   }
-
-  // Auto-submit (no continue buttons)
-  React.useEffect(() => {
-    if (stepId !== "postPlans") return;
-    if (screenMode !== "question") return;
-
-    clearPostPlansAutoTimer();
-
-    const snapshot = [...postPlans];
-    if (snapshot.length <= 0) return;
-
-    // If "Not sure yet" is selected, submit immediately.
-    if (snapshot.includes("no_idea")) {
-      submitPostPlans(snapshot);
-      return;
-    }
-
-    postPlansAutoTimerRef.current = window.setTimeout(() => {
-      submitPostPlans(snapshot);
-    }, 700);
-
-    return () => clearPostPlansAutoTimer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stepId, screenMode, postPlans]);
-
-  React.useEffect(() => {
-    if (stepId !== "activities") return;
-    if (screenMode !== "question") return;
-
-    clearActivitiesAutoTimer();
-
-    const snapshot = [...activities];
-    if (snapshot.length <= 0) return;
-
-    // If "other" is selected, submission happens via the textarea send button.
-    if (snapshot.includes("other")) return;
-
-    activitiesAutoTimerRef.current = window.setTimeout(() => {
-      submitActivities(snapshot);
-    }, 700);
-
-    return () => clearActivitiesAutoTimer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stepId, screenMode, activities]);
 
   /* ============================================================
      Render helpers
@@ -1253,16 +1281,11 @@ export default function OnboardingPage() {
   }
 
   function TitleBlock({ title, micro }: { title: string; micro?: string }) {
-    // Static titles: prevents “retyping”/re-animating on click/mic/typing.
     return (
       <div className="max-w-3xl">
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          {title}
-        </h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{title}</h1>
         {micro ? (
-          <p className="mt-4 text-[15px] leading-7 text-white/60 max-w-2xl whitespace-pre-line">
-            {micro}
-          </p>
+          <p className="mt-4 text-[15px] leading-7 text-white/60 max-w-2xl whitespace-pre-line">{micro}</p>
         ) : null}
       </div>
     );
@@ -1427,6 +1450,8 @@ export default function OnboardingPage() {
   }
 
   function renderPostPlans() {
+    const hasSelection = postPlans.length > 0;
+
     return (
       <div className="flex min-h-[60svh] items-center">
         <div className="w-full">
@@ -1434,11 +1459,7 @@ export default function OnboardingPage() {
           <TitleBlock title={STEP_META.postPlans.title} micro={STEP_META.postPlans.micro} />
 
           <div className="mt-10 max-w-3xl">
-            <ChoiceRowText
-              label="Get a job"
-              selected={postPlans.includes("job")}
-              onClick={() => togglePostPlan("job")}
-            />
+            <ChoiceRowText label="Get a job" selected={postPlans.includes("job")} onClick={() => togglePostPlan("job")} />
             <ChoiceRowText
               label="Four-year college"
               selected={postPlans.includes("four_year")}
@@ -1466,6 +1487,8 @@ export default function OnboardingPage() {
             />
 
             <EndOfAnswersLine />
+
+            <MinimalContinue onClick={continuePostPlans} disabled={!hasSelection} />
           </div>
         </div>
       </div>
@@ -1503,16 +1526,8 @@ export default function OnboardingPage() {
               selected={activities.includes("volunteer")}
               onClick={() => toggleActivity("volunteer")}
             />
-            <ChoiceRowText
-              label="Working a job"
-              selected={activities.includes("job")}
-              onClick={() => toggleActivity("job")}
-            />
-            <ChoiceRowText
-              label="Other"
-              selected={activities.includes("other")}
-              onClick={() => toggleActivity("other")}
-            />
+            <ChoiceRowText label="Working a job" selected={activities.includes("job")} onClick={() => toggleActivity("job")} />
+            <ChoiceRowText label="Other" selected={activities.includes("other")} onClick={() => toggleActivity("other")} />
 
             <EndOfAnswersLine />
 
@@ -1522,7 +1537,7 @@ export default function OnboardingPage() {
                 <MinimalTextarea
                   value={draft}
                   onChange={setDraft}
-                  onSubmit={() => submitActivities([...activities], draft)}
+                  onSubmit={() => continueActivities(draft)}
                   canSubmit={true}
                   textareaRef={textareaRef}
                   showMic
@@ -1531,23 +1546,15 @@ export default function OnboardingPage() {
                   onToggleMic={() => toggleMic("activitiesOther")}
                 />
               </div>
-            ) : (
-              <div className="mt-6 text-xs text-white/35">
-                {hasSelection ? "" : "Pick at least one to continue."}
-              </div>
-            )}
+            ) : null}
+
+            <MinimalContinue onClick={() => continueActivities()} disabled={!hasSelection} />
           </div>
         </div>
       </div>
     );
   }
 
-  // Fun images (no nested animals folder)
-  // Expected:
-  //  public/onboarding/dog.jpg
-  //  public/onboarding/cat.jpg
-  //  public/onboarding/bearded-dragon.jpg
-  //  public/onboarding/rock.jpg
   const FUN_OPTIONS: { key: Exclude<FunChoice, null>; src: string; alt: string }[] = [
     { key: "dog", src: "/onboarding/dog.jpg", alt: "Dog" },
     { key: "cat", src: "/onboarding/cat.jpg", alt: "Cat" },
@@ -1612,9 +1619,7 @@ export default function OnboardingPage() {
       <div className="flex min-h-[60svh] items-center">
         <div className="w-full">
           <div className="max-w-3xl">
-            <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-              Everleap
-            </div>
+            <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">Everleap</div>
 
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               {n ? `Here’s your starting point, ${n}.` : "Here’s a strong starting point."}
@@ -1656,12 +1661,8 @@ export default function OnboardingPage() {
       ambientCap={0.22}
     >
       <div className={`relative min-h-[100svh] ${theme.pageBgBaseClass}`} style={pageBgStyle}>
-        {/* minimal ambient */}
         {gradientLevel > 0 && (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: gradient.ambientOpacity * 0.4 }}
-          >
+          <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity * 0.4 }}>
             <div className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
             <div
               className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}

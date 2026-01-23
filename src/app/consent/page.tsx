@@ -112,25 +112,30 @@ export default function ConsentPage() {
             </p>
           </div>
 
-          {/* Decision zone (no boxes; structure via whitespace) */}
+          {/* Decision zone (minimal: no big buttons/boxes) */}
           <div className="mt-10">
-            <button
-              type="button"
-              onClick={onAgree}
-              disabled={busy}
-              className="h-12 w-full rounded-full bg-white/92 text-[15px] font-medium text-[#070B16] shadow-sm transition hover:bg-white disabled:opacity-60"
-            >
-              {busy ? "Continuing…" : "Agree and continue"}
-            </button>
+            <div className="flex flex-col items-start gap-4">
+              <button
+                type="button"
+                onClick={onAgree}
+                disabled={busy}
+                className="text-[15px] font-semibold text-white/85 transition hover:text-white disabled:opacity-60"
+              >
+                {busy ? "Continuing…" : "→ Agree and continue"}
+              </button>
 
-            <button
-              type="button"
-              onClick={onNotNow}
-              disabled={busy}
-              className="mt-3 h-12 w-full rounded-full bg-transparent text-[15px] font-medium text-white/65 transition hover:text-white disabled:opacity-60"
-            >
-              Not now
-            </button>
+              <button
+                type="button"
+                onClick={onNotNow}
+                disabled={busy}
+                className="text-[15px] font-semibold text-white/55 transition hover:text-white/80 disabled:opacity-60"
+              >
+                Not now
+              </button>
+            </div>
+
+            {/* Quiet separation line */}
+            <div className="mt-8 h-px w-44 rounded-full bg-white/14" />
           </div>
         </div>
 

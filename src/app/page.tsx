@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import * as React from "react";
@@ -268,6 +269,16 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 hidden md:block bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
       </div>
 
+      {/* Top-right Sign in link (quiet, non-competing) */}
+      <div className="absolute top-0 right-0 z-20 p-4">
+        <Link
+          href="/login"
+          className="rounded-full px-3 py-1.5 text-sm font-semibold text-white/70 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+        >
+          Sign in
+        </Link>
+      </div>
+
       <BrandBadge />
 
       {/* ===== CONTENT ===== */}
@@ -290,7 +301,7 @@ export default function HomePage() {
   );
 }
 
-/* ---- cards unchanged (except tiny desktop typography nudge) ---- */
+/* ---- cards unchanged (except adding subtle "Already have an account? Sign in") ---- */
 
 function DesktopHeroCard({ authed }: { authed: boolean | null }) {
   return (
@@ -315,6 +326,13 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
           Start talking
         </Link>
       </div>
+
+      <p className="mt-4 text-xs text-white/55">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-white/70 hover:text-white transition">
+          Sign in
+        </Link>
+      </p>
 
       {authed === null && <p className="mt-5 text-xs text-white/55">Checking access…</p>}
     </div>
@@ -345,6 +363,13 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
         </Link>
       </div>
 
+      <p className="mt-3 text-xs text-white/55">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-white/70 hover:text-white transition">
+          Sign in
+        </Link>
+      </p>
+
       {authed === null && <p className="mt-4 text-xs text-white/55">Checking access…</p>}
     </div>
   );
@@ -366,13 +391,12 @@ function AuthOverlay() {
       </p>
 
       <div className="mt-7 flex flex-col items-center justify-center gap-3 md:mt-8">
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
+        <Link
+          href="/login"
           className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white/5 px-6 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm hover:bg-white/10 active:scale-[0.99]"
         >
           Sign in
-        </button>
+        </Link>
 
         <p className="text-xs text-white/55">
           If you don’t see a login prompt, your browser may have cached credentials. Try a hard refresh
