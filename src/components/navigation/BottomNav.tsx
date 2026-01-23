@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, UserRound, Sparkles, Compass, ListChecks, Plus, Sparkle } from "lucide-react";
+import { Home, Sparkles, Compass, ListChecks, Plus, Sparkle } from "lucide-react";
 
 import {
   DEFAULT_THEME_ID,
@@ -17,7 +17,11 @@ import {
 
 import MoreMenuPopover from "@/components/navigation/MoreMenuPopover";
 
-type NavKey = "home" | "you" | "insights" | "explore" | "actions";
+/* ============================================================
+   Types
+   ============================================================ */
+
+type NavKey = "home" | "insights" | "explore" | "actions";
 
 type BottomNavProps = {
   activeKey?: NavKey | string;
@@ -42,9 +46,12 @@ type NavItem = {
   Icon: React.ComponentType<{ className?: string }>;
 };
 
+/* ============================================================
+   Helpers
+   ============================================================ */
+
 function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname === "/main" || pathname.startsWith("/main/home")) return "home";
-  if (pathname.startsWith("/main/you")) return "you";
   if (pathname.startsWith("/main/insights")) return "insights";
   if (pathname.startsWith("/main/explore")) return "explore";
   if (pathname.startsWith("/main/actions")) return "actions";
@@ -60,7 +67,6 @@ function normalizeActiveKey(key?: string): NavKey | undefined {
   if (key === "main") return "home";
   if (key === "spotlight") return "home";
   if (key === "home") return "home";
-  if (key === "you") return "you";
   if (key === "insights") return "insights";
   if (key === "explore") return "explore";
   if (key === "actions") return "actions";
@@ -71,6 +77,10 @@ function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
 }
+
+/* ============================================================
+   Component
+   ============================================================ */
 
 export function BottomNav({
   activeKey,
@@ -91,8 +101,7 @@ export function BottomNav({
   const ambient = Math.min(clamp01(grad.ambientOpacity), 0.18);
 
   const items: NavItem[] = [
-    { key: "home", href: "/main/home", label: "Home", Icon: Home },
-    { key: "you", href: "/main/you", label: "You", Icon: UserRound },
+    { key: "home", href: "/main", label: "Today", Icon: Home },
     { key: "insights", href: "/main/insights", label: "Insights", Icon: Sparkles },
     { key: "explore", href: "/main/explore", label: "Explore", Icon: Compass },
     { key: "actions", href: "/main/actions", label: "Actions", Icon: ListChecks },
@@ -122,7 +131,6 @@ export function BottomNav({
         {/* Bottom-right Guide button */}
         {showGuideFab && (
           <Link
-            // ✅ send users to the REAL Explore page (no intro/placeholder)
             href="/main/explore"
             aria-label="Guide"
             className={[
@@ -168,7 +176,7 @@ export function BottomNav({
 
         {/* Footer bar */}
         <div className="relative border-t border-white/10 bg-black/45 backdrop-blur-md">
-          {/* Subtle theme tint inside the bar */}
+          {/* Ambient tints */}
           {ambient > 0 && (
             <>
               <div

@@ -24,7 +24,9 @@ import { lookupZipPlace, stateFullName } from "../onboarding/zipLookup";
    ============================================================================= */
 
 const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-const STORY_STORAGE_KEY = "everleap.story.answers.v1";
+
+// Story answers used by QuestionFlow (category sets)
+const STORY_STORAGE_KEY_V3 = "everleap.story.answers.v3";
 
 const QUOTE_SESSION_KEY = "everleap.main.quote.v1";
 const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
@@ -70,7 +72,8 @@ type OnboardingSnapshot = {
   funChoice?: FunChoice;
 };
 
-type StoryAnswers = Record<string, { answer?: string; skipped?: boolean }>;
+type Saved = { answer?: string; skipped?: boolean };
+type StoryAnswersV3 = Record<string, Saved>;
 
 type Quote = { text: string; author: string };
 
@@ -93,6 +96,17 @@ type CuriositySprintState = {
 type SessionTinyState = {
   shownIds: TinyTaskId[];
   completedIds: TinyTaskId[];
+};
+
+type SignalKey = "motivations" | "strengths" | "skills";
+
+type SignalProgress = {
+  motivationsDone: boolean;
+  strengthsDone: boolean;
+  skillsDone: boolean;
+  motivationsCount: number;
+  strengthsCount: number;
+  skillsCount: number;
 };
 
 /* =============================================================================
@@ -139,25 +153,44 @@ function joinNatural(list: string[]) {
 
 function readOnboardingSnapshot(): OnboardingSnapshot | null {
   if (typeof window === "undefined") return null;
-  return safeJsonParse<OnboardingSnapshot>(
-    window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
-  );
+  return safeJsonParse<OnboardingSnapshot>(window.localStorage.getItem(ONBOARDING_STORAGE_KEY));
 }
 
-function readStoryAnswers(): StoryAnswers | null {
+function readStoryAnswersV3(): StoryAnswersV3 | null {
   if (typeof window === "undefined") return null;
-  return safeJsonParse<StoryAnswers>(window.localStorage.getItem(STORY_STORAGE_KEY));
+  return safeJsonParse<StoryAnswersV3>(window.localStorage.getItem(STORY_STORAGE_KEY_V3));
 }
 
-function countAnsweredStory(answers: StoryAnswers | null): number {
-  if (!answers || typeof answers !== "object") return 0;
+function isSavedMeaningfully(s: Saved | undefined): boolean {
+  if (!s) return false;
+  if (s.skipped) return true;
+  const a = (s.answer ?? "").trim();
+  return a.length > 0;
+}
+
+function countCategorySaved(answers: StoryAnswersV3 | null, cat: SignalKey): number {
+  if (!answers) return 0;
   let n = 0;
-  for (const v of Object.values(answers)) {
-    const ans = (v?.answer ?? "").trim();
-    const skipped = Boolean(v?.skipped);
-    if (!skipped && ans.length > 0) n += 1;
+  for (let i = 1; i <= 5; i += 1) {
+    const id = `${cat}_${i}`;
+    if (isSavedMeaningfully(answers[id])) n += 1;
   }
   return n;
+}
+
+function computeSignals(answers: StoryAnswersV3 | null): SignalProgress {
+  const motivationsCount = countCategorySaved(answers, "motivations");
+  const strengthsCount = countCategorySaved(answers, "strengths");
+  const skillsCount = countCategorySaved(answers, "skills");
+
+  return {
+    motivationsDone: motivationsCount >= 5,
+    strengthsDone: strengthsCount >= 5,
+    skillsDone: skillsCount >= 5,
+    motivationsCount,
+    strengthsCount,
+    skillsCount,
+  };
 }
 
 function postPlanLabel(k: PostPlanKey): string {
@@ -218,7 +251,10 @@ const QUOTES: Quote[] = [
   { text: "You don’t have to see the whole staircase. Just take the first step.", author: "Martin Luther King Jr." },
   { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
   { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
-  { text: "What you do makes a difference. And you have to decide what kind of difference you want to make.", author: "Jane Goodall" },
+  {
+    text: "What you do makes a difference. And you have to decide what kind of difference you want to make.",
+    author: "Jane Goodall",
+  },
 ];
 
 function pickStableSessionQuote(): Quote {
@@ -296,10 +332,7 @@ function writeSessionTinyState(next: SessionTinyState) {
    Agent narrative (recap)
    ============================================================================= */
 
-function buildNarrativeRecap(args: {
-  snapshot: OnboardingSnapshot | null;
-  placeLabel: string | null;
-}) {
+function buildNarrativeRecap(args: { snapshot: OnboardingSnapshot | null; placeLabel: string | null }) {
   const { snapshot, placeLabel } = args;
 
   const name = niceName(snapshot?.name ?? "") || "there";
@@ -313,46 +346,105 @@ function buildNarrativeRecap(args: {
 
   const fragments: string[] = [];
 
-  if (snapshot.situation === "high_school") fragments.push("you’re in high school");
-  else if (snapshot.situation === "young_adult") fragments.push("you’re a young adult (18–24)");
+  if (snapshot.situation === "high_school") fragments.push("high school");
+  else if (snapshot.situation === "young_adult") fragments.push("young adult (18–24)");
 
   const plans = (snapshot.postPlans ?? []).filter(Boolean);
   if (plans.length > 0) {
-    if (plans.includes("no_idea")) fragments.push("you’re keeping options open for what comes next");
+    if (plans.includes("no_idea")) fragments.push("keeping options open");
     else {
       const planText = joinNatural(plans.map(postPlanLabel));
-      if (planText) fragments.push(`you’re considering ${planText}`);
+      if (planText) fragments.push(`considering ${planText}`);
     }
   }
 
   const activities = (snapshot.activities ?? []).filter(Boolean);
   if (activities.length > 0) {
     const listText = joinNatural(activities.map(activityLabel));
-    if (listText) fragments.push(`outside of school you’re into ${listText}`);
+    if (listText) fragments.push(`into ${listText}`);
   }
 
-  if (placeLabel) fragments.push(`you’re in ${placeLabel}`);
-  else if ((snapshot.zip ?? "").trim()) fragments.push("you shared a zip, so I can lean local when it matters");
-
+  if (placeLabel) fragments.push(`${placeLabel}`);
   const fun = funTag(snapshot.funChoice ?? null);
-  if (fun) fragments.push(`and you picked ${fun}`);
+  if (fun) fragments.push(fun);
 
+  // Less parrot-y: “signals” not “here’s what you said”
   const recap =
     fragments.length > 0
-      ? `Right now, all I know about you is what you told me in onboarding — and here’s what I’m hearing: ${joinNatural(
-          fragments
-        )}.`
+      ? `So far the signals look like: ${joinNatural(fragments)}.`
       : null;
 
   let confidence: string | null = null;
-  if (snapshot.certainty === "strong")
-    confidence = "You’ve got a pretty clear direction — we can move faster.";
-  else if (snapshot.certainty === "kinda")
-    confidence = "You’ve got some ideas — enough to narrow quickly.";
-  else if (snapshot.certainty === "no_clue")
-    confidence = "You’re not sure yet — totally normal. We’ll explore smart, not random.";
+  if (snapshot.certainty === "strong") confidence = "Clear direction — the next steps can move fast.";
+  else if (snapshot.certainty === "kinda") confidence = "Some direction — enough to narrow quickly.";
+  else if (snapshot.certainty === "no_clue") confidence = "No clear direction yet — that’s normal. Explore smart, not random.";
 
   return { name, recap, confidence };
+}
+
+/* =============================================================================
+   Signals progress (Motivations / Strengths / Skills)
+   ============================================================================= */
+
+function SignalsProgressStrip({
+  dark,
+  progress,
+}: {
+  dark: boolean;
+  progress: SignalProgress;
+}) {
+  const items: { key: SignalKey; label: string; done: boolean; count: number }[] = [
+    { key: "motivations", label: "Motivations", done: progress.motivationsDone, count: progress.motivationsCount },
+    { key: "strengths", label: "Strengths", done: progress.strengthsDone, count: progress.strengthsCount },
+    { key: "skills", label: "Skills", done: progress.skillsDone, count: progress.skillsCount },
+  ];
+
+  const rail = dark ? "bg-white/10" : "bg-slate-900/10";
+  const dotOff = dark ? "bg-white/14" : "bg-slate-900/15";
+  const dotOn = dark ? "bg-white/60" : "bg-slate-900/50";
+  const dotDone = dark ? "bg-emerald-300/70" : "bg-emerald-600/55";
+  const text = dark ? "text-slate-200/85" : "text-slate-700";
+  const faint = dark ? "text-slate-400" : "text-slate-500";
+  const border = dark ? "border-white/10" : "border-slate-900/10";
+
+  return (
+    <div className={`mt-5 rounded-2xl border ${border} px-4 py-3`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className={`text-xs font-semibold uppercase tracking-[0.22em] ${faint}`}>Signals</div>
+        <div className={`text-xs ${faint}`}>{`${Math.min(15, progress.motivationsCount + progress.strengthsCount + progress.skillsCount)}/15`}</div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        {items.map((it) => {
+          const dots = 5;
+          const filled = Math.max(0, Math.min(dots, it.count));
+          return (
+            <div key={it.key} className="min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className={`text-[12px] font-semibold ${text} truncate`}>{it.label}</div>
+                <div className={`text-[11px] ${faint}`}>{it.done ? "done" : `${filled}/5`}</div>
+              </div>
+
+              <div className={`mt-2 h-1.5 w-full rounded-full ${rail} overflow-hidden`}>
+                <div
+                  className={`h-full rounded-full ${it.done ? (dark ? "bg-emerald-300/65" : "bg-emerald-600/55") : (dark ? "bg-white/35" : "bg-slate-900/25")}`}
+                  style={{ width: `${(filled / dots) * 100}%` }}
+                />
+              </div>
+
+              <div className="mt-2 flex items-center gap-1.5">
+                {Array.from({ length: dots }).map((_, i) => {
+                  const isFilled = i < filled;
+                  const cls = it.done ? dotDone : isFilled ? dotOn : dotOff;
+                  return <span key={i} aria-hidden className={`h-1.5 w-1.5 rounded-full ${cls}`} />;
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 /* =============================================================================
@@ -368,9 +460,7 @@ function StepDots({ step, total }: { step: number; total: number }) {
         return (
           <span
             key={i}
-            className={`h-[6px] w-[14px] rounded-full transition ${
-              on ? "bg-white/70" : "bg-white/18"
-            }`}
+            className={`h-[6px] w-[14px] rounded-full transition ${on ? "bg-white/70" : "bg-white/18"}`}
           />
         );
       })}
@@ -392,11 +482,12 @@ function ChoiceChips({
       {options.map((o) => {
         const selected = value === o;
         return (
-          <button
+          <motion.button
             key={o}
             type="button"
             onClick={() => onChange(o)}
-            className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition active:scale-[0.99] ${
+            whileTap={{ scale: 0.99 }}
+            className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
               selected
                 ? "border-white/35 bg-white/10 text-white"
                 : "border-white/12 bg-white/5 text-white/75 hover:bg-white/8 hover:text-white/85"
@@ -404,7 +495,7 @@ function ChoiceChips({
             aria-pressed={selected}
           >
             {o}
-          </button>
+          </motion.button>
         );
       })}
     </div>
@@ -479,7 +570,6 @@ function buildSprintPromptsFromOnboarding(snapshot: OnboardingSnapshot | null): 
   const leansTrade = plans.includes("credential");
   const leansMilitary = plans.includes("military");
 
-  // Keep prompts short and *doable*.
   if (leansWork) {
     return [
       "Find 1 thing about being a Product Manager that seems genuinely fun.",
@@ -516,6 +606,19 @@ function buildSprintPromptsFromOnboarding(snapshot: OnboardingSnapshot | null): 
   ];
 }
 
+function laneHelper(lane: CuriositySprintState["lane"]) {
+  switch (lane) {
+    case "jobs":
+      return "What people actually do all day.";
+    case "majors":
+      return "What you’d spend time learning.";
+    case "skills":
+      return "Things you could get good at.";
+    case "experiments":
+      return "Low-risk ways to try things.";
+  }
+}
+
 function TaskRunnerModal({
   open,
   onClose,
@@ -546,10 +649,8 @@ function TaskRunnerModal({
   React.useEffect(() => {
     if (!open) return;
 
-    // Reset stepper each open
     setStep(0);
 
-    // Prime with existing focus (optional)
     const existingFocus = readWeeklyFocus();
     if (existingFocus) {
       setVibe(existingFocus.vibe ?? "");
@@ -561,32 +662,24 @@ function TaskRunnerModal({
       setSentence("");
     }
 
-    // Sprint defaults
     setLane("jobs");
     setPrompt(prompts[0] ?? "");
     setTakeaway("");
   }, [open, taskId, prompts]);
 
-  const surface = dark
-    ? "border-white/12 bg-black/35"
-    : "border-slate-900/10 bg-white/45";
+  const surface = dark ? "border-white/12 bg-black/40" : "border-slate-900/10 bg-white/55";
+  const overlay = dark ? "bg-black/60" : "bg-black/40";
 
-  const overlay = dark ? "bg-black/55" : "bg-black/35";
-
-  const close = () => {
-    onClose();
-  };
+  const close = () => onClose();
 
   const primaryBtn =
     "inline-flex items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.99]";
 
   const primaryBtnClass = dark
-    ? `${primaryBtn} border-white/12 bg-white/8 hover:bg-white/12 text-white`
-    : `${primaryBtn} border-slate-900/10 bg-white/70 hover:bg-white text-slate-900`;
+    ? `${primaryBtn} border-white/12 bg-white/10 hover:bg-white/14 text-white`
+    : `${primaryBtn} border-slate-900/10 bg-white/75 hover:bg-white text-slate-900`;
 
-  const subtleBtnClass = dark
-    ? "text-white/70 hover:text-white/90"
-    : "text-slate-700 hover:text-slate-950";
+  const subtleBtnClass = dark ? "text-white/70 hover:text-white/90" : "text-slate-700 hover:text-slate-950";
 
   const labelClass = dark
     ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
@@ -602,12 +695,10 @@ function TaskRunnerModal({
     writeWeeklyFocus(next);
 
     const s = readSessionTinyState();
-    const completedIds: TinyTaskId[] = Array.from(
-      new Set<TinyTaskId>([...(s.completedIds ?? []), "weekly_focus"])
-    );
+    const completedIds: TinyTaskId[] = Array.from(new Set<TinyTaskId>([...(s.completedIds ?? []), "weekly_focus"]));
     writeSessionTinyState({ shownIds: s.shownIds ?? [], completedIds });
 
-    setStep(3); // completion
+    setStep(3);
   }
 
   function completeSprint() {
@@ -625,16 +716,13 @@ function TaskRunnerModal({
     writeSprints([nextItem, ...prev].slice(0, 40));
 
     const s = readSessionTinyState();
-    const completedIds: TinyTaskId[] = Array.from(
-      new Set<TinyTaskId>([...(s.completedIds ?? []), "curiosity_sprint"])
-    );
+    const completedIds: TinyTaskId[] = Array.from(new Set<TinyTaskId>([...(s.completedIds ?? []), "curiosity_sprint"]));
     writeSessionTinyState({ shownIds: s.shownIds ?? [], completedIds });
 
-    setStep(4); // completion
+    setStep(4);
   }
 
   function renderWeeklyFocus() {
-    // Steps: 0 vibe -> 1 target -> 2 sentence -> 3 done
     const total = 4;
 
     const vibeOptions = ["Calm", "Confident", "Curious", "Productive", "Social", "Strong", "Creative", "Reset"];
@@ -657,9 +745,7 @@ function TaskRunnerModal({
         {step === 0 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">How do you want this week to feel?</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Pick one vibe. This helps me steer what I suggest.
-            </p>
+            <p className="mt-2 text-sm text-white/70">Pick one vibe. It helps Everleap steer what shows up next.</p>
             <ChoiceChips options={vibeOptions} value={vibe} onChange={(v) => setVibe(v)} />
           </>
         ) : step === 1 ? (
@@ -671,9 +757,7 @@ function TaskRunnerModal({
         ) : step === 2 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">One sentence (optional)</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Keep it simple. You can leave this blank.
-            </p>
+            <p className="mt-2 text-sm text-white/70">Keep it simple. You can leave this blank.</p>
             <MinimalLineInput
               value={sentence}
               onChange={setSentence}
@@ -688,12 +772,11 @@ function TaskRunnerModal({
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Locked.</h2>
             <p className="mt-2 text-sm text-white/75">
-              I’ll steer today’s picks toward <span className="font-semibold text-white">{vibe}</span> +
+              Today’s picks can lean toward{" "}
+              <span className="font-semibold text-white">{vibe}</span> +
               <span className="font-semibold text-white"> {target}</span>.
             </p>
-            {sentence.trim() ? (
-              <p className="mt-3 text-sm text-white/70">“{sentence.trim()}”</p>
-            ) : null}
+            {sentence.trim() ? <p className="mt-3 text-sm text-white/70">“{sentence.trim()}”</p> : null}
 
             <div className="mt-6 flex items-center gap-3">
               <button type="button" onClick={close} className={primaryBtnClass}>
@@ -734,17 +817,17 @@ function TaskRunnerModal({
   }
 
   function renderCuriositySprint() {
-    // Steps: 0 pick lane -> 1 pick prompt -> 2 do it (mini) -> 3 takeaway -> 4 done
     const total = 5;
 
-    const laneOptions: { id: CuriositySprintState["lane"]; label: string }[] = [
-      { id: "jobs", label: "Jobs" },
-      { id: "majors", label: "Majors" },
-      { id: "skills", label: "Skills" },
-      { id: "experiments", label: "Life experiments" },
+    const laneOptions: { id: CuriositySprintState["lane"]; label: string; emoji: string }[] = [
+      { id: "jobs", label: "Jobs", emoji: "🔎" },
+      { id: "majors", label: "Majors", emoji: "🎓" },
+      { id: "skills", label: "Skills", emoji: "🛠️" },
+      { id: "experiments", label: "Experiments", emoji: "🧪" },
     ];
 
     const suggested = prompts.slice(0, 3);
+
     const canNext =
       (step === 0 && Boolean(lane)) ||
       (step === 1 && Boolean((prompt ?? "").trim())) ||
@@ -752,7 +835,7 @@ function TaskRunnerModal({
       (step === 3 && takeaway.trim().length > 0);
 
     const nextLabel =
-      step === 3 ? "Save takeaway" : step === 2 ? "I did it" : "Next";
+      step === 3 ? "Save takeaway" : step === 2 ? "I did it" : step === 1 ? "Do it" : "See a prompt";
 
     return (
       <div>
@@ -763,52 +846,71 @@ function TaskRunnerModal({
 
         {step === 0 ? (
           <>
-            <h2 className="mt-4 text-xl font-semibold text-white">Pick a lane for 10 minutes.</h2>
-            <p className="mt-2 text-sm text-white/70">No commitment. Just signal.</p>
+            <h2 className="mt-4 text-xl font-semibold text-white">What do you want to explore for 10 minutes?</h2>
+            <p className="mt-2 text-sm text-white/70">Pick one area. No commitment — just curiosity.</p>
+
             <div className="mt-4 flex flex-wrap gap-2">
               {laneOptions.map((o) => {
                 const selected = lane === o.id;
                 return (
-                  <button
+                  <motion.button
                     key={o.id}
                     type="button"
                     onClick={() => setLane(o.id)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition active:scale-[0.99] ${
+                    whileTap={{ scale: 0.99 }}
+                    className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                       selected
-                        ? "border-white/35 bg-white/10 text-white"
+                        ? "border-white/35 bg-white/12 text-white"
                         : "border-white/12 bg-white/5 text-white/75 hover:bg-white/8 hover:text-white/85"
                     }`}
                     aria-pressed={selected}
                   >
                     {o.label}
-                  </button>
+                    {selected ? <span className="ml-2 opacity-80">{o.emoji}</span> : null}
+                  </motion.button>
                 );
               })}
             </div>
+
+            <AnimatePresence initial={false}>
+              {lane ? (
+                <motion.div
+                  key={lane}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                >
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">What this means</div>
+                  <div className="mt-2 text-sm text-white/85">{laneHelper(lane)}</div>
+                  <div className="mt-2 text-xs text-white/45">Not choosing a path — just opening a door.</div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </>
         ) : step === 1 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Here’s a prompt.</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Pick one. You can edit it if you want.
-            </p>
+            <p className="mt-2 text-sm text-white/70">Pick one. You can edit it if you want.</p>
 
             <div className="mt-4 space-y-2">
               {suggested.map((p) => {
                 const selected = prompt === p;
                 return (
-                  <button
+                  <motion.button
                     key={p}
                     type="button"
                     onClick={() => setPrompt(p)}
+                    whileTap={{ scale: 0.995 }}
                     className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
                       selected
-                        ? "border-white/25 bg-white/8 text-white"
+                        ? "border-white/25 bg-white/10 text-white"
                         : "border-white/12 bg-white/5 text-white/75 hover:bg-white/8 hover:text-white/85"
                     }`}
                   >
                     {p}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -823,47 +925,30 @@ function TaskRunnerModal({
         ) : step === 2 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Do it.</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Set a 10-minute timer on your phone. Then come back and tell me one thing you noticed.
-            </p>
+            <p className="mt-2 text-sm text-white/70">Set a 10-minute timer on your phone. Then come back and save one thing you noticed.</p>
 
             <div className="mt-4 rounded-2xl border border-white/12 bg-white/5 px-4 py-3 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
-                Your prompt
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Your prompt</div>
               <div className="mt-2">{prompt.trim() || suggested[0] || "Find one interesting thing."}</div>
             </div>
 
-            <div className="mt-4 text-xs text-white/50">
-              (This stays minimalist: no in-app timer yet — just the behavior.)
-            </div>
+            <div className="mt-4 text-xs text-white/50">(No in-app timer yet — just the behavior.)</div>
           </>
         ) : step === 3 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">What’s your takeaway?</h2>
             <p className="mt-2 text-sm text-white/70">One sentence is enough.</p>
 
-            <MinimalLineInput
-              value={takeaway}
-              onChange={setTakeaway}
-              placeholder="I noticed that…"
-              onEnter={() => completeSprint()}
-            />
-            <div className="mt-4 text-xs text-white/55">
-              This gets saved so the agent can reference it later.
-            </div>
+            <MinimalLineInput value={takeaway} onChange={setTakeaway} placeholder="I noticed that…" onEnter={() => completeSprint()} />
+            <div className="mt-4 text-xs text-white/55">This gets saved so Everleap can build on it later.</div>
           </>
         ) : (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Nice.</h2>
-            <p className="mt-2 text-sm text-white/75">
-              That’s a real signal. I’ll remember it.
-            </p>
+            <p className="mt-2 text-sm text-white/75">That’s a real signal. It will show up in better picks over time.</p>
 
             <div className="mt-4 rounded-2xl border border-white/12 bg-white/5 px-4 py-3 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
-                Saved takeaway
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Saved takeaway</div>
               <div className="mt-2">{takeaway.trim()}</div>
             </div>
 
@@ -919,18 +1004,27 @@ function TaskRunnerModal({
           <div className={`absolute inset-0 ${overlay}`} onClick={close} aria-hidden="true" />
 
           <motion.div
-            initial={{ y: 18, opacity: 0, scale: 0.99 }}
+            initial={{ y: 22, opacity: 0, scale: 0.985 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 12, opacity: 0, scale: 0.99 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className={`relative w-full max-w-xl overflow-hidden rounded-[28px] border ${surface} backdrop-blur-xl`}
+            exit={{ y: 14, opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className={`relative w-full max-w-xl overflow-hidden rounded-[28px] border ${surface} backdrop-blur-xl shadow-[0_24px_90px_rgba(0,0,0,0.75)]`}
           >
-            <div className="flex items-center justify-between px-5 py-4">
-              <div className="text-sm font-semibold text-white/85">Everleap</div>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{
+                background:
+                  "radial-gradient(1200px 500px at 12% 0%, rgba(255,255,255,0.10), transparent 60%), radial-gradient(900px 400px at 90% 10%, rgba(255,255,255,0.06), transparent 55%)",
+              }}
+            />
+
+            <div className="relative flex items-center justify-between px-5 py-4">
+              <div className="text-sm font-semibold text-white/90">Everleap</div>
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:text-white/90 hover:bg-white/8 transition"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/70 hover:text-white/90 hover:bg-white/10 transition"
                 aria-label="Close"
                 title="Close"
               >
@@ -938,9 +1032,7 @@ function TaskRunnerModal({
               </button>
             </div>
 
-            <div className="px-5 pb-6">
-              {taskId === "weekly_focus" ? renderWeeklyFocus() : renderCuriositySprint()}
-            </div>
+            <div className="relative px-5 pb-6">{taskId === "weekly_focus" ? renderWeeklyFocus() : renderCuriositySprint()}</div>
           </motion.div>
         </motion.div>
       ) : null}
@@ -958,46 +1050,51 @@ export default function MainHomePage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
   const dark = isDarkTheme(themeId);
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
-  // Orb glow fallback (keeps this file robust if theme shape changes)
   const orbGlowClass =
     "orbGlowClass" in (theme as unknown as Record<string, unknown>)
       ? String((theme as unknown as { orbGlowClass?: string }).orbGlowClass ?? "")
       : dark
-      ? "bg-sky-400/25"
-      : "bg-amber-300/30";
+        ? "bg-sky-400/25"
+        : "bg-amber-300/30";
 
-  // Presence softens after scroll
   const [presenceSoft, setPresenceSoft] = React.useState(false);
 
-  // Snapshot + story
   const [snapshot, setSnapshot] = React.useState<OnboardingSnapshot | null>(null);
-  const [storyAnswered, setStoryAnswered] = React.useState(0);
 
-  // Zip place label
   const [placeLabel, setPlaceLabel] = React.useState<string | null>(null);
-
-  // Quote (stable per session)
   const [quote, setQuote] = React.useState<Quote | null>(null);
 
-  // Tiny task runner
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
 
-  // Session tiny state (to mark “done this session”)
-  const [sessionTiny, setSessionTiny] = React.useState<SessionTinyState>({
-    shownIds: [],
-    completedIds: [],
+  const [sessionTiny, setSessionTiny] = React.useState<SessionTinyState>({ shownIds: [], completedIds: [] });
+
+  // Persisted data that must not be read during render (prevents hydration mismatch)
+  const [weeklyFocus, setWeeklyFocus] = React.useState<WeeklyFocusState | null>(null);
+  const [sprintCount, setSprintCount] = React.useState(0);
+
+  const [signals, setSignals] = React.useState<SignalProgress>({
+    motivationsDone: false,
+    strengthsDone: false,
+    skillsDone: false,
+    motivationsCount: 0,
+    strengthsCount: 0,
+    skillsCount: 0,
   });
 
   React.useEffect(() => {
     const snap = readOnboardingSnapshot();
     setSnapshot(snap);
-    setStoryAnswered(countAnsweredStory(readStoryAnswers()));
     setQuote(pickStableSessionQuote());
     setSessionTiny(readSessionTinyState());
+
+    setWeeklyFocus(readWeeklyFocus());
+    setSprintCount(readSprints().length);
+
+    const story = readStoryAnswersV3();
+    setSignals(computeSignals(story));
 
     const zip5 = (snap?.zip ?? "").trim();
     if (zip5) {
@@ -1010,12 +1107,17 @@ export default function MainHomePage() {
     }
 
     const onFocus = () => {
-      const next = readOnboardingSnapshot();
-      setSnapshot(next);
-      setStoryAnswered(countAnsweredStory(readStoryAnswers()));
+      const nextSnap = readOnboardingSnapshot();
+      setSnapshot(nextSnap);
       setSessionTiny(readSessionTinyState());
 
-      const z = (next?.zip ?? "").trim();
+      setWeeklyFocus(readWeeklyFocus());
+      setSprintCount(readSprints().length);
+
+      const nextStory = readStoryAnswersV3();
+      setSignals(computeSignals(nextStory));
+
+      const z = (nextSnap?.zip ?? "").trim();
       if (!z) {
         setPlaceLabel(null);
         return;
@@ -1044,20 +1146,12 @@ export default function MainHomePage() {
   const textFaint = dark ? "text-slate-400" : "text-slate-500";
   const divider = dark ? "border-white/10" : "border-slate-900/10";
 
-  const firstArrival = storyAnswered === 0;
-
-  // Tiny tasks (now “real” via inline step flows)
-  const focusExisting = typeof window !== "undefined" ? readWeeklyFocus() : null;
-  const focusDone = Boolean(focusExisting?.vibe && focusExisting?.target);
-
-  const sprintCount = typeof window !== "undefined" ? readSprints().length : 0;
+  const focusDone = Boolean(weeklyFocus?.vibe && weeklyFocus?.target);
   const sprintDoneThisSession = sessionTiny.completedIds.includes("curiosity_sprint");
 
   const openTask = (id: TinyTaskId) => {
     const s = readSessionTinyState();
-    const shownIds: TinyTaskId[] = Array.from(
-      new Set<TinyTaskId>([...(s.shownIds ?? []), id])
-    );
+    const shownIds: TinyTaskId[] = Array.from(new Set<TinyTaskId>([...(s.shownIds ?? []), id]));
     const next: SessionTinyState = { shownIds, completedIds: s.completedIds ?? [] };
     writeSessionTinyState(next);
     setSessionTiny(next);
@@ -1069,14 +1163,59 @@ export default function MainHomePage() {
   const closeTask = () => {
     setTaskOpen(false);
     setActiveTaskId(null);
-    // refresh session state (completion writes to sessionStorage inside modal)
+
     setSessionTiny(readSessionTinyState());
+    setWeeklyFocus(readWeeklyFocus());
+    setSprintCount(readSprints().length);
+
+    const story = readStoryAnswersV3();
+    setSignals(computeSignals(story));
   };
 
-  const primaryNextHref =
-    storyAnswered === 0 ? "/main/questions?focus=motivation" : "/main/questions?focus=strengths";
-  const primaryNextLabel =
-    storyAnswered === 0 ? "Start with motivation" : "Add your strengths";
+  // Decide the next “signal set” to do
+  const nextSignal: SignalKey | "done" =
+    !signals.motivationsDone ? "motivations" : !signals.strengthsDone ? "strengths" : !signals.skillsDone ? "skills" : "done";
+
+  const nextHref =
+    nextSignal === "done"
+      ? "/main" // safe fallback; change to your next destination (Insights/Explore) when ready
+      : `/main/questions?cat=${nextSignal}&returnTo=/main`;
+
+  const nextLabel =
+    nextSignal === "motivations"
+      ? "Motivations"
+      : nextSignal === "strengths"
+        ? "Strengths"
+        : nextSignal === "skills"
+          ? "Skills"
+          : "Next";
+
+  const nextMicro =
+    nextSignal === "motivations"
+      ? "2 minutes. First signal. Sets your direction."
+      : nextSignal === "strengths"
+        ? "2 minutes. Second signal. Finds what you do best."
+        : nextSignal === "skills"
+          ? "2 minutes. Third signal. Turns growth into moves."
+          : "You’ve built the core signals.";
+
+  // Copy shifts once you’ve finished something (feels “earned”)
+  const topNudge =
+    nextSignal === "motivations"
+      ? "A quick set to learn what actually drives you — so suggestions stop being generic."
+      : nextSignal === "strengths"
+        ? "Motivations captured. Next: strengths — so the guidance can match how you naturally win."
+        : nextSignal === "skills"
+          ? "Motivations + strengths captured. Next: skills — so the plan turns into momentum."
+          : "Signals captured. Now it can start feeling personal.";
+
+  const primaryBtnBase =
+    "inline-flex items-center justify-center rounded-full border text-sm font-semibold transition active:scale-[0.99]";
+
+  // Smaller, calmer control (not a big CTA)
+  const primaryBtnClass = dark
+    ? `${primaryBtnBase} border-white/12 bg-white/6 hover:bg-white/10 px-4 py-2.5`
+    : `${primaryBtnBase} border-slate-900/10 bg-white/45 hover:bg-white/70 px-4 py-2.5`;
 
   return (
     <AppChrome
@@ -1087,13 +1226,7 @@ export default function MainHomePage() {
       orbSource="spotlight_orb"
       ambientCap={0.35}
     >
-      <TaskRunnerModal
-        open={taskOpen}
-        onClose={closeTask}
-        taskId={activeTaskId}
-        snapshot={snapshot}
-        dark={dark}
-      />
+      <TaskRunnerModal open={taskOpen} onClose={closeTask} taskId={activeTaskId} snapshot={snapshot} dark={dark} />
 
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pt-8">
@@ -1140,47 +1273,44 @@ export default function MainHomePage() {
               <h1 className="text-xl font-semibold sm:text-2xl">{`Hey ${name}.`}</h1>
 
               <div className={`mt-2 space-y-3 text-sm leading-relaxed ${textMuted}`}>
-                {firstArrival ? <p>You just finished getting set up.</p> : null}
-
                 {recap ? (
                   <p>{recap}</p>
                 ) : (
-                  <p className="opacity-85">I don’t see your onboarding snapshot yet — no worries. We can start fresh.</p>
+                  <p className="opacity-85">Onboarding snapshot isn’t here yet — no worries. A quick set will teach Everleap fast.</p>
                 )}
 
                 {confidence ? <p>{confidence}</p> : null}
 
-                <p className="opacity-90">
-                  Next, I’ll learn a little more through short question sets (like motivation and strengths) — and I’ll use that
-                  to guide you through insights, explorations, and real-world tiny actions.
-                </p>
+                <p className="opacity-90">{topNudge}</p>
               </div>
 
-              {/* Primary next step (still allowed, but it’s framed) */}
+              {/* Signals progress imagery */}
+              <SignalsProgressStrip dark={dark} progress={signals} />
+
+              {/* Primary next step */}
               <div className="mt-6">
                 <div className={`mb-2 text-xs ${textFaint}`}>
-                  {storyAnswered === 0
-                    ? "Motivation is the cleanest starting point — it makes everything else land better."
-                    : "Strengths makes your next options feel way more “you.”"}
+                  {nextSignal === "done"
+                    ? "You’ve finished the three core signal sets."
+                    : `Next up: ${nextLabel}.`}
                 </div>
-                <Link
-                  href={primaryNextHref}
-                  onClick={() => setPresenceSoft(true)}
-                  className={`inline-flex w-full items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${
-                    dark
-                      ? "border-white/12 bg-white/6 hover:bg-white/10"
-                      : "border-slate-900/10 bg-white/40 hover:bg-white/65"
-                  }`}
-                >
-                  {primaryNextLabel}
-                </Link>
+
+                {nextSignal === "done" ? (
+                  <Link href={nextHref} onClick={() => setPresenceSoft(true)} className={primaryBtnClass}>
+                    See what this unlocked
+                  </Link>
+                ) : (
+                  <Link href={nextHref} onClick={() => setPresenceSoft(true)} className={primaryBtnClass}>
+                    Continue with {nextLabel}
+                  </Link>
+                )}
+
+                <div className={`mt-2 text-xs ${textFaint}`}>{nextMicro}</div>
               </div>
 
-              {/* Tiny tasks (now step-based, not “link cards”) */}
+              {/* Tiny tasks (step-based) */}
               <div className={`mt-7 border-t pt-4 ${divider}`}>
-                <div className={`text-xs font-semibold uppercase tracking-[0.22em] ${textFaint}`}>
-                  Two tiny things you can do today
-                </div>
+                <div className={`text-xs font-semibold uppercase tracking-[0.22em] ${textFaint}`}>Two tiny things you can do today</div>
 
                 <div className="mt-4 space-y-5">
                   {/* Task 1: Weekly focus */}
@@ -1201,17 +1331,15 @@ export default function MainHomePage() {
                       </button>
                     </div>
 
-                    <div className={`text-sm ${textMuted}`}>
-                      A 45-second setup that makes the agent feel smarter immediately.
-                    </div>
+                    <div className={`text-sm ${textMuted}`}>A 45-second setup that makes Everleap’s next picks feel smarter.</div>
 
-                    {focusDone && focusExisting ? (
+                    {focusDone && weeklyFocus ? (
                       <div className="mt-2 text-xs text-white/55">
                         Focus:{" "}
                         <span className="font-semibold text-white/80">
-                          {focusExisting.vibe} + {focusExisting.target}
+                          {weeklyFocus.vibe} + {weeklyFocus.target}
                         </span>
-                        {focusExisting.sentence ? <span className="text-white/45"> · “{focusExisting.sentence}”</span> : null}
+                        {weeklyFocus.sentence ? <span className="text-white/45"> · “{weeklyFocus.sentence}”</span> : null}
                       </div>
                     ) : null}
                   </div>
@@ -1234,9 +1362,7 @@ export default function MainHomePage() {
                       </button>
                     </div>
 
-                    <div className={`text-sm ${textMuted}`}>
-                      Pick a prompt, do a tiny explore, save one takeaway. That’s how the agent learns you.
-                    </div>
+                    <div className={`text-sm ${textMuted}`}>Pick a prompt, explore a little, save one takeaway. That’s how Everleap learns you.</div>
 
                     {sprintCount > 0 ? (
                       <div className="mt-2 text-xs text-white/55">
@@ -1245,8 +1371,6 @@ export default function MainHomePage() {
                     ) : null}
                   </div>
                 </div>
-
-                {/* Intentionally no “you can still use the bottom nav” copy per your request */}
               </div>
             </div>
           </section>

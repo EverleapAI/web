@@ -776,7 +776,6 @@ export default function OnboardingPage() {
     window.setTimeout(() => {
       textareaRef.current?.focus();
     }, 50);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Speech supported

@@ -40,7 +40,6 @@ const ONBOARDING_KEY = "everleapOnboarding_v1";
 
 /* ============================================================
    Questions (5 + 5 + 5)
-   Category-scoped IDs
    ============================================================ */
 
 const MOTIVATIONS_5 = [
@@ -108,9 +107,7 @@ function saveOne(id: string, payload: Saved) {
   current[id] = payload;
   try {
     window.localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(current));
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 function readNameFromOnboarding(): string {
@@ -128,16 +125,12 @@ function readNameFromOnboarding(): string {
 function isMeaningfulText(value: string): boolean {
   const trimmed = value.trim();
   if (trimmed.length < 3) return false;
-
   const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, "");
   if (!lettersOnly) return false;
-
   const unique = new Set(lettersOnly.toLowerCase()).size;
   if (unique <= 2) return false;
-
   const squashed = trimmed.replace(/\s+/g, "");
   if (/^(.)\1{6,}$/i.test(squashed)) return false;
-
   return true;
 }
 
@@ -168,19 +161,17 @@ function labelForCategory(cat: Category): CategoryLabel {
 
 function safeReturnTo(raw: string | null): string {
   const v = (raw ?? "").trim();
-  if (!v) return "/main/home";
-  if (!v.startsWith("/")) return "/main/home";
-  if (v.startsWith("//")) return "/main/home";
+  if (!v) return "/main";
+  if (!v.startsWith("/")) return "/main";
+  if (v.startsWith("//")) return "/main";
   return v;
 }
 
 /* ============================================================
-   Completion copy (short + minimalist)
-   - Use "you" (never name)
-   - Remove "You can always refine this later."
+   Completion copy
    ============================================================ */
 
-function completionCopy(cat: Category, _label: CategoryLabel) {
+function completionCopy(cat: Category) {
   if (cat === "motivations") {
     return [
       "This gives us a clear starting point for how you function day to day — what supports energy and focus, and what tends to drain it.",
@@ -197,7 +188,6 @@ function completionCopy(cat: Category, _label: CategoryLabel) {
     ];
   }
 
-  // skills
   return [
     "This gives us a practical picture of where you want to grow, and how that growth might realistically happen.",
     "From here, Everleap will recommend skill paths and next steps that are doable, not overwhelming — built around momentum, not pressure.",
@@ -231,7 +221,6 @@ function ProgressDashes({
       {Array.from({ length: total }).map((_, i) => {
         const active = i === current;
         const done = isDone(i);
-
         return (
           <span
             key={i}
@@ -277,9 +266,10 @@ export default function QuestionFlow() {
   const categoryLabel = labelForCategory(category);
   const returnTo = safeReturnTo(params?.get("returnTo"));
 
-  const questions = React.useMemo(() => {
-    return QUESTIONS_ALL.filter((q) => q.category === category);
-  }, [category]);
+  const questions = React.useMemo(
+    () => QUESTIONS_ALL.filter((q) => q.category === category),
+    [category]
+  );
 
   const total = questions.length;
 
@@ -290,12 +280,11 @@ export default function QuestionFlow() {
   const [savedMap, setSavedMap] = React.useState<Record<string, Saved>>({});
 
   const q = questions[index] ?? questions[0];
+  const qId = q?.id ?? "";
 
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
-  /* ---------------- Focus helper ---------------- */
-
-  function focusAnswer(opts?: { select?: boolean }) {
+  const focusAnswer = React.useCallback((opts?: { select?: boolean }) => {
     const el = textareaRef.current;
     if (!el) return;
     try {
@@ -304,19 +293,21 @@ export default function QuestionFlow() {
         const len = el.value.length;
         el.setSelectionRange(len, len);
       }
-    } catch {
-      // ignore
-    }
-  }
-
-  /* ---------------- Speech ---------------- */
+    } catch {}
+  }, []);
 
   const [isListening, setIsListening] = React.useState(false);
   const [speechSupported, setSpeechSupported] = React.useState(true);
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const lastFinalRef = React.useRef<string>("");
 
-  /* ---------------- Completion beat state ---------------- */
+  const stopListening = React.useCallback(() => {
+    if (!recognitionRef.current) return;
+    try {
+      recognitionRef.current.stop();
+    } catch {}
+    setIsListening(false);
+  }, []);
 
   const [showPauseLine, setShowPauseLine] = React.useState(false);
   const [ctaReady, setCtaReady] = React.useState(false);
@@ -326,7 +317,6 @@ export default function QuestionFlow() {
   }, []);
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
     const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
       | SpeechRecognitionConstructor
       | undefined;
@@ -341,13 +331,10 @@ export default function QuestionFlow() {
 
   React.useEffect(() => {
     refreshSaved();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_V3) refreshSaved();
-    };
-    window.addEventListener("storage", onStorage);
+    window.addEventListener("storage", refreshSaved);
     window.addEventListener("focus", refreshSaved);
     return () => {
-      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("storage", refreshSaved);
       window.removeEventListener("focus", refreshSaved);
     };
   }, []);
@@ -359,102 +346,39 @@ export default function QuestionFlow() {
     setShowPauseLine(false);
     setCtaReady(false);
     window.setTimeout(() => focusAnswer(), 50);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
-
-  function stopListening() {
-    if (!recognitionRef.current) return;
-    try {
-      recognitionRef.current.stop();
-    } catch {}
-    setIsListening(false);
-  }
-
-  function getOrCreateRecognition(): SpeechRecognition | null {
-    if (typeof window === "undefined") return null;
-    if (recognitionRef.current) return recognitionRef.current;
-
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-      | SpeechRecognitionConstructor
-      | undefined;
-    if (!SpeechRec) return null;
-
-    const rec = new SpeechRec();
-    rec.lang = "en-US";
-    rec.interimResults = true;
-    rec.maxAlternatives = 1;
-    rec.continuous = false;
-
-    rec.onresult = (event: SpeechRecognitionEvent) => {
-      let finalChunk = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const res = event.results[i];
-        const t = (res?.[0]?.transcript ?? "").trim();
-        if (!t) continue;
-        if (res.isFinal) finalChunk += (finalChunk ? " " : "") + t;
-      }
-      const cleaned = finalChunk.trim();
-      if (!cleaned || cleaned === lastFinalRef.current) return;
-      lastFinalRef.current = cleaned;
-      setDraft((prev) => (prev.trim() ? `${prev.trim()} ${cleaned}` : cleaned));
-    };
-
-    rec.onerror = () => setIsListening(false);
-    rec.onend = () => setIsListening(false);
-
-    recognitionRef.current = rec;
-    return rec;
-  }
-
-  function toggleMic() {
-    focusAnswer();
-    lastFinalRef.current = "";
-    if (isListening) {
-      stopListening();
-      return;
-    }
-    const rec = getOrCreateRecognition();
-    if (!rec) return;
-    try {
-      setIsListening(true);
-      rec.start();
-    } catch {
-      setIsListening(false);
-    }
-  }
+  }, [category, focusAnswer]);
 
   React.useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (!q || screenMode !== "question") return;
+    if (!qId || screenMode !== "question") return;
     stopListening();
     lastFinalRef.current = "";
-    const s = loadSaved()[q.id];
+    const s = loadSaved()[qId];
     setDraft((s?.answer ?? "").trim());
     window.setTimeout(() => focusAnswer(), 0);
-  }, [q?.id, screenMode]);
+  }, [qId, screenMode, stopListening, focusAnswer]);
 
   React.useEffect(() => {
-    const onVis = () => {
-      if (document.visibilityState === "visible" && screenMode === "question") {
-        window.setTimeout(() => focusAnswer(), 0);
-      }
-    };
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("focus", onVis);
+    if (total === 0) router.push(returnTo);
+  }, [total, router, returnTo]);
+
+  React.useEffect(() => {
+    if (screenMode !== "final") {
+      setShowPauseLine(false);
+      setCtaReady(false);
+      return;
+    }
+    const t1 = window.setTimeout(() => setShowPauseLine(true), 450);
+    const t2 = window.setTimeout(() => setCtaReady(true), 3000);
     return () => {
-      document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("focus", onVis);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
     };
-  }, [screenMode]);
+  }, [screenMode, category]);
+
+  const completionParagraphs = React.useMemo(
+    () => completionCopy(category),
+    [category]
+  );
 
   function exitNow() {
     stopListening();
@@ -481,96 +405,78 @@ export default function QuestionFlow() {
       }
     }
 
-    if (opts.skipped) saveOne(q.id, { skipped: true });
-    else saveOne(q.id, { answer: text, skipped: false });
-
+    saveOne(q.id, opts.skipped ? { skipped: true } : { answer: text, skipped: false });
     refreshSaved();
     stopListening();
     setDraft("");
 
-    const nextIndex = index + 1;
-    if (nextIndex >= total) {
+    if (index + 1 >= total) {
       setScreenMode("final");
       return;
     }
 
-    setIndex(nextIndex);
-    setScreenMode("question");
+    setIndex((i) => i + 1);
     window.setTimeout(() => focusAnswer(), 50);
   }
 
-  function submit() {
-    completeAndAdvance({ skipped: false });
-  }
-
-  function skip() {
-    completeAndAdvance({ skipped: true });
-  }
-
-  const screenKey = screenMode === "final" ? `final_${category}` : q?.id ?? "q";
-
-  React.useEffect(() => {
-    if (total === 0) router.push(returnTo);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [total]);
-
-  // Quiet beat timing on completion screen:
-  // - show line shortly after render
-  // - enable CTA after ~3s total dwell
-  React.useEffect(() => {
-    if (screenMode !== "final") {
-      setShowPauseLine(false);
-      setCtaReady(false);
+  function toggleMic() {
+    focusAnswer();
+    lastFinalRef.current = "";
+    if (isListening) {
+      stopListening();
       return;
     }
 
-    setShowPauseLine(false);
-    setCtaReady(false);
+    const SpeechRec =
+      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!SpeechRec) return;
 
-    const t1 = window.setTimeout(() => setShowPauseLine(true), 450);
-    const t2 = window.setTimeout(() => setCtaReady(true), 3000);
+    const rec = new SpeechRec();
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.continuous = false;
 
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+    rec.onresult = (event: SpeechRecognitionEvent) => {
+      let finalChunk = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const res = event.results[i];
+        if (res.isFinal) finalChunk += res[0]?.transcript ?? "";
+      }
+      const cleaned = finalChunk.trim();
+      if (!cleaned || cleaned === lastFinalRef.current) return;
+      lastFinalRef.current = cleaned;
+      setDraft((prev) => (prev ? `${prev} ${cleaned}` : cleaned));
     };
-  }, [screenMode, category]);
 
-  const completionParagraphs = React.useMemo(() => {
-    return completionCopy(category, categoryLabel);
-  }, [category, categoryLabel]);
+    rec.onend = () => setIsListening(false);
+    rec.onerror = () => setIsListening(false);
+
+    recognitionRef.current = rec;
+    setIsListening(true);
+    try {
+      rec.start();
+    } catch {
+      setIsListening(false);
+    }
+  }
+
+  const screenKey = screenMode === "final" ? `final_${category}` : qId || "q";
 
   return (
     <div className="mx-auto w-full max-w-[980px] px-6 pt-10 pb-24">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="flex items-center justify-between sm:block min-w-0 sm:min-w-[160px]">
-          <div className="text-sm font-semibold text-white/80">Everleap</div>
-          <button
-            type="button"
-            onClick={exitNow}
-            className="text-sm font-semibold text-white/60 hover:text-white transition sm:hidden"
-          >
-            Exit
-          </button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+        <div className="text-sm font-semibold text-white/80">Everleap</div>
+        <div className="flex flex-col items-center gap-3">
+          <ProgressDashes current={index} total={total} isDone={isDoneDash} />
+          <CategoryPill label={categoryLabel} />
         </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col items-center gap-3">
-            <ProgressDashes current={index} total={total} isDone={isDoneDash} />
-            <CategoryPill label={categoryLabel} />
-          </div>
-        </div>
-
-        <div className="hidden sm:flex min-w-0 sm:min-w-[160px] justify-end">
-          <button
-            type="button"
-            onClick={exitNow}
-            className="text-sm font-semibold text-white/60 hover:text-white transition"
-          >
-            Exit
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={exitNow}
+          className="text-sm font-semibold text-white/60 hover:text-white transition"
+        >
+          Exit
+        </button>
       </div>
 
       <div className="mt-10">
@@ -585,15 +491,11 @@ export default function QuestionFlow() {
             {screenMode === "final" ? (
               <div className="flex min-h-[60svh] items-center">
                 <div className="w-full max-w-3xl">
-                  <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-                    Everleap · {categoryLabel}
-                  </div>
-
-                  <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-                    {firstName(name) ? `${categoryLabel} done, ${firstName(name)}.` : `${categoryLabel} done.`}
+                  <h1 className="mt-4 text-4xl font-semibold text-white">
+                    {categoryLabel} done{firstName(name) ? `, ${firstName(name)}` : ""}.
                   </h1>
 
-                  <div className="mt-6 max-w-2xl space-y-4">
+                  <div className="mt-6 space-y-4">
                     {completionParagraphs.map((p, i) => (
                       <p key={i} className="text-[15px] leading-7 text-white/75">
                         {p}
@@ -601,7 +503,6 @@ export default function QuestionFlow() {
                     ))}
                   </div>
 
-                  {/* quiet beat */}
                   <PauseLine show={showPauseLine} />
 
                   <div className="mt-8">
@@ -609,8 +510,8 @@ export default function QuestionFlow() {
                       type="button"
                       onClick={exitNow}
                       disabled={!ctaReady}
-                      className={`text-sm font-semibold transition ${
-                        ctaReady ? "text-white/85 hover:text-white" : "text-white/35 cursor-not-allowed"
+                      className={`text-sm font-semibold ${
+                        ctaReady ? "text-white/85 hover:text-white" : "text-white/35"
                       }`}
                     >
                       → Return
@@ -619,74 +520,52 @@ export default function QuestionFlow() {
                 </div>
               </div>
             ) : (
-              <div
-                className="flex min-h-[60svh] items-center"
-                onPointerDown={(e) => {
-                  const t = e.target as HTMLElement | null;
-                  if (t?.closest("button,a,input,textarea,select")) return;
-                  focusAnswer();
-                }}
-              >
-                <div className="w-full">
-                  <div className="max-w-3xl">
-                    <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                      {q?.question ?? ""}
-                    </h1>
+              <div className="flex min-h-[60svh] items-center">
+                <div className="w-full max-w-3xl">
+                  <h1 className="text-3xl font-semibold text-white">
+                    {q?.question}
+                  </h1>
+
+                  <div className="mt-7 flex items-end gap-3">
+                    <div className="flex-1 border-b border-white/18">
+                      <textarea
+                        ref={textareaRef}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            completeAndAdvance({ skipped: false });
+                          }
+                        }}
+                        rows={2}
+                        className="w-full bg-transparent py-3 text-white/90 outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      disabled={!speechSupported}
+                      className="h-10 w-10 rounded-full border border-white/18 text-white/80"
+                    >
+                      {isListening ? <MicOff /> : <Mic />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => completeAndAdvance({ skipped: false })}
+                      disabled={!draft.trim()}
+                      className="h-10 w-10 rounded-full bg-white/80 text-black disabled:opacity-40"
+                    >
+                      <Send />
+                    </button>
                   </div>
 
-                  <div className="mt-7 w-full max-w-3xl">
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1 border-b border-white/18 focus-within:border-white/40 transition">
-                        <textarea
-                          ref={textareaRef}
-                          value={draft}
-                          onChange={(e) => setDraft(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              submit();
-                            }
-                          }}
-                          rows={2}
-                          className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/90 outline-none"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={toggleMic}
-                        disabled={!speechSupported}
-                        className={`h-10 w-10 rounded-full border transition active:scale-95 ${
-                          !speechSupported
-                            ? "border-white/10 bg-white/5 text-white/30 cursor-not-allowed"
-                            : isListening
-                              ? "border-white/35 bg-white/10 text-white"
-                              : "border-white/18 bg-white/6 text-white/80 hover:bg-white/10"
-                        }`}
-                      >
-                        {isListening ? <MicOff className="mx-auto h-4 w-4" /> : <Mic className="mx-auto h-4 w-4" />}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={submit}
-                        disabled={!draft.trim()}
-                        className={`h-10 w-10 rounded-full transition active:scale-95 ${
-                          draft.trim()
-                            ? "bg-white/80 text-black hover:bg-white"
-                            : "bg-white/10 text-white/35 cursor-not-allowed"
-                        }`}
-                      >
-                        <Send className="mx-auto h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <div className="mt-6 flex items-center justify-between text-sm text-white/60">
-                      <button type="button" onClick={skip} className="hover:text-white/80 transition">
-                        Skip for now
-                      </button>
-                      <span aria-hidden="true" />
-                    </div>
+                  <div className="mt-6 text-sm text-white/60">
+                    <button onClick={() => completeAndAdvance({ skipped: true })}>
+                      Skip for now
+                    </button>
                   </div>
                 </div>
               </div>
