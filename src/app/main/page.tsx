@@ -68,7 +68,7 @@ type SignalsProgress = {
   totalPer: number;
 };
 
-type AgentState = "EMPTY" | "FOUNDATION" | "ACTIVE" | "RETURNING";
+type AgentState = "EMPTY" | "WELCOME" | "FOUNDATION" | "ACTIVE" | "RETURNING";
 
 type HeroCopy = {
   line1?: string;
@@ -180,6 +180,7 @@ function signalWhy(k: SignalKey, progress: SignalsProgress) {
   ) {
     return "Now we turn what we know into momentum — which skills to build next, and what would actually be worth practicing.";
   }
+
   return "This turns insight into momentum — choosing a skill to build and a simple way to practice it.";
 }
 
@@ -314,7 +315,12 @@ function deriveAgentState(args: {
   const { snapshot, progress, hasAnySignal, hasAnyTiny } = args;
 
   const onboardingDone = Boolean(snapshot?.name || snapshot?.zip || snapshot?.situation);
+
+  // Totally empty (no onboarding, no signals)
   if (!onboardingDone && !hasAnySignal) return "EMPTY";
+
+  // IMPORTANT: onboarding done, but zero signals yet -> true welcome moment
+  if (onboardingDone && !hasAnySignal) return "WELCOME";
 
   const allDone = progress.motivationsDone && progress.strengthsDone && progress.skillsDone;
   if (allDone) return hasAnyTiny ? "RETURNING" : "ACTIVE";
@@ -322,10 +328,6 @@ function deriveAgentState(args: {
   return "FOUNDATION";
 }
 
-// Option A, but with more “teen rhythm”:
-// - two beats (line1 + line2)
-// - tiny tag line (soft emotion)
-// - no location, no inventory language
 function buildHeroCopy(args: {
   agentState: AgentState;
   totalAnswered: number;
@@ -336,8 +338,16 @@ function buildHeroCopy(args: {
 
   const hasStarted = totalAnswered > 0;
 
-  // Keep it calm + not corny.
-  const tag = agentState === "RETURNING" ? "Small steps add up." : "Small step. Big signal.";
+  if (agentState === "WELCOME") {
+    return {
+      line1: "You’re just getting started here — and that’s exactly how Everleap is meant to work.",
+      line2: `Start with: ${nextLabel}.`,
+      tag: "Five quick questions. No right answers.",
+    };
+  }
+
+  const tag =
+    agentState === "RETURNING" ? "Small steps add up." : "Small step. Big signal.";
 
   if (agentState === "EMPTY" && !hasStarted) {
     return {
@@ -549,9 +559,7 @@ export default function MainHomePage() {
     );
   };
 
-  // Use resolved location exactly once, tiny + optional.
-  // This clears the eslint warning and gives a subtle “grounded” feel without getting busy.
-  const locationWhisper = placeLabel ? `in ${placeLabel}` : null;
+  const showWelcomeBlock = agentState === "WELCOME" && next === "motivations" && totalAnswered === 0;
 
   return (
     <AppChrome
@@ -616,17 +624,36 @@ export default function MainHomePage() {
                     {name ? `Hey ${name}.` : "Hey."}
                   </div>
 
-                  {/* Tiny location whisper (optional, once) */}
-                  {locationWhisper ? (
-                    <div className={`mt-1 text-xs ${textFaint}`}>Here {locationWhisper}.</div>
+                  {/* Single tiny nod to location ONLY during welcome (fixes lint + feels human) */}
+                  {showWelcomeBlock && placeLabel ? (
+                    <div className={`mt-1 text-xs ${textFaint}`}>Here in {placeLabel}.</div>
                   ) : null}
 
                   <div className={`mt-3 space-y-1 text-sm leading-relaxed ${textMuted}`}>
                     {hero.line1 ? <div>{hero.line1}</div> : null}
                     <div>{renderHeroLine2()}</div>
 
-                    {hero.tag ? <div className={`pt-1 text-xs italic ${textFaint}`}>{hero.tag}</div> : null}
+                    {hero.tag ? (
+                      <div className={`pt-1 text-xs italic ${textFaint}`}>{hero.tag}</div>
+                    ) : null}
                   </div>
+
+                  {/* Welcome path + why (only for brand-new users who just onboarded) */}
+                  {showWelcomeBlock ? (
+                    <div className={`mt-4 space-y-2 text-sm leading-relaxed ${textMuted}`}>
+                      <div>
+                        We build clarity through a few short conversations — one at a time.
+                      </div>
+                      <div>
+                        We usually go <span className="font-semibold text-white/85">Motivations</span>, then{" "}
+                        <span className="font-semibold text-white/85">Strengths</span>, and later{" "}
+                        <span className="font-semibold text-white/85">Skills</span>. Each step sharpens the next.
+                      </div>
+                      <div>
+                        Motivations come first because they tell me what genuinely gives you energy — and what drains it — so recommendations don’t sound generic.
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* One primary suggestion */}
@@ -648,7 +675,9 @@ export default function MainHomePage() {
 
                   {/* Supportive tiny-task context: EXACTLY ONCE, only here */}
                   {supportiveContext ? (
-                    <div className={`mt-2 text-sm leading-relaxed ${textMuted}`}>{supportiveContext}</div>
+                    <div className={`mt-2 text-sm leading-relaxed ${textMuted}`}>
+                      {supportiveContext}
+                    </div>
                   ) : null}
                 </div>
 
