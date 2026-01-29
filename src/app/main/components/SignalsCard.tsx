@@ -1,9 +1,12 @@
+// src/app/main/components/SignalsCard.tsx
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 
 import { hrefForSignal } from "../domain/signals";
+
+type SignalKey = "motivations" | "strengths" | "skills";
 
 type Progress = {
   motivationsDone: boolean;
@@ -15,15 +18,13 @@ type Progress = {
   totalPer: number;
 };
 
-export function SignalsCard({
-  dark,
-  progress,
-  nextKey,
-}: {
+type Props = {
   dark: boolean;
   progress: Progress;
-  nextKey: "motivations" | "strengths" | "skills";
-}) {
+  nextKey: SignalKey;
+};
+
+export function SignalsCard({ dark, progress, nextKey }: Props) {
   const border = dark ? "border-white/10" : "border-black/10";
   const textDim = dark ? "text-white/55" : "text-slate-500";
   const textMain = dark ? "text-white/85" : "text-slate-900";
@@ -31,8 +32,15 @@ export function SignalsCard({
   const track = dark ? "bg-white/10" : "bg-black/10";
   const fillDone = dark ? "bg-emerald-300/80" : "bg-emerald-600/80";
 
+  const totalAnswered =
+    (progress.motivationsAnswered || 0) +
+    (progress.strengthsAnswered || 0) +
+    (progress.skillsAnswered || 0);
+
+  const totalAll = (progress.totalPer || 0) * 3;
+
   const lanes: Array<{
-    k: "motivations" | "strengths" | "skills";
+    k: SignalKey;
     label: string;
     answered: number;
     done: boolean;
@@ -40,32 +48,27 @@ export function SignalsCard({
     {
       k: "motivations",
       label: "Motivations",
-      answered: progress.motivationsAnswered,
-      done: progress.motivationsDone,
+      answered: progress.motivationsAnswered ?? 0,
+      done: !!progress.motivationsDone,
     },
     {
       k: "strengths",
       label: "Strengths",
-      answered: progress.strengthsAnswered,
-      done: progress.strengthsDone,
+      answered: progress.strengthsAnswered ?? 0,
+      done: !!progress.strengthsDone,
     },
     {
       k: "skills",
       label: "Skills",
-      answered: progress.skillsAnswered,
-      done: progress.skillsDone,
+      answered: progress.skillsAnswered ?? 0,
+      done: !!progress.skillsDone,
     },
   ];
 
   return (
-    <div
-      className={[
-        "mt-3 rounded-2xl border px-4 py-4",
-        border,
-      ].join(" ")}
-    >
+    <div className="mt-3">
       {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div
           className={`text-[0.7rem] font-semibold uppercase tracking-[0.26em] ${
             dark ? "text-white/70" : "text-slate-500"
@@ -74,59 +77,66 @@ export function SignalsCard({
           Signals
         </div>
 
-        <div className={`text-xs font-semibold ${textDim}`}>
-          tap to review
+        <div className="flex items-center gap-2">
+          <div className={`text-[11px] font-semibold ${textDim}`}>tap to review</div>
+          <div className={`text-xs font-semibold ${textDim}`}>
+            {totalAnswered}/{totalAll}
+          </div>
         </div>
       </div>
 
-      {/* Lanes */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Mobile: stack. Desktop: 3 columns */}
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {lanes.map((l) => {
-          const pct = Math.max(0, Math.min(1, l.answered / progress.totalPer));
+          const meta = l.done ? "done" : `${l.answered}/${progress.totalPer}`;
+          const pct =
+            progress.totalPer > 0 ? Math.max(0, Math.min(1, l.answered / progress.totalPer)) : 0;
+
           const isNext = l.k === nextKey;
 
+          // Each lane is its own link — ALWAYS goes to that lane’s questions.
           return (
             <Link
               key={l.k}
               href={hrefForSignal(l.k)}
               className={[
-                "group block rounded-xl p-2 transition",
-                dark ? "hover:bg-white/5" : "hover:bg-black/5",
-                isNext ? "ring-1 ring-amber-400/40" : "",
+                "block rounded-2xl border px-4 py-4 transition",
+                border,
+                dark ? "hover:bg-white/5" : "hover:bg-black/4",
+                dark ? "focus:ring-white/20" : "focus:ring-black/15",
+                "focus:outline-none focus:ring-2",
               ].join(" ")}
-              aria-label={`Review ${l.label}`}
+              aria-label={`Open ${l.label}`}
             >
-              <div className="flex items-baseline justify-between gap-2">
-                <div
-                  className={`truncate text-xs font-semibold ${textMain}`}
-                >
-                  {l.label}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  {/* Never truncate label on mobile: allow wrapping */}
+                  <div className={`text-sm font-semibold leading-snug ${textMain}`}>{l.label}</div>
+
+                  {isNext ? (
+                    <div
+                      className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        dark ? "bg-white/10 text-white/70" : "bg-black/5 text-slate-700"
+                      }`}
+                    >
+                      Next
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className={`text-[11px] font-semibold ${textDim}`}>
-                  {l.done ? "done" : `${l.answered}/${progress.totalPer}`}
-                </div>
+                <div className={`shrink-0 text-[11px] font-semibold ${textDim}`}>{meta}</div>
               </div>
 
-              {/* Progress bar */}
-              <div
-                className={`mt-2 h-[3px] w-full overflow-hidden rounded-full ${track}`}
-                aria-hidden
-              >
+              <div className={`mt-3 h-[3px] w-full overflow-hidden rounded-full ${track}`}>
                 <div
                   className={`h-full rounded-full ${
-                    l.done
-                      ? fillDone
-                      : dark
-                      ? "bg-white/12"
-                      : "bg-black/12"
+                    l.done ? fillDone : dark ? "bg-white/12" : "bg-black/12"
                   }`}
                   style={{ width: `${pct * 100}%` }}
                 />
               </div>
 
-              {/* Dots */}
-              <div className="mt-2 flex items-center gap-1" aria-hidden>
+              <div className="mt-3 flex flex-wrap items-center gap-1" aria-hidden>
                 {Array.from({ length: progress.totalPer }).map((_, i) => {
                   const filled = i < l.answered;
 
@@ -143,12 +153,9 @@ export function SignalsCard({
                       ? "bg-white/10"
                       : "bg-black/10";
 
-                  return (
-                    <span
-                      key={i}
-                      className={`h-1.5 w-1.5 rounded-full ${dot}`}
-                    />
-                  );
+                  const emphasis = isNext ? "opacity-95" : "opacity-80";
+
+                  return <span key={i} className={`h-1.5 w-1.5 rounded-full ${dot} ${emphasis}`} />;
                 })}
               </div>
             </Link>
