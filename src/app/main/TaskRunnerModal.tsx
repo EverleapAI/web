@@ -5,6 +5,22 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, X, Check } from "lucide-react";
 
+import type {
+  OnboardingSnapshot,
+  TinyTaskId,
+  WeeklyFocusState,
+  CuriositySprintState,
+  SessionTinyState,
+} from "./domain/types";
+
+// Re-export for backwards compatibility (page.tsx currently imports from here)
+export type {
+  OnboardingSnapshot,
+  TinyTaskId,
+  WeeklyFocusState,
+  CuriositySprintState,
+} from "./domain/types";
+
 /* =============================================================================
    Storage keys (must match main/page.tsx exactly)
    ============================================================================= */
@@ -14,61 +30,17 @@ const WEEKLY_FOCUS_KEY = "everleap.focus.week.v1";
 const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
 
 /* =============================================================================
-   Types (structurally compatible with main/page.tsx)
+   Local compat types
+   - domain/types.ts WeeklyFocusState may not include `sentence` yet
+   - but this modal stores/reads it, so we widen only here
    ============================================================================= */
 
-type Situation = "high_school" | "young_adult" | null;
-type Certainty = "strong" | "kinda" | "no_clue" | null;
-
-type PostPlanKey =
-  | "job"
-  | "associates"
-  | "credential"
-  | "military"
-  | "four_year"
-  | "no_idea";
-
-type ActivityKey =
-  | "sports"
-  | "visual_arts"
-  | "performing_arts"
-  | "volunteer"
-  | "job"
-  | "other";
-
-type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
-
-export type OnboardingSnapshot = {
-  name?: string;
-  situation?: Situation;
-  zip?: string; // normalized zip or ""
-  certainty?: Certainty;
-  postPlans?: PostPlanKey[];
-  activities?: ActivityKey[];
-  activitiesOther?: string;
-  funChoice?: FunChoice;
-};
-
-export type TinyTaskId = "weekly_focus" | "curiosity_sprint";
-
-export type WeeklyFocusState = {
-  createdAt: string; // ISO
-  vibe: string;
-  target: string;
+type WeeklyFocusStored = WeeklyFocusState & {
   sentence?: string;
 };
 
-export type CuriositySprintState = {
-  createdAt: string; // ISO
-  lane: "jobs" | "majors" | "skills" | "experiments";
-  prompt: string;
-  takeaway: string;
-};
-
-type SessionTinyState = {
-  shownIds: TinyTaskId[];
-  completedIds: TinyTaskId[];
-};
+// Lane id used in UI. Keep narrow/clean regardless of what domain type is.
+type SprintLane = "jobs" | "majors" | "skills" | "experiments";
 
 /* =============================================================================
    Safe storage helpers
@@ -91,12 +63,12 @@ function safeJsonStringify(value: unknown) {
   }
 }
 
-function readWeeklyFocus(): WeeklyFocusState | null {
+function readWeeklyFocus(): WeeklyFocusStored | null {
   if (typeof window === "undefined") return null;
-  return safeJsonParse<WeeklyFocusState>(window.localStorage.getItem(WEEKLY_FOCUS_KEY));
+  return safeJsonParse<WeeklyFocusStored>(window.localStorage.getItem(WEEKLY_FOCUS_KEY));
 }
 
-function writeWeeklyFocus(next: WeeklyFocusState) {
+function writeWeeklyFocus(next: WeeklyFocusStored) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(WEEKLY_FOCUS_KEY, safeJsonStringify(next));
@@ -124,6 +96,7 @@ function writeSprints(next: CuriositySprintState[]) {
 
 function readSessionTinyState(): SessionTinyState {
   if (typeof window === "undefined") return { shownIds: [], completedIds: [] };
+
   const parsed = safeJsonParse<SessionTinyState>(
     window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY)
   );
@@ -158,8 +131,12 @@ function writeSessionTinyState(next: SessionTinyState) {
    ============================================================================= */
 
 function buildSprintPromptsFromOnboarding(snapshot: OnboardingSnapshot | null): string[] {
-  const plans = snapshot?.postPlans ?? [];
-  const activities = snapshot?.activities ?? [];
+  // Widen to string[] to avoid TS “includes” complaints when upstream types are unions/readonly.
+  const plansRaw = snapshot?.postPlans ?? [];
+  const activitiesRaw = snapshot?.activities ?? [];
+
+  const plans = Array.isArray(plansRaw) ? (plansRaw as unknown[]).map(String) : [];
+  const activities = Array.isArray(activitiesRaw) ? (activitiesRaw as unknown[]).map(String) : [];
 
   const leansWork = plans.includes("job") || activities.includes("job");
   const leansCollege = plans.includes("four_year") || plans.includes("associates");
@@ -202,7 +179,7 @@ function buildSprintPromptsFromOnboarding(snapshot: OnboardingSnapshot | null): 
   ];
 }
 
-function laneHelper(lane: CuriositySprintState["lane"]) {
+function laneHelper(lane: SprintLane) {
   switch (lane) {
     case "jobs":
       return "What people actually do all day.";
@@ -343,7 +320,7 @@ export function TaskRunnerModal({
   const [sentence, setSentence] = React.useState("");
 
   // Sprint state
-  const [lane, setLane] = React.useState<CuriositySprintState["lane"]>("jobs");
+  const [lane, setLane] = React.useState<SprintLane>("jobs");
   const [prompt, setPrompt] = React.useState("");
   const [takeaway, setTakeaway] = React.useState("");
 
@@ -381,9 +358,7 @@ export function TaskRunnerModal({
     ? `${primaryBtn} border-white/12 bg-white/10 hover:bg-white/14 text-white`
     : `${primaryBtn} border-slate-900/10 bg-white/75 hover:bg-white text-slate-900`;
 
-  const subtleBtnClass = dark
-    ? "text-white/65 hover:text-white/90"
-    : "text-slate-700 hover:text-slate-950";
+  const subtleBtnClass = dark ? "text-white/65 hover:text-white/90" : "text-slate-700 hover:text-slate-950";
 
   const labelClass = dark
     ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
@@ -392,7 +367,7 @@ export function TaskRunnerModal({
   const close = () => onClose();
 
   function completeWeeklyFocus() {
-    const next: WeeklyFocusState = {
+    const next: WeeklyFocusStored = {
       createdAt: new Date().toISOString(),
       vibe: vibe.trim(),
       target: target.trim(),
@@ -415,7 +390,7 @@ export function TaskRunnerModal({
 
     const nextItem: CuriositySprintState = {
       createdAt: new Date().toISOString(),
-      lane,
+      lane, // SprintLane is compatible with CuriositySprintState["lane"] if it’s a string union
       prompt: prompt.trim() || (prompts[0] ?? ""),
       takeaway: t,
     };
@@ -435,16 +410,7 @@ export function TaskRunnerModal({
   function renderWeeklyFocus() {
     const total = 4;
 
-    const vibeOptions = [
-      "Calm",
-      "Confident",
-      "Curious",
-      "Productive",
-      "Social",
-      "Strong",
-      "Creative",
-      "Reset",
-    ];
+    const vibeOptions = ["Calm", "Confident", "Curious", "Productive", "Social", "Strong", "Creative", "Reset"];
     const targetOptions = ["School", "Friends", "Health", "Money", "Future", "Confidence", "Time"];
 
     const canNext =
@@ -463,18 +429,14 @@ export function TaskRunnerModal({
 
         {step === 0 ? (
           <>
-            <h2 className="mt-4 text-xl font-semibold text-white">
-              How do you want this week to feel?
-            </h2>
+            <h2 className="mt-4 text-xl font-semibold text-white">How do you want this week to feel?</h2>
             <p className="mt-2 text-sm text-white/70">Pick a vibe.</p>
             <p className="mt-2 text-xs text-white/45">I’ll shape your suggestions around it.</p>
             <ChoiceChips options={vibeOptions} value={vibe} onChange={(v) => setVibe(v)} />
           </>
         ) : step === 1 ? (
           <>
-            <h2 className="mt-4 text-xl font-semibold text-white">
-              Where do you want that energy aimed?
-            </h2>
+            <h2 className="mt-4 text-xl font-semibold text-white">Where do you want that energy aimed?</h2>
             <p className="mt-2 text-sm text-white/70">Pick one target.</p>
             <p className="mt-2 text-xs text-white/45">This helps me keep it practical.</p>
             <ChoiceChips options={targetOptions} value={target} onChange={(v) => setTarget(v)} />
@@ -489,31 +451,22 @@ export function TaskRunnerModal({
               placeholder="This week I want…"
               onEnter={() => completeWeeklyFocus()}
             />
-            <div className="mt-4 text-xs text-white/50">
-              Saved locally for now (Actions hookup comes later).
-            </div>
+            <div className="mt-4 text-xs text-white/50">Saved locally for now (Actions hookup comes later).</div>
           </>
         ) : (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Locked.</h2>
             <p className="mt-2 text-sm text-white/75">
-              Picks can lean toward{" "}
-              <span className="font-semibold text-white">{vibe}</span> +
+              Picks can lean toward <span className="font-semibold text-white">{vibe}</span> +
               <span className="font-semibold text-white"> {target}</span>.
             </p>
-            {sentence.trim() ? (
-              <p className="mt-3 text-sm text-white/70">“{sentence.trim()}”</p>
-            ) : null}
+            {sentence.trim() ? <p className="mt-3 text-sm text-white/70">“{sentence.trim()}”</p> : null}
 
             <div className="mt-6 flex items-center gap-3">
               <button type="button" onClick={close} className={primaryBtnClass}>
                 Done
               </button>
-              <button
-                type="button"
-                onClick={close}
-                className={`text-sm font-semibold ${subtleBtnClass}`}
-              >
+              <button type="button" onClick={close} className={`text-sm font-semibold ${subtleBtnClass}`}>
                 Back
               </button>
             </div>
@@ -554,7 +507,7 @@ export function TaskRunnerModal({
   function renderCuriositySprint() {
     const total = 5;
 
-    const laneOptions: { id: CuriositySprintState["lane"]; label: string; emoji: string }[] = [
+    const laneOptions: { id: SprintLane; label: string; emoji: string }[] = [
       { id: "jobs", label: "Jobs", emoji: "🔎" },
       { id: "majors", label: "Majors", emoji: "🎓" },
       { id: "skills", label: "Skills", emoji: "🛠️" },
@@ -581,9 +534,7 @@ export function TaskRunnerModal({
 
         {step === 0 ? (
           <>
-            <h2 className="mt-4 text-xl font-semibold text-white">
-              What do you want to explore for 10 minutes?
-            </h2>
+            <h2 className="mt-4 text-xl font-semibold text-white">What do you want to explore for 10 minutes?</h2>
             <p className="mt-2 text-sm text-white/70">Pick one. No commitment.</p>
             <p className="mt-2 text-xs text-white/45">You’re just opening a door.</p>
 
@@ -592,7 +543,7 @@ export function TaskRunnerModal({
                 const selected = lane === o.id;
                 return (
                   <motion.button
-                    key={o.id}
+                    key={String(o.id)} // <- fixes TS key squiggle
                     type="button"
                     onClick={() => setLane(o.id)}
                     whileTap={{ scale: 0.99 }}
@@ -614,20 +565,16 @@ export function TaskRunnerModal({
             <AnimatePresence initial={false}>
               {lane ? (
                 <motion.div
-                  key={lane}
+                  key={String(lane)} // <- fixes TS key squiggle
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="mt-4"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
-                    What this opens
-                  </div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">What this opens</div>
                   <div className="mt-2 text-sm text-white/85">{laneHelper(lane)}</div>
-                  <div className="mt-2 text-xs text-white/45">
-                    Not choosing a path — just gathering signal.
-                  </div>
+                  <div className="mt-2 text-xs text-white/45">Not choosing a path — just gathering signal.</div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -656,12 +603,7 @@ export function TaskRunnerModal({
               })}
             </div>
 
-            <MinimalLineInput
-              value={prompt}
-              onChange={setPrompt}
-              placeholder="Or write your own prompt…"
-              onEnter={() => setStep(2)}
-            />
+            <MinimalLineInput value={prompt} onChange={setPrompt} placeholder="Or write your own prompt…" onEnter={() => setStep(2)} />
           </>
         ) : step === 2 ? (
           <>
@@ -671,9 +613,7 @@ export function TaskRunnerModal({
             </p>
 
             <div className="mt-4 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
-                Your prompt
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Your prompt</div>
               <div className="mt-2">{prompt.trim() || suggested[0] || "Find one interesting thing."}</div>
             </div>
 
@@ -684,12 +624,7 @@ export function TaskRunnerModal({
             <h2 className="mt-4 text-xl font-semibold text-white">One takeaway.</h2>
             <p className="mt-2 text-sm text-white/70">A sentence is enough.</p>
 
-            <MinimalLineInput
-              value={takeaway}
-              onChange={setTakeaway}
-              placeholder="I noticed that…"
-              onEnter={() => completeSprint()}
-            />
+            <MinimalLineInput value={takeaway} onChange={setTakeaway} placeholder="I noticed that…" onEnter={() => completeSprint()} />
             <div className="mt-4 text-xs text-white/55">Saved so Everleap can build on it later.</div>
           </>
         ) : (
@@ -698,9 +633,7 @@ export function TaskRunnerModal({
             <p className="mt-2 text-sm text-white/75">That’s a real signal.</p>
 
             <div className="mt-4 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
-                Saved takeaway
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Saved takeaway</div>
               <div className="mt-2">{takeaway.trim()}</div>
             </div>
 
@@ -708,11 +641,7 @@ export function TaskRunnerModal({
               <button type="button" onClick={close} className={primaryBtnClass}>
                 Done
               </button>
-              <button
-                type="button"
-                onClick={close}
-                className={`text-sm font-semibold ${subtleBtnClass}`}
-              >
+              <button type="button" onClick={close} className={`text-sm font-semibold ${subtleBtnClass}`}>
                 Back
               </button>
             </div>

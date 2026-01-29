@@ -4,10 +4,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
+import { TinyTasks, type TinyTaskSummary } from "./components/TinyTasks";
 
 import {
   isDarkTheme,
@@ -20,64 +20,50 @@ import {
 import {
   TaskRunnerModal,
   type TinyTaskId,
-  type OnboardingSnapshot,
-  type WeeklyFocusState,
-  type CuriositySprintState,
+  type OnboardingSnapshot as ModalOnboardingSnapshot,
 } from "./TaskRunnerModal";
 
-// Reuse onboarding zip helpers so we can say “San Rafael, CA”
+// Reuse onboarding zip helpers (STATE only — no city callouts)
 import { lookupZipPlace, stateFullName } from "../onboarding/zipLookup";
 
+// ✅ App-layer VM builder
+import { buildTodayViewModel } from "./app/buildTodayViewModel";
+
+// ✅ Domain helpers for labels/links + retort assembly
+import {
+  hrefForSignal,
+  signalLabel,
+  continueButtonText,
+  continueSubcopy,
+} from "./domain/signals";
+import { buildRetort } from "./domain/retort";
+
+// ✅ Extracted UI modules
+import { HowEverleapWorks } from "./components/HowEverleapWorks";
+import { SignalsCard } from "./components/SignalsCard";
+import { TodayIntro } from "./components/TodayIntro";
+
 /* =============================================================================
-   Storage keys (UNCHANGED)
+   Session keys (only what page still owns)
    ============================================================================= */
 
-const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-const STORY_STORAGE_KEY = "everleap.story.answers.v3";
-
-const QUOTE_SESSION_KEY = "everleap.main.quote.v1";
+// Zip -> state cache (session)
 const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
 
-// Tiny task storage (UI-only for now; Actions hookup later)
+// Tiny task session state (page still writes this for now)
 const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
-const WEEKLY_FOCUS_KEY = "everleap.focus.week.v1";
-const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
 
 /* =============================================================================
-   Types
+   Types (page-local)
    ============================================================================= */
-
-type StoryAnswers = Record<string, { answer?: string; skipped?: boolean }>;
-
-type Quote = { text: string; author: string };
 
 type SessionTinyState = {
   shownIds: TinyTaskId[];
   completedIds: TinyTaskId[];
 };
 
-type SignalKey = "motivations" | "strengths" | "skills";
-
-type SignalsProgress = {
-  motivationsDone: boolean;
-  strengthsDone: boolean;
-  skillsDone: boolean;
-  motivationsAnswered: number;
-  strengthsAnswered: number;
-  skillsAnswered: number;
-  totalPer: number;
-};
-
-type AgentState = "EMPTY" | "WELCOME" | "FOUNDATION" | "ACTIVE" | "RETURNING";
-
-type HeroCopy = {
-  line1?: string;
-  line2: string; // always show a clear next step
-  tag?: string; // tiny emotional hook
-};
-
 /* =============================================================================
-   Utils
+   Small utils
    ============================================================================= */
 
 function safeJsonParse<T>(raw: string | null): T | null {
@@ -110,131 +96,27 @@ function niceName(raw: string) {
   return n.length === 1 ? n.toUpperCase() : `${n[0]!.toUpperCase()}${n.slice(1)}`;
 }
 
-function isAnswered(v: { answer?: string; skipped?: boolean } | undefined) {
-  const ans = (v?.answer ?? "").trim();
-  const skipped = Boolean(v?.skipped);
-  return skipped || ans.length > 0;
+function getSnapshotName(snapshot: unknown): string {
+  if (!snapshot || typeof snapshot !== "object") return "";
+  const s = snapshot as { name?: unknown };
+  return typeof s.name === "string" ? s.name : "";
 }
 
-function countAnsweredForPrefix(
-  answers: StoryAnswers | null,
-  prefix: string,
-  totalPer: number
-) {
-  if (!answers) return 0;
-  let n = 0;
-  for (let i = 1; i <= totalPer; i += 1) {
-    const id = `${prefix}_${i}`;
-    if (isAnswered(answers[id])) n += 1;
-  }
-  return n;
-}
-
-function deriveSignalsProgress(answers: StoryAnswers | null): SignalsProgress {
-  const totalPer = 5;
-  const motivationsAnswered = countAnsweredForPrefix(answers, "motivations", totalPer);
-  const strengthsAnswered = countAnsweredForPrefix(answers, "strengths", totalPer);
-  const skillsAnswered = countAnsweredForPrefix(answers, "skills", totalPer);
-
-  return {
-    motivationsDone: motivationsAnswered >= totalPer,
-    strengthsDone: strengthsAnswered >= totalPer,
-    skillsDone: skillsAnswered >= totalPer,
-    motivationsAnswered,
-    strengthsAnswered,
-    skillsAnswered,
-    totalPer,
-  };
-}
-
-function nextSignal(progress: SignalsProgress): SignalKey {
-  if (!progress.motivationsDone) return "motivations";
-  if (!progress.strengthsDone) return "strengths";
-  if (!progress.skillsDone) return "skills";
-  return "motivations";
-}
-
-function signalLabel(k: SignalKey) {
-  if (k === "motivations") return "Motivations";
-  if (k === "strengths") return "Strengths";
-  return "Skills";
-}
-
-function signalWhy(k: SignalKey, progress: SignalsProgress) {
-  if (k === "motivations") {
-    return "This gives me your baseline — what energizes you, what drains you, and what “good days” actually look like.";
-  }
-
-  if (k === "strengths") {
-    if (progress.motivationsDone || progress.motivationsAnswered > 0) {
-      return "Your strengths are where you naturally do your best work — so the options I suggest actually match how you operate.";
-    }
-    return "Your strengths are where you tend to perform at your best — so ideas fit you instead of fighting you.";
-  }
-
-  if (
-    progress.motivationsDone ||
-    progress.strengthsDone ||
-    progress.motivationsAnswered > 0 ||
-    progress.strengthsAnswered > 0
-  ) {
-    return "Now we turn what we know into momentum — which skills to build next, and what would actually be worth practicing.";
-  }
-
-  return "This turns insight into momentum — choosing a skill to build and a simple way to practice it.";
-}
-
-function hrefForSignal(k: SignalKey) {
-  return `/main/questions?cat=${k}&returnTo=/main`;
-}
-
-function ctaText(k: SignalKey) {
-  const lower = signalLabel(k).toLowerCase();
-  return `Explore your ${lower}`;
+function getSnapshotZip(snapshot: unknown): string {
+  if (!snapshot || typeof snapshot !== "object") return "";
+  const s = snapshot as { zip?: unknown };
+  return typeof s.zip === "string" ? s.zip : "";
 }
 
 /* =============================================================================
-   Quote (stable per session)
-   ============================================================================= */
-
-const QUOTES: Quote[] = [
-  { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
-  {
-    text: "You don’t have to see the whole staircase. Just take the first step.",
-    author: "Martin Luther King Jr.",
-  },
-  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
-  { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
-  {
-    text: "What you do makes a difference. And you have to decide what kind of difference you want to make.",
-    author: "Jane Goodall",
-  },
-];
-
-function pickStableSessionQuote(): Quote {
-  if (typeof window === "undefined") return QUOTES[0]!;
-  try {
-    const existing = safeJsonParse<Quote>(window.sessionStorage.getItem(QUOTE_SESSION_KEY));
-    if (existing?.text && existing?.author) return existing;
-
-    const idx = Math.floor(Math.random() * QUOTES.length);
-    const chosen = QUOTES[idx] ?? QUOTES[0]!;
-    window.sessionStorage.setItem(QUOTE_SESSION_KEY, JSON.stringify(chosen));
-    return chosen;
-  } catch {
-    return QUOTES[0]!;
-  }
-}
-
-/* =============================================================================
-   Zip -> place label (cached per session)
+   Zip -> STATE label (cached per session)
    ============================================================================= */
 
 function zipCacheKey(zip5: string) {
   return `${ZIP_PLACE_SESSION_PREFIX}${zip5}`;
 }
 
-async function resolveZipPlaceLabel(zip5: string): Promise<string | null> {
+async function resolveHomeStateLabel(zip5: string): Promise<string | null> {
   if (!zip5) return null;
   if (typeof window === "undefined") return null;
 
@@ -245,7 +127,8 @@ async function resolveZipPlaceLabel(zip5: string): Promise<string | null> {
     const place = await lookupZipPlace(zip5);
     if (!place) return null;
 
-    const label = `${place.city}, ${stateFullName(place.state)}`;
+    // STATE ONLY (no city)
+    const label = stateFullName(place.state);
     window.sessionStorage.setItem(zipCacheKey(zip5), label);
     return label;
   } catch {
@@ -254,7 +137,7 @@ async function resolveZipPlaceLabel(zip5: string): Promise<string | null> {
 }
 
 /* =============================================================================
-   Tiny task state (session + persisted)
+   Tiny task session state (page still writes this)
    ============================================================================= */
 
 function readSessionTinyState(): SessionTinyState {
@@ -289,100 +172,17 @@ function writeSessionTinyState(next: SessionTinyState) {
   }
 }
 
-function readWeeklyFocus(): WeeklyFocusState | null {
-  if (typeof window === "undefined") return null;
-  return safeJsonParse<WeeklyFocusState>(window.localStorage.getItem(WEEKLY_FOCUS_KEY));
-}
-
-function readSprints(): CuriositySprintState[] {
-  if (typeof window === "undefined") return [];
-  const parsed = safeJsonParse<CuriositySprintState[]>(
-    window.localStorage.getItem(CURIOSITY_SPRINTS_KEY)
-  );
-  return Array.isArray(parsed) ? parsed : [];
-}
-
-/* =============================================================================
-   Agent state + copy
-   ============================================================================= */
-
-function deriveAgentState(args: {
-  snapshot: OnboardingSnapshot | null;
-  progress: SignalsProgress;
-  hasAnySignal: boolean;
-  hasAnyTiny: boolean;
-}): AgentState {
-  const { snapshot, progress, hasAnySignal, hasAnyTiny } = args;
-
-  const onboardingDone = Boolean(snapshot?.name || snapshot?.zip || snapshot?.situation);
-
-  // Totally empty (no onboarding, no signals)
-  if (!onboardingDone && !hasAnySignal) return "EMPTY";
-
-  // IMPORTANT: onboarding done, but zero signals yet -> true welcome moment
-  if (onboardingDone && !hasAnySignal) return "WELCOME";
-
-  const allDone = progress.motivationsDone && progress.strengthsDone && progress.skillsDone;
-  if (allDone) return hasAnyTiny ? "RETURNING" : "ACTIVE";
-
-  return "FOUNDATION";
-}
-
-function buildHeroCopy(args: {
-  agentState: AgentState;
-  totalAnswered: number;
-  nextKey: SignalKey;
-}): HeroCopy {
-  const { agentState, totalAnswered, nextKey } = args;
-  const nextLabel = signalLabel(nextKey);
-
-  const hasStarted = totalAnswered > 0;
-
-  if (agentState === "WELCOME") {
-    return {
-      line1: "You’re just getting started here — and that’s exactly how Everleap is meant to work.",
-      line2: `Start with: ${nextLabel}.`,
-      tag: "Five quick questions. No right answers.",
-    };
-  }
-
-  const tag =
-    agentState === "RETURNING" ? "Small steps add up." : "Small step. Big signal.";
-
-  if (agentState === "EMPTY" && !hasStarted) {
-    return {
-      line2: `If you want one smart place to start: ${nextLabel}.`,
-      tag,
-    };
-  }
-
-  if (!hasStarted) {
-    return {
-      line2: `Next up: ${nextLabel}.`,
-      tag,
-    };
-  }
-
-  return {
-    line1: "You’ve already shared a bit about yourself — that helps a lot.",
-    line2: `Next up: ${nextLabel}.`,
-    tag,
-  };
-}
-
 /* =============================================================================
    Page
    ============================================================================= */
 
 export default function MainHomePage() {
-  // Shared visual state (AppChrome)
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
   const dark = isDarkTheme(themeId);
   const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
-  // Orb glow fallback (keeps this file robust if theme shape changes)
   const orbGlowClass =
     "orbGlowClass" in (theme as unknown as Record<string, unknown>)
       ? String((theme as unknown as { orbGlowClass?: string }).orbGlowClass ?? "")
@@ -392,76 +192,24 @@ export default function MainHomePage() {
 
   const [presenceSoft, setPresenceSoft] = React.useState(false);
 
-  const [snapshot, setSnapshot] = React.useState<OnboardingSnapshot | null>(null);
-  const [answers, setAnswers] = React.useState<StoryAnswers | null>(null);
+  // ✅ VM state (single source)
+  const [vm, setVm] = React.useState(() => buildTodayViewModel());
 
-  const [placeLabel, setPlaceLabel] = React.useState<string | null>(null);
+  // Hydration guards (vm is sourced from client storage; SSR won't match)
+  const [mounted, setMounted] = React.useState(false);
 
-  // Always show quote (SSR-safe default)
-  const [quote, setQuote] = React.useState<Quote>(() => QUOTES[0]!);
+  // Zip->state label (async; not in VM yet)
+  const [homeState, setHomeState] = React.useState<string | null>(null);
 
-  // Tiny task runner
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
 
-  const [sessionTiny, setSessionTiny] = React.useState<SessionTinyState>({
-    shownIds: [],
-    completedIds: [],
-  });
-
-  const [weeklyFocus, setWeeklyFocus] = React.useState<WeeklyFocusState | null>(null);
-  const [sprintCount, setSprintCount] = React.useState(0);
-
   React.useEffect(() => {
-    const snap = safeJsonParse<OnboardingSnapshot>(
-      window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
-    );
-    const a = safeJsonParse<StoryAnswers>(window.localStorage.getItem(STORY_STORAGE_KEY));
+    setMounted(true);
 
-    setSnapshot(snap);
-    setAnswers(a);
-    setQuote(pickStableSessionQuote());
-    setSessionTiny(readSessionTinyState());
+    setVm(buildTodayViewModel());
 
-    setWeeklyFocus(readWeeklyFocus());
-    setSprintCount(readSprints().length);
-
-    const zip5 = (snap?.zip ?? "").trim();
-    if (zip5) {
-      void (async () => {
-        const label = await resolveZipPlaceLabel(zip5);
-        setPlaceLabel(label);
-      })();
-    } else {
-      setPlaceLabel(null);
-    }
-
-    const onFocus = () => {
-      const nextSnap = safeJsonParse<OnboardingSnapshot>(
-        window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
-      );
-      const nextAnswers = safeJsonParse<StoryAnswers>(
-        window.localStorage.getItem(STORY_STORAGE_KEY)
-      );
-
-      setSnapshot(nextSnap);
-      setAnswers(nextAnswers);
-      setSessionTiny(readSessionTinyState());
-
-      setWeeklyFocus(readWeeklyFocus());
-      setSprintCount(readSprints().length);
-
-      const z = (nextSnap?.zip ?? "").trim();
-      if (!z) {
-        setPlaceLabel(null);
-        return;
-      }
-      void (async () => {
-        const label = await resolveZipPlaceLabel(z);
-        setPlaceLabel(label);
-      })();
-    };
-
+    const onFocus = () => setVm(buildTodayViewModel());
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
@@ -474,53 +222,32 @@ export default function MainHomePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const name = niceName(snapshot?.name ?? "");
+  // Resolve homeState label when snapshot zip changes
+  React.useEffect(() => {
+    const zip5 = getSnapshotZip(vm.snapshot).trim();
+    if (!zip5) {
+      setHomeState(null);
+      return;
+    }
 
-  const progress = deriveSignalsProgress(answers);
-  const next = nextSignal(progress);
+    let alive = true;
+    void (async () => {
+      const label = await resolveHomeStateLabel(zip5);
+      if (alive) setHomeState(label);
+    })();
 
-  const totalAnswered =
-    progress.motivationsAnswered + progress.strengthsAnswered + progress.skillsAnswered;
+    return () => {
+      alive = false;
+    };
+  }, [vm.snapshot]);
 
-  const hasAnySignal = totalAnswered > 0;
-  const focusDone = Boolean(weeklyFocus?.vibe && weeklyFocus?.target);
-  const hasAnyTiny = Boolean((weeklyFocus?.vibe && weeklyFocus?.target) || sprintCount > 0);
-
-  const agentState = deriveAgentState({
-    snapshot,
-    progress,
-    hasAnySignal,
-    hasAnyTiny,
-  });
-
-  // Signals should be open by default (user can collapse manually).
-  const [signalsOpen, setSignalsOpen] = React.useState<boolean>(true);
-
-  const hero = buildHeroCopy({
-    agentState,
-    totalAnswered,
-    nextKey: next,
-  });
-
-  const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
-  const textFaint = dark ? "text-slate-400" : "text-slate-500";
-
-  // One supportive “context” line (exactly once) after the why line.
-  const memoryBits: string[] = [];
-  if (focusDone) memoryBits.push("a weekly focus");
-  if (sprintCount > 0) memoryBits.push(`${sprintCount} sprint${sprintCount === 1 ? "" : "s"}`);
-
-  const supportiveContext =
-    memoryBits.length > 0
-      ? `You’ve got ${memoryBits.join(" and ")} saved — I’ll build from that.`
-      : null;
+  const name = niceName(getSnapshotName(vm.snapshot));
 
   const openTask = (id: TinyTaskId) => {
     const s = readSessionTinyState();
     const shownIds: TinyTaskId[] = Array.from(new Set<TinyTaskId>([...(s.shownIds ?? []), id]));
     const nextState: SessionTinyState = { shownIds, completedIds: s.completedIds ?? [] };
     writeSessionTinyState(nextState);
-    setSessionTiny(nextState);
 
     setActiveTaskId(id);
     setTaskOpen(true);
@@ -530,36 +257,45 @@ export default function MainHomePage() {
     setTaskOpen(false);
     setActiveTaskId(null);
 
-    setSessionTiny(readSessionTinyState());
-    setWeeklyFocus(readWeeklyFocus());
-    setSprintCount(readSprints().length);
+    // refresh VM after modal writes to storage
+    setVm(buildTodayViewModel());
   };
 
-  const sprintDoneThisSession = sessionTiny.completedIds.includes("curiosity_sprint");
+  // Prefer session flag if present; guard in case vm shape changes during hydration
+  const sprintDoneThisSession = !!vm?.sessionTiny?.completedIds?.includes("curiosity_sprint");
 
-  const nextLabel = signalLabel(next);
+  // ✅ Rebuild retort with homeState (until we move zip lookup into VM/app layer)
+  const retort = buildRetort({
+    agentState: vm.agentState,
+    nextKey: vm.nextKey,
+    progress: vm.progress,
+    snapshot: vm.snapshot,
+    answers: vm.answers,
+    homeState,
+    weeklyFocus: vm.weeklyFocus,
+    sprintCount: vm.sprintCount,
+    sprintDoneThisSession,
+  });
 
-  const renderHeroLine2 = () => {
-    const raw = hero.line2 || "";
-    const idx = raw.indexOf(nextLabel);
+  const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
+  const textFaint = dark ? "text-slate-400" : "text-slate-500";
 
-    if (idx === -1) return <span>{raw}</span>;
-
-    const before = raw.slice(0, idx);
-    const after = raw.slice(idx + nextLabel.length);
-
-    return (
-      <>
-        <span>{before}</span>
-        <span className="font-semibold underline underline-offset-4 decoration-white/15">
-          {nextLabel}
-        </span>
-        <span>{after}</span>
-      </>
-    );
-  };
-
-  const showWelcomeBlock = agentState === "WELCOME" && next === "motivations" && totalAnswered === 0;
+  const tasks: TinyTaskSummary[] = [
+    {
+      id: "weekly_focus",
+      title: "Weekly focus",
+      subtitle: "Pick a vibe + a target for this week.",
+      status: vm.weeklyFocus?.vibe && vm.weeklyFocus?.target ? "set" : "start",
+    },
+    {
+      id: "curiosity_sprint",
+      title: "Curiosity sprint",
+      subtitle: "10 minutes. One small experiment you can actually do.",
+      count: vm.sprintCount,
+      disabled: sprintDoneThisSession,
+      status: sprintDoneThisSession ? "done" : "start",
+    },
+  ];
 
   return (
     <AppChrome
@@ -570,13 +306,18 @@ export default function MainHomePage() {
       orbSource="spotlight_orb"
       ambientCap={0.35}
     >
-      <TaskRunnerModal
-        open={taskOpen}
-        onClose={closeTask}
-        taskId={activeTaskId}
-        snapshot={snapshot}
-        dark={dark}
-      />
+      <AnimatePresence>
+        {taskOpen && activeTaskId ? (
+          <TaskRunnerModal
+            open={taskOpen}
+            onClose={closeTask}
+            taskId={activeTaskId}
+            // ✅ Fix: TaskRunnerModal expects its own snapshot type
+            snapshot={vm.snapshot as unknown as ModalOnboardingSnapshot | null}
+            dark={dark}
+          />
+        ) : null}
+      </AnimatePresence>
 
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pt-8">
@@ -597,291 +338,70 @@ export default function MainHomePage() {
             </motion.div>
 
             <div className="pl-12">
-              {/* TODAY marker */}
-              <div className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] opacity-85">
-                <span
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.7rem] ${
-                    dark ? "bg-amber-200/90 text-slate-950" : "bg-amber-400 text-slate-900"
-                  }`}
-                >
-                  <Sparkles className="h-3 w-3" />
-                </span>
-                <span>Today</span>
-              </div>
+              <TodayIntro
+                dark={dark}
+                mounted={mounted}
+                textFaintClass={textFaint}
+                textMutedClass={textMuted}
+                quote={vm.quote}
+                name={name}
+                retortKey={retort.key}
+                retortParagraphs={retort.paragraphs.slice(0, 3)}
+              />
 
-              <div className="space-y-6">
-                {/* Quote (always shown) */}
-                <div className={`text-sm ${textFaint}`}>
-                  <span className="opacity-80">“</span>
-                  <span className="italic">{quote.text}</span>
-                  <span className="opacity-80">”</span>
-                  <span className="ml-2 opacity-70">— {quote.author}</span>
+              {/* Next up (BEFORE Signals) */}
+              <div>
+                <div className={`text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                  Next up:{" "}
+                  <span className={`font-semibold ${dark ? "text-white/90" : "text-slate-900"}`}>
+                    {mounted ? signalLabel(vm.nextKey) : "…"}
+                  </span>
+                  .
                 </div>
 
-                {/* Greeting + hero */}
-                <div>
-                  <div className="text-xl font-semibold sm:text-2xl">
-                    {name ? `Hey ${name}.` : "Hey."}
-                  </div>
-
-                  {/* Single tiny nod to location ONLY during welcome (fixes lint + feels human) */}
-                  {showWelcomeBlock && placeLabel ? (
-                    <div className={`mt-1 text-xs ${textFaint}`}>Here in {placeLabel}.</div>
-                  ) : null}
-
-                  <div className={`mt-3 space-y-1 text-sm leading-relaxed ${textMuted}`}>
-                    {hero.line1 ? <div>{hero.line1}</div> : null}
-                    <div>{renderHeroLine2()}</div>
-
-                    {hero.tag ? (
-                      <div className={`pt-1 text-xs italic ${textFaint}`}>{hero.tag}</div>
-                    ) : null}
-                  </div>
-
-                  {/* Welcome path + why (only for brand-new users who just onboarded) */}
-                  {showWelcomeBlock ? (
-                    <div className={`mt-4 space-y-2 text-sm leading-relaxed ${textMuted}`}>
-                      <div>
-                        We build clarity through a few short conversations — one at a time.
-                      </div>
-                      <div>
-                        We usually go <span className="font-semibold text-white/85">Motivations</span>, then{" "}
-                        <span className="font-semibold text-white/85">Strengths</span>, and later{" "}
-                        <span className="font-semibold text-white/85">Skills</span>. Each step sharpens the next.
-                      </div>
-                      <div>
-                        Motivations come first because they tell me what genuinely gives you energy — and what drains it — so recommendations don’t sound generic.
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* One primary suggestion */}
-                <div>
+                <div className="mt-3 flex items-center gap-3">
                   <Link
-                    href={hrefForSignal(next)}
+                    href={mounted ? hrefForSignal(vm.nextKey) : "#"}
                     onClick={() => setPresenceSoft(true)}
-                    className="inline-flex items-center gap-2 text-[15px] font-semibold text-white/90 hover:text-white transition"
+                    aria-disabled={!mounted}
+                    className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.99] ${
+                      dark
+                        ? "bg-white/10 text-white hover:bg-white/14"
+                        : "bg-slate-900 text-white hover:bg-slate-950"
+                    } ${!mounted ? "pointer-events-none opacity-70" : ""}`}
                   >
-                    <span className="underline underline-offset-4 decoration-white/20">
-                      {ctaText(next)}
-                    </span>
-                    <ChevronRight className="h-4 w-4 opacity-75" />
+                    {mounted ? continueButtonText(vm.nextKey) : "Continue"}
                   </Link>
-
-                  <div className={`mt-2 text-sm leading-relaxed ${textMuted}`}>
-                    {signalWhy(next, progress)}
-                  </div>
-
-                  {/* Supportive tiny-task context: EXACTLY ONCE, only here */}
-                  {supportiveContext ? (
-                    <div className={`mt-2 text-sm leading-relaxed ${textMuted}`}>
-                      {supportiveContext}
-                    </div>
-                  ) : null}
                 </div>
 
-                {/* Signals (collapsible reference, OPEN by default) */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setSignalsOpen((v) => !v)}
-                    className="group inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/70 hover:text-white/85 transition"
-                    aria-expanded={signalsOpen}
-                  >
-                    <span>What this is based on</span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/35">
-                      {signalsOpen ? "hide" : "show"}
-                    </span>
-                    {signalsOpen ? (
-                      <ChevronUp className="h-4 w-4 opacity-70 group-hover:opacity-90" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 opacity-70 group-hover:opacity-90" />
-                    )}
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {signalsOpen ? (
-                      <motion.div
-                        key="signals"
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 6 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="mt-4 space-y-3"
-                      >
-                        {[
-                          {
-                            label: "Motivations",
-                            status: progress.motivationsDone
-                              ? ("done" as const)
-                              : next === "motivations"
-                              ? ("next" as const)
-                              : ("later" as const),
-                            detail: progress.motivationsDone
-                              ? "done"
-                              : `${progress.motivationsAnswered}/${progress.totalPer} answered`,
-                          },
-                          {
-                            label: "Strengths",
-                            status: progress.strengthsDone
-                              ? ("done" as const)
-                              : next === "strengths"
-                              ? ("next" as const)
-                              : ("later" as const),
-                            detail: progress.strengthsDone
-                              ? "done"
-                              : `${progress.strengthsAnswered}/${progress.totalPer} answered`,
-                          },
-                          {
-                            label: "Skills",
-                            status: progress.skillsDone
-                              ? ("done" as const)
-                              : next === "skills"
-                              ? ("next" as const)
-                              : ("later" as const),
-                            detail: progress.skillsDone
-                              ? "done"
-                              : `${progress.skillsAnswered}/${progress.totalPer} answered`,
-                          },
-                        ].map((row) => {
-                          const dotClass =
-                            row.status === "done"
-                              ? "bg-white/35"
-                              : row.status === "next"
-                              ? "bg-amber-200/60"
-                              : "bg-white/12";
-
-                          const statusLabel =
-                            row.status === "done"
-                              ? "in hand"
-                              : row.status === "next"
-                              ? "worth next"
-                              : "later";
-
-                          const Dot =
-                            row.status === "next" ? (
-                              <motion.span
-                                aria-hidden
-                                className={`mt-[6px] h-2 w-2 rounded-full ${dotClass}`}
-                                animate={{ opacity: [0.65, 1, 0.65], scale: [1, 1.18, 1] }}
-                                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-                              />
-                            ) : (
-                              <span className={`mt-[6px] h-2 w-2 rounded-full ${dotClass}`} />
-                            );
-
-                          return (
-                            <div key={row.label} className="flex items-start gap-3">
-                              {Dot}
-                              <div className="min-w-0">
-                                <div className="text-sm font-semibold text-white/85">
-                                  {row.label}
-                                  <span className="ml-2 text-xs font-semibold text-white/35">
-                                    · {statusLabel}
-                                  </span>
-                                </div>
-                                <div className={`text-xs ${textFaint}`}>{row.detail}</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
+                <div className={`mt-2 text-xs ${dark ? "text-white/50" : "text-slate-500"}`}>
+                  {mounted ? continueSubcopy(vm.nextKey, vm.progress) : "Loading your next step…"}
                 </div>
-
-                {/* Tiny tasks (optional, minimal) */}
-                <div className="pt-2">
-                  <div className={`text-xs font-semibold uppercase tracking-[0.22em] ${textFaint}`}>
-                    Two tiny things (optional)
-                  </div>
-
-                  <div className="mt-4 space-y-5">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold text-white/90">
-                          Weekly focus
-                          {focusDone ? (
-                            <span className="ml-2 text-xs font-semibold text-white/45">· saved</span>
-                          ) : null}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => openTask("weekly_focus")}
-                          className={`text-sm font-semibold underline underline-offset-4 transition ${
-                            dark
-                              ? "text-slate-100/85 hover:text-white"
-                              : "text-slate-900 hover:text-slate-950"
-                          }`}
-                        >
-                          {focusDone ? "Edit" : "Start"}
-                        </button>
-                      </div>
-
-                      <div className={`text-sm ${textMuted}`}>
-                        Takes ~45 seconds. Makes the next suggestions sharper.
-                      </div>
-
-                      {focusDone && weeklyFocus ? (
-                        <div className="mt-2 text-xs text-white/55">
-                          Focus:{" "}
-                          <span className="font-semibold text-white/80">
-                            {weeklyFocus.vibe} + {weeklyFocus.target}
-                          </span>
-                          {weeklyFocus.sentence ? (
-                            <span className="text-white/45"> · “{weeklyFocus.sentence}”</span>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold text-white/90">
-                          10-minute curiosity sprint
-                          {sprintDoneThisSession ? (
-                            <span className="ml-2 text-xs font-semibold text-white/45">· saved</span>
-                          ) : null}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => openTask("curiosity_sprint")}
-                          className={`text-sm font-semibold underline underline-offset-4 transition ${
-                            dark
-                              ? "text-slate-100/85 hover:text-white"
-                              : "text-slate-900 hover:text-slate-950"
-                          }`}
-                        >
-                          Start
-                        </button>
-                      </div>
-
-                      <div className={`text-sm ${textMuted}`}>
-                        Pick a prompt. Explore a little. Save one takeaway.
-                      </div>
-
-                      {sprintCount > 0 ? (
-                        <div className="mt-2 text-xs text-white/55">
-                          Saved sprints:{" "}
-                          <span className="font-semibold text-white/75">{sprintCount}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-
-                {agentState === "RETURNING" ? (
-                  <div className={`pt-2 text-xs ${textFaint}`}>
-                    You’re not starting over — the suggestions will keep getting sharper over time.
-                  </div>
-                ) : null}
               </div>
+
+              {/* Signals */}
+              {mounted ? (
+                <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
+              ) : (
+                <div className="mt-3 h-28 rounded-2xl border border-transparent" aria-hidden />
+              )}
+
+              {/* How Everleap works */}
+              <HowEverleapWorks dark={dark} textMutedClass={textMuted} />
+
+              {/* Tiny Tasks */}
+              {mounted ? (
+                <TinyTasks tasks={tasks} onOpenTask={openTask} dark={dark} />
+              ) : (
+                <div className="mt-4 h-28" aria-hidden />
+              )}
+
+              <div className="h-3" />
             </div>
           </section>
         </main>
 
-        <BottomNav activeKey="home" />
+        <BottomNav />
       </div>
     </AppChrome>
   );
