@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -16,45 +16,37 @@ import {
   INSIGHTS_THEMES,
 } from "@/theme/everleapVisuals";
 
-// Modal extracted (Step 1)
 import {
   TaskRunnerModal,
   type TinyTaskId,
   type OnboardingSnapshot as ModalOnboardingSnapshot,
 } from "./TaskRunnerModal";
 
-// Reuse onboarding zip helpers (STATE only — no city callouts)
-import { lookupZipPlace, stateFullName } from "../onboarding/zipLookup";
-
-// ✅ App-layer VM builder
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
 
-// ✅ Domain helpers for labels/links + retort assembly
 import {
-  hrefForSignal,
-  signalLabel,
-  continueButtonText,
-  continueSubcopy,
-} from "./domain/signals";
-import { buildRetort } from "./domain/retort";
-
-// ✅ Extracted UI modules
-import { HowEverleapWorks } from "./components/HowEverleapWorks";
+  TodayIntro,
+  type TodayPhase,
+  type ArrivalReference,
+  type RecommendedNext,
+} from "./components/TodayIntro";
 import { SignalsCard } from "./components/SignalsCard";
-import { TodayIntro } from "./components/TodayIntro";
 
 /* =============================================================================
-   Session keys (only what page still owns)
+   Session keys
    ============================================================================= */
 
-// Zip -> state cache (session)
-const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
-
-// Tiny task session state (page still writes this for now)
 const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
+const INTRO_SEEN_SESSION_KEY = "everleap.main.introSeen.v1";
 
 /* =============================================================================
-   Types (page-local)
+   Completion thresholds
+   ============================================================================= */
+
+const SIGNAL_COMPLETE_COUNT = 5;
+
+/* =============================================================================
+   Types
    ============================================================================= */
 
 type SessionTinyState = {
@@ -63,7 +55,7 @@ type SessionTinyState = {
 };
 
 /* =============================================================================
-   Small utils
+   Utils
    ============================================================================= */
 
 function safeJsonParse<T>(raw: string | null): T | null {
@@ -83,61 +75,30 @@ function safeJsonStringify(value: unknown) {
   }
 }
 
-function firstName(raw: string) {
-  const cleaned = (raw ?? "").trim().replace(/\s+/g, " ");
-  if (!cleaned) return "";
-  const first = cleaned.split(" ")[0] ?? "";
-  return first.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-function niceName(raw: string) {
-  const n = firstName(raw);
-  if (!n) return "";
-  return n.length === 1 ? n.toUpperCase() : `${n[0]!.toUpperCase()}${n.slice(1)}`;
-}
-
-function getSnapshotName(snapshot: unknown): string {
-  if (!snapshot || typeof snapshot !== "object") return "";
-  const s = snapshot as { name?: unknown };
-  return typeof s.name === "string" ? s.name : "";
-}
-
-function getSnapshotZip(snapshot: unknown): string {
-  if (!snapshot || typeof snapshot !== "object") return "";
-  const s = snapshot as { zip?: unknown };
-  return typeof s.zip === "string" ? s.zip : "";
-}
-
-/* =============================================================================
-   Zip -> STATE label (cached per session)
-   ============================================================================= */
-
-function zipCacheKey(zip5: string) {
-  return `${ZIP_PLACE_SESSION_PREFIX}${zip5}`;
-}
-
-async function resolveHomeStateLabel(zip5: string): Promise<string | null> {
-  if (!zip5) return null;
-  if (typeof window === "undefined") return null;
-
+function readIntroSeen(): boolean {
+  if (typeof window === "undefined") return false;
   try {
-    const cached = window.sessionStorage.getItem(zipCacheKey(zip5));
-    if (cached) return cached;
-
-    const place = await lookupZipPlace(zip5);
-    if (!place) return null;
-
-    // STATE ONLY (no city)
-    const label = stateFullName(place.state);
-    window.sessionStorage.setItem(zipCacheKey(zip5), label);
-    return label;
+    return window.sessionStorage.getItem(INTRO_SEEN_SESSION_KEY) === "1";
   } catch {
-    return null;
+    return false;
+  }
+}
+
+function writeIntroSeen() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(INTRO_SEEN_SESSION_KEY, "1");
+  } catch {
+    // ignore
   }
 }
 
 /* =============================================================================
-   Tiny task session state (page still writes this)
+   Tiny task session state
    ============================================================================= */
 
 function readSessionTinyState(): SessionTinyState {
@@ -148,19 +109,10 @@ function readSessionTinyState(): SessionTinyState {
   );
   if (!parsed) return { shownIds: [], completedIds: [] };
 
-  const shownIds = Array.isArray(parsed.shownIds)
-    ? (parsed.shownIds.filter(
-        (v): v is TinyTaskId => v === "weekly_focus" || v === "curiosity_sprint"
-      ) as TinyTaskId[])
-    : [];
-
-  const completedIds = Array.isArray(parsed.completedIds)
-    ? (parsed.completedIds.filter(
-        (v): v is TinyTaskId => v === "weekly_focus" || v === "curiosity_sprint"
-      ) as TinyTaskId[])
-    : [];
-
-  return { shownIds, completedIds };
+  return {
+    shownIds: parsed.shownIds ?? [],
+    completedIds: parsed.completedIds ?? [],
+  };
 }
 
 function writeSessionTinyState(next: SessionTinyState) {
@@ -177,6 +129,8 @@ function writeSessionTinyState(next: SessionTinyState) {
    ============================================================================= */
 
 export default function MainHomePage() {
+  const router = useRouter();
+
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
@@ -192,26 +146,51 @@ export default function MainHomePage() {
 
   const [presenceSoft, setPresenceSoft] = React.useState(false);
 
-  // ✅ VM state (single source)
   const [vm, setVm] = React.useState(() => buildTodayViewModel());
-
-  // Hydration guards (vm is sourced from client storage; SSR won't match)
   const [mounted, setMounted] = React.useState(false);
 
-  // Zip->state label (async; not in VM yet)
-  const [homeState, setHomeState] = React.useState<string | null>(null);
+  const [phase, setPhase] = React.useState<TodayPhase>("arrival");
+
+  const [motionEnabled, setMotionEnabled] = React.useState(true);
+
+  const [arrivalShowContinue, setArrivalShowContinue] = React.useState(false);
+  const [directionShowPrimary, setDirectionShowPrimary] = React.useState(false);
+  const [directionShowSecondary, setDirectionShowSecondary] = React.useState(false);
+
+  const [transitioning, setTransitioning] = React.useState(false);
+
+  const interactedRef = React.useRef(false);
 
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
 
+  /* ---------------------------------------------------------------------------
+     Mount / refresh
+     --------------------------------------------------------------------------- */
+
   React.useEffect(() => {
     setMounted(true);
 
+    // Refresh VM after mount (prevents hydration mismatch from storage/random)
     setVm(buildTodayViewModel());
+
+    // reduced motion
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const reduce = !!mq?.matches;
+    setMotionEnabled(!reduce);
+
+    const onChange = () => {
+      setMotionEnabled(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    };
+    mq?.addEventListener?.("change", onChange);
 
     const onFocus = () => setVm(buildTodayViewModel());
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+
+    return () => {
+      mq?.removeEventListener?.("change", onChange);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -222,63 +201,254 @@ export default function MainHomePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Resolve homeState label when snapshot zip changes
+  /* ---------------------------------------------------------------------------
+     Auto-advance cancel on interaction (Arrival only)
+     --------------------------------------------------------------------------- */
+
   React.useEffect(() => {
-    const zip5 = getSnapshotZip(vm.snapshot).trim();
-    if (!zip5) {
-      setHomeState(null);
+    interactedRef.current = false;
+    if (!motionEnabled) return;
+
+    const mark = () => {
+      interactedRef.current = true;
+    };
+
+    window.addEventListener("pointerdown", mark, { passive: true });
+    window.addEventListener("keydown", mark);
+    window.addEventListener("wheel", mark, { passive: true });
+    window.addEventListener("touchstart", mark, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", mark);
+      window.removeEventListener("keydown", mark);
+      window.removeEventListener("wheel", mark);
+      window.removeEventListener("touchstart", mark);
+    };
+  }, [motionEnabled]);
+
+  /* ---------------------------------------------------------------------------
+     Completion + gate decision
+     --------------------------------------------------------------------------- */
+
+  const progress = mounted
+    ? vm.progress
+    : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
+
+  const motComplete = progress.motivationsAnswered >= SIGNAL_COMPLETE_COUNT;
+  const strComplete = progress.strengthsAnswered >= SIGNAL_COMPLETE_COUNT;
+  const sklComplete = progress.skillsAnswered >= SIGNAL_COMPLETE_COUNT;
+
+  const allSignalsComplete = motComplete && strComplete && sklComplete;
+
+  const recommendedNext: RecommendedNext =
+    !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
+
+  // Decide initial phase once we have mounted data
+  React.useEffect(() => {
+    if (!mounted) return;
+
+    // If all done: "door open" immediately
+    if (allSignalsComplete) {
+      setPhase("unlocked");
+      writeIntroSeen();
       return;
     }
 
-    let alive = true;
-    void (async () => {
-      const label = await resolveHomeStateLabel(zip5);
-      if (alive) setHomeState(label);
-    })();
+    // Otherwise: run cinematic only once per session
+    const seen = readIntroSeen();
+    setPhase(seen ? "unlocked" : "arrival");
+  }, [mounted, allSignalsComplete]);
 
-    return () => {
-      alive = false;
+  /* ---------------------------------------------------------------------------
+     Phase timing + staged UI
+     --------------------------------------------------------------------------- */
+
+  React.useEffect(() => {
+    if (!motionEnabled) {
+      setArrivalShowContinue(true);
+      setDirectionShowPrimary(true);
+      setDirectionShowSecondary(true);
+      return;
+    }
+
+    if (phase === "arrival") {
+      setArrivalShowContinue(false);
+      setDirectionShowPrimary(false);
+      setDirectionShowSecondary(false);
+
+      const tContinue = window.setTimeout(() => setArrivalShowContinue(true), 2000);
+
+      // Arrival auto-advance only (and only if not interacted)
+      const tAuto = window.setTimeout(() => {
+        if (!interactedRef.current) setPhase("direction");
+      }, 10000);
+
+      return () => {
+        window.clearTimeout(tContinue);
+        window.clearTimeout(tAuto);
+      };
+    }
+
+    if (phase === "direction") {
+      setArrivalShowContinue(true);
+      setDirectionShowPrimary(false);
+      setDirectionShowSecondary(false);
+
+      const tPrimary = window.setTimeout(() => setDirectionShowPrimary(true), 900);
+      const tSecondary = window.setTimeout(() => setDirectionShowSecondary(true), 1500);
+
+      return () => {
+        window.clearTimeout(tPrimary);
+        window.clearTimeout(tSecondary);
+      };
+    }
+
+    // unlocked
+    setArrivalShowContinue(true);
+    setDirectionShowPrimary(true);
+    setDirectionShowSecondary(true);
+  }, [phase, motionEnabled]);
+
+  /* ---------------------------------------------------------------------------
+     Copy derivations
+     --------------------------------------------------------------------------- */
+
+  const snapshot = mounted ? vm.snapshot : null;
+
+  const arrivalReference: ArrivalReference =
+    sklComplete
+      ? "skills_done"
+      : strComplete
+      ? "strengths_done"
+      : motComplete
+      ? "motivations_done"
+      : snapshot
+      ? "onboarding_only"
+      : "returning_no_action";
+
+  const arrivalParagraphs: string[] = (() => {
+    if (!mounted) return ["…"];
+
+    switch (arrivalReference) {
+      case "motivations_done":
+        return [
+          "You’ve already worked through your Motivations. That tells me what reliably energizes you — and what tends to drain you.",
+        ];
+      case "strengths_done":
+        return [
+          "You’ve already mapped your Strengths. That tells me how you actually operate day to day — not just what sounds interesting.",
+        ];
+      case "skills_done":
+        return [
+          "You’ve already completed Skills. That means Everleap can stop being generic and start being specific.",
+        ];
+      case "onboarding_only":
+        return [
+          "From onboarding, I have a starting read on you — enough to stop guessing.",
+          "Now the goal is to turn that into a direction that feels real (not random).",
+        ];
+      default:
+        return ["Picking up where we left off."];
+    }
+  })();
+
+  const directionCopy = (() => {
+    if (!mounted) {
+      return {
+        headline: "…",
+        body: "…",
+        primaryCtaLabel: "Continue",
+        secondaryCtaLabel: "Not yet",
+      };
+    }
+
+    if (recommendedNext === "motivations") {
+      return {
+        headline: "Next: Motivations — so Everleap doesn’t push bad-fit paths.",
+        body:
+          "Motivations tells Everleap what consistently pulls you forward (and what drains you). We use this to filter out directions that look good on paper but won’t feel right in real life — then we prioritize what to explore and what to try next.",
+        primaryCtaLabel: "Continue to Motivations",
+        secondaryCtaLabel: "Show me Today anyway",
+      };
+    }
+
+    if (recommendedNext === "strengths") {
+      return {
+        headline: "Next: Strengths — so the recommendations fit how you work.",
+        body:
+          "Strengths tells Everleap how you naturally do your best work. We use this to recommend paths that match your default mode — and avoid suggestions that would constantly fight how you operate.",
+        primaryCtaLabel: "Continue to Strengths",
+        secondaryCtaLabel: "Show me Today anyway",
+      };
+    }
+
+    // skills
+    return {
+      headline: "Next: Skills — so Everleap can get specific about next steps.",
+      body:
+        "Skills is how Everleap goes from “interesting direction” to “doable plan.” It lets us suggest concrete next moves — what to build, try, or practice next — instead of vague ideas.",
+      primaryCtaLabel: "Continue to Skills",
+      secondaryCtaLabel: "Keep exploring Today",
     };
-  }, [vm.snapshot]);
+  })();
 
-  const name = niceName(getSnapshotName(vm.snapshot));
+  const unlockedHeader = (() => {
+    if (!mounted) {
+      return {
+        recap: "…",
+        why: "…",
+        primaryCtaLabel: undefined as string | undefined,
+        secondaryCtaLabel: undefined as string | undefined,
+      };
+    }
 
-  const openTask = (id: TinyTaskId) => {
-    const s = readSessionTinyState();
-    const shownIds: TinyTaskId[] = Array.from(new Set<TinyTaskId>([...(s.shownIds ?? []), id]));
-    const nextState: SessionTinyState = { shownIds, completedIds: s.completedIds ?? [] };
-    writeSessionTinyState(nextState);
+    if (allSignalsComplete) {
+      return {
+        recap: "Signals complete. The door is open.",
+        why: "Insights is where Everleap starts making real picks — patterns, next steps, and what to explore based on your signals.",
+        primaryCtaLabel: "Go to Insights",
+        secondaryCtaLabel: undefined,
+      };
+    }
 
-    setActiveTaskId(id);
-    setTaskOpen(true);
-  };
+    const nextLabel =
+      recommendedNext === "motivations"
+        ? "Motivations"
+        : recommendedNext === "strengths"
+        ? "Strengths"
+        : "Skills";
 
-  const closeTask = () => {
-    setTaskOpen(false);
-    setActiveTaskId(null);
+    const doneBits = [
+      motComplete ? "Motivations" : null,
+      strComplete ? "Strengths" : null,
+      sklComplete ? "Skills" : null,
+    ].filter(Boolean) as string[];
 
-    // refresh VM after modal writes to storage
-    setVm(buildTodayViewModel());
-  };
+    const doneLabel = doneBits.length ? doneBits.join(" + ") : "Onboarding";
+    const recap = doneBits.length ? `${doneLabel} is in. Next up: ${nextLabel}.` : `Next up: ${nextLabel}.`;
 
-  // Prefer session flag if present; guard in case vm shape changes during hydration
-  const sprintDoneThisSession = !!vm?.sessionTiny?.completedIds?.includes("curiosity_sprint");
+    const why =
+      recommendedNext === "motivations"
+        ? "Everleap uses Motivations to filter out paths that won’t feel right day to day — so suggestions fit you, not just what sounds impressive."
+        : recommendedNext === "strengths"
+        ? "Everleap uses Strengths to match options to how you work — so the next steps feel natural, not forced."
+        : "Everleap uses Skills to turn direction into specific next steps — what to try, build, or practice next.";
 
-  // ✅ Rebuild retort with homeState (until we move zip lookup into VM/app layer)
-  const retort = buildRetort({
-    agentState: vm.agentState,
-    nextKey: vm.nextKey,
-    progress: vm.progress,
-    snapshot: vm.snapshot,
-    answers: vm.answers,
-    homeState,
-    weeklyFocus: vm.weeklyFocus,
-    sprintCount: vm.sprintCount,
-    sprintDoneThisSession,
-  });
+    return {
+      recap,
+      why,
+      primaryCtaLabel: `Continue to ${nextLabel}`,
+      secondaryCtaLabel: undefined,
+    };
+  })();
 
-  const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
-  const textFaint = dark ? "text-slate-400" : "text-slate-500";
+  /* ---------------------------------------------------------------------------
+     Tiny Tasks
+     --------------------------------------------------------------------------- */
+
+  const sprintDoneThisSession = mounted
+    ? vm.sessionTiny.completedIds.includes("curiosity_sprint")
+    : false;
 
   const tasks: TinyTaskSummary[] = [
     {
@@ -297,6 +467,39 @@ export default function MainHomePage() {
     },
   ];
 
+  /* ---------------------------------------------------------------------------
+     Navigation helpers
+     --------------------------------------------------------------------------- */
+
+  const buildQuestionsHref = (cat: RecommendedNext) => {
+    const params = new URLSearchParams();
+    params.set("cat", cat);
+    params.set("returnTo", "/main");
+    return `/main/questions?${params.toString()}`;
+  };
+
+  /* ---------------------------------------------------------------------------
+     Click-driven fades
+     --------------------------------------------------------------------------- */
+
+  const fadeThen = async (fn: () => void | Promise<void>) => {
+    if (!motionEnabled) {
+      await fn();
+      return;
+    }
+    if (transitioning) return;
+
+    setTransitioning(true);
+    await sleep(220);
+    await fn();
+    await sleep(140);
+    setTransitioning(false);
+  };
+
+  /* ---------------------------------------------------------------------------
+     Render
+     --------------------------------------------------------------------------- */
+
   return (
     <AppChrome
       themeId={themeId}
@@ -306,13 +509,32 @@ export default function MainHomePage() {
       orbSource="spotlight_orb"
       ambientCap={0.35}
     >
+      {/* Scrim fade for click transitions */}
+      <AnimatePresence>
+        {transitioning && motionEnabled ? (
+          <motion.div
+            aria-hidden
+            className="pointer-events-none fixed inset-0 z-[60]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.22 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <div className={dark ? "h-full w-full bg-black" : "h-full w-full bg-white"} />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <AnimatePresence>
         {taskOpen && activeTaskId ? (
           <TaskRunnerModal
             open={taskOpen}
-            onClose={closeTask}
+            onClose={() => {
+              setTaskOpen(false);
+              setActiveTaskId(null);
+              setVm(buildTodayViewModel());
+            }}
             taskId={activeTaskId}
-            // ✅ Fix: TaskRunnerModal expects its own snapshot type
             snapshot={vm.snapshot as unknown as ModalOnboardingSnapshot | null}
             dark={dark}
           />
@@ -322,7 +544,7 @@ export default function MainHomePage() {
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pt-8">
           <section className="relative">
-            {/* subtle agent presence */}
+            {/* agent presence */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute -left-1 top-2 h-10 w-10 rounded-full"
@@ -340,60 +562,77 @@ export default function MainHomePage() {
             <div className="pl-12">
               <TodayIntro
                 dark={dark}
-                mounted={mounted}
-                textFaintClass={textFaint}
-                textMutedClass={textMuted}
-                quote={vm.quote}
-                name={name}
-                retortKey={retort.key}
-                retortParagraphs={retort.paragraphs.slice(0, 3)}
+                phase={phase}
+                motionEnabled={motionEnabled}
+                isTransitioning={transitioning}
+                quote={mounted ? vm.quote : undefined}
+                arrival={{
+                  reference: arrivalReference,
+                  paragraphs: arrivalParagraphs,
+                  showContinue: arrivalShowContinue,
+                }}
+                direction={{
+                  recommendedNext,
+                  ...directionCopy,
+                  showPrimaryCta: directionShowPrimary,
+                  showSecondaryCta: directionShowSecondary,
+                }}
+                unlocked={{
+                  ...unlockedHeader,
+                  showPrimaryCta: true,
+                  showSecondaryCta: false,
+                }}
+                onArrivalContinue={() => {
+                  void fadeThen(() => setPhase("direction"));
+                }}
+                onDirectionAccept={() => {
+                  // Once they hit “Continue to …”, consider intro seen for this session
+                  writeIntroSeen();
+                  void fadeThen(async () => {
+                    setPhase("unlocked");
+                    router.push(buildQuestionsHref(recommendedNext));
+                  });
+                }}
+                onDirectionSkip={() => {
+                  writeIntroSeen();
+                  void fadeThen(() => setPhase("unlocked"));
+                }}
+                onUnlockedPrimary={() => {
+                  writeIntroSeen();
+                  if (allSignalsComplete) {
+                    void fadeThen(async () => {
+                      router.push("/main/insights");
+                    });
+                  } else {
+                    void fadeThen(async () => {
+                      router.push(buildQuestionsHref(recommendedNext));
+                    });
+                  }
+                }}
               />
 
-              {/* Next up (BEFORE Signals) */}
-              <div>
-                <div className={`text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
-                  Next up:{" "}
-                  <span className={`font-semibold ${dark ? "text-white/90" : "text-slate-900"}`}>
-                    {mounted ? signalLabel(vm.nextKey) : "…"}
-                  </span>
-                  .
-                </div>
+              {/* FULL PAGE AREA (only after unlocked) */}
+              {phase === "unlocked" && mounted && (
+                <>
+                  {/* If all 3 done: door open wide → no Signals pressure */}
+                  {!allSignalsComplete ? (
+                    <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
+                  ) : null}
 
-                <div className="mt-3 flex items-center gap-3">
-                  <Link
-                    href={mounted ? hrefForSignal(vm.nextKey) : "#"}
-                    onClick={() => setPresenceSoft(true)}
-                    aria-disabled={!mounted}
-                    className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.99] ${
-                      dark
-                        ? "bg-white/10 text-white hover:bg-white/14"
-                        : "bg-slate-900 text-white hover:bg-slate-950"
-                    } ${!mounted ? "pointer-events-none opacity-70" : ""}`}
-                  >
-                    {mounted ? continueButtonText(vm.nextKey) : "Continue"}
-                  </Link>
-                </div>
-
-                <div className={`mt-2 text-xs ${dark ? "text-white/50" : "text-slate-500"}`}>
-                  {mounted ? continueSubcopy(vm.nextKey, vm.progress) : "Loading your next step…"}
-                </div>
-              </div>
-
-              {/* Signals */}
-              {mounted ? (
-                <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
-              ) : (
-                <div className="mt-3 h-28 rounded-2xl border border-transparent" aria-hidden />
-              )}
-
-              {/* How Everleap works */}
-              <HowEverleapWorks dark={dark} textMutedClass={textMuted} />
-
-              {/* Tiny Tasks */}
-              {mounted ? (
-                <TinyTasks tasks={tasks} onOpenTask={openTask} dark={dark} />
-              ) : (
-                <div className="mt-4 h-28" aria-hidden />
+                  <TinyTasks
+                    tasks={tasks}
+                    onOpenTask={(id) => {
+                      const s = readSessionTinyState();
+                      writeSessionTinyState({
+                        shownIds: Array.from(new Set([...s.shownIds, id])),
+                        completedIds: s.completedIds,
+                      });
+                      setActiveTaskId(id);
+                      setTaskOpen(true);
+                    }}
+                    dark={dark}
+                  />
+                </>
               )}
 
               <div className="h-3" />
