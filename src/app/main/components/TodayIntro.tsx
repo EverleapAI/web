@@ -61,10 +61,10 @@ export type TodayIntroProps = {
   dark: boolean;
   phase: TodayPhase;
 
-  /** Already resolved at page level */
+  /** Reduced-motion aware */
   motionEnabled: boolean;
 
-  /** Quote is rendered outside the centered canvas; pass only after mount */
+  /** Quote rendered above copy (pass only after mount) */
   quote?: Quote;
 
   /** Page-level fade control (used on clicks) */
@@ -80,8 +80,7 @@ export type TodayIntroProps = {
   /* ---------- Direction (Phase B) ---------- */
   direction: {
     recommendedNext: RecommendedNext;
-    headline: string;
-    body: string;
+    paragraphs: string[];
     primaryCtaLabel: string;
     secondaryCtaLabel: string;
     showPrimaryCta: boolean;
@@ -90,12 +89,9 @@ export type TodayIntroProps = {
 
   /* ---------- Unlocked (Phase C) ---------- */
   unlocked: {
-    recap: string;
-    why: string;
-
+    paragraphs: string[];
     primaryCtaLabel?: string;
     secondaryCtaLabel?: string;
-
     showPrimaryCta?: boolean;
     showSecondaryCta?: boolean;
   };
@@ -136,22 +132,24 @@ export function TodayIntro(props: TodayIntroProps) {
   const isCentered = phase === "arrival" || phase === "direction";
   const centeredPad = "py-6";
 
-  // 2× larger typography for conversation phases
-  const bodyClass = `text-lg leading-relaxed md:text-xl ${textMuted}`;
-  const headlineClass = "text-xl font-semibold md:text-2xl";
-
-  const ctaPrimaryClass = `text-lg font-semibold md:text-xl ${
+  // Conversation typography (2× feel vs old small dashboard text)
+  const convoBodyClass = `text-lg leading-relaxed md:text-xl ${textMuted}`;
+  const convoCtaPrimaryClass = `text-lg font-semibold md:text-xl ${
     dark ? "text-white hover:underline" : "text-slate-900 hover:underline"
   }`;
-  const ctaSecondaryClass = `text-sm md:text-base ${
+  const convoCtaSecondaryClass = `text-sm md:text-base ${
     dark ? "text-white/55 hover:text-white/70" : "text-slate-500 hover:text-slate-600"
   }`;
 
-  // Compact typography for unlocked header (dashboard feel)
-  const unlockedRecapClass = `text-base md:text-lg font-semibold ${
-    dark ? "text-white/90" : "text-slate-900"
-  }`;
-  const unlockedWhyClass = `text-sm md:text-base leading-relaxed ${textMuted}`;
+  // Unlocked typography (still conversational, but slightly tighter)
+  const unlockedBodyClass = `text-base leading-relaxed md:text-lg ${textMuted}`;
+  const unlockedCtaPrimaryClass = convoCtaPrimaryClass;
+  const unlockedCtaSecondaryClass = convoCtaSecondaryClass;
+
+  const paragraphsToRender =
+    phase === "arrival" ? arrival.paragraphs : phase === "direction" ? direction.paragraphs : unlocked.paragraphs;
+
+  const bodyClass = phase === "unlocked" ? unlockedBodyClass : convoBodyClass;
 
   return (
     <div className="relative">
@@ -193,228 +191,200 @@ export function TodayIntro(props: TodayIntroProps) {
             transition={{ duration: 0.32, ease: "easeOut" }}
             className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}
           >
-            {/* =========================
-                Phase A — Arrival
-               ========================= */}
+            {/* Copy */}
+            <div className="space-y-4">
+              {paragraphsToRender.map((p, idx) => (
+                <p
+                  key={`${phase}_${idx}`}
+                  className={bodyClass}
+                >
+                  {p}
+                </p>
+              ))}
+            </div>
+
+            {/* CTAs */}
             {phase === "arrival" ? (
-              <div>
-                <div className="space-y-4">
-                  {arrival.paragraphs.map((p, idx) => (
-                    <p key={`arrival_${arrival.reference}_${idx}`} className={bodyClass}>
-                      {p}
-                    </p>
-                  ))}
+              <div className="mt-7">
+                <div className="h-7 md:h-8">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {arrival.showContinue ? (
+                      motionEnabled ? (
+                        <motion.button
+                          key="arrival_continue"
+                          type="button"
+                          onClick={onArrivalContinue}
+                          initial={fadeIn.initial}
+                          animate={fadeIn.animate}
+                          exit={fadeIn.exit}
+                          transition={{ duration: 0.35, ease: "easeOut" }}
+                          className={`text-lg font-semibold md:text-xl ${
+                            dark ? "text-white/85 hover:text-white" : "text-slate-900 hover:text-slate-950"
+                          }`}
+                        >
+                          Continue
+                        </motion.button>
+                      ) : (
+                        <button
+                          key="arrival_continue_static"
+                          type="button"
+                          onClick={onArrivalContinue}
+                          className={`text-lg font-semibold md:text-xl ${
+                            dark ? "text-white/85 hover:text-white" : "text-slate-900 hover:text-slate-950"
+                          }`}
+                        >
+                          Continue
+                        </button>
+                      )
+                    ) : (
+                      <span key="arrival_spacer" aria-hidden />
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ) : null}
+
+            {phase === "direction" ? (
+              <div className="mt-7 space-y-3">
+                <div className="h-8 md:h-9">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {direction.showPrimaryCta ? (
+                      motionEnabled ? (
+                        <motion.button
+                          key="dir_primary"
+                          type="button"
+                          onClick={onDirectionAccept}
+                          initial={fadeIn.initial}
+                          animate={fadeIn.animate}
+                          exit={fadeIn.exit}
+                          transition={{ duration: 0.35, ease: "easeOut" }}
+                          className={convoCtaPrimaryClass}
+                        >
+                          {direction.primaryCtaLabel}
+                        </motion.button>
+                      ) : (
+                        <button
+                          key="dir_primary_static"
+                          type="button"
+                          onClick={onDirectionAccept}
+                          className={convoCtaPrimaryClass}
+                        >
+                          {direction.primaryCtaLabel}
+                        </button>
+                      )
+                    ) : (
+                      <span key="dir_primary_spacer" aria-hidden />
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                <div className="mt-7">
-                  {/* Reserve space so centering doesn’t jump */}
-                  <div className="h-7 md:h-8">
+                <div className="h-5 md:h-6">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {direction.showSecondaryCta ? (
+                      motionEnabled ? (
+                        <motion.button
+                          key="dir_secondary"
+                          type="button"
+                          onClick={onDirectionSkip}
+                          initial={fadeIn.initial}
+                          animate={fadeIn.animate}
+                          exit={fadeIn.exit}
+                          transition={{ duration: 0.35, ease: "easeOut", delay: 0.02 }}
+                          className={convoCtaSecondaryClass}
+                        >
+                          {direction.secondaryCtaLabel}
+                        </motion.button>
+                      ) : (
+                        <button
+                          key="dir_secondary_static"
+                          type="button"
+                          onClick={onDirectionSkip}
+                          className={convoCtaSecondaryClass}
+                        >
+                          {direction.secondaryCtaLabel}
+                        </button>
+                      )
+                    ) : (
+                      <span key="dir_secondary_spacer" aria-hidden />
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ) : null}
+
+            {phase === "unlocked" ? (
+              <div className="mt-5 space-y-3">
+                {unlocked.primaryCtaLabel ? (
+                  <div className="h-8 md:h-9">
                     <AnimatePresence mode="wait" initial={false}>
-                      {arrival.showContinue ? (
+                      {unlocked.showPrimaryCta !== false ? (
                         motionEnabled ? (
                           <motion.button
-                            key="arrival_continue"
+                            key="unlocked_primary"
                             type="button"
-                            onClick={onArrivalContinue}
+                            onClick={onUnlockedPrimary}
                             initial={fadeIn.initial}
                             animate={fadeIn.animate}
                             exit={fadeIn.exit}
-                            transition={{ duration: 0.35, ease: "easeOut" }}
-                            className={`text-lg font-semibold md:text-xl ${
-                              dark
-                                ? "text-white/85 hover:text-white"
-                                : "text-slate-900 hover:text-slate-950"
-                            }`}
+                            transition={{ duration: 0.32, ease: "easeOut" }}
+                            className={unlockedCtaPrimaryClass}
                           >
-                            Continue
+                            {unlocked.primaryCtaLabel}
                           </motion.button>
                         ) : (
                           <button
-                            key="arrival_continue_static"
+                            key="unlocked_primary_static"
                             type="button"
-                            onClick={onArrivalContinue}
-                            className={`text-lg font-semibold md:text-xl ${
-                              dark
-                                ? "text-white/85 hover:text-white"
-                                : "text-slate-900 hover:text-slate-950"
-                            }`}
+                            onClick={onUnlockedPrimary}
+                            className={unlockedCtaPrimaryClass}
                           >
-                            Continue
+                            {unlocked.primaryCtaLabel}
                           </button>
                         )
                       ) : (
-                        <span key="arrival_spacer" aria-hidden />
+                        <span key="unlocked_primary_spacer" aria-hidden />
                       )}
                     </AnimatePresence>
                   </div>
-                </div>
+                ) : null}
 
-                <SectionDivider dark={dark} />
-              </div>
-            ) : null}
-
-            {/* =========================
-                Phase B — Direction
-               ========================= */}
-            {phase === "direction" ? (
-              <div>
-                <div className="space-y-4">
-                  <div className={headlineClass}>{direction.headline}</div>
-                  <p className={bodyClass}>{direction.body}</p>
-
-                  <div className="mt-6 space-y-3">
-                    <div className="h-8 md:h-9">
-                      <AnimatePresence mode="wait" initial={false}>
-                        {direction.showPrimaryCta ? (
-                          motionEnabled ? (
-                            <motion.button
-                              key="dir_primary"
-                              type="button"
-                              onClick={onDirectionAccept}
-                              initial={fadeIn.initial}
-                              animate={fadeIn.animate}
-                              exit={fadeIn.exit}
-                              transition={{ duration: 0.35, ease: "easeOut" }}
-                              className={ctaPrimaryClass}
-                            >
-                              {direction.primaryCtaLabel}
-                            </motion.button>
-                          ) : (
-                            <button
-                              key="dir_primary_static"
-                              type="button"
-                              onClick={onDirectionAccept}
-                              className={ctaPrimaryClass}
-                            >
-                              {direction.primaryCtaLabel}
-                            </button>
-                          )
+                {unlocked.secondaryCtaLabel ? (
+                  <div className="h-5 md:h-6">
+                    <AnimatePresence mode="wait" initial={false}>
+                      {unlocked.showSecondaryCta ? (
+                        motionEnabled ? (
+                          <motion.button
+                            key="unlocked_secondary"
+                            type="button"
+                            onClick={onUnlockedSecondary}
+                            initial={fadeIn.initial}
+                            animate={fadeIn.animate}
+                            exit={fadeIn.exit}
+                            transition={{ duration: 0.32, ease: "easeOut" }}
+                            className={unlockedCtaSecondaryClass}
+                          >
+                            {unlocked.secondaryCtaLabel}
+                          </motion.button>
                         ) : (
-                          <span key="dir_primary_spacer" aria-hidden />
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    <div className="h-5 md:h-6">
-                      <AnimatePresence mode="wait" initial={false}>
-                        {direction.showSecondaryCta ? (
-                          motionEnabled ? (
-                            <motion.button
-                              key="dir_secondary"
-                              type="button"
-                              onClick={onDirectionSkip}
-                              initial={fadeIn.initial}
-                              animate={fadeIn.animate}
-                              exit={fadeIn.exit}
-                              transition={{ duration: 0.35, ease: "easeOut", delay: 0.02 }}
-                              className={ctaSecondaryClass}
-                            >
-                              {direction.secondaryCtaLabel}
-                            </motion.button>
-                          ) : (
-                            <button
-                              key="dir_secondary_static"
-                              type="button"
-                              onClick={onDirectionSkip}
-                              className={ctaSecondaryClass}
-                            >
-                              {direction.secondaryCtaLabel}
-                            </button>
-                          )
-                        ) : (
-                          <span key="dir_secondary_spacer" aria-hidden />
-                        )}
-                      </AnimatePresence>
-                    </div>
+                          <button
+                            key="unlocked_secondary_static"
+                            type="button"
+                            onClick={onUnlockedSecondary}
+                            className={unlockedCtaSecondaryClass}
+                          >
+                            {unlocked.secondaryCtaLabel}
+                          </button>
+                        )
+                      ) : (
+                        <span key="unlocked_secondary_spacer" aria-hidden />
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
-
-                <SectionDivider dark={dark} />
+                ) : null}
               </div>
             ) : null}
 
-            {/* =========================
-                Phase C — Unlocked
-               ========================= */}
-            {phase === "unlocked" ? (
-              <div className="pb-2">
-                <div className="space-y-2">
-                  <div className={unlockedRecapClass}>{unlocked.recap}</div>
-                  <div className={unlockedWhyClass}>{unlocked.why}</div>
-
-                  {/* Optional unlocked CTAs */}
-                  {(unlocked.primaryCtaLabel || unlocked.secondaryCtaLabel) ? (
-                    <div className="mt-4 space-y-3">
-                      <div className="h-8 md:h-9">
-                        <AnimatePresence mode="wait" initial={false}>
-                          {unlocked.primaryCtaLabel && unlocked.showPrimaryCta ? (
-                            motionEnabled ? (
-                              <motion.button
-                                key="unlocked_primary"
-                                type="button"
-                                onClick={onUnlockedPrimary}
-                                initial={fadeIn.initial}
-                                animate={fadeIn.animate}
-                                exit={fadeIn.exit}
-                                transition={{ duration: 0.32, ease: "easeOut" }}
-                                className={ctaPrimaryClass}
-                              >
-                                {unlocked.primaryCtaLabel}
-                              </motion.button>
-                            ) : (
-                              <button
-                                key="unlocked_primary_static"
-                                type="button"
-                                onClick={onUnlockedPrimary}
-                                className={ctaPrimaryClass}
-                              >
-                                {unlocked.primaryCtaLabel}
-                              </button>
-                            )
-                          ) : (
-                            <span key="unlocked_primary_spacer" aria-hidden />
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <div className="h-5 md:h-6">
-                        <AnimatePresence mode="wait" initial={false}>
-                          {unlocked.secondaryCtaLabel && unlocked.showSecondaryCta ? (
-                            motionEnabled ? (
-                              <motion.button
-                                key="unlocked_secondary"
-                                type="button"
-                                onClick={onUnlockedSecondary}
-                                initial={fadeIn.initial}
-                                animate={fadeIn.animate}
-                                exit={fadeIn.exit}
-                                transition={{ duration: 0.32, ease: "easeOut" }}
-                                className={ctaSecondaryClass}
-                              >
-                                {unlocked.secondaryCtaLabel}
-                              </motion.button>
-                            ) : (
-                              <button
-                                key="unlocked_secondary_static"
-                                type="button"
-                                onClick={onUnlockedSecondary}
-                                className={ctaSecondaryClass}
-                              >
-                                {unlocked.secondaryCtaLabel}
-                              </button>
-                            )
-                          ) : (
-                            <span key="unlocked_secondary_spacer" aria-hidden />
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <SectionDivider dark={dark} />
-              </div>
-            ) : null}
+            <SectionDivider dark={dark} />
           </motion.div>
         </AnimatePresence>
       </div>

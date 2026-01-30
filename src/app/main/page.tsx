@@ -97,6 +97,34 @@ function writeIntroSeen() {
   }
 }
 
+function firstName(raw: string) {
+  const cleaned = (raw ?? "").trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+  const first = cleaned.split(" ")[0] ?? "";
+  return first.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+}
+
+function niceName(raw: string) {
+  const n = firstName(raw);
+  if (!n) return "";
+  return n.length === 1 ? n.toUpperCase() : `${n[0]!.toUpperCase()}${n.slice(1)}`;
+}
+
+function getSnapshotName(snapshot: unknown): string {
+  if (!snapshot || typeof snapshot !== "object") return "";
+  const s = snapshot as { name?: unknown };
+  return typeof s.name === "string" ? s.name : "";
+}
+
+function greet(name: string) {
+  const n = name?.trim();
+  return n ? `Hey ${n}.` : "Hey.";
+}
+
+function labelForNext(next: RecommendedNext) {
+  return next === "motivations" ? "Motivations" : next === "strengths" ? "Strengths" : "Skills";
+}
+
 /* =============================================================================
    Tiny task session state
    ============================================================================= */
@@ -310,8 +338,11 @@ export default function MainHomePage() {
   }, [phase, motionEnabled]);
 
   /* ---------------------------------------------------------------------------
-     Copy derivations
+     Copy derivations (ALL variants are conversational + name-aware)
      --------------------------------------------------------------------------- */
+
+  const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
+  const hello = greet(name);
 
   const snapshot = mounted ? vm.snapshot : null;
 
@@ -326,37 +357,50 @@ export default function MainHomePage() {
       ? "onboarding_only"
       : "returning_no_action";
 
+  // Phase A: arrival acknowledgement (always starts with greeting)
   const arrivalParagraphs: string[] = (() => {
     if (!mounted) return ["…"];
 
-    switch (arrivalReference) {
-      case "motivations_done":
-        return [
-          "You’ve already worked through your Motivations. That tells me what reliably energizes you — and what tends to drain you.",
-        ];
-      case "strengths_done":
-        return [
-          "You’ve already mapped your Strengths. That tells me how you actually operate day to day — not just what sounds interesting.",
-        ];
-      case "skills_done":
-        return [
-          "You’ve already completed Skills. That means Everleap can stop being generic and start being specific.",
-        ];
-      case "onboarding_only":
-        return [
-          "From onboarding, I have a starting read on you — enough to stop guessing.",
-          "Now the goal is to turn that into a direction that feels real (not random).",
-        ];
-      default:
-        return ["Picking up where we left off."];
+    if (arrivalReference === "onboarding_only") {
+      return [
+        hello,
+        "I’ve got your onboarding answers — enough to stop guessing.",
+        "Now we turn that into a direction that feels real (not random).",
+      ];
     }
+
+    if (arrivalReference === "motivations_done") {
+      return [
+        hello,
+        "You’ve already done Motivations — that tells me what reliably energizes you and what drains you.",
+        "That’s a strong start. Next we make it usable.",
+      ];
+    }
+
+    if (arrivalReference === "strengths_done") {
+      return [
+        hello,
+        "You’ve already done Strengths — that tells me how you actually operate day to day.",
+        "That’s the difference between “cool idea” and “this fits you.”",
+      ];
+    }
+
+    if (arrivalReference === "skills_done") {
+      return [
+        hello,
+        "Nice — you’ve already done Skills too.",
+        "That means I can stop being vague and start being specific about what you should try next.",
+      ];
+    }
+
+    return [hello, "Picking up where we left off."];
   })();
 
-  const directionCopy = (() => {
+  // Phase B: direction + why (always starts with greeting)
+  const directionParagraphsAndCtas = (() => {
     if (!mounted) {
       return {
-        headline: "…",
-        body: "…",
+        paragraphs: ["…"],
         primaryCtaLabel: "Continue",
         secondaryCtaLabel: "Not yet",
       };
@@ -364,81 +408,97 @@ export default function MainHomePage() {
 
     if (recommendedNext === "motivations") {
       return {
-        headline: "Next: Motivations — so Everleap doesn’t push bad-fit paths.",
-        body:
-          "Motivations tells Everleap what consistently pulls you forward (and what drains you). We use this to filter out directions that look good on paper but won’t feel right in real life — then we prioritize what to explore and what to try next.",
+        paragraphs: [
+          hello,
+          "Before I suggest anything, I want one thing clear: what actually pulls you forward (and what drains you).",
+          "That’s Motivations. It helps me avoid recommending paths that look good on paper but won’t feel right in real life.",
+          "If you’ve got two minutes, let’s do it now.",
+        ],
         primaryCtaLabel: "Continue to Motivations",
-        secondaryCtaLabel: "Show me Today anyway",
+        secondaryCtaLabel: "Not yet",
       };
     }
 
     if (recommendedNext === "strengths") {
       return {
-        headline: "Next: Strengths — so the recommendations fit how you work.",
-        body:
-          "Strengths tells Everleap how you naturally do your best work. We use this to recommend paths that match your default mode — and avoid suggestions that would constantly fight how you operate.",
+        paragraphs: [
+          hello,
+          "You’ve told me what motivates you — great.",
+          "Next is Strengths. This is how I make sure the options I suggest match how you actually work, not just what sounds interesting.",
+          "Want to keep going?",
+        ],
         primaryCtaLabel: "Continue to Strengths",
-        secondaryCtaLabel: "Show me Today anyway",
+        secondaryCtaLabel: "Not yet",
       };
     }
 
     // skills
     return {
-      headline: "Next: Skills — so Everleap can get specific about next steps.",
-      body:
-        "Skills is how Everleap goes from “interesting direction” to “doable plan.” It lets us suggest concrete next moves — what to build, try, or practice next — instead of vague ideas.",
+      paragraphs: [
+        hello,
+        "You’ve already nailed Motivations and Strengths — that’s the hard thinking.",
+        "Skills is the part where things get practical. It’s how I turn “direction” into specific next steps — what to try, build, or practice next.",
+        "If you’re down, let’s finish that piece.",
+      ],
       primaryCtaLabel: "Continue to Skills",
-      secondaryCtaLabel: "Keep exploring Today",
+      secondaryCtaLabel: "Not yet",
     };
   })();
 
-  const unlockedHeader = (() => {
+  // Phase C: unlocked header copy (still conversational, always greeting)
+  // - If ALL complete: push to Insights (door open)
+  // - If incomplete: keep nudging next signal, but like a human
+  const unlockedParagraphsAndCtas = (() => {
     if (!mounted) {
-      return {
-        recap: "…",
-        why: "…",
-        primaryCtaLabel: undefined as string | undefined,
-        secondaryCtaLabel: undefined as string | undefined,
-      };
+      return { paragraphs: ["…"], primaryCtaLabel: undefined as string | undefined };
     }
 
     if (allSignalsComplete) {
       return {
-        recap: "Signals complete. The door is open.",
-        why: "Insights is where Everleap starts making real picks — patterns, next steps, and what to explore based on your signals.",
+        paragraphs: [
+          hello,
+          "You’ve got the full set now — Motivations, Strengths, and Skills.",
+          "That’s the moment Everleap stops being generic. Insights is where I translate your signals into actual picks: patterns, next steps, and what to explore.",
+        ],
         primaryCtaLabel: "Go to Insights",
-        secondaryCtaLabel: undefined,
       };
     }
 
-    const nextLabel =
-      recommendedNext === "motivations"
-        ? "Motivations"
-        : recommendedNext === "strengths"
-        ? "Strengths"
-        : "Skills";
+    const nextLabel = labelForNext(recommendedNext);
 
-    const doneBits = [
-      motComplete ? "Motivations" : null,
-      strComplete ? "Strengths" : null,
-      sklComplete ? "Skills" : null,
-    ].filter(Boolean) as string[];
+    if (recommendedNext === "motivations") {
+      return {
+        paragraphs: [
+          hello,
+          "Quick check: I still don’t have your Motivations.",
+          "That’s the piece that keeps me from pushing “good on paper” paths that won’t feel right for you.",
+          "Want to knock it out so the rest of Everleap gets smarter immediately?",
+        ],
+        primaryCtaLabel: `Continue to ${nextLabel}`,
+      };
+    }
 
-    const doneLabel = doneBits.length ? doneBits.join(" + ") : "Onboarding";
-    const recap = doneBits.length ? `${doneLabel} is in. Next up: ${nextLabel}.` : `Next up: ${nextLabel}.`;
+    if (recommendedNext === "strengths") {
+      return {
+        paragraphs: [
+          hello,
+          "I’ve got your Motivations — good.",
+          "Strengths is what helps me recommend options that fit how you operate day to day.",
+          "If you do one thing next, do this.",
+        ],
+        primaryCtaLabel: `Continue to ${nextLabel}`,
+      };
+    }
 
-    const why =
-      recommendedNext === "motivations"
-        ? "Everleap uses Motivations to filter out paths that won’t feel right day to day — so suggestions fit you, not just what sounds impressive."
-        : recommendedNext === "strengths"
-        ? "Everleap uses Strengths to match options to how you work — so the next steps feel natural, not forced."
-        : "Everleap uses Skills to turn direction into specific next steps — what to try, build, or practice next.";
-
+    // skills
     return {
-      recap,
-      why,
+      paragraphs: [
+        hello,
+        "Motivations and Strengths are in — you’ve done the foundation work.",
+        "Skills is what lets me turn that into concrete next steps instead of broad ideas.",
+        "Give me Skills, and I can start making sharper calls.",
+      ],
       primaryCtaLabel: `Continue to ${nextLabel}`,
-      secondaryCtaLabel: undefined,
     };
   })();
 
@@ -573,12 +633,15 @@ export default function MainHomePage() {
                 }}
                 direction={{
                   recommendedNext,
-                  ...directionCopy,
+                  paragraphs: directionParagraphsAndCtas.paragraphs,
+                  primaryCtaLabel: directionParagraphsAndCtas.primaryCtaLabel,
+                  secondaryCtaLabel: directionParagraphsAndCtas.secondaryCtaLabel,
                   showPrimaryCta: directionShowPrimary,
                   showSecondaryCta: directionShowSecondary,
                 }}
                 unlocked={{
-                  ...unlockedHeader,
+                  paragraphs: unlockedParagraphsAndCtas.paragraphs,
+                  primaryCtaLabel: unlockedParagraphsAndCtas.primaryCtaLabel,
                   showPrimaryCta: true,
                   showSecondaryCta: false,
                 }}
@@ -586,7 +649,6 @@ export default function MainHomePage() {
                   void fadeThen(() => setPhase("direction"));
                 }}
                 onDirectionAccept={() => {
-                  // Once they hit “Continue to …”, consider intro seen for this session
                   writeIntroSeen();
                   void fadeThen(async () => {
                     setPhase("unlocked");
