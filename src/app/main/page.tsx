@@ -33,11 +33,22 @@ import {
 import { SignalsCard } from "./components/SignalsCard";
 
 /* =============================================================================
-   Session keys
+   Storage keys (QA reset + session gates)
    ============================================================================= */
 
-const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
+// localStorage
+const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
+const STORY_STORAGE_KEY_V3 = "everleap.story.answers.v3";
+const WEEKLY_FOCUS_KEY = "everleap.focus.week.v1";
+const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
+
+// sessionStorage
+const QUOTE_SESSION_KEY = "everleap.main.quote.v1";
 const INTRO_SEEN_SESSION_KEY = "everleap.main.introSeen.v1";
+const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
+
+// session prefix
+const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
 
 /* =============================================================================
    Completion thresholds
@@ -116,13 +127,22 @@ function getSnapshotName(snapshot: unknown): string {
   return typeof s.name === "string" ? s.name : "";
 }
 
-function greet(name: string) {
-  const n = name?.trim();
-  return n ? `Hey ${n}.` : "Hey.";
+function labelForNext(next: RecommendedNext) {
+  return next === "motivations"
+    ? "Motivations"
+    : next === "strengths"
+    ? "Strengths"
+    : "Skills";
 }
 
-function labelForNext(next: RecommendedNext) {
-  return next === "motivations" ? "Motivations" : next === "strengths" ? "Strengths" : "Skills";
+/**
+ * Opening line for copy:
+ * - If name exists → greet.
+ * - If no name → counselor welcome (never “Hey.”).
+ */
+function openingLine(name: string) {
+  const n = (name ?? "").trim();
+  return n ? `Hey ${n}.` : "Welcome — I’m your Everleap counselor.";
 }
 
 /* =============================================================================
@@ -147,6 +167,46 @@ function writeSessionTinyState(next: SessionTinyState) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(TINY_TASKS_SESSION_KEY, safeJsonStringify(next));
+  } catch {
+    // ignore
+  }
+}
+
+/* =============================================================================
+   QA reset helpers
+   ============================================================================= */
+
+function clearSessionPrefix(prefix: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const k = window.sessionStorage.key(i);
+      if (k && k.startsWith(prefix)) keys.push(k);
+    }
+    keys.forEach((k) => window.sessionStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
+
+function wipeEverleapClientStorage() {
+  if (typeof window === "undefined") return;
+
+  try {
+    // localStorage
+    window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    window.localStorage.removeItem(STORY_STORAGE_KEY_V3);
+    window.localStorage.removeItem(WEEKLY_FOCUS_KEY);
+    window.localStorage.removeItem(CURIOSITY_SPRINTS_KEY);
+
+    // sessionStorage
+    window.sessionStorage.removeItem(QUOTE_SESSION_KEY);
+    window.sessionStorage.removeItem(INTRO_SEEN_SESSION_KEY);
+    window.sessionStorage.removeItem(TINY_TASKS_SESSION_KEY);
+
+    // session prefix
+    clearSessionPrefix(ZIP_PLACE_SESSION_PREFIX);
   } catch {
     // ignore
   }
@@ -186,11 +246,19 @@ export default function MainHomePage() {
   const [directionShowSecondary, setDirectionShowSecondary] = React.useState(false);
 
   const [transitioning, setTransitioning] = React.useState(false);
-
   const interactedRef = React.useRef(false);
 
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
+
+  // QA reset UI
+  const [qaResetOpen, setQaResetOpen] = React.useState(false);
+
+  // Show only in dev OR when explicitly enabled
+  const showQaReset =
+    typeof window !== "undefined" &&
+    (process.env.NODE_ENV !== "production" ||
+      (process.env.NEXT_PUBLIC_QA_MODE ?? "") === "1");
 
   /* ---------------------------------------------------------------------------
      Mount / refresh
@@ -262,6 +330,10 @@ export default function MainHomePage() {
     ? vm.progress
     : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
 
+  const motStarted = progress.motivationsAnswered > 0;
+  const strStarted = progress.strengthsAnswered > 0;
+  const sklStarted = progress.skillsAnswered > 0;
+
   const motComplete = progress.motivationsAnswered >= SIGNAL_COMPLETE_COUNT;
   const strComplete = progress.strengthsAnswered >= SIGNAL_COMPLETE_COUNT;
   const sklComplete = progress.skillsAnswered >= SIGNAL_COMPLETE_COUNT;
@@ -270,6 +342,15 @@ export default function MainHomePage() {
 
   const recommendedNext: RecommendedNext =
     !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
+
+  // "Returning" should be true only for real past activity (NOT just onboarding).
+  const hasWeeklyFocus = mounted ? !!(vm.weeklyFocus?.vibe && vm.weeklyFocus?.target) : false;
+  const hasSprints = mounted ? (vm.sprintCount ?? 0) > 0 : false;
+  const hasTinyCompleted = mounted ? (vm.sessionTiny?.completedIds?.length ?? 0) > 0 : false;
+  const hasAnySignalsProgress = motStarted || strStarted || sklStarted;
+
+  const isReturning =
+    mounted && (hasAnySignalsProgress || hasWeeklyFocus || hasSprints || hasTinyCompleted);
 
   // Decide initial phase once we have mounted data
   React.useEffect(() => {
@@ -338,65 +419,66 @@ export default function MainHomePage() {
   }, [phase, motionEnabled]);
 
   /* ---------------------------------------------------------------------------
-     Copy derivations (ALL variants are conversational + name-aware)
+     Copy derivations (conversational + name-aware + status-aware)
      --------------------------------------------------------------------------- */
 
   const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
-  const hello = greet(name);
+  const open = openingLine(name);
 
-  const snapshot = mounted ? vm.snapshot : null;
+  const arrivalReference: ArrivalReference = sklComplete
+    ? "skills_done"
+    : strComplete
+    ? "strengths_done"
+    : motComplete
+    ? "motivations_done"
+    : isReturning
+    ? "returning_no_action"
+    : "onboarding_only";
 
-  const arrivalReference: ArrivalReference =
-    sklComplete
-      ? "skills_done"
-      : strComplete
-      ? "strengths_done"
-      : motComplete
-      ? "motivations_done"
-      : snapshot
-      ? "onboarding_only"
-      : "returning_no_action";
-
-  // Phase A: arrival acknowledgement (always starts with greeting)
+  // Phase A: Arrival
   const arrivalParagraphs: string[] = (() => {
     if (!mounted) return ["…"];
 
-    if (arrivalReference === "onboarding_only") {
-      return [
-        hello,
-        "I’ve got your onboarding answers — enough to stop guessing.",
-        "Now we turn that into a direction that feels real (not random).",
-      ];
+    // No-name experience: counselor welcome + one-sentence promise.
+    const promise =
+      "I’ll help turn what you’re into into a clear direction — and a few next steps you can actually do.";
+
+    // Brand-new: never say “picking up…”
+    if (!isReturning && !motStarted && !strStarted && !sklStarted) {
+      // If they have a name, still greet, but keep the same promise.
+      return [open, promise];
     }
 
+    // Returning states
     if (arrivalReference === "motivations_done") {
       return [
-        hello,
-        "You’ve already done Motivations — that tells me what reliably energizes you and what drains you.",
-        "That’s a strong start. Next we make it usable.",
+        open,
+        "You’ve already done Motivations — nice.",
+        "Now we’ll turn that into a direction and a next step that feels real.",
       ];
     }
 
     if (arrivalReference === "strengths_done") {
       return [
-        hello,
-        "You’ve already done Strengths — that tells me how you actually operate day to day.",
-        "That’s the difference between “cool idea” and “this fits you.”",
+        open,
+        "You’ve already done Strengths — that’s the part most people skip.",
+        "Now we use it to make options that fit you day to day.",
       ];
     }
 
     if (arrivalReference === "skills_done") {
       return [
-        hello,
-        "Nice — you’ve already done Skills too.",
-        "That means I can stop being vague and start being specific about what you should try next.",
+        open,
+        "Nice — you’ve already captured Skills too.",
+        "That’s enough signal for me to stop being vague and start being specific.",
       ];
     }
 
-    return [hello, "Picking up where we left off."];
+    // Only valid if returning
+    return [open, "Picking up where we left off."];
   })();
 
-  // Phase B: direction + why (always starts with greeting)
+  // Phase B: Direction (friendlier grammar, always references status)
   const directionParagraphsAndCtas = (() => {
     if (!mounted) {
       return {
@@ -409,10 +491,10 @@ export default function MainHomePage() {
     if (recommendedNext === "motivations") {
       return {
         paragraphs: [
-          hello,
-          "Before I suggest anything, I want one thing clear: what actually pulls you forward (and what drains you).",
-          "That’s Motivations. It helps me avoid recommending paths that look good on paper but won’t feel right in real life.",
-          "If you’ve got two minutes, let’s do it now.",
+          name ? open : "Alright — quick start.",
+          "You haven’t done Motivations yet — totally normal.",
+          "Motivations tells me what actually energizes you (and what drains you).",
+          "Give me that, and everything Everleap suggests gets way more you.",
         ],
         primaryCtaLabel: "Continue to Motivations",
         secondaryCtaLabel: "Not yet",
@@ -422,9 +504,9 @@ export default function MainHomePage() {
     if (recommendedNext === "strengths") {
       return {
         paragraphs: [
-          hello,
-          "You’ve told me what motivates you — great.",
-          "Next is Strengths. This is how I make sure the options I suggest match how you actually work, not just what sounds interesting.",
+          open,
+          "You’ve already done Motivations — great.",
+          "Next is Strengths. This is how I make sure your options fit how you operate day to day — not just what sounds interesting.",
           "Want to keep going?",
         ],
         primaryCtaLabel: "Continue to Strengths",
@@ -435,9 +517,9 @@ export default function MainHomePage() {
     // skills
     return {
       paragraphs: [
-        hello,
-        "You’ve already nailed Motivations and Strengths — that’s the hard thinking.",
-        "Skills is the part where things get practical. It’s how I turn “direction” into specific next steps — what to try, build, or practice next.",
+        open,
+        "You’ve got Motivations and Strengths — that’s the foundation.",
+        "Skills is the practical layer. It’s how I turn “direction” into real next steps: what to try, build, or practice next.",
         "If you’re down, let’s finish that piece.",
       ],
       primaryCtaLabel: "Continue to Skills",
@@ -445,9 +527,7 @@ export default function MainHomePage() {
     };
   })();
 
-  // Phase C: unlocked header copy (still conversational, always greeting)
-  // - If ALL complete: push to Insights (door open)
-  // - If incomplete: keep nudging next signal, but like a human
+  // Phase C: Unlocked (friendlier grammar; no “quick check” stiffness)
   const unlockedParagraphsAndCtas = (() => {
     if (!mounted) {
       return { paragraphs: ["…"], primaryCtaLabel: undefined as string | undefined };
@@ -456,9 +536,9 @@ export default function MainHomePage() {
     if (allSignalsComplete) {
       return {
         paragraphs: [
-          hello,
-          "You’ve got the full set now — Motivations, Strengths, and Skills.",
-          "That’s the moment Everleap stops being generic. Insights is where I translate your signals into actual picks: patterns, next steps, and what to explore.",
+          open,
+          "You’ve got the full set — Motivations, Strengths, and Skills.",
+          "Insights is where I translate that into real picks: patterns, next steps, and what to explore next.",
         ],
         primaryCtaLabel: "Go to Insights",
       };
@@ -469,10 +549,9 @@ export default function MainHomePage() {
     if (recommendedNext === "motivations") {
       return {
         paragraphs: [
-          hello,
-          "Quick check: I still don’t have your Motivations.",
-          "That’s the piece that keeps me from pushing “good on paper” paths that won’t feel right for you.",
-          "Want to knock it out so the rest of Everleap gets smarter immediately?",
+          name ? open : "Want me to stop guessing?",
+          "Motivations is the fastest way to make Everleap feel personal.",
+          "Two minutes — then I can start giving you real direction.",
         ],
         primaryCtaLabel: `Continue to ${nextLabel}`,
       };
@@ -481,9 +560,9 @@ export default function MainHomePage() {
     if (recommendedNext === "strengths") {
       return {
         paragraphs: [
-          hello,
+          open,
           "I’ve got your Motivations — good.",
-          "Strengths is what helps me recommend options that fit how you operate day to day.",
+          "Strengths is what makes the recommendations actually fit you day to day.",
           "If you do one thing next, do this.",
         ],
         primaryCtaLabel: `Continue to ${nextLabel}`,
@@ -493,10 +572,10 @@ export default function MainHomePage() {
     // skills
     return {
       paragraphs: [
-        hello,
-        "Motivations and Strengths are in — you’ve done the foundation work.",
-        "Skills is what lets me turn that into concrete next steps instead of broad ideas.",
-        "Give me Skills, and I can start making sharper calls.",
+        open,
+        "You’ve done the foundation work.",
+        "Skills is what lets me turn it into concrete next steps instead of broad ideas.",
+        "Give me Skills, and I can make sharper calls.",
       ],
       primaryCtaLabel: `Continue to ${nextLabel}`,
     };
@@ -557,6 +636,35 @@ export default function MainHomePage() {
   };
 
   /* ---------------------------------------------------------------------------
+     QA reset handlers
+     --------------------------------------------------------------------------- */
+
+  const doQaReset = async () => {
+    // close modal immediately for snappier UX
+    setQaResetOpen(false);
+
+    await fadeThen(async () => {
+      wipeEverleapClientStorage();
+
+      // reset local state
+      setVm(buildTodayViewModel());
+
+      // restart the cinematic
+      setPhase("arrival");
+
+      // ensure we start at top
+      try {
+        window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+      } catch {
+        window.scrollTo(0, 0);
+      }
+
+      // optional: refresh route cache
+      router.refresh();
+    });
+  };
+
+  /* ---------------------------------------------------------------------------
      Render
      --------------------------------------------------------------------------- */
 
@@ -581,6 +689,71 @@ export default function MainHomePage() {
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
             <div className={dark ? "h-full w-full bg-black" : "h-full w-full bg-white"} />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* QA Reset Modal */}
+      <AnimatePresence>
+        {qaResetOpen ? (
+          <motion.div
+            className="fixed inset-0 z-[80] flex items-center justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Reset Everleap data"
+          >
+            <button
+              type="button"
+              className="absolute inset-0"
+              aria-label="Close"
+              onClick={() => setQaResetOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className={`relative w-full max-w-md rounded-2xl border p-4 shadow-xl ${
+                dark
+                  ? "border-white/10 bg-slate-950/70 text-white backdrop-blur"
+                  : "border-black/10 bg-white/80 text-slate-900 backdrop-blur"
+              }`}
+            >
+              <div className="text-sm font-semibold">Reset this device’s Everleap data?</div>
+              <div className={`mt-2 text-sm ${dark ? "text-white/70" : "text-slate-600"}`}>
+                This clears onboarding, signals (Motivations/Strengths/Skills), weekly focus, sprints,
+                and session caches so QA can start over.
+              </div>
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQaResetOpen(false)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    dark
+                      ? "bg-white/10 text-white hover:bg-white/14"
+                      : "bg-slate-900 text-white hover:bg-slate-950"
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void doQaReset()}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    dark
+                      ? "bg-red-500/20 text-red-100 hover:bg-red-500/26"
+                      : "bg-red-600 text-white hover:bg-red-700"
+                  }`}
+                >
+                  Reset
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -620,6 +793,25 @@ export default function MainHomePage() {
             </motion.div>
 
             <div className="pl-12">
+              {/* QA Reset pill */}
+              {mounted && showQaReset ? (
+                <div className="mb-3 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setQaResetOpen(true)}
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
+                      dark
+                        ? "bg-white/8 text-white/70 hover:bg-white/12 hover:text-white/85"
+                        : "bg-slate-900/90 text-white/80 hover:bg-slate-950 hover:text-white"
+                    }`}
+                    aria-label="QA Reset"
+                    title="QA Reset"
+                  >
+                    QA Reset
+                  </button>
+                </div>
+              ) : null}
+
               <TodayIntro
                 dark={dark}
                 phase={phase}
