@@ -9,16 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
    Types
    ============================================================================= */
 
-export type TodayPhase = "arrival" | "direction" | "unlocked";
-
-export type ArrivalReference =
-  | "onboarding_only"
-  | "motivations_done"
-  | "strengths_done"
-  | "skills_done"
-  | "tiny_task_done"
-  | "returning_no_action";
-
 export type RecommendedNext = "motivations" | "strengths" | "skills";
 
 type Quote = { text: string; author: string };
@@ -47,19 +37,12 @@ const fadeIn = {
   exit: { opacity: 0, y: 2 },
 };
 
-const phaseFade = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -4 },
-};
-
 /* =============================================================================
    Props
    ============================================================================= */
 
 export type TodayIntroProps = {
   dark: boolean;
-  phase: TodayPhase;
 
   /** Reduced-motion aware */
   motionEnabled: boolean;
@@ -70,39 +53,14 @@ export type TodayIntroProps = {
   /** Page-level fade control (used on clicks) */
   isTransitioning?: boolean;
 
-  /* ---------- Arrival (Phase A) ---------- */
-  arrival: {
-    reference: ArrivalReference;
-    paragraphs: string[];
-    showContinue: boolean;
-  };
+  /** Counselor copy (agentic, on-page) */
+  paragraphs: string[];
 
-  /* ---------- Direction (Phase B) ---------- */
-  direction: {
-    recommendedNext: RecommendedNext;
-    paragraphs: string[];
-    primaryCtaLabel: string;
-    secondaryCtaLabel: string;
-    showPrimaryCta: boolean;
-    showSecondaryCta: boolean;
-  };
+  /** Primary action (single CTA only) */
+  primaryCtaLabel?: string;
 
-  /* ---------- Unlocked (Phase C) ---------- */
-  unlocked: {
-    paragraphs: string[];
-    primaryCtaLabel?: string;
-    secondaryCtaLabel?: string;
-    showPrimaryCta?: boolean;
-    showSecondaryCta?: boolean;
-  };
-
-  /* ---------- Callbacks ---------- */
-  onArrivalContinue: () => void;
-  onDirectionAccept: () => void;
-  onDirectionSkip: () => void;
-
-  onUnlockedPrimary?: () => void;
-  onUnlockedSecondary?: () => void;
+  /** Callback for primary CTA */
+  onPrimary?: () => void;
 };
 
 /* =============================================================================
@@ -112,44 +70,22 @@ export type TodayIntroProps = {
 export function TodayIntro(props: TodayIntroProps) {
   const {
     dark,
-    phase,
     motionEnabled,
     quote,
     isTransitioning = false,
-    arrival,
-    direction,
-    unlocked,
-    onArrivalContinue,
-    onDirectionAccept,
-    onDirectionSkip,
-    onUnlockedPrimary,
-    onUnlockedSecondary,
+    paragraphs,
+    primaryCtaLabel,
+    onPrimary,
   } = props;
 
   const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
   const textFaint = dark ? "text-slate-400" : "text-slate-500";
-
-  const isCentered = phase === "arrival" || phase === "direction";
-  const centeredPad = "py-6";
 
   // Conversation typography (2× feel vs old small dashboard text)
   const convoBodyClass = `text-lg leading-relaxed md:text-xl ${textMuted}`;
   const convoCtaPrimaryClass = `text-lg font-semibold md:text-xl ${
     dark ? "text-white hover:underline" : "text-slate-900 hover:underline"
   }`;
-  const convoCtaSecondaryClass = `text-sm md:text-base ${
-    dark ? "text-white/55 hover:text-white/70" : "text-slate-500 hover:text-slate-600"
-  }`;
-
-  // Unlocked typography (still conversational, but slightly tighter)
-  const unlockedBodyClass = `text-base leading-relaxed md:text-lg ${textMuted}`;
-  const unlockedCtaPrimaryClass = convoCtaPrimaryClass;
-  const unlockedCtaSecondaryClass = convoCtaSecondaryClass;
-
-  const paragraphsToRender =
-    phase === "arrival" ? arrival.paragraphs : phase === "direction" ? direction.paragraphs : unlocked.paragraphs;
-
-  const bodyClass = phase === "unlocked" ? unlockedBodyClass : convoBodyClass;
 
   return (
     <div className="relative">
@@ -175,218 +111,49 @@ export function TodayIntro(props: TodayIntroProps) {
         </div>
       ) : null}
 
-      {/* Centered canvas for A/B only */}
-      <div
-        className={[
-          isCentered ? "min-h-[55svh] md:min-h-[60svh] flex flex-col justify-center" : "",
-          isCentered ? centeredPad : "",
-        ].join(" ")}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={`phase_${phase}`}
-            initial={motionEnabled ? phaseFade.initial : { opacity: 1, y: 0 }}
-            animate={motionEnabled ? phaseFade.animate : { opacity: 1, y: 0 }}
-            exit={motionEnabled ? phaseFade.exit : { opacity: 0, y: 0 }}
-            transition={{ duration: 0.32, ease: "easeOut" }}
-            className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}
-          >
-            {/* Copy */}
-            <div className="space-y-4">
-              {paragraphsToRender.map((p, idx) => (
-                <p
-                  key={`${phase}_${idx}`}
-                  className={bodyClass}
-                >
-                  {p}
-                </p>
-              ))}
+      {/* Counselor copy + single CTA */}
+      <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
+        <div className="space-y-4">
+          {paragraphs.map((p, idx) => (
+            <p key={`today_${idx}`} className={convoBodyClass}>
+              {p}
+            </p>
+          ))}
+        </div>
+
+        {primaryCtaLabel ? (
+          <div className="mt-7">
+            <div className="h-8 md:h-9">
+              <AnimatePresence mode="wait" initial={false}>
+                {motionEnabled ? (
+                  <motion.button
+                    key="today_primary"
+                    type="button"
+                    onClick={onPrimary}
+                    initial={fadeIn.initial}
+                    animate={fadeIn.animate}
+                    exit={fadeIn.exit}
+                    transition={{ duration: 0.32, ease: "easeOut" }}
+                    className={convoCtaPrimaryClass}
+                  >
+                    {primaryCtaLabel}
+                  </motion.button>
+                ) : (
+                  <button
+                    key="today_primary_static"
+                    type="button"
+                    onClick={onPrimary}
+                    className={convoCtaPrimaryClass}
+                  >
+                    {primaryCtaLabel}
+                  </button>
+                )}
+              </AnimatePresence>
             </div>
+          </div>
+        ) : null}
 
-            {/* CTAs */}
-            {phase === "arrival" ? (
-              <div className="mt-7">
-                <div className="h-7 md:h-8">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {arrival.showContinue ? (
-                      motionEnabled ? (
-                        <motion.button
-                          key="arrival_continue"
-                          type="button"
-                          onClick={onArrivalContinue}
-                          initial={fadeIn.initial}
-                          animate={fadeIn.animate}
-                          exit={fadeIn.exit}
-                          transition={{ duration: 0.35, ease: "easeOut" }}
-                          className={`text-lg font-semibold md:text-xl ${
-                            dark ? "text-white/85 hover:text-white" : "text-slate-900 hover:text-slate-950"
-                          }`}
-                        >
-                          Continue
-                        </motion.button>
-                      ) : (
-                        <button
-                          key="arrival_continue_static"
-                          type="button"
-                          onClick={onArrivalContinue}
-                          className={`text-lg font-semibold md:text-xl ${
-                            dark ? "text-white/85 hover:text-white" : "text-slate-900 hover:text-slate-950"
-                          }`}
-                        >
-                          Continue
-                        </button>
-                      )
-                    ) : (
-                      <span key="arrival_spacer" aria-hidden />
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            ) : null}
-
-            {phase === "direction" ? (
-              <div className="mt-7 space-y-3">
-                <div className="h-8 md:h-9">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {direction.showPrimaryCta ? (
-                      motionEnabled ? (
-                        <motion.button
-                          key="dir_primary"
-                          type="button"
-                          onClick={onDirectionAccept}
-                          initial={fadeIn.initial}
-                          animate={fadeIn.animate}
-                          exit={fadeIn.exit}
-                          transition={{ duration: 0.35, ease: "easeOut" }}
-                          className={convoCtaPrimaryClass}
-                        >
-                          {direction.primaryCtaLabel}
-                        </motion.button>
-                      ) : (
-                        <button
-                          key="dir_primary_static"
-                          type="button"
-                          onClick={onDirectionAccept}
-                          className={convoCtaPrimaryClass}
-                        >
-                          {direction.primaryCtaLabel}
-                        </button>
-                      )
-                    ) : (
-                      <span key="dir_primary_spacer" aria-hidden />
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div className="h-5 md:h-6">
-                  <AnimatePresence mode="wait" initial={false}>
-                    {direction.showSecondaryCta ? (
-                      motionEnabled ? (
-                        <motion.button
-                          key="dir_secondary"
-                          type="button"
-                          onClick={onDirectionSkip}
-                          initial={fadeIn.initial}
-                          animate={fadeIn.animate}
-                          exit={fadeIn.exit}
-                          transition={{ duration: 0.35, ease: "easeOut", delay: 0.02 }}
-                          className={convoCtaSecondaryClass}
-                        >
-                          {direction.secondaryCtaLabel}
-                        </motion.button>
-                      ) : (
-                        <button
-                          key="dir_secondary_static"
-                          type="button"
-                          onClick={onDirectionSkip}
-                          className={convoCtaSecondaryClass}
-                        >
-                          {direction.secondaryCtaLabel}
-                        </button>
-                      )
-                    ) : (
-                      <span key="dir_secondary_spacer" aria-hidden />
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-            ) : null}
-
-            {phase === "unlocked" ? (
-              <div className="mt-5 space-y-3">
-                {unlocked.primaryCtaLabel ? (
-                  <div className="h-8 md:h-9">
-                    <AnimatePresence mode="wait" initial={false}>
-                      {unlocked.showPrimaryCta !== false ? (
-                        motionEnabled ? (
-                          <motion.button
-                            key="unlocked_primary"
-                            type="button"
-                            onClick={onUnlockedPrimary}
-                            initial={fadeIn.initial}
-                            animate={fadeIn.animate}
-                            exit={fadeIn.exit}
-                            transition={{ duration: 0.32, ease: "easeOut" }}
-                            className={unlockedCtaPrimaryClass}
-                          >
-                            {unlocked.primaryCtaLabel}
-                          </motion.button>
-                        ) : (
-                          <button
-                            key="unlocked_primary_static"
-                            type="button"
-                            onClick={onUnlockedPrimary}
-                            className={unlockedCtaPrimaryClass}
-                          >
-                            {unlocked.primaryCtaLabel}
-                          </button>
-                        )
-                      ) : (
-                        <span key="unlocked_primary_spacer" aria-hidden />
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : null}
-
-                {unlocked.secondaryCtaLabel ? (
-                  <div className="h-5 md:h-6">
-                    <AnimatePresence mode="wait" initial={false}>
-                      {unlocked.showSecondaryCta ? (
-                        motionEnabled ? (
-                          <motion.button
-                            key="unlocked_secondary"
-                            type="button"
-                            onClick={onUnlockedSecondary}
-                            initial={fadeIn.initial}
-                            animate={fadeIn.animate}
-                            exit={fadeIn.exit}
-                            transition={{ duration: 0.32, ease: "easeOut" }}
-                            className={unlockedCtaSecondaryClass}
-                          >
-                            {unlocked.secondaryCtaLabel}
-                          </motion.button>
-                        ) : (
-                          <button
-                            key="unlocked_secondary_static"
-                            type="button"
-                            onClick={onUnlockedSecondary}
-                            className={unlockedCtaSecondaryClass}
-                          >
-                            {unlocked.secondaryCtaLabel}
-                          </button>
-                        )
-                      ) : (
-                        <span key="unlocked_secondary_spacer" aria-hidden />
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            <SectionDivider dark={dark} />
-          </motion.div>
-        </AnimatePresence>
+        <SectionDivider dark={dark} />
       </div>
     </div>
   );

@@ -23,13 +23,7 @@ import {
 } from "./TaskRunnerModal";
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
-
-import {
-  TodayIntro,
-  type TodayPhase,
-  type ArrivalReference,
-  type RecommendedNext,
-} from "./components/TodayIntro";
+import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
 import { SignalsCard } from "./components/SignalsCard";
 
 /* =============================================================================
@@ -44,7 +38,6 @@ const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
 
 // sessionStorage
 const QUOTE_SESSION_KEY = "everleap.main.quote.v1";
-const INTRO_SEEN_SESSION_KEY = "everleap.main.introSeen.v1";
 const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
 
 // session prefix
@@ -63,6 +56,13 @@ const SIGNAL_COMPLETE_COUNT = 5;
 type SessionTinyState = {
   shownIds: TinyTaskId[];
   completedIds: TinyTaskId[];
+};
+
+type AgeLane = "high_school" | "young_adult" | "unknown";
+
+type Interpretation = {
+  lines: string[]; // 1–3 lines (only longer when confidence is high)
+  confidence: number; // 0..1
 };
 
 /* =============================================================================
@@ -90,24 +90,6 @@ function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-function readIntroSeen(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.sessionStorage.getItem(INTRO_SEEN_SESSION_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeIntroSeen() {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(INTRO_SEEN_SESSION_KEY, "1");
-  } catch {
-    // ignore
-  }
-}
-
 function firstName(raw: string) {
   const cleaned = (raw ?? "").trim().replace(/\s+/g, " ");
   if (!cleaned) return "";
@@ -127,14 +109,6 @@ function getSnapshotName(snapshot: unknown): string {
   return typeof s.name === "string" ? s.name : "";
 }
 
-function labelForNext(next: RecommendedNext) {
-  return next === "motivations"
-    ? "Motivations"
-    : next === "strengths"
-    ? "Strengths"
-    : "Skills";
-}
-
 /**
  * Opening line for copy:
  * - If name exists → greet.
@@ -143,6 +117,152 @@ function labelForNext(next: RecommendedNext) {
 function openingLine(name: string) {
   const n = (name ?? "").trim();
   return n ? `Hey ${n}.` : "Welcome — I’m your Everleap counselor.";
+}
+
+function labelForNext(next: RecommendedNext) {
+  return next === "motivations"
+    ? "Motivations"
+    : next === "strengths"
+    ? "Strengths"
+    : "Skills";
+}
+
+function clamp01(n: number) {
+  return Math.max(0, Math.min(1, n));
+}
+
+function detectAgeLaneFromOnboarding(snapshot: unknown): AgeLane {
+  if (!snapshot || typeof snapshot !== "object") return "unknown";
+  const s = snapshot as { situation?: unknown };
+  if (s.situation === "high_school") return "high_school";
+  if (s.situation === "young_adult") return "young_adult";
+  return "unknown";
+}
+
+/* =============================================================================
+   Story answers (for “I heard you” quote)
+   ============================================================================= */
+
+type SavedAnswer = { answer?: string; skipped?: boolean };
+
+function isMeaningfulText(value: string): boolean {
+  const trimmed = (value ?? "").trim();
+  if (trimmed.length < 3) return false;
+
+  const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, "");
+  if (!lettersOnly) return false;
+
+  const unique = new Set(lettersOnly.toLowerCase()).size;
+  if (unique <= 2) return false;
+
+  const squashed = trimmed.replace(/\s+/g, "");
+  if (/^(.)\1{6,}$/i.test(squashed)) return false;
+
+  return true;
+}
+
+function readStoryAnswerMap(): Record<string, SavedAnswer> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORY_STORAGE_KEY_V3);
+    const parsed = safeJsonParse<Record<string, SavedAnswer>>(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function pickRepresentativeAnswer(map: Record<string, SavedAnswer>): string | null {
+  const entries = Object.entries(map ?? {});
+  if (!entries.length) return null;
+
+  // Prefer answered (not skipped), meaningful, and longer.
+  const candidates = entries
+    .map(([id, s]) => ({ id, a: (s?.answer ?? "").trim(), skipped: Boolean(s?.skipped) }))
+    .filter((x) => !x.skipped && isMeaningfulText(x.a));
+
+  if (!candidates.length) return null;
+
+  // Favor longer, more “quote-able” lines, but cap so it doesn't become a paragraph.
+  candidates.sort((x, y) => y.a.length - x.a.length);
+
+  const best = candidates[0]!.a;
+  const capped =
+    best.length > 160 ? `${best.slice(0, 157).trim()}…` : best;
+
+  return capped;
+}
+
+/* =============================================================================
+   Interpretation (age-tuned + non-judgmental + confidence gating)
+   ============================================================================= */
+
+function interpretSnippet(snippetRaw: string, age: AgeLane): Interpretation {
+  const snippet = (snippetRaw ?? "").trim();
+  const t = snippet.toLowerCase();
+
+  const hasEffort = /(hard[-\s]?working|work hard|effort|grind|train|practice|discipline|push myself|lock in)/.test(t);
+  const hasBody = /(gym|workout|run|lift|train|sports|practice|move|movement)/.test(t);
+  const hasRoutine = /(routine|schedule|structure|plan|checklist|habit|consistent|every day)/.test(t);
+  const hasCalm = /(calm|quiet|peace|reset|decompress|breathe|alone|space)/.test(t);
+  const hasPeople = /(friends|people|team|together|help|coach|community|talk|support)/.test(t);
+  const hasCreate = /(create|build|make|design|draw|write|edit|music|art|film|code)/.test(t);
+  const hasProgress = /(progress|improve|better|level up|grow|momentum|forward)/.test(t);
+
+  const hits = [hasEffort, hasBody, hasRoutine, hasCalm, hasPeople, hasCreate, hasProgress].filter(Boolean).length;
+
+  let score = hits >= 3 ? 0.85 : hits === 2 ? 0.7 : hits === 1 ? 0.55 : 0.4;
+  if (snippet.length < 18) score -= 0.12;
+  score = clamp01(score);
+
+  const tone = {
+    high_school: {
+      softLead: "That tells me",
+      secondLead: "And it also suggests",
+      close: "So I’ll aim for options that feel real in your actual week — not just “cool on paper.”",
+    },
+    young_adult: {
+      softLead: "That tells me",
+      secondLead: "And it also suggests",
+      close: "So I’ll aim for options that translate into real momentum — not just ideas.",
+    },
+    unknown: {
+      softLead: "That tells me",
+      secondLead: "And it also suggests",
+      close: "So I’ll aim for options that match your real life — not just what sounds good.",
+    },
+  }[age];
+
+  let line1 = `${tone.softLead} you care about days that feel real and satisfying — not just busy.`;
+  let line2 = "";
+
+  if (hasEffort && hasBody) {
+    line1 = `${tone.softLead} you feel best when you’ve put real effort in — movement and “earned” progress matter to you.`;
+    line2 = `${tone.secondLead} you’ll probably stick with next steps more when they’re concrete and trackable (something you can actually do).`;
+  } else if (hasRoutine) {
+    line1 = `${tone.softLead} you do better when there’s a bit of structure — small routines help the day feel under control.`;
+    line2 = `${tone.secondLead} you’ll likely prefer next steps that are simple, repeatable, and low-friction.`;
+  } else if (hasCreate) {
+    line1 = `${tone.softLead} you’re energized by making things — you want hands-on progress, not just talking about it.`;
+    line2 = `${tone.secondLead} you’ll probably learn fastest through projects and quick experiments.`;
+  } else if (hasPeople) {
+    line1 = `${tone.softLead} you get a lot of signal from people — support, teamwork, or being around the right crowd matters.`;
+    line2 = `${tone.secondLead} you’ll likely do better with next steps that include other humans (a class, a club, a partner, a coach).`;
+  } else if (hasCalm) {
+    line1 = `${tone.softLead} you value a reset — focus and calm time help you feel like yourself.`;
+    line2 = `${tone.secondLead} you’ll probably do best with options that protect your attention instead of draining it.`;
+  } else if (hasProgress) {
+    line1 = `${tone.softLead} you like forward motion — you want to feel yourself getting better over time.`;
+    line2 = `${tone.secondLead} you’ll likely respond well to “next step” plans that show visible improvement.`;
+  }
+
+  const lines: string[] = [line1];
+
+  const highConfidence = score >= 0.8;
+  if (highConfidence && line2) lines.push(line2);
+  if (highConfidence) lines.push(tone.close);
+
+  return { lines, confidence: score };
 }
 
 /* =============================================================================
@@ -202,7 +322,6 @@ function wipeEverleapClientStorage() {
 
     // sessionStorage
     window.sessionStorage.removeItem(QUOTE_SESSION_KEY);
-    window.sessionStorage.removeItem(INTRO_SEEN_SESSION_KEY);
     window.sessionStorage.removeItem(TINY_TASKS_SESSION_KEY);
 
     // session prefix
@@ -237,16 +356,9 @@ export default function MainHomePage() {
   const [vm, setVm] = React.useState(() => buildTodayViewModel());
   const [mounted, setMounted] = React.useState(false);
 
-  const [phase, setPhase] = React.useState<TodayPhase>("arrival");
-
   const [motionEnabled, setMotionEnabled] = React.useState(true);
 
-  const [arrivalShowContinue, setArrivalShowContinue] = React.useState(false);
-  const [directionShowPrimary, setDirectionShowPrimary] = React.useState(false);
-  const [directionShowSecondary, setDirectionShowSecondary] = React.useState(false);
-
   const [transitioning, setTransitioning] = React.useState(false);
-  const interactedRef = React.useRef(false);
 
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
@@ -261,7 +373,7 @@ export default function MainHomePage() {
       (process.env.NEXT_PUBLIC_QA_MODE ?? "") === "1");
 
   /* ---------------------------------------------------------------------------
-     Mount / refresh
+     Mount / refresh (avoid hydration mismatch)
      --------------------------------------------------------------------------- */
 
   React.useEffect(() => {
@@ -298,32 +410,7 @@ export default function MainHomePage() {
   }, []);
 
   /* ---------------------------------------------------------------------------
-     Auto-advance cancel on interaction (Arrival only)
-     --------------------------------------------------------------------------- */
-
-  React.useEffect(() => {
-    interactedRef.current = false;
-    if (!motionEnabled) return;
-
-    const mark = () => {
-      interactedRef.current = true;
-    };
-
-    window.addEventListener("pointerdown", mark, { passive: true });
-    window.addEventListener("keydown", mark);
-    window.addEventListener("wheel", mark, { passive: true });
-    window.addEventListener("touchstart", mark, { passive: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", mark);
-      window.removeEventListener("keydown", mark);
-      window.removeEventListener("wheel", mark);
-      window.removeEventListener("touchstart", mark);
-    };
-  }, [motionEnabled]);
-
-  /* ---------------------------------------------------------------------------
-     Completion + gate decision
+     Completion + recommendation
      --------------------------------------------------------------------------- */
 
   const progress = mounted
@@ -343,6 +430,8 @@ export default function MainHomePage() {
   const recommendedNext: RecommendedNext =
     !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
 
+  const nextLabel = labelForNext(recommendedNext);
+
   // "Returning" should be true only for real past activity (NOT just onboarding).
   const hasWeeklyFocus = mounted ? !!(vm.weeklyFocus?.vibe && vm.weeklyFocus?.target) : false;
   const hasSprints = mounted ? (vm.sprintCount ?? 0) > 0 : false;
@@ -351,235 +440,6 @@ export default function MainHomePage() {
 
   const isReturning =
     mounted && (hasAnySignalsProgress || hasWeeklyFocus || hasSprints || hasTinyCompleted);
-
-  // Decide initial phase once we have mounted data
-  React.useEffect(() => {
-    if (!mounted) return;
-
-    // If all done: "door open" immediately
-    if (allSignalsComplete) {
-      setPhase("unlocked");
-      writeIntroSeen();
-      return;
-    }
-
-    // Otherwise: run cinematic only once per session
-    const seen = readIntroSeen();
-    setPhase(seen ? "unlocked" : "arrival");
-  }, [mounted, allSignalsComplete]);
-
-  /* ---------------------------------------------------------------------------
-     Phase timing + staged UI
-     --------------------------------------------------------------------------- */
-
-  React.useEffect(() => {
-    if (!motionEnabled) {
-      setArrivalShowContinue(true);
-      setDirectionShowPrimary(true);
-      setDirectionShowSecondary(true);
-      return;
-    }
-
-    if (phase === "arrival") {
-      setArrivalShowContinue(false);
-      setDirectionShowPrimary(false);
-      setDirectionShowSecondary(false);
-
-      const tContinue = window.setTimeout(() => setArrivalShowContinue(true), 2000);
-
-      // Arrival auto-advance only (and only if not interacted)
-      const tAuto = window.setTimeout(() => {
-        if (!interactedRef.current) setPhase("direction");
-      }, 10000);
-
-      return () => {
-        window.clearTimeout(tContinue);
-        window.clearTimeout(tAuto);
-      };
-    }
-
-    if (phase === "direction") {
-      setArrivalShowContinue(true);
-      setDirectionShowPrimary(false);
-      setDirectionShowSecondary(false);
-
-      const tPrimary = window.setTimeout(() => setDirectionShowPrimary(true), 900);
-      const tSecondary = window.setTimeout(() => setDirectionShowSecondary(true), 1500);
-
-      return () => {
-        window.clearTimeout(tPrimary);
-        window.clearTimeout(tSecondary);
-      };
-    }
-
-    // unlocked
-    setArrivalShowContinue(true);
-    setDirectionShowPrimary(true);
-    setDirectionShowSecondary(true);
-  }, [phase, motionEnabled]);
-
-  /* ---------------------------------------------------------------------------
-     Copy derivations (conversational + name-aware + status-aware)
-     --------------------------------------------------------------------------- */
-
-  const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
-  const open = openingLine(name);
-
-  const arrivalReference: ArrivalReference = sklComplete
-    ? "skills_done"
-    : strComplete
-    ? "strengths_done"
-    : motComplete
-    ? "motivations_done"
-    : isReturning
-    ? "returning_no_action"
-    : "onboarding_only";
-
-  // Phase A: Arrival
-  const arrivalParagraphs: string[] = (() => {
-    if (!mounted) return ["…"];
-
-    // No-name experience: counselor welcome + one-sentence promise.
-    const promise =
-      "I’ll help turn what you’re into into a clear direction — and a few next steps you can actually do.";
-
-    // Brand-new: never say “picking up…”
-    if (!isReturning && !motStarted && !strStarted && !sklStarted) {
-      // If they have a name, still greet, but keep the same promise.
-      return [open, promise];
-    }
-
-    // Returning states
-    if (arrivalReference === "motivations_done") {
-      return [
-        open,
-        "You’ve already done Motivations — nice.",
-        "Now we’ll turn that into a direction and a next step that feels real.",
-      ];
-    }
-
-    if (arrivalReference === "strengths_done") {
-      return [
-        open,
-        "You’ve already done Strengths — that’s the part most people skip.",
-        "Now we use it to make options that fit you day to day.",
-      ];
-    }
-
-    if (arrivalReference === "skills_done") {
-      return [
-        open,
-        "Nice — you’ve already captured Skills too.",
-        "That’s enough signal for me to stop being vague and start being specific.",
-      ];
-    }
-
-    // Only valid if returning
-    return [open, "Picking up where we left off."];
-  })();
-
-  // Phase B: Direction (friendlier grammar, always references status)
-  const directionParagraphsAndCtas = (() => {
-    if (!mounted) {
-      return {
-        paragraphs: ["…"],
-        primaryCtaLabel: "Continue",
-        secondaryCtaLabel: "Not yet",
-      };
-    }
-
-    if (recommendedNext === "motivations") {
-      return {
-        paragraphs: [
-          name ? open : "Alright — quick start.",
-          "You haven’t done Motivations yet — totally normal.",
-          "Motivations tells me what actually energizes you (and what drains you).",
-          "Give me that, and everything Everleap suggests gets way more you.",
-        ],
-        primaryCtaLabel: "Continue to Motivations",
-        secondaryCtaLabel: "Not yet",
-      };
-    }
-
-    if (recommendedNext === "strengths") {
-      return {
-        paragraphs: [
-          open,
-          "You’ve already done Motivations — great.",
-          "Next is Strengths. This is how I make sure your options fit how you operate day to day — not just what sounds interesting.",
-          "Want to keep going?",
-        ],
-        primaryCtaLabel: "Continue to Strengths",
-        secondaryCtaLabel: "Not yet",
-      };
-    }
-
-    // skills
-    return {
-      paragraphs: [
-        open,
-        "You’ve got Motivations and Strengths — that’s the foundation.",
-        "Skills is the practical layer. It’s how I turn “direction” into real next steps: what to try, build, or practice next.",
-        "If you’re down, let’s finish that piece.",
-      ],
-      primaryCtaLabel: "Continue to Skills",
-      secondaryCtaLabel: "Not yet",
-    };
-  })();
-
-  // Phase C: Unlocked (friendlier grammar; no “quick check” stiffness)
-  const unlockedParagraphsAndCtas = (() => {
-    if (!mounted) {
-      return { paragraphs: ["…"], primaryCtaLabel: undefined as string | undefined };
-    }
-
-    if (allSignalsComplete) {
-      return {
-        paragraphs: [
-          open,
-          "You’ve got the full set — Motivations, Strengths, and Skills.",
-          "Insights is where I translate that into real picks: patterns, next steps, and what to explore next.",
-        ],
-        primaryCtaLabel: "Go to Insights",
-      };
-    }
-
-    const nextLabel = labelForNext(recommendedNext);
-
-    if (recommendedNext === "motivations") {
-      return {
-        paragraphs: [
-          name ? open : "Want me to stop guessing?",
-          "Motivations is the fastest way to make Everleap feel personal.",
-          "Two minutes — then I can start giving you real direction.",
-        ],
-        primaryCtaLabel: `Continue to ${nextLabel}`,
-      };
-    }
-
-    if (recommendedNext === "strengths") {
-      return {
-        paragraphs: [
-          open,
-          "I’ve got your Motivations — good.",
-          "Strengths is what makes the recommendations actually fit you day to day.",
-          "If you do one thing next, do this.",
-        ],
-        primaryCtaLabel: `Continue to ${nextLabel}`,
-      };
-    }
-
-    // skills
-    return {
-      paragraphs: [
-        open,
-        "You’ve done the foundation work.",
-        "Skills is what lets me turn it into concrete next steps instead of broad ideas.",
-        "Give me Skills, and I can make sharper calls.",
-      ],
-      primaryCtaLabel: `Continue to ${nextLabel}`,
-    };
-  })();
 
   /* ---------------------------------------------------------------------------
      Tiny Tasks
@@ -649,9 +509,6 @@ export default function MainHomePage() {
       // reset local state
       setVm(buildTodayViewModel());
 
-      // restart the cinematic
-      setPhase("arrival");
-
       // ensure we start at top
       try {
         window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -662,6 +519,98 @@ export default function MainHomePage() {
       // optional: refresh route cache
       router.refresh();
     });
+  };
+
+  /* ---------------------------------------------------------------------------
+     Agentic copy (on-page)
+     --------------------------------------------------------------------------- */
+
+  const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
+  const open = openingLine(name);
+
+  const introParagraphs: string[] = (() => {
+    if (!mounted) return ["…"];
+
+    const p: string[] = [open];
+
+    // Brand new
+    if (!isReturning && !hasAnySignalsProgress) {
+      p.push(
+        "I’ll help turn what you’re into into a clear direction — and a few next steps you can actually do."
+      );
+
+      if (recommendedNext === "motivations") {
+        p.push("First: Motivations. It’s the fastest way for me to stop guessing and start matching what actually fits.");
+        p.push("Two minutes — then I can start giving you real direction.");
+      } else {
+        p.push(`Next I’d do ${nextLabel}.`);
+      }
+
+      return p;
+    }
+
+    // Status line
+    if (motComplete && !strComplete) p.push("So far you’ve locked in Motivations.");
+    else if (motComplete && strComplete && !sklComplete) p.push("So far you’ve locked in Motivations and Strengths.");
+    else if (allSignalsComplete) p.push("You’ve got the full set — Motivations, Strengths, and Skills.");
+    else if (hasAnySignalsProgress) p.push("So far you’ve started building real signal.");
+    else p.push("Picking up where we left off.");
+
+    // Quote + interpretation (if we have one)
+    const map = readStoryAnswerMap();
+    const picked = pickRepresentativeAnswer(map);
+
+    if (picked) {
+      p.push("One thing you said that I’m treating as a real signal:");
+      p.push(`“${picked}”`);
+
+      const age = detectAgeLaneFromOnboarding(vm.snapshot);
+      const interp = interpretSnippet(picked, age);
+      interp.lines.forEach((line) => p.push(line));
+    }
+
+    // Next step framing
+    if (allSignalsComplete) {
+      p.push("Insights is where I translate that into real picks: patterns, next steps, and what to explore next.");
+      return p;
+    }
+
+    if (recommendedNext === "motivations") {
+      p.push("Next I’d do Motivations.");
+      p.push("Motivations tells me what energizes you (and what drains you) — so everything I suggest gets way more you.");
+      return p;
+    }
+
+    if (recommendedNext === "strengths") {
+      p.push("Next I’d do Strengths.");
+      p.push(
+        "Strengths is how I make sure options fit how you operate day to day — not just what sounds interesting."
+      );
+      return p;
+    }
+
+    p.push("Next I’d do Skills.");
+    p.push(
+      "Skills is the practical layer — it’s how I turn “direction” into real next steps: what to try, build, or practice next."
+    );
+    return p;
+  })();
+
+  const primaryCtaLabel = mounted
+    ? allSignalsComplete
+      ? "Go to Insights"
+      : `Continue to ${nextLabel}`
+    : undefined;
+
+  const onPrimary = () => {
+    if (!mounted) return;
+
+    if (allSignalsComplete) {
+      void fadeThen(async () => router.push("/main/insights"));
+      return;
+    }
+
+    void fadeThen(async () => router.push(buildQuestionsHref(recommendedNext)));
   };
 
   /* ---------------------------------------------------------------------------
@@ -814,61 +763,17 @@ export default function MainHomePage() {
 
               <TodayIntro
                 dark={dark}
-                phase={phase}
                 motionEnabled={motionEnabled}
                 isTransitioning={transitioning}
                 quote={mounted ? vm.quote : undefined}
-                arrival={{
-                  reference: arrivalReference,
-                  paragraphs: arrivalParagraphs,
-                  showContinue: arrivalShowContinue,
-                }}
-                direction={{
-                  recommendedNext,
-                  paragraphs: directionParagraphsAndCtas.paragraphs,
-                  primaryCtaLabel: directionParagraphsAndCtas.primaryCtaLabel,
-                  secondaryCtaLabel: directionParagraphsAndCtas.secondaryCtaLabel,
-                  showPrimaryCta: directionShowPrimary,
-                  showSecondaryCta: directionShowSecondary,
-                }}
-                unlocked={{
-                  paragraphs: unlockedParagraphsAndCtas.paragraphs,
-                  primaryCtaLabel: unlockedParagraphsAndCtas.primaryCtaLabel,
-                  showPrimaryCta: true,
-                  showSecondaryCta: false,
-                }}
-                onArrivalContinue={() => {
-                  void fadeThen(() => setPhase("direction"));
-                }}
-                onDirectionAccept={() => {
-                  writeIntroSeen();
-                  void fadeThen(async () => {
-                    setPhase("unlocked");
-                    router.push(buildQuestionsHref(recommendedNext));
-                  });
-                }}
-                onDirectionSkip={() => {
-                  writeIntroSeen();
-                  void fadeThen(() => setPhase("unlocked"));
-                }}
-                onUnlockedPrimary={() => {
-                  writeIntroSeen();
-                  if (allSignalsComplete) {
-                    void fadeThen(async () => {
-                      router.push("/main/insights");
-                    });
-                  } else {
-                    void fadeThen(async () => {
-                      router.push(buildQuestionsHref(recommendedNext));
-                    });
-                  }
-                }}
+                paragraphs={introParagraphs}
+                primaryCtaLabel={primaryCtaLabel}
+                onPrimary={onPrimary}
               />
 
-              {/* FULL PAGE AREA (only after unlocked) */}
-              {phase === "unlocked" && mounted && (
+              {/* Main page content (always on-page now) */}
+              {mounted ? (
                 <>
-                  {/* If all 3 done: door open wide → no Signals pressure */}
                   {!allSignalsComplete ? (
                     <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
                   ) : null}
@@ -886,10 +791,12 @@ export default function MainHomePage() {
                     }}
                     dark={dark}
                   />
-                </>
-              )}
 
-              <div className="h-3" />
+                  <div className="h-3" />
+                </>
+              ) : (
+                <div className="h-10" />
+              )}
             </div>
           </section>
         </main>
