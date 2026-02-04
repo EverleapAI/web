@@ -209,7 +209,7 @@ function StepDots({
   return (
     <div className="flex items-center gap-3">
       {showLabel ? (
-        <div className="text-[11px] font-semibold text-white/40">
+        <div className="text-[11px] font-semibold text-white/45">
           Step {filled} of {total}
         </div>
       ) : null}
@@ -220,7 +220,7 @@ function StepDots({
             <span
               key={i}
               className={`h-[6px] w-[14px] rounded-full transition ${
-                on ? "bg-white/70" : "bg-white/18"
+                on ? "bg-white/75" : "bg-white/20"
               }`}
             />
           );
@@ -251,12 +251,12 @@ function ChoiceChips({
             whileTap={{ scale: 0.99 }}
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
               selected
-                ? "border-white/30 bg-white/10 text-white"
-                : "border-white/12 bg-white/5 text-white/75 hover:bg-white/8 hover:text-white/85"
+                ? "border-white/34 bg-white/14 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset]"
+                : "border-white/16 bg-white/8 text-white/82 hover:bg-white/12 hover:text-white/95"
             }`}
             aria-pressed={selected}
           >
-            {selected ? <Check className="h-4 w-4 text-white/80" /> : null}
+            {selected ? <Check className="h-4 w-4 text-white/90" /> : null}
             <span>{o}</span>
           </motion.button>
         );
@@ -277,7 +277,7 @@ function MinimalLineInput({
   onEnter?: () => void;
 }) {
   return (
-    <div className="mt-5 border-b border-white/18 transition focus-within:border-white/40">
+    <div className="mt-5 border-b border-white/22 transition focus-within:border-white/50">
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -289,7 +289,7 @@ function MinimalLineInput({
         }}
         rows={2}
         placeholder={placeholder ?? ""}
-        className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/90 placeholder:text-white/30 outline-none"
+        className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/92 placeholder:text-white/40 outline-none"
       />
     </div>
   );
@@ -339,7 +339,6 @@ export function TaskRunnerModal({
     } else {
       setVibe("");
       setTarget("");
-      // keep sentence empty for a “fresh” feel each open
       setSentence("");
     }
 
@@ -348,20 +347,25 @@ export function TaskRunnerModal({
     setTakeaway("");
   }, [open, taskId, prompts]);
 
-  const surface = dark ? "border-white/12 bg-black/40" : "border-slate-900/10 bg-white/55";
-  const overlay = dark ? "bg-black/60" : "bg-black/40";
+  // Direction C: “Glass-card” with a subtle accent wash (more pop, still minimalist).
+  const overlay = dark ? "bg-black/28" : "bg-black/22";
+  const surface = dark
+    ? "border-white/14 bg-slate-900/45"
+    : "border-slate-900/10 bg-white/78";
 
   const primaryBtn =
     "inline-flex items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.99]";
 
   const primaryBtnClass = dark
-    ? `${primaryBtn} border-white/12 bg-white/10 hover:bg-white/14 text-white`
-    : `${primaryBtn} border-slate-900/10 bg-white/75 hover:bg-white text-slate-900`;
+    ? `${primaryBtn} border-white/16 bg-white/14 hover:bg-white/18 text-white`
+    : `${primaryBtn} border-slate-900/10 bg-white/90 hover:bg-white text-slate-900`;
 
-  const subtleBtnClass = dark ? "text-white/65 hover:text-white/90" : "text-slate-700 hover:text-slate-950";
+  const subtleBtnClass = dark
+    ? "text-white/70 hover:text-white/95"
+    : "text-slate-700 hover:text-slate-950";
 
   const labelClass = dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
+    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/55"
     : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-700/60";
 
   const close = () => onClose();
@@ -390,7 +394,7 @@ export function TaskRunnerModal({
 
     const nextItem: CuriositySprintState = {
       createdAt: new Date().toISOString(),
-      lane, // SprintLane is compatible with CuriositySprintState["lane"] if it’s a string union
+      lane,
       prompt: prompt.trim() || (prompts[0] ?? ""),
       takeaway: t,
     };
@@ -410,7 +414,16 @@ export function TaskRunnerModal({
   function renderWeeklyFocus() {
     const total = 4;
 
-    const vibeOptions = ["Calm", "Confident", "Curious", "Productive", "Social", "Strong", "Creative", "Reset"];
+    const vibeOptions = [
+      "Calm",
+      "Confident",
+      "Curious",
+      "Productive",
+      "Social",
+      "Strong",
+      "Creative",
+      "Reset",
+    ];
     const targetOptions = ["School", "Friends", "Health", "Money", "Future", "Confidence", "Time"];
 
     const canNext =
@@ -430,37 +443,39 @@ export function TaskRunnerModal({
         {step === 0 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">How do you want this week to feel?</h2>
-            <p className="mt-2 text-sm text-white/70">Pick a vibe.</p>
-            <p className="mt-2 text-xs text-white/45">I’ll shape your suggestions around it.</p>
+            <p className="mt-2 text-sm text-white/78">Pick a vibe.</p>
+            <p className="mt-2 text-xs text-white/58">I’ll shape your suggestions around it.</p>
             <ChoiceChips options={vibeOptions} value={vibe} onChange={(v) => setVibe(v)} />
           </>
         ) : step === 1 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Where do you want that energy aimed?</h2>
-            <p className="mt-2 text-sm text-white/70">Pick one target.</p>
-            <p className="mt-2 text-xs text-white/45">This helps me keep it practical.</p>
+            <p className="mt-2 text-sm text-white/78">Pick one target.</p>
+            <p className="mt-2 text-xs text-white/58">This helps me keep it practical.</p>
             <ChoiceChips options={targetOptions} value={target} onChange={(v) => setTarget(v)} />
           </>
         ) : step === 2 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">One sentence (optional)</h2>
-            <p className="mt-2 text-sm text-white/70">Keep it simple.</p>
+            <p className="mt-2 text-sm text-white/78">Keep it simple.</p>
             <MinimalLineInput
               value={sentence}
               onChange={setSentence}
               placeholder="This week I want…"
               onEnter={() => completeWeeklyFocus()}
             />
-            <div className="mt-4 text-xs text-white/50">Saved locally for now (Actions hookup comes later).</div>
+            <div className="mt-4 text-xs text-white/62">
+              Saved locally for now (Actions hookup comes later).
+            </div>
           </>
         ) : (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Locked.</h2>
-            <p className="mt-2 text-sm text-white/75">
+            <p className="mt-2 text-sm text-white/82">
               Picks can lean toward <span className="font-semibold text-white">{vibe}</span> +
               <span className="font-semibold text-white"> {target}</span>.
             </p>
-            {sentence.trim() ? <p className="mt-3 text-sm text-white/70">“{sentence.trim()}”</p> : null}
+            {sentence.trim() ? <p className="mt-3 text-sm text-white/78">“{sentence.trim()}”</p> : null}
 
             <div className="mt-6 flex items-center gap-3">
               <button type="button" onClick={close} className={primaryBtnClass}>
@@ -478,7 +493,7 @@ export function TaskRunnerModal({
             <button
               type="button"
               onClick={close}
-              className={`text-xs font-semibold ${subtleBtnClass} opacity-70 hover:opacity-100`}
+              className={`text-xs font-semibold ${subtleBtnClass} opacity-75 hover:opacity-100`}
             >
               Not now
             </button>
@@ -534,29 +549,31 @@ export function TaskRunnerModal({
 
         {step === 0 ? (
           <>
-            <h2 className="mt-4 text-xl font-semibold text-white">What do you want to explore for 10 minutes?</h2>
-            <p className="mt-2 text-sm text-white/70">Pick one. No commitment.</p>
-            <p className="mt-2 text-xs text-white/45">You’re just opening a door.</p>
+            <h2 className="mt-4 text-xl font-semibold text-white">
+              What do you want to explore for 10 minutes?
+            </h2>
+            <p className="mt-2 text-sm text-white/78">Pick one. No commitment.</p>
+            <p className="mt-2 text-xs text-white/58">You’re just opening a door.</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {laneOptions.map((o) => {
                 const selected = lane === o.id;
                 return (
                   <motion.button
-                    key={String(o.id)} // <- fixes TS key squiggle
+                    key={String(o.id)}
                     type="button"
                     onClick={() => setLane(o.id)}
                     whileTap={{ scale: 0.99 }}
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                       selected
-                        ? "border-white/30 bg-white/12 text-white"
-                        : "border-white/12 bg-white/5 text-white/75 hover:bg-white/8 hover:text-white/85"
+                        ? "border-white/34 bg-white/14 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset]"
+                        : "border-white/16 bg-white/8 text-white/82 hover:bg-white/12 hover:text-white/95"
                     }`}
                     aria-pressed={selected}
                   >
-                    {selected ? <Check className="h-4 w-4 text-white/80" /> : null}
+                    {selected ? <Check className="h-4 w-4 text-white/90" /> : null}
                     <span>{o.label}</span>
-                    {selected ? <span className="opacity-80">{o.emoji}</span> : null}
+                    {selected ? <span className="opacity-85">{o.emoji}</span> : null}
                   </motion.button>
                 );
               })}
@@ -565,16 +582,20 @@ export function TaskRunnerModal({
             <AnimatePresence initial={false}>
               {lane ? (
                 <motion.div
-                  key={String(lane)} // <- fixes TS key squiggle
+                  key={String(lane)}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="mt-4"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">What this opens</div>
-                  <div className="mt-2 text-sm text-white/85">{laneHelper(lane)}</div>
-                  <div className="mt-2 text-xs text-white/45">Not choosing a path — just gathering signal.</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+                    What this opens
+                  </div>
+                  <div className="mt-2 text-sm text-white/90">{laneHelper(lane)}</div>
+                  <div className="mt-2 text-xs text-white/60">
+                    Not choosing a path — just gathering signal.
+                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
@@ -582,7 +603,7 @@ export function TaskRunnerModal({
         ) : step === 1 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Pick a prompt.</h2>
-            <p className="mt-2 text-sm text-white/70">You can edit it.</p>
+            <p className="mt-2 text-sm text-white/78">You can edit it.</p>
 
             <div className="mt-4 space-y-2">
               {suggested.map((p) => {
@@ -594,7 +615,7 @@ export function TaskRunnerModal({
                     onClick={() => setPrompt(p)}
                     whileTap={{ scale: 0.995 }}
                     className={`w-full text-left text-sm transition ${
-                      selected ? "text-white" : "text-white/75 hover:text-white/90"
+                      selected ? "text-white" : "text-white/84 hover:text-white/95"
                     }`}
                   >
                     <span className="underline decoration-white/20 underline-offset-4">{p}</span>
@@ -603,37 +624,51 @@ export function TaskRunnerModal({
               })}
             </div>
 
-            <MinimalLineInput value={prompt} onChange={setPrompt} placeholder="Or write your own prompt…" onEnter={() => setStep(2)} />
+            <MinimalLineInput
+              value={prompt}
+              onChange={setPrompt}
+              placeholder="Or write your own prompt…"
+              onEnter={() => setStep(2)}
+            />
           </>
         ) : step === 2 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Do it.</h2>
-            <p className="mt-2 text-sm text-white/70">
+            <p className="mt-2 text-sm text-white/78">
               Set a 10-minute timer. Come back and save one thing you noticed.
             </p>
 
-            <div className="mt-4 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Your prompt</div>
+            <div className="mt-4 text-sm text-white/92">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+                Your prompt
+              </div>
               <div className="mt-2">{prompt.trim() || suggested[0] || "Find one interesting thing."}</div>
             </div>
 
-            <div className="mt-4 text-xs text-white/50">(No in-app timer yet — just the behavior.)</div>
+            <div className="mt-4 text-xs text-white/60">(No in-app timer yet — just the behavior.)</div>
           </>
         ) : step === 3 ? (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">One takeaway.</h2>
-            <p className="mt-2 text-sm text-white/70">A sentence is enough.</p>
+            <p className="mt-2 text-sm text-white/78">A sentence is enough.</p>
 
-            <MinimalLineInput value={takeaway} onChange={setTakeaway} placeholder="I noticed that…" onEnter={() => completeSprint()} />
-            <div className="mt-4 text-xs text-white/55">Saved so Everleap can build on it later.</div>
+            <MinimalLineInput
+              value={takeaway}
+              onChange={setTakeaway}
+              placeholder="I noticed that…"
+              onEnter={() => completeSprint()}
+            />
+            <div className="mt-4 text-xs text-white/62">Saved so Everleap can build on it later.</div>
           </>
         ) : (
           <>
             <h2 className="mt-4 text-xl font-semibold text-white">Nice.</h2>
-            <p className="mt-2 text-sm text-white/75">That’s a real signal.</p>
+            <p className="mt-2 text-sm text-white/82">That’s a real signal.</p>
 
-            <div className="mt-4 text-sm text-white/85">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/45">Saved takeaway</div>
+            <div className="mt-4 text-sm text-white/92">
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+                Saved takeaway
+              </div>
               <div className="mt-2">{takeaway.trim()}</div>
             </div>
 
@@ -653,7 +688,7 @@ export function TaskRunnerModal({
             <button
               type="button"
               onClick={close}
-              className={`text-xs font-semibold ${subtleBtnClass} opacity-70 hover:opacity-100`}
+              className={`text-xs font-semibold ${subtleBtnClass} opacity-75 hover:opacity-100`}
             >
               Not now
             </button>
@@ -697,23 +732,25 @@ export function TaskRunnerModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 14, opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className={`relative w-full max-w-xl overflow-hidden rounded-[28px] border ${surface} backdrop-blur-xl shadow-[0_24px_90px_rgba(0,0,0,0.75)]`}
+            className={`relative w-full max-w-xl overflow-hidden rounded-[28px] border ${surface} backdrop-blur-xl shadow-[0_18px_90px_rgba(0,0,0,0.55)]`}
           >
+            {/* Accent wash (adds “pop”) + brighter top glow, keeps content readable */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-40"
+              className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(1200px 500px at 12% 0%, rgba(255,255,255,0.10), transparent 60%), radial-gradient(900px 400px at 90% 10%, rgba(255,255,255,0.06), transparent 55%)",
+                  "radial-gradient(1100px 520px at 18% 0%, rgba(255,255,255,0.14), transparent 60%), radial-gradient(900px 520px at 92% 10%, rgba(255,255,255,0.10), transparent 62%), radial-gradient(900px 520px at 20% 92%, rgba(56,189,248,0.14), transparent 60%), radial-gradient(900px 520px at 90% 88%, rgba(251,191,36,0.12), transparent 62%), linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.18) 100%)",
+                opacity: 1,
               }}
             />
 
             <div className="relative flex items-center justify-between px-5 py-4">
-              <div className="text-sm font-semibold text-white/90">Everleap</div>
+              <div className="text-sm font-semibold text-white/92">Everleap</div>
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/6 text-white/70 transition hover:bg-white/10 hover:text-white/90"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/14 bg-white/10 text-white/78 transition hover:bg-white/14 hover:text-white/95"
                 aria-label="Close"
                 title="Close"
               >

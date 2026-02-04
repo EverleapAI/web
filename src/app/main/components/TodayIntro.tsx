@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* =============================================================================
@@ -81,11 +81,42 @@ export function TodayIntro(props: TodayIntroProps) {
   const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
   const textFaint = dark ? "text-slate-400" : "text-slate-500";
 
-  // Conversation typography (2× feel vs old small dashboard text)
+  // Conversation typography
   const convoBodyClass = `text-lg leading-relaxed md:text-xl ${textMuted}`;
-  const convoCtaPrimaryClass = `text-lg font-semibold md:text-xl ${
-    dark ? "text-white hover:underline" : "text-slate-900 hover:underline"
-  }`;
+
+  // CTA: subtle “coach action”, not a headline link
+  const ctaClass = [
+    "group inline-flex items-center gap-2",
+    "text-base md:text-lg",
+    "font-semibold",
+    "transition",
+    dark ? "text-white/85 hover:text-white" : "text-slate-900/85 hover:text-slate-900",
+    // no underline; rely on motion + icon + tone
+    "focus-visible:outline-none",
+    dark ? "focus-visible:ring-2 focus-visible:ring-white/20" : "focus-visible:ring-2 focus-visible:ring-slate-900/15",
+  ].join(" ");
+
+  // Collapse/expand (news-feed style, but without explicit “read more” text)
+  const [expanded, setExpanded] = React.useState(false);
+
+  // Fixed height in collapsed mode (mobile-first)
+  const collapsedMaxH = "max-h-[10.5rem] md:max-h-[12.5rem]";
+
+  // Big veil that fades over many lines
+  const veilGradient = dark
+    ? "bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-950/95"
+    : "bg-gradient-to-b from-white/0 via-white/75 to-white/95";
+
+  // Only collapse if there’s enough content to justify it
+  const canCollapse = (paragraphs?.length ?? 0) >= 4;
+
+  // Make narrative feel tappable without adding UI chrome
+  const narrativeHover = dark ? "hover:bg-white/[0.02]" : "hover:bg-black/[0.02]";
+  const narrativeFocus = dark
+    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
+    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/12";
+
+  const clickHint = expanded ? "Click to collapse" : "Click to expand";
 
   return (
     <div className="relative">
@@ -113,16 +144,72 @@ export function TodayIntro(props: TodayIntroProps) {
 
       {/* Counselor copy + single CTA */}
       <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
-        <div className="space-y-4">
-          {paragraphs.map((p, idx) => (
-            <p key={`today_${idx}`} className={convoBodyClass}>
-              {p}
-            </p>
-          ))}
+        {/* Narrative (click anywhere to expand/collapse; no explicit label) */}
+        <div className="relative">
+          {canCollapse ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className={[
+                "group relative block w-full text-left",
+                "rounded-2xl",
+                "px-1 py-1",
+                "transition",
+                narrativeHover,
+                narrativeFocus,
+              ].join(" ")}
+              aria-expanded={expanded}
+              aria-label={`${clickHint}. Coach narrative`}
+              title={clickHint}
+            >
+              <div
+                className={[
+                  "relative",
+                  !expanded ? `overflow-hidden ${collapsedMaxH}` : "",
+                ].join(" ")}
+              >
+                <div className="space-y-4">
+                  {paragraphs.map((p, idx) => (
+                    <p key={`today_${idx}`} className={convoBodyClass}>
+                      {p}
+                    </p>
+                  ))}
+                </div>
+
+                {/* Strong fade veil */}
+                {!expanded ? (
+                  <div
+                    aria-hidden
+                    className={[
+                      "pointer-events-none absolute inset-x-0 bottom-0",
+                      "h-[8.5rem] md:h-[9.5rem]",
+                      veilGradient,
+                    ].join(" ")}
+                  />
+                ) : null}
+
+                {/* Tiny non-text cue: a faint dot row at the bottom edge (no words, no collision) */}
+                {!expanded ? (
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
+                    <div className={`h-1 w-10 rounded-full ${dark ? "bg-white/10" : "bg-black/10"}`} />
+                  </div>
+                ) : null}
+              </div>
+            </button>
+          ) : (
+            <div className="space-y-4">
+              {paragraphs.map((p, idx) => (
+                <p key={`today_${idx}`} className={convoBodyClass}>
+                  {p}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Primary CTA (subtle, coach-like) */}
         {primaryCtaLabel ? (
-          <div className="mt-7">
+          <div className="mt-6">
             <div className="h-8 md:h-9">
               <AnimatePresence mode="wait" initial={false}>
                 {motionEnabled ? (
@@ -134,18 +221,34 @@ export function TodayIntro(props: TodayIntroProps) {
                     animate={fadeIn.animate}
                     exit={fadeIn.exit}
                     transition={{ duration: 0.32, ease: "easeOut" }}
-                    className={convoCtaPrimaryClass}
+                    className={ctaClass}
                   >
-                    {primaryCtaLabel}
+                    <span>{primaryCtaLabel}</span>
+                    <ChevronRight
+                      className={[
+                        "h-4 w-4 transition",
+                        "opacity-70 group-hover:opacity-95",
+                        "translate-x-0 group-hover:translate-x-[2px]",
+                      ].join(" ")}
+                      aria-hidden
+                    />
                   </motion.button>
                 ) : (
                   <button
                     key="today_primary_static"
                     type="button"
                     onClick={onPrimary}
-                    className={convoCtaPrimaryClass}
+                    className={ctaClass}
                   >
-                    {primaryCtaLabel}
+                    <span>{primaryCtaLabel}</span>
+                    <ChevronRight
+                      className={[
+                        "h-4 w-4 transition",
+                        "opacity-70 group-hover:opacity-95",
+                        "translate-x-0 group-hover:translate-x-[2px]",
+                      ].join(" ")}
+                      aria-hidden
+                    />
                   </button>
                 )}
               </AnimatePresence>

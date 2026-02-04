@@ -38,7 +38,11 @@ const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
 
 // sessionStorage
 const QUOTE_SESSION_KEY = "everleap.main.quote.v1";
+const INTRO_SEEN_SESSION_KEY = "everleap.main.introSeen.v1";
 const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
+
+// Today copy variant (session)
+const TODAY_COPY_VARIANT_KEY = "everleap.main.todayCopyVariant.v1";
 
 // session prefix
 const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
@@ -54,16 +58,11 @@ const SIGNAL_COMPLETE_COUNT = 5;
    ============================================================================= */
 
 type SessionTinyState = {
-  shownIds: TinyTaskId[];
-  completedIds: TinyTaskId[];
+  shownIds: string[];
+  completedIds: string[];
 };
 
-type AgeLane = "high_school" | "young_adult" | "unknown";
-
-type Interpretation = {
-  lines: string[]; // 1–3 lines (only longer when confidence is high)
-  confidence: number; // 0..1
-};
+type Saved = { answer?: string; skipped?: boolean };
 
 /* =============================================================================
    Utils
@@ -109,171 +108,64 @@ function getSnapshotName(snapshot: unknown): string {
   return typeof s.name === "string" ? s.name : "";
 }
 
-/**
- * Opening line for copy:
- * - If name exists → greet.
- * - If no name → counselor welcome (never “Hey.”).
- */
+function labelForNext(next: RecommendedNext) {
+  return next === "motivations" ? "Motivations" : next === "strengths" ? "Strengths" : "Skills";
+}
+
 function openingLine(name: string) {
   const n = (name ?? "").trim();
   return n ? `Hey ${n}.` : "Welcome — I’m your Everleap counselor.";
 }
 
-function labelForNext(next: RecommendedNext) {
-  return next === "motivations"
-    ? "Motivations"
-    : next === "strengths"
-    ? "Strengths"
-    : "Skills";
+function cleanOneLine(s: string) {
+  return (s ?? "").replace(/\s+/g, " ").trim();
 }
-
-function clamp01(n: number) {
-  return Math.max(0, Math.min(1, n));
-}
-
-function detectAgeLaneFromOnboarding(snapshot: unknown): AgeLane {
-  if (!snapshot || typeof snapshot !== "object") return "unknown";
-  const s = snapshot as { situation?: unknown };
-  if (s.situation === "high_school") return "high_school";
-  if (s.situation === "young_adult") return "young_adult";
-  return "unknown";
-}
-
-/* =============================================================================
-   Story answers (for “I heard you” quote)
-   ============================================================================= */
-
-type SavedAnswer = { answer?: string; skipped?: boolean };
 
 function isMeaningfulText(value: string): boolean {
   const trimmed = (value ?? "").trim();
   if (trimmed.length < 3) return false;
-
   const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, "");
   if (!lettersOnly) return false;
-
   const unique = new Set(lettersOnly.toLowerCase()).size;
   if (unique <= 2) return false;
-
   const squashed = trimmed.replace(/\s+/g, "");
   if (/^(.)\1{6,}$/i.test(squashed)) return false;
-
   return true;
 }
 
-function readStoryAnswerMap(): Record<string, SavedAnswer> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(STORY_STORAGE_KEY_V3);
-    const parsed = safeJsonParse<Record<string, SavedAnswer>>(raw);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function pickRepresentativeAnswer(map: Record<string, SavedAnswer>): string | null {
-  const entries = Object.entries(map ?? {});
-  if (!entries.length) return null;
-
-  // Prefer answered (not skipped), meaningful, and longer.
-  const candidates = entries
-    .map(([id, s]) => ({ id, a: (s?.answer ?? "").trim(), skipped: Boolean(s?.skipped) }))
-    .filter((x) => !x.skipped && isMeaningfulText(x.a));
-
-  if (!candidates.length) return null;
-
-  // Favor longer, more “quote-able” lines, but cap so it doesn't become a paragraph.
-  candidates.sort((x, y) => y.a.length - x.a.length);
-
-  const best = candidates[0]!.a;
-  const capped =
-    best.length > 160 ? `${best.slice(0, 157).trim()}…` : best;
-
-  return capped;
-}
-
 /* =============================================================================
-   Interpretation (age-tuned + non-judgmental + confidence gating)
+   SessionTiny normalizer (NO any)
    ============================================================================= */
 
-function interpretSnippet(snippetRaw: string, age: AgeLane): Interpretation {
-  const snippet = (snippetRaw ?? "").trim();
-  const t = snippet.toLowerCase();
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((x): x is string => typeof x === "string");
+}
 
-  const hasEffort = /(hard[-\s]?working|work hard|effort|grind|train|practice|discipline|push myself|lock in)/.test(t);
-  const hasBody = /(gym|workout|run|lift|train|sports|practice|move|movement)/.test(t);
-  const hasRoutine = /(routine|schedule|structure|plan|checklist|habit|consistent|every day)/.test(t);
-  const hasCalm = /(calm|quiet|peace|reset|decompress|breathe|alone|space)/.test(t);
-  const hasPeople = /(friends|people|team|together|help|coach|community|talk|support)/.test(t);
-  const hasCreate = /(create|build|make|design|draw|write|edit|music|art|film|code)/.test(t);
-  const hasProgress = /(progress|improve|better|level up|grow|momentum|forward)/.test(t);
+function readVmSessionTiny(vm: unknown): SessionTinyState {
+  if (!vm || typeof vm !== "object") return { shownIds: [], completedIds: [] };
 
-  const hits = [hasEffort, hasBody, hasRoutine, hasCalm, hasPeople, hasCreate, hasProgress].filter(Boolean).length;
+  const obj = vm as Record<string, unknown>;
+  const st = obj["sessionTiny"];
 
-  let score = hits >= 3 ? 0.85 : hits === 2 ? 0.7 : hits === 1 ? 0.55 : 0.4;
-  if (snippet.length < 18) score -= 0.12;
-  score = clamp01(score);
+  if (!st || typeof st !== "object") return { shownIds: [], completedIds: [] };
 
-  const tone = {
-    high_school: {
-      softLead: "That tells me",
-      secondLead: "And it also suggests",
-      close: "So I’ll aim for options that feel real in your actual week — not just “cool on paper.”",
-    },
-    young_adult: {
-      softLead: "That tells me",
-      secondLead: "And it also suggests",
-      close: "So I’ll aim for options that translate into real momentum — not just ideas.",
-    },
-    unknown: {
-      softLead: "That tells me",
-      secondLead: "And it also suggests",
-      close: "So I’ll aim for options that match your real life — not just what sounds good.",
-    },
-  }[age];
-
-  let line1 = `${tone.softLead} you care about days that feel real and satisfying — not just busy.`;
-  let line2 = "";
-
-  if (hasEffort && hasBody) {
-    line1 = `${tone.softLead} you feel best when you’ve put real effort in — movement and “earned” progress matter to you.`;
-    line2 = `${tone.secondLead} you’ll probably stick with next steps more when they’re concrete and trackable (something you can actually do).`;
-  } else if (hasRoutine) {
-    line1 = `${tone.softLead} you do better when there’s a bit of structure — small routines help the day feel under control.`;
-    line2 = `${tone.secondLead} you’ll likely prefer next steps that are simple, repeatable, and low-friction.`;
-  } else if (hasCreate) {
-    line1 = `${tone.softLead} you’re energized by making things — you want hands-on progress, not just talking about it.`;
-    line2 = `${tone.secondLead} you’ll probably learn fastest through projects and quick experiments.`;
-  } else if (hasPeople) {
-    line1 = `${tone.softLead} you get a lot of signal from people — support, teamwork, or being around the right crowd matters.`;
-    line2 = `${tone.secondLead} you’ll likely do better with next steps that include other humans (a class, a club, a partner, a coach).`;
-  } else if (hasCalm) {
-    line1 = `${tone.softLead} you value a reset — focus and calm time help you feel like yourself.`;
-    line2 = `${tone.secondLead} you’ll probably do best with options that protect your attention instead of draining it.`;
-  } else if (hasProgress) {
-    line1 = `${tone.softLead} you like forward motion — you want to feel yourself getting better over time.`;
-    line2 = `${tone.secondLead} you’ll likely respond well to “next step” plans that show visible improvement.`;
-  }
-
-  const lines: string[] = [line1];
-
-  const highConfidence = score >= 0.8;
-  if (highConfidence && line2) lines.push(line2);
-  if (highConfidence) lines.push(tone.close);
-
-  return { lines, confidence: score };
+  const stObj = st as Record<string, unknown>;
+  return {
+    shownIds: toStringArray(stObj["shownIds"]),
+    completedIds: toStringArray(stObj["completedIds"]),
+  };
 }
 
 /* =============================================================================
-   Tiny task session state
+   Tiny task session state (sessionStorage)
    ============================================================================= */
 
 function readSessionTinyState(): SessionTinyState {
   if (typeof window === "undefined") return { shownIds: [], completedIds: [] };
 
   const parsed = safeJsonParse<SessionTinyState>(
-    window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY)
+    window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY),
   );
   if (!parsed) return { shownIds: [], completedIds: [] };
 
@@ -322,13 +214,216 @@ function wipeEverleapClientStorage() {
 
     // sessionStorage
     window.sessionStorage.removeItem(QUOTE_SESSION_KEY);
+    window.sessionStorage.removeItem(INTRO_SEEN_SESSION_KEY);
     window.sessionStorage.removeItem(TINY_TASKS_SESSION_KEY);
+    window.sessionStorage.removeItem(TODAY_COPY_VARIANT_KEY);
 
     // session prefix
     clearSessionPrefix(ZIP_PLACE_SESSION_PREFIX);
   } catch {
     // ignore
   }
+}
+
+/* =============================================================================
+   Story + onboarding readers (for meaningful copy)
+   ============================================================================= */
+
+type OnboardingV4 = {
+  name?: string;
+  situation?: "high_school" | "young_adult" | null;
+  certainty?: "strong" | "kinda" | "no_clue" | null;
+};
+
+function readOnboardingV4(): OnboardingV4 {
+  if (typeof window === "undefined") return {};
+  const raw = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
+  const parsed = safeJsonParse<OnboardingV4>(raw);
+  return parsed ?? {};
+}
+
+function loadStorySaved(): Record<string, Saved> {
+  if (typeof window === "undefined") return {};
+  const raw = window.localStorage.getItem(STORY_STORAGE_KEY_V3);
+  const parsed = safeJsonParse<Record<string, Saved>>(raw);
+  return parsed ?? {};
+}
+
+type ExtractedSignal = {
+  category: RecommendedNext;
+  questionId: string;
+  answer: string;
+  confidence: number; // 0..1
+  interpretation: string;
+  extraInterpretation?: string;
+};
+
+function scoreAnswer(a: string) {
+  const t = cleanOneLine(a);
+  if (!isMeaningfulText(t)) return 0;
+
+  const len = t.length;
+  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
+  const hasMovement = /\b(gym|run|lift|workout|move|training|practice)\b/i.test(t);
+  const hasEmotion = /\b(happy|calm|proud|stressed|anxious|excited|good|better)\b/i.test(t);
+  const hasRoutine = /\b(day|daily|routine|morning|night|shower|sleep|schedule)\b/i.test(t);
+
+  let score = 0;
+  score += Math.min(50, len) / 50;
+  score += hasEffort ? 0.35 : 0;
+  score += hasMovement ? 0.25 : 0;
+  score += hasEmotion ? 0.18 : 0;
+  score += hasRoutine ? 0.12 : 0;
+
+  return Math.min(2, score);
+}
+
+function interpretAnswer(opts: {
+  answer: string;
+  lane: "high_school" | "young_adult" | "unknown";
+  confidence: number;
+}): { interpretation: string; extra?: string } {
+  const { answer, lane, confidence } = opts;
+  const t = cleanOneLine(answer);
+
+  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|progress)\b/i.test(t);
+  const hasMovement = /\b(gym|run|lift|workout|move|training)\b/i.test(t);
+  const hasReset = /\b(shower|sleep|reset|clean|fresh)\b/i.test(t);
+  const hasMood = /\b(happy|calm|good|better|peace|ok)\b/i.test(t);
+
+  let interpretation =
+    "You do best when there’s a clear win in the day — something you can point to and say, “I did that.”";
+
+  if (hasEffort && hasMovement) {
+    interpretation = "You do best when progress feels earned — effort + momentum matter to you.";
+  } else if (hasEffort) {
+    interpretation = "You do best when the day feels earned — real effort, real progress, not just drifting.";
+  } else if (hasMovement) {
+    interpretation = "You do best with momentum — when you move, your head clears and you lock in.";
+  } else if (hasMood) {
+    interpretation = "Your mood isn’t random — it tracks with what your day actually contains.";
+  }
+
+  if (hasReset) {
+    interpretation += " You also have a reset ritual — that’s you protecting your headspace.";
+  }
+
+  let extra: string | undefined;
+  if (confidence >= 0.78) {
+    if (lane === "high_school") {
+      extra = "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
+    } else if (lane === "young_adult") {
+      extra =
+        "So I’m going to bias toward paths with visible momentum — projects, routines, and environments where progress shows.";
+    } else {
+      extra = "So I’m going to recommend next steps you can actually train — not just browse.";
+    }
+  }
+
+  // keep it tight if signal is weak
+  if (confidence < 0.45) return { interpretation, extra: undefined };
+
+  return { interpretation, extra };
+}
+
+function pickBestSignal(): ExtractedSignal | null {
+  if (typeof window === "undefined") return null;
+
+  const saved = loadStorySaved();
+  const onboarding = readOnboardingV4();
+
+  const lane: "high_school" | "young_adult" | "unknown" =
+    onboarding.situation === "high_school"
+      ? "high_school"
+      : onboarding.situation === "young_adult"
+      ? "young_adult"
+      : "unknown";
+
+  const candidates: Array<{ id: string; cat: RecommendedNext; answer: string; score: number }> = [];
+
+  const addIf = (id: string, cat: RecommendedNext) => {
+    const s = saved[id];
+    const a = cleanOneLine(s?.answer ?? "");
+    if (!a || !isMeaningfulText(a)) return;
+    candidates.push({ id, cat, answer: a, score: scoreAnswer(a) });
+  };
+
+  for (let i = 1; i <= 5; i += 1) addIf(`motivations_${i}`, "motivations");
+  for (let i = 1; i <= 5; i += 1) addIf(`strengths_${i}`, "strengths");
+  for (let i = 1; i <= 5; i += 1) addIf(`skills_${i}`, "skills");
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => {
+    const biasA = a.cat === "motivations" ? 0.06 : 0;
+    const biasB = b.cat === "motivations" ? 0.06 : 0;
+    return b.score + biasB - (a.score + biasA);
+  });
+
+  const top = candidates[0]!;
+  const normalized = Math.max(0, Math.min(1, top.score / 2));
+  const { interpretation, extra } = interpretAnswer({
+    answer: top.answer,
+    lane,
+    confidence: normalized,
+  });
+
+  return {
+    category: top.cat,
+    questionId: top.id,
+    answer: top.answer,
+    confidence: normalized,
+    interpretation,
+    extraInterpretation: extra,
+  };
+}
+
+function readCopyVariant(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.sessionStorage.getItem(TODAY_COPY_VARIANT_KEY);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) ? Math.max(0, Math.min(3, Math.floor(n))) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeCopyVariant(n: number) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(TODAY_COPY_VARIANT_KEY, String(n));
+  } catch {
+    // ignore
+  }
+}
+
+/* =============================================================================
+   Coach copy helpers (spoken, grounded, progress-aware)
+   ============================================================================= */
+
+type NarrativeMode = "welcome_new" | "in_progress" | "complete_signals";
+
+function certaintyLine(certainty?: OnboardingV4["certainty"]) {
+  if (certainty === "strong") return "You sound pretty clear on what you want — we’ll make it real, not vague.";
+  if (certainty === "kinda")
+    return "You’re not guessing, but you’re not locked in either — that’s a good place to work from.";
+  if (certainty === "no_clue") return "You don’t need a “forever plan.” We just need one honest direction to test.";
+  return "";
+}
+
+function nextWhy(next: RecommendedNext) {
+  if (next === "motivations") {
+    return "Motivations tells me what actually pulls you forward (and what drains you) — it’s how I stop guessing.";
+  }
+  if (next === "strengths") {
+    return "Strengths is how we make sure options fit how you operate day to day — not just what sounds interesting.";
+  }
+  return "Skills is where we turn direction into something concrete — what to try, build, or practice next.";
+}
+
+function primaryCtaLabel(next: RecommendedNext, allComplete: boolean) {
+  return allComplete ? "Go to Insights" : `Continue to ${labelForNext(next)}`;
 }
 
 /* =============================================================================
@@ -353,11 +448,23 @@ export default function MainHomePage() {
 
   const [presenceSoft, setPresenceSoft] = React.useState(false);
 
-  const [vm, setVm] = React.useState(() => buildTodayViewModel());
+  type TodayVM = ReturnType<typeof buildTodayViewModel>;
+
+  const makeEmptyVm = (): TodayVM =>
+    ({
+      snapshot: null,
+      quote: undefined,
+      progress: { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 },
+      weeklyFocus: null,
+      sprintCount: 0,
+      sessionTiny: { shownIds: [], completedIds: [] },
+      nextKey: "motivations",
+    } as unknown as TodayVM);
+
+  const [vm, setVm] = React.useState<TodayVM>(makeEmptyVm);
   const [mounted, setMounted] = React.useState(false);
 
   const [motionEnabled, setMotionEnabled] = React.useState(true);
-
   const [transitioning, setTransitioning] = React.useState(false);
 
   const [taskOpen, setTaskOpen] = React.useState(false);
@@ -366,18 +473,22 @@ export default function MainHomePage() {
   // QA reset UI
   const [qaResetOpen, setQaResetOpen] = React.useState(false);
 
-  // Show only in dev OR when explicitly enabled
+  // Copy variant UI (QA/dev)
+  const [copyVariant, setCopyVariant] = React.useState(0);
+
   const showQaReset =
     typeof window !== "undefined" &&
-    (process.env.NODE_ENV !== "production" ||
-      (process.env.NEXT_PUBLIC_QA_MODE ?? "") === "1");
+    (process.env.NODE_ENV !== "production" || (process.env.NEXT_PUBLIC_QA_MODE ?? "") === "1");
 
   /* ---------------------------------------------------------------------------
-     Mount / refresh (avoid hydration mismatch)
+     Mount / refresh
      --------------------------------------------------------------------------- */
 
   React.useEffect(() => {
     setMounted(true);
+
+    // Load chosen copy variant
+    setCopyVariant(readCopyVariant());
 
     // Refresh VM after mount (prevents hydration mismatch from storage/random)
     setVm(buildTodayViewModel());
@@ -410,57 +521,49 @@ export default function MainHomePage() {
   }, []);
 
   /* ---------------------------------------------------------------------------
-     Completion + recommendation
+     Completion + next step
      --------------------------------------------------------------------------- */
 
   const progress = mounted
     ? vm.progress
     : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
 
-  const motStarted = progress.motivationsAnswered > 0;
-  const strStarted = progress.strengthsAnswered > 0;
-  const sklStarted = progress.skillsAnswered > 0;
+  const motAnswered = progress.motivationsAnswered ?? 0;
+  const strAnswered = progress.strengthsAnswered ?? 0;
+  const sklAnswered = progress.skillsAnswered ?? 0;
 
-  const motComplete = progress.motivationsAnswered >= SIGNAL_COMPLETE_COUNT;
-  const strComplete = progress.strengthsAnswered >= SIGNAL_COMPLETE_COUNT;
-  const sklComplete = progress.skillsAnswered >= SIGNAL_COMPLETE_COUNT;
+  const motComplete = motAnswered >= SIGNAL_COMPLETE_COUNT;
+  const strComplete = strAnswered >= SIGNAL_COMPLETE_COUNT;
+  const sklComplete = sklAnswered >= SIGNAL_COMPLETE_COUNT;
 
   const allSignalsComplete = motComplete && strComplete && sklComplete;
 
   const recommendedNext: RecommendedNext =
     !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
 
-  const nextLabel = labelForNext(recommendedNext);
-
-  // "Returning" should be true only for real past activity (NOT just onboarding).
-  const hasWeeklyFocus = mounted ? !!(vm.weeklyFocus?.vibe && vm.weeklyFocus?.target) : false;
-  const hasSprints = mounted ? (vm.sprintCount ?? 0) > 0 : false;
-  const hasTinyCompleted = mounted ? (vm.sessionTiny?.completedIds?.length ?? 0) > 0 : false;
-  const hasAnySignalsProgress = motStarted || strStarted || sklStarted;
-
-  const isReturning =
-    mounted && (hasAnySignalsProgress || hasWeeklyFocus || hasSprints || hasTinyCompleted);
-
   /* ---------------------------------------------------------------------------
      Tiny Tasks
      --------------------------------------------------------------------------- */
 
-  const sprintDoneThisSession = mounted
-    ? vm.sessionTiny.completedIds.includes("curiosity_sprint")
-    : false;
+  const vmTiny = readVmSessionTiny(vm);
+  const sprintDoneThisSession = mounted ? vmTiny.completedIds.includes("curiosity_sprint") : false;
+
+  const weeklyFocusSet = !!(vm.weeklyFocus?.vibe && vm.weeklyFocus?.target);
+  const sprintCount = vm.sprintCount ?? 0;
+  const shownTinyCount = vmTiny.shownIds.length;
 
   const tasks: TinyTaskSummary[] = [
     {
       id: "weekly_focus",
       title: "Weekly focus",
       subtitle: "Pick a vibe + a target for this week.",
-      status: vm.weeklyFocus?.vibe && vm.weeklyFocus?.target ? "set" : "start",
+      status: weeklyFocusSet ? "set" : "start",
     },
     {
       id: "curiosity_sprint",
       title: "Curiosity sprint",
       subtitle: "10 minutes. One small experiment you can actually do.",
-      count: vm.sprintCount,
+      count: sprintCount,
       disabled: sprintDoneThisSession,
       status: sprintDoneThisSession ? "done" : "start",
     },
@@ -500,118 +603,170 @@ export default function MainHomePage() {
      --------------------------------------------------------------------------- */
 
   const doQaReset = async () => {
-    // close modal immediately for snappier UX
     setQaResetOpen(false);
 
     await fadeThen(async () => {
       wipeEverleapClientStorage();
 
-      // reset local state
       setVm(buildTodayViewModel());
 
-      // ensure we start at top
       try {
         window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
       } catch {
         window.scrollTo(0, 0);
       }
 
-      // optional: refresh route cache
       router.refresh();
     });
   };
 
   /* ---------------------------------------------------------------------------
-     Agentic copy (on-page)
+     Coach narrative (spoken, grounded, progress-aware)
      --------------------------------------------------------------------------- */
 
   const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
   const open = openingLine(name);
 
-  const introParagraphs: string[] = (() => {
+  const onboarding = mounted ? readOnboardingV4() : {};
+  const signal = mounted ? pickBestSignal() : null;
+
+  const hasAnyProgress = motAnswered > 0 || strAnswered > 0 || sklAnswered > 0;
+  const hasAnyAction = weeklyFocusSet || sprintCount > 0 || shownTinyCount > 0;
+  const hasOnboarded = mounted ? !!(onboarding.name || vm.snapshot) : false;
+
+  const mode: NarrativeMode =
+    allSignalsComplete
+      ? "complete_signals"
+      : hasOnboarded && !hasAnyProgress && !signal && !hasAnyAction
+      ? "welcome_new"
+      : "in_progress";
+
+  const paragraphs: string[] = React.useMemo(() => {
     if (!mounted) return ["…"];
 
-    const p: string[] = [open];
-
-    // Brand new
-    if (!isReturning && !hasAnySignalsProgress) {
-      p.push(
-        "I’ll help turn what you’re into into a clear direction — and a few next steps you can actually do."
-      );
-
-      if (recommendedNext === "motivations") {
-        p.push("First: Motivations. It’s the fastest way for me to stop guessing and start matching what actually fits.");
-        p.push("Two minutes — then I can start giving you real direction.");
-      } else {
-        p.push(`Next I’d do ${nextLabel}.`);
-      }
-
-      return p;
+    if (mode === "complete_signals") {
+      return [
+        open,
+        "You’ve got the full set — Motivations, Strengths, and Skills.",
+        "Insights is where I translate that into patterns + next steps you can actually act on.",
+      ];
     }
 
-    // Status line
-    if (motComplete && !strComplete) p.push("So far you’ve locked in Motivations.");
-    else if (motComplete && strComplete && !sklComplete) p.push("So far you’ve locked in Motivations and Strengths.");
-    else if (allSignalsComplete) p.push("You’ve got the full set — Motivations, Strengths, and Skills.");
-    else if (hasAnySignalsProgress) p.push("So far you’ve started building real signal.");
-    else p.push("Picking up where we left off.");
+    const next = recommendedNext;
+    const why = nextWhy(next);
 
-    // Quote + interpretation (if we have one)
-    const map = readStoryAnswerMap();
-    const picked = pickRepresentativeAnswer(map);
+    const cadence =
+      copyVariant === 0
+        ? "direct"
+        : copyVariant === 1
+        ? "warm"
+        : copyVariant === 2
+        ? "precise"
+        : "minimal";
 
-    if (picked) {
-      p.push("One thing you said that I’m treating as a real signal:");
-      p.push(`“${picked}”`);
+    const certainty = certaintyLine(onboarding.certainty);
 
-      const age = detectAgeLaneFromOnboarding(vm.snapshot);
-      const interp = interpretSnippet(picked, age);
-      interp.lines.forEach((line) => p.push(line));
+    const didLineParts: string[] = [];
+    if (motComplete) didLineParts.push("Motivations");
+    if (strComplete) didLineParts.push("Strengths");
+    if (sklComplete) didLineParts.push("Skills");
+
+    const didLine =
+      didLineParts.length === 0
+        ? ""
+        : didLineParts.length === 1
+        ? `You’ve already locked in ${didLineParts[0]}.`
+        : didLineParts.length === 2
+        ? `You’ve already locked in ${didLineParts[0]} + ${didLineParts[1]}.`
+        : "You’ve already locked in Motivations + Strengths + Skills.";
+
+    const actionLine = weeklyFocusSet
+      ? "And you’ve got a weekly focus set — that’s where progress actually starts showing up."
+      : sprintCount > 0
+      ? `You’ve already done ${sprintCount} curiosity sprint${sprintCount === 1 ? "" : "s"} — that’s real momentum.`
+      : "";
+
+    const signalLine = signal?.interpretation
+      ? `One pattern I’m taking seriously: ${signal.interpretation}`
+      : "";
+
+    if (mode === "welcome_new") {
+      const base =
+        cadence === "minimal"
+          ? "Welcome to Everleap. We’ll turn what you already feel into a direction you can act on."
+          : cadence === "precise"
+          ? "Welcome to Everleap. My job is to make your next steps specific — not generic — using the signals you give me."
+          : cadence === "warm"
+          ? "Welcome to Everleap. I’ll be your coach here — the goal is a direction that feels real, not random."
+          : "Welcome to Everleap. I’m here to help you find a direction you can actually move on.";
+
+      const journey =
+        cadence === "minimal"
+          ? "We go Motivations → Strengths → Skills, then we turn that into actions."
+          : "We’ll go Motivations → Strengths → Skills, and then we’ll turn that into small actions you can actually do.";
+
+      const firstStep =
+        next === "motivations"
+          ? "We start with Motivations because it tells me what actually pulls you forward — it’s the foundation for everything else."
+          : `Next I want ${labelForNext(next)} so I’m building from you, not a template.`;
+
+      const lines: string[] = [open, base, journey, firstStep];
+      if (certainty) lines.push(certainty);
+      return lines.filter(Boolean).slice(0, 5);
     }
 
-    // Next step framing
-    if (allSignalsComplete) {
-      p.push("Insights is where I translate that into real picks: patterns, next steps, and what to explore next.");
-      return p;
+    // IN PROGRESS
+    const checkIn =
+      cadence === "minimal"
+        ? "I’m tracking your signal so far — and I can already make a cleaner next call."
+        : cadence === "precise"
+        ? "You’ve given me enough signal to stop guessing and start narrowing."
+        : cadence === "warm"
+        ? "Good — you’ve started giving me real signal. That’s how this stops feeling generic."
+        : "Alright — I’m getting a clearer read on you from what you’ve done so far.";
+
+    const recommend = `My recommendation: ${labelForNext(next)}. ${why}`;
+
+    const alt =
+      next === "motivations"
+        ? ""
+        : `If that doesn’t feel right today, ${next === "strengths" ? "Motivations" : "Strengths"} is still a solid move.`;
+
+    const lines: string[] = [open];
+
+    const p2Parts: string[] = [checkIn];
+    if (didLine) p2Parts.push(didLine);
+    if (actionLine) p2Parts.push(actionLine);
+    lines.push(p2Parts.join(" "));
+
+    if (signalLine) {
+      lines.push(signalLine);
+      if (signal?.extraInterpretation) lines.push(signal.extraInterpretation);
     }
 
-    if (recommendedNext === "motivations") {
-      p.push("Next I’d do Motivations.");
-      p.push("Motivations tells me what energizes you (and what drains you) — so everything I suggest gets way more you.");
-      return p;
-    }
+    lines.push(recommend);
+    if (alt) lines.push(alt);
 
-    if (recommendedNext === "strengths") {
-      p.push("Next I’d do Strengths.");
-      p.push(
-        "Strengths is how I make sure options fit how you operate day to day — not just what sounds interesting."
-      );
-      return p;
-    }
+    return lines.filter(Boolean).slice(0, 8);
+  }, [
+    mounted,
+    mode,
+    open,
+    recommendedNext,
+    copyVariant,
+    onboarding.certainty,
+    motComplete,
+    strComplete,
+    sklComplete,
+    weeklyFocusSet,
+    sprintCount,
+    signal,
+  ]);
 
-    p.push("Next I’d do Skills.");
-    p.push(
-      "Skills is the practical layer — it’s how I turn “direction” into real next steps: what to try, build, or practice next."
-    );
-    return p;
-  })();
-
-  const primaryCtaLabel = mounted
-    ? allSignalsComplete
-      ? "Go to Insights"
-      : `Continue to ${nextLabel}`
-    : undefined;
-
-  const onPrimary = () => {
-    if (!mounted) return;
-
-    if (allSignalsComplete) {
-      void fadeThen(async () => router.push("/main/insights"));
-      return;
-    }
-
-    void fadeThen(async () => router.push(buildQuestionsHref(recommendedNext)));
-  };
+  const ctaLabel = React.useMemo(() => {
+    if (!mounted) return undefined;
+    return primaryCtaLabel(recommendedNext, allSignalsComplete);
+  }, [mounted, recommendedNext, allSignalsComplete]);
 
   /* ---------------------------------------------------------------------------
      Render
@@ -742,9 +897,27 @@ export default function MainHomePage() {
             </motion.div>
 
             <div className="pl-12">
-              {/* QA Reset pill */}
+              {/* QA pills */}
               {mounted && showQaReset ? (
-                <div className="mb-3 flex items-center justify-end">
+                <div className="mb-3 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = (copyVariant + 1) % 4;
+                      setCopyVariant(next);
+                      writeCopyVariant(next);
+                    }}
+                    className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] transition ${
+                      dark
+                        ? "bg-white/8 text-white/70 hover:bg-white/12 hover:text-white/85"
+                        : "bg-slate-900/90 text-white/80 hover:bg-slate-950 hover:text-white"
+                    }`}
+                    aria-label="Cycle copy variant"
+                    title="Cycle copy variant"
+                  >
+                    Copy {copyVariant === 0 ? "A" : copyVariant === 1 ? "B" : copyVariant === 2 ? "C" : "D"}
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setQaResetOpen(true)}
@@ -766,37 +939,44 @@ export default function MainHomePage() {
                 motionEnabled={motionEnabled}
                 isTransitioning={transitioning}
                 quote={mounted ? vm.quote : undefined}
-                paragraphs={introParagraphs}
-                primaryCtaLabel={primaryCtaLabel}
-                onPrimary={onPrimary}
+                paragraphs={paragraphs}
+                primaryCtaLabel={ctaLabel}
+                onPrimary={() => {
+                  if (allSignalsComplete) {
+                    void fadeThen(async () => router.push("/main/insights"));
+                    return;
+                  }
+                  void fadeThen(async () => router.push(buildQuestionsHref(recommendedNext)));
+                }}
               />
 
-              {/* Main page content (always on-page now) */}
               {mounted ? (
                 <>
                   {!allSignalsComplete ? (
-                    <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
+                    <div className="mt-1">
+                      <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
+                    </div>
                   ) : null}
 
-                  <TinyTasks
-                    tasks={tasks}
-                    onOpenTask={(id) => {
-                      const s = readSessionTinyState();
-                      writeSessionTinyState({
-                        shownIds: Array.from(new Set([...s.shownIds, id])),
-                        completedIds: s.completedIds,
-                      });
-                      setActiveTaskId(id);
-                      setTaskOpen(true);
-                    }}
-                    dark={dark}
-                  />
-
-                  <div className="h-3" />
+                  <div className="mt-5">
+                    <TinyTasks
+                      tasks={tasks}
+                      onOpenTask={(id) => {
+                        const s = readSessionTinyState();
+                        writeSessionTinyState({
+                          shownIds: Array.from(new Set([...s.shownIds, String(id)])),
+                          completedIds: s.completedIds,
+                        });
+                        setActiveTaskId(id);
+                        setTaskOpen(true);
+                      }}
+                      dark={dark}
+                    />
+                  </div>
                 </>
-              ) : (
-                <div className="h-10" />
-              )}
+              ) : null}
+
+              <div className="h-3" />
             </div>
           </section>
         </main>
