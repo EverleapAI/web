@@ -2,24 +2,21 @@
 "use client";
 
 import * as React from "react";
+import { ChevronRight } from "lucide-react";
+
+/* =============================================================================
+   Types
+   ============================================================================= */
 
 export type TinyTaskId = "weekly_focus" | "curiosity_sprint";
-
-export type TinyTaskStatus = "start" | "set" | "done";
 
 export type TinyTaskSummary = {
   id: TinyTaskId;
   title: string;
   subtitle: string;
-
-  /** Optional badge count (e.g., number of sprints completed) */
+  status: "start" | "set" | "done";
   count?: number;
-
-  /** Disable interaction (e.g., sprint done this session) */
   disabled?: boolean;
-
-  /** Status label */
-  status: TinyTaskStatus;
 };
 
 export type TinyTasksProps = {
@@ -28,116 +25,113 @@ export type TinyTasksProps = {
   onOpenTask: (id: TinyTaskId) => void;
 };
 
-function accentDot(taskId: TinyTaskId, dark: boolean) {
-  // Subtle, adult accents — just enough “pop” without turning into boxes.
-  if (taskId === "weekly_focus") return dark ? "bg-amber-200/80" : "bg-amber-500";
-  return dark ? "bg-violet-200/80" : "bg-violet-600";
-}
+/* =============================================================================
+   Component
+   ============================================================================= */
 
-function statusLabel(status: TinyTaskStatus) {
-  if (status === "done") return "Done";
-  if (status === "set") return "Set";
-  return "Start";
-}
+export function TinyTasks(props: TinyTasksProps) {
+  const { dark, tasks, onOpenTask } = props;
 
-function statusTone(status: TinyTaskStatus, dark: boolean) {
-  if (status === "done") return dark ? "text-emerald-200" : "text-emerald-700";
-  if (status === "set") return dark ? "text-sky-200" : "text-sky-700";
-  return dark ? "text-white/60" : "text-slate-600";
-}
+  const headerMuted = dark ? "text-white/60" : "text-slate-600";
+  const fineMuted = dark ? "text-white/55" : "text-slate-600";
 
-export function TinyTasks({ dark, tasks, onOpenTask }: TinyTasksProps) {
-  const border = dark ? "border-white/10" : "border-black/10";
-  const panelBg = dark ? "bg-white/3" : "bg-black/3";
-  const text = dark ? "text-white" : "text-slate-900";
-  const muted = dark ? "text-white/70" : "text-slate-600";
-  const faint = dark ? "text-white/55" : "text-slate-500";
+  const rowHover = dark ? "hover:bg-white/5" : "hover:bg-black/[0.025]";
+  const focusRing = dark
+    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/22"
+    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/18";
 
-  const divider = dark ? "divide-white/10" : "divide-black/10";
+  // Slightly less boxed / more cinematic (match Signals softening)
+  const shellClass = dark
+    ? "border-white/8 bg-white/4 text-white"
+    : "border-black/8 bg-white/60 text-slate-900";
+
+  const divider = dark ? "border-white/8" : "border-black/8";
+
+  const statusPill = (status: TinyTaskSummary["status"]) => {
+    // Quieter, less “enterprise chip”
+    if (dark) {
+      if (status === "done") return "bg-emerald-400/10 text-emerald-100";
+      if (status === "set") return "bg-sky-300/10 text-sky-100";
+      return "bg-white/7 text-white/70";
+    }
+    if (status === "done") return "bg-emerald-600/10 text-emerald-800";
+    if (status === "set") return "bg-sky-600/10 text-sky-800";
+    return "bg-slate-900/5 text-slate-700";
+  };
+
+  const statusLabel = (t: TinyTaskSummary) => {
+    if (t.status === "done") return "Done";
+    if (t.status === "set") return "Set";
+    return "Start";
+  };
 
   return (
-    <div className="mt-5">
-      <div className="mb-2 flex items-end justify-between gap-4">
-        <div className={`text-sm font-semibold ${text}`}>Tiny tasks</div>
-        <div className={`text-xs ${faint}`}>Small wins that keep momentum real.</div>
+    <div className="mt-2">
+      <div className="mb-2">
+        <div className="flex items-end justify-between">
+          <div className="text-sm font-semibold">Tiny tasks</div>
+          <div className={`text-[11px] ${headerMuted}`}>Two quick levers</div>
+        </div>
+
+        {/* Option 1 */}
+        <div className={`mt-1 text-[11px] ${fineMuted}`}>Small moves. Real momentum.</div>
       </div>
 
-      <div className={`rounded-2xl border ${border} ${panelBg}`}>
-        <div className={`divide-y ${divider}`}>
-          {tasks.map((t) => {
-            const isDisabled = !!t.disabled;
-            const tone = statusTone(t.status, dark);
+      <div className={`rounded-2xl border ${shellClass}`}>
+        {tasks.map((t, idx) => {
+          const disabled = !!t.disabled;
 
-            return (
-              <div key={t.id} className="px-4 py-3 md:py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-start gap-2">
-                      <span
-                        aria-hidden
-                        className={`mt-[0.35rem] h-2 w-2 shrink-0 rounded-full ${accentDot(
-                          t.id,
-                          dark
-                        )}`}
-                      />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <div className={`text-sm font-semibold ${text}`}>{t.title}</div>
-
-                          {typeof t.count === "number" ? (
-                            <div
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                dark ? "bg-white/8 text-white/70" : "bg-black/5 text-slate-700"
-                              }`}
-                              aria-label={`${t.count} completed`}
-                            >
-                              {t.count}
-                            </div>
-                          ) : null}
-
-                          <div className={`text-xs font-semibold ${tone}`}>{statusLabel(t.status)}</div>
-                        </div>
-
-                        <div className={`mt-1 text-sm leading-relaxed ${muted}`}>{t.subtitle}</div>
-                      </div>
-                    </div>
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => (disabled ? undefined : onOpenTask(t.id))}
+              className={[
+                "w-full text-left",
+                "px-4 py-3",
+                "transition",
+                rowHover,
+                focusRing,
+                idx === 0 ? "" : `border-t ${divider}`,
+                disabled ? "opacity-60 cursor-not-allowed" : "",
+              ].join(" ")}
+              aria-label={`Open ${t.title}`}
+              disabled={disabled}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-semibold">{t.title}</div>
+                    {typeof t.count === "number" ? (
+                      <div className={`text-[11px] ${headerMuted}`}>{t.count}</div>
+                    ) : null}
                   </div>
-
-                  <div className="shrink-0">
-                    <button
-                      type="button"
-                      disabled={isDisabled}
-                      onClick={() => onOpenTask(t.id)}
-                      className={[
-                        "rounded-full px-4 py-2 text-sm font-semibold transition",
-                        isDisabled ? "cursor-not-allowed opacity-50" : "",
-                        dark
-                          ? "bg-white/10 text-white hover:bg-white/14"
-                          : "bg-slate-900 text-white hover:bg-slate-950",
-                      ].join(" ")}
-                      aria-label={`${statusLabel(t.status)} ${t.title}`}
-                    >
-                      {t.status === "done" ? "View" : "Open"}
-                    </button>
-                  </div>
+                  <div className={`mt-1 text-xs leading-snug ${fineMuted}`}>{t.subtitle}</div>
                 </div>
 
-                {/* Quiet helper line (keeps it conversational, not boxy) */}
-                {t.id === "curiosity_sprint" && t.status !== "done" ? (
-                  <div className={`mt-2 text-xs ${faint}`}>
-                    Ten minutes counts. You’re building signal and confidence at the same time.
+                <div className="flex shrink-0 items-center gap-2">
+                  <div
+                    className={[
+                      "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+                      statusPill(t.status),
+                    ].join(" ")}
+                  >
+                    {statusLabel(t)}
                   </div>
-                ) : null}
 
-                {t.id === "weekly_focus" && t.status === "start" ? (
-                  <div className={`mt-2 text-xs ${faint}`}>
-                    Pick a vibe + one target. I’ll use it to keep your next steps grounded.
-                  </div>
-                ) : null}
+                  <ChevronRight
+                    className={[
+                      "h-4 w-4 transition",
+                      dark ? "text-white/45 group-hover:text-white/75" : "text-slate-700/55 group-hover:text-slate-900",
+                      disabled ? "opacity-35" : "opacity-70",
+                    ].join(" ")}
+                    aria-hidden
+                  />
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

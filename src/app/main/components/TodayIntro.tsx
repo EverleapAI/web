@@ -102,16 +102,16 @@ export function TodayIntro(props: TodayIntroProps) {
   // Fixed height in collapsed mode (mobile-first)
   const collapsedMaxH = "max-h-[10.5rem] md:max-h-[12.5rem]";
 
-  // Big veil that fades over many lines
-  const veilGradient = dark
-    ? "bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-950/95"
-    : "bg-gradient-to-b from-white/0 via-white/75 to-white/95";
-
   // Only collapse if there’s enough content to justify it
   const canCollapse = (paragraphs?.length ?? 0) >= 4;
 
-  // Make narrative feel tappable without adding UI chrome
-  const narrativeHover = dark ? "hover:bg-white/[0.02]" : "hover:bg-black/[0.02]";
+  // Cinematic fade without adding a dark overlay “box”:
+  // Use a mask-image fade so the page background shows through naturally.
+  const cinematicMask = [
+    "[mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_72%,rgba(0,0,0,0)_100%)]",
+    "[-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_72%,rgba(0,0,0,0)_100%)]",
+  ].join(" ");
+
   const narrativeFocus = dark
     ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
     : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/12";
@@ -144,7 +144,7 @@ export function TodayIntro(props: TodayIntroProps) {
 
       {/* Counselor copy + single CTA */}
       <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
-        {/* Narrative (click anywhere to expand/collapse; no explicit label) */}
+        {/* Narrative (click anywhere to expand/collapse; cinematic, no background) */}
         <div className="relative">
           {canCollapse ? (
             <button
@@ -152,10 +152,9 @@ export function TodayIntro(props: TodayIntroProps) {
               onClick={() => setExpanded((v) => !v)}
               className={[
                 "group relative block w-full text-left",
-                "rounded-2xl",
-                "px-1 py-1",
+                // no rounded “card” look; keep only focus ring
+                "px-0 py-0",
                 "transition",
-                narrativeHover,
                 narrativeFocus,
               ].join(" ")}
               aria-expanded={expanded}
@@ -165,7 +164,7 @@ export function TodayIntro(props: TodayIntroProps) {
               <div
                 className={[
                   "relative",
-                  !expanded ? `overflow-hidden ${collapsedMaxH}` : "",
+                  !expanded ? `overflow-hidden ${collapsedMaxH} ${cinematicMask}` : "",
                 ].join(" ")}
               >
                 <div className="space-y-4">
@@ -176,19 +175,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   ))}
                 </div>
 
-                {/* Strong fade veil */}
-                {!expanded ? (
-                  <div
-                    aria-hidden
-                    className={[
-                      "pointer-events-none absolute inset-x-0 bottom-0",
-                      "h-[8.5rem] md:h-[9.5rem]",
-                      veilGradient,
-                    ].join(" ")}
-                  />
-                ) : null}
-
-                {/* Tiny non-text cue: a faint dot row at the bottom edge (no words, no collision) */}
+                {/* Tiny non-text cue: a faint pill at the bottom edge (no words) */}
                 {!expanded ? (
                   <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center">
                     <div className={`h-1 w-10 rounded-full ${dark ? "bg-white/10" : "bg-black/10"}`} />
