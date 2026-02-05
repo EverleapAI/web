@@ -32,24 +32,15 @@ type SignalBarItem = {
 };
 
 type UnlockItem = { id: string; label: string; href?: string };
-
 type Unlock = { title?: string; items: UnlockItem[] };
 
 type Suggest = { id: string; text: string };
-
 type TripUp = { id: string; title: string; text: string };
-
 type Experiment = { title: string; text: string };
 
-type TrackProgress = {
-  id: "motivations" | "strengths" | "skills";
-  title: string;
-  subtitle: string;
-  answered: number;
-  total: number;
-  state: "not_started" | "in_progress" | "done";
-  href: string;
-  hint?: string;
+export type WordCloudItem = {
+  term: string;
+  weight: number; // 0..1
 };
 
 export type InsightsViewModel = {
@@ -57,8 +48,8 @@ export type InsightsViewModel = {
   summary: {
     headline: string;
     receipts: Receipt[];
-    progress: TrackProgress[];
     signalBar: SignalBarItem[];
+    wordCloud: WordCloudItem[];
     unlock?: Unlock;
     storySoFar: string[];
     suggests: Suggest[];
@@ -107,7 +98,7 @@ function niceName(raw: string) {
 function readOnboardingV4(): OnboardingV4 {
   if (typeof window === "undefined") return {};
   const parsed = safeJsonParse<OnboardingV4>(
-    window.localStorage.getItem(ONBOARDING_STORAGE_KEY),
+    window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
   );
   return parsed ?? {};
 }
@@ -115,14 +106,14 @@ function readOnboardingV4(): OnboardingV4 {
 function loadStorySaved(): Record<string, Saved> {
   if (typeof window === "undefined") return {};
   const parsed = safeJsonParse<Record<string, Saved>>(
-    window.localStorage.getItem(STORY_STORAGE_KEY_V3),
+    window.localStorage.getItem(STORY_STORAGE_KEY_V3)
   );
   return parsed ?? {};
 }
 
 function countAnswered(
   prefix: "motivations" | "strengths" | "skills",
-  saved: Record<string, Saved>,
+  saved: Record<string, Saved>
 ) {
   let n = 0;
   for (let i = 1; i <= 5; i += 1) {
@@ -199,32 +190,32 @@ function buildSignalBar(saved: Record<string, Saved>) {
       id: "action",
       label: "Making",
       strength: action,
-      meaning: "Making / shipping energy",
-      why: "How often your answers point to doing, building, practicing, finishing.",
+      meaning: "Hands-on / making energy",
+      why: "You keep pointing at doing: building, practicing, finishing.",
       examples: actionExamples,
     },
     {
       id: "people",
       label: "Feedback",
       strength: people,
-      meaning: "People + feedback energy",
-      why: "How much your clarity comes from others: teams, coaches, critique, collaboration.",
+      meaning: "People + feedback loop",
+      why: "You get sharper around others: coaches, teams, critique.",
       examples: peopleExamples,
     },
     {
       id: "curiosity",
       label: "Exploring",
       strength: curiosity,
-      meaning: "Exploring energy",
-      why: "How strongly your answers lean toward learning, trying, and figuring things out.",
+      meaning: "Curiosity / learning pull",
+      why: "You lean toward learning, trying, and figuring things out.",
       examples: curiosityExamples,
     },
     {
       id: "clarity",
       label: "Direction",
       strength: clarity,
-      meaning: "Clarity-seeking energy",
-      why: "How much you’re asking for a next step, a plan, or a sharper direction.",
+      meaning: "Clarity-seeking",
+      why: "You keep asking for the next step: a plan, a direction, a decision.",
       examples: clarityExamples,
     },
   ];
@@ -238,7 +229,8 @@ function pickRepresentativeAnswer(saved: Record<string, Saved>) {
   for (let i = 1; i <= 5; i += 1) ids.push(`strengths_${i}`);
   for (let i = 1; i <= 5; i += 1) ids.push(`skills_${i}`);
 
-  const prefer = /\b(friends?|coffee|team|coach|school|class|club|practice|project|building|making)\b/i;
+  const prefer =
+    /\b(friends?|coffee|team|coach|school|class|club|practice|project|building|making|sunshine|outside|music|art)\b/i;
 
   let firstLong: string | null = null;
   let bestPrefer: string | null = null;
@@ -256,55 +248,59 @@ function pickRepresentativeAnswer(saved: Record<string, Saved>) {
   return bestPrefer ?? firstLong ?? null;
 }
 
-function buildProgressCards(mot: number, str: number, skl: number): TrackProgress[] {
-  const total = 5;
+/* =========================
+   Word cloud (local, simple)
+   ========================= */
 
-  const mkState = (n: number): TrackProgress["state"] =>
-    n <= 0 ? "not_started" : n >= total ? "done" : "in_progress";
+const STOPWORDS = new Set(
+  [
+    "a","an","the","and","or","but","so","if","then","than","that","this","those","these",
+    "i","me","my","mine","you","your","yours","we","us","our","ours","they","them","their",
+    "to","of","in","on","at","for","from","with","without","about","into","over","under",
+    "is","are","was","were","be","being","been","do","does","did","doing","have","has","had",
+    "it","its","as","just","really","very","maybe","like","kind","kinda","sort","stuff",
+    "get","got","getting","make","made","making","build","building","want","wanted","need","needed",
+    "feel","feels","feeling","time","times","day","days"
+  ]
+);
 
-  const hintFor = (id: TrackProgress["id"], n: number) => {
-    if (n >= total) return "Locked in enough signal to use this.";
-    if (n === 0) {
-      if (id === "motivations") return "Start here — it makes everything else sharper.";
-      if (id === "strengths") return "This tells me how you operate day-to-day.";
-      return "This tells me what you can build on next.";
+function tokenize(text: string): string[] {
+  const raw = (text ?? "").toLowerCase();
+  // keep words + simple apostrophes
+  const parts = raw.split(/[^a-z0-9']+/g).map((p) => p.trim()).filter(Boolean);
+  const out: string[] = [];
+  for (const p of parts) {
+    if (p.length < 3) continue;
+    if (STOPWORDS.has(p)) continue;
+    // trim apostrophes
+    const cleaned = p.replace(/^'+|'+$/g, "");
+    if (cleaned.length < 3) continue;
+    if (STOPWORDS.has(cleaned)) continue;
+    out.push(cleaned);
+  }
+  return out;
+}
+
+function buildWordCloud(saved: Record<string, Saved>): WordCloudItem[] {
+  const counts = new Map<string, number>();
+  for (const v of Object.values(saved)) {
+    const a = cleanOneLine(v?.answer ?? "");
+    if (!a) continue;
+    for (const t of tokenize(a)) {
+      counts.set(t, (counts.get(t) ?? 0) + 1);
     }
-    if (n < 3) return "Two more answers makes this click.";
-    return "Almost there — one or two more.";
-  };
+  }
 
-  return [
-    {
-      id: "motivations",
-      title: "Motivations",
-      subtitle: "What pulls you forward (and what drains you).",
-      answered: mot,
-      total,
-      state: mkState(mot),
-      href: "/main/questions?cat=motivations&returnTo=/main/insights",
-      hint: hintFor("motivations", mot),
-    },
-    {
-      id: "strengths",
-      title: "Strengths",
-      subtitle: "How you operate when you’re at your best.",
-      answered: str,
-      total,
-      state: mkState(str),
-      href: "/main/questions?cat=strengths&returnTo=/main/insights",
-      hint: hintFor("strengths", str),
-    },
-    {
-      id: "skills",
-      title: "Skills",
-      subtitle: "What you can build or practice next.",
-      answered: skl,
-      total,
-      state: mkState(skl),
-      href: "/main/questions?cat=skills&returnTo=/main/insights",
-      hint: hintFor("skills", skl),
-    },
-  ];
+  const entries = Array.from(counts.entries())
+    .filter(([term, c]) => term.length >= 3 && c >= 1)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 22);
+
+  const max = Math.max(1, ...entries.map((e) => e[1]));
+  return entries.map(([term, c]) => ({
+    term,
+    weight: clamp01(c / max),
+  }));
 }
 
 function buildSummaryVM(opts: UseLocalOpts) {
@@ -314,65 +310,23 @@ function buildSummaryVM(opts: UseLocalOpts) {
     receipts: [
       { id: "starter", label: "Insights", detail: "waiting on your answers", tone: "neutral" },
     ],
-    progress: buildProgressCards(0, 0, 0),
     signalBar: [
-      {
-        id: "action",
-        label: "Making",
-        strength: 0.1,
-        meaning: "Making / shipping energy",
-        why: "How often your answers point to doing, building, practicing, finishing.",
-        examples: [],
-      },
-      {
-        id: "people",
-        label: "Feedback",
-        strength: 0.1,
-        meaning: "People + feedback energy",
-        why: "How much your clarity comes from others: teams, coaches, critique, collaboration.",
-        examples: [],
-      },
-      {
-        id: "curiosity",
-        label: "Exploring",
-        strength: 0.1,
-        meaning: "Exploring energy",
-        why: "How strongly your answers lean toward learning, trying, and figuring things out.",
-        examples: [],
-      },
-      {
-        id: "clarity",
-        label: "Direction",
-        strength: 0.1,
-        meaning: "Clarity-seeking energy",
-        why: "How much you’re asking for a next step, a plan, or a sharper direction.",
-        examples: [],
-      },
+      { id: "action", label: "Making", strength: 0.1, meaning: "Hands-on / making energy", why: "Shows up when you talk about doing and building.", examples: [] },
+      { id: "people", label: "Feedback", strength: 0.1, meaning: "People + feedback loop", why: "Shows up when you mention teams, coaches, critique.", examples: [] },
+      { id: "curiosity", label: "Exploring", strength: 0.1, meaning: "Curiosity / learning pull", why: "Shows up when you talk about learning and exploring.", examples: [] },
+      { id: "clarity", label: "Direction", strength: 0.1, meaning: "Clarity-seeking", why: "Shows up when you ask for a next step or direction.", examples: [] },
     ],
+    wordCloud: [],
     unlock: {
       title: "Fastest way to unlock real Insights",
-      items: [
-        {
-          id: "finish_any",
-          label: "Answer a few questions",
-          href: "/main/questions?returnTo=/main/insights",
-        },
-      ],
+      items: [{ id: "finish_any", label: "Answer a few questions", href: "/main/questions?returnTo=/main/insights" }],
     },
     storySoFar: [
       "I don’t want to guess about you.",
-      "Give me a few real answers, and I’ll reflect back patterns you can actually use — plus one next move you can try this week.",
+      "Give me a few real answers and I’ll reflect back patterns you can actually use — plus one next step you can try this week.",
     ],
-    suggests: [
-      { id: "s0", text: "A few answers is enough for this page to become personal and useful." },
-    ],
-    tripUps: [
-      {
-        id: "t0",
-        title: "Not enough signal yet",
-        text: "With no examples from your life, everything has to stay generic.",
-      },
-    ],
+    suggests: [{ id: "s0", text: "A few answers is enough for this page to become personal and useful." }],
+    tripUps: [{ id: "t0", title: "Not enough signal yet", text: "With no examples from your life, everything has to stay generic." }],
     experiment: {
       title: "Run one tiny test",
       text:
@@ -396,15 +350,14 @@ function buildSummaryVM(opts: UseLocalOpts) {
 
   const signalBar = buildSignalBar(saved);
   const representative = pickRepresentativeAnswer(saved);
-
-  const who = name ? `${name}` : "You";
+  const cloud = buildWordCloud(saved);
 
   const headline =
     answeredTotal === 0
-      ? `${name ? `${name}, ` : ""}give me a few answers — and I’ll make this page sound like it’s about you.`
-      : `${who} — here’s what I’m seeing so far.`;
+      ? `${name ? `${name}, ` : ""}I’m ready when you are — give me a few answers and I’ll make this personal.`
+      : `${name ? `${name} — ` : ""}here’s what I’m seeing so far.`;
 
-  // Receipts should be “facts / highlights”, not duplicate progress objects.
+  // IMPORTANT: receipts should be “life receipts”, NOT the progress objects
   const receipts: Receipt[] = [];
   if (answeredTotal > 0) {
     receipts.push({
@@ -414,11 +367,11 @@ function buildSummaryVM(opts: UseLocalOpts) {
       tone: answeredTotal >= 10 ? "good" : "neutral",
     });
   }
-  if (representative) {
+  if (cloud.length) {
     receipts.push({
-      id: "rep_detail",
-      label: "You mentioned",
-      detail: `“${representative}”`,
+      id: "themes_found",
+      label: "Themes",
+      detail: `${cloud.length}`,
       tone: "neutral",
     });
   }
@@ -426,98 +379,71 @@ function buildSummaryVM(opts: UseLocalOpts) {
   const storySoFar: string[] = [];
 
   if (answeredTotal === 0) {
-    storySoFar.push("I’m not going to do the fortune-cookie thing.");
-    storySoFar.push("Answer a few questions and I’ll reflect *your* patterns back — with a next move you can actually try.");
+    storySoFar.push("I don’t want to guess about you.");
+    storySoFar.push("Answer a few questions and I’ll turn that into a direction you can actually test.");
   } else {
-    storySoFar.push("This already has signal — because you used real examples, not vibes.");
-    if (representative) {
-      storySoFar.push(`That line about “${representative}” is a clue. It points to what actually pulls you in.`);
-    }
+    storySoFar.push(
+      "You’ve done the hard part: you’re giving real examples. That’s why this can sound like *you* instead of generic advice."
+    );
 
-    if (str < 2 || skl < 2) {
+    if (representative) {
       storySoFar.push(
-        "Right now I can see direction… but not enough detail to be *specific* about fit.",
-      );
-      storySoFar.push(
-        "Fastest upgrade: add 2 Strengths answers + 2 Skills answers. Then I can turn this into clearer options and a better next step.",
+        `One detail that stood out: “${representative}”. That’s the kind of clue that points to what actually fits you day-to-day.`
       );
     } else {
       storySoFar.push(
-        "You’ve got enough here to stop debating in your head and run a small test on purpose.",
+        "A pattern is already showing up: you get clearer when something is real — not when it stays hypothetical."
       );
+    }
+
+    storySoFar.push(
+      "What I’m picking up so far: you move forward fastest when there’s something concrete to work on — and when there’s feedback (people, a coach, a team, or a clear loop of improving)."
+    );
+
+    const missingStr = Math.max(0, 2 - str);
+    const missingSkl = Math.max(0, 2 - skl);
+    if (missingStr > 0 || missingSkl > 0) {
       storySoFar.push(
-        "That test result is what will make this page feel scary-accurate instead of generic.",
+        `Fastest upgrade: add ${missingStr ? `${missingStr} Strengths` : ""}${
+          missingStr && missingSkl ? " + " : ""
+        }${missingSkl ? `${missingSkl} Skills` : ""} answers. Then I can turn this from “pattern” into specific options + a sharper next step.`
+      );
+    } else {
+      storySoFar.push(
+        "You’ve got enough signal to stop guessing. Next move is a small test — then we learn from what happens."
       );
     }
   }
 
   const suggests: Suggest[] = answeredTotal
     ? [
-        { id: "s1", text: "You’ll get clearer by running small tests — not by overthinking." },
-        { id: "s2", text: "You’ll do best where progress is visible (projects, feedback, outcomes)." },
-        { id: "s3", text: "Pick a week-sized next move. Don’t try to pick a forever label." },
+        { id: "s1", text: "You’ll get clearer by running small tests than by trying to think your way to certainty." },
+        { id: "s2", text: "You’ll do best where progress is visible (projects, feedback, real outcomes)." },
+        { id: "s3", text: "Keep the next step week-sized. Labels can come later." },
       ]
     : [{ id: "s0", text: "Answering a few questions will unlock real insights here." }];
 
   const tripUps: TripUp[] = answeredTotal
     ? [
-        {
-          id: "t1",
-          title: "Trying to solve your whole future at once",
-          text: "You don’t need the perfect answer. One small test teaches you more than hours of thinking.",
-        },
-        {
-          id: "t2",
-          title: "Waiting to feel ready first",
-          text: "Feeling ready usually shows up after you start — not before.",
-        },
+        { id: "t1", title: "Trying to solve your whole future at once", text: "You don’t need the perfect answer. One small test teaches you more than hours of thinking." },
+        { id: "t2", title: "Waiting to feel ready first", text: "Feeling ready usually shows up after you start — not before." },
         ...(answeredTotal > 0 && (mot < 2 || str < 2 || skl < 2)
-          ? [
-              {
-                id: "t3",
-                title: "Too little detail to be specific",
-                text: "If answers stay super short, I’ll stay vague. A couple real examples makes everything sharper.",
-              },
-            ]
+          ? [{ id: "t3", title: "Too little detail to be specific", text: "If answers stay super short, I’ll stay vague. One or two real examples makes everything sharper." }]
           : []),
       ]
-    : [
-        {
-          id: "t0",
-          title: "No real data yet",
-          text: "Without examples from your life, everything here stays generic.",
-        },
-      ];
+    : [{ id: "t0", title: "No real data yet", text: "Without examples from your life, everything here stays generic." }];
 
   const unlockItems: UnlockItem[] = [];
-  if (mot < 5)
-    unlockItems.push({
-      id: "u_mot",
-      label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers",
-      href: "/main/questions?cat=motivations&returnTo=/main/insights",
-    });
-  if (str < 5)
-    unlockItems.push({
-      id: "u_str",
-      label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers",
-      href: "/main/questions?cat=strengths&returnTo=/main/insights",
-    });
-  if (skl < 5)
-    unlockItems.push({
-      id: "u_skl",
-      label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers",
-      href: "/main/questions?cat=skills&returnTo=/main/insights",
-    });
+  if (mot < 5) unlockItems.push({ id: "u_mot", label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers", href: "/main/questions?cat=motivations&returnTo=/main/insights" });
+  if (str < 5) unlockItems.push({ id: "u_str", label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers", href: "/main/questions?cat=strengths&returnTo=/main/insights" });
+  if (skl < 5) unlockItems.push({ id: "u_skl", label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers", href: "/main/questions?cat=skills&returnTo=/main/insights" });
 
   const unlock: Unlock | undefined = unlockItems.length
     ? {
-        title: answeredTotal === 0 ? "Fastest way to unlock real Insights" : "Want this sharper?",
+        title: answeredTotal === 0 ? "Fastest way to unlock real Insights" : "To make this sharply tailored",
         items: unlockItems.slice(0, 3),
       }
-    : {
-        title: "Next",
-        items: [{ id: "u_explore", label: "Explore directions", href: "/main/explore" }],
-      };
+    : undefined;
 
   const experiment: Experiment = answeredTotal
     ? {
@@ -538,8 +464,8 @@ function buildSummaryVM(opts: UseLocalOpts) {
   return {
     headline,
     receipts: receipts.slice(0, 8),
-    progress: buildProgressCards(mot, str, skl),
     signalBar,
+    wordCloud: cloud,
     unlock,
     storySoFar: storySoFar.slice(0, 6),
     suggests: suggests.slice(0, 5),
@@ -548,10 +474,7 @@ function buildSummaryVM(opts: UseLocalOpts) {
   };
 }
 
-export function buildInsightsViewModel(
-  tab: InsightsTab,
-  opts: UseLocalOpts,
-): InsightsViewModel {
+export function buildInsightsViewModel(tab: InsightsTab, opts: UseLocalOpts): InsightsViewModel {
   const summary = buildSummaryVM(opts);
   return { tab, summary };
 }

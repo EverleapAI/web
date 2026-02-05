@@ -17,6 +17,7 @@ import {
 import {
   buildInsightsViewModel,
   type InsightsTab,
+  type WordCloudItem,
   type SignalId,
 } from "./app/buildInsightsViewModel";
 
@@ -83,15 +84,16 @@ function pillBase(dark: boolean) {
       ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
       : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
     dark
-      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
-      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/12",
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
   ].join(" ");
 }
 
 function pillSelected(dark: boolean) {
+  // stronger “pressed” state so it’s obvious
   return dark
-    ? "bg-white/14 text-white border-white/14 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_14px_45px_rgba(0,0,0,0.35)]"
-    : "bg-white text-slate-900 border-slate-200 shadow-[0_10px_30px_rgba(0,0,0,0.10)]";
+    ? "bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)]"
+    : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)]";
 }
 
 function chipTone(dark: boolean, tone?: "neutral" | "good" | "watch") {
@@ -104,17 +106,17 @@ function chipTone(dark: boolean, tone?: "neutral" | "good" | "watch") {
 
   if (dark) {
     if (tone === "good")
-      return base.concat(["border-white/12 bg-white/8 text-white/85"]).join(" ");
+      return base.concat(["border-white/12 bg-white/10 text-white/90"]).join(" ");
     if (tone === "watch")
-      return base.concat(["border-white/12 bg-white/6 text-white/75"]).join(" ");
-    return base.concat(["border-white/10 bg-white/5 text-white/75"]).join(" ");
+      return base.concat(["border-white/12 bg-white/8 text-white/80"]).join(" ");
+    return base.concat(["border-white/10 bg-white/7 text-white/80"]).join(" ");
   }
 
   if (tone === "good")
-    return base.concat(["border-black/10 bg-white/85 text-slate-900"]).join(" ");
+    return base.concat(["border-black/10 bg-white/90 text-slate-900"]).join(" ");
   if (tone === "watch")
-    return base.concat(["border-black/10 bg-white/80 text-slate-800"]).join(" ");
-  return base.concat(["border-black/10 bg-white/80 text-slate-800"]).join(" ");
+    return base.concat(["border-black/10 bg-white/85 text-slate-800"]).join(" ");
+  return base.concat(["border-black/10 bg-white/85 text-slate-800"]).join(" ");
 }
 
 function signalGradient(dark: boolean, id: SignalId) {
@@ -162,50 +164,18 @@ type LoggedExperiment = {
   learned?: string;
 };
 
-type ProgressCard = {
-  id: "motivations" | "strengths" | "skills";
-  title: string;
-  subtitle: string;
-  answered: number;
-  total: number;
-  state: "not_started" | "in_progress" | "done";
-  href: string;
-  hint?: string;
-};
-
-function progressAccent(dark: boolean, id: ProgressCard["id"]) {
-  if (id === "motivations") return dark ? "bg-amber-300/18" : "bg-amber-500/10";
-  if (id === "strengths") return dark ? "bg-sky-300/16" : "bg-sky-500/10";
-  return dark ? "bg-fuchsia-300/16" : "bg-fuchsia-500/10";
-}
-
-function progressRing(dark: boolean, id: ProgressCard["id"]) {
-  if (id === "motivations") return dark ? "ring-amber-200/20" : "ring-amber-500/15";
-  if (id === "strengths") return dark ? "ring-sky-200/20" : "ring-sky-500/15";
-  return dark ? "ring-fuchsia-200/20" : "ring-fuchsia-500/15";
-}
-
-function progressGlow(id: ProgressCard["id"]) {
-  if (id === "motivations") return "shadow-[0_18px_55px_rgba(251,191,36,0.10)]";
-  if (id === "strengths") return "shadow-[0_18px_55px_rgba(56,189,248,0.10)]";
-  return "shadow-[0_18px_55px_rgba(217,70,239,0.10)]";
-}
-
-function progressDotClass(dark: boolean, id: ProgressCard["id"], on: boolean) {
-  if (!on) return dark ? "bg-white/10" : "bg-black/10";
-  if (id === "motivations") return dark ? "bg-amber-200/70" : "bg-amber-600/70";
-  if (id === "strengths") return dark ? "bg-sky-200/70" : "bg-sky-600/70";
-  return dark ? "bg-fuchsia-200/70" : "bg-fuchsia-600/70";
-}
-
-function sectionWash(dark: boolean, kind: "suggests" | "watchouts" | "experiment") {
+function sectionWash(dark: boolean, kind: "suggests" | "watchouts" | "experiment" | "signals") {
   if (!dark) {
+    if (kind === "signals")
+      return "bg-gradient-to-br from-sky-500/10 via-fuchsia-500/8 to-amber-500/7";
     if (kind === "suggests")
       return "bg-gradient-to-br from-amber-500/10 via-rose-500/8 to-fuchsia-500/8";
     if (kind === "watchouts")
       return "bg-gradient-to-br from-violet-500/10 via-sky-500/8 to-emerald-500/6";
     return "bg-gradient-to-br from-emerald-500/10 via-sky-500/8 to-fuchsia-500/6";
   }
+  if (kind === "signals")
+    return "bg-gradient-to-br from-sky-300/14 via-fuchsia-300/10 to-amber-300/9";
   if (kind === "suggests")
     return "bg-gradient-to-br from-amber-300/14 via-rose-300/10 to-fuchsia-300/10";
   if (kind === "watchouts")
@@ -213,14 +183,18 @@ function sectionWash(dark: boolean, kind: "suggests" | "watchouts" | "experiment
   return "bg-gradient-to-br from-emerald-300/14 via-sky-300/10 to-fuchsia-300/8";
 }
 
-function sectionEdge(dark: boolean, kind: "suggests" | "watchouts" | "experiment") {
+function sectionEdge(dark: boolean, kind: "suggests" | "watchouts" | "experiment" | "signals") {
   if (!dark) {
+    if (kind === "signals")
+      return "bg-gradient-to-b from-sky-500/45 via-fuchsia-500/30 to-amber-500/20";
     if (kind === "suggests")
       return "bg-gradient-to-b from-amber-500/50 via-rose-500/35 to-fuchsia-500/25";
     if (kind === "watchouts")
       return "bg-gradient-to-b from-violet-500/45 via-sky-500/30 to-emerald-500/20";
     return "bg-gradient-to-b from-emerald-500/45 via-sky-500/30 to-fuchsia-500/20";
   }
+  if (kind === "signals")
+    return "bg-gradient-to-b from-sky-200/55 via-fuchsia-200/40 to-amber-200/28";
   if (kind === "suggests")
     return "bg-gradient-to-b from-amber-200/55 via-rose-200/40 to-fuchsia-200/28";
   if (kind === "watchouts")
@@ -239,28 +213,14 @@ function relativeTime(ts: number) {
   return `${days}d ago`;
 }
 
-/* =============================================================================
-   Signal cloud
-   ============================================================================= */
-
-function cloudSize(strength: number) {
-  const s = Math.max(0, Math.min(1, strength));
-  // 12..22-ish
-  return 12 + s * 10;
+function wordSizePx(w: number) {
+  // w 0..1 -> 12..22 (mobile friendly)
+  return 12 + Math.round(Math.max(0, Math.min(1, w)) * 10);
 }
 
-function cloudWeight(strength: number) {
-  const s = Math.max(0, Math.min(1, strength));
-  if (s > 0.78) return 800;
-  if (s > 0.55) return 700;
-  if (s > 0.35) return 600;
-  return 600;
-}
-
-function cloudOpacity(strength: number, selected: boolean) {
-  if (selected) return 1;
-  const s = Math.max(0, Math.min(1, strength));
-  return 0.55 + s * 0.45; // 0.55..1
+function wordOpacity(w: number) {
+  // w 0..1 -> 0.55..1
+  return 0.55 + Math.max(0, Math.min(1, w)) * 0.45;
 }
 
 /* =============================================================================
@@ -275,7 +235,8 @@ export default function InsightsPage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
   const dark = isDarkTheme(themeId);
-  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  const theme =
+    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
   const initialTabFromUrl = React.useMemo<InsightsTab>(() => {
     const raw = searchParams?.get("tab") ?? searchParams?.get("section");
@@ -289,15 +250,16 @@ export default function InsightsPage() {
 
   const vm = React.useMemo(
     () => buildInsightsViewModel(tab, { useLocal: mounted }),
-    [tab, mounted],
+    [tab, mounted]
   );
 
-  const [calibration, setCalibration] = React.useState<CalibrationChoice | null>(null);
+  const [calibration, setCalibration] =
+    React.useState<CalibrationChoice | null>(null);
 
   React.useEffect(() => {
     if (!mounted) return;
     const saved = safeJsonParse<{ value: CalibrationChoice }>(
-      window.localStorage.getItem(INSIGHTS_CALIBRATION_KEY),
+      window.localStorage.getItem(INSIGHTS_CALIBRATION_KEY)
     );
     if (saved?.value) setCalibration(saved.value);
   }, [mounted]);
@@ -305,26 +267,29 @@ export default function InsightsPage() {
   function setCalibrationAndPersist(next: CalibrationChoice) {
     setCalibration(next);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(INSIGHTS_CALIBRATION_KEY, JSON.stringify({ value: next }));
+      window.localStorage.setItem(
+        INSIGHTS_CALIBRATION_KEY,
+        JSON.stringify({ value: next })
+      );
     }
   }
 
   const [showAllStory, setShowAllStory] = React.useState(false);
   const [showSignalsInfo, setShowSignalsInfo] = React.useState(false);
 
-  const [selectedSignal, setSelectedSignal] = React.useState<SignalId | null>(null);
-
   const [experiments, setExperiments] = React.useState<LoggedExperiment[]>([]);
   const [logOpen, setLogOpen] = React.useState(false);
 
   const [logTried, setLogTried] = React.useState("");
-  const [logFeel, setLogFeel] = React.useState<LoggedExperiment["feel"] | null>(null);
+  const [logFeel, setLogFeel] = React.useState<
+    LoggedExperiment["feel"] | null
+  >(null);
   const [logLearned, setLogLearned] = React.useState("");
 
   React.useEffect(() => {
     if (!mounted) return;
     const parsed = safeJsonParse<LoggedExperiment[]>(
-      window.localStorage.getItem(INSIGHTS_EXPERIMENTS_KEY),
+      window.localStorage.getItem(INSIGHTS_EXPERIMENTS_KEY)
     );
     if (Array.isArray(parsed)) setExperiments(parsed);
   }, [mounted]);
@@ -334,7 +299,7 @@ export default function InsightsPage() {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(
         INSIGHTS_EXPERIMENTS_KEY,
-        JSON.stringify(next.slice(0, 25)),
+        JSON.stringify(next.slice(0, 25))
       );
     }
   }
@@ -387,10 +352,15 @@ export default function InsightsPage() {
     ? "bg-gradient-to-t from-slate-950/92 via-slate-950/78 to-slate-950/0"
     : "bg-gradient-to-t from-white/95 via-white/80 to-white/0";
 
-  const calibrationOptions: CalibrationChoice[] = ["Mostly right", "Somewhat", "Not really"];
+  const calibrationOptions: CalibrationChoice[] = [
+    "Mostly right",
+    "Somewhat",
+    "Not really",
+  ];
 
   function setTabAndSync(next: InsightsTab) {
     setTab(next);
+
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", next);
     params.delete("section");
@@ -398,8 +368,8 @@ export default function InsightsPage() {
   }
 
   const receipts = vm.summary.receipts ?? [];
-  const progress = (vm.summary as any).progress as ProgressCard[] | undefined;
   const signalBar = vm.summary.signalBar ?? [];
+  const wordCloud: WordCloudItem[] = vm.summary.wordCloud ?? [];
   const unlock = vm.summary.unlock;
 
   const story = vm.summary.storySoFar ?? [];
@@ -407,10 +377,6 @@ export default function InsightsPage() {
   const storyExpanded = story.slice(0, 6);
   const storyToShow = showAllStory ? storyExpanded : storyCollapsed;
   const canToggleStory = story.length > 2;
-
-  const selectedSignalObj = selectedSignal
-    ? (signalBar.find((s: any) => s.id === selectedSignal) as any) ?? null
-    : null;
 
   return (
     <AppChrome
@@ -446,7 +412,10 @@ export default function InsightsPage() {
                   <button
                     key={t.id}
                     type="button"
-                    className={[pillBase(dark), selected ? pillSelected(dark) : ""].join(" ")}
+                    className={[
+                      pillBase(dark),
+                      selected ? pillSelected(dark) : "",
+                    ].join(" ")}
                     aria-current={selected ? "page" : undefined}
                     onClick={() => setTabAndSync(t.id)}
                   >
@@ -457,6 +426,9 @@ export default function InsightsPage() {
             </div>
           </div>
 
+          {/* =========================
+              SUMMARY TAB
+             ========================= */}
           {tab === "summary" ? (
             <section className="mb-6">
               <div
@@ -514,126 +486,7 @@ export default function InsightsPage() {
                     ) : null}
                   </div>
 
-                  {/* YOUR PROGRESS (separate from “Based on what you’ve shared”) */}
-                  {progress?.length ? (
-                    <div className="mt-6">
-                      <div
-                        className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                          dark ? "text-white/45" : "text-slate-500"
-                        }`}
-                      >
-                        Your progress
-                      </div>
-
-                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                        {progress.slice(0, 3).map((p) => {
-                          const pct = Math.round((p.answered / Math.max(1, p.total)) * 100);
-                          const done = p.state === "done";
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              className={[
-                                "group relative overflow-hidden rounded-2xl px-4 py-3 text-left",
-                                dark ? "bg-white/5" : "bg-white/75",
-                                "ring-1",
-                                dark ? "ring-white/10" : "ring-black/10",
-                                progressGlow(p.id),
-                              ].join(" ")}
-                              onClick={() => router.push(p.href)}
-                            >
-                              <div className="pointer-events-none absolute inset-0">
-                                <div
-                                  className={[
-                                    "absolute -left-10 -top-10 h-28 w-28 rounded-full blur-2xl opacity-60",
-                                    progressAccent(dark, p.id),
-                                  ].join(" ")}
-                                />
-                                <div
-                                  className={[
-                                    "absolute -bottom-12 -right-12 h-36 w-36 rounded-full blur-3xl opacity-45",
-                                    progressAccent(dark, p.id),
-                                  ].join(" ")}
-                                />
-                              </div>
-
-                              <div className="relative">
-                                <div className="flex items-center justify-between gap-3">
-                                  <div
-                                    className={`text-sm font-semibold ${
-                                      dark ? "text-white" : "text-slate-900"
-                                    }`}
-                                  >
-                                    {p.title}
-                                  </div>
-
-                                  <div
-                                    className={[
-                                      "shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold",
-                                      "ring-1",
-                                      progressRing(dark, p.id),
-                                      dark
-                                        ? done
-                                          ? "bg-white/10 text-white/85"
-                                          : "bg-white/6 text-white/75"
-                                        : done
-                                        ? "bg-white text-slate-900"
-                                        : "bg-white/85 text-slate-800",
-                                    ].join(" ")}
-                                  >
-                                    {done ? "Done" : `${pct}%`}
-                                  </div>
-                                </div>
-
-                                <div
-                                  className={`mt-0.5 text-xs ${
-                                    dark ? "text-white/65" : "text-slate-600"
-                                  }`}
-                                >
-                                  {p.subtitle}
-                                </div>
-
-                                <div className="mt-2 flex items-center gap-1.5">
-                                  {Array.from({ length: p.total }).map((_, i) => {
-                                    const on = i < p.answered;
-                                    return (
-                                      <span
-                                        key={`${p.id}_dot_${i}`}
-                                        className={[
-                                          "h-1.5 w-6 rounded-full",
-                                          progressDotClass(dark, p.id, on),
-                                        ].join(" ")}
-                                      />
-                                    );
-                                  })}
-                                </div>
-
-                                {p.hint ? (
-                                  <div
-                                    className={`mt-2 text-xs ${
-                                      dark ? "text-white/60" : "text-slate-600"
-                                    }`}
-                                  >
-                                    {p.hint}
-                                  </div>
-                                ) : null}
-
-                                <div
-                                  className={`mt-2 text-xs font-semibold ${
-                                    dark ? "text-white/70" : "text-slate-700"
-                                  }`}
-                                >
-                                  Open →
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* BASED ON WHAT YOU’VE SHARED (receipts + unlock only) */}
+                  {/* BASED ON WHAT YOU’VE SHARED */}
                   {(receipts.length || unlock?.items?.length) ? (
                     <div className="mt-6">
                       <div
@@ -644,6 +497,7 @@ export default function InsightsPage() {
                         Based on what you’ve shared
                       </div>
 
+                      {/* Receipts chips (life receipts only) */}
                       {receipts.length ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {receipts.slice(0, 6).map((r) => (
@@ -662,6 +516,7 @@ export default function InsightsPage() {
                         </div>
                       ) : null}
 
+                      {/* Unlock CTAs */}
                       {unlock?.items?.length ? (
                         <div className="mt-3">
                           <div
@@ -669,11 +524,10 @@ export default function InsightsPage() {
                               dark ? "text-white/70" : "text-slate-700"
                             }`}
                           >
-                            Want this sharper? Give me a little more signal.
+                            If you want this to get sharper, give me a little more signal.
                             <span className={dark ? "text-white/80" : "text-slate-800"}>
                               {" "}
-                              Strengths tells me <span className="font-semibold">how you operate</span>.
-                              Skills tells me <span className="font-semibold">what you can build on</span>.
+                              Two more answers can change the quality of what I can say.
                             </span>
                           </div>
 
@@ -697,7 +551,7 @@ export default function InsightsPage() {
                                   </span>
                                   <span>{it.label}</span>
                                 </button>
-                              ) : null,
+                              ) : null
                             )}
                           </div>
                         </div>
@@ -705,135 +559,147 @@ export default function InsightsPage() {
                     </div>
                   ) : null}
 
-                  {/* SIGNALS (word cloud) */}
-                  {signalBar.length ? (
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                            dark ? "text-white/45" : "text-slate-500"
-                          }`}
-                        >
-                          Signals
-                        </div>
-
-                        <button
-                          type="button"
-                          className={[
-                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition active:scale-95",
-                            dark
-                              ? "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-                              : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                          ].join(" ")}
-                          onClick={() => setShowSignalsInfo((v) => !v)}
-                        >
-                          {showSignalsInfo ? "Hide what this is" : "What is this?"}
-                        </button>
+                  {/* SIGNALS (word cloud + tiny signal chips) */}
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between">
+                      <div
+                        className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                          dark ? "text-white/45" : "text-slate-500"
+                        }`}
+                      >
+                        Signals
                       </div>
 
-                      {showSignalsInfo ? (
-                        <div
-                          className={[
-                            "mt-2 rounded-2xl px-4 py-3",
-                            dark ? "bg-white/6" : "bg-white/75",
-                            "ring-1",
-                            dark ? "ring-white/10" : "ring-black/10",
-                          ].join(" ")}
-                        >
-                          <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
-                            Not a score — a reading.
-                          </div>
-                          <div className={`mt-1 text-sm leading-relaxed ${dark ? "text-white/70" : "text-slate-700"}`}>
-                            This looks at the words in your answers and detects themes. Bigger word = showing up more in what you wrote.
-                          </div>
-                        </div>
-                      ) : null}
+                      <button
+                        type="button"
+                        className={[
+                          "rounded-full border px-3 py-1.5 text-xs font-semibold transition active:scale-95",
+                          dark
+                            ? "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                            : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+                        ].join(" ")}
+                        onClick={() => setShowSignalsInfo((v) => !v)}
+                      >
+                        {showSignalsInfo ? "Hide what this is" : "What is this?"}
+                      </button>
+                    </div>
 
-                      {/* Cloud */}
+                    {showSignalsInfo ? (
                       <div
                         className={[
-                          "mt-3 rounded-3xl px-4 py-4",
-                          dark ? "bg-white/5" : "bg-white/75",
+                          "mt-2 rounded-2xl px-4 py-3",
+                          dark ? "bg-white/6" : "bg-white/75",
                           "ring-1",
                           dark ? "ring-white/10" : "ring-black/10",
                         ].join(" ")}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          {(signalBar as any[]).slice(0, 4).map((s) => {
-                            const isSel = selectedSignal === s.id;
-                            const fs = cloudSize(s.strength ?? 0);
-                            return (
-                              <button
-                                key={s.id}
-                                type="button"
-                                onClick={() => setSelectedSignal((prev) => (prev === s.id ? null : s.id))}
-                                className={[
-                                  "relative overflow-hidden rounded-full border px-3 py-2",
-                                  "transition active:scale-95",
-                                  dark
-                                    ? "border-white/12 bg-white/6 text-white/85 hover:bg-white/10"
-                                    : "border-black/10 bg-white text-slate-900 hover:bg-white",
-                                  isSel ? (dark ? "ring-2 ring-white/15" : "ring-2 ring-slate-900/10") : "",
-                                ].join(" ")}
-                                style={{
-                                  fontSize: `${fs}px`,
-                                  fontWeight: cloudWeight(s.strength ?? 0) as any,
-                                  opacity: cloudOpacity(s.strength ?? 0, isSel),
-                                }}
-                              >
-                                <span className="pointer-events-none absolute inset-0 opacity-60">
-                                  <span
-                                    className={[
-                                      "absolute -left-8 -top-8 h-20 w-20 rounded-full blur-2xl",
-                                      signalGradient(dark, s.id as SignalId),
-                                    ].join(" ")}
-                                  />
-                                  <span
-                                    className={[
-                                      "absolute -right-10 -bottom-10 h-24 w-24 rounded-full blur-3xl",
-                                      signalGradient(dark, s.id as SignalId),
-                                    ].join(" ")}
-                                  />
-                                </span>
-                                <span className="relative">{s.label}</span>
-                              </button>
-                            );
-                          })}
+                        <div
+                          className={`text-sm font-semibold ${
+                            dark ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          Not a score — a reading.
                         </div>
+                        <div
+                          className={`mt-1 text-sm leading-relaxed ${
+                            dark ? "text-white/70" : "text-slate-700"
+                          }`}
+                        >
+                          These are repeated themes in your answers. Bigger words show up more in what you wrote.
+                        </div>
+                      </div>
+                    ) : null}
 
-                        {/* Details */}
-                        {selectedSignalObj ? (
-                          <div
-                            className={[
-                              "mt-3 rounded-2xl px-4 py-3",
-                              dark ? "bg-slate-950/30" : "bg-black/[0.03]",
-                              "ring-1",
-                              dark ? "ring-white/10" : "ring-black/10",
-                            ].join(" ")}
-                          >
-                            <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
-                              {selectedSignalObj.meaning}
-                            </div>
-                            <div className={`mt-1 text-sm leading-relaxed ${dark ? "text-white/70" : "text-slate-700"}`}>
-                              {selectedSignalObj.why}
-                            </div>
-                            {Array.isArray(selectedSignalObj.examples) && selectedSignalObj.examples.length ? (
-                              <div className={`mt-2 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
-                                In your words:{" "}
-                                <span className={dark ? "text-white/80" : "text-slate-800"}>
-                                  {selectedSignalObj.examples.slice(0, 3).join(", ")}
+                    <div
+                      className={[
+                        "mt-3 relative overflow-hidden rounded-3xl px-5 py-4",
+                        sectionWash(dark, "signals"),
+                        dark ? "ring-1 ring-white/12" : "ring-1 ring-black/10",
+                      ].join(" ")}
+                    >
+                      <div className="pointer-events-none absolute inset-0">
+                        <div
+                          className={[
+                            "absolute left-0 top-0 h-full w-1.5 opacity-70",
+                            sectionEdge(dark, "signals"),
+                          ].join(" ")}
+                        />
+                        <div
+                          className={[
+                            "absolute -right-16 -top-16 h-64 w-64 rounded-full blur-3xl opacity-25",
+                            dark
+                              ? "bg-gradient-to-br from-sky-300/25 via-fuchsia-300/18 to-amber-300/15"
+                              : "bg-gradient-to-br from-sky-500/14 via-fuchsia-500/12 to-amber-500/10",
+                          ].join(" ")}
+                        />
+                      </div>
+
+                      <div className="relative">
+                        {/* Tiny signal chips (no ugly blocks) */}
+                        {signalBar.length ? (
+                          <div className="flex flex-wrap gap-2">
+                            {signalBar.slice(0, 4).map((s) => (
+                              <span
+                                key={s.id}
+                                className={[
+                                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                                  dark
+                                    ? "border-white/12 bg-white/8 text-white/85"
+                                    : "border-black/10 bg-white/80 text-slate-800",
+                                ].join(" ")}
+                              >
+                                <span
+                                  className={[
+                                    "h-2.5 w-2.5 rounded-full",
+                                    signalGradient(dark, s.id as SignalId),
+                                  ].join(" ")}
+                                  aria-hidden
+                                />
+                                <span>{s.label}</span>
+                                <span className={dark ? "text-white/55" : "text-slate-500"}>
+                                  {Math.round((s.strength ?? 0) * 100)}
                                 </span>
-                              </div>
-                            ) : null}
+                              </span>
+                            ))}
                           </div>
-                        ) : (
-                          <div className={`mt-3 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
-                            Tap a word to see what it means.
-                          </div>
-                        )}
+                        ) : null}
+
+                        {/* Word cloud */}
+                        <div className="mt-4">
+                          {wordCloud.length ? (
+                            <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                              {wordCloud.map((w) => (
+                                <span
+                                  key={w.term}
+                                  className={[
+                                    "select-none rounded-full border px-3 py-1",
+                                    "transition active:scale-95",
+                                    dark
+                                      ? "border-white/10 bg-white/6 text-white hover:bg-white/10"
+                                      : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
+                                  ].join(" ")}
+                                  style={{
+                                    fontSize: `${wordSizePx(w.weight)}px`,
+                                    opacity: wordOpacity(w.weight),
+                                  }}
+                                >
+                                  {w.term}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div
+                              className={`text-sm ${
+                                dark ? "text-white/70" : "text-slate-700"
+                              }`}
+                            >
+                              No themes yet — answer a few questions and this turns into a real word cloud.
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  ) : null}
+                  </div>
 
                   {/* Divider */}
                   <div className={`my-6 h-px ${dark ? "bg-white/10" : "bg-black/10"}`} />
@@ -921,10 +787,18 @@ export default function InsightsPage() {
                                 dark ? "ring-1 ring-white/10" : "ring-1 ring-black/10",
                               ].join(" ")}
                             >
-                              <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+                              <div
+                                className={`text-sm font-semibold ${
+                                  dark ? "text-white" : "text-slate-900"
+                                }`}
+                              >
                                 {e.title}
                               </div>
-                              <div className={`mt-1 text-sm leading-relaxed ${dark ? "text-white/70" : "text-slate-600"}`}>
+                              <div
+                                className={`mt-1 text-sm leading-relaxed ${
+                                  dark ? "text-white/70" : "text-slate-600"
+                                }`}
+                              >
                                 {e.text}
                               </div>
                             </div>
@@ -974,10 +848,18 @@ export default function InsightsPage() {
                                 : "bg-gradient-to-br from-white via-white/80 to-white/70",
                             ].join(" ")}
                           >
-                            <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+                            <div
+                              className={`text-sm font-semibold ${
+                                dark ? "text-white" : "text-slate-900"
+                              }`}
+                            >
                               {vm.summary.experiment.title}
                             </div>
-                            <div className={`mt-1 whitespace-pre-line text-sm leading-relaxed ${dark ? "text-white/75" : "text-slate-700"}`}>
+                            <div
+                              className={`mt-1 whitespace-pre-line text-sm leading-relaxed ${
+                                dark ? "text-white/75" : "text-slate-700"
+                              }`}
+                            >
                               {vm.summary.experiment.text}
                             </div>
 
@@ -989,13 +871,25 @@ export default function InsightsPage() {
                                   dark ? "ring-1 ring-white/10" : "ring-1 ring-black/10",
                                 ].join(" ")}
                               >
-                                <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/45" : "text-slate-500"}`}>
+                                <div
+                                  className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                                    dark ? "text-white/45" : "text-slate-500"
+                                  }`}
+                                >
                                   Last logged
                                 </div>
-                                <div className={`mt-1 text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+                                <div
+                                  className={`mt-1 text-sm font-semibold ${
+                                    dark ? "text-white" : "text-slate-900"
+                                  }`}
+                                >
                                   {lastExperiment.tried}
                                 </div>
-                                <div className={`mt-1 text-xs ${dark ? "text-white/60" : "text-slate-600"}`}>
+                                <div
+                                  className={`mt-1 text-xs ${
+                                    dark ? "text-white/60" : "text-slate-600"
+                                  }`}
+                                >
                                   {lastExperiment.feel === "energized"
                                     ? "Felt energizing"
                                     : lastExperiment.feel === "drained"
@@ -1004,7 +898,11 @@ export default function InsightsPage() {
                                   • {relativeTime(lastExperiment.createdAt)}
                                 </div>
                                 {lastExperiment.learned ? (
-                                  <div className={`mt-2 text-sm leading-relaxed ${dark ? "text-white/70" : "text-slate-700"}`}>
+                                  <div
+                                    className={`mt-2 text-sm leading-relaxed ${
+                                      dark ? "text-white/70" : "text-slate-700"
+                                    }`}
+                                  >
                                     “{lastExperiment.learned}”
                                   </div>
                                 ) : null}
@@ -1018,7 +916,11 @@ export default function InsightsPage() {
                               dark ? "bg-slate-950/35" : "bg-black/[0.03]",
                             ].join(" ")}
                           >
-                            <div className={`text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                            <div
+                              className={`text-xs ${
+                                dark ? "text-white/55" : "text-slate-600"
+                              }`}
+                            >
                               Logging is how we turn “advice” into “you.”
                             </div>
 
@@ -1041,9 +943,13 @@ export default function InsightsPage() {
                     </div>
                   </div>
 
-                  {/* Calibration */}
+                  {/* Quick check */}
                   <div className="mt-6">
-                    <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/50" : "text-slate-500"}`}>
+                    <div
+                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                        dark ? "text-white/50" : "text-slate-500"
+                      }`}
+                    >
                       Quick check
                     </div>
 
@@ -1054,12 +960,16 @@ export default function InsightsPage() {
                           <button
                             key={opt}
                             type="button"
-                            className={[pillBase(dark), selected ? pillSelected(dark) : ""].join(" ")}
+                            className={[
+                              pillBase(dark),
+                              selected ? pillSelected(dark) : "",
+                              selected ? "ring-2 ring-white/20" : "",
+                            ].join(" ")}
                             onClick={() => setCalibrationAndPersist(opt)}
                             aria-pressed={selected}
                           >
                             <span className="mr-2" aria-hidden>
-                              {opt === "Mostly right" ? "👍" : opt === "Somewhat" ? "😐" : "👎"}
+                              {selected ? "✓" : opt === "Mostly right" ? "👍" : opt === "Somewhat" ? "😐" : "👎"}
                             </span>
                             {opt}
                           </button>
@@ -1067,7 +977,11 @@ export default function InsightsPage() {
                       })}
                     </div>
 
-                    <div className={`mt-2 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
+                    <div
+                      className={`mt-2 text-xs ${
+                        dark ? "text-white/45" : "text-slate-500"
+                      }`}
+                    >
                       (We’ll use this later to recalibrate Insights.)
                     </div>
                   </div>
@@ -1089,7 +1003,9 @@ export default function InsightsPage() {
                     className={[
                       "relative w-full max-w-xl overflow-hidden rounded-[28px] border",
                       "backdrop-blur-xl",
-                      dark ? "border-white/12 bg-slate-950/70" : "border-black/10 bg-white/85",
+                      dark
+                        ? "border-white/12 bg-slate-950/70"
+                        : "border-black/10 bg-white/85",
                       "shadow-[0_28px_95px_rgba(0,0,0,0.55)]",
                     ].join(" ")}
                   >
@@ -1115,11 +1031,19 @@ export default function InsightsPage() {
                     <div className="relative px-5 py-5 sm:px-7 sm:py-6">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className={`text-lg font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
+                          <div
+                            className={`text-lg font-semibold ${
+                              dark ? "text-white" : "text-slate-900"
+                            }`}
+                          >
                             Log your experiment
                           </div>
-                          <div className={`mt-1 text-sm ${dark ? "text-white/65" : "text-slate-600"}`}>
-                            Quick, honest, and small. This is how Insights gets personal.
+                          <div
+                            className={`mt-1 text-sm ${
+                              dark ? "text-white/65" : "text-slate-600"
+                            }`}
+                          >
+                            Quick and small. This is how Insights gets personal.
                           </div>
                         </div>
 
@@ -1139,7 +1063,11 @@ export default function InsightsPage() {
 
                       <div className="mt-4 space-y-4">
                         <div>
-                          <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/45" : "text-slate-500"}`}>
+                          <div
+                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                              dark ? "text-white/45" : "text-slate-500"
+                            }`}
+                          >
                             What did you try?
                           </div>
                           <input
@@ -1157,7 +1085,11 @@ export default function InsightsPage() {
                         </div>
 
                         <div>
-                          <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/45" : "text-slate-500"}`}>
+                          <div
+                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                              dark ? "text-white/45" : "text-slate-500"
+                            }`}
+                          >
                             How did it feel?
                           </div>
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -1182,7 +1114,7 @@ export default function InsightsPage() {
                                   aria-pressed={selected}
                                 >
                                   <span className="mr-2" aria-hidden>
-                                    {x.icon}
+                                    {selected ? "✓" : x.icon}
                                   </span>
                                   {x.label}
                                 </button>
@@ -1192,7 +1124,11 @@ export default function InsightsPage() {
                         </div>
 
                         <div>
-                          <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/45" : "text-slate-500"}`}>
+                          <div
+                            className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                              dark ? "text-white/45" : "text-slate-500"
+                            }`}
+                          >
                             What did you learn? (optional)
                           </div>
                           <textarea
@@ -1212,7 +1148,11 @@ export default function InsightsPage() {
                       </div>
 
                       <div className="mt-5 flex items-center justify-between gap-3">
-                        <div className={`text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
+                        <div
+                          className={`text-xs ${
+                            dark ? "text-white/55" : "text-slate-600"
+                          }`}
+                        >
                           Stored locally for now.
                         </div>
 
@@ -1257,8 +1197,8 @@ export default function InsightsPage() {
                       : "border-slate-200 bg-white/75 text-slate-700"
                   }`}
                 >
-                  <span className="font-semibold">UI note:</span> pills + tab routing are in place;
-                  we can swap in real section components without changing navigation.
+                  <span className="font-semibold">UI note:</span> pills + tab routing are in place; we can
+                  swap in real section components without changing navigation.
                 </div>
               </div>
             </section>
