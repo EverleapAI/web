@@ -191,13 +191,18 @@ function getRetortMs(fromStep: StepId) {
 function ProgressDots({ current, total }: { current: number; total: number }) {
   const filled = clampInt(current + 1, 1, total);
   return (
-    <div className="flex items-center justify-center gap-2" aria-label={`Step ${filled} of ${total}`}>
+    <div
+      className="flex items-center justify-center gap-2"
+      aria-label={`Step ${filled} of ${total}`}
+    >
       {Array.from({ length: total }).map((_, i) => {
         const on = i < filled;
         return (
           <span
             key={i}
-            className={`h-[6px] w-[14px] rounded-full transition ${on ? "bg-white/70" : "bg-white/18"}`}
+            className={`h-[6px] w-[14px] rounded-full transition ${
+              on ? "bg-white/70" : "bg-white/18"
+            }`}
           />
         );
       })}
@@ -250,7 +255,9 @@ function ChoiceRowText({
     <button type="button" onClick={onClick} className="group block w-full py-3 text-left">
       <div
         className={`text-[16px] leading-7 transition ${
-          selected ? "text-white font-semibold" : "text-white/70 group-hover:text-white/85 font-normal"
+          selected
+            ? "text-white font-semibold"
+            : "text-white/70 group-hover:text-white/85 font-normal"
         }`}
       >
         {label}
@@ -324,7 +331,11 @@ function MinimalTextarea({
             aria-label={isListening ? "Stop voice input" : "Start voice input"}
             title={!speechSupported ? "Voice not supported" : isListening ? "Listening…" : "Voice input"}
           >
-            {isListening ? <MicOff className="mx-auto h-4 w-4" /> : <Mic className="mx-auto h-4 w-4" />}
+            {isListening ? (
+              <MicOff className="mx-auto h-4 w-4" />
+            ) : (
+              <Mic className="mx-auto h-4 w-4" />
+            )}
           </button>
         ) : null}
 
@@ -683,6 +694,10 @@ export default function OnboardingPage() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
 
+  // ✅ Fix: only reset onboarding storage when explicitly requested
+  // Use /onboarding?reset=1 to start fresh (QA / demos).
+  const shouldReset = searchParams.get("reset") === "1";
+
   // AppChrome visuals (keep minimal)
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
@@ -732,51 +747,54 @@ export default function OnboardingPage() {
   // Fun "how did you pick" (speed hint)
   const funShownAtRef = React.useRef<number | null>(null);
 
-  // Reset EVERYTHING when onboarding mounts (fresh conversation every time)
+  // Reset when onboarding mounts (ONLY if ?reset=1)
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
 
-    // Hard reset local state
-    setStepIndex(0);
-    setScreenMode("question");
-    setRetortText(null);
-    setRetortFromStep(null);
-    retortTokenRef.current = null;
-    advanceLockRef.current = false;
-
-    setName("");
-    setSituation(null);
-    setZip("");
-    setCertainty(null);
-    setPostPlans([]);
-    setActivities([]);
-    setActivitiesOther("");
-    setFunChoice(null);
-    setDraft("");
-
-    // stop any mic in progress
-    if (recognitionRef.current) {
+    if (shouldReset) {
       try {
-        recognitionRef.current.stop();
+        window.localStorage.removeItem(STORAGE_KEY);
       } catch {
         // ignore
       }
+
+      // Hard reset local state
+      setStepIndex(0);
+      setScreenMode("question");
+      setRetortText(null);
+      setRetortFromStep(null);
+      retortTokenRef.current = null;
+      advanceLockRef.current = false;
+
+      setName("");
+      setSituation(null);
+      setZip("");
+      setCertainty(null);
+      setPostPlans([]);
+      setActivities([]);
+      setActivitiesOther("");
+      setFunChoice(null);
+      setDraft("");
+
+      // stop any mic in progress
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+      }
+      setIsListening(false);
+      lastFinalRef.current = "";
+      activeTargetRef.current = null;
+      funShownAtRef.current = null;
     }
-    setIsListening(false);
-    lastFinalRef.current = "";
-    activeTargetRef.current = null;
-    funShownAtRef.current = null;
 
     // focus after first paint
     window.setTimeout(() => {
       textareaRef.current?.focus();
     }, 50);
-  }, []);
+  }, [shouldReset]);
 
   // Speech supported
   React.useEffect(() => {
@@ -1041,7 +1059,6 @@ export default function OnboardingPage() {
         const place = await lookupZipPlace(zip5);
         const resolved = place ? `${place.city}, ${stateFullName(place.state)}` : null;
 
-        // If lookup missed but override exists, still use override (handled above); otherwise resolved may be null.
         if (resolved && retortTokenRef.current === token && screenMode !== "completion") {
           const t1 = buildRetort({
             fromStep,
@@ -1057,7 +1074,6 @@ export default function OnboardingPage() {
             funLatencyMs: effectiveFunLatencyMs,
           });
 
-          // Only update if we're still on the same retort
           if (retortTokenRef.current === token && retortFromStep === "zip") {
             setRetortText(t1);
           }
@@ -1272,11 +1288,7 @@ export default function OnboardingPage() {
 
   function Kicker() {
     if (!meta?.kicker) return null;
-    return (
-      <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-        {meta.kicker}
-      </div>
-    );
+    return <div className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">{meta.kicker}</div>;
   }
 
   function TitleBlock({ title, micro }: { title: string; micro?: string }) {
@@ -1525,7 +1537,11 @@ export default function OnboardingPage() {
               selected={activities.includes("volunteer")}
               onClick={() => toggleActivity("volunteer")}
             />
-            <ChoiceRowText label="Working a job" selected={activities.includes("job")} onClick={() => toggleActivity("job")} />
+            <ChoiceRowText
+              label="Working a job"
+              selected={activities.includes("job")}
+              onClick={() => toggleActivity("job")}
+            />
             <ChoiceRowText label="Other" selected={activities.includes("other")} onClick={() => toggleActivity("other")} />
 
             <EndOfAnswersLine />

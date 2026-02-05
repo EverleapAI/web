@@ -1,17 +1,8 @@
-// CHUNK 1/2
 // src/app/main/insights/page.tsx
 "use client";
 
 import * as React from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  ArrowRight,
-  X,
-  Send,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -24,27 +15,132 @@ import {
 } from "@/theme/everleapVisuals";
 
 import {
-  INSIGHTS_AREAS,
-  type TraitCard,
-  type TraitCardVariant,
-} from "./insightsContent";
+  buildInsightsViewModel,
+  type InsightsTab,
+} from "./app/buildInsightsViewModel";
 
-/* ============================================================
-   Local guide modal types
-   ============================================================ */
+/* =============================================================================
+   Tabs
+   ============================================================================= */
 
-type FeedbackRating = "mostly" | "somewhat" | "nope";
-type GuideMsg = { role: "guide" | "user"; text: string };
+type TabDef = { id: InsightsTab; label: string };
 
-function labelForRating(r: FeedbackRating) {
-  if (r === "mostly") return "Mostly right";
-  if (r === "somewhat") return "Somewhat";
-  return "Not really";
+const TABS: TabDef[] = [
+  { id: "summary", label: "Summary" },
+  { id: "superpowers", label: "Superpowers" },
+  { id: "patterns", label: "Patterns" },
+  { id: "edges", label: "Edges" },
+  { id: "directions", label: "Directions" },
+  { id: "doppelganger", label: "Historical Doppelgänger" },
+];
+
+type CalibrationChoice = "Mostly right" | "Somewhat" | "Not really";
+
+/* =============================================================================
+   URL helpers
+   ============================================================================= */
+
+function coerceTab(raw: string | null | undefined): InsightsTab {
+  const v = (raw ?? "").toLowerCase();
+  if (v === "summary") return "summary";
+  if (v === "superpowers") return "superpowers";
+  if (v === "patterns") return "patterns";
+  if (v === "edges") return "edges";
+  if (v === "directions") return "directions";
+  if (v === "doppelganger") return "doppelganger";
+  if (v.includes("doppel")) return "doppelganger";
+  return "summary";
 }
 
-/* ============================================================
+/* =============================================================================
+   UI helpers
+   ============================================================================= */
+
+function sectionTitle(dark: boolean) {
+  return dark ? "text-white" : "text-slate-900";
+}
+
+function sectionMuted(dark: boolean) {
+  return dark ? "text-white/60" : "text-slate-600";
+}
+
+function hairline(dark: boolean) {
+  return dark ? "bg-white/10" : "bg-black/10";
+}
+
+function pillBase(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center",
+    "rounded-full border",
+    "px-3.5 py-2",
+    "text-sm font-semibold",
+    "transition active:scale-95",
+    dark
+      ? "border-white/10 bg-white/[0.06] text-white/70 hover:bg-white/[0.10]"
+      : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+    dark
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/12",
+  ].join(" ");
+}
+
+function pillSelected(dark: boolean) {
+  return dark
+    ? "bg-white/[0.16] text-white border-white/[0.16]"
+    : "bg-white text-slate-900 border-slate-200";
+}
+
+function chipTone(dark: boolean, tone?: "neutral" | "good" | "watch") {
+  const base = [
+    "inline-flex items-center gap-2",
+    "rounded-full border px-3 py-1.5",
+    "text-xs font-semibold",
+    "backdrop-blur-xl",
+    "transition",
+  ];
+
+  if (dark) {
+    if (tone === "good")
+      return base
+        .concat([
+          "border-white/14 bg-white/[0.12] text-white/90 hover:bg-white/[0.16]",
+        ])
+        .join(" ");
+    if (tone === "watch")
+      return base
+        .concat([
+          "border-white/12 bg-white/[0.10] text-white/78 hover:bg-white/[0.14]",
+        ])
+        .join(" ");
+    return base
+      .concat([
+        "border-white/10 bg-white/[0.09] text-white/78 hover:bg-white/[0.13]",
+      ])
+      .join(" ");
+  }
+
+  if (tone === "good")
+    return base.concat(["border-black/10 bg-white/90 text-slate-900"]).join(" ");
+  if (tone === "watch")
+    return base.concat(["border-black/10 bg-white/85 text-slate-800"]).join(" ");
+  return base.concat(["border-black/10 bg-white/85 text-slate-800"]).join(" ");
+}
+
+function signalFillGradient(id: string) {
+  if (id === "action")
+    return "bg-gradient-to-r from-amber-300/95 via-orange-400/80 to-pink-500/70";
+  if (id === "people")
+    return "bg-gradient-to-r from-sky-300/95 via-cyan-400/80 to-emerald-400/70";
+  if (id === "curiosity")
+    return "bg-gradient-to-r from-fuchsia-400/95 via-violet-500/80 to-sky-400/70";
+  if (id === "clarity")
+    return "bg-gradient-to-r from-emerald-300/95 via-lime-300/80 to-amber-200/70";
+  return "bg-gradient-to-r from-white/35 via-white/22 to-white/16";
+}
+
+/* =============================================================================
    Page
-   ============================================================ */
+   ============================================================================= */
 
 export default function InsightsPage() {
   const searchParams = useSearchParams();
@@ -53,800 +149,65 @@ export default function InsightsPage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
-  const [activeIndex, setActiveIndex] = React.useState(0);
-
-  // Context toggles
-  const [whyOpen, setWhyOpen] = React.useState(false);
-  const [laneContextOpen, setLaneContextOpen] = React.useState(false);
-
-  // Deep dive modal
-  const [deepOpen, setDeepOpen] = React.useState(false);
-  const deepCloseBtnRef = React.useRef<HTMLButtonElement | null>(null);
-
-  // Guide modal
-  const [guideOpen, setGuideOpen] = React.useState(false);
-  const [guideDraft, setGuideDraft] = React.useState("");
-  const [guideMsgs, setGuideMsgs] = React.useState<GuideMsg[]>([]);
-  const [guideCtx, setGuideCtx] = React.useState<{
-    areaId: string;
-    areaLabel: string;
-    rating: FeedbackRating;
-    source: "page" | "deep";
-  } | null>(null);
-  const guideInputRef = React.useRef<HTMLTextAreaElement | null>(null);
-
-  // Chip scroller affordance
-  const chipsWrapRef = React.useRef<HTMLDivElement | null>(null);
-  const [chipsHintSeen, setChipsHintSeen] = React.useState(false);
-  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
-  const [canScrollRight, setCanScrollRight] = React.useState(false);
-
   const dark = isDarkTheme(themeId);
   const theme =
     INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
-  // map url param -> index (only if it matches)
-  const areaParam = searchParams?.get("area") ?? "";
-  React.useEffect(() => {
-    if (!areaParam) return;
-    const idx = INSIGHTS_AREAS.findIndex((a) => areaParam === a.id);
-    if (idx >= 0) setActiveIndex(idx);
-  }, [areaParam]);
+  const initialTabFromUrl = React.useMemo<InsightsTab>(() => {
+    const raw = searchParams?.get("tab") ?? searchParams?.get("section");
+    return coerceTab(raw);
+  }, [searchParams]);
 
-  const activeArea = INSIGHTS_AREAS[activeIndex];
+  const [tab, setTab] = React.useState<InsightsTab>(initialTabFromUrl);
 
-  const sectionLabelClass = dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/60"
-    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500";
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
-  const pageTextMutedClass = dark ? "text-slate-300/90" : "text-slate-600";
+  const vm = React.useMemo(
+    () => buildInsightsViewModel(tab, { useLocal: mounted }),
+    [tab, mounted]
+  );
 
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.75)]"
-    : "shadow-[0_16px_45px_rgba(0,0,0,0.18)]";
+  const [calibration, setCalibration] =
+    React.useState<CalibrationChoice | null>(null);
 
-  const surface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
+  const calibrationOptions: CalibrationChoice[] = [
+    "Mostly right",
+    "Somewhat",
+    "Not really",
+  ];
 
-  const microText = dark ? "text-slate-400" : "text-slate-500";
-
-  const areaChipBase = dark
-    ? "border-slate-800/80 bg-slate-950/60 text-slate-200 hover:bg-slate-950/75"
-    : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white";
-
-  const areaChipActive = dark
-    ? `
-      border-white/18 text-slate-50
-      bg-gradient-to-r from-white/10 via-white/6 to-white/5
-      shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_28px_rgba(56,189,248,0.18)]
-    `
-    : `
-      border-sky-300 text-slate-900
-      bg-gradient-to-r from-sky-50 via-white to-white
-      shadow-[0_0_0_1px_rgba(56,189,248,0.22),0_10px_24px_rgba(56,189,248,0.16)]
-    `;
-
-  const accentGlow = `bg-gradient-to-br ${activeArea.glowClass}`;
-  const chipAccentBar = `bg-gradient-to-b ${activeArea.glowClass}`;
-
-  const topSignals = activeArea.signals.slice(0, 3);
-  const extraSignals = Math.max(activeArea.signals.length - topSignals.length, 0);
-
-  function goToArea(nextIndex: number) {
-    setWhyOpen(false);
-    setLaneContextOpen(false);
-    setActiveIndex(nextIndex);
-
-    // Keep URL in sync (nice for refresh/share)
-    const id =
-      INSIGHTS_AREAS[nextIndex]?.id ?? INSIGHTS_AREAS[0]?.id ?? "motivations";
-    router.replace(`/main/insights?area=${encodeURIComponent(id)}`);
+  function setTabAndSync(next: InsightsTab) {
+    setTab(next);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("tab", next);
+    params.delete("section");
+    router.replace(`/main/insights?${params.toString()}`);
   }
 
-  function openDeepDive() {
-    setDeepOpen(true);
-  }
-  function closeDeepDive() {
-    setDeepOpen(false);
-  }
-
-  function openGuide(rating: FeedbackRating, source: "page" | "deep") {
-    const ctx = {
-      areaId: activeArea.id,
-      areaLabel: activeArea.label,
-      rating,
-      source,
-    } as const;
-
-    setGuideCtx(ctx);
-
-    const seed: GuideMsg[] = [
-      {
-        role: "guide",
-        text:
-          `Calibration for **${activeArea.label}**: you said “${labelForRating(
-            rating
-          )}.”\n\n` + `What part felt most true — and what part is wrong?`,
-      },
-      {
-        role: "guide",
-        text:
-          "If you rewrote this insight in your own words, what would it say (one or two sentences)?",
-      },
-    ];
-
-    setGuideMsgs(seed);
-    setGuideDraft("");
-    setGuideOpen(true);
-
-    window.setTimeout(() => guideInputRef.current?.focus(), 50);
-  }
-
-  function closeGuide() {
-    setGuideOpen(false);
-  }
-
-  function submitGuide() {
-    const text = guideDraft.trim();
-    if (!text) return;
-
-    setGuideMsgs((prev) => [...prev, { role: "user", text }]);
-    setGuideDraft("");
-
-    const followUp =
-      guideCtx?.rating === "nope"
-        ? "Got it. What’s the *truer* pattern for you (and when does it show up most)?"
-        : guideCtx?.rating === "somewhat"
-        ? "Helpful. Which part should I tone down or flip, and what’s the better version?"
-        : "Nice. What’s one specific example from your life that proves this is true?";
-
-    setGuideMsgs((prev) => [...prev, { role: "guide", text: followUp }]);
-  }
-
-  React.useEffect(() => {
-    if (!deepOpen) return;
-
-    window.setTimeout(() => deepCloseBtnRef.current?.focus(), 0);
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeDeepDive();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [deepOpen]);
-
-  React.useEffect(() => {
-    if (!guideOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeGuide();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [guideOpen]);
-
-  function computeChipScrollState() {
-    const el = chipsWrapRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 4);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
-  }
-
-  React.useEffect(() => {
-    computeChipScrollState();
-    const onResize = () => computeChipScrollState();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  function scrollChips(dir: "left" | "right") {
-    const el = chipsWrapRef.current;
-    if (!el) return;
-    setChipsHintSeen(true);
-    el.scrollBy({ left: dir === "left" ? -260 : 260, behavior: "smooth" });
-    window.setTimeout(computeChipScrollState, 250);
-  }
-
-  const feedbackButtonBase =
-    "inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95";
-  const feedbackButtonDark =
-    "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10";
-  const feedbackButtonLight =
-    "border-slate-200 bg-white/85 text-slate-800 hover:bg-white";
-
-  /* ============================================================
-     Trait card rendering (supports your variants)
-     IMPORTANT: vertical stack always
-     ============================================================ */
-
-  type StoryPayload = {
-    title?: string;
-    lead?: string;
-    beats?: string[];
-    closer?: string;
-  };
-
-  type WarningPayload = {
-    title?: string;
-    text?: string;
-    bullets?: string[];
-  };
-
-  type MicroPayload = {
-    facts?: string[];
-  };
-
-  type ExtendedTraitCard = TraitCard & {
-    story?: StoryPayload;
-    warning?: WarningPayload;
-    micro?: MicroPayload;
-  };
-
-  function chipForVariant(v?: TraitCardVariant) {
-    if (!v) return null;
-    const label =
-      v === "micro"
-        ? "micro"
-        : v === "quote"
-        ? "quote"
-        : v === "contrast"
-        ? "contrast"
-        : v === "checklist"
-        ? "checklist"
-        : v === "story"
-        ? "story"
-        : v === "warning"
-        ? "watchout"
-        : "exercise";
-
-    return (
-      <span
-        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-          dark
-            ? "border-white/10 bg-white/5 text-slate-100"
-            : "border-slate-200 bg-white/85 text-slate-800"
-        }`}
-      >
-        {label}
-      </span>
-    );
-  }
-
-  function TraitTile({ c }: { c: TraitCard }) {
-    const card = c as ExtendedTraitCard;
-
-    const base =
-      dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80";
-
-    const insetPanel =
-      dark
-        ? "border-white/10 bg-slate-950/45 text-slate-100"
-        : "border-slate-200 bg-white/75 text-slate-800";
-
-    return (
-      <div className={`rounded-3xl border px-5 py-4 backdrop-blur-xl ${base}`}>
-        <div className="flex items-start gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-              dark
-                ? "bg-slate-950/60 text-slate-50"
-                : "bg-slate-900/5 text-slate-800"
-            }`}
-            aria-hidden
-          >
-            <span className="text-lg">{c.icon ?? "✨"}</span>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div
-                className={`text-base font-semibold ${
-                  dark ? "text-slate-50" : "text-slate-900"
-                }`}
-              >
-                {c.title}
-              </div>
-              {chipForVariant(c.variant)}
-            </div>
-
-            <div className={`mt-1 text-sm ${pageTextMutedClass}`}>{c.short}</div>
-
-            {c.variant === "quote" && c.quote ? (
-              <div
-                className={`mt-3 rounded-2xl border px-4 py-3 text-sm italic ${
-                  dark
-                    ? "border-white/10 bg-slate-950/35 text-slate-100"
-                    : "border-slate-200 bg-white/70 text-slate-800"
-                }`}
-              >
-                “{c.quote}”
-              </div>
-            ) : null}
-
-            {c.variant === "checklist" && c.bullets?.length ? (
-              <ul className={`mt-3 space-y-1 text-sm ${pageTextMutedClass}`}>
-                {c.bullets.slice(0, 6).map((b) => (
-                  <li key={b} className="flex items-start gap-2">
-                    <span
-                      aria-hidden
-                      className={`mt-1 inline-block h-1.5 w-1.5 rounded-full ${
-                        dark ? "bg-slate-200/70" : "bg-slate-500"
-                      }`}
-                    />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            {c.variant === "contrast" && c.contrast ? (
-              <div className="mt-3 space-y-2">
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm ${
-                    dark
-                      ? "border-emerald-200/10 bg-emerald-500/10 text-slate-100"
-                      : "border-emerald-200 bg-emerald-50 text-slate-800"
-                  }`}
-                >
-                  <span className="font-semibold">Do: </span>
-                  {c.contrast.do}
-                </div>
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm ${
-                    dark
-                      ? "border-rose-200/10 bg-rose-500/10 text-slate-100"
-                      : "border-rose-200 bg-rose-50 text-slate-800"
-                  }`}
-                >
-                  <span className="font-semibold">Avoid: </span>
-                  {c.contrast.avoid}
-                </div>
-              </div>
-            ) : null}
-
-            {c.variant === "exercise" && c.prompt ? (
-              <div className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${insetPanel}`}>
-                <span className="font-semibold">Exercise: </span>
-                {c.prompt}
-              </div>
-            ) : null}
-
-            {c.variant === "story" &&
-            (card.story?.lead || card.story?.beats?.length) ? (
-              <div
-                className={`mt-3 overflow-hidden rounded-2xl border ${
-                  dark ? "border-white/10" : "border-slate-200"
-                }`}
-              >
-                <div className={`px-4 py-3 ${dark ? "bg-slate-950/40" : "bg-white/70"}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div
-                      className={`text-sm font-semibold ${
-                        dark ? "text-slate-50" : "text-slate-900"
-                      }`}
-                    >
-                      {card.story?.title ?? "Mini story"}
-                    </div>
-                    <span
-                      className={`text-xs font-semibold ${
-                        dark ? "text-slate-300/70" : "text-slate-600/80"
-                      }`}
-                    >
-                      playful read
-                    </span>
-                  </div>
-
-                  {card.story?.lead ? (
-                    <div className={`mt-2 text-sm ${pageTextMutedClass}`}>
-                      {card.story.lead}
-                    </div>
-                  ) : null}
-                </div>
-
-                {card.story?.beats?.length ? (
-                  <div className={`px-4 py-3 ${dark ? "bg-slate-950/55" : "bg-white/85"}`}>
-                    <ol className="space-y-2">
-                      {card.story.beats.slice(0, 4).map((b, idx) => (
-                        <li key={`${c.id}-beat-${idx}`} className="flex items-start gap-3">
-                          <span
-                            className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                              dark
-                                ? "bg-white/10 text-slate-100"
-                                : "bg-slate-900/5 text-slate-800"
-                            }`}
-                          >
-                            {idx + 1}
-                          </span>
-                          <div className={`text-sm ${pageTextMutedClass}`}>{b}</div>
-                        </li>
-                      ))}
-                    </ol>
-
-                    {card.story?.closer ? (
-                      <div
-                        className={`mt-3 rounded-xl border px-3 py-2 text-xs leading-relaxed ${
-                          dark
-                            ? "border-white/10 bg-white/5 text-slate-200/85"
-                            : "border-slate-200 bg-white text-slate-700"
-                        }`}
-                      >
-                        <span className="font-semibold">Try this lens: </span>
-                        {card.story.closer}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {c.variant === "warning" &&
-            (card.warning?.text || card.warning?.bullets?.length) ? (
-              <div
-                className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
-                  dark
-                    ? "border-amber-200/10 bg-amber-500/10 text-slate-100"
-                    : "border-amber-200 bg-amber-50 text-slate-800"
-                }`}
-              >
-                <div className="font-semibold">{card.warning?.title ?? "Watch out"}</div>
-
-                {card.warning?.text ? (
-                  <div className={`mt-1 ${pageTextMutedClass}`}>{card.warning.text}</div>
-                ) : null}
-
-                {card.warning?.bullets?.length ? (
-                  <ul className={`mt-2 space-y-1 text-sm ${pageTextMutedClass}`}>
-                    {card.warning.bullets.slice(0, 5).map((b) => (
-                      <li key={b} className="flex items-start gap-2">
-                        <span aria-hidden className="mt-1">
-                          ⚠️
-                        </span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-
-            {c.variant === "micro" && card.micro?.facts?.length ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {card.micro.facts.slice(0, 6).map((f) => (
-                  <span
-                    key={f}
-                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
-                      dark
-                        ? "border-white/10 bg-white/5 text-slate-100"
-                        : "border-slate-200 bg-white/80 text-slate-800"
-                    }`}
-                  >
-                    {f}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            {c.long ? (
-              <div
-                className={`mt-3 text-xs leading-relaxed ${
-                  dark ? "text-slate-200/75" : "text-slate-700/80"
-                }`}
-              >
-                {c.long}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ============================================================
-     Non-recommendation lane card (vertical tiles)
-     ============================================================ */
-
-  function LaneCard() {
-    // Compute inline (tiny list) to avoid hook-deps warnings in nested component
-    const orderedCards = (() => {
-      const cards = (activeArea.cards ?? []).slice();
-      if (!cards.length) return cards;
-
-      const NEW_ID = "historical_doppelganger";
-      const ANCHOR_ID = "skills";
-
-      const newIdx = cards.findIndex((c) => c.id === NEW_ID);
-      if (newIdx < 0) return cards; // new card not in this lane
-
-      const [newCard] = cards.splice(newIdx, 1);
-      const anchorIdx = cards.findIndex((c) => c.id === ANCHOR_ID);
-
-      if (anchorIdx >= 0) {
-        cards.splice(anchorIdx + 1, 0, newCard);
-        return cards;
-      }
-
-      cards.push(newCard);
-      return cards;
-    })();
-
-    return (
-      <section className="mb-5">
-        <div
-          className={`relative overflow-hidden rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
-        >
-          <div className="pointer-events-none absolute inset-0">
-            <div
-              className={`absolute -top-10 -left-10 h-56 w-56 rounded-full blur-3xl opacity-25 ${accentGlow}`}
-            />
-            <div
-              className={`absolute -bottom-16 -right-10 h-64 w-64 rounded-full blur-3xl opacity-20 ${accentGlow}`}
-            />
-          </div>
-
-          <div className="relative">
-            <div className={sectionLabelClass}>{activeArea.label}</div>
-
-            <div className="mt-2 max-w-2xl">
-              <div
-                className={`text-lg font-semibold ${
-                  dark ? "text-slate-50" : "text-slate-900"
-                }`}
-              >
-                {activeArea.summary}
-              </div>
-              <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
-                {activeArea.hint}
-              </div>
-            </div>
-
-            {/* ===== Tiles: ALWAYS VERTICAL ===== */}
-            {orderedCards.length ? (
-              <div className="mt-5 flex flex-col gap-3">
-                {orderedCards.slice(0, 6).map((c) => (
-                  <TraitTile key={c.id} c={c} />
-                ))}
-              </div>
-            ) : null}
-
-            {/* next moves */}
-            {activeArea.nextMoves?.length ? (
-              <div className="mt-6">
-                <div
-                  className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
-                >
-                  Next moves
-                </div>
-
-                <div className="space-y-2">
-                  {activeArea.nextMoves.slice(0, 4).map((m, idx) => (
-                    <div
-                      key={m.id}
-                      className={`rounded-2xl border px-4 py-3 ${
-                        dark
-                          ? "border-white/10 bg-slate-950/35"
-                          : "border-slate-200 bg-white/75"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                            dark
-                              ? "bg-white/10 text-slate-100"
-                              : "bg-slate-900/5 text-slate-800"
-                          }`}
-                        >
-                          {idx + 1}
-                        </span>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div
-                              className={`text-sm font-semibold ${
-                                dark ? "text-slate-50" : "text-slate-900"
-                              }`}
-                            >
-                              {m.title}
-                            </div>
-
-                            {m.timebox ? (
-                              <span
-                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold ${
-                                  dark
-                                    ? "border-white/10 bg-white/5 text-slate-100"
-                                    : "border-slate-200 bg-white/80 text-slate-800"
-                                }`}
-                              >
-                                {m.timebox}
-                              </span>
-                            ) : null}
-
-                            {m.difficulty ? (
-                              <span
-                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold ${
-                                  dark
-                                    ? "border-white/10 bg-white/5 text-slate-100"
-                                    : "border-slate-200 bg-white/80 text-slate-800"
-                                }`}
-                              >
-                                {m.difficulty}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <div className={`mt-1 text-sm ${pageTextMutedClass}`}>
-                            {m.blurb}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {/* signals */}
-            <div className="mt-6">
-              <div
-                className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
-              >
-                Signals
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {topSignals.map((sig) => (
-                  <span
-                    key={sig}
-                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
-                      dark
-                        ? "border-white/10 bg-white/5 text-slate-100"
-                        : "border-slate-200 bg-white/80 text-slate-800"
-                    }`}
-                  >
-                    {sig}
-                  </span>
-                ))}
-                {extraSignals > 0 ? (
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs opacity-85 ${
-                      dark
-                        ? "border-white/10 bg-white/5 text-slate-100"
-                        : "border-slate-200 bg-white/80 text-slate-800"
-                    }`}
-                  >
-                    +{extraSignals} more
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            {/* quick check */}
-            <div className="mt-6">
-              <div
-                className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${microText}`}
-              >
-                Quick check
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => openGuide("mostly", "page")}
-                  className={`${feedbackButtonBase} ${
-                    dark ? feedbackButtonDark : feedbackButtonLight
-                  }`}
-                >
-                  👍 This fits
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openGuide("somewhat", "page")}
-                  className={`${feedbackButtonBase} ${
-                    dark ? feedbackButtonDark : feedbackButtonLight
-                  }`}
-                >
-                  😐 Kinda
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openGuide("nope", "page")}
-                  className={`${feedbackButtonBase} ${
-                    dark ? feedbackButtonDark : feedbackButtonLight
-                  }`}
-                >
-                  👎 Nope
-                </button>
-              </div>
-            </div>
-
-            {/* context + go deeper */}
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="button"
-                onClick={() => setLaneContextOpen((o) => !o)}
-                className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition ${
-                  dark
-                    ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                    : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                }`}
-                aria-expanded={laneContextOpen}
-              >
-                More context
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${
-                    laneContextOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              <button
-                type="button"
-                onClick={openDeepDive}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/35 transition hover:bg-amber-200 active:scale-95"
-              >
-                Go deeper <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {laneContextOpen ? (
-              <div className="mt-4 space-y-4">
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm ${
-                    dark
-                      ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
-                      : "border-slate-200 bg-white/80 text-slate-700"
-                  }`}
-                >
-                  <div className="font-semibold">What I’m noticing</div>
-                  <div className={`mt-2 ${pageTextMutedClass}`}>
-                    <span className={dark ? "text-slate-100" : "text-slate-900"}>
-                      {activeArea.summary}
-                    </span>
-                  </div>
-                  <div className={`mt-2 ${pageTextMutedClass}`}>{activeArea.hint}</div>
-                  <div className={`mt-3 whitespace-pre-wrap ${pageTextMutedClass}`}>
-                    {activeArea.coachRead}
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setWhyOpen((o) => !o)}
-                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      dark
-                        ? "border-slate-800/80 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                        : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                    }`}
-                    aria-expanded={whyOpen}
-                  >
-                    What I’m basing this on
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-
-                  {whyOpen ? (
-                    <div
-                      className={`relative mt-3 rounded-2xl border px-4 py-3 text-sm ${
-                        dark
-                          ? "border-slate-800/80 bg-slate-950/60 text-slate-200/90"
-                          : "border-slate-200 bg-white/80 text-slate-700"
-                      }`}
-                    >
-                      {activeArea.about}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </section>
-    );
-  }
-// CHUNK 2/2
-// src/app/main/insights/page.tsx
-
-  /* ============================================================
-     Render
-   ============================================================ */
+  const receipts = vm.summary.receipts ?? [];
+  const signalBar = vm.summary.signalBar ?? [];
+  const unlock = vm.summary.unlock;
+
+  // ✅ your real public path
+  const HERO_BG = "/images/insights/insights-cosmos-hero.png";
+
+  const bottomDockClass = "fixed inset-x-0 bottom-[72px] z-40 md:hidden";
+  const bottomDockFade = dark
+    ? "bg-gradient-to-t from-slate-950/92 via-slate-950/48 to-transparent"
+    : "bg-gradient-to-t from-white/95 via-white/70 to-transparent";
+
+  // MUCH lighter panels so image shows through
+  const glassPanel = [
+    "rounded-[26px] border backdrop-blur-2xl",
+    dark
+      ? "border-white/12 bg-slate-950/10 shadow-[0_30px_110px_rgba(0,0,0,0.55)]"
+      : "border-black/10 bg-white/78 shadow-[0_18px_60px_rgba(0,0,0,0.14)]",
+  ].join(" ");
+
+  const neonEdge = dark
+    ? "shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_70px_rgba(56,189,248,0.18),0_0_100px_rgba(217,70,239,0.16),0_0_110px_rgba(251,191,36,0.12)]"
+    : "";
 
   return (
     <AppChrome
@@ -855,363 +216,483 @@ export default function InsightsPage() {
       gradientLevel={gradientLevel}
       setGradientLevel={setGradientLevel}
       orbSource="insights_orb"
-      ambientCap={0.35}
+      ambientCap={0.22}
     >
       <div className="relative flex min-h-[100svh] flex-col">
-        <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
-          {/* top row */}
-          <div className="relative mb-5 flex flex-col gap-3">
-            <div
-              aria-hidden
-              className={`pointer-events-none absolute left-0 top-1 h-10 w-[3px] rounded-full ${chipAccentBar} opacity-60`}
-            />
+        {/* IMMERSIVE COLOR BACKDROP (LOUD PASS) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-100"
+            style={{
+              backgroundImage: `url('${HERO_BG}')`,
+              // stronger so it reads under glass
+              filter: "saturate(1.45) contrast(1.18) brightness(1.08)",
+              transform: "scale(1.03)",
+            }}
+          />
 
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className={sectionLabelClass}>Insights</span>
+          {/* nearly no dark wash */}
+          <div className="absolute inset-0 bg-slate-950/0" />
+
+          {/* light leaks */}
+          <div className="absolute inset-0">
+            <div className="absolute -top-28 left-[-14%] h-[420px] w-[640px] rounded-full bg-gradient-to-br from-fuchsia-500/65 via-sky-400/32 to-amber-300/18 blur-3xl mix-blend-screen" />
+            <div className="absolute top-[10%] right-[-18%] h-[520px] w-[780px] rounded-full bg-gradient-to-br from-cyan-400/60 via-violet-500/32 to-fuchsia-500/22 blur-3xl mix-blend-screen" />
+            <div className="absolute bottom-[-22%] left-[0%] h-[640px] w-[980px] rounded-full bg-gradient-to-br from-amber-300/38 via-pink-500/36 to-sky-400/30 blur-3xl mix-blend-screen" />
+          </div>
+
+          {/* softer vignette (do NOT ink the whole page) */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(2,6,23,0.00)_0%,rgba(2,6,23,0.18)_52%,rgba(2,6,23,0.62)_100%)]" />
+
+          {/* top/bottom fades */}
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/70 via-slate-950/18 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/88 via-slate-950/38 to-transparent" />
+        </div>
+
+        <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-28 pt-5 md:px-8 md:pb-24 md:pt-7">
+          {/* Header */}
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <div
+                className={`text-3xl font-semibold tracking-tight ${
+                  dark ? "text-white" : "text-slate-900"
+                }`}
+              >
+                Insights
               </div>
+              <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                A living read of what you’ve shared so far.
+              </div>
+
+              <div className="mt-3 h-[2px] w-24 rounded-full bg-gradient-to-r from-fuchsia-500/90 via-sky-400/85 to-amber-300/85" />
             </div>
 
-            {/* chips row + scroll affordance */}
-            <div className="relative mt-2">
-              <div
-                aria-hidden
-                className={`pointer-events-none absolute inset-y-0 left-0 w-10 ${
-                  dark
-                    ? "bg-gradient-to-r from-slate-950/70 to-transparent"
-                    : "bg-gradient-to-r from-white/80 to-transparent"
-                } ${canScrollLeft ? "opacity-100" : "opacity-0"} transition-opacity`}
-              />
-              <div
-                aria-hidden
-                className={`pointer-events-none absolute inset-y-0 right-0 w-10 ${
-                  dark
-                    ? "bg-gradient-to-l from-slate-950/70 to-transparent"
-                    : "bg-gradient-to-l from-white/80 to-transparent"
-                } ${canScrollRight ? "opacity-100" : "opacity-0"} transition-opacity`}
-              />
+            {/* Desktop tabs rail */}
+            <div
+              className={[
+                "hidden md:flex md:max-w-[62%] md:flex-wrap md:justify-end md:gap-2",
+                "rounded-full border px-2 py-2 backdrop-blur-2xl",
+                dark
+                  ? "border-white/10 bg-slate-950/10 shadow-[0_18px_70px_rgba(0,0,0,0.45)]"
+                  : "border-black/10 bg-white/70",
+              ].join(" ")}
+            >
+              {TABS.map((t) => {
+                const selected = t.id === tab;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={[
+                      pillBase(dark),
+                      selected ? pillSelected(dark) : "",
+                    ].join(" ")}
+                    aria-current={selected ? "page" : undefined}
+                    onClick={() => setTabAndSync(t.id)}
+                  >
+                    {t.id === "doppelganger" ? "Doppelgänger" : t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-              {canScrollLeft ? (
-                <button
-                  type="button"
-                  onClick={() => scrollChips("left")}
-                  className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
-                    dark
-                      ? "border-white/10 bg-slate-950/55 text-slate-100 hover:bg-slate-950/70"
-                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                  }`}
-                  aria-label="Scroll insights left"
-                  title="Scroll left"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              ) : null}
-
-              {canScrollRight ? (
-                <button
-                  type="button"
-                  onClick={() => scrollChips("right")}
-                  className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
-                    dark
-                      ? "border-white/10 bg-slate-950/55 text-slate-100 hover:bg-slate-950/70"
-                      : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                  }`}
-                  aria-label="Scroll insights right"
-                  title="Scroll right"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : null}
-
+          {tab === "summary" ? (
+            <section className="mb-6 space-y-4">
+              {/* HERO */}
               <div
-                ref={chipsWrapRef}
-                onScroll={() => {
-                  computeChipScrollState();
-                  setChipsHintSeen(true);
-                }}
-                className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className={[
+                  glassPanel,
+                  neonEdge,
+                  "px-5 py-5 sm:px-7 sm:py-6",
+                ].join(" ")}
               >
-                <div className="flex items-stretch gap-2 pr-2">
-                  {INSIGHTS_AREAS.map((area, idx) => {
-                    const active = idx === activeIndex;
-                    const dot = `bg-gradient-to-br ${area.glowClass}`;
-                    return (
-                      <button
-                        key={area.id}
-                        type="button"
-                        onClick={() => goToArea(idx)}
-                        className={`relative inline-flex shrink-0 flex-col items-start gap-0.5 rounded-2xl border px-4 py-2.5 text-left transition ${
-                          active ? areaChipActive : areaChipBase
-                        }`}
-                      >
-                        {active && (
-                          <span
-                            aria-hidden
-                            className={`absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b ${area.glowClass}`}
-                          />
-                        )}
+                <div
+                  className={`text-[24px] font-semibold leading-snug tracking-tight md:text-[30px] ${
+                    dark ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {vm.summary.headline}
+                </div>
 
-                        <span className="flex items-center gap-2 text-sm font-semibold leading-tight">
-                          <span className={`h-2.5 w-2.5 rounded-full ${dot} opacity-90`} />
-                          {area.label}
-                        </span>
-                        <span className={`text-xs leading-tight ${microText}`}>
-                          {area.chip}
-                        </span>
-                      </button>
+                <div className="mt-4 space-y-4">
+                  {vm.summary.storySoFar.map((p, idx) => (
+                    <p
+                      key={`sum_story_${idx}`}
+                      className={`text-[15.5px] leading-7 md:text-[16px] ${
+                        dark ? "text-slate-200/92" : "text-slate-700"
+                      }`}
+                    >
+                      {p}
+                    </p>
+                  ))}
+                </div>
+
+                {(receipts.length || unlock?.items?.length) && (
+                  <div className="mt-5 flex flex-col gap-3">
+                    {receipts.length ? (
+                      <div>
+                        <div
+                          className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                            dark ? "text-white/45" : "text-slate-500"
+                          }`}
+                        >
+                          What I’m using
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {receipts.slice(0, 8).map((r) => (
+                            <span key={r.id} className={chipTone(dark, r.tone)}>
+                              <span aria-hidden className="opacity-80">
+                                {r.tone === "good"
+                                  ? "✦"
+                                  : r.tone === "watch"
+                                  ? "◔"
+                                  : "•"}
+                              </span>
+                              <span>{r.label}</span>
+                              {r.detail ? (
+                                <span
+                                  className={
+                                    dark ? "text-white/60" : "text-slate-600"
+                                  }
+                                >
+                                  {r.detail}
+                                </span>
+                              ) : null}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {unlock?.items?.length ? (
+                      <div>
+                        <div
+                          className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                            dark ? "text-white/45" : "text-slate-500"
+                          }`}
+                        >
+                          {unlock.title ?? "Next"}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {unlock.items.slice(0, 4).map((it) =>
+                            it.href ? (
+                              <button
+                                key={it.id}
+                                type="button"
+                                className={[
+                                  "group inline-flex items-center gap-2",
+                                  "rounded-full border px-3 py-1.5",
+                                  "text-xs font-semibold",
+                                  "transition active:scale-95",
+                                  dark
+                                    ? "border-white/12 bg-white/[0.12] text-white/90 hover:bg-white/[0.16]"
+                                    : "border-black/10 bg-white/80 text-slate-900 hover:bg-white",
+                                ].join(" ")}
+                                onClick={() => router.push(it.href!)}
+                              >
+                                <span aria-hidden className="opacity-80">
+                                  ↗
+                                </span>
+                                <span>{it.label}</span>
+                                <span
+                                  aria-hidden
+                                  className="opacity-0 transition group-hover:opacity-70"
+                                >
+                                  →
+                                </span>
+                              </button>
+                            ) : (
+                              <span
+                                key={it.id}
+                                className={chipTone(dark, "neutral")}
+                              >
+                                <span aria-hidden>↗</span>
+                                <span>{it.label}</span>
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              {/* SIGNALS */}
+              <div
+                className={[glassPanel, "px-5 py-5 sm:px-7 sm:py-6"].join(" ")}
+              >
+                <div className="flex items-end justify-between">
+                  <div className={`text-sm font-semibold ${sectionTitle(dark)}`}>
+                    Signals
+                  </div>
+                  <div
+                    className={`text-xs ${
+                      dark ? "text-white/45" : "text-slate-500"
+                    }`}
+                  >
+                    based on your words so far
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-col gap-2.5">
+                  {signalBar.slice(0, 4).map((s) => {
+                    const pct = Math.round((s.strength ?? 0) * 100);
+                    return (
+                      <div key={s.id} className="flex items-center gap-3">
+                        <div
+                          className={`w-28 shrink-0 text-xs font-semibold ${
+                            dark ? "text-white/70" : "text-slate-700"
+                          }`}
+                        >
+                          {s.label}
+                        </div>
+
+                        <div
+                          className={`relative h-3 flex-1 overflow-hidden rounded-full ${
+                            dark ? "bg-white/10" : "bg-black/10"
+                          }`}
+                        >
+                          <div
+                            className={[
+                              "absolute inset-y-0 left-0 rounded-full blur-md",
+                              signalFillGradient(s.id),
+                            ].join(" ")}
+                            style={{
+                              width: `${Math.max(6, pct)}%`,
+                              opacity: 0.9,
+                            }}
+                          />
+                          <div
+                            className={[
+                              "absolute inset-y-0 left-0 rounded-full",
+                              signalFillGradient(s.id),
+                            ].join(" ")}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+
+                        <div
+                          className={`w-12 text-right text-xs font-semibold ${
+                            dark ? "text-white/60" : "text-slate-600"
+                          }`}
+                        >
+                          {pct}%
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
-              {!chipsHintSeen && canScrollRight ? (
-                <div
-                  className={`mt-2 text-center text-xs ${
-                    dark ? "text-slate-300/60" : "text-slate-600/70"
-                  }`}
-                >
-                  Swipe <span className="mx-1">←</span>
-                  <span className="mx-1">→</span> to explore
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* =========================
-             LANE CONTENT
-             ========================= */}
-          <LaneCard />
-        </main>
-
-        <BottomNav />
-
-        {/* =========================
-            GO DEEPER MODAL / SHEET
-           ========================= */}
-        {deepOpen ? (
-          <div className="fixed inset-0 z-[60]">
-            <button
-              type="button"
-              onClick={closeDeepDive}
-              className="absolute inset-0 bg-black/55 backdrop-blur-sm"
-              aria-label="Close"
-            />
-
-            <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl md:inset-0 md:flex md:items-center md:justify-center">
+              {/* IMPLICATIONS + WATCH-OUTS */}
               <div
-                className="
-                  relative w-full
-                  rounded-t-[28px] border border-white/10 bg-slate-950/80
-                  shadow-[0_45px_140px_rgba(0,0,0,0.65)] backdrop-blur-2xl
-                  md:rounded-[28px] md:max-h-[82vh]
-                "
-                role="dialog"
-                aria-modal="true"
-                aria-label={activeArea.deepDive.title}
+                className={[glassPanel, "px-5 py-5 sm:px-7 sm:py-6"].join(" ")}
               >
-                <div className="sticky top-0 z-10 rounded-t-[28px] border-b border-white/10 bg-slate-950/75 px-5 py-4 backdrop-blur-2xl md:rounded-t-[28px]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
-                        Go deeper
-                      </div>
-                      <div className="mt-1 text-lg font-semibold text-slate-50">
-                        {activeArea.deepDive.title}
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-slate-300/70">Accurate?</span>
-                        <button
-                          type="button"
-                          onClick={() => openGuide("mostly", "deep")}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
-                        >
-                          👍 Mostly
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openGuide("somewhat", "deep")}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
-                        >
-                          😐 Somewhat
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openGuide("nope", "deep")}
-                          className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-100 hover:bg-white/10"
-                        >
-                          👎 Not really
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      ref={deepCloseBtnRef}
-                      type="button"
-                      onClick={closeDeepDive}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 active:scale-95"
-                      aria-label="Close modal"
-                      title="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                <div>
+                  <div className={`text-sm font-semibold ${sectionTitle(dark)}`}>
+                    What this suggests
                   </div>
-                </div>
-
-                <div className="max-h-[72vh] overflow-y-auto px-5 pb-6 pt-4 md:max-h-[72vh]">
-                  <div className="space-y-6">
-                    {activeArea.deepDive.sections.map((s) => (
-                      <section key={s.h} className="space-y-2">
-                        <div className="text-sm font-semibold text-slate-50">{s.h}</div>
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200/85">
-                          {s.p}
-                        </div>
-                      </section>
-                    ))}
-
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={closeDeepDive}
-                        className="inline-flex w-full items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/40 hover:bg-amber-200 active:scale-[0.99]"
-                      >
-                        Got it
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="h-3 md:hidden" />
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* =========================
-            GUIDE FEEDBACK MODAL
-           ========================= */}
-        {guideOpen ? (
-          <div className="fixed inset-0 z-[70]">
-            <button
-              type="button"
-              onClick={closeGuide}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              aria-label="Close"
-            />
-
-            <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl md:inset-0 md:flex md:items-center md:justify-center">
-              <div
-                className="
-                  relative w-full
-                  rounded-t-[28px] border border-white/10 bg-slate-950/85
-                  shadow-[0_45px_140px_rgba(0,0,0,0.72)] backdrop-blur-2xl
-                  md:rounded-[28px] md:max-h-[82vh]
-                "
-                role="dialog"
-                aria-modal="true"
-                aria-label="Everleap Guide"
-              >
-                <div className="sticky top-0 z-10 rounded-t-[28px] border-b border-white/10 bg-slate-950/80 px-5 py-4 backdrop-blur-2xl md:rounded-t-[28px]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
-                        Guide
-                      </div>
-                      <div className="mt-1 text-lg font-semibold text-slate-50">
-                        Calibration
-                      </div>
-                      {guideCtx ? (
-                        <div className="mt-1 text-sm text-slate-300/85">
-                          {guideCtx.areaLabel} • {labelForRating(guideCtx.rating)}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={closeGuide}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 active:scale-95"
-                      aria-label="Close"
-                      title="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="max-h-[58vh] overflow-y-auto px-5 pb-4 pt-4 md:max-h-[58vh]">
-                  <div className="space-y-3">
-                    {guideMsgs.map((m, i) => {
-                      const isGuide = m.role === "guide";
-                      return (
+                  <ul className="mt-3 space-y-2">
+                    {vm.summary.suggests.map((it) => (
+                      <li key={it.id} className="flex items-start gap-3">
+                        <span
+                          aria-hidden
+                          className="mt-2 inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-sky-400 opacity-70"
+                        />
                         <div
-                          key={i}
-                          className={`flex ${isGuide ? "justify-start" : "justify-end"}`}
+                          className={`text-sm leading-relaxed ${
+                            dark ? "text-slate-200/85" : "text-slate-700"
+                          }`}
                         >
-                          <div
-                            className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                              isGuide
-                                ? "border border-white/10 bg-white/5 text-slate-100"
-                                : "bg-sky-300 text-slate-950"
-                            }`}
-                          >
-                            {m.text.split(/\*\*(.*?)\*\*/g).map((chunk, idx) =>
-                              idx % 2 === 1 ? (
-                                <strong key={idx}>{chunk}</strong>
-                              ) : (
-                                <span key={idx}>{chunk}</span>
-                              )
-                            )}
-                          </div>
+                          {it.text}
                         </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className={`my-6 h-px ${hairline(dark)}`} />
+
+                <div>
+                  <div className={`text-sm font-semibold ${sectionTitle(dark)}`}>
+                    Watch-outs
+                  </div>
+                  <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                    Common ways this goes sideways — so you can avoid them.
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    {vm.summary.tripUps.map((e) => (
+                      <div key={e.id} className="space-y-1">
+                        <div
+                          className={`text-sm font-semibold ${
+                            dark ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          {e.title}
+                        </div>
+                        <div
+                          className={`text-sm leading-relaxed ${
+                            dark ? "text-white/72" : "text-slate-600"
+                          }`}
+                        >
+                          {e.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* EXPERIMENT */}
+              <div
+                className={[
+                  glassPanel,
+                  neonEdge,
+                  "px-5 py-5 sm:px-7 sm:py-6",
+                ].join(" ")}
+              >
+                <div className={`text-sm font-semibold ${sectionTitle(dark)}`}>
+                  One small experiment
+                </div>
+                <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                  Do it once. The result is the point.
+                </div>
+
+                <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div className="min-w-0">
+                    <div
+                      className={`text-sm font-semibold ${
+                        dark ? "text-white" : "text-slate-900"
+                      }`}
+                    >
+                      {vm.summary.experiment.title}
+                    </div>
+                    <div
+                      className={`mt-2 whitespace-pre-line text-sm leading-relaxed ${
+                        dark ? "text-white/82" : "text-slate-700"
+                      }`}
+                    >
+                      {vm.summary.experiment.text}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={[
+                      "w-full md:w-auto",
+                      "rounded-full border px-4 py-2",
+                      "text-sm font-semibold transition active:scale-95",
+                      dark
+                        ? "border-white/14 bg-white/[0.14] text-white/95 hover:bg-white/[0.18]"
+                        : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
+                    ].join(" ")}
+                    onClick={() => router.push("/main/explore")}
+                  >
+                    Explore →
+                  </button>
+                </div>
+
+                <div className="mt-6">
+                  <div
+                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                      dark ? "text-white/50" : "text-slate-500"
+                    }`}
+                  >
+                    Quick check
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {calibrationOptions.map((opt) => {
+                      const selected = calibration === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={[
+                            pillBase(dark),
+                            selected ? pillSelected(dark) : "",
+                          ].join(" ")}
+                          onClick={() => setCalibration(opt)}
+                        >
+                          {opt}
+                        </button>
                       );
                     })}
                   </div>
-                </div>
 
-                <div className="border-t border-white/10 bg-slate-950/70 px-5 py-4">
-                  <div className="flex items-end gap-3">
-                    <textarea
-                      ref={guideInputRef}
-                      value={guideDraft}
-                      onChange={(e) => setGuideDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          submitGuide();
-                        }
-                      }}
-                      rows={2}
-                      placeholder="Tell me what you’re thinking…"
-                      className="min-h-[52px] flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-400/70"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={submitGuide}
-                      disabled={!guideDraft.trim()}
-                      className={`inline-flex h-11 w-11 items-center justify-center rounded-full transition active:scale-95 ${
-                        guideDraft.trim()
-                          ? "bg-sky-300 text-slate-950 shadow-[0_10px_30px_rgba(56,189,248,0.35)] hover:bg-sky-200"
-                          : "bg-white/10 text-slate-200/50"
-                      }`}
-                      aria-label="Send"
-                      title="Send"
-                    >
-                      <Send className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="mt-2 text-xs text-slate-300/50">
-                    Placeholder guide flow for now (no AI API yet). Your responses can be stored later for learning.
+                  <div
+                    className={`mt-2 text-xs ${
+                      dark ? "text-white/45" : "text-slate-500"
+                    }`}
+                  >
+                    We’ll use this later to recalibrate Insights.
                   </div>
                 </div>
-
-                <div className="h-3 md:hidden" />
               </div>
+            </section>
+          ) : (
+            <section className="mb-6">
+              <div
+                className={[
+                  "rounded-[28px] border px-5 py-5 backdrop-blur-2xl",
+                  theme.cardBorderClass,
+                  dark
+                    ? "border-white/12 bg-slate-950/10 text-white/80"
+                    : "border-black/10 bg-white/78 text-slate-800",
+                ].join(" ")}
+              >
+                <div className={`text-lg font-semibold ${sectionTitle(dark)}`}>
+                  {TABS.find((t) => t.id === tab)?.label ?? "Section"}
+                </div>
+                <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                  This section is scaffolded. We’ll implement it next after
+                  Summary is locked.
+                </div>
+              </div>
+            </section>
+          )}
+        </main>
+
+        {/* Mobile sticky nav pills */}
+        <div className={bottomDockClass} aria-hidden={false}>
+          <div className={`pointer-events-none h-10 w-full ${bottomDockFade}`} />
+          <div className="pointer-events-auto px-3 pb-3">
+            <div
+              className={[
+                "mx-auto flex max-w-5xl gap-2 overflow-x-auto",
+                "rounded-[22px] border px-2 py-2",
+                "backdrop-blur-2xl",
+                dark
+                  ? "border-white/10 bg-slate-950/10 shadow-[0_16px_60px_rgba(0,0,0,0.55)]"
+                  : "border-black/10 bg-white/70",
+              ].join(" ")}
+            >
+              {TABS.map((t) => {
+                const selected = t.id === tab;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={[
+                      "shrink-0",
+                      pillBase(dark),
+                      selected ? pillSelected(dark) : "",
+                    ].join(" ")}
+                    aria-current={selected ? "page" : undefined}
+                    onClick={() => setTabAndSync(t.id)}
+                  >
+                    {t.id === "doppelganger" ? "Doppelgänger" : t.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        ) : null}
+        </div>
+
+        <BottomNav />
       </div>
     </AppChrome>
   );

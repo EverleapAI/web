@@ -36,7 +36,11 @@ declare global {
    ============================================================ */
 
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
-const ONBOARDING_KEY = "everleapOnboarding_v1";
+
+// ✅ FIX: align with onboarding snapshot key used in src/app/onboarding/page.tsx
+const ONBOARDING_KEY_PRIMARY = "everleapOnboarding_v4_convo_min";
+// Optional legacy fallback (keeps older installs working if they still wrote v1)
+const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
 
 /* ============================================================
    Questions (5 + 5 + 5)
@@ -112,14 +116,22 @@ function saveOne(id: string, payload: Saved) {
 
 function readNameFromOnboarding(): string {
   if (typeof window === "undefined") return "";
-  try {
-    const raw = window.localStorage.getItem(ONBOARDING_KEY);
-    if (!raw) return "";
-    const parsed = JSON.parse(raw) as { name?: string } | null;
-    return (parsed?.name ?? "").trim();
-  } catch {
-    return "";
-  }
+  const tryRead = (key: string): string => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return "";
+      const parsed = JSON.parse(raw) as { name?: string } | null;
+      return (parsed?.name ?? "").trim();
+    } catch {
+      return "";
+    }
+  };
+
+  const primary = tryRead(ONBOARDING_KEY_PRIMARY);
+  if (primary) return primary;
+
+  const fallback = tryRead(ONBOARDING_KEY_FALLBACK);
+  return fallback;
 }
 
 function isMeaningfulText(value: string): boolean {
@@ -375,10 +387,7 @@ export default function QuestionFlow() {
     };
   }, [screenMode, category]);
 
-  const completionParagraphs = React.useMemo(
-    () => completionCopy(category),
-    [category]
-  );
+  const completionParagraphs = React.useMemo(() => completionCopy(category), [category]);
 
   function exitNow() {
     stopListening();
@@ -427,8 +436,7 @@ export default function QuestionFlow() {
       return;
     }
 
-    const SpeechRec =
-      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    const SpeechRec = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRec) return;
 
     const rec = new SpeechRec();
@@ -522,9 +530,7 @@ export default function QuestionFlow() {
             ) : (
               <div className="flex min-h-[60svh] items-center">
                 <div className="w-full max-w-3xl">
-                  <h1 className="text-3xl font-semibold text-white">
-                    {q?.question}
-                  </h1>
+                  <h1 className="text-3xl font-semibold text-white">{q?.question}</h1>
 
                   <div className="mt-7 flex items-end gap-3">
                     <div className="flex-1 border-b border-white/18">
@@ -563,7 +569,7 @@ export default function QuestionFlow() {
                   </div>
 
                   <div className="mt-6 text-sm text-white/60">
-                    <button onClick={() => completeAndAdvance({ skipped: true })}>
+                    <button type="button" onClick={() => completeAndAdvance({ skipped: true })}>
                       Skip for now
                     </button>
                   </div>

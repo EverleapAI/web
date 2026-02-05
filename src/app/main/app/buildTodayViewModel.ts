@@ -62,18 +62,24 @@ const QUOTES: Quote[] = [
   { text: "What you do makes a difference — decide what kind of difference.", author: "Jane Goodall" },
 ];
 
+const FALLBACK_QUOTE: Quote =
+  QUOTES[0] ?? { text: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" };
+
 function pickStableSessionQuote(): Quote {
-  if (typeof window === "undefined") return QUOTES[0]!;
+  if (typeof window === "undefined") return FALLBACK_QUOTE;
+
   const existing = safeJsonParse<Quote>(window.sessionStorage.getItem(QUOTE_SESSION_KEY));
   if (existing?.text && existing?.author) return existing;
 
   const idx = Math.floor(Math.random() * QUOTES.length);
-  const chosen = QUOTES[idx] ?? QUOTES[0]!;
+  const chosen = QUOTES[idx] ?? FALLBACK_QUOTE;
+
   try {
     window.sessionStorage.setItem(QUOTE_SESSION_KEY, JSON.stringify(chosen));
   } catch {
     // ignore
   }
+
   return chosen;
 }
 
@@ -98,9 +104,7 @@ function readWeeklyFocus(): WeeklyFocusState | null {
 
 function readSprints(): CuriositySprintState[] {
   if (typeof window === "undefined") return [];
-  const parsed = safeJsonParse<CuriositySprintState[]>(
-    window.localStorage.getItem(CURIOSITY_SPRINTS_KEY)
-  );
+  const parsed = safeJsonParse<CuriositySprintState[]>(window.localStorage.getItem(CURIOSITY_SPRINTS_KEY));
   return Array.isArray(parsed) ? parsed : [];
 }
 
@@ -108,6 +112,7 @@ function readSessionTiny(): SessionTinyState {
   if (typeof window === "undefined") return { shownIds: [], completedIds: [] };
 
   const parsed = safeJsonParse<SessionTinyState>(window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY));
+
   const shownIds = Array.isArray(parsed?.shownIds) ? parsed!.shownIds : [];
   const completedIds = Array.isArray(parsed?.completedIds) ? parsed!.completedIds : [];
 
