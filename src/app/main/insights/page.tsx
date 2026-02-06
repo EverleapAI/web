@@ -324,6 +324,9 @@ export default function Page() {
     router.replace(`/main/insights?${params.toString()}`);
   }
 
+  const tabLabel =
+    TABS.find((t) => t.id === tab)?.label ?? (tab as string) ?? "Summary";
+
   const wordCloudRaw = vm.summary.wordCloud;
   const wordCloud = React.useMemo<WordCloudItem[]>(
     () => wordCloudRaw ?? [],
@@ -352,7 +355,7 @@ export default function Page() {
   const canToggleStory = storyExpandedItems.length > 0 && story.length > 2;
 
   const suggestsItems = vm.summary.suggests ?? [];
-  const suggestsCollapsedCount = 2;
+  const suggestsCollapsedCount = 2; // ensures "Read more" shows up even when suggestsItems is short-ish
   const suggestsShort = suggestsItems.slice(0, suggestsCollapsedCount);
   const suggestsLong = suggestsItems;
 
@@ -372,9 +375,6 @@ export default function Page() {
 
   const missingProfileSignal =
     (vm?.summary?.primaryUnlock?.items?.length ?? 0) > 0;
-
-  const currentTabLabel =
-    TABS.find((t) => t.id === tab)?.label ?? "Summary";
 
   return (
     <AppChrome
@@ -411,11 +411,11 @@ export default function Page() {
         /* Softer overlays (covers many Tailwind overlay variants) */
         .el-insights
           :where(
-            .bg-black\/80,
-            .bg-black\/75,
-            .bg-black\/70,
-            .bg-black\/65,
-            .bg-black\/60
+            .bg-black\\/80,
+            .bg-black\\/75,
+            .bg-black\\/70,
+            .bg-black\\/65,
+            .bg-black\\/60
           ) {
           background-color: rgba(0, 0, 0, 0.38) !important;
         }
@@ -423,15 +423,17 @@ export default function Page() {
         /* Brighter frosted panels (covers common dark modal surfaces) */
         .el-insights
           :where(
-            .bg-slate-950\/95,
-            .bg-slate-950\/90,
-            .bg-slate-950\/85,
-            .bg-slate-950\/80,
-            .bg-slate-950\/75,
-            .bg-slate-950\/70,
-            .bg-slate-900\/90,
-            .bg-slate-900\/80,
-            .bg-slate-900\/75
+            .bg-slate-950\\/95,
+            .bg-slate-950\\/90,
+            .bg-slate-950\\/85,
+            .bg-slate-950\\/80,
+            .bg-slate-950\\/75,
+            .bg-slate-950\\/70,
+            .bg-slate-900\\/90,
+            .bg-slate-900\\/80,
+            .bg-slate-900\\/75,
+            .bg-black\\/55,
+            .bg-black\\/60
           ) {
           background-color: rgba(255, 255, 255, 0.09) !important;
           backdrop-filter: blur(20px) !important;
@@ -441,29 +443,31 @@ export default function Page() {
         /* Nudge borders toward “glass” instead of “box” */
         .el-insights
           :where(
-            .border-white\/20,
-            .border-white\/18,
-            .border-white\/15,
-            .border-white\/12,
-            .border-white\/10
+            .border-white\\/20,
+            .border-white\\/18,
+            .border-white\\/15,
+            .border-white\\/12,
+            .border-white\\/10
           ) {
           border-color: rgba(255, 255, 255, 0.16) !important;
         }
 
         /* Inputs inside dialogs often look too cave-like; lighten a touch */
         .el-insights
-          :where(.bg-white\/5, .bg-white\/6, .bg-white\/8, .bg-white\/10) {
+          :where(.bg-white\\/5, .bg-white\\/6, .bg-white\\/8, .bg-white\\/10) {
           background-color: rgba(255, 255, 255, 0.07);
         }
 
         /* “Boxed UI” inside NextSteps (steps containers / inner panels) */
         .el-insights .el-nextsteps :where(.rounded-2xl.border, .rounded-3xl.border) {
-          border-color: rgba(255, 255, 255, 0.10) !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
         }
-        .el-insights .el-nextsteps :where(.bg-white\/10, .bg-white\/12, .bg-white\/15) {
+        .el-insights .el-nextsteps :where(.bg-white\\/10, .bg-white\\/12, .bg-white\\/15) {
           background-color: rgba(255, 255, 255, 0.07) !important;
         }
-        .el-insights .el-nextsteps :where(.ring-1.ring-white\/10, .ring-1.ring-white\/12, .ring-1.ring-white\/15) {
+        .el-insights
+          .el-nextsteps
+          :where(.ring-1.ring-white\\/10, .ring-1.ring-white\\/12, .ring-1.ring-white\\/15) {
           box-shadow: none !important;
         }
       `}</style>
@@ -535,9 +539,10 @@ export default function Page() {
              ========================= */}
           {tab === "summary" ? (
             <section className="mb-6">
-              {/* ONE subtle stage glow (not a giant outer card) */}
+              {/* Removed the big outer “stage box”.
+                  Keep the cinematic glows as a backdrop only. */}
               <div className="relative">
-                <div className="pointer-events-none absolute inset-0">
+                <div className="pointer-events-none absolute inset-0 -z-10">
                   <div
                     className={[
                       "absolute -top-16 -left-16 h-80 w-80 rounded-full blur-3xl",
@@ -546,462 +551,458 @@ export default function Page() {
                   />
                   <div
                     className={[
-                      "absolute -bottom-20 -right-16 h-96 w-96 rounded-full blur-3xl",
+                      "absolute -bottom-20 -right-20 h-96 w-96 rounded-full blur-3xl",
                       dark ? "bg-sky-400/10" : "bg-sky-400/8",
                     ].join(" ")}
                   />
                 </div>
 
-                <div className="relative">
-                  {/* HERO: agentic paragraph + word cloud (desktop side-by-side) */}
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-start">
-                    {/* Agentic intro */}
-                    <div
-                      className={[
-                        "relative overflow-hidden rounded-3xl px-5 py-4",
-                        sectionRing(dark),
-                        dark ? "bg-white/5" : "bg-white/80",
-                        "backdrop-blur-xl",
-                        cardShadow,
-                      ].join(" ")}
-                    >
-                      <div className="relative">
-                        <div
-                          className={`text-[22px] leading-snug md:text-[26px] ${
-                            dark ? "text-white" : "text-slate-900"
-                          }`}
-                        >
-                          {vm.summary.headline}
-                        </div>
-
-                        <div className="mt-3">
-                          {!storyExpanded ? (
-                            <div className="relative" style={fadeMaskStyle("story")}>
-                              <p
-                                className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
-                              >
-                                {storyTextCollapsed || storyTextExpanded}
-                              </p>
-                            </div>
-                          ) : (
-                            <AnimatePresence initial={false}>
-                              <motion.p
-                                key="storyExpanded"
-                                initial={{ opacity: 0, y: 6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 6 }}
-                                transition={{ duration: 0.18 }}
-                                className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
-                              >
-                                {storyTextExpanded}
-                              </motion.p>
-                            </AnimatePresence>
-                          )}
-                        </div>
-
-                        {canToggleStory ? (
-                          <div className="mt-3">
-                            <button
-                              type="button"
-                              className={pillButton(dark)}
-                              onClick={() => setStoryExpanded((v) => !v)}
-                            >
-                              <span aria-hidden className="opacity-85">
-                                {storyExpanded ? "▾" : "▸"}
-                              </span>
-                              {storyExpanded ? "Read less" : "Read more"}
-                            </button>
-                          </div>
-                        ) : null}
-
-                        {/* PRIMARY CTA */}
-                        {primaryUnlock?.items?.length ? (
-                          <div
-                            className={[
-                              "mt-4 relative overflow-hidden rounded-3xl px-4 py-3 sm:px-5 sm:py-3.5",
-                              sectionTint(dark, "primary"),
-                              sectionRing(dark),
-                            ].join(" ")}
-                          >
-                            <div className="pointer-events-none absolute inset-0">
-                              <div
-                                className={[
-                                  "absolute left-0 top-0 h-full w-1",
-                                  accentBar(dark, "primary"),
-                                ].join(" ")}
-                              />
-                            </div>
-
-                            <div className="relative">
-                              <div
-                                className={`text-sm font-semibold ${
-                                  dark ? "text-white" : "text-slate-900"
-                                }`}
-                              >
-                                {missingProfileSignal
-                                  ? "Before this gets real…"
-                                  : primaryUnlock.title ??
-                                    "If you want this to get sharper…"}
-                              </div>
-
-                              <div
-                                className={`mt-1 text-sm leading-relaxed ${
-                                  dark ? "text-white/78" : "text-slate-700"
-                                }`}
-                              >
-                                Finish a little more of your profile (Motivations,
-                                Strengths, Skills) and this becomes noticeably
-                                more personal — less “pretty accurate,” more “yeah,
-                                that’s me.”
-                              </div>
-
-                              <div className="mt-2.5 flex flex-wrap gap-2">
-                                {primaryUnlock.items.slice(0, 3).map((it) =>
-                                  it.href ? (
-                                    <button
-                                      key={it.id}
-                                      type="button"
-                                      className={[
-                                        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
-                                        "text-xs font-semibold transition active:scale-95",
-                                        dark
-                                          ? "border-white/12 bg-white/10 text-white/92 hover:bg-white/14"
-                                          : "border-black/10 bg-white text-slate-900 hover:bg-white",
-                                      ].join(" ")}
-                                      onClick={() => router.push(it.href!)}
-                                    >
-                                      <span aria-hidden className="opacity-85">
-                                        ↗
-                                      </span>
-                                      <span>{it.label}</span>
-                                    </button>
-                                  ) : null
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Word cloud (NO pill / NO description — cloud speaks for itself) */}
-                    <div
-                      className={[
-                        "relative overflow-hidden rounded-3xl px-5 py-4",
-                        sectionTint(dark, "signals"),
-                        sectionRing(dark),
-                        "backdrop-blur-xl",
-                        cardShadow,
-                      ].join(" ")}
-                    >
-                      <div className="pointer-events-none absolute inset-0">
-                        <div
-                          className={[
-                            "absolute left-0 top-0 h-full w-1",
-                            accentBar(dark, "signals"),
-                          ].join(" ")}
-                        />
-                      </div>
-
-                      <div className="relative">
-                        {wordCloud.length ? (
-                          <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                            {wordCloud.map((w) => {
-                              const isTop = topWordSet.has(w.term.toLowerCase());
-                              return (
-                                <span
-                                  key={w.term}
-                                  className={[
-                                    "select-none el-word",
-                                    wordColorClasses(dark, w.term),
-                                    isTop
-                                      ? [
-                                          "rounded-full px-2.5 py-1",
-                                          highlightWrap(dark),
-                                        ].join(" ")
-                                      : "",
-                                  ].join(" ")}
-                                  style={{
-                                    fontSize: `${wordSizePx(w.weight)}px`,
-                                    opacity: wordOpacity(w.weight),
-                                    ...wordChaosVars(w.term, w.weight),
-                                  }}
-                                >
-                                  {w.term}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div
-                            className={`text-sm ${
-                              dark ? "text-white/70" : "text-slate-700"
-                            }`}
-                          >
-                            Nothing to map yet — answer a few questions and this
-                            will fill in.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div
-                    className={`my-6 h-px ${dark ? "bg-white/10" : "bg-black/10"}`}
-                  />
-
-                  {/* WHAT THIS SUGGESTS (agentic, fade + Read more under content) */}
+                {/* HERO: agentic paragraph + word cloud (desktop side-by-side) */}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-start">
+                  {/* Agentic intro */}
                   <div
                     className={[
                       "relative overflow-hidden rounded-3xl px-5 py-4",
-                      sectionTint(dark, "suggests"),
+                      sectionRing(dark),
+                      dark ? "bg-white/5" : "bg-white/80",
+                      dark
+                        ? "shadow-[0_22px_80px_rgba(0,0,0,0.35)]"
+                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
+                      "backdrop-blur-xl",
+                    ].join(" ")}
+                  >
+                    <div className="relative">
+                      <div
+                        className={`text-[22px] leading-snug md:text-[26px] ${
+                          dark ? "text-white" : "text-slate-900"
+                        }`}
+                      >
+                        {vm.summary.headline}
+                      </div>
+
+                      <div className="mt-3">
+                        {!storyExpanded ? (
+                          <div className="relative" style={fadeMaskStyle("story")}>
+                            <p
+                              className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
+                            >
+                              {storyTextCollapsed || storyTextExpanded}
+                            </p>
+                          </div>
+                        ) : (
+                          <AnimatePresence initial={false}>
+                            <motion.p
+                              key="storyExpanded"
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 6 }}
+                              transition={{ duration: 0.18 }}
+                              className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
+                            >
+                              {storyTextExpanded}
+                            </motion.p>
+                          </AnimatePresence>
+                        )}
+                      </div>
+
+                      {canToggleStory ? (
+                        <div className="mt-3">
+                          <button
+                            type="button"
+                            className={pillButton(dark)}
+                            onClick={() => setStoryExpanded((v) => !v)}
+                          >
+                            <span aria-hidden className="opacity-85">
+                              {storyExpanded ? "▾" : "▸"}
+                            </span>
+                            {storyExpanded ? "Read less" : "Read more"}
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {/* PRIMARY CTA */}
+                      {primaryUnlock?.items?.length ? (
+                        <div
+                          className={[
+                            "mt-4 relative overflow-hidden rounded-3xl px-4 py-3 sm:px-5 sm:py-3.5",
+                            sectionTint(dark, "primary"),
+                            sectionRing(dark),
+                            "backdrop-blur-xl",
+                          ].join(" ")}
+                        >
+                          <div className="pointer-events-none absolute inset-0">
+                            <div
+                              className={[
+                                "absolute left-0 top-0 h-full w-1",
+                                accentBar(dark, "primary"),
+                              ].join(" ")}
+                            />
+                          </div>
+
+                          <div className="relative">
+                            <div
+                              className={`text-sm font-semibold ${
+                                dark ? "text-white" : "text-slate-900"
+                              }`}
+                            >
+                              {missingProfileSignal
+                                ? "Before this gets real…"
+                                : primaryUnlock.title ??
+                                  "If you want this to get sharper…"}
+                            </div>
+
+                            <div
+                              className={`mt-1 text-sm leading-relaxed ${
+                                dark ? "text-white/78" : "text-slate-700"
+                              }`}
+                            >
+                              Finish a little more of your profile (Motivations,
+                              Strengths, Skills) and this becomes noticeably more
+                              personal — less “pretty accurate,” more “yeah, that’s me.”
+                            </div>
+
+                            <div className="mt-2.5 flex flex-wrap gap-2">
+                              {primaryUnlock.items.slice(0, 3).map((it) =>
+                                it.href ? (
+                                  <button
+                                    key={it.id}
+                                    type="button"
+                                    className={[
+                                      "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+                                      "text-xs font-semibold transition active:scale-95",
+                                      dark
+                                        ? "border-white/12 bg-white/10 text-white/92 hover:bg-white/14"
+                                        : "border-black/10 bg-white text-slate-900 hover:bg-white",
+                                    ].join(" ")}
+                                    onClick={() => router.push(it.href!)}
+                                  >
+                                    <span aria-hidden className="opacity-85">
+                                      ↗
+                                    </span>
+                                    <span>{it.label}</span>
+                                  </button>
+                                ) : null
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Word cloud (NO pill / NO description — cloud speaks for itself) */}
+                  <div
+                    className={[
+                      "relative overflow-hidden rounded-3xl px-5 py-4",
+                      sectionTint(dark, "signals"),
                       sectionRing(dark),
                       "backdrop-blur-xl",
-                      cardShadow,
+                      dark
+                        ? "shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
+                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
                     ].join(" ")}
                   >
                     <div className="pointer-events-none absolute inset-0">
                       <div
                         className={[
                           "absolute left-0 top-0 h-full w-1",
-                          accentBar(dark, "suggests"),
+                          accentBar(dark, "signals"),
                         ].join(" ")}
                       />
                     </div>
 
                     <div className="relative">
-                      <div className="min-w-0">
-                        <span
-                          className={[
-                            "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
-                            "text-xs font-semibold",
-                            chipClasses(dark, "suggests"),
-                          ].join(" ")}
-                        >
-                          <span aria-hidden className="opacity-90">
-                            🧭
-                          </span>
-                          <span>What this suggests</span>
-                        </span>
-
+                      {wordCloud.length ? (
+                        <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                          {wordCloud.map((w) => {
+                            const isTop = topWordSet.has(w.term.toLowerCase());
+                            return (
+                              <span
+                                key={w.term}
+                                className={[
+                                  "select-none el-word",
+                                  wordColorClasses(dark, w.term),
+                                  isTop
+                                    ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(
+                                        " "
+                                      )
+                                    : "",
+                                ].join(" ")}
+                                style={{
+                                  fontSize: `${wordSizePx(w.weight)}px`,
+                                  opacity: wordOpacity(w.weight),
+                                  ...wordChaosVars(w.term, w.weight),
+                                }}
+                              >
+                                {w.term}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
                         <div
-                          className={`mt-2 text-sm leading-relaxed ${
+                          className={`text-sm ${
                             dark ? "text-white/70" : "text-slate-700"
                           }`}
                         >
-                          A directional read — something you can test in real life.
+                          Nothing to map yet — answer a few questions and this will fill in.
                         </div>
-                      </div>
-
-                      <div className="mt-4">
-                        {!suggestsExpanded ? (
-                          <div
-                            className="relative"
-                            style={fadeMaskStyle("suggests")}
-                          >
-                            <div className="space-y-3">
-                              {suggestsToShow.map((it) => (
-                                <p
-                                  key={it.id}
-                                  className={`text-sm leading-relaxed ${
-                                    dark
-                                      ? "text-slate-200/88"
-                                      : "text-slate-700"
-                                  }`}
-                                >
-                                  {it.text}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <AnimatePresence initial={false}>
-                            <motion.div
-                              key="suggestsExpanded"
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 6 }}
-                              transition={{ duration: 0.18 }}
-                              className="space-y-3"
-                            >
-                              {suggestsToShow.map((it) => (
-                                <p
-                                  key={it.id}
-                                  className={`text-sm leading-relaxed ${
-                                    dark
-                                      ? "text-slate-200/88"
-                                      : "text-slate-700"
-                                  }`}
-                                >
-                                  {it.text}
-                                </p>
-                              ))}
-                            </motion.div>
-                          </AnimatePresence>
-                        )}
-                      </div>
-
-                      {/* CTA sits under the faded content, left-aligned */}
-                      {suggestsCanExpand ? (
-                        <div className="mt-3">
-                          <button
-                            type="button"
-                            className={pillButton(dark)}
-                            onClick={() => setSuggestsExpanded((v) => !v)}
-                          >
-                            <span aria-hidden className="opacity-85">
-                              {suggestsExpanded ? "▾" : "▸"}
-                            </span>
-                            {suggestsExpanded ? "Read less" : "Read more"}
-                          </button>
-                        </div>
-                      ) : null}
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* WATCH-OUTS */}
-                  <div className="mt-6">
+                {/* Divider */}
+                <div className={`my-6 h-px ${dark ? "bg-white/10" : "bg-black/10"}`} />
+
+                {/* WHAT THIS SUGGESTS (agentic, fade + Read more under content) */}
+                <div
+                  className={[
+                    "relative overflow-hidden rounded-3xl px-5 py-4",
+                    sectionTint(dark, "suggests"),
+                    sectionRing(dark),
+                    "backdrop-blur-xl",
+                    dark
+                      ? "shadow-[0_18px_70px_rgba(0,0,0,0.22)]"
+                      : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
+                  ].join(" ")}
+                >
+                  <div className="pointer-events-none absolute inset-0">
                     <div
                       className={[
-                        "relative overflow-hidden rounded-3xl px-5 py-4",
-                        sectionTint(dark, "watchouts"),
-                        sectionRing(dark),
-                        "backdrop-blur-xl",
-                        cardShadow,
+                        "absolute left-0 top-0 h-full w-1",
+                        accentBar(dark, "suggests"),
                       ].join(" ")}
-                    >
-                      <div className="pointer-events-none absolute inset-0">
-                        <div
-                          className={[
-                            "absolute left-0 top-0 h-full w-1",
-                            accentBar(dark, "watchouts"),
-                          ].join(" ")}
-                        />
-                      </div>
-
-                      <div className="relative">
-                        <span
-                          className={[
-                            "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
-                            "text-xs font-semibold",
-                            chipClasses(dark, "watchouts"),
-                          ].join(" ")}
-                        >
-                          <span aria-hidden className="opacity-90">
-                            🛟
-                          </span>
-                          <span>Watch-outs</span>
-                        </span>
-
-                        <div
-                          className={`mt-2 text-sm leading-relaxed ${
-                            dark ? "text-white/70" : "text-slate-700"
-                          }`}
-                        >
-                          Guardrails — no shame, just reality.
-                        </div>
-
-                        <ul className="mt-4 space-y-3">
-                          {vm.summary.tripUps.map((e) => (
-                            <li key={e.id} className="flex items-start gap-3">
-                              <span
-                                aria-hidden
-                                className={`mt-2 inline-block h-1.5 w-1.5 rounded-full ${
-                                  dark ? "bg-white/35" : "bg-slate-900/35"
-                                }`}
-                              />
-                              <div className="min-w-0">
-                                <div
-                                  className={`text-sm font-semibold ${
-                                    dark ? "text-white" : "text-slate-900"
-                                  }`}
-                                >
-                                  {e.title}
-                                </div>
-                                <div
-                                  className={`mt-1 text-sm leading-relaxed ${
-                                    dark ? "text-white/70" : "text-slate-700"
-                                  }`}
-                                >
-                                  {e.text}
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
+                    />
                   </div>
 
-                  {/* TINY TASK → ACTION (standardized) */}
-                  {nextSteps ? (
-                    <div className="el-nextsteps mt-6">
-                      <NextStepsStack
-                        dark={dark}
-                        useLocal={mounted}
-                        definition={nextSteps}
-                        heading=""
-                        subheading=""
+                  <div className="relative">
+                    <div className="min-w-0">
+                      <span
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
+                          "text-xs font-semibold",
+                          chipClasses(dark, "suggests"),
+                        ].join(" ")}
+                      >
+                        <span aria-hidden className="opacity-90">
+                          🧭
+                        </span>
+                        <span>What this suggests</span>
+                      </span>
+
+                      <div
+                        className={`mt-2 text-sm leading-relaxed ${
+                          dark ? "text-white/70" : "text-slate-700"
+                        }`}
+                      >
+                        A directional read — something you can test in real life.
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      {!suggestsExpanded ? (
+                        <div className="relative" style={fadeMaskStyle("suggests")}>
+                          <div className="space-y-3">
+                            {suggestsToShow.map((it) => (
+                              <p
+                                key={it.id}
+                                className={`text-sm leading-relaxed ${
+                                  dark ? "text-slate-200/88" : "text-slate-700"
+                                }`}
+                              >
+                                {it.text}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <AnimatePresence initial={false}>
+                          <motion.div
+                            key="suggestsExpanded"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 6 }}
+                            transition={{ duration: 0.18 }}
+                            className="space-y-3"
+                          >
+                            {suggestsToShow.map((it) => (
+                              <p
+                                key={it.id}
+                                className={`text-sm leading-relaxed ${
+                                  dark ? "text-slate-200/88" : "text-slate-700"
+                                }`}
+                              >
+                                {it.text}
+                              </p>
+                            ))}
+                          </motion.div>
+                        </AnimatePresence>
+                      )}
+                    </div>
+
+                    {/* CTA now sits under the faded content, left-aligned */}
+                    {suggestsCanExpand ? (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className={pillButton(dark)}
+                          onClick={() => setSuggestsExpanded((v) => !v)}
+                        >
+                          <span aria-hidden className="opacity-85">
+                            {suggestsExpanded ? "▾" : "▸"}
+                          </span>
+                          {suggestsExpanded ? "Read less" : "Read more"}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* WATCH-OUTS */}
+                <div className="mt-6">
+                  <div
+                    className={[
+                      "relative overflow-hidden rounded-3xl px-5 py-4",
+                      sectionTint(dark, "watchouts"),
+                      sectionRing(dark),
+                      "backdrop-blur-xl",
+                      dark
+                        ? "shadow-[0_18px_70px_rgba(0,0,0,0.22)]"
+                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
+                    ].join(" ")}
+                  >
+                    <div className="pointer-events-none absolute inset-0">
+                      <div
+                        className={[
+                          "absolute left-0 top-0 h-full w-1",
+                          accentBar(dark, "watchouts"),
+                        ].join(" ")}
                       />
                     </div>
-                  ) : null}
 
-                  {/* Quick check */}
-                  <div className="mt-6">
-                    <div
-                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                        dark ? "text-white/50" : "text-slate-500"
-                      }`}
-                    >
-                      Quick check
-                    </div>
+                    <div className="relative">
+                      <span
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
+                          "text-xs font-semibold",
+                          chipClasses(dark, "watchouts"),
+                        ].join(" ")}
+                      >
+                        <span aria-hidden className="opacity-90">
+                          🛟
+                        </span>
+                        <span>Watch-outs</span>
+                      </span>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {calibrationOptions.map((opt) => {
-                        const selected = calibration === opt;
-                        return (
-                          <button
-                            key={opt}
-                            type="button"
-                            className={[
-                              "inline-flex items-center justify-center",
-                              "rounded-full border px-3.5 py-2",
-                              "text-sm font-semibold transition active:scale-95",
-                              dark
-                                ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
-                                : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                              selected
-                                ? dark
-                                  ? "bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)] ring-2 ring-white/25"
-                                  : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)] ring-2 ring-slate-900/10"
-                                : "",
-                            ].join(" ")}
-                            onClick={() => setCalibrationAndPersist(opt)}
-                            aria-pressed={selected}
-                          >
-                            <span className="mr-2" aria-hidden>
-                              {selected
-                                ? "✓"
-                                : opt === "Mostly right"
-                                ? "👍"
-                                : opt === "Somewhat"
-                                ? "😐"
-                                : "👎"}
-                            </span>
-                            {opt}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      <div
+                        className={`mt-2 text-sm leading-relaxed ${
+                          dark ? "text-white/70" : "text-slate-700"
+                        }`}
+                      >
+                        Guardrails — no shame, just reality.
+                      </div>
 
-                    <div
-                      className={`mt-2 text-xs ${
-                        dark ? "text-white/45" : "text-slate-500"
-                      }`}
-                    >
-                      (We’ll use this later to recalibrate Insights.)
+                      <ul className="mt-4 space-y-3">
+                        {vm.summary.tripUps.map((e) => (
+                          <li key={e.id} className="flex items-start gap-3">
+                            <span
+                              aria-hidden
+                              className={`mt-2 inline-block h-1.5 w-1.5 rounded-full ${
+                                dark ? "bg-white/35" : "bg-slate-900/35"
+                              }`}
+                            />
+                            <div className="min-w-0">
+                              <div
+                                className={`text-sm font-semibold ${
+                                  dark ? "text-white" : "text-slate-900"
+                                }`}
+                              >
+                                {e.title}
+                              </div>
+                              <div
+                                className={`mt-1 text-sm leading-relaxed ${
+                                  dark ? "text-white/70" : "text-slate-700"
+                                }`}
+                              >
+                                {e.text}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
+                  </div>
+                </div>
+
+                {/* TINY TASK → ACTION (standardized)
+                    - bridge line removed via override above */}
+                {nextSteps ? (
+                  <div className="el-nextsteps mt-6">
+                    <NextStepsStack
+                      dark={dark}
+                      useLocal={mounted}
+                      definition={nextSteps}
+                      heading=""
+                      subheading=""
+                    />
+                  </div>
+                ) : null}
+
+                {/* Quick check */}
+                <div className="mt-6">
+                  <div
+                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                      dark ? "text-white/50" : "text-slate-500"
+                    }`}
+                  >
+                    Quick check
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {calibrationOptions.map((opt) => {
+                      const selected = calibration === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={[
+                            "inline-flex items-center justify-center",
+                            "rounded-full border px-3.5 py-2",
+                            "text-sm font-semibold transition active:scale-95",
+                            dark
+                              ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+                              : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+                            selected
+                              ? dark
+                                ? "bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)] ring-2 ring-white/25"
+                                : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)] ring-2 ring-slate-900/10"
+                              : "",
+                          ].join(" ")}
+                          onClick={() => setCalibrationAndPersist(opt)}
+                          aria-pressed={selected}
+                        >
+                          <span className="mr-2" aria-hidden>
+                            {selected
+                              ? "✓"
+                              : opt === "Mostly right"
+                              ? "👍"
+                              : opt === "Somewhat"
+                              ? "😐"
+                              : "👎"}
+                          </span>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div
+                    className={`mt-2 text-xs ${
+                      dark ? "text-white/45" : "text-slate-500"
+                    }`}
+                  >
+                    (We’ll use this later to recalibrate Insights.)
                   </div>
                 </div>
               </div>
@@ -1021,53 +1022,43 @@ export default function Page() {
                   {TABS.find((t) => t.id === tab)?.label ?? "Section"}
                 </div>
                 <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                  This section is scaffolded. We’ll implement it next after Summary
-                  is locked.
+                  This section is scaffolded. We’ll implement it next after Summary is
+                  locked.
                 </div>
               </div>
             </section>
           )}
         </main>
 
-        {/* Mobile floating Sections pill (centered, above BottomNav) */}
-        {!sectionsOpen ? (
-          <div className="fixed inset-x-0 bottom-[92px] z-40 md:hidden">
-            <div className="pointer-events-none flex justify-center px-4">
+        {/* Mobile “Sections” pill (centered) */}
+        <div className="fixed inset-x-0 bottom-[78px] z-40 md:hidden">
+          <div className="pointer-events-auto px-4 pb-3">
+            <div className="mx-auto flex max-w-5xl justify-center">
               <button
                 type="button"
                 className={[
-                  "pointer-events-auto inline-flex items-center gap-2",
+                  "inline-flex items-center gap-2",
                   "rounded-full border px-4 py-2.5",
                   "backdrop-blur-xl",
                   "text-sm font-semibold",
-                  "shadow-[0_18px_60px_rgba(0,0,0,0.35)]",
+                  "shadow-[0_18px_60px_rgba(0,0,0,0.22)]",
                   dark
-                    ? "border-white/12 bg-white/10 text-white/85 hover:bg-white/14"
-                    : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
-                  dark
-                    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-                    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
+                    ? "border-white/12 bg-slate-950/35 text-white/88 hover:bg-slate-950/45"
+                    : "border-black/10 bg-white/75 text-slate-900 hover:bg-white",
                 ].join(" ")}
                 onClick={() => setSectionsOpen(true)}
-                aria-label="Open sections"
               >
-                <span aria-hidden className="text-base leading-none opacity-90">
+                <span aria-hidden className="opacity-85">
                   ☰
                 </span>
-                <span className="opacity-90">Sections</span>
-                <span aria-hidden className={dark ? "text-white/35" : "text-black/25"}>
-                  ·
-                </span>
-                <span className={dark ? "text-white/70" : "text-slate-700"}>
-                  {currentTabLabel}
-                </span>
-                <span aria-hidden className="ml-0.5 opacity-80">
-                  ▴
+                <span>Sections</span>
+                <span className={dark ? "text-white/55" : "text-slate-600"}>
+                  · {tabLabel}
                 </span>
               </button>
             </div>
           </div>
-        ) : null}
+        </div>
 
         <AnimatePresence>
           {sectionsOpen ? (
@@ -1077,95 +1068,180 @@ export default function Page() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Softer overlay */}
               <div
-                className="absolute inset-0 bg-black/35"
+                className="absolute inset-0 bg-black/28"
                 onClick={() => setSectionsOpen(false)}
                 aria-hidden
               />
+
+              {/* Centered sheet */}
               <motion.div
-                initial={{ y: 24, opacity: 0 }}
+                initial={{ y: 22, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 24, opacity: 0 }}
+                exit={{ y: 22, opacity: 0 }}
                 transition={{ duration: 0.18 }}
-                className={[
-                  "absolute inset-x-0 bottom-0",
-                  "rounded-t-[28px] border",
-                  "backdrop-blur-xl",
-                  dark
-                    ? "border-white/12 bg-slate-950/55"
-                    : "border-black/10 bg-white/85",
-                ].join(" ")}
+                className="absolute inset-x-0 bottom-0 px-4 pb-4"
               >
-                <div className="px-5 pb-6 pt-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div
-                        className={`text-base font-semibold ${
-                          dark ? "text-white" : "text-slate-900"
-                        }`}
-                      >
-                        Sections
+                <div
+                  className={[
+                    "relative mx-auto w-full max-w-[640px]",
+                    "overflow-hidden rounded-[28px] border",
+                    "backdrop-blur-2xl",
+                    dark
+                      ? "border-white/12 bg-slate-950/40"
+                      : "border-black/10 bg-white/90",
+                    "shadow-[0_28px_95px_rgba(0,0,0,0.45)]",
+                  ].join(" ")}
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  {/* gentle color glow */}
+                  <div className="pointer-events-none absolute inset-0">
+                    <div
+                      className={[
+                        "absolute -top-20 -left-24 h-64 w-64 rounded-full blur-3xl",
+                        dark ? "bg-fuchsia-400/14" : "bg-fuchsia-400/10",
+                      ].join(" ")}
+                    />
+                    <div
+                      className={[
+                        "absolute -bottom-24 -right-24 h-72 w-72 rounded-full blur-3xl",
+                        dark ? "bg-sky-400/14" : "bg-sky-400/10",
+                      ].join(" ")}
+                    />
+                  </div>
+
+                  <div className="relative px-5 pb-5 pt-5 sm:px-7 sm:pb-6 sm:pt-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div
+                          className={`text-base font-semibold ${
+                            dark ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          Sections
+                          <span
+                            className={`ml-2 text-sm font-semibold ${
+                              dark ? "text-white/55" : "text-slate-500"
+                            }`}
+                          >
+                            · {tabLabel}
+                          </span>
+                        </div>
+                        <div
+                          className={`mt-1 text-sm ${
+                            dark ? "text-white/60" : "text-slate-600"
+                          }`}
+                        >
+                          Jump anywhere — you won’t lose your place.
+                        </div>
                       </div>
-                      <div
-                        className={`mt-1 text-sm ${
-                          dark ? "text-white/60" : "text-slate-600"
-                        }`}
+
+                      <button
+                        type="button"
+                        className={pillButton(dark)}
+                        onClick={() => setSectionsOpen(false)}
                       >
-                        Jump anywhere — you won’t lose your place.
+                        Close
+                      </button>
+                    </div>
+
+                    {/* Unified menu panel (less “stack of boxes”) */}
+                    <div
+                      className={[
+                        "mt-4 overflow-hidden rounded-2xl border",
+                        "backdrop-blur-xl",
+                        dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
+                      ].join(" ")}
+                      style={{ maxHeight: "62vh" }}
+                    >
+                      <div className="max-h-[62vh] overflow-auto">
+                        {TABS.map((t, idx) => {
+                          const selected = t.id === tab;
+                          const isLast = idx === TABS.length - 1;
+
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              className={[
+                                "relative w-full text-left",
+                                "px-4 py-3.5",
+                                "transition active:scale-[0.995]",
+                                dark
+                                  ? "text-white/88 hover:bg-white/6"
+                                  : "text-slate-900 hover:bg-black/2",
+                                !isLast
+                                  ? dark
+                                    ? "border-b border-white/10"
+                                    : "border-b border-black/10"
+                                  : "",
+                                selected ? (dark ? "bg-white/8" : "bg-black/2") : "",
+                              ].join(" ")}
+                              onClick={() => {
+                                setTabAndSync(t.id);
+                                setSectionsOpen(false);
+                              }}
+                            >
+                              {/* Selected accent rail */}
+                              {selected ? (
+                                <span
+                                  aria-hidden
+                                  className={[
+                                    "absolute left-0 top-0 h-full w-1.5",
+                                    "rounded-r-full",
+                                    "bg-fuchsia-300/65",
+                                  ].join(" ")}
+                                />
+                              ) : null}
+
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold">
+                                    {t.label}
+                                  </div>
+                                  {t.blurb ? (
+                                    <div
+                                      className={`mt-0.5 text-xs ${
+                                        dark ? "text-white/55" : "text-slate-600"
+                                      }`}
+                                    >
+                                      {t.blurb}
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                <div
+                                  className={[
+                                    "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                                    dark
+                                      ? "border-white/10 bg-white/6 text-white/60"
+                                      : "border-black/10 bg-white text-slate-600",
+                                    selected
+                                      ? dark
+                                        ? "text-white/80"
+                                        : "text-slate-800"
+                                      : "",
+                                  ].join(" ")}
+                                  aria-hidden
+                                >
+                                  {selected ? "You are here" : "Open"}
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      className={pillButton(dark)}
-                      onClick={() => setSectionsOpen(false)}
+                    <div
+                      className={`mt-3 text-xs ${
+                        dark ? "text-white/45" : "text-slate-500"
+                      }`}
                     >
-                      Close
-                    </button>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    {TABS.map((t) => {
-                      const selected = t.id === tab;
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          className={[
-                            "w-full rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99]",
-                            dark
-                              ? "border-white/10 bg-white/5 hover:bg-white/8"
-                              : "border-black/10 bg-white/80 hover:bg-white",
-                            selected
-                              ? dark
-                                ? "ring-2 ring-white/16"
-                                : "ring-2 ring-slate-900/10"
-                              : "",
-                          ].join(" ")}
-                          onClick={() => {
-                            setTabAndSync(t.id);
-                            setSectionsOpen(false);
-                          }}
-                        >
-                          <div
-                            className={`text-sm font-semibold ${
-                              dark ? "text-white/90" : "text-slate-900"
-                            }`}
-                          >
-                            {t.label}
-                          </div>
-                          {t.blurb ? (
-                            <div
-                              className={`mt-0.5 text-xs ${
-                                dark ? "text-white/55" : "text-slate-600"
-                              }`}
-                            >
-                              {t.blurb}
-                            </div>
-                          ) : null}
-                        </button>
-                      );
-                    })}
+                      Tip: you can always come back here — nothing gets “lost.”
+                    </div>
                   </div>
                 </div>
               </motion.div>
