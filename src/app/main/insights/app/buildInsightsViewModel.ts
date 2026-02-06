@@ -4,9 +4,9 @@
 export type InsightsTab =
   | "summary"
   | "superpowers"
-  | "patterns"
-  | "edges"
-  | "directions"
+  | "motivations"
+  | "strengths"
+  | "skills"
   | "doppelganger";
 
 type UseLocalOpts = { useLocal: boolean };
@@ -47,10 +47,11 @@ export type InsightsViewModel = {
   tab: InsightsTab;
   summary: {
     headline: string;
-    receipts: Receipt[];
+    receipts: Receipt[]; // keep (internal), but UI doesn't show the old block
     signalBar: SignalBarItem[];
     wordCloud: WordCloudItem[];
     unlock?: Unlock;
+    primaryUnlock?: Unlock;
     storySoFar: string[];
     suggests: Suggest[];
     tripUps: TripUp[];
@@ -161,12 +162,14 @@ function buildSignalBar(saved: Record<string, Saved>) {
     countAnswered("strengths", saved) +
     countAnswered("skills", saved);
 
-  const actionRx = /\b(build|make|ship|try|practice|train|create|prototype|start|finish)\b/gi;
+  const actionRx =
+    /\b(build|make|ship|try|practice|train|create|prototype|start|finish)\b/gi;
   const peopleRx =
     /\b(feedback|coach|mentor|team|friends?|critique|review|someone|together|group)\b/gi;
   const curiousRx =
     /\b(curious|curiosity|learn|explore|why|figure out|understand|research|discover)\b/gi;
-  const clarityRx = /\b(clear|clarity|specific|plan|next step|decide|direction|focus)\b/gi;
+  const clarityRx =
+    /\b(clear|clarity|specific|plan|next step|decide|direction|focus)\b/gi;
 
   const actionHits = (joined.match(actionRx) ?? []).length;
   const peopleHits = (joined.match(peopleRx) ?? []).length;
@@ -254,28 +257,111 @@ function pickRepresentativeAnswer(saved: Record<string, Saved>) {
 
 const STOPWORDS = new Set(
   [
-    "a","an","the","and","or","but","so","if","then","than","that","this","those","these",
-    "i","me","my","mine","you","your","yours","we","us","our","ours","they","them","their",
-    "to","of","in","on","at","for","from","with","without","about","into","over","under",
-    "is","are","was","were","be","being","been","do","does","did","doing","have","has","had",
-    "it","its","as","just","really","very","maybe","like","kind","kinda","sort","stuff",
-    "get","got","getting","make","made","making","build","building","want","wanted","need","needed",
-    "feel","feels","feeling","time","times","day","days"
-  ]
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "but",
+    "so",
+    "if",
+    "then",
+    "than",
+    "that",
+    "this",
+    "those",
+    "these",
+    "i",
+    "me",
+    "my",
+    "mine",
+    "you",
+    "your",
+    "yours",
+    "we",
+    "us",
+    "our",
+    "ours",
+    "they",
+    "them",
+    "their",
+    "to",
+    "of",
+    "in",
+    "on",
+    "at",
+    "for",
+    "from",
+    "with",
+    "without",
+    "about",
+    "into",
+    "over",
+    "under",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "being",
+    "been",
+    "do",
+    "does",
+    "did",
+    "doing",
+    "have",
+    "has",
+    "had",
+    "it",
+    "its",
+    "as",
+    "just",
+    "really",
+    "very",
+    "maybe",
+    "like",
+    "kind",
+    "kinda",
+    "sort",
+    "stuff",
+    "get",
+    "got",
+    "getting",
+    "make",
+    "made",
+    "making",
+    "build",
+    "building",
+    "want",
+    "wanted",
+    "need",
+    "needed",
+    "feel",
+    "feels",
+    "feeling",
+    "time",
+    "times",
+    "day",
+    "days",
+  ].sort()
 );
 
 function tokenize(text: string): string[] {
   const raw = (text ?? "").toLowerCase();
-  // keep words + simple apostrophes
-  const parts = raw.split(/[^a-z0-9']+/g).map((p) => p.trim()).filter(Boolean);
+  const parts = raw
+    .split(/[^a-z0-9']+/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
   const out: string[] = [];
   for (const p of parts) {
     if (p.length < 3) continue;
     if (STOPWORDS.has(p)) continue;
-    // trim apostrophes
+
     const cleaned = p.replace(/^'+|'+$/g, "");
     if (cleaned.length < 3) continue;
     if (STOPWORDS.has(cleaned)) continue;
+
     out.push(cleaned);
   }
   return out;
@@ -303,30 +389,102 @@ function buildWordCloud(saved: Record<string, Saved>): WordCloudItem[] {
   }));
 }
 
-function buildSummaryVM(opts: UseLocalOpts) {
+/* =========================
+   Summary copy helpers
+   ========================= */
+
+function capSentence(s: string) {
+  const t = cleanOneLine(s);
+  if (!t) return "";
+  const c = t[0]!.toUpperCase() + t.slice(1);
+  return /[.!?]$/.test(c) ? c : `${c}.`;
+}
+
+function quoteSnippet(raw: string) {
+  const s = cleanOneLine(raw);
+  if (!s) return "";
+  // keep it short so it feels like a quick callback, not a dump
+  if (s.length <= 64) return s;
+  return `${s.slice(0, 61)}…`;
+}
+
+function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const fallback: InsightsViewModel["summary"] = {
     headline:
       "I’m ready when you are — give me a few answers and I’ll start sounding like I actually know you.",
-    receipts: [
-      { id: "starter", label: "Insights", detail: "waiting on your answers", tone: "neutral" },
-    ],
+    receipts: [],
     signalBar: [
-      { id: "action", label: "Making", strength: 0.1, meaning: "Hands-on / making energy", why: "Shows up when you talk about doing and building.", examples: [] },
-      { id: "people", label: "Feedback", strength: 0.1, meaning: "People + feedback loop", why: "Shows up when you mention teams, coaches, critique.", examples: [] },
-      { id: "curiosity", label: "Exploring", strength: 0.1, meaning: "Curiosity / learning pull", why: "Shows up when you talk about learning and exploring.", examples: [] },
-      { id: "clarity", label: "Direction", strength: 0.1, meaning: "Clarity-seeking", why: "Shows up when you ask for a next step or direction.", examples: [] },
+      {
+        id: "action",
+        label: "Making",
+        strength: 0.1,
+        meaning: "Hands-on / making energy",
+        why: "Shows up when you talk about doing and building.",
+        examples: [],
+      },
+      {
+        id: "people",
+        label: "Feedback",
+        strength: 0.1,
+        meaning: "People + feedback loop",
+        why: "Shows up when you mention teams, coaches, critique.",
+        examples: [],
+      },
+      {
+        id: "curiosity",
+        label: "Exploring",
+        strength: 0.1,
+        meaning: "Curiosity / learning pull",
+        why: "Shows up when you talk about learning and exploring.",
+        examples: [],
+      },
+      {
+        id: "clarity",
+        label: "Direction",
+        strength: 0.1,
+        meaning: "Clarity-seeking",
+        why: "Shows up when you ask for a next step or direction.",
+        examples: [],
+      },
     ],
     wordCloud: [],
     unlock: {
       title: "Fastest way to unlock real Insights",
-      items: [{ id: "finish_any", label: "Answer a few questions", href: "/main/questions?returnTo=/main/insights" }],
+      items: [
+        {
+          id: "finish_any",
+          label: "Answer a few questions",
+          href: "/main/questions?returnTo=/main/insights",
+        },
+      ],
+    },
+    primaryUnlock: {
+      title: "Want this to get sharper?",
+      items: [
+        {
+          id: "u_str",
+          label: "Answer Strengths",
+          href: "/main/questions?cat=strengths&returnTo=/main/insights",
+        },
+        {
+          id: "u_skl",
+          label: "Answer Skills",
+          href: "/main/questions?cat=skills&returnTo=/main/insights",
+        },
+      ],
     },
     storySoFar: [
       "I don’t want to guess about you.",
       "Give me a few real answers and I’ll reflect back patterns you can actually use — plus one next step you can try this week.",
     ],
-    suggests: [{ id: "s0", text: "A few answers is enough for this page to become personal and useful." }],
-    tripUps: [{ id: "t0", title: "Not enough signal yet", text: "With no examples from your life, everything has to stay generic." }],
+    suggests: [{ id: "s0", text: "Answer a few questions and this page becomes personal fast." }],
+    tripUps: [
+      {
+        id: "t0",
+        title: "Not enough signal yet",
+        text: "With no examples from your life, everything has to stay generic.",
+      },
+    ],
     experiment: {
       title: "Run one tiny test",
       text:
@@ -357,93 +515,183 @@ function buildSummaryVM(opts: UseLocalOpts) {
       ? `${name ? `${name}, ` : ""}I’m ready when you are — give me a few answers and I’ll make this personal.`
       : `${name ? `${name} — ` : ""}here’s what I’m seeing so far.`;
 
-  // IMPORTANT: receipts should be “life receipts”, NOT the progress objects
+  // receipts are intentionally minimal now (UI doesn't show the old receipts block)
   const receipts: Receipt[] = [];
-  if (answeredTotal > 0) {
-    receipts.push({
-      id: "answers_total",
-      label: "Answers saved",
-      detail: String(answeredTotal),
-      tone: answeredTotal >= 10 ? "good" : "neutral",
-    });
+
+  /* -------------------------
+     Primary CTA logic
+     ------------------------- */
+
+  // Primary CTA should be loud ONLY when they have some signal already (esp motivations)
+  // and are missing Strengths/Skills — because that's what sharpens options.
+  const primaryItems: UnlockItem[] = [];
+  const missingStrengths = str < 1;
+  const missingSkills = skl < 1;
+
+  if (answeredTotal > 0 && (missingStrengths || missingSkills)) {
+    if (missingStrengths) {
+      primaryItems.push({
+        id: "pu_str",
+        label: "Answer Strengths",
+        href: "/main/questions?cat=strengths&returnTo=/main/insights",
+      });
+    }
+    if (missingSkills) {
+      primaryItems.push({
+        id: "pu_skl",
+        label: "Answer Skills",
+        href: "/main/questions?cat=skills&returnTo=/main/insights",
+      });
+    }
   }
-  if (cloud.length) {
-    receipts.push({
-      id: "themes_found",
-      label: "Themes",
-      detail: `${cloud.length}`,
-      tone: "neutral",
+
+  const primaryUnlock: Unlock | undefined =
+    primaryItems.length && mot > 0
+      ? {
+          title: "If you want this to get sharper…",
+          items: primaryItems.slice(0, 2),
+        }
+      : undefined;
+
+  // Secondary unlock (kept for completeness; not the loud callout)
+  const unlockItems: UnlockItem[] = [];
+  if (mot < 5)
+    unlockItems.push({
+      id: "u_mot",
+      label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers",
+      href: "/main/questions?cat=motivations&returnTo=/main/insights",
     });
-  }
+  if (str < 5)
+    unlockItems.push({
+      id: "u_str",
+      label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers",
+      href: "/main/questions?cat=strengths&returnTo=/main/insights",
+    });
+  if (skl < 5)
+    unlockItems.push({
+      id: "u_skl",
+      label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers",
+      href: "/main/questions?cat=skills&returnTo=/main/insights",
+    });
+
+  const unlock: Unlock | undefined = unlockItems.length
+    ? {
+        title: answeredTotal === 0 ? "Fastest way to unlock real Insights" : "If you want more specific",
+        items: unlockItems.slice(0, 3),
+      }
+    : undefined;
+
+  /* -------------------------
+     Conversational "story so far"
+     ------------------------- */
 
   const storySoFar: string[] = [];
 
   if (answeredTotal === 0) {
-    storySoFar.push("I don’t want to guess about you.");
-    storySoFar.push("Answer a few questions and I’ll turn that into a direction you can actually test.");
-  } else {
     storySoFar.push(
-      "You’ve done the hard part: you’re giving real examples. That’s why this can sound like *you* instead of generic advice."
+      "Right now I don’t have anything real to work with — so I’d just be guessing."
+    );
+    storySoFar.push(
+      "Answer a few questions (any category), then come back. This page changes fast once I have your actual words."
+    );
+  } else {
+    // 1) Lead with validation that feels human (no “most people skip”).
+    storySoFar.push(
+      capSentence(
+        `You gave me real examples${name ? ", which makes this easy to read" : ""} — not just “I like ___.”`
+      )
     );
 
+    // 2) Call back one concrete snippet as the “proof you were listening”
     if (representative) {
       storySoFar.push(
-        `One detail that stood out: “${representative}”. That’s the kind of clue that points to what actually fits you day-to-day.`
+        capSentence(
+          `For example: “${quoteSnippet(representative)}.” That’s a real signal, not a random detail.`
+        )
       );
     } else {
       storySoFar.push(
-        "A pattern is already showing up: you get clearer when something is real — not when it stays hypothetical."
+        "Even with a small amount of signal, a pattern is already showing up."
       );
     }
 
+    // 3) Replace “vibe” + meta with a clear, speakable pattern sentence.
+    // Keep it generic enough for local heuristics, but human.
     storySoFar.push(
-      "What I’m picking up so far: you move forward fastest when there’s something concrete to work on — and when there’s feedback (people, a coach, a team, or a clear loop of improving)."
+      "Here’s the pattern I’d bet on: you get clearer when you’re working on something real — and you improve faster when feedback is in the loop."
     );
 
-    const missingStr = Math.max(0, 2 - str);
-    const missingSkl = Math.max(0, 2 - skl);
-    if (missingStr > 0 || missingSkl > 0) {
+    // 4) Missing-signal line (non-mechanical)
+    if (mot > 0 && str === 0 && skl === 0) {
       storySoFar.push(
-        `Fastest upgrade: add ${missingStr ? `${missingStr} Strengths` : ""}${
-          missingStr && missingSkl ? " + " : ""
-        }${missingSkl ? `${missingSkl} Skills` : ""} answers. Then I can turn this from “pattern” into specific options + a sharper next step.`
+        "Right now I mostly have signal from Motivations. Strengths and Skills will sharpen this a lot — fast."
+      );
+    } else if (missingStrengths || missingSkills) {
+      storySoFar.push(
+        "I’m close, but I’m missing part of the picture. Two quick answers (Strengths and/or Skills) will make what I say noticeably more specific."
       );
     } else {
       storySoFar.push(
-        "You’ve got enough signal to stop guessing. Next move is a small test — then we learn from what happens."
+        "You’ve given me enough to stop guessing — now we just need one small test to learn from."
       );
     }
+
+    // 5) Replace “Below, I’ll show…” with a short natural bridge.
+    storySoFar.push(
+      "Here are the themes I’m hearing — plus one small experiment you can run this week."
+    );
   }
+
+  /* -------------------------
+     Suggests / watch-outs / experiment
+     ------------------------- */
 
   const suggests: Suggest[] = answeredTotal
     ? [
-        { id: "s1", text: "You’ll get clearer by running small tests than by trying to think your way to certainty." },
-        { id: "s2", text: "You’ll do best where progress is visible (projects, feedback, real outcomes)." },
-        { id: "s3", text: "Keep the next step week-sized. Labels can come later." },
+        {
+          id: "s1",
+          text: "You’ll get clearer faster by running small tests than by trying to think your way to certainty.",
+        },
+        {
+          id: "s2",
+          text: "You’ll do best where progress is visible (projects, feedback, real outcomes).",
+        },
+        {
+          id: "s3",
+          text: "Keep the next step week-sized. Labels can come later.",
+        },
       ]
-    : [{ id: "s0", text: "Answering a few questions will unlock real insights here." }];
+    : [{ id: "s0", text: "Answer a few questions and this page becomes personal fast." }];
 
   const tripUps: TripUp[] = answeredTotal
     ? [
-        { id: "t1", title: "Trying to solve your whole future at once", text: "You don’t need the perfect answer. One small test teaches you more than hours of thinking." },
-        { id: "t2", title: "Waiting to feel ready first", text: "Feeling ready usually shows up after you start — not before." },
-        ...(answeredTotal > 0 && (mot < 2 || str < 2 || skl < 2)
-          ? [{ id: "t3", title: "Too little detail to be specific", text: "If answers stay super short, I’ll stay vague. One or two real examples makes everything sharper." }]
+        {
+          id: "t1",
+          title: "Trying to solve your whole future at once",
+          text: "You don’t need the perfect answer. One small test teaches you more than hours of thinking.",
+        },
+        {
+          id: "t2",
+          title: "Waiting to feel ready first",
+          text: "Feeling ready usually shows up after you start — not before.",
+        },
+        ...(mot > 0 && str === 0 && skl === 0
+          ? [
+              {
+                id: "t3",
+                title: "Not enough signal to get specific",
+                text: "Right now I can describe patterns — but not “best-fit options.” Two Strengths/Skills answers fixes that fast.",
+              },
+            ]
           : []),
       ]
-    : [{ id: "t0", title: "No real data yet", text: "Without examples from your life, everything here stays generic." }];
-
-  const unlockItems: UnlockItem[] = [];
-  if (mot < 5) unlockItems.push({ id: "u_mot", label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers", href: "/main/questions?cat=motivations&returnTo=/main/insights" });
-  if (str < 5) unlockItems.push({ id: "u_str", label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers", href: "/main/questions?cat=strengths&returnTo=/main/insights" });
-  if (skl < 5) unlockItems.push({ id: "u_skl", label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers", href: "/main/questions?cat=skills&returnTo=/main/insights" });
-
-  const unlock: Unlock | undefined = unlockItems.length
-    ? {
-        title: answeredTotal === 0 ? "Fastest way to unlock real Insights" : "To make this sharply tailored",
-        items: unlockItems.slice(0, 3),
-      }
-    : undefined;
+    : [
+        {
+          id: "t0",
+          title: "No real data yet",
+          text: "Without examples from your life, everything here stays generic.",
+        },
+      ];
 
   const experiment: Experiment = answeredTotal
     ? {
@@ -456,25 +704,27 @@ function buildSummaryVM(opts: UseLocalOpts) {
       }
     : {
         title: "Give me a little to work with",
-        text:
-          "Answer three questions in any category.\n" +
-          "Then come back and see how this page changes.",
+        text: "Answer three questions in any category.\nThen come back and see how this page changes.",
       };
 
   return {
     headline,
-    receipts: receipts.slice(0, 8),
+    receipts,
     signalBar,
     wordCloud: cloud,
     unlock,
-    storySoFar: storySoFar.slice(0, 6),
+    primaryUnlock,
+    storySoFar: storySoFar.slice(0, 7),
     suggests: suggests.slice(0, 5),
     tripUps: tripUps.slice(0, 4),
     experiment,
   };
 }
 
-export function buildInsightsViewModel(tab: InsightsTab, opts: UseLocalOpts): InsightsViewModel {
+export function buildInsightsViewModel(
+  tab: InsightsTab,
+  opts: UseLocalOpts
+): InsightsViewModel {
   const summary = buildSummaryVM(opts);
   return { tab, summary };
 }
