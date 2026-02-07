@@ -4,6 +4,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { Compass, Shield } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -12,7 +13,6 @@ import {
   isDarkTheme,
   type SpotlightThemeId,
   type GradientLevel,
-  INSIGHTS_THEMES,
 } from "@/theme/everleapVisuals";
 
 import {
@@ -140,7 +140,8 @@ function pillButton(dark: boolean) {
   ].join(" ");
 }
 
-function chipClasses(dark: boolean, kind: WashKind) {
+/** Big “section header pill” (icon visible) */
+function sectionHeaderPill(dark: boolean, kind: WashKind) {
   if (!dark) {
     if (kind === "suggests")
       return "border-amber-500/20 bg-amber-500/10 text-amber-900";
@@ -157,7 +158,6 @@ function chipClasses(dark: boolean, kind: WashKind) {
 }
 
 function fadeMaskStyle(mode: "story" | "suggests"): React.CSSProperties {
-  // Used only in collapsed state; if mask isn't supported it simply won't fade.
   const cut = mode === "story" ? "62%" : "70%";
   return {
     WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${cut}, rgba(0,0,0,0) 100%)`,
@@ -225,7 +225,7 @@ function wordChaosVars(term: string, weight: number): CSSVars {
   const mode = h % 10;
   const allow = mode < 4 && w < 0.95;
 
-  const rot = allow ? ((h % 5) - 2) * 1 : 0; // -2..+2 deg
+  const rot = allow ? ((h % 5) - 2) * 1 : 0;
   const ty = allow ? ((h % 7) - 3) * 0.6 : 0;
   const ls = w > 0.75 ? 0.2 : 0;
 
@@ -259,8 +259,7 @@ export default function Page() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
 
   const dark = isDarkTheme(themeId);
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  void gradientLevel;
 
   const initialTabFromUrl = React.useMemo<InsightsTab>(() => {
     const raw = searchParams?.get("tab") ?? searchParams?.get("section");
@@ -302,10 +301,6 @@ export default function Page() {
   const [suggestsExpanded, setSuggestsExpanded] = React.useState(false);
 
   const [sectionsOpen, setSectionsOpen] = React.useState(false);
-
-  const cardShadow = dark
-    ? "shadow-[0_28px_95px_rgba(0,0,0,0.70)]"
-    : "shadow-[0_16px_45px_rgba(0,0,0,0.16)]";
 
   const narrativeText = dark ? "text-slate-200/88" : "text-slate-700";
 
@@ -355,7 +350,7 @@ export default function Page() {
   const canToggleStory = storyExpandedItems.length > 0 && story.length > 2;
 
   const suggestsItems = vm.summary.suggests ?? [];
-  const suggestsCollapsedCount = 2; // ensures "Read more" shows up even when suggestsItems is short-ish
+  const suggestsCollapsedCount = 2;
   const suggestsShort = suggestsItems.slice(0, suggestsCollapsedCount);
   const suggestsLong = suggestsItems;
 
@@ -367,14 +362,10 @@ export default function Page() {
     []
   );
 
-  // Override the bridge line here (so we don't have to change registry yet)
   const nextSteps = React.useMemo(() => {
     if (!nextStepsBase) return null;
     return { ...nextStepsBase, bridgeLine: "" };
   }, [nextStepsBase]);
-
-  const missingProfileSignal =
-    (vm?.summary?.primaryUnlock?.items?.length ?? 0) > 0;
 
   return (
     <AppChrome
@@ -400,75 +391,6 @@ export default function Page() {
         .el-word:active {
           transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg))
             scale(0.985);
-        }
-
-        /* ============================================================
-           Insights polish overrides (scoped)
-           - Lighten "Log your result" style (common dialog classes)
-           - De-box NextSteps a bit (reduce inner “boxed UI” feeling)
-           ============================================================ */
-
-        /* Softer overlays (covers many Tailwind overlay variants) */
-        .el-insights
-          :where(
-            .bg-black\\/80,
-            .bg-black\\/75,
-            .bg-black\\/70,
-            .bg-black\\/65,
-            .bg-black\\/60
-          ) {
-          background-color: rgba(0, 0, 0, 0.38) !important;
-        }
-
-        /* Brighter frosted panels (covers common dark modal surfaces) */
-        .el-insights
-          :where(
-            .bg-slate-950\\/95,
-            .bg-slate-950\\/90,
-            .bg-slate-950\\/85,
-            .bg-slate-950\\/80,
-            .bg-slate-950\\/75,
-            .bg-slate-950\\/70,
-            .bg-slate-900\\/90,
-            .bg-slate-900\\/80,
-            .bg-slate-900\\/75,
-            .bg-black\\/55,
-            .bg-black\\/60
-          ) {
-          background-color: rgba(255, 255, 255, 0.09) !important;
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-        }
-
-        /* Nudge borders toward “glass” instead of “box” */
-        .el-insights
-          :where(
-            .border-white\\/20,
-            .border-white\\/18,
-            .border-white\\/15,
-            .border-white\\/12,
-            .border-white\\/10
-          ) {
-          border-color: rgba(255, 255, 255, 0.16) !important;
-        }
-
-        /* Inputs inside dialogs often look too cave-like; lighten a touch */
-        .el-insights
-          :where(.bg-white\\/5, .bg-white\\/6, .bg-white\\/8, .bg-white\\/10) {
-          background-color: rgba(255, 255, 255, 0.07);
-        }
-
-        /* “Boxed UI” inside NextSteps (steps containers / inner panels) */
-        .el-insights .el-nextsteps :where(.rounded-2xl.border, .rounded-3xl.border) {
-          border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-        .el-insights .el-nextsteps :where(.bg-white\\/10, .bg-white\\/12, .bg-white\\/15) {
-          background-color: rgba(255, 255, 255, 0.07) !important;
-        }
-        .el-insights
-          .el-nextsteps
-          :where(.ring-1.ring-white\\/10, .ring-1.ring-white\\/12, .ring-1.ring-white\\/15) {
-          box-shadow: none !important;
         }
       `}</style>
 
@@ -534,107 +456,78 @@ export default function Page() {
             </div>
           </div>
 
-          {/* =========================
-              SUMMARY TAB
-             ========================= */}
           {tab === "summary" ? (
             <section className="mb-6">
-              {/* Removed the big outer “stage box”.
-                  Keep the cinematic glows as a backdrop only. */}
               <div className="relative">
-                <div className="pointer-events-none absolute inset-0 -z-10">
-                  <div
-                    className={[
-                      "absolute -top-16 -left-16 h-80 w-80 rounded-full blur-3xl",
-                      dark ? "bg-fuchsia-400/10" : "bg-fuchsia-400/8",
-                    ].join(" ")}
-                  />
-                  <div
-                    className={[
-                      "absolute -bottom-20 -right-20 h-96 w-96 rounded-full blur-3xl",
-                      dark ? "bg-sky-400/10" : "bg-sky-400/8",
-                    ].join(" ")}
-                  />
-                </div>
-
-                {/* HERO: agentic paragraph + word cloud (desktop side-by-side) */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-start">
+                {/* HERO GRID */}
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.15fr_0.85fr] md:items-start">
                   {/* Agentic intro */}
-                  <div
-                    className={[
-                      "relative overflow-hidden rounded-3xl px-5 py-4",
-                      sectionRing(dark),
-                      dark ? "bg-white/5" : "bg-white/80",
-                      dark
-                        ? "shadow-[0_22px_80px_rgba(0,0,0,0.35)]"
-                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
-                      "backdrop-blur-xl",
-                    ].join(" ")}
-                  >
-                    <div className="relative">
-                      <div
-                        className={`text-[22px] leading-snug md:text-[26px] ${
-                          dark ? "text-white" : "text-slate-900"
-                        }`}
-                      >
-                        {vm.summary.headline}
-                      </div>
+                  <div className="relative pt-3 md:pt-4">
+                    <div
+                      className={`text-[24px] leading-snug md:text-[28px] ${
+                        dark ? "text-white" : "text-slate-900"
+                      }`}
+                    >
+                      {vm.summary.headline}
+                    </div>
 
-                      <div className="mt-3">
-                        {!storyExpanded ? (
-                          <div className="relative" style={fadeMaskStyle("story")}>
-                            <p
-                              className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
-                            >
-                              {storyTextCollapsed || storyTextExpanded}
-                            </p>
-                          </div>
-                        ) : (
-                          <AnimatePresence initial={false}>
-                            <motion.p
-                              key="storyExpanded"
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 6 }}
-                              transition={{ duration: 0.18 }}
-                              className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
-                            >
-                              {storyTextExpanded}
-                            </motion.p>
-                          </AnimatePresence>
-                        )}
-                      </div>
-
-                      {canToggleStory ? (
-                        <div className="mt-3">
-                          <button
-                            type="button"
-                            className={pillButton(dark)}
-                            onClick={() => setStoryExpanded((v) => !v)}
+                    <div className="mt-3">
+                      {!storyExpanded ? (
+                        <div className="relative" style={fadeMaskStyle("story")}>
+                          <p
+                            className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
                           >
-                            <span aria-hidden className="opacity-85">
-                              {storyExpanded ? "▾" : "▸"}
-                            </span>
-                            {storyExpanded ? "Read less" : "Read more"}
-                          </button>
+                            {storyTextCollapsed || storyTextExpanded}
+                          </p>
                         </div>
-                      ) : null}
+                      ) : (
+                        <AnimatePresence initial={false}>
+                          <motion.p
+                            key="storyExpanded"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 6 }}
+                            transition={{ duration: 0.18 }}
+                            className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
+                          >
+                            {storyTextExpanded}
+                          </motion.p>
+                        </AnimatePresence>
+                      )}
+                    </div>
 
-                      {/* PRIMARY CTA */}
-                      {primaryUnlock?.items?.length ? (
+                    {canToggleStory ? (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className={pillButton(dark)}
+                          onClick={() => setStoryExpanded((v) => !v)}
+                        >
+                          <span aria-hidden className="opacity-85">
+                            {storyExpanded ? "▾" : "▸"}
+                          </span>
+                          {storyExpanded ? "Read less" : "Read more"}
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {/* WANT THIS TO GET MORE SPECIFIC?  (no icon inside box) */}
+                    {primaryUnlock?.items?.length ? (
+                      <div className="mt-5">
                         <div
                           className={[
-                            "mt-4 relative overflow-hidden rounded-3xl px-4 py-3 sm:px-5 sm:py-3.5",
-                            sectionTint(dark, "primary"),
-                            sectionRing(dark),
-                            "backdrop-blur-xl",
+                            "relative overflow-hidden rounded-[22px] border px-4 py-3",
+                            "backdrop-blur-2xl",
+                            dark
+                              ? "border-amber-200/18 bg-amber-200/10"
+                              : "border-amber-500/18 bg-amber-500/10",
                           ].join(" ")}
                         >
                           <div className="pointer-events-none absolute inset-0">
                             <div
                               className={[
-                                "absolute left-0 top-0 h-full w-1",
-                                accentBar(dark, "primary"),
+                                "absolute -top-12 -right-14 h-40 w-40 rounded-full blur-3xl",
+                                dark ? "bg-amber-300/14" : "bg-amber-400/10",
                               ].join(" ")}
                             />
                           </div>
@@ -645,24 +538,20 @@ export default function Page() {
                                 dark ? "text-white" : "text-slate-900"
                               }`}
                             >
-                              {missingProfileSignal
-                                ? "Before this gets real…"
-                                : primaryUnlock.title ??
-                                  "If you want this to get sharper…"}
+                              Want this to get more specific?
                             </div>
 
                             <div
                               className={`mt-1 text-sm leading-relaxed ${
-                                dark ? "text-white/78" : "text-slate-700"
+                                dark ? "text-white/72" : "text-slate-700"
                               }`}
                             >
-                              Finish a little more of your profile (Motivations,
-                              Strengths, Skills) and this becomes noticeably more
-                              personal — less “pretty accurate,” more “yeah, that’s me.”
+                              Right now I’m guessing a bit. Finish one more section
+                              and I’ll get way more specific.
                             </div>
 
                             <div className="mt-2.5 flex flex-wrap gap-2">
-                              {primaryUnlock.items.slice(0, 3).map((it) =>
+                              {primaryUnlock.items.slice(0, 2).map((it) =>
                                 it.href ? (
                                   <button
                                     key={it.id}
@@ -671,8 +560,8 @@ export default function Page() {
                                       "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
                                       "text-xs font-semibold transition active:scale-95",
                                       dark
-                                        ? "border-white/12 bg-white/10 text-white/92 hover:bg-white/14"
-                                        : "border-black/10 bg-white text-slate-900 hover:bg-white",
+                                        ? "border-amber-200/22 bg-amber-200/12 text-white/92 hover:bg-amber-200/16"
+                                        : "border-amber-500/18 bg-white/80 text-slate-900 hover:bg-white",
                                     ].join(" ")}
                                     onClick={() => router.push(it.href!)}
                                   >
@@ -686,76 +575,75 @@ export default function Page() {
                             </div>
                           </div>
                         </div>
-                      ) : null}
-                    </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  {/* Word cloud (NO pill / NO description — cloud speaks for itself) */}
-                  <div
-                    className={[
-                      "relative overflow-hidden rounded-3xl px-5 py-4",
-                      sectionTint(dark, "signals"),
-                      sectionRing(dark),
-                      "backdrop-blur-xl",
-                      dark
-                        ? "shadow-[0_22px_80px_rgba(0,0,0,0.28)]"
-                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
-                    ].join(" ")}
-                  >
-                    <div className="pointer-events-none absolute inset-0">
-                      <div
-                        className={[
-                          "absolute left-0 top-0 h-full w-1",
-                          accentBar(dark, "signals"),
-                        ].join(" ")}
-                      />
+                  {/* Word cloud area */}
+                  <div className="relative pt-3 md:pt-4">
+                    <div
+                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                        dark ? "text-white/55" : "text-slate-600"
+                      }`}
+                    >
+                      Themes showing up
                     </div>
 
-                    <div className="relative">
-                      {wordCloud.length ? (
-                        <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                          {wordCloud.map((w) => {
-                            const isTop = topWordSet.has(w.term.toLowerCase());
-                            return (
-                              <span
-                                key={w.term}
-                                className={[
-                                  "select-none el-word",
-                                  wordColorClasses(dark, w.term),
-                                  isTop
-                                    ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(
-                                        " "
-                                      )
-                                    : "",
-                                ].join(" ")}
-                                style={{
-                                  fontSize: `${wordSizePx(w.weight)}px`,
-                                  opacity: wordOpacity(w.weight),
-                                  ...wordChaosVars(w.term, w.weight),
-                                }}
-                              >
-                                {w.term}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div
-                          className={`text-sm ${
-                            dark ? "text-white/70" : "text-slate-700"
-                          }`}
-                        >
-                          Nothing to map yet — answer a few questions and this will fill in.
-                        </div>
-                      )}
+                    <div className="relative mt-3">
+                      <div className="relative">
+                        {wordCloud.length ? (
+                          <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                            {wordCloud.map((w) => {
+                              const isTop = topWordSet.has(
+                                w.term.toLowerCase()
+                              );
+                              return (
+                                <span
+                                  key={w.term}
+                                  className={[
+                                    "select-none el-word",
+                                    wordColorClasses(dark, w.term),
+                                    isTop
+                                      ? [
+                                          "rounded-full px-2.5 py-1",
+                                          highlightWrap(dark),
+                                        ].join(" ")
+                                      : "",
+                                  ].join(" ")}
+                                  style={{
+                                    fontSize: `${wordSizePx(w.weight)}px`,
+                                    opacity: wordOpacity(w.weight),
+                                    ...wordChaosVars(w.term, w.weight),
+                                  }}
+                                >
+                                  {w.term}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div
+                            className={`text-sm ${
+                              dark ? "text-white/70" : "text-slate-700"
+                            }`}
+                          >
+                            Nothing to map yet — answer a few questions and this will
+                            fill in.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Divider */}
-                <div className={`my-6 h-px ${dark ? "bg-white/10" : "bg-black/10"}`} />
+                <div
+                  className={`my-6 h-px ${
+                    dark ? "bg-white/10" : "bg-black/10"
+                  }`}
+                />
 
-                {/* WHAT THIS SUGGESTS (agentic, fade + Read more under content) */}
+                {/* WHAT THIS SUGGESTS (BIG PILL) */}
                 <div
                   className={[
                     "relative overflow-hidden rounded-3xl px-5 py-4",
@@ -774,35 +662,44 @@ export default function Page() {
                         accentBar(dark, "suggests"),
                       ].join(" ")}
                     />
+                    <div
+                      className="absolute right-5 top-5 opacity-[0.14]"
+                      aria-hidden
+                    >
+                      <Compass
+                        className={`h-12 w-12 ${
+                          dark ? "text-amber-200" : "text-amber-700"
+                        }`}
+                      />
+                    </div>
                   </div>
 
                   <div className="relative">
-                    <div className="min-w-0">
-                      <span
-                        className={[
-                          "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
-                          "text-xs font-semibold",
-                          chipClasses(dark, "suggests"),
-                        ].join(" ")}
-                      >
-                        <span aria-hidden className="opacity-90">
-                          🧭
-                        </span>
-                        <span>What this suggests</span>
-                      </span>
+                    <span
+                      className={[
+                        "inline-flex items-center gap-2.5 rounded-full border px-4 py-2",
+                        "text-sm font-semibold",
+                        sectionHeaderPill(dark, "suggests"),
+                      ].join(" ")}
+                    >
+                      <Compass className="h-5 w-5 opacity-90" aria-hidden />
+                      <span>What this suggests</span>
+                    </span>
 
-                      <div
-                        className={`mt-2 text-sm leading-relaxed ${
-                          dark ? "text-white/70" : "text-slate-700"
-                        }`}
-                      >
-                        A directional read — something you can test in real life.
-                      </div>
+                    <div
+                      className={`mt-2 text-sm leading-relaxed ${
+                        dark ? "text-white/70" : "text-slate-700"
+                      }`}
+                    >
+                      A directional read — something you can test in real life.
                     </div>
 
                     <div className="mt-4">
                       {!suggestsExpanded ? (
-                        <div className="relative" style={fadeMaskStyle("suggests")}>
+                        <div
+                          className="relative"
+                          style={fadeMaskStyle("suggests")}
+                        >
                           <div className="space-y-3">
                             {suggestsToShow.map((it) => (
                               <p
@@ -841,7 +738,6 @@ export default function Page() {
                       )}
                     </div>
 
-                    {/* CTA now sits under the faded content, left-aligned */}
                     {suggestsCanExpand ? (
                       <div className="mt-3">
                         <button
@@ -859,7 +755,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* WATCH-OUTS */}
+                {/* WATCH-OUTS (BIG PILL) */}
                 <div className="mt-6">
                   <div
                     className={[
@@ -879,19 +775,27 @@ export default function Page() {
                           accentBar(dark, "watchouts"),
                         ].join(" ")}
                       />
+                      <div
+                        className="absolute right-5 top-5 opacity-[0.14]"
+                        aria-hidden
+                      >
+                        <Shield
+                          className={`h-12 w-12 ${
+                            dark ? "text-emerald-200" : "text-emerald-700"
+                          }`}
+                        />
+                      </div>
                     </div>
 
                     <div className="relative">
                       <span
                         className={[
-                          "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
-                          "text-xs font-semibold",
-                          chipClasses(dark, "watchouts"),
+                          "inline-flex items-center gap-2.5 rounded-full border px-4 py-2",
+                          "text-sm font-semibold",
+                          sectionHeaderPill(dark, "watchouts"),
                         ].join(" ")}
                       >
-                        <span aria-hidden className="opacity-90">
-                          🛟
-                        </span>
+                        <Shield className="h-5 w-5 opacity-90" aria-hidden />
                         <span>Watch-outs</span>
                       </span>
 
@@ -935,10 +839,9 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* TINY TASK → ACTION (standardized)
-                    - bridge line removed via override above */}
+                {/* NEXT STEPS (Tiny Task + Action) */}
                 {nextSteps ? (
-                  <div className="el-nextsteps mt-6">
+                  <div className="mt-6">
                     <NextStepsStack
                       dark={dark}
                       useLocal={mounted}
@@ -1012,25 +915,26 @@ export default function Page() {
               <div
                 className={[
                   "rounded-[28px] px-5 py-5",
-                  theme.cardBgClass,
-                  cardShadow,
+                  "shadow-[0_28px_95px_rgba(0,0,0,0.70)]",
                   "backdrop-blur-xl",
-                  dark ? "text-white/80 bg-slate-950/25" : "text-slate-800",
+                  dark
+                    ? "text-white/80 bg-slate-950/25"
+                    : "text-slate-800 bg-white/80",
                 ].join(" ")}
               >
                 <div className={`text-lg font-semibold ${sectionTitle(dark)}`}>
                   {TABS.find((t) => t.id === tab)?.label ?? "Section"}
                 </div>
                 <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                  This section is scaffolded. We’ll implement it next after Summary is
-                  locked.
+                  This section is scaffolded. We’ll implement it next after
+                  Summary is locked.
                 </div>
               </div>
             </section>
           )}
         </main>
 
-        {/* Mobile “Sections” pill (centered) */}
+        {/* Mobile “Sections” pill */}
         <div className="fixed inset-x-0 bottom-[78px] z-40 md:hidden">
           <div className="pointer-events-auto px-4 pb-3">
             <div className="mx-auto flex max-w-5xl justify-center">
@@ -1060,6 +964,7 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Sections modal (kept minimal) */}
         <AnimatePresence>
           {sectionsOpen ? (
             <motion.div
@@ -1068,14 +973,12 @@ export default function Page() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Softer overlay */}
               <div
                 className="absolute inset-0 bg-black/28"
                 onClick={() => setSectionsOpen(false)}
                 aria-hidden
               />
 
-              {/* Centered sheet */}
               <motion.div
                 initial={{ y: 22, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -1096,22 +999,6 @@ export default function Page() {
                   role="dialog"
                   aria-modal="true"
                 >
-                  {/* gentle color glow */}
-                  <div className="pointer-events-none absolute inset-0">
-                    <div
-                      className={[
-                        "absolute -top-20 -left-24 h-64 w-64 rounded-full blur-3xl",
-                        dark ? "bg-fuchsia-400/14" : "bg-fuchsia-400/10",
-                      ].join(" ")}
-                    />
-                    <div
-                      className={[
-                        "absolute -bottom-24 -right-24 h-72 w-72 rounded-full blur-3xl",
-                        dark ? "bg-sky-400/14" : "bg-sky-400/10",
-                      ].join(" ")}
-                    />
-                  </div>
-
                   <div className="relative px-5 pb-5 pt-5 sm:px-7 sm:pb-6 sm:pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
@@ -1147,55 +1034,40 @@ export default function Page() {
                       </button>
                     </div>
 
-                    {/* Unified menu panel (less “stack of boxes”) */}
                     <div
                       className={[
                         "mt-4 overflow-hidden rounded-2xl border",
                         "backdrop-blur-xl",
-                        dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
+                        dark
+                          ? "border-white/10 bg-white/5"
+                          : "border-black/10 bg-white/80",
                       ].join(" ")}
                       style={{ maxHeight: "62vh" }}
                     >
                       <div className="max-h-[62vh] overflow-auto">
-                        {TABS.map((t, idx) => {
+                        {TABS.map((t) => {
                           const selected = t.id === tab;
-                          const isLast = idx === TABS.length - 1;
-
                           return (
                             <button
                               key={t.id}
                               type="button"
                               className={[
-                                "relative w-full text-left",
-                                "px-4 py-3.5",
+                                "relative w-full text-left px-4 py-3.5",
                                 "transition active:scale-[0.995]",
                                 dark
                                   ? "text-white/88 hover:bg-white/6"
                                   : "text-slate-900 hover:bg-black/2",
-                                !isLast
+                                selected
                                   ? dark
-                                    ? "border-b border-white/10"
-                                    : "border-b border-black/10"
+                                    ? "bg-white/8"
+                                    : "bg-black/2"
                                   : "",
-                                selected ? (dark ? "bg-white/8" : "bg-black/2") : "",
                               ].join(" ")}
                               onClick={() => {
                                 setTabAndSync(t.id);
                                 setSectionsOpen(false);
                               }}
                             >
-                              {/* Selected accent rail */}
-                              {selected ? (
-                                <span
-                                  aria-hidden
-                                  className={[
-                                    "absolute left-0 top-0 h-full w-1.5",
-                                    "rounded-r-full",
-                                    "bg-fuchsia-300/65",
-                                  ].join(" ")}
-                                />
-                              ) : null}
-
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                   <div className="text-sm font-semibold">
@@ -1233,14 +1105,6 @@ export default function Page() {
                           );
                         })}
                       </div>
-                    </div>
-
-                    <div
-                      className={`mt-3 text-xs ${
-                        dark ? "text-white/45" : "text-slate-500"
-                      }`}
-                    >
-                      Tip: you can always come back here — nothing gets “lost.”
                     </div>
                   </div>
                 </div>

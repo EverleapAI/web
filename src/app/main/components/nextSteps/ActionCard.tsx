@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Rocket } from "lucide-react";
 
 import type {
   ActionItem,
@@ -24,19 +25,13 @@ import {
    ============================================================================= */
 
 export type ActionDefinition = {
-  /** Stable id for this action “template” on this page */
   id: string;
-  /** Which page is this action coming from? e.g. "insights.summary" */
   pageId: string;
 
   title: string;
   goal: string;
   steps?: string[];
 
-  /**
-   * Optional: if present, this action can be “instantiated” per visit.
-   * If false/omitted, we reuse the latest action for this page id.
-   */
   instanceStrategy?: "reuse_latest" | "new_each_time";
 };
 
@@ -46,10 +41,7 @@ type Props = {
 
   definition: ActionDefinition;
 
-  /** Visual label shown in the UI (default: "Action") */
   label?: string;
-
-  /** Optional hint shown under the header */
   subtitle?: string;
 };
 
@@ -96,6 +88,17 @@ function pill(dark: boolean, selected = false) {
   ].join(" ");
 }
 
+/** Bigger label pill so the icon is actually visible */
+function headerPill(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2",
+    "text-sm font-semibold",
+    dark
+      ? "border-violet-300/18 bg-violet-300/12 text-violet-100 shadow-[0_0_26px_rgba(196,181,253,0.12)]"
+      : "border-violet-500/18 bg-violet-500/10 text-violet-800",
+  ].join(" ");
+}
+
 function statusPill(dark: boolean, status: ActionStatus) {
   const base =
     "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold";
@@ -133,9 +136,7 @@ function relativeTime(ts: number) {
 }
 
 /* =============================================================================
-   Proof log encoding (keep domain unchanged, avoid overwriting)
-   - We store multiple logs inside proof.text with a lightweight marker.
-   - Example entry: [[ts:1700000000000]] did X and got Y feedback
+   Proof log encoding
    ============================================================================= */
 
 type ProofEntry = { ts: number; text: string };
@@ -148,8 +149,10 @@ function parseEntries(raw: string | null | undefined): ProofEntry[] {
   const s = (raw ?? "").trim();
   if (!s) return [];
 
-  // Split by blank lines, tolerate older single-text content.
-  const parts = s.split(/\n{2,}/g).map((x) => x.trim()).filter(Boolean);
+  const parts = s
+    .split(/\n{2,}/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
   const entries: ProofEntry[] = [];
   for (const p of parts) {
@@ -160,22 +163,21 @@ function parseEntries(raw: string | null | undefined): ProofEntry[] {
       if (Number.isFinite(ts) && body) entries.push({ ts, text: body });
       continue;
     }
-    // Legacy single entry (no timestamp marker)
     entries.push({ ts: NaN, text: p });
   }
 
-  // Newest first when ts exists; otherwise keep order.
   const hasTs = entries.some((e) => Number.isFinite(e.ts));
   if (hasTs) {
-    return entries
-      .map((e, i) => ({ ...e, _i: i }))
+    const sorted = entries
+      .map((e, i) => ({ ...e, __order: i }))
       .sort((a, b) => {
         const at = Number.isFinite(a.ts) ? a.ts : -Infinity;
         const bt = Number.isFinite(b.ts) ? b.ts : -Infinity;
         if (bt !== at) return bt - at;
-        return b._i - a._i;
-      })
-      .map(({ _i, ...e }) => e);
+        return b.__order - a.__order;
+      });
+
+    return sorted.map((e) => ({ ts: e.ts, text: e.text }));
   }
 
   return entries;
@@ -184,10 +186,7 @@ function parseEntries(raw: string | null | undefined): ProofEntry[] {
 function appendEntry(existingRaw: string | null | undefined, nextText: string) {
   const base = (existingRaw ?? "").trim();
   const entry = encodeEntry(Date.now(), nextText.trim());
-
   if (!base) return entry;
-
-  // If base has no marker, treat it as a legacy single entry and keep it.
   return `${base}\n\n${entry}`;
 }
 
@@ -208,20 +207,15 @@ export function ActionCard({
   const [proofOpen, setProofOpen] = React.useState(false);
   const [proofText, setProofText] = React.useState("");
 
-  // Load once (local only)
   React.useEffect(() => {
     const loaded = loadActions({ useLocal });
     setItems(loaded);
   }, [useLocal]);
 
-  // Resolve “current” action for this page
   const current = React.useMemo(() => {
     const latest = findLatestActionForPage(items, definition.pageId);
-
-    // Reuse latest unless strategy says “new each time”
     if (definition.instanceStrategy !== "new_each_time" && latest) return latest;
 
-    // No action yet -> create placeholder action (but don’t write until user interacts)
     return createAction({
       id: definition.id,
       title: definition.title,
@@ -246,7 +240,6 @@ export function ActionCard({
     const next = upsertAction(items, current, { touchUpdatedAt: true });
     persist(next);
 
-    // Return the now-persisted version
     const persisted = next.find((x) => x.id === current.id) ?? current;
     return persisted;
   }
@@ -274,14 +267,8 @@ export function ActionCard({
   function onLogProof() {
     const persisted = ensurePersisted();
     const existing = persisted.proof?.kind === "text" ? persisted.proof.text : "";
-
-    // New log should not overwrite: start fresh input.
-    setProofText("");
-
-    // Ensure modal opens with context + we keep prior logs below.
-    // (We still *show* prior logs in the card itself.)
     void existing;
-
+    setProofText("");
     setProofOpen(true);
   }
 
@@ -293,11 +280,8 @@ export function ActionCard({
       return;
     }
 
-    // Pull freshest existing proof text from current items snapshot if available.
     const live = items.find((x) => x.id === persisted.id) ?? persisted;
-    const existingText =
-      live.proof?.kind === "text" ? live.proof.text ?? "" : "";
-
+    const existingText = live.proof?.kind === "text" ? live.proof.text ?? "" : "";
     const combined = appendEntry(existingText, trimmed);
 
     const proof: ActionProof = { kind: "text", text: combined };
@@ -306,9 +290,7 @@ export function ActionCard({
     setProofOpen(false);
   }
 
-  const persistedItem = isPersisted
-    ? items.find((x) => x.id === current.id)
-    : null;
+  const persistedItem = isPersisted ? items.find((x) => x.id === current.id) : null;
 
   const status = (persistedItem?.status ?? current.status) as ActionStatus;
   const proof = persistedItem?.proof ?? current.proof;
@@ -331,6 +313,7 @@ export function ActionCard({
       {/* Accent rail + gentle warmth */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-0 top-0 h-full w-1.5 bg-violet-400/70" />
+
         <div
           className={[
             "absolute -bottom-24 right-[-80px] h-[360px] w-[360px] rounded-full blur-3xl",
@@ -343,21 +326,26 @@ export function ActionCard({
             dark ? "bg-violet-400/12" : "bg-violet-400/9",
           ].join(" ")}
         />
+
+        {/* WATERMARK ICON */}
+        <div
+          className={[
+            "absolute right-5 top-5",
+            "opacity-[0.12] blur-[1px]",
+            dark ? "text-violet-200" : "text-violet-700",
+          ].join(" ")}
+          aria-hidden
+        >
+          <Rocket className="h-14 w-14" />
+        </div>
       </div>
 
       <div className="relative">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
+        <div className="flex flex-col gap-3">
+          {/* TOP: pills left, Details centered */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={[
-                  "inline-flex items-center gap-2 rounded-full border px-2.5 py-1",
-                  "text-xs font-semibold",
-                  dark
-                    ? "border-violet-300/18 bg-violet-300/12 text-violet-100 shadow-[0_0_26px_rgba(196,181,253,0.12)]"
-                    : "border-violet-500/18 bg-violet-500/10 text-violet-800",
-                ].join(" ")}
-              >
+              <span className={headerPill(dark)}>
                 <span aria-hidden className="opacity-90">
                   ⚡
                 </span>
@@ -372,21 +360,35 @@ export function ActionCard({
                     status === "done"
                       ? "bg-emerald-300/80"
                       : status === "started"
-                      ? "bg-sky-300/80"
-                      : dark
-                      ? "bg-white/25"
-                      : "bg-black/20",
+                        ? "bg-sky-300/80"
+                        : dark
+                          ? "bg-white/25"
+                          : "bg-black/20",
                   ].join(" ")}
                 />
                 {statusLabel(status)}
               </span>
             </div>
 
-            <div
-              className={`mt-3 text-[16px] font-semibold leading-snug ${text(
-                dark
-              )}`}
-            >
+            <div className="flex justify-center">
+              <button
+                type="button"
+                className={pill(dark)}
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+              >
+                <span aria-hidden className="opacity-80">
+                  {open ? "▾" : "▸"}
+                </span>
+                {open ? "Hide" : "Details"}
+              </button>
+            </div>
+
+            <div aria-hidden />
+          </div>
+
+          <div className="min-w-0">
+            <div className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
               {definition.title}
             </div>
             <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
@@ -398,18 +400,6 @@ export function ActionCard({
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
           </div>
-
-          <button
-            type="button"
-            className={pill(dark)}
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-          >
-            <span aria-hidden className="opacity-80">
-              {open ? "▾" : "▸"}
-            </span>
-            {open ? "Hide" : "Details"}
-          </button>
         </div>
 
         <AnimatePresence initial={false}>
@@ -425,9 +415,7 @@ export function ActionCard({
                 <div
                   className={[
                     "rounded-3xl border p-4 backdrop-blur-xl",
-                    dark
-                      ? "border-white/10 bg-white/5"
-                      : "border-black/10 bg-white/85",
+                    dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/85",
                   ].join(" ")}
                 >
                   <div
@@ -461,14 +449,11 @@ export function ActionCard({
                 </div>
               ) : null}
 
-              {/* MULTI-LOG DISPLAY (newest first, does not overwrite) */}
               {proofEntries.length ? (
                 <div
                   className={[
                     "mt-4 rounded-3xl border p-4 backdrop-blur-xl",
-                    dark
-                      ? "border-white/10 bg-white/5"
-                      : "border-black/10 bg-white/85",
+                    dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/85",
                   ].join(" ")}
                 >
                   <div
@@ -492,9 +477,7 @@ export function ActionCard({
                           key={`${tsOk ? e.ts : "legacy"}_${idx}`}
                           className={[
                             "rounded-2xl border px-3.5 py-3",
-                            dark
-                              ? "border-white/10 bg-white/6"
-                              : "border-black/10 bg-white",
+                            dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
                           ].join(" ")}
                         >
                           <div className={`text-sm leading-relaxed ${softText(dark)}`}>
@@ -552,14 +535,10 @@ export function ActionCard({
           ) : null}
         </AnimatePresence>
 
-        {/* Proof modal (simple) */}
         {proofOpen ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            {/* Softer overlay (less “cave”), keep context visible */}
             <div
-              className={["absolute inset-0", "bg-black/35 backdrop-blur-[6px]"].join(
-                " "
-              )}
+              className="absolute inset-0 bg-black/35 backdrop-blur-[6px]"
               onClick={() => setProofOpen(false)}
               aria-hidden
             />
@@ -568,33 +547,12 @@ export function ActionCard({
               role="dialog"
               aria-modal="true"
               className={[
-                "relative w-full max-w-xl overflow-hidden rounded-[28px] border",
-                "backdrop-blur-2xl",
+                "relative w-full max-w-xl overflow-hidden rounded-[28px] border backdrop-blur-2xl",
                 dark
-                  ? [
-                      "border-white/15",
-                      "bg-white/9",
-                      "shadow-[0_28px_95px_rgba(0,0,0,0.45)]",
-                    ].join(" ")
+                  ? "border-white/15 bg-white/9 shadow-[0_28px_95px_rgba(0,0,0,0.45)]"
                   : "border-black/10 bg-white/90 shadow-[0_28px_95px_rgba(0,0,0,0.22)]",
               ].join(" ")}
             >
-              {/* Subtle glass glow */}
-              <div className="pointer-events-none absolute inset-0">
-                <div
-                  className={[
-                    "absolute -top-16 -right-20 h-72 w-72 rounded-full blur-3xl",
-                    dark ? "bg-violet-400/12" : "bg-violet-400/10",
-                  ].join(" ")}
-                />
-                <div
-                  className={[
-                    "absolute -bottom-24 -left-24 h-80 w-80 rounded-full blur-3xl",
-                    dark ? "bg-emerald-400/10" : "bg-emerald-400/8",
-                  ].join(" ")}
-                />
-              </div>
-
               <div className="relative px-5 py-5 sm:px-7 sm:py-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -636,25 +594,10 @@ export function ActionCard({
                     placeholder="What did you do, and what happened?"
                     rows={4}
                     className={[
-                      "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none",
-                      "transition",
+                      "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition",
                       dark
-                        ? [
-                            "border-white/12",
-                            "bg-white/7",
-                            "text-white",
-                            "placeholder:text-white/40",
-                            "focus-visible:ring-2 focus-visible:ring-emerald-300/30",
-                            "focus-visible:border-white/18",
-                          ].join(" ")
-                        : [
-                            "border-black/10",
-                            "bg-white",
-                            "text-slate-900",
-                            "placeholder:text-slate-400",
-                            "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
-                            "focus-visible:border-black/15",
-                          ].join(" "),
+                        ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-emerald-300/30 focus-visible:border-white/18"
+                        : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-black/15",
                     ].join(" ")}
                   />
 
