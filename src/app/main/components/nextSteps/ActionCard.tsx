@@ -5,11 +5,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket } from "lucide-react";
 
-import type {
-  ActionItem,
-  ActionProof,
-  ActionStatus,
-} from "@/app/main/domain/actions";
+import type { ActionItem, ActionProof, ActionStatus } from "@/app/main/domain/actions";
 import {
   loadActions,
   saveActions,
@@ -99,6 +95,21 @@ function headerPill(dark: boolean) {
   ].join(" ");
 }
 
+function ctaPill(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-5 py-2.5",
+    "text-sm font-semibold transition active:scale-[0.98]",
+    "backdrop-blur-xl",
+    dark
+      ? "border-violet-300/18 bg-violet-300/12 text-violet-50 hover:bg-violet-300/16 shadow-[0_18px_60px_rgba(0,0,0,0.24)]"
+      : "border-violet-500/18 bg-violet-500/10 text-violet-900 hover:bg-violet-500/14 shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
+    dark
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/28"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/18",
+  ].join(" ");
+}
+
 function statusPill(dark: boolean, status: ActionStatus) {
   const base =
     "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-semibold";
@@ -177,6 +188,7 @@ function parseEntries(raw: string | null | undefined): ProofEntry[] {
         return b.__order - a.__order;
       });
 
+    // Return only the public shape (and avoid unused-var warnings from destructuring)
     return sorted.map((e) => ({ ts: e.ts, text: e.text }));
   }
 
@@ -265,9 +277,7 @@ export function ActionCard({
   }
 
   function onLogProof() {
-    const persisted = ensurePersisted();
-    const existing = persisted.proof?.kind === "text" ? persisted.proof.text : "";
-    void existing;
+    ensurePersisted();
     setProofText("");
     setProofOpen(true);
   }
@@ -301,6 +311,9 @@ export function ActionCard({
     return parseEntries(proof.text);
   }, [proof]);
 
+  // Compact-by-default: calm until the user opens Details.
+  const showCompact = !open;
+
   return (
     <div
       className={[
@@ -327,64 +340,62 @@ export function ActionCard({
           ].join(" ")}
         />
 
-        {/* WATERMARK ICON */}
-        <div
-          className={[
-            "absolute right-5 top-5",
-            "opacity-[0.12] blur-[1px]",
-            dark ? "text-violet-200" : "text-violet-700",
-          ].join(" ")}
-          aria-hidden
-        >
-          <Rocket className="h-14 w-14" />
-        </div>
+        {/* WATERMARK ICON — only when expanded to reduce noise */}
+        {open ? (
+          <div
+            className={[
+              "absolute right-5 top-5",
+              "opacity-[0.12] blur-[1px]",
+              dark ? "text-violet-200" : "text-violet-700",
+            ].join(" ")}
+            aria-hidden
+          >
+            <Rocket className="h-14 w-14" />
+          </div>
+        ) : null}
       </div>
 
       <div className="relative">
         <div className="flex flex-col gap-3">
-          {/* TOP: pills left, Details centered */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={headerPill(dark)}>
-                <span aria-hidden className="opacity-90">
-                  ⚡
-                </span>
-                <span>{label}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={headerPill(dark)}>
+              <span aria-hidden className="opacity-90">
+                ⚡
               </span>
+              <span>{label}</span>
+            </span>
 
-              <span className={statusPill(dark, status)}>
-                <span
-                  aria-hidden
-                  className={[
-                    "h-1.5 w-1.5 rounded-full",
-                    status === "done"
-                      ? "bg-emerald-300/80"
-                      : status === "started"
-                        ? "bg-sky-300/80"
-                        : dark
-                          ? "bg-white/25"
-                          : "bg-black/20",
-                  ].join(" ")}
-                />
-                {statusLabel(status)}
+            <span className={statusPill(dark, status)}>
+              <span
+                aria-hidden
+                className={[
+                  "h-1.5 w-1.5 rounded-full",
+                  status === "done"
+                    ? "bg-emerald-300/80"
+                    : status === "started"
+                      ? "bg-sky-300/80"
+                      : dark
+                        ? "bg-white/25"
+                        : "bg-black/20",
+                ].join(" ")}
+              />
+              {statusLabel(status)}
+            </span>
+          </div>
+
+          {/* CTA should be near the top + centered (not over watermark) */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              className={ctaPill(dark)}
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+            >
+              <span aria-hidden className="opacity-90">
+                {open ? "▾" : "▸"}
               </span>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                type="button"
-                className={pill(dark)}
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-              >
-                <span aria-hidden className="opacity-80">
-                  {open ? "▾" : "▸"}
-                </span>
-                {open ? "Hide" : "Details"}
-              </button>
-            </div>
-
-            <div aria-hidden />
+              {open ? "Hide" : "Details"}
+            </button>
           </div>
 
           <div className="min-w-0">
@@ -396,7 +407,8 @@ export function ActionCard({
               {definition.goal}
             </div>
 
-            {subtitle ? (
+            {/* Keep helper copy hidden unless expanded (reduces noise) */}
+            {!showCompact && subtitle ? (
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
           </div>
@@ -440,9 +452,7 @@ export function ActionCard({
                             dark ? "bg-white/30" : "bg-black/20",
                           ].join(" ")}
                         />
-                        <div className={`text-sm leading-relaxed ${softText(dark)}`}>
-                          {s}
-                        </div>
+                        <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
                       </li>
                     ))}
                   </ul>
@@ -480,9 +490,7 @@ export function ActionCard({
                             dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
                           ].join(" ")}
                         >
-                          <div className={`text-sm leading-relaxed ${softText(dark)}`}>
-                            {e.text}
-                          </div>
+                          <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
                           <div className={`mt-1 text-xs ${muted(dark)}`}>
                             {tsOk ? relativeTime(e.ts) : "Earlier"}
                           </div>
@@ -508,26 +516,20 @@ export function ActionCard({
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 {status !== "started" ? (
                   <button type="button" className={pill(dark)} onClick={onStart}>
-                    <span aria-hidden className="opacity-80">
-                      ▶
-                    </span>
+                    <span aria-hidden className="opacity-80">▶</span>
                     Start
                   </button>
                 ) : null}
 
                 {status !== "done" ? (
                   <button type="button" className={pill(dark)} onClick={onDone}>
-                    <span aria-hidden className="opacity-80">
-                      ✓
-                    </span>
+                    <span aria-hidden className="opacity-80">✓</span>
                     Mark done
                   </button>
                 ) : null}
 
                 <button type="button" className={pill(dark)} onClick={onLogProof}>
-                  <span aria-hidden className="opacity-80">
-                    ✎
-                  </span>
+                  <span aria-hidden className="opacity-80">✎</span>
                   Log result
                 </button>
               </div>
@@ -556,19 +558,11 @@ export function ActionCard({
               <div className="relative px-5 py-5 sm:px-7 sm:py-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className={`text-lg font-semibold ${text(dark)}`}>
-                      How did that go?
-                    </div>
+                    <div className={`text-lg font-semibold ${text(dark)}`}>How did that go?</div>
 
                     <div className={`mt-1 text-sm ${muted(dark)}`}>
                       You just tried:{" "}
-                      <span
-                        className={
-                          dark
-                            ? "text-white/85 font-semibold"
-                            : "text-slate-900 font-semibold"
-                        }
-                      >
+                      <span className={dark ? "text-white/85 font-semibold" : "text-slate-900 font-semibold"}>
                         {definition.title}
                       </span>
                     </div>
@@ -578,11 +572,7 @@ export function ActionCard({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className={pill(dark)}
-                    onClick={() => setProofOpen(false)}
-                  >
+                  <button type="button" className={pill(dark)} onClick={() => setProofOpen(false)}>
                     Close
                   </button>
                 </div>
@@ -611,10 +601,7 @@ export function ActionCard({
 
                   <button
                     type="button"
-                    className={[
-                      pill(dark, true),
-                      !(proofText ?? "").trim() ? "opacity-50" : "",
-                    ].join(" ")}
+                    className={[pill(dark, true), !(proofText ?? "").trim() ? "opacity-50" : ""].join(" ")}
                     onClick={saveProof}
                     disabled={!(proofText ?? "").trim()}
                   >

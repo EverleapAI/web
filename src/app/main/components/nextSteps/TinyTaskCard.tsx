@@ -5,10 +5,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Wand2, Timer, CheckCircle2 } from "lucide-react";
 
-import type {
-  TinyTaskDefinition,
-  TinyTaskResult,
-} from "@/app/main/domain/tinyTasks";
+import type { TinyTaskDefinition, TinyTaskResult } from "@/app/main/domain/tinyTasks";
 import {
   loadTinyTaskResult,
   saveTinyTaskResult,
@@ -207,6 +204,9 @@ export function TinyTaskCard({
     [definition, result]
   );
 
+  // Compact-by-default: keep this card calm until user expands.
+  const showCompact = !open;
+
   return (
     <div
       className={[
@@ -219,7 +219,7 @@ export function TinyTaskCard({
           : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
       ].join(" ")}
     >
-      {/* Creative treatment (NO left rail) */}
+      {/* Creative treatment (kept subtle; watermark only when expanded to reduce noise) */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className={[
@@ -234,17 +234,18 @@ export function TinyTaskCard({
           ].join(" ")}
         />
 
-        {/* watermark icon */}
-        <div
-          className={[
-            "absolute right-5 top-5",
-            "opacity-[0.16]",
-            dark ? "text-emerald-200" : "text-emerald-700",
-          ].join(" ")}
-          aria-hidden
-        >
-          <Sparkles className="h-14 w-14" />
-        </div>
+        {open ? (
+          <div
+            className={[
+              "absolute right-5 top-5",
+              "opacity-[0.16]",
+              dark ? "text-emerald-200" : "text-emerald-700",
+            ].join(" ")}
+            aria-hidden
+          >
+            <Sparkles className="h-14 w-14" />
+          </div>
+        ) : null}
 
         <div
           className={[
@@ -256,63 +257,67 @@ export function TinyTaskCard({
 
       <div className="relative">
         <div className="flex flex-col gap-3">
-          {/* TOP: pills left, CTA centered (with right spacer so it stays centered) */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={headerPill(dark, "primary")}>
-                <Wand2 className="h-5 w-5 opacity-90" aria-hidden />
-                <span>{label}</span>
+          {/* Top pills row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={headerPill(dark, "primary")}>
+              <Wand2 className="h-5 w-5 opacity-90" aria-hidden />
+              <span>{label}</span>
+            </span>
+
+            <span className={headerPill(dark, "neutral")}>
+              <Timer className="h-5 w-5 opacity-85" aria-hidden />
+              {minutes} min
+            </span>
+
+            {isDone ? (
+              <span className={headerPill(dark, "done")}>
+                <CheckCircle2 className="h-5 w-5 opacity-90" aria-hidden />
+                Done
               </span>
+            ) : null}
+          </div>
 
-              <span className={headerPill(dark, "neutral")}>
-                <Timer className="h-5 w-5 opacity-85" aria-hidden />
-                {minutes} min
+          {/* CTA should live near the top + centered (not over watermark) */}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              className={ctaPill(dark)}
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+            >
+              <span aria-hidden className="opacity-90">
+                {open ? "▾" : "▸"}
               </span>
-
-              {isDone ? (
-                <span className={headerPill(dark, "done")}>
-                  <CheckCircle2 className="h-5 w-5 opacity-90" aria-hidden />
-                  Done
-                </span>
-              ) : null}
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                type="button"
-                className={ctaPill(dark)}
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-              >
-                <span aria-hidden className="opacity-90">
-                  {open ? "▾" : "▸"}
-                </span>
-                {open ? "Close" : isDone ? "Edit answer" : "Answer this"}
-              </button>
-            </div>
-
-            {/* spacer keeps CTA centered; also prevents overlapping watermark */}
-            <div aria-hidden />
+              {open ? "Close" : isDone ? "Edit answer" : "Answer this"}
+            </button>
           </div>
 
           <div className="min-w-0">
             <div className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
               {definition.title}
             </div>
-            <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-              {definition.prompt}
-            </div>
 
-            {subtitle ? (
+            {/* In compact mode, keep copy tight to reduce noise */}
+            {showCompact ? (
+              <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
+                {definition.prompt}
+              </div>
+            ) : (
+              <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
+                {definition.prompt}
+              </div>
+            )}
+
+            {/* Hide extra helper copy unless expanded (keeps the card calmer) */}
+            {!showCompact && subtitle ? (
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
 
-            {definition.profileHint ? (
-              <div className={`mt-2 text-xs ${muted(dark)}`}>
-                {definition.profileHint}
-              </div>
+            {!showCompact && definition.profileHint ? (
+              <div className={`mt-2 text-xs ${muted(dark)}`}>{definition.profileHint}</div>
             ) : null}
 
+            {/* If done and collapsed, show the answer summary inline (this is useful; keep it) */}
             {!open && isDone ? (
               <div
                 className={[
@@ -321,9 +326,7 @@ export function TinyTaskCard({
                   dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
                 ].join(" ")}
               >
-                <div className={`text-xs font-semibold ${muted(dark)}`}>
-                  Your answer
-                </div>
+                <div className={`text-xs font-semibold ${muted(dark)}`}>Your answer</div>
                 <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
                   {resultSummary}
                 </div>
@@ -336,11 +339,9 @@ export function TinyTaskCard({
             ) : null}
 
             {!open && isDone ? (
-              <div className="mt-3 flex justify-center">
+              <div className="mt-2 flex justify-center">
                 <button type="button" className={pill(dark)} onClick={clear}>
-                  <span aria-hidden className="opacity-80">
-                    ↺
-                  </span>
+                  <span aria-hidden className="opacity-80">↺</span>
                   Reset
                 </button>
               </div>
@@ -433,9 +434,7 @@ export function TinyTaskCard({
 
                         {isDone ? (
                           <button type="button" className={pill(dark)} onClick={clear}>
-                            <span aria-hidden className="opacity-80">
-                              ↺
-                            </span>
+                            <span aria-hidden className="opacity-80">↺</span>
                             Reset
                           </button>
                         ) : null}
@@ -466,9 +465,7 @@ export function TinyTaskCard({
                         <div className="flex items-center gap-2">
                           {isDone ? (
                             <button type="button" className={pill(dark)} onClick={clear}>
-                              <span aria-hidden className="opacity-80">
-                                ↺
-                              </span>
+                              <span aria-hidden className="opacity-80">↺</span>
                               Reset
                             </button>
                           ) : null}
