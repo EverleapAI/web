@@ -84,7 +84,6 @@ function pill(dark: boolean, selected = false) {
   ].join(" ");
 }
 
-/** Bigger label pill so the icon is actually visible */
 function headerPill(dark: boolean) {
   return [
     "inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2",
@@ -188,7 +187,6 @@ function parseEntries(raw: string | null | undefined): ProofEntry[] {
         return b.__order - a.__order;
       });
 
-    // Return only the public shape (and avoid unused-var warnings from destructuring)
     return sorted.map((e) => ({ ts: e.ts, text: e.text }));
   }
 
@@ -311,7 +309,6 @@ export function ActionCard({
     return parseEntries(proof.text);
   }, [proof]);
 
-  // Compact-by-default: calm until the user opens Details.
   const showCompact = !open;
 
   return (
@@ -323,7 +320,7 @@ export function ActionCard({
         "shadow-[0_18px_70px_rgba(0,0,0,0.18)]",
       ].join(" ")}
     >
-      {/* Accent rail + gentle warmth */}
+      {/* Accent rail + gentle warmth + watermark */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-0 top-0 h-full w-1.5 bg-violet-400/70" />
 
@@ -340,19 +337,17 @@ export function ActionCard({
           ].join(" ")}
         />
 
-        {/* WATERMARK ICON — only when expanded to reduce noise */}
-        {open ? (
-          <div
-            className={[
-              "absolute right-5 top-5",
-              "opacity-[0.12] blur-[1px]",
-              dark ? "text-violet-200" : "text-violet-700",
-            ].join(" ")}
-            aria-hidden
-          >
-            <Rocket className="h-14 w-14" />
-          </div>
-        ) : null}
+        {/* WATERMARK ICON — always present, subtle */}
+        <div
+          className={[
+            "absolute right-5 top-5",
+            "opacity-[0.12] blur-[0.6px]",
+            dark ? "text-violet-200" : "text-violet-700",
+          ].join(" ")}
+          aria-hidden
+        >
+          <Rocket className="h-14 w-14" />
+        </div>
       </div>
 
       <div className="relative">
@@ -373,29 +368,14 @@ export function ActionCard({
                   status === "done"
                     ? "bg-emerald-300/80"
                     : status === "started"
-                      ? "bg-sky-300/80"
-                      : dark
-                        ? "bg-white/25"
-                        : "bg-black/20",
+                    ? "bg-sky-300/80"
+                    : dark
+                    ? "bg-white/25"
+                    : "bg-black/20",
                 ].join(" ")}
               />
               {statusLabel(status)}
             </span>
-          </div>
-
-          {/* CTA should be near the top + centered (not over watermark) */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              className={ctaPill(dark)}
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-            >
-              <span aria-hidden className="opacity-90">
-                {open ? "▾" : "▸"}
-              </span>
-              {open ? "Hide" : "Details"}
-            </button>
           </div>
 
           <div className="min-w-0">
@@ -407,7 +387,21 @@ export function ActionCard({
               {definition.goal}
             </div>
 
-            {/* Keep helper copy hidden unless expanded (reduces noise) */}
+            {/* CTA: left-justified under definition */}
+            <div className="mt-3 flex justify-start">
+              <button
+                type="button"
+                className={ctaPill(dark)}
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+              >
+                <span aria-hidden className="opacity-90">
+                  {open ? "▾" : "▸"}
+                </span>
+                {open ? "Hide" : "Details"}
+              </button>
+            </div>
+
             {!showCompact && subtitle ? (
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
@@ -441,10 +435,7 @@ export function ActionCard({
 
                   <ul className="mt-3 space-y-2">
                     {definition.steps.map((s, idx) => (
-                      <li
-                        key={`${definition.id}_step_${idx}`}
-                        className="flex items-start gap-3"
-                      >
+                      <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
                         <span
                           aria-hidden
                           className={[

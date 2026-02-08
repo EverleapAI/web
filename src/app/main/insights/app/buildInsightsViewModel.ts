@@ -1,4 +1,3 @@
-// src/app/main/insights/app/buildInsightsViewModel.ts
 "use client";
 
 export type InsightsTab =
@@ -47,7 +46,7 @@ export type InsightsViewModel = {
   tab: InsightsTab;
   summary: {
     headline: string;
-    receipts: Receipt[]; // keep (internal), but UI doesn't show the old block
+    receipts: Receipt[];
     signalBar: SignalBarItem[];
     wordCloud: WordCloudItem[];
     unlock?: Unlock;
@@ -65,6 +64,12 @@ type OnboardingV4 = {
   name?: string;
   situation?: "high_school" | "young_adult" | null;
   certainty?: "strong" | "kinda" | "no_clue" | null;
+  zip?: string;
+  postPlans?: string[];
+  activities?: string[];
+  activitiesOther?: string;
+  funChoice?: string | null;
+  stepIndex?: number;
 };
 
 const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
@@ -226,29 +231,35 @@ function buildSignalBar(saved: Record<string, Saved>) {
   return items;
 }
 
-function pickRepresentativeAnswer(saved: Record<string, Saved>) {
+function pickRepresentativeAnswers(saved: Record<string, Saved>, max: number) {
   const ids: string[] = [];
   for (let i = 1; i <= 5; i += 1) ids.push(`motivations_${i}`);
   for (let i = 1; i <= 5; i += 1) ids.push(`strengths_${i}`);
   for (let i = 1; i <= 5; i += 1) ids.push(`skills_${i}`);
 
   const prefer =
-    /\b(friends?|coffee|team|coach|school|class|club|practice|project|building|making|sunshine|outside|music|art)\b/i;
+    /\b(friends?|coffee|team|coach|school|class|club|practice|project|building|making|sunshine|outside|music|art|happy)\b/i;
 
+  const picks: string[] = [];
   let firstLong: string | null = null;
-  let bestPrefer: string | null = null;
 
   for (const id of ids) {
     const a = cleanOneLine(saved[id]?.answer ?? "");
     if (!a) continue;
 
     if (!firstLong && a.length > 14) firstLong = a;
-    if (!bestPrefer && a.length > 10 && prefer.test(a)) bestPrefer = a;
 
-    if (bestPrefer) break;
+    if (prefer.test(a) && a.length >= 3) {
+      if (!picks.includes(a)) picks.push(a);
+      if (picks.length >= max) break;
+    }
   }
 
-  return bestPrefer ?? firstLong ?? null;
+  if (picks.length < max && firstLong && !picks.includes(firstLong)) {
+    picks.push(firstLong);
+  }
+
+  return picks.slice(0, max);
 }
 
 /* =========================
@@ -343,6 +354,8 @@ const STOPWORDS = new Set(
     "times",
     "day",
     "days",
+    "most",
+      // NOTE: leaving "some" OUT so “Coffee and some friends” still yields coffee/friends
   ].sort()
 );
 
@@ -369,6 +382,7 @@ function tokenize(text: string): string[] {
 
 function buildWordCloud(saved: Record<string, Saved>): WordCloudItem[] {
   const counts = new Map<string, number>();
+
   for (const v of Object.values(saved)) {
     const a = cleanOneLine(v?.answer ?? "");
     if (!a) continue;
@@ -397,21 +411,46 @@ function capSentence(s: string) {
   const t = cleanOneLine(s);
   if (!t) return "";
   const c = t[0]!.toUpperCase() + t.slice(1);
-  return /[.!?]$/.test(c) ? c : `${c}.`;
+  const endsLikeSentence = /[.!?](["'”’)\]]?)$/.test(c);
+  return endsLikeSentence ? c : `${c}.`;
 }
 
 function quoteSnippet(raw: string) {
   const s = cleanOneLine(raw);
   if (!s) return "";
-  // keep it short so it feels like a quick callback, not a dump
   if (s.length <= 64) return s;
   return `${s.slice(0, 61)}…`;
 }
 
+function progressPhrase(label: string, n: number) {
+  if (n >= 5) return `${label}: done`;
+  if (n <= 0) return `${label}: not started`;
+  return `${label}: ${n}/5`;
+}
+
+function pickTopSignals(items: SignalBarItem[]) {
+  const sorted = [...items].sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0));
+  const top = sorted[0];
+  const second = sorted[1];
+  return { top, second };
+}
+
+function funReadFromSignals(top?: SignalBarItem, second?: SignalBarItem) {
+  const id = top?.id;
+
+  if (id === "people") return "you level up around other people — feedback makes you sharper.";
+  if (id === "action") return "you get clearer by doing — movement beats overthinking for you.";
+  if (id === "curiosity") return "you’re driven by figuring things out — questions pull you forward.";
+  if (id === "clarity") return "you don’t like fog — you want a next step you can trust.";
+
+  if (second?.id) return funReadFromSignals(second, undefined);
+
+  return "a pattern is starting to show up — and it’ll sharpen fast with one more section.";
+}
+
 function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const fallback: InsightsViewModel["summary"] = {
-    headline:
-      "I’m ready when you are — give me a few answers and I’ll start sounding like I actually know you.",
+    headline: "Welcome to Insights.",
     receipts: [],
     signalBar: [
       {
@@ -474,8 +513,8 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
       ],
     },
     storySoFar: [
-      "I don’t want to guess about you.",
-      "Give me a few real answers and I’ll reflect back patterns you can actually use — plus one next step you can try this week.",
+      "This is where Everleap reflects what it’s learning about you — patterns, signals, and what to try next.",
+      "Answer a few questions and this page will start sounding like it actually knows you.",
     ],
     suggests: [{ id: "s0", text: "Answer a few questions and this page becomes personal fast." }],
     tripUps: [
@@ -501,33 +540,23 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const saved = loadStorySaved();
 
   const name = niceName(onboarding.name ?? "");
+
   const mot = countAnswered("motivations", saved);
   const str = countAnswered("strengths", saved);
   const skl = countAnswered("skills", saved);
   const answeredTotal = mot + str + skl;
 
   const signalBar = buildSignalBar(saved);
-  const representative = pickRepresentativeAnswer(saved);
   const cloud = buildWordCloud(saved);
+  const { top, second } = pickTopSignals(signalBar);
+  const funRead = funReadFromSignals(top, second);
 
-  const headline =
-    answeredTotal === 0
-      ? `${name ? `${name}, ` : ""}I’m ready when you are — give me a few answers and I’ll make this personal.`
-      : `${name ? `${name} — ` : ""}here’s what I’m seeing so far.`;
+  const headline = name ? `Welcome to Insights, ${name}.` : "Welcome to Insights.";
 
-  // receipts are intentionally minimal now (UI doesn't show the old receipts block)
-  const receipts: Receipt[] = [];
-
-  /* -------------------------
-     Primary CTA logic
-     ------------------------- */
-
-  // Primary CTA should be loud ONLY when they have some signal already (esp motivations)
-  // and are missing Strengths/Skills — because that's what sharpens options.
-  const primaryItems: UnlockItem[] = [];
   const missingStrengths = str < 1;
   const missingSkills = skl < 1;
 
+  const primaryItems: UnlockItem[] = [];
   if (answeredTotal > 0 && (missingStrengths || missingSkills)) {
     if (missingStrengths) {
       primaryItems.push({
@@ -546,14 +575,13 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   }
 
   const primaryUnlock: Unlock | undefined =
-    primaryItems.length && mot > 0
+    primaryItems.length && answeredTotal > 0
       ? {
-          title: "If you want this to get sharper…",
+          title: "Want this to get more specific?",
           items: primaryItems.slice(0, 2),
         }
       : undefined;
 
-  // Secondary unlock (kept for completeness; not the loud callout)
   const unlockItems: UnlockItem[] = [];
   if (mot < 5)
     unlockItems.push({
@@ -581,70 +609,61 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
       }
     : undefined;
 
-  /* -------------------------
-     Conversational "story so far"
-     ------------------------- */
-
   const storySoFar: string[] = [];
 
   if (answeredTotal === 0) {
     storySoFar.push(
-      "Right now I don’t have anything real to work with — so I’d just be guessing."
+      "This is where Everleap reflects what it’s learning about you — based on what you actually answer."
     );
     storySoFar.push(
-      "Answer a few questions (any category), then come back. This page changes fast once I have your actual words."
+      "Right now I don’t have enough from you to say anything real yet. Answer a few questions and this page will change immediately."
     );
   } else {
-    // 1) Lead with validation that feels human (no “most people skip”).
     storySoFar.push(
       capSentence(
-        `You gave me real examples${name ? ", which makes this easy to read" : ""} — not just “I like ___.”`
+        "This is where Everleap reflects what it’s learning about you — based on what you actually answered"
       )
     );
 
-    // 2) Call back one concrete snippet as the “proof you were listening”
-    if (representative) {
+    storySoFar.push(
+      capSentence(
+        `So far: ${progressPhrase("Motivations", mot)} · ${progressPhrase("Strengths", str)} · ${progressPhrase("Skills", skl)}`
+      )
+    );
+
+    const clues = pickRepresentativeAnswers(saved, 2);
+    if (clues.length === 1) {
+      storySoFar.push(`A real clue from you: “${quoteSnippet(clues[0]!)}.”`);
+    } else if (clues.length >= 2) {
       storySoFar.push(
-        capSentence(
-          `For example: “${quoteSnippet(representative)}.” That’s a real signal, not a random detail.`
-        )
-      );
-    } else {
-      storySoFar.push(
-        "Even with a small amount of signal, a pattern is already showing up."
+        `A couple real clues from you: “${quoteSnippet(clues[0]!)}” and “${quoteSnippet(clues[1]!)}.”`
       );
     }
 
-    // 3) Replace “vibe” + meta with a clear, speakable pattern sentence.
-    // Keep it generic enough for local heuristics, but human.
+    storySoFar.push(capSentence(`Fun read: ${funRead}`));
+
     storySoFar.push(
-      "Here’s the pattern I’d bet on: you get clearer when you’re working on something real — and you improve faster when feedback is in the loop."
+      capSentence(
+        "The full read is split into three parts: Motivations (what drives you), Strengths (natural ways of thinking and behaving that energize you), and Skills (specific tools and technical knowledge you have learned)"
+      )
     );
 
-    // 4) Missing-signal line (non-mechanical)
-    if (mot > 0 && str === 0 && skl === 0) {
+    if (skl === 0) {
       storySoFar.push(
-        "Right now I mostly have signal from Motivations. Strengths and Skills will sharpen this a lot — fast."
+        capSentence(
+          "Answer Skills and I can switch from pattern-spotting to a sharper next move"
+        )
       );
     } else if (missingStrengths || missingSkills) {
       storySoFar.push(
-        "I’m close, but I’m missing part of the picture. Two quick answers (Strengths and/or Skills) will make what I say noticeably more specific."
+        capSentence("Two quick answers in what’s missing will make this noticeably more specific")
       );
     } else {
       storySoFar.push(
-        "You’ve given me enough to stop guessing — now we just need one small test to learn from."
+        capSentence("You’ve given me enough signal to be specific — now we test one small next step")
       );
     }
-
-    // 5) Replace “Below, I’ll show…” with a short natural bridge.
-    storySoFar.push(
-      "Here are the themes I’m hearing — plus one small experiment you can run this week."
-    );
   }
-
-  /* -------------------------
-     Suggests / watch-outs / experiment
-     ------------------------- */
 
   const suggests: Suggest[] = answeredTotal
     ? [
@@ -680,7 +699,8 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
               {
                 id: "t3",
                 title: "Not enough signal to get specific",
-                text: "Right now I can describe patterns — but not “best-fit options.” Two Strengths/Skills answers fixes that fast.",
+                text:
+                  "Right now I can describe patterns — but not best-fit options. Two Strengths/Skills answers fixes that fast.",
               },
             ]
           : []),
@@ -709,9 +729,9 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
 
   return {
     headline,
-    receipts,
+    receipts: [],
     signalBar,
-    wordCloud: cloud,
+    wordCloud: cloud, // ✅ critical: this must be the computed cloud
     unlock,
     primaryUnlock,
     storySoFar: storySoFar.slice(0, 7),
@@ -721,10 +741,7 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   };
 }
 
-export function buildInsightsViewModel(
-  tab: InsightsTab,
-  opts: UseLocalOpts
-): InsightsViewModel {
+export function buildInsightsViewModel(tab: InsightsTab, opts: UseLocalOpts): InsightsViewModel {
   const summary = buildSummaryVM(opts);
   return { tab, summary };
 }

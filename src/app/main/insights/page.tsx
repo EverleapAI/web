@@ -4,7 +4,6 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Shield } from "lucide-react";
 
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
@@ -32,9 +31,13 @@ type TabDef = { id: InsightsTab; label: string; blurb?: string };
 
 const TABS: TabDef[] = [
   { id: "summary", label: "Summary", blurb: "Your read so far" },
-  { id: "motivations", label: "Motivations", blurb: "What pulls you" },
-  { id: "strengths", label: "Strengths", blurb: "How you operate" },
-  { id: "skills", label: "Skills", blurb: "What you can do" },
+  { id: "motivations", label: "Motivation(s)", blurb: "What drives you" },
+  {
+    id: "strengths",
+    label: "Strength(s)",
+    blurb: "How you think + behave",
+  },
+  { id: "skills", label: "Skill(s)", blurb: "Tools + technical knowledge" },
   { id: "superpowers", label: "Superpowers", blurb: "What you’re good at" },
   { id: "doppelganger", label: "Time Twin", blurb: "A mirror / archetype" },
 ];
@@ -85,45 +88,11 @@ function safeJsonParse<T>(raw: string | null): T | null {
   }
 }
 
-type WashKind = "primary" | "signals" | "suggests" | "watchouts";
-
 type CSSVars = React.CSSProperties & { [key: `--${string}`]: string | number };
 
 function clamp01(n: number) {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
-}
-
-function sectionTint(dark: boolean, kind: WashKind) {
-  if (!dark) {
-    if (kind === "primary") return "bg-fuchsia-500/8";
-    if (kind === "signals") return "bg-sky-500/8";
-    if (kind === "suggests") return "bg-amber-500/10";
-    return "bg-emerald-500/9";
-  }
-
-  if (kind === "primary") return "bg-fuchsia-200/10";
-  if (kind === "signals") return "bg-sky-200/10";
-  if (kind === "suggests") return "bg-amber-200/11";
-  return "bg-emerald-200/10";
-}
-
-function sectionRing(dark: boolean) {
-  return dark ? "ring-1 ring-white/10" : "ring-1 ring-black/8";
-}
-
-function accentBar(dark: boolean, kind: WashKind) {
-  if (!dark) {
-    if (kind === "primary") return "bg-fuchsia-500/45";
-    if (kind === "signals") return "bg-sky-500/45";
-    if (kind === "suggests") return "bg-amber-500/55";
-    return "bg-emerald-500/50";
-  }
-
-  if (kind === "primary") return "bg-fuchsia-200/45";
-  if (kind === "signals") return "bg-sky-200/45";
-  if (kind === "suggests") return "bg-amber-200/55";
-  return "bg-emerald-200/50";
 }
 
 function pillButton(dark: boolean) {
@@ -140,24 +109,7 @@ function pillButton(dark: boolean) {
   ].join(" ");
 }
 
-/** Big “section header pill” (icon visible) */
-function sectionHeaderPill(dark: boolean, kind: WashKind) {
-  if (!dark) {
-    if (kind === "suggests")
-      return "border-amber-500/20 bg-amber-500/10 text-amber-900";
-    if (kind === "watchouts")
-      return "border-emerald-500/20 bg-emerald-500/10 text-emerald-900";
-    return "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-900";
-  }
-
-  if (kind === "suggests")
-    return "border-amber-200/18 bg-amber-200/10 text-amber-100";
-  if (kind === "watchouts")
-    return "border-emerald-200/18 bg-emerald-200/10 text-emerald-100";
-  return "border-fuchsia-200/18 bg-fuchsia-200/10 text-fuchsia-100";
-}
-
-function fadeMaskStyle(mode: "story" | "suggests"): React.CSSProperties {
+function fadeMaskStyle(mode: "story"): React.CSSProperties {
   const cut = mode === "story" ? "62%" : "70%";
   return {
     WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${cut}, rgba(0,0,0,0) 100%)`,
@@ -248,6 +200,99 @@ function highlightWrap(dark: boolean) {
 }
 
 /* =============================================================================
+   Color accents
+   ============================================================================= */
+
+function tabAccent(id: InsightsTab) {
+  if (id === "motivations") return { dot: "bg-amber-300/85", ring: "ring-amber-300/25" };
+  if (id === "strengths") return { dot: "bg-fuchsia-300/85", ring: "ring-fuchsia-300/25" };
+  if (id === "skills") return { dot: "bg-cyan-300/85", ring: "ring-cyan-300/25" };
+  if (id === "superpowers") return { dot: "bg-lime-300/85", ring: "ring-lime-300/25" };
+  if (id === "doppelganger") return { dot: "bg-violet-300/85", ring: "ring-violet-300/25" };
+  return { dot: "bg-sky-300/75", ring: "ring-sky-300/20" };
+}
+
+function tabPillClasses(dark: boolean, selected: boolean, id: InsightsTab) {
+  const acc = tabAccent(id);
+
+  const base = [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-3.5 py-2",
+    "text-sm font-semibold transition active:scale-95",
+  ];
+
+  const skin = dark
+    ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
+    : "border-black/10 bg-white/80 text-slate-800 hover:bg-white";
+
+  const on = selected
+    ? dark
+      ? `bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)] ring-2 ${acc.ring}`
+      : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)] ring-2 ring-slate-900/10"
+    : "";
+
+  return [...base, skin, on].join(" ");
+}
+
+function accentDot(id: InsightsTab) {
+  const acc = tabAccent(id);
+  return <span aria-hidden className={["h-2 w-2 rounded-full", acc.dot].join(" ")} />;
+}
+
+/* =============================================================================
+   Welcome copy keyword colorizer
+   ============================================================================= */
+
+function keywordClass(dark: boolean, token: string) {
+  const t = token.toLowerCase();
+  if (t === "everleap") return dark ? "text-emerald-200" : "text-emerald-700";
+  if (t === "insights") return dark ? "text-sky-200" : "text-sky-700";
+  if (t.startsWith("motivation")) return dark ? "text-amber-200" : "text-amber-700";
+  if (t.startsWith("strength")) return dark ? "text-fuchsia-200" : "text-fuchsia-700";
+  if (t.startsWith("skill")) return dark ? "text-cyan-200" : "text-cyan-700";
+  return "";
+}
+
+function colorizeKeywords(dark: boolean, text: string): React.ReactNode {
+  const s = (text ?? "").trim();
+  if (!s) return s;
+
+  // match ONLY these words, singular/plural, any case
+  const rx = /\b(Everleap|Insights|Motivation(?:s)?|Strength(?:s)?|Skill(?:s)?)\b/g;
+
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+
+  for (const m of s.matchAll(rx)) {
+    const idx = m.index ?? 0;
+    const hit = m[0] ?? "";
+    if (idx > last) parts.push(s.slice(last, idx));
+
+    const cls = keywordClass(dark, hit);
+    parts.push(
+      <span
+        key={`${idx}_${hit}`}
+        className={[
+          cls,
+          "font-semibold",
+          dark ? "drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)]" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {hit}
+      </span>
+    );
+
+    last = idx + hit.length;
+  }
+
+  if (last < s.length) parts.push(s.slice(last));
+
+  return parts;
+}
+
+/* =============================================================================
    Page
    ============================================================================= */
 
@@ -298,7 +343,6 @@ export default function Page() {
   }
 
   const [storyExpanded, setStoryExpanded] = React.useState(false);
-  const [suggestsExpanded, setSuggestsExpanded] = React.useState(false);
 
   const [sectionsOpen, setSectionsOpen] = React.useState(false);
 
@@ -348,14 +392,6 @@ export default function Page() {
   }, [storyExpandedItems]);
 
   const canToggleStory = storyExpandedItems.length > 0 && story.length > 2;
-
-  const suggestsItems = vm.summary.suggests ?? [];
-  const suggestsCollapsedCount = 2;
-  const suggestsShort = suggestsItems.slice(0, suggestsCollapsedCount);
-  const suggestsLong = suggestsItems;
-
-  const suggestsCanExpand = suggestsItems.length > suggestsCollapsedCount;
-  const suggestsToShow = suggestsExpanded ? suggestsLong : suggestsShort;
 
   const nextStepsBase = React.useMemo(
     () => getNextStepsDefinition("insights.summary"),
@@ -433,22 +469,11 @@ export default function Page() {
                   <button
                     key={t.id}
                     type="button"
-                    className={[
-                      "inline-flex items-center justify-center",
-                      "rounded-full border px-3.5 py-2",
-                      "text-sm font-semibold transition active:scale-95",
-                      dark
-                        ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10"
-                        : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                      selected
-                        ? dark
-                          ? "bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)]"
-                          : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
-                        : "",
-                    ].join(" ")}
+                    className={tabPillClasses(dark, selected, t.id)}
                     aria-current={selected ? "page" : undefined}
                     onClick={() => setTabAndSync(t.id)}
                   >
+                    {accentDot(t.id)}
                     {t.label}
                   </button>
                 );
@@ -468,7 +493,7 @@ export default function Page() {
                         dark ? "text-white" : "text-slate-900"
                       }`}
                     >
-                      {vm.summary.headline}
+                      {colorizeKeywords(dark, vm.summary.headline)}
                     </div>
 
                     <div className="mt-3">
@@ -477,7 +502,10 @@ export default function Page() {
                           <p
                             className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
                           >
-                            {storyTextCollapsed || storyTextExpanded}
+                            {colorizeKeywords(
+                              dark,
+                              storyTextCollapsed || storyTextExpanded
+                            )}
                           </p>
                         </div>
                       ) : (
@@ -490,7 +518,7 @@ export default function Page() {
                             transition={{ duration: 0.18 }}
                             className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
                           >
-                            {storyTextExpanded}
+                            {colorizeKeywords(dark, storyTextExpanded)}
                           </motion.p>
                         </AnimatePresence>
                       )}
@@ -511,7 +539,7 @@ export default function Page() {
                       </div>
                     ) : null}
 
-                    {/* WANT THIS TO GET MORE SPECIFIC?  (no icon inside box) */}
+                    {/* WANT THIS TO GET MORE SPECIFIC? */}
                     {primaryUnlock?.items?.length ? (
                       <div className="mt-5">
                         <div
@@ -546,8 +574,7 @@ export default function Page() {
                                 dark ? "text-white/72" : "text-slate-700"
                               }`}
                             >
-                              Right now I’m guessing a bit. Finish one more section
-                              and I’ll get way more specific.
+                              Finish one more section and I’ll get way more specific.
                             </div>
 
                             <div className="mt-2.5 flex flex-wrap gap-2">
@@ -594,9 +621,7 @@ export default function Page() {
                         {wordCloud.length ? (
                           <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
                             {wordCloud.map((w) => {
-                              const isTop = topWordSet.has(
-                                w.term.toLowerCase()
-                              );
+                              const isTop = topWordSet.has(w.term.toLowerCase());
                               return (
                                 <span
                                   key={w.term}
@@ -604,10 +629,9 @@ export default function Page() {
                                     "select-none el-word",
                                     wordColorClasses(dark, w.term),
                                     isTop
-                                      ? [
-                                          "rounded-full px-2.5 py-1",
-                                          highlightWrap(dark),
-                                        ].join(" ")
+                                      ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(
+                                          " "
+                                        )
                                       : "",
                                   ].join(" ")}
                                   style={{
@@ -627,8 +651,8 @@ export default function Page() {
                               dark ? "text-white/70" : "text-slate-700"
                             }`}
                           >
-                            Nothing to map yet — answer a few questions and this will
-                            fill in.
+                            Nothing to map yet — answer a few questions and this will fill
+                            in.
                           </div>
                         )}
                       </div>
@@ -637,218 +661,43 @@ export default function Page() {
                 </div>
 
                 {/* Divider */}
-                <div
-                  className={`my-6 h-px ${
-                    dark ? "bg-white/10" : "bg-black/10"
-                  }`}
-                />
+                <div className={`my-6 h-px ${dark ? "bg-white/10" : "bg-black/10"}`} />
 
-                {/* WHAT THIS SUGGESTS (BIG PILL) */}
-                <div
-                  className={[
-                    "relative overflow-hidden rounded-3xl px-5 py-4",
-                    sectionTint(dark, "suggests"),
-                    sectionRing(dark),
-                    "backdrop-blur-xl",
-                    dark
-                      ? "shadow-[0_18px_70px_rgba(0,0,0,0.22)]"
-                      : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
-                  ].join(" ")}
-                >
-                  <div className="pointer-events-none absolute inset-0">
+                {/* NEXT STEPS — render directly (removes the extra click layer) */}
+                {nextSteps ? (
+                  <div className="mt-2">
                     <div
                       className={[
-                        "absolute left-0 top-0 h-full w-1",
-                        accentBar(dark, "suggests"),
-                      ].join(" ")}
-                    />
-                    <div
-                      className="absolute right-5 top-5 opacity-[0.14]"
-                      aria-hidden
-                    >
-                      <Compass
-                        className={`h-12 w-12 ${
-                          dark ? "text-amber-200" : "text-amber-700"
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="relative">
-                    <span
-                      className={[
-                        "inline-flex items-center gap-2.5 rounded-full border px-4 py-2",
-                        "text-sm font-semibold",
-                        sectionHeaderPill(dark, "suggests"),
+                        "relative overflow-hidden rounded-3xl border px-5 py-4",
+                        "backdrop-blur-xl",
+                        dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
+                        dark
+                          ? "shadow-[0_18px_70px_rgba(0,0,0,0.22)]"
+                          : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
                       ].join(" ")}
                     >
-                      <Compass className="h-5 w-5 opacity-90" aria-hidden />
-                      <span>What this suggests</span>
-                    </span>
-
-                    <div
-                      className={`mt-2 text-sm leading-relaxed ${
-                        dark ? "text-white/70" : "text-slate-700"
-                      }`}
-                    >
-                      A directional read — something you can test in real life.
-                    </div>
-
-                    <div className="mt-4">
-                      {!suggestsExpanded ? (
-                        <div
-                          className="relative"
-                          style={fadeMaskStyle("suggests")}
-                        >
-                          <div className="space-y-3">
-                            {suggestsToShow.map((it) => (
-                              <p
-                                key={it.id}
-                                className={`text-sm leading-relaxed ${
-                                  dark ? "text-slate-200/88" : "text-slate-700"
-                                }`}
-                              >
-                                {it.text}
-                              </p>
-                            ))}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className={`text-sm font-semibold ${sectionTitle(dark)}`}>
+                            Next steps
+                          </div>
+                          <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                            Optional — a quick reflection + a real-world action.
                           </div>
                         </div>
-                      ) : (
-                        <AnimatePresence initial={false}>
-                          <motion.div
-                            key="suggestsExpanded"
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 6 }}
-                            transition={{ duration: 0.18 }}
-                            className="space-y-3"
-                          >
-                            {suggestsToShow.map((it) => (
-                              <p
-                                key={it.id}
-                                className={`text-sm leading-relaxed ${
-                                  dark ? "text-slate-200/88" : "text-slate-700"
-                                }`}
-                              >
-                                {it.text}
-                              </p>
-                            ))}
-                          </motion.div>
-                        </AnimatePresence>
-                      )}
-                    </div>
-
-                    {suggestsCanExpand ? (
-                      <div className="mt-3">
-                        <button
-                          type="button"
-                          className={pillButton(dark)}
-                          onClick={() => setSuggestsExpanded((v) => !v)}
-                        >
-                          <span aria-hidden className="opacity-85">
-                            {suggestsExpanded ? "▾" : "▸"}
-                          </span>
-                          {suggestsExpanded ? "Read less" : "Read more"}
-                        </button>
                       </div>
-                    ) : null}
-                  </div>
-                </div>
 
-                {/* WATCH-OUTS (BIG PILL) */}
-                <div className="mt-6">
-                  <div
-                    className={[
-                      "relative overflow-hidden rounded-3xl px-5 py-4",
-                      sectionTint(dark, "watchouts"),
-                      sectionRing(dark),
-                      "backdrop-blur-xl",
-                      dark
-                        ? "shadow-[0_18px_70px_rgba(0,0,0,0.22)]"
-                        : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]",
-                    ].join(" ")}
-                  >
-                    <div className="pointer-events-none absolute inset-0">
-                      <div
-                        className={[
-                          "absolute left-0 top-0 h-full w-1",
-                          accentBar(dark, "watchouts"),
-                        ].join(" ")}
-                      />
-                      <div
-                        className="absolute right-5 top-5 opacity-[0.14]"
-                        aria-hidden
-                      >
-                        <Shield
-                          className={`h-12 w-12 ${
-                            dark ? "text-emerald-200" : "text-emerald-700"
-                          }`}
+                      <div className="mt-4">
+                        <NextStepsStack
+                          dark={dark}
+                          useLocal={mounted}
+                          definition={nextSteps}
+                          heading=""
+                          subheading=""
+                          showDivider={false}
                         />
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <span
-                        className={[
-                          "inline-flex items-center gap-2.5 rounded-full border px-4 py-2",
-                          "text-sm font-semibold",
-                          sectionHeaderPill(dark, "watchouts"),
-                        ].join(" ")}
-                      >
-                        <Shield className="h-5 w-5 opacity-90" aria-hidden />
-                        <span>Watch-outs</span>
-                      </span>
-
-                      <div
-                        className={`mt-2 text-sm leading-relaxed ${
-                          dark ? "text-white/70" : "text-slate-700"
-                        }`}
-                      >
-                        Guardrails — no shame, just reality.
-                      </div>
-
-                      <ul className="mt-4 space-y-3">
-                        {vm.summary.tripUps.map((e) => (
-                          <li key={e.id} className="flex items-start gap-3">
-                            <span
-                              aria-hidden
-                              className={`mt-2 inline-block h-1.5 w-1.5 rounded-full ${
-                                dark ? "bg-white/35" : "bg-slate-900/35"
-                              }`}
-                            />
-                            <div className="min-w-0">
-                              <div
-                                className={`text-sm font-semibold ${
-                                  dark ? "text-white" : "text-slate-900"
-                                }`}
-                              >
-                                {e.title}
-                              </div>
-                              <div
-                                className={`mt-1 text-sm leading-relaxed ${
-                                  dark ? "text-white/70" : "text-slate-700"
-                                }`}
-                              >
-                                {e.text}
-                              </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* NEXT STEPS (Tiny Task + Action) */}
-                {nextSteps ? (
-                  <div className="mt-6">
-                    <NextStepsStack
-                      dark={dark}
-                      useLocal={mounted}
-                      definition={nextSteps}
-                      heading=""
-                      subheading=""
-                    />
                   </div>
                 ) : null}
 
@@ -900,11 +749,7 @@ export default function Page() {
                     })}
                   </div>
 
-                  <div
-                    className={`mt-2 text-xs ${
-                      dark ? "text-white/45" : "text-slate-500"
-                    }`}
-                  >
+                  <div className={`mt-2 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
                     (We’ll use this later to recalibrate Insights.)
                   </div>
                 </div>
@@ -917,17 +762,14 @@ export default function Page() {
                   "rounded-[28px] px-5 py-5",
                   "shadow-[0_28px_95px_rgba(0,0,0,0.70)]",
                   "backdrop-blur-xl",
-                  dark
-                    ? "text-white/80 bg-slate-950/25"
-                    : "text-slate-800 bg-white/80",
+                  dark ? "text-white/80 bg-slate-950/25" : "text-slate-800 bg-white/80",
                 ].join(" ")}
               >
                 <div className={`text-lg font-semibold ${sectionTitle(dark)}`}>
                   {TABS.find((t) => t.id === tab)?.label ?? "Section"}
                 </div>
                 <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                  This section is scaffolded. We’ll implement it next after
-                  Summary is locked.
+                  This section is scaffolded. We’ll implement it next after Summary is locked.
                 </div>
               </div>
             </section>
@@ -964,7 +806,7 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Sections modal (kept minimal) */}
+        {/* Sections modal (narrower / less horizontally chunky) */}
         <AnimatePresence>
           {sectionsOpen ? (
             <motion.div
@@ -988,24 +830,20 @@ export default function Page() {
               >
                 <div
                   className={[
-                    "relative mx-auto w-full max-w-[640px]",
-                    "overflow-hidden rounded-[28px] border",
+                    "relative mx-auto w-full max-w-[520px]",
+                    "overflow-hidden rounded-[26px] border",
                     "backdrop-blur-2xl",
-                    dark
-                      ? "border-white/12 bg-slate-950/40"
-                      : "border-black/10 bg-white/90",
+                    dark ? "border-white/12 bg-slate-950/40" : "border-black/10 bg-white/90",
                     "shadow-[0_28px_95px_rgba(0,0,0,0.45)]",
                   ].join(" ")}
                   role="dialog"
                   aria-modal="true"
                 >
-                  <div className="relative px-5 pb-5 pt-5 sm:px-7 sm:pb-6 sm:pt-6">
+                  <div className="relative px-5 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div
-                          className={`text-base font-semibold ${
-                            dark ? "text-white" : "text-slate-900"
-                          }`}
+                          className={`text-base font-semibold ${dark ? "text-white" : "text-slate-900"}`}
                         >
                           Sections
                           <span
@@ -1016,11 +854,7 @@ export default function Page() {
                             · {tabLabel}
                           </span>
                         </div>
-                        <div
-                          className={`mt-1 text-sm ${
-                            dark ? "text-white/60" : "text-slate-600"
-                          }`}
-                        >
+                        <div className={`mt-1 text-sm ${dark ? "text-white/60" : "text-slate-600"}`}>
                           Jump anywhere — you won’t lose your place.
                         </div>
                       </div>
@@ -1038,13 +872,11 @@ export default function Page() {
                       className={[
                         "mt-4 overflow-hidden rounded-2xl border",
                         "backdrop-blur-xl",
-                        dark
-                          ? "border-white/10 bg-white/5"
-                          : "border-black/10 bg-white/80",
+                        dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
                       ].join(" ")}
-                      style={{ maxHeight: "62vh" }}
+                      style={{ maxHeight: "56vh" }}
                     >
-                      <div className="max-h-[62vh] overflow-auto">
+                      <div className="max-h-[56vh] overflow-auto">
                         {TABS.map((t) => {
                           const selected = t.id === tab;
                           return (
@@ -1052,16 +884,10 @@ export default function Page() {
                               key={t.id}
                               type="button"
                               className={[
-                                "relative w-full text-left px-4 py-3.5",
+                                "relative w-full text-left px-4 py-3",
                                 "transition active:scale-[0.995]",
-                                dark
-                                  ? "text-white/88 hover:bg-white/6"
-                                  : "text-slate-900 hover:bg-black/2",
-                                selected
-                                  ? dark
-                                    ? "bg-white/8"
-                                    : "bg-black/2"
-                                  : "",
+                                dark ? "text-white/88 hover:bg-white/6" : "text-slate-900 hover:bg-black/2",
+                                selected ? (dark ? "bg-white/8" : "bg-black/2") : "",
                               ].join(" ")}
                               onClick={() => {
                                 setTabAndSync(t.id);
@@ -1070,15 +896,13 @@ export default function Page() {
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                  <div className="text-sm font-semibold">
-                                    {t.label}
+                                  <div className="flex items-center gap-2 text-sm font-semibold">
+                                    {accentDot(t.id)}
+                                    <span>{t.label}</span>
                                   </div>
+
                                   {t.blurb ? (
-                                    <div
-                                      className={`mt-0.5 text-xs ${
-                                        dark ? "text-white/55" : "text-slate-600"
-                                      }`}
-                                    >
+                                    <div className={`mt-0.5 text-xs ${dark ? "text-white/55" : "text-slate-600"}`}>
                                       {t.blurb}
                                     </div>
                                   ) : null}
@@ -1087,14 +911,8 @@ export default function Page() {
                                 <div
                                   className={[
                                     "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-                                    dark
-                                      ? "border-white/10 bg-white/6 text-white/60"
-                                      : "border-black/10 bg-white text-slate-600",
-                                    selected
-                                      ? dark
-                                        ? "text-white/80"
-                                        : "text-slate-800"
-                                      : "",
+                                    dark ? "border-white/10 bg-white/6 text-white/60" : "border-black/10 bg-white text-slate-600",
+                                    selected ? (dark ? "text-white/80" : "text-slate-800") : "",
                                   ].join(" ")}
                                   aria-hidden
                                 >

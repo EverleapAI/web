@@ -134,7 +134,6 @@ function summarizeResult(def: TinyTaskDefinition, r: TinyTaskResult | null) {
   if (!r) return null;
 
   if (r.kind === "choice") {
-    // TinyTaskDefinition is a union; only the "choice" variant has `options`.
     if (def.kind === "choice") {
       const found = def.options?.find((o) => o.id === r.choiceId);
       return found?.label ?? "Saved";
@@ -180,8 +179,6 @@ export function TinyTaskCard({
   function persist(next: TinyTaskResult) {
     setResult(next);
     saveTinyTaskResult(definition.pageId, next, { useLocal });
-
-    // UX: after a save, collapse the “modal” so the result reads inline
     setOpen(false);
   }
 
@@ -204,7 +201,6 @@ export function TinyTaskCard({
     [definition, result]
   );
 
-  // Compact-by-default: keep this card calm until user expands.
   const showCompact = !open;
 
   return (
@@ -214,13 +210,13 @@ export function TinyTaskCard({
         ring(dark),
         surface(dark),
         "backdrop-blur-2xl",
-        dark
-          ? "shadow-[0_22px_80px_rgba(0,0,0,0.22)]"
-          : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
+        dark ? "shadow-[0_22px_80px_rgba(0,0,0,0.22)]" : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
       ].join(" ")}
     >
-      {/* Creative treatment (kept subtle; watermark only when expanded to reduce noise) */}
+      {/* Accent rail + subtle glow + watermark */}
       <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-0 top-0 h-full w-1.5 bg-emerald-400/70" />
+
         <div
           className={[
             "absolute -top-16 -left-20 h-[280px] w-[280px] rounded-full blur-3xl",
@@ -234,25 +230,19 @@ export function TinyTaskCard({
           ].join(" ")}
         />
 
-        {open ? (
-          <div
-            className={[
-              "absolute right-5 top-5",
-              "opacity-[0.16]",
-              dark ? "text-emerald-200" : "text-emerald-700",
-            ].join(" ")}
-            aria-hidden
-          >
-            <Sparkles className="h-14 w-14" />
-          </div>
-        ) : null}
-
+        {/* WATERMARK ICON — always present, subtle */}
         <div
           className={[
-            "absolute inset-x-0 top-0 h-px",
-            dark ? "bg-white/10" : "bg-black/8",
+            "absolute right-5 top-5",
+            "opacity-[0.12] blur-[0.6px]",
+            dark ? "text-emerald-200" : "text-emerald-700",
           ].join(" ")}
-        />
+          aria-hidden
+        >
+          <Sparkles className="h-14 w-14" />
+        </div>
+
+        <div className={["absolute inset-x-0 top-0 h-px", dark ? "bg-white/10" : "bg-black/8"].join(" ")} />
       </div>
 
       <div className="relative">
@@ -277,38 +267,30 @@ export function TinyTaskCard({
             ) : null}
           </div>
 
-          {/* CTA should live near the top + centered (not over watermark) */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              className={ctaPill(dark)}
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-            >
-              <span aria-hidden className="opacity-90">
-                {open ? "▾" : "▸"}
-              </span>
-              {open ? "Close" : isDone ? "Edit answer" : "Answer this"}
-            </button>
-          </div>
-
           <div className="min-w-0">
             <div className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
               {definition.title}
             </div>
 
-            {/* In compact mode, keep copy tight to reduce noise */}
-            {showCompact ? (
-              <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-                {definition.prompt}
-              </div>
-            ) : (
-              <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-                {definition.prompt}
-              </div>
-            )}
+            <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
+              {definition.prompt}
+            </div>
 
-            {/* Hide extra helper copy unless expanded (keeps the card calmer) */}
+            {/* CTA: left-justified under definition */}
+            <div className="mt-3 flex justify-start">
+              <button
+                type="button"
+                className={ctaPill(dark)}
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+              >
+                <span aria-hidden className="opacity-90">
+                  {open ? "▾" : "▸"}
+                </span>
+                {open ? "Hide" : isDone ? "Edit answer" : "Answer this"}
+              </button>
+            </div>
+
             {!showCompact && subtitle ? (
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
@@ -317,7 +299,6 @@ export function TinyTaskCard({
               <div className={`mt-2 text-xs ${muted(dark)}`}>{definition.profileHint}</div>
             ) : null}
 
-            {/* If done and collapsed, show the answer summary inline (this is useful; keep it) */}
             {!open && isDone ? (
               <div
                 className={[
@@ -339,7 +320,7 @@ export function TinyTaskCard({
             ) : null}
 
             {!open && isDone ? (
-              <div className="mt-2 flex justify-center">
+              <div className="mt-2 flex justify-start">
                 <button type="button" className={pill(dark)} onClick={clear}>
                   <span aria-hidden className="opacity-80">↺</span>
                   Reset
@@ -411,8 +392,8 @@ export function TinyTaskCard({
                                   selected
                                     ? "bg-emerald-300/85 shadow-[0_0_16px_rgba(52,211,153,0.45)]"
                                     : dark
-                                      ? "bg-white/18"
-                                      : "bg-black/15",
+                                    ? "bg-white/18"
+                                    : "bg-black/15",
                                 ].join(" ")}
                                 aria-hidden
                               />
@@ -472,10 +453,7 @@ export function TinyTaskCard({
 
                           <button
                             type="button"
-                            className={[
-                              pill(dark, true),
-                              !textValue.trim() ? "opacity-50" : "",
-                            ].join(" ")}
+                            className={[pill(dark, true), !textValue.trim() ? "opacity-50" : ""].join(" ")}
                             onClick={() =>
                               persist(
                                 makeTextResult({
