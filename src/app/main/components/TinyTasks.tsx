@@ -35,28 +35,30 @@ export function TinyTasks(props: TinyTasksProps) {
   const headerMuted = dark ? "text-white/60" : "text-slate-600";
   const fineMuted = dark ? "text-white/55" : "text-slate-600";
 
-  const rowHover = dark ? "hover:bg-white/5" : "hover:bg-black/[0.025]";
   const focusRing = dark
     ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/22"
     : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/18";
 
-  // Slightly less boxed / more cinematic (match Signals softening)
+  // Weather-like: calm surface, predictable contrast
   const shellClass = dark
-    ? "border-white/8 bg-white/4 text-white"
-    : "border-black/8 bg-white/60 text-slate-900";
+    ? "border-white/10 bg-slate-950/22 text-white"
+    : "border-black/10 bg-white/80 text-slate-900";
 
-  const divider = dark ? "border-white/8" : "border-black/8";
+  const divider = dark ? "border-white/10" : "border-black/10";
+
+  const rowHover = dark ? "hover:bg-white/[0.035]" : "hover:bg-black/[0.02]";
+  const rowActive = dark ? "active:bg-white/[0.05]" : "active:bg-black/[0.03]";
 
   const statusPill = (status: TinyTaskSummary["status"]) => {
-    // Quieter, less “enterprise chip”
+    // Keep it secondary (title/subtitle should lead)
     if (dark) {
-      if (status === "done") return "bg-emerald-400/10 text-emerald-100";
-      if (status === "set") return "bg-sky-300/10 text-sky-100";
-      return "bg-white/7 text-white/70";
+      if (status === "done") return "bg-emerald-400/9 text-emerald-100/85 ring-1 ring-emerald-300/18";
+      if (status === "set") return "bg-sky-300/9 text-sky-100/85 ring-1 ring-sky-300/16";
+      return "bg-white/6 text-white/70 ring-1 ring-white/10";
     }
-    if (status === "done") return "bg-emerald-600/10 text-emerald-800";
-    if (status === "set") return "bg-sky-600/10 text-sky-800";
-    return "bg-slate-900/5 text-slate-700";
+    if (status === "done") return "bg-emerald-600/10 text-emerald-800 ring-1 ring-emerald-700/15";
+    if (status === "set") return "bg-sky-600/10 text-sky-800 ring-1 ring-sky-700/12";
+    return "bg-slate-900/5 text-slate-700 ring-1 ring-black/6";
   };
 
   const statusLabel = (t: TinyTaskSummary) => {
@@ -73,11 +75,10 @@ export function TinyTasks(props: TinyTasksProps) {
           <div className={`text-[11px] ${headerMuted}`}>Two quick levers</div>
         </div>
 
-        {/* Option 1 */}
-        <div className={`mt-1 text-[11px] ${fineMuted}`}>Small moves. Real momentum.</div>
+        <div className={`mt-1 text-[12px] leading-snug ${fineMuted}`}>Small moves. Real momentum.</div>
       </div>
 
-      <div className={`rounded-2xl border ${shellClass}`}>
+      <div className={["rounded-2xl border", "overflow-hidden", shellClass].join(" ")}>
         {tasks.map((t, idx) => {
           const disabled = !!t.disabled;
 
@@ -87,43 +88,51 @@ export function TinyTasks(props: TinyTasksProps) {
               type="button"
               onClick={() => (disabled ? undefined : onOpenTask(t.id))}
               className={[
-                "w-full text-left",
-                "px-4 py-3",
+                "group w-full text-left",
+                "px-4 py-3.5",
                 "transition",
                 rowHover,
+                rowActive,
                 focusRing,
                 idx === 0 ? "" : `border-t ${divider}`,
                 disabled ? "opacity-60 cursor-not-allowed" : "",
               ].join(" ")}
-              aria-label={`Open ${t.title}`}
+              aria-label={`Open ${t.title}${disabled ? " (disabled)" : ""}`}
               disabled={disabled}
+              aria-disabled={disabled}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate text-sm font-semibold">{t.title}</div>
+                  <div className="flex items-baseline gap-2">
+                    <div className="truncate text-[15px] font-semibold leading-snug">{t.title}</div>
+
                     {typeof t.count === "number" ? (
-                      <div className={`text-[11px] ${headerMuted}`}>{t.count}</div>
+                      <div
+                        className={[
+                          "shrink-0 rounded-full border px-2 py-0.5",
+                          "text-[11px] font-semibold tabular-nums",
+                          dark ? "border-white/10 text-white/55" : "border-black/10 text-slate-600",
+                        ].join(" ")}
+                        aria-label={`${t.count}`}
+                      >
+                        {t.count}
+                      </div>
                     ) : null}
                   </div>
-                  <div className={`mt-1 text-xs leading-snug ${fineMuted}`}>{t.subtitle}</div>
+
+                  <div className={`mt-1 text-[13px] leading-snug ${fineMuted}`}>{t.subtitle}</div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                  <div
-                    className={[
-                      "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-                      statusPill(t.status),
-                    ].join(" ")}
-                  >
+                  <div className={["rounded-full px-2.5 py-1", "text-[11px] font-semibold tabular-nums", statusPill(t.status)].join(" ")}>
                     {statusLabel(t)}
                   </div>
 
                   <ChevronRight
                     className={[
                       "h-4 w-4 transition",
-                      dark ? "text-white/45 group-hover:text-white/75" : "text-slate-700/55 group-hover:text-slate-900",
-                      disabled ? "opacity-35" : "opacity-70",
+                      dark ? "text-white/30 group-hover:text-white/60" : "text-slate-700/40 group-hover:text-slate-900/75",
+                      disabled ? "opacity-35" : "opacity-80",
                     ].join(" ")}
                     aria-hidden
                   />

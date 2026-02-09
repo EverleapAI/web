@@ -47,12 +47,13 @@ function ring(dark: boolean) {
   return dark ? "ring-1 ring-white/10" : "ring-1 ring-black/8";
 }
 
-function surface(dark: boolean) {
-  return dark ? "bg-white/5" : "bg-white/85";
+function calmSurface(dark: boolean) {
+  // Weather-like: calm, predictable contrast
+  return dark ? "bg-slate-950/22" : "bg-white/85";
 }
 
 function muted(dark: boolean) {
-  return dark ? "text-white/65" : "text-slate-600";
+  return dark ? "text-white/60" : "text-slate-600";
 }
 
 function text(dark: boolean) {
@@ -61,13 +62,6 @@ function text(dark: boolean) {
 
 function softText(dark: boolean) {
   return dark ? "text-white/78" : "text-slate-700";
-}
-
-function chip(dark: boolean) {
-  if (dark) {
-    return "border-emerald-300/18 bg-emerald-300/12 text-emerald-100 shadow-[0_0_26px_rgba(52,211,153,0.14)]";
-  }
-  return "border-emerald-500/18 bg-emerald-500/10 text-emerald-800";
 }
 
 function pill(dark: boolean, selected = false) {
@@ -80,8 +74,8 @@ function pill(dark: boolean, selected = false) {
       : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
     selected
       ? dark
-        ? "ring-1 ring-emerald-300/30"
-        : "ring-1 ring-emerald-500/20"
+        ? "ring-1 ring-emerald-300/24"
+        : "ring-1 ring-emerald-500/18"
       : "",
     dark
       ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
@@ -89,52 +83,40 @@ function pill(dark: boolean, selected = false) {
   ].join(" ");
 }
 
-function headerPill(dark: boolean, tone: "primary" | "neutral" | "done") {
-  const base =
-    "inline-flex items-center gap-2.5 rounded-full border px-3.5 py-2 text-sm font-semibold";
-
-  if (tone === "primary") return `${base} ${chip(dark)}`;
-
-  if (tone === "done") {
-    return [
-      base,
-      dark
-        ? "border-emerald-300/18 bg-emerald-300/12 text-emerald-100"
-        : "border-emerald-500/18 bg-emerald-500/10 text-emerald-800",
-    ].join(" ");
-  }
-
+function headerChip(dark: boolean) {
+  // Single, compact chip: "Tiny Task · 3 min"
   return [
-    base,
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+    "text-xs font-semibold",
+    "backdrop-blur-md",
     dark
-      ? "border-white/12 bg-white/6 text-white/70"
+      ? "border-emerald-300/16 bg-emerald-300/10 text-emerald-100/90"
+      : "border-emerald-500/18 bg-emerald-500/10 text-emerald-900",
+  ].join(" ");
+}
+
+function doneBadge(dark: boolean) {
+  // Subtle (secondary) badge
+  return [
+    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+    "text-[11px] font-semibold",
+    dark
+      ? "border-white/12 bg-white/6 text-white/72"
       : "border-black/10 bg-black/3 text-slate-700",
   ].join(" ");
 }
 
-function ctaPill(dark: boolean) {
+function headerToggle(dark: boolean) {
+  // Small, unobtrusive control (now placed on the LEFT per request)
   return [
-    "inline-flex items-center justify-center gap-2",
-    "rounded-full border px-5 py-2.5",
-    "text-sm font-semibold transition active:scale-[0.98]",
-    "backdrop-blur-xl",
+    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5",
+    "text-xs font-semibold",
+    "transition active:scale-[0.99]",
     dark
-      ? "border-emerald-300/18 bg-emerald-300/12 text-emerald-50 hover:bg-emerald-300/16 shadow-[0_18px_60px_rgba(0,0,0,0.24)]"
-      : "border-emerald-500/18 bg-emerald-500/10 text-emerald-900 hover:bg-emerald-500/14 shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
-    dark
-      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/28"
-      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/18",
-  ].join(" ");
-}
-
-function textAffordance(dark: boolean) {
-  return [
-    "inline-flex items-center gap-2",
-    "text-sm font-semibold",
-    "transition active:scale-[0.995]",
-    dark ? "text-white/70 hover:text-white/90" : "text-slate-700 hover:text-slate-900",
+      ? "border-white/12 bg-white/6 text-white/75 hover:bg-white/10"
+      : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
     "focus-visible:outline-none",
-    dark ? "focus-visible:ring-2 focus-visible:ring-white/14" : "focus-visible:ring-2 focus-visible:ring-slate-900/10",
+    dark ? "focus-visible:ring-2 focus-visible:ring-white/16" : "focus-visible:ring-2 focus-visible:ring-slate-900/12",
   ].join(" ");
 }
 
@@ -196,10 +178,10 @@ export function TinyTaskCard({
     if (result.kind === "text") setTextValue(result.text);
   }, [result]);
 
-  function persist(next: TinyTaskResult) {
+  function persist(next: TinyTaskResult, opts?: { close?: boolean }) {
     setResult(next);
     saveTinyTaskResult(definition.pageId, next, { useLocal });
-    setOpen(false);
+    if (opts?.close) setOpen(false);
   }
 
   function clear() {
@@ -216,54 +198,36 @@ export function TinyTaskCard({
       ? Math.max(1, Math.min(5, Math.round(definition.minutes)))
       : 5;
 
-  const resultSummary = React.useMemo(
-    () => summarizeResult(definition, result),
-    [definition, result]
-  );
+  const resultSummary = React.useMemo(() => summarizeResult(definition, result), [definition, result]);
+
+  const titleId = React.useId();
 
   return (
     <div
       className={[
         "relative overflow-hidden rounded-3xl",
-        embedded ? "px-5 py-4" : "px-5 py-4",
+        "px-5 py-4",
         ring(dark),
-        surface(dark),
+        calmSurface(dark),
         "backdrop-blur-2xl",
         embedded
           ? dark
-            ? "shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+            ? "shadow-[0_18px_60px_rgba(0,0,0,0.16)]"
             : "shadow-[0_12px_34px_rgba(0,0,0,0.10)]"
           : dark
-          ? "shadow-[0_22px_80px_rgba(0,0,0,0.22)]"
+          ? "shadow-[0_22px_80px_rgba(0,0,0,0.20)]"
           : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
       ].join(" ")}
+      aria-labelledby={titleId}
     >
-      {/* Accent rail + subtle glow + watermark */}
+      {/* Accent rail + VERY subtle glow + watermark */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-0 top-0 h-full w-1.5 bg-emerald-400/70" />
+        <div className={["absolute left-0 top-0 h-full w-1", dark ? "bg-emerald-300/55" : "bg-emerald-500/45"].join(" ")} />
 
-        <div
-          className={[
-            "absolute -top-16 -left-20 h-[280px] w-[280px] rounded-full blur-3xl",
-            dark ? "bg-emerald-400/14" : "bg-emerald-400/10",
-          ].join(" ")}
-        />
-        <div
-          className={[
-            "absolute -bottom-20 -right-20 h-[320px] w-[320px] rounded-full blur-3xl",
-            dark ? "bg-sky-400/12" : "bg-sky-400/8",
-          ].join(" ")}
-        />
+        <div className={["absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl", dark ? "bg-emerald-300/10" : "bg-emerald-400/8"].join(" ")} />
+        <div className={["absolute -bottom-24 -right-24 h-[300px] w-[300px] rounded-full blur-3xl", dark ? "bg-sky-300/8" : "bg-sky-400/6"].join(" ")} />
 
-        {/* WATERMARK ICON — keep subtle */}
-        <div
-          className={[
-            "absolute right-5 top-5",
-            "opacity-[0.10] blur-[0.6px]",
-            dark ? "text-emerald-200" : "text-emerald-700",
-          ].join(" ")}
-          aria-hidden
-        >
+        <div className={["absolute right-5 top-5 opacity-[0.07]", dark ? "text-white" : "text-slate-900"].join(" ")} aria-hidden>
           <Sparkles className="h-14 w-14" />
         </div>
 
@@ -271,268 +235,223 @@ export function TinyTaskCard({
       </div>
 
       <div className="relative">
-        <div className="flex flex-col gap-3">
-          {/* Top pills row */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={headerPill(dark, "primary")}>
-              <Wand2 className="h-5 w-5 opacity-90" aria-hidden />
-              <span>{label}</span>
-            </span>
-
-            <span className={headerPill(dark, "neutral")}>
-              <Timer className="h-5 w-5 opacity-85" aria-hidden />
-              {minutes} min
-            </span>
-
-            {isDone ? (
-              <span className={headerPill(dark, "done")}>
-                <CheckCircle2 className="h-5 w-5 opacity-90" aria-hidden />
-                Done
+        {/* Header row: LEFT-aligned controls (per request) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={headerChip(dark)}>
+            <Wand2 className="h-4 w-4 opacity-90" aria-hidden />
+            <span>
+              {label} <span className={dark ? "text-emerald-100/70" : "text-emerald-900/70"}>·</span>{" "}
+              <span className="inline-flex items-center gap-1.5">
+                <Timer className="h-4 w-4 opacity-85" aria-hidden />
+                {minutes} min
               </span>
-            ) : null}
+            </span>
+          </span>
+
+          {isDone ? (
+            <span className={doneBadge(dark)}>
+              <CheckCircle2 className="h-4 w-4 opacity-90" aria-hidden />
+              Done
+            </span>
+          ) : null}
+
+          <button
+            type="button"
+            className={headerToggle(dark)}
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls={`${titleId}-panel`}
+          >
+            <span aria-hidden className="opacity-80">{open ? "▾" : "▸"}</span>
+            {open ? "Hide" : isDone ? "Edit" : "Answer"}
+          </button>
+        </div>
+
+        <div className="mt-3 min-w-0">
+          <div id={titleId} className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
+            {definition.title}
           </div>
 
-          <div className="min-w-0">
-            <div className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
-              {definition.title}
+          <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>{definition.prompt}</div>
+
+          {/* Embedded: keep "Saved" ultra-light (no inner card) */}
+          {!open && isDone && embedded ? (
+            <div className={`mt-2 text-xs ${muted(dark)}`}>
+              <span className={dark ? "text-white/70 font-semibold" : "text-slate-800 font-semibold"}>Saved:</span>{" "}
+              <span className={dark ? "text-white/75" : "text-slate-700"}>{resultSummary}</span>
+              {result?.completedAt ? <span className={dark ? "text-white/45" : "text-slate-500"}> · {relativeTime(result.completedAt)}</span> : null}
             </div>
+          ) : null}
 
-            <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-              {definition.prompt}
+          {/* Only show hints when open (keeps collapsed clean) */}
+          {open && subtitle ? <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div> : null}
+          {open && definition.profileHint ? <div className={`mt-2 text-xs ${muted(dark)}`}>{definition.profileHint}</div> : null}
+
+          {/* Non-embedded: keep “Your answer” card + reset */}
+          {!open && isDone && !embedded ? (
+            <div className={["mt-3 rounded-2xl border px-3.5 py-3", "backdrop-blur-xl", dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90"].join(" ")}>
+              <div className={`text-xs font-semibold ${muted(dark)}`}>Your answer</div>
+              <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>{resultSummary}</div>
+              {result?.completedAt ? <div className={`mt-1 text-xs ${muted(dark)}`}>Saved {relativeTime(result.completedAt)}.</div> : null}
             </div>
+          ) : null}
 
-            {/* Embedded: keep "Saved" ultra-light (no inner card) */}
-            {!open && isDone && embedded ? (
-              <div className={`mt-2 text-xs ${muted(dark)}`}>
-                <span className={dark ? "text-white/70 font-semibold" : "text-slate-800 font-semibold"}>
-                  Saved:
-                </span>{" "}
-                <span className={dark ? "text-white/75" : "text-slate-700"}>{resultSummary}</span>
-                {result?.completedAt ? (
-                  <span className={dark ? "text-white/45" : "text-slate-500"}>
-                    {" "}
-                    · {relativeTime(result.completedAt)}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-
-            {/* CTA */}
-            <div className="mt-3 flex justify-start">
-              {embedded ? (
-                <button
-                  type="button"
-                  className={textAffordance(dark)}
-                  onClick={() => setOpen((v) => !v)}
-                  aria-expanded={open}
-                >
-                  <span aria-hidden className="opacity-80">
-                    {open ? "▾" : "▸"}
-                  </span>
-                  {open ? "Hide" : isDone ? "Edit answer" : "Answer this"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={ctaPill(dark)}
-                  onClick={() => setOpen((v) => !v)}
-                  aria-expanded={open}
-                >
-                  <span aria-hidden className="opacity-90">
-                    {open ? "▾" : "▸"}
-                  </span>
-                  {open ? "Hide" : isDone ? "Edit answer" : "Answer this"}
-                </button>
-              )}
+          {!open && isDone && !embedded ? (
+            <div className="mt-2 flex justify-start">
+              <button type="button" className={pill(dark)} onClick={clear}>
+                <span aria-hidden className="opacity-80">↺</span>
+                Reset
+              </button>
             </div>
-
-            {/* Only show these hints when open (keeps collapsed clean) */}
-            {open && subtitle ? (
-              <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
-            ) : null}
-
-            {open && definition.profileHint ? (
-              <div className={`mt-2 text-xs ${muted(dark)}`}>{definition.profileHint}</div>
-            ) : null}
-
-            {/* Non-embedded: keep your existing “Your answer” card + reset */}
-            {!open && isDone && !embedded ? (
-              <div
-                className={[
-                  "mt-3 rounded-2xl border px-3.5 py-3",
-                  "backdrop-blur-xl",
-                  dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
-                ].join(" ")}
-              >
-                <div className={`text-xs font-semibold ${muted(dark)}`}>Your answer</div>
-                <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-                  {resultSummary}
-                </div>
-                {result?.completedAt ? (
-                  <div className={`mt-1 text-xs ${muted(dark)}`}>
-                    Saved {relativeTime(result.completedAt)}.
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {!open && isDone && !embedded ? (
-              <div className="mt-2 flex justify-start">
-                <button type="button" className={pill(dark)} onClick={clear}>
-                  <span aria-hidden className="opacity-80">↺</span>
-                  Reset
-                </button>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
 
         <AnimatePresence initial={false}>
           {open ? (
             <motion.div
+              id={`${titleId}-panel`}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.18 }}
               className="mt-4"
             >
-              {/* KEY CHANGE: embedded renders inline (no inner bordered "card") */}
-              <div className={embedded ? "relative" : "relative"}>
-                {definition.kind === "choice" ? (
-                  <div className={embedded ? "space-y-2" : "space-y-2"}>
-                    {definition.options.map((opt) => {
-                      const selected =
-                        result?.kind === "choice" && result.choiceId === opt.id;
+              {definition.kind === "choice" ? (
+                <div className="space-y-2">
+                  {definition.options.map((opt) => {
+                    const selected = result?.kind === "choice" && result.choiceId === opt.id;
 
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={[
+                          "group relative w-full text-left rounded-2xl border px-4 py-3",
+                          "text-sm font-semibold transition active:scale-[0.99]",
+                          "backdrop-blur-md",
+                          dark ? "border-white/10 bg-white/6 text-white/88 hover:bg-white/10" : "border-black/10 bg-white text-slate-900 hover:bg-black/2",
+                          selected
+                            ? dark
+                              ? "border-emerald-300/18 bg-white/8 ring-1 ring-emerald-300/22"
+                              : "border-emerald-500/16 bg-black/2 ring-1 ring-emerald-500/16"
+                            : "",
+                          "focus-visible:outline-none",
+                          dark ? "focus-visible:ring-2 focus-visible:ring-emerald-300/24" : "focus-visible:ring-2 focus-visible:ring-emerald-500/18",
+                        ].join(" ")}
+                        onClick={() =>
+                          persist(
+                            makeChoiceResult({
+                              id: definition.id,
+                              pageId: definition.pageId,
+                              choiceId: opt.id,
+                            }),
+                            // IMPORTANT: do NOT auto-hide on selection
+                            { close: false }
+                          )
+                        }
+                      >
+                        <span
+                          aria-hidden
                           className={[
-                            "w-full text-left rounded-2xl border px-4 py-3",
-                            "text-sm font-semibold transition active:scale-[0.99]",
-                            "backdrop-blur-md",
-                            dark
-                              ? "border-white/10 bg-white/6 text-white/88 hover:bg-white/10"
-                              : "border-black/10 bg-white text-slate-900 hover:bg-black/2",
-                            selected
-                              ? dark
-                                ? "ring-2 ring-emerald-300/22 bg-white/10"
-                                : "ring-2 ring-emerald-500/18 bg-black/2"
-                              : "",
-                            "focus-visible:outline-none",
-                            dark
-                              ? "focus-visible:ring-2 focus-visible:ring-emerald-300/28"
-                              : "focus-visible:ring-2 focus-visible:ring-emerald-500/18",
+                            "absolute left-0 top-2 bottom-2 w-1 rounded-full transition",
+                            selected ? (dark ? "bg-emerald-300/70" : "bg-emerald-500/55") : dark ? "bg-white/0 group-hover:bg-white/6" : "bg-black/0 group-hover:bg-black/5",
                           ].join(" ")}
-                          onClick={() =>
-                            persist(
-                              makeChoiceResult({
-                                id: definition.id,
-                                pageId: definition.pageId,
-                                choiceId: opt.id,
-                              })
-                            )
-                          }
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">{opt.label}</div>
+                        />
+
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">{opt.label}</div>
+
+                          {selected ? (
                             <div
                               className={[
-                                "h-2.5 w-2.5 shrink-0 rounded-full",
-                                selected
-                                  ? "bg-emerald-300/85 shadow-[0_0_16px_rgba(52,211,153,0.45)]"
-                                  : dark
-                                  ? "bg-white/18"
-                                  : "bg-black/15",
+                                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
+                                "text-[11px] font-semibold",
+                                dark ? "border-emerald-300/18 bg-emerald-300/10 text-emerald-100/90" : "border-emerald-500/18 bg-emerald-500/10 text-emerald-900",
                               ].join(" ")}
                               aria-hidden
-                            />
-                          </div>
+                            >
+                              <CheckCircle2 className="h-4 w-4 opacity-90" />
+                              Selected
+                            </div>
+                          ) : (
+                            <div className={["h-2.5 w-2.5 shrink-0 rounded-full", dark ? "bg-white/16" : "bg-black/12"].join(" ")} aria-hidden />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+
+                  {!embedded ? (
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      {result?.completedAt ? (
+                        <div className={`text-xs ${muted(dark)}`}>Saved {relativeTime(result.completedAt)}.</div>
+                      ) : (
+                        <div className={`text-xs ${muted(dark)}`}>Tap one option to save.</div>
+                      )}
+
+                      {isDone ? (
+                        <button type="button" className={pill(dark)} onClick={clear}>
+                          <span aria-hidden className="opacity-80">↺</span>
+                          Reset
                         </button>
-                      );
-                    })}
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div>
+                  <textarea
+                    value={textValue}
+                    onChange={(e) => setTextValue(e.target.value)}
+                    placeholder={definition.placeholder ?? "One sentence is enough."}
+                    rows={3}
+                    className={[
+                      "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none",
+                      "transition",
+                      dark
+                        ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-emerald-300/26 focus-visible:border-white/18"
+                        : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500/18 focus-visible:border-black/15",
+                    ].join(" ")}
+                    maxLength={definition.maxChars ?? 280}
+                  />
 
-                    {/* Embedded: no footer chrome; Non-embedded keeps your footer */}
-                    {!embedded ? (
-                      <div className="mt-2 flex items-center justify-between gap-3">
-                        {result?.completedAt ? (
-                          <div className={`text-xs ${muted(dark)}`}>
-                            Saved {relativeTime(result.completedAt)}.
-                          </div>
-                        ) : (
-                          <div className={`text-xs ${muted(dark)}`}>
-                            Tap one option to save (and close).
-                          </div>
-                        )}
-
-                        {isDone ? (
-                          <button type="button" className={pill(dark)} onClick={clear}>
-                            <span aria-hidden className="opacity-80">↺</span>
-                            Reset
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div>
-                    <textarea
-                      value={textValue}
-                      onChange={(e) => setTextValue(e.target.value)}
-                      placeholder={definition.placeholder ?? "One sentence is enough."}
-                      rows={3}
-                      className={[
-                        "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none",
-                        "transition",
-                        dark
-                          ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-emerald-300/30 focus-visible:border-white/18"
-                          : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500/20 focus-visible:border-black/15",
-                      ].join(" ")}
-                      maxLength={definition.maxChars ?? 280}
-                    />
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <div className={`text-xs ${muted(dark)}`}>
-                        {textValue.trim().length}/{definition.maxChars ?? 280}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* Embedded: no reset button here (keeps it calm) */}
-                        {!embedded && isDone ? (
-                          <button type="button" className={pill(dark)} onClick={clear}>
-                            <span aria-hidden className="opacity-80">↺</span>
-                            Reset
-                          </button>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          className={[pill(dark, true), !textValue.trim() ? "opacity-50" : ""].join(" ")}
-                          onClick={() =>
-                            persist(
-                              makeTextResult({
-                                id: definition.id,
-                                pageId: definition.pageId,
-                                text: textValue.trim(),
-                              })
-                            )
-                          }
-                          disabled={!textValue.trim()}
-                        >
-                          Save & close →
-                        </button>
-                      </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <div className={`text-xs ${muted(dark)}`}>
+                      {textValue.trim().length}/{definition.maxChars ?? 280}
                     </div>
 
-                    {!embedded && result?.completedAt ? (
-                      <div className={`mt-2 text-xs ${muted(dark)}`}>
-                        Saved {relativeTime(result.completedAt)}.
-                      </div>
-                    ) : null}
+                    <div className="flex items-center gap-2">
+                      {!embedded && isDone ? (
+                        <button type="button" className={pill(dark)} onClick={clear}>
+                          <span aria-hidden className="opacity-80">↺</span>
+                          Reset
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className={[pill(dark, true), !textValue.trim() ? "opacity-50" : ""].join(" ")}
+                        onClick={() =>
+                          persist(
+                            makeTextResult({
+                              id: definition.id,
+                              pageId: definition.pageId,
+                              text: textValue.trim(),
+                            }),
+                            // Text explicitly "Save & close"
+                            { close: true }
+                          )
+                        }
+                        disabled={!textValue.trim()}
+                      >
+                        Save & close →
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {!embedded && result?.completedAt ? <div className={`mt-2 text-xs ${muted(dark)}`}>Saved {relativeTime(result.completedAt)}.</div> : null}
+                </div>
+              )}
             </motion.div>
           ) : null}
         </AnimatePresence>
