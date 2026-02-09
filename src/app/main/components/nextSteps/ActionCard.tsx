@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, CheckCircle2 } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 import type { ActionItem, ActionProof, ActionStatus } from "@/app/main/domain/actions";
 import {
@@ -134,7 +134,9 @@ function headerToggle(dark: boolean) {
       ? "border-white/12 bg-white/6 text-white/75 hover:bg-white/10"
       : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
     "focus-visible:outline-none",
-    dark ? "focus-visible:ring-2 focus-visible:ring-white/16" : "focus-visible:ring-2 focus-visible:ring-slate-900/12",
+    dark
+      ? "focus-visible:ring-2 focus-visible:ring-white/16"
+      : "focus-visible:ring-2 focus-visible:ring-slate-900/12",
   ].join(" ");
 }
 
@@ -264,7 +266,7 @@ export function ActionCard({
     const next = setActionStatus(
       items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
       persisted.id,
-      "started"
+      "started",
     );
     persist(next);
   }
@@ -274,7 +276,7 @@ export function ActionCard({
     const next = setActionStatus(
       items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
       persisted.id,
-      "done"
+      "done",
     );
     persist(next);
   }
@@ -328,30 +330,58 @@ export function ActionCard({
             ? "shadow-[0_18px_60px_rgba(0,0,0,0.16)]"
             : "shadow-[0_12px_34px_rgba(0,0,0,0.10)]"
           : dark
-          ? "shadow-[0_22px_80px_rgba(0,0,0,0.20)]"
-          : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
+            ? "shadow-[0_22px_80px_rgba(0,0,0,0.20)]"
+            : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
       ].join(" ")}
       aria-labelledby={titleId}
     >
       {/* Accent rail + subtle glow + watermark */}
       <div className="pointer-events-none absolute inset-0">
-        <div className={["absolute left-0 top-0 h-full w-1", dark ? "bg-violet-300/55" : "bg-violet-500/45"].join(" ")} />
+        <div
+          className={[
+            "absolute left-0 top-0 h-full w-1",
+            dark ? "bg-violet-300/55" : "bg-violet-500/45",
+          ].join(" ")}
+        />
 
-        <div className={["absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl", dark ? "bg-violet-300/10" : "bg-violet-400/8"].join(" ")} />
-        <div className={["absolute -bottom-24 -right-24 h-[320px] w-[320px] rounded-full blur-3xl", dark ? "bg-amber-300/8" : "bg-amber-400/6"].join(" ")} />
+        <div
+          className={[
+            "absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl",
+            dark ? "bg-violet-300/10" : "bg-violet-400/8",
+          ].join(" ")}
+        />
+        <div
+          className={[
+            "absolute -bottom-24 -right-24 h-[320px] w-[320px] rounded-full blur-3xl",
+            dark ? "bg-amber-300/8" : "bg-amber-400/6",
+          ].join(" ")}
+        />
 
-        <div className={["absolute right-5 top-5 opacity-[0.07]", dark ? "text-white" : "text-slate-900"].join(" ")} aria-hidden>
+        <div
+          className={[
+            "absolute right-5 top-5 opacity-[0.07]",
+            dark ? "text-white" : "text-slate-900",
+          ].join(" ")}
+          aria-hidden
+        >
           <Rocket className="h-14 w-14" />
         </div>
 
-        <div className={["absolute inset-x-0 top-0 h-px", dark ? "bg-white/10" : "bg-black/8"].join(" ")} />
+        <div
+          className={[
+            "absolute inset-x-0 top-0 h-px",
+            dark ? "bg-white/10" : "bg-black/8",
+          ].join(" ")}
+        />
       </div>
 
       <div className="relative">
         {/* Header row: left-aligned controls (match TinyTask) */}
         <div className="flex flex-wrap items-center gap-2">
           <span className={headerChip(dark)}>
-            <span aria-hidden className="opacity-90">⚡</span>
+            <span aria-hidden className="opacity-90">
+              ⚡
+            </span>
             <span>{label}</span>
           </span>
 
@@ -363,10 +393,10 @@ export function ActionCard({
                 status === "done"
                   ? "bg-emerald-300/75"
                   : status === "started"
-                  ? "bg-sky-300/75"
-                  : dark
-                  ? "bg-white/22"
-                  : "bg-black/18",
+                    ? "bg-sky-300/75"
+                    : dark
+                      ? "bg-white/22"
+                      : "bg-black/18",
               ].join(" ")}
             />
             {statusLabel(status)}
@@ -379,7 +409,9 @@ export function ActionCard({
             aria-expanded={open}
             aria-controls={`${titleId}-panel`}
           >
-            <span aria-hidden className="opacity-80">{open ? "▾" : "▸"}</span>
+            <span aria-hidden className="opacity-80">
+              {open ? "▾" : "▸"}
+            </span>
             {open ? "Hide" : "Details"}
           </button>
         </div>
@@ -394,7 +426,9 @@ export function ActionCard({
           </div>
 
           {/* Keep the collapsed card calm; only show subtitle when open */}
-          {open && subtitle ? <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div> : null}
+          {open && subtitle ? (
+            <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
+          ) : null}
         </div>
 
         <AnimatePresence initial={false}>
@@ -410,14 +444,25 @@ export function ActionCard({
               {/* Steps (inline, no nested "card") */}
               {definition.steps?.length ? (
                 <div className="mt-1">
-                  <div className={["text-xs font-semibold uppercase tracking-[0.18em]", dark ? "text-white/50" : "text-slate-500"].join(" ")}>
+                  <div
+                    className={[
+                      "text-xs font-semibold uppercase tracking-[0.18em]",
+                      dark ? "text-white/50" : "text-slate-500",
+                    ].join(" ")}
+                  >
                     Steps
                   </div>
 
                   <ul className="mt-3 space-y-2">
                     {definition.steps.map((s, idx) => (
                       <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
-                        <span aria-hidden className={["mt-2 inline-block h-1.5 w-1.5 rounded-full", dark ? "bg-white/30" : "bg-black/20"].join(" ")} />
+                        <span
+                          aria-hidden
+                          className={[
+                            "mt-2 inline-block h-1.5 w-1.5 rounded-full",
+                            dark ? "bg-white/30" : "bg-black/20",
+                          ].join(" ")}
+                        />
                         <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
                       </li>
                     ))}
@@ -428,9 +473,17 @@ export function ActionCard({
               {/* Logs */}
               {proofEntries.length ? (
                 <div className="mt-5">
-                  <div className={["flex items-center justify-between gap-3", "text-xs font-semibold uppercase tracking-[0.18em]", dark ? "text-white/50" : "text-slate-500"].join(" ")}>
+                  <div
+                    className={[
+                      "flex items-center justify-between gap-3",
+                      "text-xs font-semibold uppercase tracking-[0.18em]",
+                      dark ? "text-white/50" : "text-slate-500",
+                    ].join(" ")}
+                  >
                     <span>Your logs</span>
-                    <span className="normal-case tracking-normal font-semibold">{proofEntries.length}</span>
+                    <span className="normal-case tracking-normal font-semibold">
+                      {proofEntries.length}
+                    </span>
                   </div>
 
                   <div className="mt-3 space-y-3">
@@ -446,14 +499,22 @@ export function ActionCard({
                           ].join(" ")}
                         >
                           <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
-                          <div className={`mt-1 text-xs ${muted(dark)}`}>{tsOk ? relativeTime(e.ts) : "Earlier"}</div>
+                          <div className={`mt-1 text-xs ${muted(dark)}`}>
+                            {tsOk ? relativeTime(e.ts) : "Earlier"}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  {proofEntries.length > 3 ? <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div> : null}
-                  {typeof updatedAt === "number" ? <div className={`mt-2 text-xs ${muted(dark)}`}>Updated {relativeTime(updatedAt)}.</div> : null}
+                  {proofEntries.length > 3 ? (
+                    <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
+                  ) : null}
+                  {typeof updatedAt === "number" ? (
+                    <div className={`mt-2 text-xs ${muted(dark)}`}>
+                      Updated {relativeTime(updatedAt)}.
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -461,20 +522,26 @@ export function ActionCard({
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 {status !== "started" ? (
                   <button type="button" className={pill(dark)} onClick={onStart}>
-                    <span aria-hidden className="opacity-80">▶</span>
+                    <span aria-hidden className="opacity-80">
+                      ▶
+                    </span>
                     Start
                   </button>
                 ) : null}
 
                 {status !== "done" ? (
                   <button type="button" className={pill(dark)} onClick={onDone}>
-                    <span aria-hidden className="opacity-80">✓</span>
+                    <span aria-hidden className="opacity-80">
+                      ✓
+                    </span>
                     Mark done
                   </button>
                 ) : null}
 
                 <button type="button" className={pill(dark)} onClick={onLogProof}>
-                  <span aria-hidden className="opacity-80">✎</span>
+                  <span aria-hidden className="opacity-80">
+                    ✎
+                  </span>
                   Log result
                 </button>
               </div>
@@ -485,14 +552,20 @@ export function ActionCard({
         {/* Proof modal (kept as-is, just calm surface + consistent rings) */}
         {proofOpen ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-black/35 backdrop-blur-[6px]" onClick={() => setProofOpen(false)} aria-hidden />
+            <div
+              className="absolute inset-0 bg-black/35 backdrop-blur-[6px]"
+              onClick={() => setProofOpen(false)}
+              aria-hidden
+            />
 
             <div
               role="dialog"
               aria-modal="true"
               className={[
                 "relative w-full max-w-xl overflow-hidden rounded-[28px] border backdrop-blur-2xl",
-                dark ? "border-white/15 bg-white/9 shadow-[0_28px_95px_rgba(0,0,0,0.45)]" : "border-black/10 bg-white/90 shadow-[0_28px_95px_rgba(0,0,0,0.22)]",
+                dark
+                  ? "border-white/15 bg-white/9 shadow-[0_28px_95px_rgba(0,0,0,0.45)]"
+                  : "border-black/10 bg-white/90 shadow-[0_28px_95px_rgba(0,0,0,0.22)]",
               ].join(" ")}
             >
               <div className="relative px-5 py-5 sm:px-7 sm:py-6">
@@ -502,7 +575,11 @@ export function ActionCard({
 
                     <div className={`mt-1 text-sm ${muted(dark)}`}>
                       You just tried:{" "}
-                      <span className={dark ? "text-white/85 font-semibold" : "text-slate-900 font-semibold"}>
+                      <span
+                        className={
+                          dark ? "text-white/85 font-semibold" : "text-slate-900 font-semibold"
+                        }
+                      >
                         {definition.title}
                       </span>
                     </div>
@@ -541,7 +618,10 @@ export function ActionCard({
 
                   <button
                     type="button"
-                    className={[pill(dark, true), !(proofText ?? "").trim() ? "opacity-50" : ""].join(" ")}
+                    className={[
+                      pill(dark, true),
+                      !(proofText ?? "").trim() ? "opacity-50" : "",
+                    ].join(" ")}
                     onClick={saveProof}
                     disabled={!(proofText ?? "").trim()}
                   >

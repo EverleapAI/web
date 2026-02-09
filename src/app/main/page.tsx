@@ -5,7 +5,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
 import { TinyTasks, type TinyTaskSummary } from "./components/TinyTasks";
 
@@ -263,7 +262,8 @@ function scoreAnswer(a: string) {
   if (!isMeaningfulText(t)) return 0;
 
   const len = t.length;
-  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
+  const hasEffort =
+    /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
   const hasMovement = /\b(gym|run|lift|workout|move|training|practice)\b/i.test(t);
   const hasEmotion = /\b(happy|calm|proud|stressed|anxious|excited|good|better)\b/i.test(t);
   const hasRoutine = /\b(day|daily|routine|morning|night|shower|sleep|schedule)\b/i.test(t);
@@ -297,7 +297,8 @@ function interpretAnswer(opts: {
   if (hasEffort && hasMovement) {
     interpretation = "You do best when progress feels earned — effort + momentum matter to you.";
   } else if (hasEffort) {
-    interpretation = "You do best when the day feels earned — real effort, real progress, not just drifting.";
+    interpretation =
+      "You do best when the day feels earned — real effort, real progress, not just drifting.";
   } else if (hasMovement) {
     interpretation = "You do best with momentum — when you move, your head clears and you lock in.";
   } else if (hasMood) {
@@ -311,7 +312,8 @@ function interpretAnswer(opts: {
   let extra: string | undefined;
   if (confidence >= 0.78) {
     if (lane === "high_school") {
-      extra = "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
+      extra =
+        "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
     } else if (lane === "young_adult") {
       extra =
         "So I’m going to bias toward paths with visible momentum — projects, routines, and environments where progress shows.";
@@ -336,8 +338,8 @@ function pickBestSignal(): ExtractedSignal | null {
     onboarding.situation === "high_school"
       ? "high_school"
       : onboarding.situation === "young_adult"
-      ? "young_adult"
-      : "unknown";
+        ? "young_adult"
+        : "unknown";
 
   const candidates: Array<{ id: string; cat: RecommendedNext; answer: string; score: number }> = [];
 
@@ -405,10 +407,12 @@ function writeCopyVariant(n: number) {
 type NarrativeMode = "welcome_new" | "in_progress" | "complete_signals";
 
 function certaintyLine(certainty?: OnboardingV4["certainty"]) {
-  if (certainty === "strong") return "You sound pretty clear on what you want — we’ll make it real, not vague.";
+  if (certainty === "strong")
+    return "You sound pretty clear on what you want — we’ll make it real, not vague.";
   if (certainty === "kinda")
     return "You’re not guessing, but you’re not locked in either — that’s a good place to work from.";
-  if (certainty === "no_clue") return "You don’t need a “forever plan.” We just need one honest direction to test.";
+  if (certainty === "no_clue")
+    return "You don’t need a “forever plan.” We just need one honest direction to test.";
   return "";
 }
 
@@ -443,8 +447,8 @@ export default function MainHomePage() {
     "orbGlowClass" in (theme as unknown as Record<string, unknown>)
       ? String((theme as unknown as { orbGlowClass?: string }).orbGlowClass ?? "")
       : dark
-      ? "bg-sky-400/25"
-      : "bg-amber-300/30";
+        ? "bg-sky-400/25"
+        : "bg-amber-300/30";
 
   const [presenceSoft, setPresenceSoft] = React.useState(false);
 
@@ -638,8 +642,8 @@ export default function MainHomePage() {
     allSignalsComplete
       ? "complete_signals"
       : hasOnboarded && !hasAnyProgress && !signal && !hasAnyAction
-      ? "welcome_new"
-      : "in_progress";
+        ? "welcome_new"
+        : "in_progress";
 
   const paragraphs: string[] = React.useMemo(() => {
     if (!mounted) return ["…"];
@@ -659,10 +663,10 @@ export default function MainHomePage() {
       copyVariant === 0
         ? "direct"
         : copyVariant === 1
-        ? "warm"
-        : copyVariant === 2
-        ? "precise"
-        : "minimal";
+          ? "warm"
+          : copyVariant === 2
+            ? "precise"
+            : "minimal";
 
     const certainty = certaintyLine(onboarding.certainty);
 
@@ -675,16 +679,16 @@ export default function MainHomePage() {
       didLineParts.length === 0
         ? ""
         : didLineParts.length === 1
-        ? `You’ve already locked in ${didLineParts[0]}.`
-        : didLineParts.length === 2
-        ? `You’ve already locked in ${didLineParts[0]} + ${didLineParts[1]}.`
-        : "You’ve already locked in Motivations + Strengths + Skills.";
+          ? `You’ve already locked in ${didLineParts[0]}.`
+          : didLineParts.length === 2
+            ? `You’ve already locked in ${didLineParts[0]} + ${didLineParts[1]}.`
+            : "You’ve already locked in Motivations + Strengths + Skills.";
 
     const actionLine = weeklyFocusSet
       ? "And you’ve got a weekly focus set — that’s where progress actually starts showing up."
       : sprintCount > 0
-      ? `You’ve already done ${sprintCount} curiosity sprint${sprintCount === 1 ? "" : "s"} — that’s real momentum.`
-      : "";
+        ? `You’ve already done ${sprintCount} curiosity sprint${sprintCount === 1 ? "" : "s"} — that’s real momentum.`
+        : "";
 
     const signalLine = signal?.interpretation
       ? `One pattern I’m taking seriously: ${signal.interpretation}`
@@ -695,10 +699,10 @@ export default function MainHomePage() {
         cadence === "minimal"
           ? "Welcome to Everleap. We’ll turn what you already feel into a direction you can act on."
           : cadence === "precise"
-          ? "Welcome to Everleap. My job is to make your next steps specific — not generic — using the signals you give me."
-          : cadence === "warm"
-          ? "Welcome to Everleap. I’ll be your coach here — the goal is a direction that feels real, not random."
-          : "Welcome to Everleap. I’m here to help you find a direction you can actually move on.";
+            ? "Welcome to Everleap. My job is to make your next steps specific — not generic — using the signals you give me."
+            : cadence === "warm"
+              ? "Welcome to Everleap. I’ll be your coach here — the goal is a direction that feels real, not random."
+              : "Welcome to Everleap. I’m here to help you find a direction you can actually move on.";
 
       const journey =
         cadence === "minimal"
@@ -720,10 +724,10 @@ export default function MainHomePage() {
       cadence === "minimal"
         ? "I’m tracking your signal so far — and I can already make a cleaner next call."
         : cadence === "precise"
-        ? "You’ve given me enough signal to stop guessing and start narrowing."
-        : cadence === "warm"
-        ? "Good — you’ve started giving me real signal. That’s how this stops feeling generic."
-        : "Alright — I’m getting a clearer read on you from what you’ve done so far.";
+          ? "You’ve given me enough signal to stop guessing and start narrowing."
+          : cadence === "warm"
+            ? "Good — you’ve started giving me real signal. That’s how this stops feeling generic."
+            : "Alright — I’m getting a clearer read on you from what you’ve done so far.";
 
     const recommend = `My recommendation: ${labelForNext(next)}. ${why}`;
 
@@ -915,7 +919,14 @@ export default function MainHomePage() {
                     aria-label="Cycle copy variant"
                     title="Cycle copy variant"
                   >
-                    Copy {copyVariant === 0 ? "A" : copyVariant === 1 ? "B" : copyVariant === 2 ? "C" : "D"}
+                    Copy{" "}
+                    {copyVariant === 0
+                      ? "A"
+                      : copyVariant === 1
+                        ? "B"
+                        : copyVariant === 2
+                          ? "C"
+                          : "D"}
                   </button>
 
                   <button
@@ -980,8 +991,6 @@ export default function MainHomePage() {
             </div>
           </section>
         </main>
-
-        <BottomNav />
       </div>
     </AppChrome>
   );

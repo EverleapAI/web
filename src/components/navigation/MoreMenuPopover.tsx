@@ -3,13 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Shield,
-  FileText,
-  Mail,
-  Accessibility,
-  User,
-} from "lucide-react";
+import { Shield, FileText, Mail, Accessibility, User } from "lucide-react";
 
 import {
   DEFAULT_THEME_ID,
@@ -82,8 +76,8 @@ export function MoreMenuPopover({
         className="absolute inset-0 bg-transparent"
       />
 
-      {/* Popover anchored above the + button (left-4, bottom-[76px]) */}
-      <div className="absolute left-4 bottom-[calc(76px+64px)]">
+      {/* Popover anchored above the + FAB (right-4, bottom-[76px]) */}
+      <div className="absolute right-4 bottom-[calc(76px+64px)]">
         <div className="relative w-[270px] overflow-hidden rounded-2xl border border-white/12 bg-black/60 backdrop-blur-xl shadow-2xl shadow-black/55">
           {/* Theme tint inside the popover (subtle) */}
           {ambient > 0 && (

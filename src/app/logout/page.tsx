@@ -39,7 +39,8 @@ export default function LogoutPage() {
         /* ignore */
       }
 
-      router.replace("/welcome");
+      // ✅ Go to public landing page
+      router.replace("/");
     })();
   }, [router]);
 

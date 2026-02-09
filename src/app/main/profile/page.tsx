@@ -3,613 +3,495 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User,
   Mail,
   Shield,
-  Bell,
-  Palette,
-  GraduationCap,
-  MapPin,
-  Lock,
+  LifeBuoy,
+  Accessibility,
   ChevronRight,
-  SlidersHorizontal,
+  LogIn,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 
 import { AppChrome } from "@/components/site/AppChrome";
 import { BottomNav } from "@/components/navigation/BottomNav";
 
-type SpotlightThemeId = "nightDusk" | "berrySoft" | "forestSoft";
-type GradientLevel = 1 | 2 | 3;
+import {
+  DEFAULT_THEME_ID,
+  DEFAULT_GRADIENT_LEVEL,
+  getThemeById,
+  getGradientConfig,
+  getPageBackgroundImage,
+  isDarkTheme,
+  type SpotlightThemeId,
+  type GradientLevel,
+} from "@/theme/everleapVisuals";
 
-const THEME_LABELS: Record<SpotlightThemeId, string> = {
-  nightDusk: "Night Dusk",
-  berrySoft: "Berry Soft",
-  forestSoft: "Forest Soft",
-};
+/* =============================================================================
+   UI helpers
+   ============================================================================= */
 
-// Minimal, local theme palette (keeps this page self-contained + lint-safe)
-function getThemeColors(themeId: SpotlightThemeId) {
-  switch (themeId) {
-    case "nightDusk":
-      return {
-        dark: true,
-        bg0: "#070A12",
-        bg1: "#0B1221",
-        glowA: "#8B5CF6", // violet
-        glowB: "#22C55E", // green
-        glowC: "#38BDF8", // sky
-        card: "rgba(255,255,255,0.08)",
-        cardBorder: "rgba(255,255,255,0.12)",
-        text: "rgba(255,255,255,0.92)",
-        subtext: "rgba(255,255,255,0.70)",
-        softText: "rgba(255,255,255,0.55)",
-      };
-    case "berrySoft":
-      return {
-        dark: false,
-        bg0: "#FFF7FB",
-        bg1: "#F7F0FF",
-        glowA: "#EC4899", // pink
-        glowB: "#8B5CF6", // violet
-        glowC: "#FB7185", // rose
-        card: "rgba(255,255,255,0.72)",
-        cardBorder: "rgba(15,23,42,0.10)",
-        text: "rgba(15,23,42,0.92)",
-        subtext: "rgba(15,23,42,0.70)",
-        softText: "rgba(15,23,42,0.55)",
-      };
-    case "forestSoft":
-    default:
-      return {
-        dark: false,
-        bg0: "#F5FFFB",
-        bg1: "#F1F7FF",
-        glowA: "#22C55E", // green
-        glowB: "#06B6D4", // cyan
-        glowC: "#60A5FA", // blue
-        card: "rgba(255,255,255,0.72)",
-        cardBorder: "rgba(15,23,42,0.10)",
-        text: "rgba(15,23,42,0.92)",
-        subtext: "rgba(15,23,42,0.70)",
-        softText: "rgba(15,23,42,0.55)",
-      };
-  }
-}
-
-function clamp01(n: number) {
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
 }
 
-function alphaForLevel(level: GradientLevel) {
-  // tuned to be “between 1 and 2” vibe without overwhelming content
-  // 1 = subtle, 2 = medium, 3 = richer
-  if (level === 1) return 0.18;
-  if (level === 2) return 0.28;
-  return 0.38;
+function ring(dark: boolean) {
+  return dark ? "ring-1 ring-white/10" : "ring-1 ring-black/8";
 }
 
-function SectionCard({
+function surface(dark: boolean) {
+  return dark ? "bg-white/5" : "bg-white/80";
+}
+
+function muted(dark: boolean) {
+  return dark ? "text-white/60" : "text-slate-600";
+}
+
+function text(dark: boolean) {
+  return dark ? "text-white" : "text-slate-900";
+}
+
+function softText(dark: boolean) {
+  return dark ? "text-white/78" : "text-slate-700";
+}
+
+function divider(dark: boolean) {
+  return dark ? "border-white/10" : "border-black/10";
+}
+
+function rowHover(dark: boolean) {
+  return dark ? "hover:bg-white/[0.06]" : "hover:bg-black/[0.03]";
+}
+
+function iconChip(dark: boolean) {
+  return dark
+    ? "border-white/12 bg-white/8 text-white/85"
+    : "border-black/10 bg-white/85 text-slate-900";
+}
+
+function primaryButton(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-5 py-2.5",
+    "text-sm font-semibold transition active:scale-[0.98]",
+    "backdrop-blur-xl",
+    dark
+      ? "border-emerald-300/18 bg-emerald-300/12 text-emerald-50 hover:bg-emerald-300/16 shadow-[0_18px_60px_rgba(0,0,0,0.22)]"
+      : "border-emerald-500/18 bg-emerald-500/10 text-emerald-900 hover:bg-emerald-500/14 shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
+    dark
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/28"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/18",
+  ].join(" ");
+}
+
+function quietButton(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-4 py-2",
+    "text-sm font-semibold transition active:scale-[0.99]",
+    dark
+      ? "border-white/12 bg-white/6 text-white/80 hover:bg-white/10"
+      : "border-black/10 bg-white/75 text-slate-900 hover:bg-white",
+    dark
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/16"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/12",
+  ].join(" ");
+}
+
+function pill(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+    "text-[11px] font-semibold uppercase tracking-[0.18em]",
+    dark
+      ? "border-amber-300/16 bg-amber-300/10 text-amber-100"
+      : "border-amber-500/18 bg-amber-500/10 text-amber-900",
+  ].join(" ");
+}
+
+function SectionHeader({
   title,
-  subtitle,
-  icon,
-  children,
-  footer,
+  hint,
   dark,
-  card,
-  cardBorder,
 }: {
   title: string;
-  subtitle?: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-  dark: boolean;
-  card: string;
-  cardBorder: string;
-}) {
-  return (
-    <section
-      className="rounded-2xl p-4 md:p-5 shadow-sm"
-      style={{
-        background: card,
-        border: `1px solid ${cardBorder}`,
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{
-            background: dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.06)",
-            border: dark
-              ? "1px solid rgba(255,255,255,0.14)"
-              : "1px solid rgba(15,23,42,0.08)",
-          }}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-base font-semibold leading-6">{title}</h2>
-              {subtitle ? <p className="mt-0.5 text-sm opacity-75">{subtitle}</p> : null}
-            </div>
-          </div>
-
-          <div className="mt-3">{children}</div>
-
-          {footer ? <div className="mt-4">{footer}</div> : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Field({
-  label,
-  value,
-  disabled = true,
-  dark,
-}: {
-  label: string;
-  value: string;
-  disabled?: boolean;
+  hint?: string;
   dark: boolean;
 }) {
   return (
-    <label className="block">
-      <div className="mb-1.5 text-xs font-medium opacity-75">{label}</div>
-      <input
-        value={value}
-        disabled={disabled}
-        readOnly
-        className={[
-          "w-full rounded-xl px-3 py-2 text-sm outline-none",
-          "ring-1 transition",
-          dark
-            ? "bg-white/10 text-white/90 ring-white/15 placeholder:text-white/40"
-            : "bg-white/70 text-slate-900 ring-slate-900/10 placeholder:text-slate-500",
-        ].join(" ")}
-      />
-    </label>
-  );
-}
-
-function ToggleRow({
-  label,
-  helper,
-  disabled = true,
-  dark,
-}: {
-  label: string;
-  helper?: string;
-  disabled?: boolean;
-  dark: boolean;
-}) {
-  return (
-    <div
-      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 ring-1"
-      style={{
-        background: dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.60)",
-        borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
-      }}
-    >
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{label}</div>
-        {helper ? <div className="mt-0.5 text-xs opacity-70">{helper}</div> : null}
-      </div>
-
-      <button
-        type="button"
-        className={[
-          "relative h-7 w-12 rounded-full ring-1 transition",
-          dark ? "bg-white/10 ring-white/15" : "bg-slate-900/10 ring-slate-900/10",
-        ].join(" ")}
-        disabled={disabled}
-        aria-disabled={disabled}
-        aria-label={`${label} (coming soon)`}
-        title="Coming soon"
-      >
-        <span
-          className={[
-            "absolute top-0.5 h-6 w-6 rounded-full",
-            "transition",
-            dark ? "bg-white/35" : "bg-white",
-          ].join(" ")}
-          style={{ left: 4 }}
-        />
-      </button>
+    <div className="mt-5 flex items-end justify-between gap-3 px-1">
+      <div className="text-sm font-semibold">{title}</div>
+      {hint ? <div className={`text-[11px] ${muted(dark)}`}>{hint}</div> : null}
     </div>
   );
 }
 
-export default function ProfilePage() {
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(2);
+function Row({
+  href,
+  onClick,
+  icon,
+  label,
+  detail,
+  right,
+  dark,
+}: {
+  href?: string;
+  onClick?: () => void;
+  icon: React.ReactNode;
+  label: string;
+  detail?: string;
+  right?: React.ReactNode;
+  dark: boolean;
+}) {
+  const content = (
+    <div
+      className={[
+        "flex items-center justify-between gap-3 px-4 py-3.5",
+        "transition",
+        rowHover(dark),
+      ].join(" ")}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className={[
+            "inline-flex h-10 w-10 items-center justify-center rounded-2xl border",
+            iconChip(dark),
+          ].join(" ")}
+        >
+          {icon}
+        </span>
 
-  const t = getThemeColors(themeId);
-  const a = alphaForLevel(gradientLevel);
+        <div className="min-w-0">
+          <div className="truncate text-[15px] font-semibold">{label}</div>
+          {detail ? (
+            <div className={`mt-0.5 truncate text-[12px] ${muted(dark)}`}>{detail}</div>
+          ) : null}
+        </div>
+      </div>
 
-  const pageStyle: React.CSSProperties = {
-    minHeight: "100vh",
-    color: t.text,
-    background: [
-      // base wash
-      `linear-gradient(180deg, ${t.bg0} 0%, ${t.bg1} 65%, ${t.bg1} 100%)`,
-      // soft glows
-      `radial-gradient(900px 500px at 20% 10%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 100%)`,
-      `radial-gradient(700px 420px at 18% 22%, rgba(255,255,255,${
-        t.dark ? 0.03 : 0.20
-      }) 0%, rgba(255,255,255,0) 60%)`,
-      `radial-gradient(820px 520px at 82% 18%, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 100%)`,
-      `radial-gradient(900px 600px at 15% 30%, ${hexToRgba(t.glowA, a)} 0%, rgba(0,0,0,0) 60%)`,
-      `radial-gradient(900px 600px at 85% 28%, ${hexToRgba(t.glowB, clamp01(a * 0.9))} 0%, rgba(0,0,0,0) 60%)`,
-      `radial-gradient(1100px 700px at 50% 78%, ${hexToRgba(
-        t.glowC,
-        clamp01(a * 0.75),
-      )} 0%, rgba(0,0,0,0) 62%)`,
-    ].join(", "),
-  };
+      <div className="flex shrink-0 items-center gap-2">
+        {right ?? null}
+        <ChevronRight className={dark ? "h-4 w-4 text-white/40" : "h-4 w-4 text-slate-400"} />
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {content}
+      </Link>
+    );
+  }
 
   return (
-    <div style={pageStyle}>
-      <AppChrome>
-        <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-4 md:pt-6">
+    <button type="button" className="block w-full text-left" onClick={onClick}>
+      {content}
+    </button>
+  );
+}
+
+/* =============================================================================
+   Auth
+   ============================================================================= */
+
+type AuthState = {
+  isAuthed: boolean;
+  displayName?: string;
+  isDev?: boolean;
+};
+
+function readAuthState(): AuthState {
+  try {
+    const verified = localStorage.getItem("everleap.verified");
+    const userId = localStorage.getItem("everleap.userId");
+    const session = localStorage.getItem("everleap.session");
+
+    const isAuthed = Boolean(verified || userId || session);
+
+    const displayName =
+      localStorage.getItem("everleap.displayName") ??
+      localStorage.getItem("everleap.name") ??
+      undefined;
+
+    const isDev =
+      (userId ?? "") === "dev_user" ||
+      (session ?? "").startsWith("dev_") ||
+      (displayName ?? "") === "Dev User";
+
+    return { isAuthed, displayName: displayName?.trim() || undefined, isDev };
+  } catch {
+    return { isAuthed: false };
+  }
+}
+
+function writeDevAuthStub(opts?: { displayName?: string }) {
+  if (typeof window === "undefined") return;
+
+  const displayName = (opts?.displayName ?? "Dev User").trim() || "Dev User";
+  const session = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+  try {
+    window.localStorage.setItem("everleap.verified", "1");
+    window.localStorage.setItem("everleap.userId", "dev_user");
+    window.localStorage.setItem("everleap.session", session);
+    window.localStorage.setItem("everleap.displayName", displayName);
+  } catch {
+    // ignore
+  }
+
+  // Nudge other tabs/components relying on storage listeners.
+  try {
+    window.dispatchEvent(new Event("storage"));
+  } catch {
+    // ignore
+  }
+}
+
+/* =============================================================================
+   Page
+   ============================================================================= */
+
+export default function ProfilePage() {
+  const router = useRouter();
+
+  // Keep Me page consistent with the app’s current visual system.
+  const themeId = DEFAULT_THEME_ID as SpotlightThemeId;
+  const gradientLevel = DEFAULT_GRADIENT_LEVEL as GradientLevel;
+
+  const theme = getThemeById(themeId);
+  const grad = getGradientConfig(gradientLevel);
+  const dark = isDarkTheme(themeId);
+
+  const bgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
+  const bgStyle: React.CSSProperties = bgImage ? { backgroundImage: bgImage } : {};
+
+  const [auth, setAuth] = React.useState<AuthState>({ isAuthed: false });
+
+  React.useEffect(() => {
+    setAuth(readAuthState());
+
+    const refresh = () => setAuth(readAuthState());
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  function signInDevAndGo() {
+    writeDevAuthStub({ displayName: auth.displayName ?? "Dev User" });
+    setAuth(readAuthState());
+    router.push("/main");
+  }
+
+  function goLogout() {
+    router.push("/logout");
+  }
+
+  // Footer ambience: intentionally quieter than the page.
+  const ambient = Math.min(clamp01(grad.ambientOpacity), 0.22);
+
+  return (
+    <AppChrome themeId={themeId} gradientLevel={gradientLevel} orbSource="profile_me" ambientCap={0.22}>
+      <div className={`relative min-h-[100svh] ${theme.pageBgBaseClass}`} style={bgStyle}>
+        {/* Ambient wash */}
+        {gradientLevel > 0 && (
+          <div className="pointer-events-none absolute inset-0" style={{ opacity: ambient * 0.42 }} aria-hidden>
+            <div className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
+            <div
+              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+              style={{ opacity: 0.32 }}
+            />
+          </div>
+        )}
+
+        <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-5">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2">
-                <div
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl"
-                  style={{
-                    background: t.dark ? "rgba(255,255,255,0.10)" : "rgba(15,23,42,0.06)",
-                    border: t.dark
-                      ? "1px solid rgba(255,255,255,0.14)"
-                      : "1px solid rgba(15,23,42,0.08)",
-                  }}
-                >
-                  <User className="h-5 w-5" />
+              <div className="flex items-center gap-2">
+                <span className={["inline-flex h-10 w-10 items-center justify-center rounded-2xl border", iconChip(dark)].join(" ")}>
+                  <User className="h-5 w-5 opacity-90" />
+                </span>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h1 className="truncate text-xl font-semibold">Me</h1>
+                    {auth.isDev ? (
+                      <span className={pill(dark)} title="Development-only login">
+                        DEV MODE
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className={`mt-0.5 text-[12px] ${muted(dark)}`}>Account + support (not your Insights content).</div>
                 </div>
-                <h1 className="text-xl font-semibold leading-7">Profile</h1>
               </div>
-              <p className="mt-2 text-sm" style={{ color: t.subtext }}>
-                This page will manage your account + personal settings (not your Everleap content).
-                For now, it’s a preview.
-              </p>
             </div>
 
-            <Link
-              href="/main"
-              className={[
-                "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm",
-                "ring-1 transition",
-                t.dark
-                  ? "bg-white/10 text-white/85 ring-white/15 hover:bg-white/15"
-                  : "bg-white/60 text-slate-900 ring-slate-900/10 hover:bg-white/75",
-              ].join(" ")}
-            >
+            <Link href="/main" className={quietButton(dark)} aria-label="Back to main" title="Back">
               Back
               <ChevronRight className="h-4 w-4 opacity-70" />
             </Link>
           </div>
 
-          {/* Theme controls */}
+          {/* Identity / status card */}
           <div
-            className="mt-5 rounded-2xl p-4"
-            style={{
-              background: t.dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.55)",
-              border: t.dark
-                ? "1px solid rgba(255,255,255,0.12)"
-                : "1px solid rgba(15,23,42,0.10)",
-              backdropFilter: "blur(10px)",
-            }}
+            className={[
+              "relative mt-4 overflow-hidden rounded-3xl px-5 py-4",
+              ring(dark),
+              surface(dark),
+              "backdrop-blur-2xl",
+              dark ? "shadow-[0_22px_80px_rgba(0,0,0,0.22)]" : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
+            ].join(" ")}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="h-4 w-4 opacity-80" />
-                <div className="text-sm font-semibold">Preview controls</div>
+            {/* Accent rail + watermark */}
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute left-0 top-0 h-full w-1.5 bg-sky-400/70" />
+
+              <div className={["absolute -top-16 -left-20 h-[280px] w-[280px] rounded-full blur-3xl", dark ? "bg-sky-400/12" : "bg-sky-400/8"].join(" ")} />
+              <div className={["absolute -bottom-20 -right-20 h-[320px] w-[320px] rounded-full blur-3xl", dark ? "bg-emerald-400/10" : "bg-emerald-400/7"].join(" ")} />
+
+              <div className={["absolute right-5 top-5", "opacity-[0.10] blur-[0.6px]", dark ? "text-sky-200" : "text-sky-700"].join(" ")} aria-hidden>
+                <Sparkles className="h-14 w-14" />
               </div>
-              <div className="text-xs opacity-70">placeholder UI</div>
+
+              <div className={["absolute inset-x-0 top-0 h-px", dark ? "bg-white/10" : "bg-black/8"].join(" ")} />
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {/* Theme pills */}
-              <button
-                type="button"
-                onClick={() => setThemeId("nightDusk")}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  themeId === "nightDusk"
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                <Palette className="h-4 w-4 opacity-80" />
-                {THEME_LABELS.nightDusk}
-              </button>
+            <div className="relative">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className={`text-[16px] font-semibold ${text(dark)}`}>{auth.displayName ? auth.displayName : "You"}</div>
 
-              <button
-                type="button"
-                onClick={() => setThemeId("berrySoft")}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  themeId === "berrySoft"
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                <Palette className="h-4 w-4 opacity-80" />
-                {THEME_LABELS.berrySoft}
-              </button>
+                {auth.isDev ? (
+                  <div className={pill(dark)} title="This is a temporary dev-only auth stub">
+                    DEV AUTH STUB
+                  </div>
+                ) : null}
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setThemeId("forestSoft")}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  themeId === "forestSoft"
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                <Palette className="h-4 w-4 opacity-80" />
-                {THEME_LABELS.forestSoft}
-              </button>
+              <div className={`mt-1 text-sm ${softText(dark)}`}>
+                {auth.isAuthed
+                  ? auth.isDev
+                    ? "Signed in using a temporary dev stub."
+                    : "Signed in on this device."
+                  : "Not signed in yet — sign in to unlock Today, Insights, Explore, and Actions."}
+              </div>
 
-              {/* Gradient pills */}
-              <div
-                className="mx-1 h-6 w-px opacity-30"
-                style={{ background: t.dark ? "white" : "black" }}
-              />
-              <button
-                type="button"
-                onClick={() => setGradientLevel(1)}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  gradientLevel === 1
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                Subtle
-              </button>
-              <button
-                type="button"
-                onClick={() => setGradientLevel(2)}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  gradientLevel === 2
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                Medium
-              </button>
-              <button
-                type="button"
-                onClick={() => setGradientLevel(3)}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ring-1 transition",
-                  gradientLevel === 3
-                    ? t.dark
-                      ? "bg-white/20 ring-white/30"
-                      : "bg-slate-900/10 ring-slate-900/15"
-                    : t.dark
-                      ? "bg-white/10 ring-white/15 hover:bg-white/15"
-                      : "bg-white/50 ring-slate-900/10 hover:bg-white/70",
-                ].join(" ")}
-              >
-                Rich
-              </button>
-            </div>
-          </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {auth.isAuthed ? (
+                  <button type="button" className={primaryButton(dark)} onClick={goLogout}>
+                    <LogOut className="h-4 w-4 opacity-90" />
+                    Log out
+                  </button>
+                ) : (
+                  <button type="button" className={primaryButton(dark)} onClick={signInDevAndGo}>
+                    <LogIn className="h-4 w-4 opacity-90" />
+                    Sign in
+                  </button>
+                )}
 
-          {/* Content grid */}
-          <div className="mt-5 grid grid-cols-1 gap-4">
-            <SectionCard
-              title="Basics"
-              subtitle="Who you are on the account level (coming soon)."
-              icon={<Mail className="h-5 w-5 opacity-90" />}
-              dark={t.dark}
-              card={t.card}
-              cardBorder={t.cardBorder}
-              footer={
                 <button
                   type="button"
+                  className={[quietButton(dark), "opacity-70 cursor-not-allowed"].join(" ")}
                   disabled
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium",
-                    "ring-1 transition opacity-70",
-                    t.dark ? "bg-white/10 text-white ring-white/15" : "bg-white/60 text-slate-900 ring-slate-900/10",
-                  ].join(" ")}
+                  aria-disabled
                   title="Coming soon"
                 >
-                  Edit basics (coming soon)
-                  <ChevronRight className="h-4 w-4 opacity-70" />
+                  Edit profile (soon)
                 </button>
-              }
-            >
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Field label="Display name" value="(placeholder)" dark={t.dark} />
-                <Field label="Email" value="(placeholder)" dark={t.dark} />
               </div>
-            </SectionCard>
 
-            <SectionCard
-              title="About you"
-              subtitle="General info to personalize the experience (not Everleap content)."
-              icon={<GraduationCap className="h-5 w-5 opacity-90" />}
-              dark={t.dark}
-              card={t.card}
-              cardBorder={t.cardBorder}
-            >
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Field label="School / organization" value="(placeholder)" dark={t.dark} />
-                <Field label="Grade / level" value="(placeholder)" dark={t.dark} />
+              <div className={`mt-3 text-[12px] ${muted(dark)}`}>
+                Everleap content (insights, logs, goals) lives inside the main experience — this is just account + support.
               </div>
-              <div className="mt-3">
-                <div
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 ring-1"
-                  style={{
-                    background: t.dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.60)",
-                    borderColor: t.dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
-                  }}
-                >
-                  <MapPin className="h-4 w-4 opacity-80" />
-                  <div className="text-sm">
-                    City / timezone: <span className="opacity-70">(placeholder)</span>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Preferences"
-              subtitle="Style + notifications. (Preview only.)"
-              icon={<Bell className="h-5 w-5 opacity-90" />}
-              dark={t.dark}
-              card={t.card}
-              cardBorder={t.cardBorder}
-            >
-              <div className="grid grid-cols-1 gap-2">
-                <ToggleRow
-                  label="Notifications"
-                  helper="Reminders, nudges, and progress check-ins."
-                  dark={t.dark}
-                />
-                <ToggleRow
-                  label="Email updates"
-                  helper="Occasional product updates. (Off by default later.)"
-                  dark={t.dark}
-                />
-                <ToggleRow
-                  label="Reduce motion"
-                  helper="Less animation for calmer screens."
-                  dark={t.dark}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Privacy & security"
-              subtitle="Controls for your account and data rights (links for now)."
-              icon={<Shield className="h-5 w-5 opacity-90" />}
-              dark={t.dark}
-              card={t.card}
-              cardBorder={t.cardBorder}
-            >
-              <div className="grid grid-cols-1 gap-2">
-                <LinkRow
-                  href="/privacy"
-                  label="Privacy policy"
-                  icon={<Lock className="h-4 w-4 opacity-80" />}
-                  dark={t.dark}
-                />
-                <LinkRow
-                  href="/terms"
-                  label="Terms of service"
-                  icon={<Lock className="h-4 w-4 opacity-80" />}
-                  dark={t.dark}
-                />
-                <div
-                  className="rounded-xl px-3 py-2 ring-1"
-                  style={{
-                    background: t.dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.60)",
-                    borderColor: t.dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
-                  }}
-                >
-                  <div className="text-sm font-medium">Download / delete account data</div>
-                  <div className="mt-0.5 text-xs opacity-70">
-                    Coming soon — this will be handled through verified requests.
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
+            </div>
           </div>
 
-          {/* Bottom hint */}
-          <div className="mt-5 text-xs" style={{ color: t.softText }}>
-            Note: This Profile page is intentionally <span className="font-medium">not</span>{" "}
-            for Everleap “app content” (goals, insights, recommendations). That stays inside the
-            main experience.
+          {/* Account */}
+          <SectionHeader title="Account" hint="Basics" dark={dark} />
+          <div className={["rounded-3xl border overflow-hidden", ring(dark), surface(dark), "backdrop-blur-2xl"].join(" ")}>
+            <div className={`border-b ${divider(dark)}`}>
+              <Row
+                // keep this as a doc/placeholder route for now
+                href="/login"
+                icon={<Mail className="h-5 w-5 opacity-90" />}
+                label="Sign-in methods"
+                detail="Passkeys + providers (coming soon)"
+                dark={dark}
+              />
+            </div>
+
+            <div className={auth.isAuthed ? "" : `border-t ${divider(dark)}`}>
+              <Row
+                onClick={auth.isAuthed ? goLogout : signInDevAndGo}
+                icon={auth.isAuthed ? <LogOut className="h-5 w-5 opacity-90" /> : <LogIn className="h-5 w-5 opacity-90" />}
+                label={auth.isAuthed ? "Log out" : "Sign in"}
+                detail={auth.isAuthed ? "Ends your session on this device" : "Dev stub: unlock the main app"}
+                dark={dark}
+              />
+            </div>
+          </div>
+
+          {/* Help & legal */}
+          <SectionHeader title="Help & legal" hint="Trust + support" dark={dark} />
+          <div className={["rounded-3xl border overflow-hidden", ring(dark), surface(dark), "backdrop-blur-2xl"].join(" ")}>
+            <div className={`border-b ${divider(dark)}`}>
+              <Row
+                href="/contact"
+                icon={<LifeBuoy className="h-5 w-5 opacity-90" />}
+                label="Contact Everleap"
+                detail="Questions, feedback, support"
+                dark={dark}
+              />
+            </div>
+
+            <div className={`border-b ${divider(dark)}`}>
+              <Row
+                href="/privacy"
+                icon={<Shield className="h-5 w-5 opacity-90" />}
+                label="Privacy policy"
+                detail="How data is handled"
+                dark={dark}
+              />
+            </div>
+
+            <div className={`border-b ${divider(dark)}`}>
+              <Row
+                href="/terms"
+                icon={<Shield className="h-5 w-5 opacity-90" />}
+                label="Terms of service"
+                detail="The rules of the road"
+                dark={dark}
+              />
+            </div>
+
+            <div>
+              <Row
+                href="/accessibility"
+                icon={<Accessibility className="h-5 w-5 opacity-90" />}
+                label="Accessibility"
+                detail="How we support different needs"
+                dark={dark}
+              />
+            </div>
+          </div>
+
+          {/* Tiny footer note */}
+          <div className={`mt-5 px-1 text-[12px] ${muted(dark)}`}>
+            Tip: If the app ever feels “off,” use{" "}
+            <span className={dark ? "text-white/75 font-semibold" : "text-slate-800 font-semibold"}>Contact Everleap</span>{" "}
+            and tell us what screen you were on — we’ll fix it.
           </div>
         </main>
 
-        <BottomNav />
-      </AppChrome>
-    </div>
-  );
-}
-
-function LinkRow({
-  href,
-  label,
-  icon,
-  dark,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  dark: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={[
-        "flex items-center justify-between gap-3 rounded-xl px-3 py-2 ring-1 transition",
-        dark ? "hover:bg-white/10" : "hover:bg-white/75",
-      ].join(" ")}
-      style={{
-        background: dark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.60)",
-        borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.10)",
-      }}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        <span
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
-          style={{
-            background: dark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.05)",
-            border: dark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(15,23,42,0.08)",
-          }}
-        >
-          {icon}
-        </span>
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">{label}</div>
-          <div className="truncate text-xs opacity-70">Opens the policy page</div>
-        </div>
+        <BottomNav activeKey="profile" themeId={themeId} gradientLevel={gradientLevel} />
       </div>
-      <ChevronRight className="h-4 w-4 opacity-60" />
-    </Link>
+    </AppChrome>
   );
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  // supports #RRGGBB
-  const h = hex.replace("#", "").trim();
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${clamp01(alpha)})`;
 }

@@ -42,7 +42,7 @@ function GoogleMark(props: React.SVGProps<SVGSVGElement>) {
       />
       <path
         fill="currentColor"
-        d="M6.34 13.82A5.92 5.92 0 0 1 6 12c0-.63.12-1.24.32-1.82l-.01-.12-3.12-2.37-.1.05A10.02 10 0 0 0 2 12c0 1.61.4 3.13 1.09 4.46l3.25-2.64Z"
+        d="M6.34 13.82A5.92 5.92 0 0 1 6 12c0-.63.12-1.24.32-1.82l-.01-.12-3.12-2.37-.1.05A10.02 10.02 0 0 0 2 12c0 1.61.4 3.13 1.09 4.46l3.25-2.64Z"
       />
       <path
         fill="currentColor"
@@ -66,10 +66,7 @@ function AppleMark(props: React.SVGProps<SVGSVGElement>) {
 function MicrosoftMark(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
-      <path
-        fill="currentColor"
-        d="M3 3h8v8H3V3Zm10 0h8v8h-8V3ZM3 13h8v8H3v-8Zm10 0h8v8h-8v-8Z"
-      />
+      <path fill="currentColor" d="M3 3h8v8H3V3Zm10 0h8v8h-8V3ZM3 13h8v8H3v-8Zm10 0h8v8h-8v-8Z" />
     </svg>
   );
 }
@@ -120,23 +117,45 @@ async function detectPasskeySupport(): Promise<boolean> {
   try {
     if (typeof window === "undefined") return false;
 
-    // Avoid SSR ReferenceError; prefer global check.
     if (typeof PublicKeyCredential === "undefined") return false;
 
-    // Best-effort: if platform authenticator is available, we treat it as "passkey ready".
-    if (
-      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable ===
-      "function"
-    ) {
-      const ok =
-        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
+      const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       return Boolean(ok);
     }
 
-    // If API exists but the check isn't available, still show the option.
     return true;
   } catch {
     return false;
+  }
+}
+
+/* ========= DEV AUTH STUB (client-only) =========
+   Matches BottomNav gate keys + logout clearing keys. */
+
+function writeDevAuthStub(opts?: { displayName?: string; provider?: ProviderId; identifier?: string }) {
+  if (typeof window === "undefined") return;
+
+  const displayName = (opts?.displayName ?? "Dev User").trim() || "Dev User";
+  const session = `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+  try {
+    window.localStorage.setItem("everleap.verified", "1");
+    window.localStorage.setItem("everleap.userId", "dev_user");
+    window.localStorage.setItem("everleap.session", session);
+    window.localStorage.setItem("everleap.displayName", displayName);
+
+    if (opts?.provider) window.localStorage.setItem("everleap.dev.provider", opts.provider);
+    if (opts?.identifier) window.localStorage.setItem("everleap.dev.identifier", opts.identifier);
+  } catch {
+    // ignore
+  }
+
+  // Nudge other tabs/components relying on storage listeners.
+  try {
+    window.dispatchEvent(new Event("storage"));
+  } catch {
+    // ignore
   }
 }
 
@@ -149,8 +168,7 @@ export default function LoginPage() {
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
 
   const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[1];
+  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[1];
 
   const dark = isDarkTheme(themeId);
 
@@ -170,7 +188,6 @@ export default function LoginPage() {
     void detectPasskeySupport().then((ok) => {
       if (!alive) return;
       setPasskeyReady(ok);
-      // If passkeys aren't available, show fallback by default.
       if (!ok) setShowFallback(true);
     });
     return () => {
@@ -190,22 +207,29 @@ export default function LoginPage() {
     router.push("/main");
   }
 
-  function handleProvider(p: ProviderId) {
-    // Front-end only placeholder: route into the app.
-    // Keep `p` used for lint + future wiring.
-    void p;
+  function signInDevAndGo(meta?: { provider?: ProviderId; identifier?: string }) {
+    writeDevAuthStub({
+      displayName: "Dev User",
+      provider: meta?.provider,
+      identifier: meta?.identifier,
+    });
     goMain();
   }
 
+  function handleProvider(p: ProviderId) {
+    signInDevAndGo({ provider: p });
+  }
+
   function handleDeviceContinue() {
-    // Front-end only placeholder: route into the app.
-    goMain();
+    // DEV STUB: clicking Continue signs you in locally and enters /main
+    signInDevAndGo();
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Front-end only placeholder: route into the app.
-    goMain();
+    const id = identifier.trim();
+    if (!id) return;
+    signInDevAndGo({ identifier: id });
   }
 
   const providerBtnBase =
@@ -229,19 +253,11 @@ export default function LoginPage() {
       orbSource="login_orb"
       ambientCap={0.22}
     >
-      <div
-        className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
-        style={bgStyle}
-      >
+      <div className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`} style={bgStyle}>
         {/* Minimal ambient (consistent with onboarding/consent vibe) */}
         {gradientLevel > 0 && (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: gradient.ambientOpacity * 0.42 }}
-          >
-            <div
-              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-            />
+          <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity * 0.42 }}>
+            <div className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
             <div
               className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
               style={{ opacity: 0.32 }}
@@ -281,17 +297,13 @@ export default function LoginPage() {
           {/* Content */}
           <div className="mx-auto mt-12 w-full max-w-[980px]">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">
-                Everleap · Sign in
-              </p>
+              <p className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">Everleap · Sign in</p>
 
               <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
                 Continue into Everleap
               </h1>
 
-              <p className={`mt-4 text-[15px] leading-7 ${mutedText}`}>
-                Use your device.
-              </p>
+              <p className={`mt-4 text-[15px] leading-7 ${mutedText}`}>Use your device.</p>
 
               {/* Primary: device / passkey */}
               <div className="mt-10">
@@ -309,9 +321,7 @@ export default function LoginPage() {
                       </span>
 
                       <div className="min-w-0">
-                        <div className="text-[15px] font-semibold text-white/90">
-                          Continue
-                        </div>
+                        <div className="text-[15px] font-semibold text-white/90">Continue</div>
                         <div className="mt-1 text-sm text-white/45">
                           {passkeyReady === null
                             ? "Checking secure sign-in…"
@@ -322,10 +332,7 @@ export default function LoginPage() {
                       </div>
                     </div>
 
-                    <div
-                      className="text-white/35 group-hover:text-white/55 transition"
-                      aria-hidden="true"
-                    >
+                    <div className="text-white/35 group-hover:text-white/55 transition" aria-hidden="true">
                       →
                     </div>
                   </div>
@@ -333,9 +340,7 @@ export default function LoginPage() {
 
                 {/* Providers (always visible, minimal icon buttons) */}
                 <div className="mt-10">
-                  <div className="text-[11px] tracking-[0.22em] text-white/35 uppercase">
-                    Or
-                  </div>
+                  <div className="text-[11px] tracking-[0.22em] text-white/35 uppercase">Or</div>
 
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
@@ -398,11 +403,7 @@ export default function LoginPage() {
                       title={showFallback ? "Hide" : "Use another method"}
                     >
                       {showFallback ? "Hide" : "Use another method"}
-                      {showFallback ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
+                      {showFallback ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </button>
                   ) : null}
 
@@ -453,14 +454,10 @@ export default function LoginPage() {
                         </div>
                       </label>
 
-                      <p className="mt-6 text-[11px] text-white/35">
-                        Secure sign-in options will be wired up soon.
-                      </p>
+                      <p className="mt-6 text-[11px] text-white/35">Secure sign-in options will be wired up soon.</p>
                     </form>
                   ) : (
-                    <p className="mt-6 text-[11px] text-white/35">
-                      Secure sign-in options will be wired up soon.
-                    </p>
+                    <p className="mt-6 text-[11px] text-white/35">Secure sign-in options will be wired up soon.</p>
                   )}
                 </div>
               </div>
