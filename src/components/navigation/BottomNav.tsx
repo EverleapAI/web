@@ -150,17 +150,19 @@ export function BottomNav({
   ];
 
   // Hooks must always run in the same order.
-  const [authed, setAuthed] = React.useState<boolean>(() => {
-    // Avoid layout flicker on first paint in /main by seeding from storage.
-    if (typeof window === "undefined") return false;
-    return detectClientAuthed();
-  });
-
+  // IMPORTANT: do NOT read localStorage during initial render (prevents SSR/client hydration mismatch).
+  const [mounted, setMounted] = React.useState(false);
+  const [authed, setAuthed] = React.useState(false);
   const [moreOpen, setMoreOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     // Only attach listeners on /main pages; safe no-op elsewhere.
     if (!inMainShell) return;
+    if (!mounted) return;
 
     const refresh = () => setAuthed(detectClientAuthed());
 
@@ -176,16 +178,19 @@ export function BottomNav({
       window.removeEventListener("storage", refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, [inMainShell]);
+  }, [inMainShell, mounted]);
 
   // Close on navigation
   React.useEffect(() => {
     if (!inMainShell) return;
+    if (!mounted) return;
     setMoreOpen(false);
-  }, [pathname, inMainShell]);
+  }, [pathname, inMainShell, mounted]);
 
   // Now that hooks are stable, we can gate rendering.
+  // Also gate on "mounted" so the first client render matches SSR output.
   if (!inMainShell) return null;
+  if (!mounted) return null;
   if (!authed) return null;
 
   return (
