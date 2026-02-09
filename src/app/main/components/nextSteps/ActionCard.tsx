@@ -39,6 +39,13 @@ type Props = {
 
   label?: string;
   subtitle?: string;
+
+  /**
+   * Embedded mode:
+   * - reduces internal chrome
+   * - removes nested sub-cards in expanded content
+   */
+  embedded?: boolean;
 };
 
 /* =============================================================================
@@ -106,6 +113,17 @@ function ctaPill(dark: boolean) {
     dark
       ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/28"
       : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/18",
+  ].join(" ");
+}
+
+function textAffordance(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2",
+    "text-sm font-semibold",
+    "transition active:scale-[0.995]",
+    dark ? "text-white/70 hover:text-white/90" : "text-slate-700 hover:text-slate-900",
+    "focus-visible:outline-none",
+    dark ? "focus-visible:ring-2 focus-visible:ring-white/14" : "focus-visible:ring-2 focus-visible:ring-slate-900/10",
   ].join(" ");
 }
 
@@ -210,6 +228,7 @@ export function ActionCard({
   definition,
   label = "Action",
   subtitle = "Bigger than a Tiny Task — something real you can do and log.",
+  embedded = false,
 }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -309,15 +328,15 @@ export function ActionCard({
     return parseEntries(proof.text);
   }, [proof]);
 
-  const showCompact = !open;
-
   return (
     <div
       className={[
         "relative overflow-hidden rounded-3xl px-5 py-4",
         ring(dark),
         surface(dark),
-        "shadow-[0_18px_70px_rgba(0,0,0,0.18)]",
+        embedded
+          ? "shadow-[0_14px_55px_rgba(0,0,0,0.16)]"
+          : "shadow-[0_18px_70px_rgba(0,0,0,0.18)]",
       ].join(" ")}
     >
       {/* Accent rail + gentle warmth + watermark */}
@@ -337,11 +356,10 @@ export function ActionCard({
           ].join(" ")}
         />
 
-        {/* WATERMARK ICON — always present, subtle */}
         <div
           className={[
             "absolute right-5 top-5",
-            "opacity-[0.12] blur-[0.6px]",
+            "opacity-[0.10] blur-[0.6px]",
             dark ? "text-violet-200" : "text-violet-700",
           ].join(" ")}
           aria-hidden
@@ -354,9 +372,7 @@ export function ActionCard({
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className={headerPill(dark)}>
-              <span aria-hidden className="opacity-90">
-                ⚡
-              </span>
+              <span aria-hidden className="opacity-90">⚡</span>
               <span>{label}</span>
             </span>
 
@@ -387,22 +403,31 @@ export function ActionCard({
               {definition.goal}
             </div>
 
-            {/* CTA: left-justified under definition */}
             <div className="mt-3 flex justify-start">
-              <button
-                type="button"
-                className={ctaPill(dark)}
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-              >
-                <span aria-hidden className="opacity-90">
-                  {open ? "▾" : "▸"}
-                </span>
-                {open ? "Hide" : "Details"}
-              </button>
+              {embedded ? (
+                <button
+                  type="button"
+                  className={textAffordance(dark)}
+                  onClick={() => setOpen((v) => !v)}
+                  aria-expanded={open}
+                >
+                  <span aria-hidden className="opacity-80">{open ? "▾" : "▸"}</span>
+                  {open ? "Hide" : "Details"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={ctaPill(dark)}
+                  onClick={() => setOpen((v) => !v)}
+                  aria-expanded={open}
+                >
+                  <span aria-hidden className="opacity-90">{open ? "▾" : "▸"}</span>
+                  {open ? "Hide" : "Details"}
+                </button>
+              )}
             </div>
 
-            {!showCompact && subtitle ? (
+            {open && subtitle ? (
               <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
             ) : null}
           </div>
@@ -417,13 +442,9 @@ export function ActionCard({
               transition={{ duration: 0.18 }}
               className="mt-4"
             >
+              {/* KEY CHANGE: remove nested sub-cards; render as inline blocks */}
               {definition.steps?.length ? (
-                <div
-                  className={[
-                    "rounded-3xl border p-4 backdrop-blur-xl",
-                    dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/85",
-                  ].join(" ")}
-                >
+                <div className="mt-1">
                   <div
                     className={[
                       "text-xs font-semibold uppercase tracking-[0.18em]",
@@ -451,12 +472,7 @@ export function ActionCard({
               ) : null}
 
               {proofEntries.length ? (
-                <div
-                  className={[
-                    "mt-4 rounded-3xl border p-4 backdrop-blur-xl",
-                    dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/85",
-                  ].join(" ")}
-                >
+                <div className="mt-5">
                   <div
                     className={[
                       "flex items-center justify-between gap-3",
@@ -465,20 +481,18 @@ export function ActionCard({
                     ].join(" ")}
                   >
                     <span>Your logs</span>
-                    <span className="normal-case tracking-normal font-semibold">
-                      {proofEntries.length}
-                    </span>
+                    <span className="normal-case tracking-normal font-semibold">{proofEntries.length}</span>
                   </div>
 
                   <div className="mt-3 space-y-3">
-                    {proofEntries.slice(0, 4).map((e, idx) => {
+                    {proofEntries.slice(0, 3).map((e, idx) => {
                       const tsOk = Number.isFinite(e.ts);
                       return (
                         <div
                           key={`${tsOk ? e.ts : "legacy"}_${idx}`}
                           className={[
                             "rounded-2xl border px-3.5 py-3",
-                            dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
+                            dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
                           ].join(" ")}
                         >
                           <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
@@ -490,16 +504,12 @@ export function ActionCard({
                     })}
                   </div>
 
-                  {proofEntries.length > 4 ? (
-                    <div className={`mt-3 text-xs ${muted(dark)}`}>
-                      Showing the latest 4. (More coming soon.)
-                    </div>
+                  {proofEntries.length > 3 ? (
+                    <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
                   ) : null}
 
                   {typeof updatedAt === "number" ? (
-                    <div className={`mt-2 text-xs ${muted(dark)}`}>
-                      Updated {relativeTime(updatedAt)}.
-                    </div>
+                    <div className={`mt-2 text-xs ${muted(dark)}`}>Updated {relativeTime(updatedAt)}.</div>
                   ) : null}
                 </div>
               ) : null}
@@ -528,6 +538,7 @@ export function ActionCard({
           ) : null}
         </AnimatePresence>
 
+        {/* Proof modal unchanged */}
         {proofOpen ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div

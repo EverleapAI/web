@@ -1,9 +1,8 @@
-// src/app/main/components/nextSteps/NextStepsStack.tsx
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type { TinyTaskDefinition } from "@/app/main/domain/tinyTasks";
 import type { ActionDefinition } from "./ActionCard";
@@ -28,6 +27,10 @@ export type NextStepsDefinition = {
   bridgeLine?: string;
 };
 
+export type NextStepsStackVariant =
+  | "framed" // legacy: renders its own small header + padding
+  | "embedded"; // new: section framing controlled by page.tsx
+
 type Props = {
   dark: boolean;
   useLocal: boolean;
@@ -35,73 +38,47 @@ type Props = {
   definition: NextStepsDefinition;
 
   /**
-   * Optional heading for the section. Keep minimalist.
-   * Default: "Next steps"
+   * If provided, stack can be collapsed/expanded.
+   * When embedded, page.tsx usually owns the big section header,
+   * but this small toggle can still be useful.
+   */
+  collapsible?: boolean;
+
+  /**
+   * Default open state when collapsible is enabled.
+   * Default: true
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Visual treatment:
+   * - framed: small internal header + padding (legacy)
+   * - embedded: no header box / no outer framing (NEW)
+   */
+  variant?: NextStepsStackVariant;
+
+  /**
+   * Optional heading for legacy framed mode only.
+   * (Ignored in embedded mode to avoid duplicate titles.)
    */
   heading?: string;
   subheading?: string;
-
-  /**
-   * Optional: show a subtle divider after the stack.
-   * Default: true when a heading/subheading is shown, otherwise false.
-   */
-  showDivider?: boolean;
-
-  /**
-   * Optional: default expanded state (default false).
-   * If you ever want desktop expanded while mobile collapsed, you can pass this.
-   */
-  defaultExpanded?: boolean;
 };
 
 /* =============================================================================
    UI helpers
    ============================================================================= */
 
-function headingText(dark: boolean) {
-  return dark ? "text-white/85" : "text-slate-900";
+function textClass(dark: boolean) {
+  return dark ? "text-white/90" : "text-slate-900/90";
 }
 
-function muted(dark: boolean) {
-  return dark ? "text-white/55" : "text-slate-600";
+function subTextClass(dark: boolean) {
+  return dark ? "text-white/60" : "text-slate-700/70";
 }
 
-function divider(dark: boolean) {
-  return dark ? "bg-white/10" : "bg-black/10";
-}
-
-function connectorLine(dark: boolean) {
-  return dark
-    ? "bg-gradient-to-r from-white/0 via-white/18 to-white/0"
-    : "bg-gradient-to-r from-black/0 via-black/14 to-black/0";
-}
-
-function connectorDot(dark: boolean) {
-  return dark
-    ? "bg-white/18 ring-1 ring-white/15"
-    : "bg-black/10 ring-1 ring-black/10";
-}
-
-function sectionHeaderButton(dark: boolean, expanded: boolean) {
-  return [
-    "group w-full",
-    "flex items-center justify-between gap-3",
-    "rounded-2xl border px-4 py-3",
-    "backdrop-blur-xl",
-    "transition active:scale-[0.99]",
-    dark
-      ? "border-white/12 bg-white/6 hover:bg-white/8"
-      : "border-black/10 bg-white/85 hover:bg-white",
-    expanded
-      ? dark
-        ? "ring-1 ring-white/12"
-        : "ring-1 ring-black/6"
-      : "",
-    "focus-visible:outline-none",
-    dark
-      ? "focus-visible:ring-2 focus-visible:ring-white/18"
-      : "focus-visible:ring-2 focus-visible:ring-slate-900/12",
-  ].join(" ");
+function hairlineClass(dark: boolean) {
+  return dark ? "bg-white/10" : "bg-slate-900/10";
 }
 
 /* =============================================================================
@@ -112,134 +89,125 @@ export function NextStepsStack({
   dark,
   useLocal,
   definition,
+  collapsible = true,
+  defaultOpen = true,
+  variant = "embedded",
   heading = "Next steps",
-  subheading = "Tiny tasks + actions you can take when ready.",
-  showDivider,
-  defaultExpanded = false,
+  subheading,
 }: Props) {
-  const showHeader = Boolean((heading ?? "").trim()) || Boolean((subheading ?? "").trim());
-  const effectiveShowDivider = showDivider ?? showHeader;
+  const [open, setOpen] = React.useState<boolean>(defaultOpen);
 
-  const [expanded, setExpanded] = React.useState<boolean>(defaultExpanded);
-
-  const contentId = React.useMemo(
-    () => `el-nextsteps-${(definition.pageId || "page").replace(/[^a-z0-9_-]/gi, "_")}`,
-    [definition.pageId]
-  );
+  const embedded = variant === "embedded";
+  const showInternalHeader = variant === "framed";
+  const showToggle = collapsible;
 
   return (
-    <div className={showHeader ? "mt-8" : ""}>
-      {/* Optional section label (kept very light) */}
-      {showHeader ? (
-        <div className="mb-3">
-          {heading ? (
-            <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${muted(dark)}`}>
+    <div className="w-full">
+      {/* Internal header (legacy framed mode only) */}
+      {showInternalHeader ? (
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className={`text-sm font-semibold ${textClass(dark)}`}>
               {heading}
             </div>
+            {subheading ? (
+              <div className={`mt-0.5 text-xs ${subTextClass(dark)}`}>
+                {subheading}
+              </div>
+            ) : null}
+          </div>
+
+          {showToggle ? (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className={[
+                "shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1",
+                "text-xs font-medium",
+                dark
+                  ? "bg-white/8 text-white/75 hover:bg-white/12"
+                  : "bg-slate-900/5 text-slate-700 hover:bg-slate-900/8",
+                "transition",
+              ].join(" ")}
+              aria-expanded={open}
+              aria-label={open ? "Hide next steps" : "Show next steps"}
+            >
+              {open ? "Hide" : "Show"}
+              {open ? (
+                <ChevronUp className="h-3.5 w-3.5 opacity-80" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+              )}
+            </button>
           ) : null}
         </div>
       ) : null}
 
-      {/* Collapsible header row (this is the key affordance) */}
-      <button
-        type="button"
-        className={sectionHeaderButton(dark, expanded)}
-        aria-expanded={expanded}
-        aria-controls={contentId}
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="min-w-0">
-          <div className={`text-sm font-semibold ${headingText(dark)}`}>
-            Next steps <span className={muted(dark)}>(optional)</span>
-          </div>
-          {subheading ? (
-            <div className={`mt-0.5 text-xs ${muted(dark)}`}>{subheading}</div>
-          ) : null}
-        </div>
-
-        <div className="shrink-0 inline-flex items-center gap-2">
-          <span
+      {/* Embedded mode: toggle row only (no extra subtitle — page owns that) */}
+      {!showInternalHeader && showToggle ? (
+        <div className="mb-2 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
             className={[
-              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1",
-              "text-[11px] font-semibold",
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1",
+              "text-xs font-medium",
               dark
-                ? "border-white/12 bg-white/6 text-white/70"
-                : "border-black/10 bg-black/3 text-slate-700",
+                ? "bg-white/6 text-white/70 hover:bg-white/10"
+                : "bg-slate-900/4 text-slate-700 hover:bg-slate-900/7",
+              "transition",
             ].join(" ")}
-            aria-hidden
+            aria-expanded={open}
+            aria-label={open ? "Hide next steps" : "Show next steps"}
           >
-            {expanded ? "Hide" : "Show"}
-          </span>
-
-          {expanded ? (
-            <ChevronDown className={dark ? "h-4 w-4 text-white/70" : "h-4 w-4 text-slate-700"} />
-          ) : (
-            <ChevronRight className={dark ? "h-4 w-4 text-white/70" : "h-4 w-4 text-slate-700"} />
-          )}
+            {open ? "Hide" : "Show"}
+            {open ? (
+              <ChevronUp className="h-3.5 w-3.5 opacity-80" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+            )}
+          </button>
         </div>
-      </button>
+      ) : null}
 
-      {/* Collapsible content */}
+      {variant === "framed" ? (
+        <div className={`${hairlineClass(dark)} mb-4 h-px w-full`} />
+      ) : null}
+
       <AnimatePresence initial={false}>
-        {expanded ? (
+        {open ? (
           <motion.div
-            id={contentId}
             key="nextsteps-open"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.18 }}
-            className="mt-4"
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.22 }}
+            className="w-full"
           >
-            <div className="space-y-4">
-              <TinyTaskCard dark={dark} useLocal={useLocal} definition={definition.tinyTask} />
+            <div className="grid gap-3">
+              <TinyTaskCard
+                dark={dark}
+                useLocal={useLocal}
+                definition={definition.tinyTask}
+                embedded={embedded}
+              />
 
               {definition.bridgeLine ? (
-                <div className="px-1">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex h-8 w-8 items-center justify-center">
-                      <span
-                        aria-hidden
-                        className={[
-                          "absolute h-8 w-8 rounded-full blur-xl",
-                          dark ? "bg-emerald-400/10" : "bg-emerald-400/8",
-                        ].join(" ")}
-                      />
-                      <span
-                        aria-hidden
-                        className={["relative h-2.5 w-2.5 rounded-full", connectorDot(dark)].join(" ")}
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className={`h-px w-full ${connectorLine(dark)}`} />
-                      <div className={`mt-2 text-xs ${muted(dark)}`}>{definition.bridgeLine}</div>
-                    </div>
-
-                    <div className="relative flex h-8 w-8 items-center justify-center">
-                      <span
-                        aria-hidden
-                        className={[
-                          "absolute h-8 w-8 rounded-full blur-xl",
-                          dark ? "bg-violet-400/10" : "bg-violet-400/8",
-                        ].join(" ")}
-                      />
-                      <span
-                        aria-hidden
-                        className={["relative h-2.5 w-2.5 rounded-full", connectorDot(dark)].join(" ")}
-                      />
-                    </div>
-                  </div>
+                <div className={`px-1 text-xs ${subTextClass(dark)}`}>
+                  {definition.bridgeLine}
                 </div>
               ) : null}
 
-              <ActionCard dark={dark} useLocal={useLocal} definition={definition.action} />
+              <ActionCard
+                dark={dark}
+                useLocal={useLocal}
+                definition={definition.action}
+                embedded={embedded}
+              />
             </div>
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      {effectiveShowDivider ? <div className={`mt-6 h-px w-full ${divider(dark)}`} /> : null}
     </div>
   );
 }
