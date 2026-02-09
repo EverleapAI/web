@@ -9,9 +9,17 @@ import { Sparkles, Clock3, Rocket } from "lucide-react";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { AppChrome } from "@/components/site/AppChrome";
 
-import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
+import {
+  isDarkTheme,
+  type SpotlightThemeId,
+  type GradientLevel,
+} from "@/theme/everleapVisuals";
 
-import { buildInsightsViewModel, type InsightsTab, type WordCloudItem } from "./app/buildInsightsViewModel";
+import {
+  buildInsightsViewModel,
+  type InsightsTab,
+  type WordCloudItem,
+} from "./app/buildInsightsViewModel";
 
 import { NextStepsStack } from "@/app/main/components/nextSteps/NextStepsStack";
 import { getNextStepsDefinition } from "@/app/main/content/nextSteps";
@@ -95,8 +103,12 @@ function pillButton(dark: boolean) {
     "inline-flex items-center justify-center gap-2",
     "rounded-full border px-3.5 py-2",
     "text-xs font-semibold transition active:scale-95",
-    dark ? "border-white/10 bg-white/6 text-white/78 hover:bg-white/10" : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
-    dark ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
+    dark
+      ? "border-white/10 bg-white/6 text-white/78 hover:bg-white/10"
+      : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
+    dark
+      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
   ].join(" ");
 }
 
@@ -112,11 +124,40 @@ function textAffordance(dark: boolean) {
 }
 
 function fadeMaskStyle(mode: "story"): React.CSSProperties {
-  const cut = mode === "story" ? "62%" : "70%";
+  const cut = mode === "story" ? "70%" : "70%";
   return {
     WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${cut}, rgba(0,0,0,0) 100%)`,
     maskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${cut}, rgba(0,0,0,0) 100%)`,
   };
+}
+
+/* =============================================================================
+   Readability surfaces (Weather-like “calm cards”)
+   ============================================================================= */
+
+function readingSurface(dark: boolean) {
+  return [
+    "relative overflow-hidden rounded-[26px] border",
+    "px-4 py-4 md:px-5 md:py-5",
+    "backdrop-blur-xl",
+    dark ? "border-white/10 bg-slate-950/22" : "border-black/10 bg-white/80",
+    "shadow-[0_18px_55px_rgba(0,0,0,0.22)]",
+  ].join(" ");
+}
+
+function surfaceTitle(dark: boolean) {
+  return [
+    "text-[13px] font-semibold uppercase tracking-[0.16em]",
+    dark ? "text-white/55" : "text-slate-600",
+  ].join(" ");
+}
+
+function surfaceSubtle(dark: boolean) {
+  return dark ? "text-white/55" : "text-slate-600";
+}
+
+function calmBodyText(dark: boolean) {
+  return dark ? "text-slate-200/90" : "text-slate-700";
 }
 
 /* ===== Word styling (multi-color words, deterministic) ===== */
@@ -132,53 +173,60 @@ function hashString(input: string) {
 
 function wordSizePx(weight: number) {
   const w = clamp01(weight);
-  return 13 + Math.round(w * 14);
+  // readability: slightly tighter range + slightly bigger minimum
+  return 14 + Math.round(w * 10); // 14..24
 }
 
 function wordOpacity(weight: number) {
   const w = clamp01(weight);
-  return 0.65 + w * 0.35;
+  // readability: less contrast swing
+  return 0.72 + w * 0.24; // 0.72..0.96
 }
 
 function wordColorClasses(dark: boolean, term: string) {
+  // readability: calmer palette (less neon)
   const paletteDark = [
-    "text-sky-200",
-    "text-fuchsia-200",
-    "text-amber-200",
-    "text-emerald-200",
-    "text-violet-200",
-    "text-rose-200",
-    "text-cyan-200",
-    "text-lime-200",
+    "text-sky-200/90",
+    "text-fuchsia-200/85",
+    "text-amber-200/90",
+    "text-emerald-200/85",
+    "text-violet-200/85",
+    "text-rose-200/85",
+    "text-cyan-200/90",
+    "text-lime-200/85",
   ] as const;
 
   const paletteLight = [
-    "text-sky-700",
-    "text-fuchsia-700",
-    "text-amber-700",
-    "text-emerald-700",
-    "text-violet-700",
-    "text-rose-700",
-    "text-cyan-700",
-    "text-lime-700",
+    "text-sky-700/95",
+    "text-fuchsia-700/90",
+    "text-amber-700/95",
+    "text-emerald-700/90",
+    "text-violet-700/90",
+    "text-rose-700/90",
+    "text-cyan-700/95",
+    "text-lime-700/90",
   ] as const;
 
   const i = hashString(term.toLowerCase()) % paletteDark.length;
 
-  return [dark ? paletteDark[i] : paletteLight[i], dark ? "drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)]" : ""]
+  // readability: reduce heavy drop shadow
+  return [
+    dark ? paletteDark[i] : paletteLight[i],
+    dark ? "drop-shadow-[0_1px_10px_rgba(0,0,0,0.38)]" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 }
 
 function wordChaosVars(term: string, weight: number): CSSVars {
+  // readability: reduce rotation/offset substantially
   const h = hashString(term.toLowerCase());
   const w = clamp01(weight);
-  const mode = h % 10;
-  const allow = mode < 4 && w < 0.95;
+  const allow = w < 0.92 && (h % 10) < 3;
 
-  const rot = allow ? ((h % 5) - 2) * 1 : 0;
-  const ty = allow ? ((h % 7) - 3) * 0.6 : 0;
-  const ls = w > 0.75 ? 0.2 : 0;
+  const rot = allow ? ((h % 5) - 2) * 0.35 : 0; // was 1deg steps
+  const ty = allow ? ((h % 7) - 3) * 0.25 : 0; // was 0.6px steps
+  const ls = w > 0.78 ? 0.15 : 0;
 
   return {
     "--el-rot": `${rot}deg`,
@@ -193,7 +241,8 @@ function topTerms(items: WordCloudItem[]) {
 }
 
 function highlightWrap(dark: boolean) {
-  return dark ? "bg-white/10 ring-1 ring-white/10" : "bg-black/5 ring-1 ring-black/8";
+  // readability: calmer highlight
+  return dark ? "bg-white/8 ring-1 ring-white/10" : "bg-black/4 ring-1 ring-black/8";
 }
 
 /* =============================================================================
@@ -210,13 +259,19 @@ function tabAccent(id: InsightsTab) {
 function tabPillClasses(dark: boolean, selected: boolean, id: InsightsTab) {
   const acc = tabAccent(id);
 
-  const base = ["inline-flex items-center justify-center gap-2", "rounded-full border px-3.5 py-2", "text-sm font-semibold transition active:scale-95"];
+  const base = [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-3.5 py-2",
+    "text-sm font-semibold transition active:scale-95",
+  ];
 
-  const skin = dark ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white";
+  const skin = dark
+    ? "border-white/10 bg-slate-950/18 text-white/78 hover:bg-slate-950/28"
+    : "border-black/10 bg-white/80 text-slate-800 hover:bg-white";
 
   const on = selected
     ? dark
-      ? `bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)] ring-2 ${acc.ring}`
+      ? `bg-white/14 text-white border-white/16 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_16px_44px_rgba(0,0,0,0.40)] ring-2 ${acc.ring}`
       : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)] ring-2 ring-slate-900/10"
     : "";
 
@@ -260,7 +315,13 @@ function colorizeKeywords(dark: boolean, text: string): React.ReactNode {
     parts.push(
       <span
         key={`${idx}_${hit}`}
-        className={[cls, "font-semibold", dark ? "drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)]" : ""].filter(Boolean).join(" ")}
+        className={[
+          cls,
+          "font-semibold",
+          dark ? "drop-shadow-[0_1px_12px_rgba(0,0,0,0.42)]" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {hit}
       </span>
@@ -284,29 +345,29 @@ function lensPalette(lensId: LensId) {
     return {
       dot: "bg-lime-300/85",
       pillRing: "ring-lime-300/20",
-      railA: "from-lime-300/55",
-      railB: "to-emerald-300/35",
-      glowA: "bg-lime-300/7",
-      glowB: "bg-emerald-300/6",
+      railA: "from-lime-300/50",
+      railB: "to-emerald-300/32",
+      glowA: "bg-lime-300/5",
+      glowB: "bg-emerald-300/4",
     };
   }
   if (lensId === "timeTwin") {
     return {
       dot: "bg-violet-300/85",
       pillRing: "ring-violet-300/18",
-      railA: "from-violet-300/50",
-      railB: "to-fuchsia-300/35",
-      glowA: "bg-violet-300/7",
-      glowB: "bg-fuchsia-300/6",
+      railA: "from-violet-300/46",
+      railB: "to-fuchsia-300/30",
+      glowA: "bg-violet-300/5",
+      glowB: "bg-fuchsia-300/4",
     };
   }
   return {
     dot: "bg-sky-300/80",
     pillRing: "ring-sky-300/16",
-    railA: "from-sky-300/45",
-    railB: "to-cyan-300/30",
-    glowA: "bg-sky-300/7",
-    glowB: "bg-cyan-300/6",
+    railA: "from-sky-300/40",
+    railB: "to-cyan-300/26",
+    glowA: "bg-sky-300/5",
+    glowB: "bg-cyan-300/4",
   };
 }
 
@@ -317,20 +378,39 @@ function lensIcon(lensId: LensId) {
 }
 
 function headerSurface(dark: boolean) {
-  return ["relative overflow-hidden rounded-2xl", "px-4 py-3 md:px-5 md:py-3.5", "backdrop-blur-xl", dark ? "bg-white/5" : "bg-white/75"].join(" ");
+  // readability: calmer surface (less “glow-as-background”)
+  return [
+    "relative overflow-hidden rounded-2xl",
+    "px-4 py-3 md:px-5 md:py-3.5",
+    "backdrop-blur-xl",
+    "border",
+    dark ? "border-white/10 bg-slate-950/20" : "border-black/10 bg-white/80",
+  ].join(" ");
 }
 
 function contentWash(dark: boolean) {
-  return ["relative overflow-hidden rounded-2xl", "px-4 pb-4 pt-3 md:px-5 md:pb-5 md:pt-4", "backdrop-blur-xl", dark ? "bg-white/3" : "bg-white/55"].join(" ");
+  return [
+    "relative overflow-hidden rounded-2xl",
+    "px-4 pb-4 pt-3 md:px-5 md:pb-5 md:pt-4",
+    "backdrop-blur-xl",
+    "border",
+    dark ? "border-white/10 bg-slate-950/18" : "border-black/10 bg-white/75",
+  ].join(" ");
 }
 
-function lensPill(dark: boolean, label: string, dotClass: string, selected?: boolean, ringClass?: string) {
+function lensPill(
+  dark: boolean,
+  label: string,
+  dotClass: string,
+  selected?: boolean,
+  ringClass?: string
+) {
   return (
     <span
       className={[
         "inline-flex items-center gap-2 rounded-full border px-3 py-1",
         "text-xs font-semibold",
-        dark ? "border-white/10 bg-white/6 text-white/82" : "border-black/10 bg-white text-slate-800",
+        dark ? "border-white/10 bg-white/6 text-white/86" : "border-black/10 bg-white text-slate-800",
         selected ? (dark ? `ring-2 ${ringClass ?? "ring-white/12"}` : "ring-2 ring-black/10") : "",
       ].join(" ")}
     >
@@ -400,17 +480,35 @@ function LensSectionRow(props: {
           headerSurface(dark),
           "w-full text-left cursor-pointer",
           "transition",
-          dark ? "hover:bg-white/7" : "hover:bg-white/85",
-          dark ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/14" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/10",
+          dark ? "hover:bg-slate-950/28" : "hover:bg-white/90",
+          dark
+            ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/14"
+            : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/10",
         ].join(" ")}
       >
         {/* Slim left rail */}
-        <div className="pointer-events-none absolute inset-y-3 left-3 hidden w-[3px] rounded-full md:block">
-          <div className={["h-full w-full rounded-full", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-80" : "opacity-55"].join(" ")} />
-          <div className={["absolute inset-0 rounded-full blur-lg", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-25" : "opacity-16"].join(" ")} />
+        <div className="pointer-events-none absolute inset-y-4 left-4 hidden w-[3px] rounded-full md:block">
+          <div
+            className={[
+              "h-full w-full rounded-full",
+              "bg-gradient-to-b",
+              pal.railA,
+              pal.railB,
+              dark ? "opacity-70" : "opacity-45",
+            ].join(" ")}
+          />
+          <div
+            className={[
+              "absolute inset-0 rounded-full blur-lg",
+              "bg-gradient-to-b",
+              pal.railA,
+              pal.railB,
+              dark ? "opacity-18" : "opacity-10",
+            ].join(" ")}
+          />
         </div>
 
-        {/* soft ambient glow */}
+        {/* soft ambient glow (reduced) */}
         <div className="pointer-events-none absolute inset-0">
           <div className={["absolute -top-12 -left-16 h-44 w-44 rounded-full blur-3xl", pal.glowA].join(" ")} />
           <div className={["absolute -bottom-16 -right-16 h-52 w-52 rounded-full blur-3xl", pal.glowB].join(" ")} />
@@ -423,13 +521,15 @@ function LensSectionRow(props: {
           </div>
         ) : null}
 
-        <div className="relative pl-0 md:pl-3.5">
+        <div className="relative pl-0 md:pl-5">
           <div className="flex flex-wrap items-center gap-3">
             {lensPill(dark, title, pal.dot, open, pal.pillRing)}
             <RowCTA dark={dark} open={open} />
           </div>
 
-          <div className={["mt-2 text-sm", dark ? "text-white/70" : "text-slate-700"].join(" ")}>{subtitle}</div>
+          <div className={["mt-2 text-sm leading-relaxed", dark ? "text-white/70" : "text-slate-700"].join(" ")}>
+            {subtitle}
+          </div>
         </div>
       </div>
 
@@ -447,17 +547,17 @@ function LensSectionRow(props: {
             {contentStyle === "wash" ? (
               <div className={contentWash(dark)}>
                 {/* faint rail continuation */}
-                <div className="pointer-events-none absolute inset-y-3 left-3 hidden w-[2px] rounded-full md:block">
-                  <div className={["h-full w-full rounded-full", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-50" : "opacity-30"].join(" ")} />
+                <div className="pointer-events-none absolute inset-y-4 left-4 hidden w-[2px] rounded-full md:block">
+                  <div className={["h-full w-full rounded-full", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-40" : "opacity-24"].join(" ")} />
                 </div>
 
-                <div className="relative pl-0 md:pl-3.5">{children}</div>
+                <div className="relative pl-0 md:pl-5">{children}</div>
               </div>
             ) : (
-              <div className="relative pl-0 md:pl-3.5">
+              <div className="relative pl-0 md:pl-5">
                 {/* no wrapper surface — avoids card-in-card for Next steps */}
                 <div className="pointer-events-none absolute -left-3 top-0 hidden h-full w-[2px] rounded-full md:block">
-                  <div className={["h-full w-full rounded-full", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-35" : "opacity-22"].join(" ")} />
+                  <div className={["h-full w-full rounded-full", "bg-gradient-to-b", pal.railA, pal.railB, dark ? "opacity-28" : "opacity-18"].join(" ")} />
                 </div>
                 {children}
               </div>
@@ -479,22 +579,26 @@ function QuoteCallout(props: { dark: boolean; tint: "lime" | "violet"; quote: st
   const rail =
     tint === "violet"
       ? dark
-        ? "from-violet-300/55 to-fuchsia-300/35"
-        : "from-violet-500/45 to-fuchsia-500/30"
+        ? "from-violet-300/50 to-fuchsia-300/30"
+        : "from-violet-500/40 to-fuchsia-500/25"
       : dark
-      ? "from-lime-300/50 to-emerald-300/35"
-      : "from-lime-500/40 to-emerald-500/28";
+      ? "from-lime-300/46 to-emerald-300/30"
+      : "from-lime-500/36 to-emerald-500/22";
 
   return (
     <div className="mt-4 flex gap-3">
       <div className="relative w-[3px] shrink-0 overflow-hidden rounded-full">
         <div className={["absolute inset-0 bg-gradient-to-b", rail].join(" ")} />
-        <div className={["absolute inset-0 blur-lg bg-gradient-to-b", rail, dark ? "opacity-25" : "opacity-16"].join(" ")} />
+        <div className={["absolute inset-0 blur-lg bg-gradient-to-b", rail, dark ? "opacity-18" : "opacity-10"].join(" ")} />
       </div>
 
       <div className="min-w-0">
-        <div className={["text-[11px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/45" : "text-slate-500"].join(" ")}>Quote</div>
-        <div className={["mt-1 text-sm leading-relaxed", dark ? "text-white/70" : "text-slate-700"].join(" ")}>“{quote}”</div>
+        <div className={["text-[11px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/45" : "text-slate-500"].join(" ")}>
+          Quote
+        </div>
+        <div className={["mt-1 text-[15px] leading-relaxed", dark ? "text-white/75" : "text-slate-700"].join(" ")}>
+          “{quote}”
+        </div>
       </div>
     </div>
   );
@@ -548,8 +652,6 @@ export default function Page() {
   const [timeTwinOpen, setTimeTwinOpen] = React.useState(false);
   const [nextStepsOpen, setNextStepsOpen] = React.useState(false);
 
-  const narrativeText = dark ? "text-slate-200/88" : "text-slate-700";
-
   const calibrationOptions: CalibrationChoice[] = ["Mostly right", "Somewhat", "Not really"];
 
   function setTabAndSync(next: InsightsTab) {
@@ -595,8 +697,22 @@ export default function Page() {
   const superDef = React.useMemo(() => getInsightLens("superpowers"), []);
   const timeDef = React.useMemo(() => getInsightLens("timeTwin"), []);
 
+  // Readability: cap displayed terms (prevents “noise wall”)
+  const wordCloudDisplay = React.useMemo(() => {
+    if (!wordCloud?.length) return [];
+    const sorted = [...wordCloud].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
+    return sorted.slice(0, 26);
+  }, [wordCloud]);
+
   return (
-    <AppChrome themeId={themeId} setThemeId={setThemeId} gradientLevel={gradientLevel} setGradientLevel={setGradientLevel} orbSource="insights_orb" ambientCap={0.35}>
+    <AppChrome
+      themeId={themeId}
+      setThemeId={setThemeId}
+      gradientLevel={gradientLevel}
+      setGradientLevel={setGradientLevel}
+      orbSource="insights_orb"
+      ambientCap={0.35}
+    >
       <style jsx global>{`
         .el-word {
           transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg)) scale(1);
@@ -605,10 +721,10 @@ export default function Page() {
           transition: transform 160ms ease;
         }
         .el-word:hover {
-          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg)) scale(1.035);
+          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg)) scale(1.03);
         }
         .el-word:active {
-          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg)) scale(0.985);
+          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg)) scale(0.988);
         }
       `}</style>
 
@@ -624,7 +740,7 @@ export default function Page() {
                   className={[
                     "inline-flex items-center gap-2 rounded-full border px-3 py-1",
                     "text-xs font-semibold",
-                    dark ? "border-white/10 bg-white/6 text-white/75" : "border-black/10 bg-white/80 text-slate-800",
+                    dark ? "border-white/10 bg-slate-950/18 text-white/78" : "border-black/10 bg-white/80 text-slate-800",
                   ].join(" ")}
                 >
                   <span aria-hidden className="opacity-85">
@@ -659,129 +775,165 @@ export default function Page() {
             <section className="mb-6">
               <div className="relative">
                 {/* HERO GRID */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.15fr_0.85fr] md:items-start">
-                  {/* Agentic intro */}
-                  <div className="relative pt-3 md:pt-4">
-                    <div className={`text-[24px] leading-snug md:text-[28px] ${dark ? "text-white" : "text-slate-900"}`}>
-                      {colorizeKeywords(dark, vm.summary.headline)}
-                    </div>
-
-                    <div className="mt-3">
-                      {!storyExpanded ? (
-                        <div className="relative" style={fadeMaskStyle("story")}>
-                          <p className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}>
-                            {colorizeKeywords(dark, storyTextCollapsed || storyTextExpanded)}
-                          </p>
-                        </div>
-                      ) : (
-                        <AnimatePresence initial={false}>
-                          <motion.p
-                            key="storyExpanded"
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 6 }}
-                            transition={{ duration: 0.18 }}
-                            className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
-                          >
-                            {colorizeKeywords(dark, storyTextExpanded)}
-                          </motion.p>
-                        </AnimatePresence>
-                      )}
-                    </div>
-
-                    {canToggleStory ? (
-                      <div className="mt-3">
-                        <button type="button" className={textAffordance(dark)} onClick={() => setStoryExpanded((v) => !v)}>
-                          <span aria-hidden className="opacity-80">
-                            {storyExpanded ? "▾" : "▸"}
-                          </span>
-                          {storyExpanded ? "Read less" : "Read more"}
-                        </button>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-start">
+                  {/* Agentic intro (reading surface) */}
+                  <div className="relative pt-1 md:pt-2">
+                    <div className={readingSurface(dark)}>
+                      <div
+                        className={[
+                          "pointer-events-none absolute inset-0",
+                          dark ? "opacity-100" : "opacity-90",
+                        ].join(" ")}
+                        aria-hidden
+                      >
+                        {/* subtle, not behind the paragraphs */}
+                        <div className={["absolute -top-14 -right-14 h-48 w-48 rounded-full blur-3xl", dark ? "bg-sky-300/7" : "bg-sky-400/6"].join(" ")} />
+                        <div className={["absolute -bottom-20 -left-14 h-56 w-56 rounded-full blur-3xl", dark ? "bg-emerald-300/6" : "bg-emerald-400/5"].join(" ")} />
                       </div>
-                    ) : null}
 
-                    {/* WANT THIS TO GET MORE SPECIFIC? (compact width) */}
-                    {primaryUnlock?.items?.length ? (
-                      <div className="mt-5">
-                        <div className="flex justify-start">
-                          <div
-                            className={[
-                              "relative w-full overflow-hidden rounded-[22px] border px-4 py-3",
-                              "backdrop-blur-2xl",
-                              "md:max-w-[420px]",
-                              dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
-                            ].join(" ")}
-                          >
-                            <div className="pointer-events-none absolute inset-0">
-                              <div className={["absolute -top-12 -right-14 h-40 w-40 rounded-full blur-3xl", dark ? "bg-amber-300/12" : "bg-amber-400/10"].join(" ")} />
-                              <div className={["absolute -bottom-16 -left-14 h-44 w-44 rounded-full blur-3xl", dark ? "bg-rose-300/8" : "bg-rose-400/8"].join(" ")} />
+                      <div className="relative">
+                        <div className={`text-[26px] leading-snug md:text-[30px] ${dark ? "text-white" : "text-slate-900"}`}>
+                          {colorizeKeywords(dark, vm.summary.headline)}
+                        </div>
+
+                        <div className="mt-3">
+                          {!storyExpanded ? (
+                            <div className="relative" style={fadeMaskStyle("story")}>
+                              <p className={`text-[16px] leading-7 md:text-[17px] ${calmBodyText(dark)}`}>
+                                {colorizeKeywords(dark, storyTextCollapsed || storyTextExpanded)}
+                              </p>
                             </div>
+                          ) : (
+                            <AnimatePresence initial={false}>
+                              <motion.p
+                                key="storyExpanded"
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 6 }}
+                                transition={{ duration: 0.18 }}
+                                className={`text-[16px] leading-7 md:text-[17px] ${calmBodyText(dark)}`}
+                              >
+                                {colorizeKeywords(dark, storyTextExpanded)}
+                              </motion.p>
+                            </AnimatePresence>
+                          )}
+                        </div>
 
-                            <div className="relative">
-                              <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>Want this to get more specific?</div>
+                        {canToggleStory ? (
+                          <div className="mt-3">
+                            <button type="button" className={textAffordance(dark)} onClick={() => setStoryExpanded((v) => !v)}>
+                              <span aria-hidden className="opacity-80">
+                                {storyExpanded ? "▾" : "▸"}
+                              </span>
+                              {storyExpanded ? "Read less" : "Read more"}
+                            </button>
+                          </div>
+                        ) : null}
 
-                              <div className={`mt-1 text-sm leading-relaxed ${dark ? "text-white/72" : "text-slate-700"}`}>Finish one more section and I’ll get way more specific.</div>
+                        {/* WANT THIS TO GET MORE SPECIFIC? */}
+                        {primaryUnlock?.items?.length ? (
+                          <div className="mt-4">
+                            <div
+                              className={[
+                                "relative overflow-hidden rounded-[22px] border px-4 py-3",
+                                "backdrop-blur-2xl",
+                                dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/85",
+                              ].join(" ")}
+                            >
+                              <div className="pointer-events-none absolute inset-0" aria-hidden>
+                                <div className={["absolute -top-10 -right-12 h-36 w-36 rounded-full blur-3xl", dark ? "bg-amber-300/10" : "bg-amber-400/8"].join(" ")} />
+                                <div className={["absolute -bottom-14 -left-12 h-44 w-44 rounded-full blur-3xl", dark ? "bg-rose-300/7" : "bg-rose-400/6"].join(" ")} />
+                              </div>
 
-                              <div className="mt-2.5 flex flex-wrap gap-2">
-                                {primaryUnlock.items.slice(0, 2).map((it) =>
-                                  it.href ? (
-                                    <button
-                                      key={it.id}
-                                      type="button"
-                                      className={[
-                                        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
-                                        "text-xs font-semibold transition active:scale-95",
-                                        dark ? "border-white/12 bg-white/6 text-white/85 hover:bg-white/10" : "border-black/10 bg-white text-slate-900 hover:bg-white",
-                                      ].join(" ")}
-                                      onClick={() => router.push(it.href!)}
-                                    >
-                                      <span aria-hidden className="opacity-85">
-                                        ↗
-                                      </span>
-                                      <span>{it.label}</span>
-                                    </button>
-                                  ) : null
-                                )}
+                              <div className="relative">
+                                <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>Want this to get more specific?</div>
+
+                                <div className={`mt-1 text-[13px] leading-relaxed ${dark ? "text-white/72" : "text-slate-700"}`}>
+                                  Finish one more section and I’ll get way more specific.
+                                </div>
+
+                                <div className="mt-2.5 flex flex-wrap gap-2">
+                                  {primaryUnlock.items.slice(0, 2).map((it) =>
+                                    it.href ? (
+                                      <button
+                                        key={it.id}
+                                        type="button"
+                                        className={[
+                                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+                                          "text-xs font-semibold transition active:scale-95",
+                                          dark ? "border-white/12 bg-white/6 text-white/85 hover:bg-white/10" : "border-black/10 bg-white text-slate-900 hover:bg-white",
+                                        ].join(" ")}
+                                        onClick={() => router.push(it.href!)}
+                                      >
+                                        <span aria-hidden className="opacity-85">
+                                          ↗
+                                        </span>
+                                        <span>{it.label}</span>
+                                      </button>
+                                    ) : null
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        ) : null}
                       </div>
-                    ) : null}
+                    </div>
                   </div>
 
-                  {/* Word cloud area */}
-                  <div className="relative pt-3 md:pt-4">
-                    <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/55" : "text-slate-600"}`}>Themes showing up</div>
-
-                    <div className="relative mt-3">
+                  {/* Themes (reading surface) */}
+                  <div className="relative pt-1 md:pt-2">
+                    <div className={readingSurface(dark)}>
                       <div className="relative">
-                        {wordCloud.length ? (
-                          <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                            {wordCloud.map((w) => {
-                              const isTop = topWordSet.has(w.term.toLowerCase());
-                              return (
-                                <span
-                                  key={w.term}
-                                  className={[
-                                    "select-none el-word",
-                                    wordColorClasses(dark, w.term),
-                                    isTop ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ") : "",
-                                  ].join(" ")}
-                                  style={{
-                                    fontSize: `${wordSizePx(w.weight)}px`,
-                                    opacity: wordOpacity(w.weight),
-                                    ...wordChaosVars(w.term, w.weight),
-                                  }}
-                                >
-                                  {w.term}
-                                </span>
-                              );
-                            })}
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className={surfaceTitle(dark)}>Themes</div>
+                            <div className={`mt-1 text-sm leading-relaxed ${surfaceSubtle(dark)}`}>
+                              The words that keep showing up in your answers.
+                            </div>
                           </div>
-                        ) : (
-                          <div className={`text-sm ${dark ? "text-white/70" : "text-slate-700"}`}>Nothing to map yet — answer a few questions and this will fill in.</div>
-                        )}
+
+                          <div
+                            className={[
+                              "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+                              dark ? "border-white/10 bg-white/6 text-white/60" : "border-black/10 bg-white text-slate-600",
+                            ].join(" ")}
+                            aria-hidden
+                          >
+                            {wordCloudDisplay.length ? `${wordCloudDisplay.length} tags` : "—"}
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          {wordCloudDisplay.length ? (
+                            <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                              {wordCloudDisplay.map((w) => {
+                                const isTop = topWordSet.has(w.term.toLowerCase());
+                                return (
+                                  <span
+                                    key={w.term}
+                                    className={[
+                                      "select-none el-word",
+                                      wordColorClasses(dark, w.term),
+                                      isTop ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ") : "",
+                                    ].join(" ")}
+                                    style={{
+                                      fontSize: `${wordSizePx(w.weight)}px`,
+                                      opacity: wordOpacity(w.weight),
+                                      ...wordChaosVars(w.term, w.weight),
+                                    }}
+                                  >
+                                    {w.term}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className={`text-[14px] leading-relaxed ${dark ? "text-white/72" : "text-slate-700"}`}>
+                              Nothing to map yet — answer a few questions and this will fill in.
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -799,16 +951,16 @@ export default function Page() {
                   open={superpowersOpen}
                   onToggle={() => setSuperpowersOpen((v) => !v)}
                 >
-                  <div className={`text-sm leading-relaxed ${dark ? "text-white/72" : "text-slate-700"}`}>{superDef.body}</div>
+                  <div className={`text-[15px] leading-relaxed ${dark ? "text-white/78" : "text-slate-700"}`}>{superDef.body}</div>
 
                   {superDef.bullets?.length ? (
                     <ul className="mt-3 space-y-2">
                       {superDef.bullets.map((b, i) => (
-                        <li key={`sp_b_${i}`} className="flex gap-2 text-sm">
+                        <li key={`sp_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
                           <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
                             •
                           </span>
-                          <span className={dark ? "text-white/75" : "text-slate-700"}>{b}</span>
+                          <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
                         </li>
                       ))}
                     </ul>
@@ -827,16 +979,16 @@ export default function Page() {
                     open={timeTwinOpen}
                     onToggle={() => setTimeTwinOpen((v) => !v)}
                   >
-                    <div className={`text-sm leading-relaxed ${dark ? "text-white/72" : "text-slate-700"}`}>{timeDef.body}</div>
+                    <div className={`text-[15px] leading-relaxed ${dark ? "text-white/78" : "text-slate-700"}`}>{timeDef.body}</div>
 
                     {timeDef.bullets?.length ? (
                       <ul className="mt-3 space-y-2">
                         {timeDef.bullets.map((b, i) => (
-                          <li key={`tt_b_${i}`} className="flex gap-2 text-sm">
+                          <li key={`tt_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
                             <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
                               •
                             </span>
-                            <span className={dark ? "text-white/75" : "text-slate-700"}>{b}</span>
+                            <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
                           </li>
                         ))}
                       </ul>
@@ -865,7 +1017,7 @@ export default function Page() {
 
                 {/* Quick check */}
                 <div className="mt-6">
-                  <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${dark ? "text-white/50" : "text-slate-500"}`}>Quick check</div>
+                  <div className={surfaceTitle(dark)}>Quick check</div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
                     {calibrationOptions.map((opt) => {
@@ -878,10 +1030,10 @@ export default function Page() {
                             "inline-flex items-center justify-center",
                             "rounded-full border px-3.5 py-2",
                             "text-sm font-semibold transition active:scale-95",
-                            dark ? "border-white/10 bg-white/5 text-white/75 hover:bg-white/10" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+                            dark ? "border-white/10 bg-slate-950/18 text-white/78 hover:bg-slate-950/28" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
                             selected
                               ? dark
-                                ? "bg-white/18 text-white border-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_18px_55px_rgba(0,0,0,0.45)] ring-2 ring-white/25"
+                                ? "bg-white/14 text-white border-white/16 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_16px_44px_rgba(0,0,0,0.40)] ring-2 ring-white/22"
                                 : "bg-white text-slate-900 border-slate-200 shadow-[0_14px_40px_rgba(0,0,0,0.12)] ring-2 ring-slate-900/10"
                               : "",
                           ].join(" ")}
@@ -897,7 +1049,9 @@ export default function Page() {
                     })}
                   </div>
 
-                  <div className={`mt-2 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>(We’ll use this later to recalibrate Insights.)</div>
+                  <div className={`mt-2 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
+                    (We’ll use this later to recalibrate Insights.)
+                  </div>
                 </div>
               </div>
             </section>
@@ -990,7 +1144,11 @@ export default function Page() {
                     </div>
 
                     <div
-                      className={["mt-4 overflow-hidden rounded-2xl border", "backdrop-blur-xl", dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80"].join(" ")}
+                      className={[
+                        "mt-4 overflow-hidden rounded-2xl border",
+                        "backdrop-blur-xl",
+                        dark ? "border-white/10 bg-slate-950/22" : "border-black/10 bg-white/85",
+                      ].join(" ")}
                       style={{ maxHeight: "56vh" }}
                     >
                       <div className="max-h-[56vh] overflow-auto">
