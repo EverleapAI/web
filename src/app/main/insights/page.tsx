@@ -18,6 +18,10 @@ import { getNextStepsDefinition } from "@/app/main/content/nextSteps";
 
 import { getInsightLens } from "@/app/main/content/insightLenses";
 
+import { MotivationsTab } from "./tabs/MotivationsTab";
+import { StrengthsTab } from "./tabs/StrengthsTab";
+import { SkillsTab } from "./tabs/SkillsTab";
+
 /* =============================================================================
    Tabs
    ============================================================================= */
@@ -658,12 +662,16 @@ export default function Page() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.15fr_0.85fr] md:items-start">
                   {/* Agentic intro */}
                   <div className="relative pt-3 md:pt-4">
-                    <div className={`text-[24px] leading-snug md:text-[28px] ${dark ? "text-white" : "text-slate-900"}`}>{colorizeKeywords(dark, vm.summary.headline)}</div>
+                    <div className={`text-[24px] leading-snug md:text-[28px] ${dark ? "text-white" : "text-slate-900"}`}>
+                      {colorizeKeywords(dark, vm.summary.headline)}
+                    </div>
 
                     <div className="mt-3">
                       {!storyExpanded ? (
                         <div className="relative" style={fadeMaskStyle("story")}>
-                          <p className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}>{colorizeKeywords(dark, storyTextCollapsed || storyTextExpanded)}</p>
+                          <p className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}>
+                            {colorizeKeywords(dark, storyTextCollapsed || storyTextExpanded)}
+                          </p>
                         </div>
                       ) : (
                         <AnimatePresence initial={false}>
@@ -893,6 +901,12 @@ export default function Page() {
                 </div>
               </div>
             </section>
+          ) : tab === "motivations" ? (
+            <MotivationsTab dark={dark} mounted={mounted} vm={vm} router={router} />
+          ) : tab === "strengths" ? (
+            <StrengthsTab dark={dark} mounted={mounted} vm={vm} router={router} />
+          ) : tab === "skills" ? (
+            <SkillsTab dark={dark} mounted={mounted} vm={vm} router={router} />
           ) : (
             <section className="mb-6">
               <div
@@ -904,7 +918,7 @@ export default function Page() {
                 ].join(" ")}
               >
                 <div className={`text-lg font-semibold ${sectionTitle(dark)}`}>{TABS.find((t) => t.id === tab)?.label ?? "Section"}</div>
-                <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>This section is scaffolded. We’ll implement it next after Summary is locked.</div>
+                <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>This section is scaffolded.</div>
               </div>
             </section>
           )}
