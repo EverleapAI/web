@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { MainCarouselCard } from "@/app/main/mainCarouselData";
+import type { MainCarouselCard } from "@/app/(app)/main/mainCarouselData";
 import { CarouselCard } from "./CarouselCard";
 import { useCarouselInteractions } from "./useCarouselInteractions";
 import { motion, type PanInfo } from "framer-motion";

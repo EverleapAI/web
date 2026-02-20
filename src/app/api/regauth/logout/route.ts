@@ -1,0 +1,21 @@
+// src/app/api/regauth/logout/route.ts
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+export async function POST() {
+  const res = NextResponse.json({ ok: true });
+
+  // Clear cookie (must match name/path/samesite)
+  res.cookies.set({
+    name: "regauth_session",
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+
+  return res;
+}

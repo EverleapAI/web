@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { MainCarousel } from "@/components/main/MainCarousel";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { mainCarouselCards, type MainCardId } from "@/app/main/mainCarouselData";
+import { mainCarouselCards, type MainCardId } from "@/app/(app)/main/mainCarouselData";
 
 export default function MainPage() {
   const [activeCardId, setActiveCardId] = useState<MainCardId>("spotlight");

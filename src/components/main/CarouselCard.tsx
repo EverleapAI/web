@@ -1,7 +1,7 @@
 // src/components/main/CarouselCard.tsx
 "use client";
 
-import type { MainCarouselCard, IconToken } from "@/app/main/mainCarouselData";
+import type { MainCarouselCard, IconToken } from "@/app/(app)/main/mainCarouselData";
 import { cn } from "@/lib/utils";
 import {
   Sparkles,

@@ -1,35 +1,32 @@
-// apps/web/src/middleware.ts
-import { NextRequest, NextResponse } from "next/server";
+// src/middleware.ts
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-const ACCESS_COOKIE = "everleap_access";
+const SESSION_COOKIE = "regauth_session";
 
-// Paths that must remain reachable without auth
-const PUBLIC_PATHS = [
-  "/access",
-  "/favicon.ico",
-  "/robots.txt",
-  "/sitemap.xml"
-];
+/**
+ * Build a safe internal returnTo string from the request URL.
+ * - always starts with "/"
+ * - includes query string
+ * - no external redirects possible because we derive it from req.nextUrl
+ */
+function buildReturnTo(req: NextRequest): string {
+  const { pathname, search } = req.nextUrl;
+  return `${pathname}${search || ""}`;
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow Next internals & public assets
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/access") ||
-    PUBLIC_PATHS.includes(pathname) ||
-    /\.[^/]+$/.test(pathname) // static files
-  ) {
-    return NextResponse.next();
-  }
+  // Only guard /main/*
+  if (!pathname.startsWith("/main")) return NextResponse.next();
 
-  const cookie = req.cookies.get(ACCESS_COOKIE)?.value;
+  const hasSession = req.cookies.get(SESSION_COOKIE)?.value;
 
-  if (!cookie) {
+  if (!hasSession) {
     const url = req.nextUrl.clone();
-    url.pathname = "/access";
-    url.searchParams.set("next", pathname);
+    url.pathname = "/regauth";
+    url.searchParams.set("returnTo", buildReturnTo(req));
     return NextResponse.redirect(url);
   }
 
@@ -37,5 +34,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"]
+  matcher: ["/main/:path*"],
 };

@@ -8,7 +8,7 @@ import type {
   InsightCard,
   SpotlightTask,
   SpotlightTaskStatus,
-} from "@/app/main/mainCarouselData";
+} from "@/app/(app)/main/mainCarouselData";
 import { cn } from "@/lib/utils";
 
 interface ContentPanelProps {

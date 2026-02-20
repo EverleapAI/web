@@ -272,7 +272,7 @@ export default function HomePage() {
       {/* Top-right Sign in link (quiet, non-competing) */}
       <div className="absolute top-0 right-0 z-20 p-4">
         <Link
-          href="/login"
+          href="/regauth"
           className="rounded-full px-3 py-1.5 text-sm font-semibold text-white/70 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
         >
           Sign in
@@ -329,7 +329,7 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
 
       <p className="mt-4 text-xs text-white/55">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-white/70 hover:text-white transition">
+        <Link href="/regauth" className="font-semibold text-white/70 hover:text-white transition">
           Sign in
         </Link>
       </p>
@@ -365,7 +365,7 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
 
       <p className="mt-3 text-xs text-white/55">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-white/70 hover:text-white transition">
+        <Link href="/regauth" className="font-semibold text-white/70 hover:text-white transition">
           Sign in
         </Link>
       </p>
@@ -392,7 +392,7 @@ function AuthOverlay() {
 
       <div className="mt-7 flex flex-col items-center justify-center gap-3 md:mt-8">
         <Link
-          href="/login"
+          href="/regauth"
           className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white/5 px-6 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm hover:bg-white/10 active:scale-[0.99]"
         >
           Sign in

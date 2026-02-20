@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type MainCarouselCard,
   type MainCardId,
-} from "@/app/main/mainCarouselData";
+} from "@/app/(app)/main/mainCarouselData";
 import { CarouselCard } from "@/components/main/CarouselCard";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";

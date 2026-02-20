@@ -1,7 +1,7 @@
 // src/components/main/CarouselHeader.tsx
 "use client";
 
-import type { MainCarouselCard } from "@/app/main/mainCarouselData";
+import type { MainCarouselCard } from "@/app/(app)/main/mainCarouselData";
 import { motion, useMotionTemplate, useSpring } from "framer-motion";
 
 interface CarouselHeaderProps {
