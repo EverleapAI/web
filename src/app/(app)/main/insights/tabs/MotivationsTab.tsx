@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Zap, HeartHandshake, Sparkles, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 import type { InsightsTab } from "@/app/(app)/main/insights/app/buildInsightsViewModel";
@@ -21,7 +21,6 @@ type MotivationsLike = {
   drivers?: { label: string; strength?: number }[];
   boosts?: string[];
   drains?: string[];
-  watchOuts?: string[];
   experiment?: { title?: string; steps?: string[] };
   primaryUnlock?: PrimaryUnlock;
 };
@@ -68,15 +67,9 @@ function asUnlock(v: unknown): PrimaryUnlock | null {
   return { items: safe };
 }
 
-function pillButton(dark: boolean) {
-  return [
-    "inline-flex items-center justify-center gap-2",
-    "rounded-full border px-3.5 py-2",
-    "text-xs font-semibold transition active:scale-95",
-    dark ? "border-white/10 bg-white/6 text-white/78 hover:bg-white/10" : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
-    dark ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
-  ].join(" ");
-}
+/* =============================================================================
+   UI helpers
+   ============================================================================= */
 
 function textAffordance(dark: boolean) {
   return [
@@ -98,16 +91,25 @@ function fadeMaskStyle(): React.CSSProperties {
   };
 }
 
-function washCard(dark: boolean) {
+function readingSurface(dark: boolean) {
   return [
-    "relative overflow-hidden rounded-[22px] border",
-    "backdrop-blur-2xl",
-    dark ? "border-white/10 bg-white/5" : "border-black/10 bg-white/80",
+    "relative overflow-hidden rounded-[26px] border",
+    "px-4 py-4 md:px-5 md:py-5",
+    "backdrop-blur-xl",
+    dark ? "border-white/10 bg-slate-950/22" : "border-black/10 bg-white/80",
+    "shadow-[0_18px_55px_rgba(0,0,0,0.22)]",
   ].join(" ");
 }
 
+function softDivider(dark: boolean) {
+  return dark ? "bg-white/10" : "bg-black/10";
+}
+
 function tinyLabel(dark: boolean) {
-  return ["text-xs font-semibold uppercase tracking-[0.18em]", dark ? "text-white/50" : "text-slate-500"].join(" ");
+  return [
+    "text-[11px] font-semibold uppercase tracking-[0.16em]",
+    dark ? "text-white/50" : "text-slate-500",
+  ].join(" ");
 }
 
 function sectionTitle(dark: boolean) {
@@ -115,15 +117,41 @@ function sectionTitle(dark: boolean) {
 }
 
 function sectionMuted(dark: boolean) {
-  return dark ? "text-white/65" : "text-slate-600";
+  return dark ? "text-white/62" : "text-slate-600";
 }
 
-function driverColor(dark: boolean) {
-  return dark ? "bg-amber-300/18 text-amber-100 ring-1 ring-amber-300/18" : "bg-amber-200/55 text-amber-950 ring-1 ring-amber-900/10";
+function bodyText(dark: boolean) {
+  return dark ? "text-slate-200/90" : "text-slate-700";
 }
 
-function softDivider(dark: boolean) {
-  return dark ? "bg-white/10" : "bg-black/10";
+function pillButton(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "rounded-full border px-3.5 py-2",
+    "text-xs font-semibold transition active:scale-95",
+    dark ? "border-white/10 bg-white/6 text-white/78 hover:bg-white/10" : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
+    dark ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20" : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
+  ].join(" ");
+}
+
+function emphasisPill(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1",
+    "text-xs font-semibold",
+    dark ? "border-white/10 bg-white/6 text-white/86" : "border-black/10 bg-white text-slate-800",
+  ].join(" ");
+}
+
+function railDot(dark: boolean) {
+  return (
+    <span
+      aria-hidden
+      className={[
+        "mt-[6px] h-2 w-2 shrink-0 rounded-full",
+        dark ? "bg-amber-300/75 ring-1 ring-amber-300/20" : "bg-amber-500/80 ring-1 ring-amber-900/10",
+      ].join(" ")}
+    />
+  );
 }
 
 /* =============================================================================
@@ -143,16 +171,25 @@ export function MotivationsTab(props: {
   const motivations = (v.motivations ?? {}) as MotivationsLike;
   const summary = (v.summary ?? {}) as SummaryLike;
 
-  const headline =
-    asString(motivations.headline, "").trim() ||
-    "What motivates you (so far)";
+  const headline = asString(motivations.headline, "").trim() || "Motivations";
 
   const story = asStringArray(motivations.storySoFar);
   const storyCollapsed = story.slice(0, 2);
   const storyExpandedItems = story.slice(0, 7);
 
-  const storyTextCollapsed = storyCollapsed.map((s) => s.trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
-  const storyTextExpanded = storyExpandedItems.map((s) => s.trim()).filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+  const storyTextCollapsed = storyCollapsed
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const storyTextExpanded = storyExpandedItems
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const canToggleStory = storyExpandedItems.length > 0 && story.length > 2;
 
@@ -160,13 +197,16 @@ export function MotivationsTab(props: {
     Array.isArray(motivations.drivers)
       ? motivations.drivers
           .filter((d): d is { label: string; strength?: number } => !!d && typeof d.label === "string")
-          .slice(0, 8)
+          .slice(0, 5)
       : [];
 
-  const boosts = Array.isArray(motivations.boosts) ? motivations.boosts.filter((x): x is string => typeof x === "string").slice(0, 5) : [];
-  const drains = Array.isArray(motivations.drains) ? motivations.drains.filter((x): x is string => typeof x === "string").slice(0, 5) : [];
+  const boosts = Array.isArray(motivations.boosts)
+    ? motivations.boosts.filter((x): x is string => typeof x === "string").slice(0, 5)
+    : [];
 
-  const watchOuts = Array.isArray(motivations.watchOuts) ? motivations.watchOuts.filter((x): x is string => typeof x === "string").slice(0, 4) : [];
+  const drains = Array.isArray(motivations.drains)
+    ? motivations.drains.filter((x): x is string => typeof x === "string").slice(0, 5)
+    : [];
 
   const experiment = isRecord(motivations.experiment) ? motivations.experiment : null;
   const experimentTitle = asString(experiment?.title, "One small experiment");
@@ -174,30 +214,52 @@ export function MotivationsTab(props: {
     ? (experiment?.steps ?? []).filter((x): x is string => typeof x === "string").slice(0, 4)
     : [];
 
-  const unlock =
-    asUnlock(motivations.primaryUnlock) ??
-    asUnlock(summary.primaryUnlock) ??
-    { items: [] };
+  // Pull state-aware nudge from motivations first, then summary
+  const unlock = asUnlock(motivations.primaryUnlock) ?? asUnlock(summary.primaryUnlock) ?? { items: [] };
 
   const [storyExpanded, setStoryExpanded] = React.useState(false);
 
-  const narrativeText = dark ? "text-slate-200/88" : "text-slate-700";
+  const storyFallback =
+    "Tell me what pulls you forward, what drains you, and what lights you up. Then I can reflect it back with precision.";
 
   return (
     <section className="mb-6">
-      {/* HERO */}
       <div className="relative">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-[1.1fr_0.9fr] md:items-start">
-          <div className="relative pt-3 md:pt-4">
-            <div className={`text-[24px] leading-snug md:text-[28px] ${dark ? "text-white" : "text-slate-900"}`}>
-              {headline}
-            </div>
+        {/* One main reading surface */}
+        <div className={readingSurface(dark)}>
+          <div
+            className="pointer-events-none absolute inset-0"
+            aria-hidden
+          >
+            <div
+              className={[
+                "absolute -top-14 -right-14 h-48 w-48 rounded-full blur-3xl",
+                dark ? "bg-amber-300/10" : "bg-amber-400/8",
+              ].join(" ")}
+            />
+            <div
+              className={[
+                "absolute -bottom-20 -left-16 h-56 w-56 rounded-full blur-3xl",
+                dark ? "bg-rose-300/7" : "bg-rose-400/6",
+              ].join(" ")}
+            />
+            <div
+              className={[
+                "absolute -bottom-24 -right-24 h-64 w-64 rounded-full blur-3xl",
+                dark ? "bg-emerald-300/6" : "bg-emerald-400/5",
+              ].join(" ")}
+            />
+          </div>
+
+          <div className="relative">
+            {/* Header / narrative */}
+            <div className={`text-[24px] leading-snug md:text-[28px] ${sectionTitle(dark)}`}>{headline}</div>
 
             <div className="mt-3">
               {!storyExpanded ? (
                 <div className="relative" style={fadeMaskStyle()}>
-                  <p className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}>
-                    {storyTextCollapsed || storyTextExpanded || "Answer a few Motivation questions and this will turn into a read that actually fits you."}
+                  <p className={`text-[15px] leading-7 md:text-[16px] ${bodyText(dark)}`}>
+                    {storyTextCollapsed || storyTextExpanded || storyFallback}
                   </p>
                 </div>
               ) : (
@@ -208,18 +270,21 @@ export function MotivationsTab(props: {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
                     transition={{ duration: 0.18 }}
-                    className={`text-[15px] leading-7 md:text-[16px] ${narrativeText}`}
+                    className={`text-[15px] leading-7 md:text-[16px] ${bodyText(dark)}`}
                   >
-                    {storyTextExpanded || storyTextCollapsed}
+                    {storyTextExpanded || storyTextCollapsed || storyFallback}
                   </motion.p>
                 </AnimatePresence>
               )}
             </div>
 
-            {/* Read more/less UNDER the faded content (not on the right) */}
             {canToggleStory ? (
               <div className="mt-3">
-                <button type="button" className={textAffordance(dark)} onClick={() => setStoryExpanded((v2) => !v2)}>
+                <button
+                  type="button"
+                  className={textAffordance(dark)}
+                  onClick={() => setStoryExpanded((v2) => !v2)}
+                >
                   <span aria-hidden className="opacity-80">
                     {storyExpanded ? "▾" : "▸"}
                   </span>
@@ -228,200 +293,133 @@ export function MotivationsTab(props: {
               </div>
             ) : null}
 
-            {/* Make it more specific (compact width) */}
+            {/* State-aware nudge (compact, not a second “card”) */}
             {unlock.items?.length ? (
-              <div className="mt-5">
-                <div className="flex justify-start">
-                  <div className={[washCard(dark), "w-full px-4 py-3 md:max-w-[420px]"].join(" ")}>
-                    <div className="pointer-events-none absolute inset-0">
-                      <div className={["absolute -top-12 -right-14 h-40 w-40 rounded-full blur-3xl", dark ? "bg-amber-300/12" : "bg-amber-400/10"].join(" ")} />
-                      <div className={["absolute -bottom-16 -left-14 h-44 w-44 rounded-full blur-3xl", dark ? "bg-rose-300/8" : "bg-rose-400/8"].join(" ")} />
-                    </div>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className={emphasisPill(dark)}>
+                  <span aria-hidden className="opacity-85">✦</span>
+                  Make this sharper
+                </span>
 
-                    <div className="relative">
-                      <div className={`text-sm font-semibold ${dark ? "text-white" : "text-slate-900"}`}>
-                        Want this to get more accurate?
-                      </div>
-                      <div className={`mt-1 text-sm leading-relaxed ${sectionMuted(dark)}`}>
-                        One more set of answers makes the Motivation read way more specific (less generic, more *you*).
-                      </div>
-
-                      <div className="mt-2.5 flex flex-wrap gap-2">
-                        {unlock.items.slice(0, 2).map((it) =>
-                          it.href ? (
-                            <button
-                              key={it.id}
-                              type="button"
-                              className={pillButton(dark)}
-                              onClick={() => router.push(it.href!)}
-                            >
-                              <ArrowUpRight className="h-4 w-4 opacity-80" />
-                              <span>{it.label}</span>
-                            </button>
-                          ) : null
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {unlock.items.slice(0, 2).map((it) =>
+                  it.href ? (
+                    <button
+                      key={it.id}
+                      type="button"
+                      className={pillButton(dark)}
+                      onClick={() => router.push(it.href!)}
+                    >
+                      <ArrowUpRight className="h-4 w-4 opacity-80" />
+                      <span>{it.label}</span>
+                    </button>
+                  ) : null
+                )}
               </div>
             ) : null}
-          </div>
 
-          {/* Drivers / chips */}
-          <div className="relative pt-3 md:pt-4">
-            <div className={tinyLabel(dark)}>Your drivers</div>
+            {/* Divider */}
+            <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
 
-            <div className="mt-3">
+            {/* Drivers (editorial list) */}
+            <div>
+              <div className={tinyLabel(dark)}>Your drivers</div>
+              <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                The things that pull you forward — not “traits,” not a test.
+              </div>
+
               {drivers.length ? (
-                <div className="flex flex-wrap gap-2">
+                <ul className="mt-3 space-y-2.5">
                   {drivers.map((d) => (
-                    <span
-                      key={d.label}
-                      className={[
-                        "inline-flex items-center gap-2 rounded-full px-3 py-2",
-                        "text-sm font-semibold",
-                        driverColor(dark),
-                      ].join(" ")}
-                    >
-                      <Flame className="h-4 w-4 opacity-80" />
-                      <span className="truncate">{d.label}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div className={`text-sm ${sectionMuted(dark)}`}>
-                  Nothing mapped yet — answer a few Motivation questions and these will appear as “drivers.”
-                </div>
-              )}
-            </div>
-
-            {/* mini note */}
-            <div className={`mt-3 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
-              These aren’t “traits.” They’re the *things that pull you forward*.
-            </div>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
-
-        {/* Two-column (mobile stacks) boosts/drains */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className={[washCard(dark), "px-4 py-4"].join(" ")}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className={["absolute -top-12 -left-14 h-40 w-40 rounded-full blur-3xl", dark ? "bg-emerald-300/10" : "bg-emerald-400/10"].join(" ")} />
-            </div>
-
-            <div className="relative">
-              <div className="flex items-center gap-2">
-                <Zap className={["h-5 w-5", dark ? "text-emerald-200" : "text-emerald-700"].join(" ")} />
-                <div className={`text-base font-semibold ${sectionTitle(dark)}`}>What boosts you</div>
-              </div>
-
-              <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                The conditions where you naturally get momentum.
-              </div>
-
-              {boosts.length ? (
-                <ul className="mt-3 space-y-2">
-                  {boosts.map((b, i) => (
-                    <li key={`boost_${i}`} className="flex gap-2 text-sm">
-                      <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
-                        •
-                      </span>
-                      <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
+                    <li key={d.label} className="flex gap-3">
+                      {railDot(dark)}
+                      <div className="min-w-0">
+                        <div className={`text-[15px] font-semibold leading-6 ${sectionTitle(dark)}`}>{d.label}</div>
+                        <div className={`text-[13px] leading-6 ${sectionMuted(dark)}`}>
+                          When this is present, your momentum comes easier.
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
-                  We’ll fill this with specifics once you’ve answered more questions.
+                  Nothing mapped yet — answer a few Motivation questions and these will appear.
                 </div>
               )}
             </div>
-          </div>
 
-          <div className={[washCard(dark), "px-4 py-4"].join(" ")}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className={["absolute -bottom-14 -right-16 h-44 w-44 rounded-full blur-3xl", dark ? "bg-rose-300/10" : "bg-rose-400/10"].join(" ")} />
-            </div>
+            {/* Divider */}
+            <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
 
-            <div className="relative">
-              <div className="flex items-center gap-2">
-                <HeartHandshake className={["h-5 w-5", dark ? "text-rose-200" : "text-rose-700"].join(" ")} />
-                <div className={`text-base font-semibold ${sectionTitle(dark)}`}>What drains you</div>
-              </div>
-
+            {/* Energy map: Boosts + Drains (inside same reading surface) */}
+            <div>
+              <div className={tinyLabel(dark)}>Energy map</div>
               <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                Not “weakness.” Just stuff that costs you energy.
+                What gives you momentum — and what quietly taxes you.
               </div>
 
-              {drains.length ? (
-                <ul className="mt-3 space-y-2">
-                  {drains.map((b, i) => (
-                    <li key={`drain_${i}`} className="flex gap-2 text-sm">
-                      <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
-                        •
-                      </span>
-                      <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
-                  As we learn more, this becomes super useful for choosing environments that fit you.
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Boosts */}
+                <div>
+                  <div className={`text-base font-semibold ${sectionTitle(dark)}`}>Boosts</div>
+                  <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                    Conditions where you naturally get traction.
+                  </div>
+
+                  {boosts.length ? (
+                    <ul className="mt-3 space-y-2">
+                      {boosts.map((b, i) => (
+                        <li key={`boost_${i}`} className="flex gap-2 text-sm">
+                          <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+                            •
+                          </span>
+                          <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
+                      We’ll fill this with specifics once you’ve answered more questions.
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Watch outs + experiment */}
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className={[washCard(dark), "px-4 py-4"].join(" ")}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className={["absolute -top-16 -right-16 h-48 w-48 rounded-full blur-3xl", dark ? "bg-amber-300/10" : "bg-amber-400/10"].join(" ")} />
-            </div>
+                {/* Drains */}
+                <div>
+                  <div className={`text-base font-semibold ${sectionTitle(dark)}`}>Drains</div>
+                  <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                    Not “weakness.” Just stuff that costs you energy.
+                  </div>
 
-            <div className="relative">
-              <div className="flex items-center gap-2">
-                <Sparkles className={["h-5 w-5", dark ? "text-amber-200" : "text-amber-700"].join(" ")} />
-                <div className={`text-base font-semibold ${sectionTitle(dark)}`}>Watch outs</div>
-              </div>
-
-              <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                Patterns that can throw you off if you don’t notice them early.
-              </div>
-
-              {watchOuts.length ? (
-                <ul className="mt-3 space-y-2">
-                  {watchOuts.map((w, i) => (
-                    <li key={`wo_${i}`} className="flex gap-2 text-sm">
-                      <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
-                        •
-                      </span>
-                      <span className={dark ? "text-white/78" : "text-slate-700"}>{w}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
-                  We’ll generate these once we have enough signal from your answers.
+                  {drains.length ? (
+                    <ul className="mt-3 space-y-2">
+                      {drains.map((b, i) => (
+                        <li key={`drain_${i}`} className="flex gap-2 text-sm">
+                          <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+                            •
+                          </span>
+                          <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
+                      As we learn more, this becomes useful for choosing environments that fit you.
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-
-          <div className={[washCard(dark), "px-4 py-4"].join(" ")}>
-            <div className="pointer-events-none absolute inset-0">
-              <div className={["absolute -bottom-16 -left-16 h-52 w-52 rounded-full blur-3xl", dark ? "bg-sky-300/10" : "bg-sky-400/10"].join(" ")} />
+              </div>
             </div>
 
-            <div className="relative">
-              <div className={`text-base font-semibold ${sectionTitle(dark)}`}>{experimentTitle}</div>
+            {/* Divider */}
+            <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
+
+            {/* One small experiment (the only distinct callout inside the surface) */}
+            <div>
+              <div className={tinyLabel(dark)}>One small experiment</div>
+              <div className={`mt-1 text-base font-semibold ${sectionTitle(dark)}`}>{experimentTitle}</div>
               <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
-                A tiny test that makes your Motivation profile clearer.
+                A tiny test that makes your motivation read clearer.
               </div>
 
               {experimentSteps.length ? (
@@ -437,17 +435,17 @@ export function MotivationsTab(props: {
                 </ol>
               ) : (
                 <div className={`mt-3 text-sm ${sectionMuted(dark)}`}>
-                  (Once we wire the backend, this becomes a real “do this today” micro-plan.)
+                  We’ll turn this into a real “do this today” micro-plan once the backend is wired.
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* teen-friendly footer note */}
-        <div className={`mt-5 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
-          Motivation isn’t “who you are.” It’s the stuff that makes your brain light up — and the stuff that makes it shut down.
-          We use it to pick environments that fit you.
+            {/* Footer note */}
+            <div className={`mt-6 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
+              Motivation isn’t “who you are.” It’s what makes your brain light up — and what makes it shut down.
+              We use it to pick environments and next steps that fit you.
+            </div>
+          </div>
         </div>
       </div>
     </section>

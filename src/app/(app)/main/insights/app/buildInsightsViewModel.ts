@@ -103,24 +103,17 @@ function niceName(raw: string) {
 
 function readOnboardingV4(): OnboardingV4 {
   if (typeof window === "undefined") return {};
-  const parsed = safeJsonParse<OnboardingV4>(
-    window.localStorage.getItem(ONBOARDING_STORAGE_KEY)
-  );
+  const parsed = safeJsonParse<OnboardingV4>(window.localStorage.getItem(ONBOARDING_STORAGE_KEY));
   return parsed ?? {};
 }
 
 function loadStorySaved(): Record<string, Saved> {
   if (typeof window === "undefined") return {};
-  const parsed = safeJsonParse<Record<string, Saved>>(
-    window.localStorage.getItem(STORY_STORAGE_KEY_V3)
-  );
+  const parsed = safeJsonParse<Record<string, Saved>>(window.localStorage.getItem(STORY_STORAGE_KEY_V3));
   return parsed ?? {};
 }
 
-function countAnswered(
-  prefix: "motivations" | "strengths" | "skills",
-  saved: Record<string, Saved>
-) {
+function countAnswered(prefix: "motivations" | "strengths" | "skills", saved: Record<string, Saved>) {
   let n = 0;
   for (let i = 1; i <= 5; i += 1) {
     const id = `${prefix}_${i}`;
@@ -163,18 +156,12 @@ function buildSignalBar(saved: Record<string, Saved>) {
   const joined = allAnswers.join("  ");
 
   const answeredTotal =
-    countAnswered("motivations", saved) +
-    countAnswered("strengths", saved) +
-    countAnswered("skills", saved);
+    countAnswered("motivations", saved) + countAnswered("strengths", saved) + countAnswered("skills", saved);
 
-  const actionRx =
-    /\b(build|make|ship|try|practice|train|create|prototype|start|finish)\b/gi;
-  const peopleRx =
-    /\b(feedback|coach|mentor|team|friends?|critique|review|someone|together|group)\b/gi;
-  const curiousRx =
-    /\b(curious|curiosity|learn|explore|why|figure out|understand|research|discover)\b/gi;
-  const clarityRx =
-    /\b(clear|clarity|specific|plan|next step|decide|direction|focus)\b/gi;
+  const actionRx = /\b(build|make|ship|try|practice|train|create|prototype|start|finish)\b/gi;
+  const peopleRx = /\b(feedback|coach|mentor|team|friends?|critique|review|someone|together|group)\b/gi;
+  const curiousRx = /\b(curious|curiosity|learn|explore|why|figure out|understand|research|discover)\b/gi;
+  const clarityRx = /\b(clear|clarity|specific|plan|next step|decide|direction|focus)\b/gi;
 
   const actionHits = (joined.match(actionRx) ?? []).length;
   const peopleHits = (joined.match(peopleRx) ?? []).length;
@@ -407,25 +394,11 @@ function buildWordCloud(saved: Record<string, Saved>): WordCloudItem[] {
    Summary copy helpers
    ========================= */
 
-function capSentence(s: string) {
-  const t = cleanOneLine(s);
-  if (!t) return "";
-  const c = t[0]!.toUpperCase() + t.slice(1);
-  const endsLikeSentence = /[.!?](["'”’)\]]?)$/.test(c);
-  return endsLikeSentence ? c : `${c}.`;
-}
-
 function quoteSnippet(raw: string) {
   const s = cleanOneLine(raw);
   if (!s) return "";
   if (s.length <= 64) return s;
   return `${s.slice(0, 61)}…`;
-}
-
-function progressPhrase(label: string, n: number) {
-  if (n >= 5) return `${label}: done`;
-  if (n <= 0) return `${label}: not started`;
-  return `${label}: ${n}/5`;
 }
 
 function pickTopSignals(items: SignalBarItem[]) {
@@ -466,9 +439,13 @@ function funReadFromSignals(top?: SignalBarItem, second?: SignalBarItem) {
   return "A pattern is forming. One more section will sharpen it.";
 }
 
+function catHref(cat: "motivations" | "strengths" | "skills") {
+  return `/main/questions?cat=${cat}&returnTo=/main/insights`;
+}
+
 function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const fallback: InsightsViewModel["summary"] = {
-    headline: "Welcome to Insights.",
+    headline: "Let’s build signal — then I’ll reflect it back with precision.",
     receipts: [],
     signalBar: [
       {
@@ -508,32 +485,22 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
     unlock: {
       title: "Fastest way to unlock real Insights",
       items: [
-        {
-          id: "finish_any",
-          label: "Answer a few questions",
-          href: "/main/questions?returnTo=/main/insights",
-        },
+        { id: "u_mot", label: "Answer Motivations", href: catHref("motivations") },
+        { id: "u_str", label: "Answer Strengths", href: catHref("strengths") },
+        { id: "u_skl", label: "Answer Skills", href: catHref("skills") },
       ],
     },
     primaryUnlock: {
-      title: "Want this to get sharper?",
+      title: "Want this to get more specific?",
       items: [
-        {
-          id: "u_str",
-          label: "Answer Strengths",
-          href: "/main/questions?cat=strengths&returnTo=/main/insights",
-        },
-        {
-          id: "u_skl",
-          label: "Answer Skills",
-          href: "/main/questions?cat=skills&returnTo=/main/insights",
-        },
+        { id: "pu_mot", label: "Start Motivations", href: catHref("motivations") },
+        { id: "pu_str", label: "Start Strengths", href: catHref("strengths") },
       ],
     },
     storySoFar: shortBullets(
       [
-        "Insights reflects patterns Everleap is learning from your answers.",
-        "Answer a few questions and this becomes personal fast.",
+        "Insights links where you’ve been to what it means — then hands you a next step.",
+        "Answer a few questions and this stops being generic fast.",
       ],
       2
     ),
@@ -563,89 +530,106 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const skl = countAnswered("skills", saved);
   const answeredTotal = mot + str + skl;
 
+  const brandNew = answeredTotal === 0;
+  const startedMot = mot >= 1;
+  const startedStr = str >= 1;
+  const startedSkl = skl >= 1;
+  const startedAllThree = startedMot && startedStr && startedSkl;
+
+  // (Optional future use) “completed” means “filled all 5”
+  // const completedAllThree = mot >= 5 && str >= 5 && skl >= 5;
+  // void completedAllThree;
+
   const signalBar = buildSignalBar(saved);
   const cloud = buildWordCloud(saved);
   const { top, second } = pickTopSignals(signalBar);
   const funRead = funReadFromSignals(top, second);
 
-  const headline = name ? `Welcome to Insights, ${name}.` : "Welcome to Insights.";
+  // Headline: coach-y, state-aware, light (not diagnostic)
+  const headline = brandNew
+    ? name
+      ? `Hey ${name} — let’s build signal first.`
+      : "Let’s build signal first."
+    : !startedAllThree
+      ? name
+        ? `Alright ${name} — I can see the outline.`
+        : "I can see the outline."
+      : name
+        ? `Here’s what I’m hearing, ${name}.`
+        : "Here’s what I’m hearing.";
 
-  const missingStrengths = str < 1;
-  const missingSkills = skl < 1;
+  // Primary unlock: if not all 3 foundations started, nudge missing cats (Motivations first)
+  const missingCats: Array<"motivations" | "strengths" | "skills"> = [];
+  if (!startedMot) missingCats.push("motivations");
+  if (!startedStr) missingCats.push("strengths");
+  if (!startedSkl) missingCats.push("skills");
 
-  const primaryItems: UnlockItem[] = [];
-  if (answeredTotal > 0 && (missingStrengths || missingSkills)) {
-    if (missingStrengths) {
-      primaryItems.push({
-        id: "pu_str",
-        label: "Answer Strengths",
-        href: "/main/questions?cat=strengths&returnTo=/main/insights",
-      });
-    }
-    if (missingSkills) {
-      primaryItems.push({
-        id: "pu_skl",
-        label: "Answer Skills",
-        href: "/main/questions?cat=skills&returnTo=/main/insights",
-      });
-    }
-  }
+  const primaryUnlock: Unlock | undefined = !startedAllThree
+    ? {
+        title: brandNew ? "Want this to get more specific?" : "Want this to sharpen?",
+        items: missingCats.slice(0, 2).map((cat) => ({
+          id: `pu_${cat}`,
+          label:
+            cat === "motivations"
+              ? brandNew
+                ? "Start Motivations"
+                : "Add Motivations"
+              : cat === "strengths"
+                ? brandNew
+                  ? "Start Strengths"
+                  : "Add Strengths"
+                : brandNew
+                  ? "Start Skills"
+                  : "Add Skills",
+          href: catHref(cat),
+        })),
+      }
+    : undefined;
 
-  const primaryUnlock: Unlock | undefined =
-    primaryItems.length && answeredTotal > 0
-      ? {
-          title: "Want this to get more specific?",
-          items: primaryItems.slice(0, 2),
-        }
-      : undefined;
-
+  // Secondary unlock: broader “fill in more” (still useful, but not required for the new UI)
   const unlockItems: UnlockItem[] = [];
   if (mot < 5)
     unlockItems.push({
       id: "u_mot",
       label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers",
-      href: "/main/questions?cat=motivations&returnTo=/main/insights",
+      href: catHref("motivations"),
     });
   if (str < 5)
     unlockItems.push({
       id: "u_str",
       label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers",
-      href: "/main/questions?cat=strengths&returnTo=/main/insights",
+      href: catHref("strengths"),
     });
   if (skl < 5)
     unlockItems.push({
       id: "u_skl",
       label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers",
-      href: "/main/questions?cat=skills&returnTo=/main/insights",
+      href: catHref("skills"),
     });
 
   const unlock: Unlock | undefined = unlockItems.length
     ? {
-        title: answeredTotal === 0 ? "Fastest way to unlock real Insights" : "If you want more specific",
+        title: brandNew ? "Fastest way to unlock real Insights" : "If you want more specific",
         items: unlockItems.slice(0, 3),
       }
     : undefined;
 
-  // SHORT story (max 3 lines)
+  // Story (2–3 coach lines, no dashboard meter)
   const storySoFarRaw: string[] = [];
-
-  if (answeredTotal === 0) {
+  if (brandNew) {
     storySoFarRaw.push("I don’t have enough signal yet.");
-    storySoFarRaw.push("Answer 3 questions and come back.");
+    storySoFarRaw.push("Give me a few real answers — then I’ll reflect patterns back that actually feel like you.");
   } else {
-    storySoFarRaw.push(
-      capSentence(
-        `So far: ${progressPhrase("Motivations", mot)} · ${progressPhrase(
-          "Strengths",
-          str
-        )} · ${progressPhrase("Skills", skl)}`
-      )
-    );
-
-    storySoFarRaw.push(capSentence(`Top read: ${funRead}`));
+    storySoFarRaw.push(`Top read: ${funRead}`);
 
     const clues = pickRepresentativeAnswers(saved, 1);
-    if (clues[0]) storySoFarRaw.push(`Your clue: “${quoteSnippet(clues[0])}.”`);
+    if (clues[0]) storySoFarRaw.push(`One clue you gave me: “${quoteSnippet(clues[0])}.”`);
+
+    if (!startedAllThree && missingCats.length) {
+      const nextCat = missingCats[0];
+      const label = nextCat === "motivations" ? "Motivations" : nextCat === "strengths" ? "Strengths" : "Skills";
+      storySoFarRaw.push(`Finish ${label} and I’ll stop speaking in generalities.`);
+    }
   }
 
   const suggests: Suggest[] = answeredTotal
@@ -670,7 +654,7 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
     headline,
     receipts: [],
     signalBar,
-    wordCloud: cloud, // ✅ critical: this must be the computed cloud
+    wordCloud: cloud, // ✅ critical: computed cloud
     unlock,
     primaryUnlock,
     storySoFar: shortBullets(storySoFarRaw, 3),
