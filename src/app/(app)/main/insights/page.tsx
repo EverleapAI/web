@@ -2,9 +2,11 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Shield, Clock3 } from "lucide-react";
 
+import { EverleapMark } from "@/components/site/AppChrome";
 import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
 
 import { buildInsightsViewModel, type InsightsTab, type WordCloudItem } from "./app/buildInsightsViewModel";
@@ -866,7 +868,22 @@ export default function Page() {
         }
       `}</style>
 
-      {/* NOTE: AppChrome owns the top-left mark + subtitle */}
+      {/* Top-left Everleap mark for Insights (keeps /main footer intact) */}
+      <header className={["relative z-20 sticky top-0 border-b backdrop-blur-xl", dark ? "border-white/10 bg-black/25" : "border-black/10 bg-white/70"].join(" ")}>
+        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
+          <Link
+            href="/main"
+            className={[
+              "rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/20",
+              "active:scale-[0.99] transition",
+            ].join(" ")}
+            aria-label="Back to main"
+          >
+            <EverleapMark subtitle="Insights" />
+          </Link>
+        </div>
+      </header>
+
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col pb-28 pt-2">
         <div className="relative mb-5">
           <div
