@@ -1,4 +1,3 @@
-// src/components/navigation/BottomNav.tsx
 "use client";
 
 import * as React from "react";
@@ -59,7 +58,6 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/actions")) return "actions";
   if (pathname.startsWith("/main/profile")) return "profile";
 
-  // legacy/alias: guide highlights Explore
   if (pathname.startsWith("/main/guide")) return "explore";
   return undefined;
 }
@@ -85,33 +83,6 @@ function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
-/**
- * Best-effort auth gate (client-only).
- * We hide the /main nav unless we see evidence of an authenticated session.
- *
- * These keys match your dev auth stub:
- * - everleap.verified
- * - everleap.userId
- * - everleap.session
- */
-function detectClientAuthed(): boolean {
-  if (typeof window === "undefined") return false;
-
-  try {
-    const verified = window.localStorage.getItem("everleap.verified");
-    const userId = window.localStorage.getItem("everleap.userId");
-    const session = window.localStorage.getItem("everleap.session");
-
-    if (verified && verified !== "0" && verified !== "false") return true;
-    if (userId && userId.trim().length > 0) return true;
-    if (session && session.trim().length > 0) return true;
-  } catch {
-    // ignore
-  }
-
-  return false;
-}
-
 /* ============================================================
    Component
    ============================================================ */
@@ -120,26 +91,21 @@ export function BottomNav({
   activeKey,
   themeId = DEFAULT_THEME_ID,
   gradientLevel = DEFAULT_GRADIENT_LEVEL,
-  // legacy:
   showGuideFab = false, // no-op now, kept for compatibility
-  showMoreButton = true, // controls the + FAB
+  showMoreButton = true,
   className,
 }: BottomNavProps) {
-  void showGuideFab; // explicitly mark as intentionally unused (prevents lint warning)
+  void showGuideFab;
 
   const pathname = usePathname();
-
-  // Compute gating booleans without early returns before hooks.
   const inMainShell = pathname.startsWith("/main");
 
-  const resolvedActiveKey =
-    normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
+  const resolvedActiveKey = normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
 
   const theme = getThemeById(themeId);
   const grad = getGradientConfig(gradientLevel);
 
-  // Footer ambience: intentionally quieter than the page.
-  const ambient = Math.min(clamp01(grad.ambientOpacity), 0.18);
+  const ambient = Math.min(clamp01(grad.ambientOpacity), 0.16);
 
   const items: NavItem[] = [
     { key: "home", href: "/main", label: "Today", Icon: Home },
@@ -149,10 +115,7 @@ export function BottomNav({
     { key: "profile", href: "/main/profile", label: "Me", Icon: User },
   ];
 
-  // Hooks must always run in the same order.
-  // IMPORTANT: do NOT read localStorage during initial render (prevents SSR/client hydration mismatch).
   const [mounted, setMounted] = React.useState(false);
-  const [authed, setAuthed] = React.useState(false);
   const [moreOpen, setMoreOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -160,50 +123,28 @@ export function BottomNav({
   }, []);
 
   React.useEffect(() => {
-    // Only attach listeners on /main pages; safe no-op elsewhere.
-    if (!inMainShell) return;
-    if (!mounted) return;
-
-    const refresh = () => setAuthed(detectClientAuthed());
-
-    refresh();
-
-    // If another tab logs in/out, update here too.
-    window.addEventListener("storage", refresh);
-
-    // When returning to the tab, re-check.
-    window.addEventListener("focus", refresh);
-
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [inMainShell, mounted]);
-
-  // Close on navigation
-  React.useEffect(() => {
     if (!inMainShell) return;
     if (!mounted) return;
     setMoreOpen(false);
   }, [pathname, inMainShell, mounted]);
 
-  // Now that hooks are stable, we can gate rendering.
-  // Also gate on "mounted" so the first client render matches SSR output.
   if (!inMainShell) return null;
   if (!mounted) return null;
-  if (!authed) return null;
+
+  const chromeBg = "var(--el-chrome-bg, rgba(255,255,255,0.03))";
+  const chromeBorder = "var(--el-chrome-border, rgba(255,255,255,0.10))";
+  const chromeHighlight = "var(--el-chrome-highlight, rgba(255,255,255,0.12))";
+  const chromeShadow = "var(--el-chrome-shadow, 0 18px 60px rgba(0,0,0,0.22))";
+  const chromeBlur = "var(--el-chrome-blur, 24px)";
+
+  // Lift the nav slightly off the absolute bottom so it doesn’t feel “stuck” to the edge.
+  const LIFT_PX = 12;
 
   return (
     <>
-      {/* More menu popover (anchored near the + FAB) */}
-      <MoreMenuPopover
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        themeId={themeId}
-        gradientLevel={gradientLevel}
-      />
+      <MoreMenuPopover open={moreOpen} onClose={() => setMoreOpen(false)} themeId={themeId} gradientLevel={gradientLevel} />
 
-      {/* + FAB (BOTTOM RIGHT) */}
+      {/* + FAB */}
       {showMoreButton ? (
         <button
           type="button"
@@ -213,26 +154,61 @@ export function BottomNav({
           className={[
             "fixed z-[60]",
             "right-4",
-            "bottom-[76px]", // sits above the nav bar
             "h-14 w-14 rounded-full",
-            "border border-white/20",
-            "bg-white/10 backdrop-blur-md",
-            "shadow-xl shadow-black/40",
             "grid place-items-center",
-            "transition hover:bg-white/14 active:scale-95",
+            "transition hover:bg-white/[0.06] active:scale-95",
           ].join(" ")}
+          style={{
+            bottom: `calc(76px + env(safe-area-inset-bottom) + ${LIFT_PX}px)`,
+            background: chromeBg,
+            border: `1px solid ${chromeBorder}`,
+            boxShadow: chromeShadow,
+            backdropFilter: `blur(${chromeBlur})`,
+            WebkitBackdropFilter: `blur(${chromeBlur})`,
+          }}
         >
-          <div className="absolute inset-0 rounded-full ring-1 ring-white/10" />
-          <Plus className="h-6 w-6 text-white" />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -inset-6 rounded-full blur-2xl"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%)", opacity: 0.9 }}
+          />
+          <div className="absolute inset-0 rounded-full ring-1" style={{ borderColor: chromeHighlight }} />
+          <Plus className="relative h-6 w-6 text-white" />
         </button>
       ) : null}
 
       <nav
         aria-label="Bottom navigation"
-        className={["fixed bottom-0 left-0 right-0 z-50", className ?? ""].join(" ")}
+        className={["fixed left-0 right-0 z-50", className ?? ""].join(" ")}
+        style={{ bottom: `calc(env(safe-area-inset-bottom) + ${LIFT_PX}px)` }}
       >
-        <div className="relative border-t border-white/10 bg-black/45 backdrop-blur-md">
-          {/* Ambient tints */}
+        <div
+          className="relative backdrop-blur-2xl"
+          style={{
+            background: chromeBg,
+            // NO hard borderTop — we’ll do the same “single highlight line” as header.
+            boxShadow: chromeShadow,
+            backdropFilter: `blur(${chromeBlur})`,
+            WebkitBackdropFilter: `blur(${chromeBlur})`,
+          }}
+        >
+          {/* Blend INTO the page (this is the key to not looking like a separate component) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-12 h-12"
+            style={{
+              background: `linear-gradient(to top, ${chromeBg}, rgba(0,0,0,0))`,
+            }}
+          />
+
+          {/* Single subtle highlight (matches header) */}
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{ background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`, opacity: 0.9 }}
+            aria-hidden
+          />
+
+          {/* Ambient tints (quiet) */}
           {ambient > 0 && (
             <>
               <div
@@ -241,7 +217,7 @@ export function BottomNav({
                   "pointer-events-none absolute -left-24 -top-28 h-[260px] w-[260px] rounded-full blur-[90px]",
                   theme.ambientTopLeftClass,
                 ].join(" ")}
-                style={{ opacity: ambient * 0.28 }}
+                style={{ opacity: ambient * 0.22 }}
               />
               <div
                 aria-hidden="true"
@@ -249,14 +225,11 @@ export function BottomNav({
                   "pointer-events-none absolute -right-28 -bottom-28 h-[320px] w-[320px] rounded-full blur-[100px]",
                   theme.ambientRightClass,
                 ].join(" ")}
-                style={{ opacity: ambient * 0.28 }}
+                style={{ opacity: ambient * 0.22 }}
               />
             </>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-
-          {/* Slightly tighter for 5 items */}
           <div className="mx-auto flex w-full items-center justify-between px-2 py-2">
             {items.map(({ key, href, label, Icon }) => {
               const active = resolvedActiveKey === key;
@@ -268,21 +241,17 @@ export function BottomNav({
                   className={[
                     "flex w-full flex-col items-center justify-center gap-1 rounded-xl",
                     "px-1.5 py-2",
-                    "transition hover:bg-white/5",
+                    "transition hover:bg-white/[0.04]",
                     active ? "bg-white/[0.06]" : "",
                   ].join(" ")}
                   aria-current={active ? "page" : undefined}
                 >
                   <Icon className={active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"} />
-                  <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>
-                    {label}
-                  </span>
+                  <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>{label}</span>
                 </Link>
               );
             })}
           </div>
-
-          <div className="h-[env(safe-area-inset-bottom)]" />
         </div>
       </nav>
     </>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import SiteHeader from "@/components/site/SiteHeader";
-import SiteFooter from "@/components/site/SiteFooter";
+import SiteFooter from "@/components/site/PublicFooter";
 
 export default function NotFound() {
   return (

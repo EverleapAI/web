@@ -2,11 +2,9 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Shield, Clock3 } from "lucide-react";
 
-import { EverleapMark } from "@/components/site/AppChrome";
 import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
 
 import { buildInsightsViewModel, type InsightsTab, type WordCloudItem } from "./app/buildInsightsViewModel";
@@ -103,8 +101,8 @@ function tabPillStyle(args: { dark: boolean; selected: boolean; accent: RGB }): 
     : `0 0 0 1px rgba(${c}, 0.22), 0 14px 40px rgba(0,0,0,0.16), 0 0 44px rgba(${c}, 0.18)`;
 
   const idleShadow = dark
-    ? `inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 30px rgba(0,0,0,0.40)`
-    : `inset 0 1px 0 rgba(255,255,255,0.70), 0 10px 24px rgba(0,0,0,0.10)`;
+    ? `inset 0 1px 0 rgba(255,255,255,0.07), 0 8px 22px rgba(0,0,0,0.34)`
+    : `inset 0 1px 0 rgba(255,255,255,0.60), 0 8px 18px rgba(0,0,0,0.09)`;
 
   return selected
     ? {
@@ -146,10 +144,9 @@ function subtleDivider(dark: boolean) {
 }
 
 function sectionKicker(dark: boolean) {
-  return [
-    "text-[12px] font-semibold uppercase tracking-[0.16em]",
-    dark ? "text-white/50" : "text-slate-600",
-  ].join(" ");
+  return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(
+    " "
+  );
 }
 
 function sectionTitle(dark: boolean) {
@@ -253,13 +250,7 @@ function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
   window.localStorage.setItem(QUICK_FEEDBACK_STORAGE_KEY, JSON.stringify(payload));
 }
 
-function QuickFeedbackInline({
-  dark,
-  contextTag,
-}: {
-  dark: boolean;
-  contextTag: string;
-}): React.JSX.Element {
+function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: string }): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
@@ -293,7 +284,7 @@ function QuickFeedbackInline({
     setOpen(false);
   }
 
-  const canSave = !!rating; // note optional
+  const canSave = !!rating;
 
   return (
     <div className="mt-6">
@@ -310,7 +301,11 @@ function QuickFeedbackInline({
           <span>Somewhat</span>
         </button>
 
-        <button type="button" className={quickChip(dark, rating === "not_really")} onClick={() => onPick("not_really")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "not_really")}
+          onClick={() => onPick("not_really")}
+        >
           <span aria-hidden>👎</span>
           <span>Not really</span>
         </button>
@@ -322,7 +317,6 @@ function QuickFeedbackInline({
         ) : null}
       </div>
 
-      {/* Inline expand panel (no overlay): grows the canvas beneath the chips */}
       <div
         className={[
           "mt-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
@@ -331,7 +325,6 @@ function QuickFeedbackInline({
         aria-hidden={!open}
       >
         <div className={softInputShell(dark)}>
-          {/* subtle wash like RegAuth inputs */}
           <div className="pointer-events-none absolute inset-0" aria-hidden>
             <div
               className="absolute inset-0"
@@ -348,7 +341,12 @@ function QuickFeedbackInline({
           <div className="relative p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                <div
+                  className={[
+                    "text-[12px] font-semibold uppercase tracking-[0.16em]",
+                    dark ? "text-white/55" : "text-slate-600",
+                  ].join(" ")}
+                >
                   Quick feedback
                 </div>
                 <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
@@ -362,7 +360,9 @@ function QuickFeedbackInline({
                 className={[
                   "shrink-0 h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+                  dark
+                    ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]"
+                    : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
                 ].join(" ")}
               >
                 Close
@@ -381,7 +381,9 @@ function QuickFeedbackInline({
                 className={[
                   "w-full resize-none rounded-[18px] px-4 py-3 text-[14px] leading-relaxed",
                   "bg-transparent outline-none ring-1 ring-inset",
-                  dark ? "text-white placeholder:text-white/32 ring-white/12 focus:ring-white/20" : "text-slate-900 placeholder:text-slate-500 ring-black/10 focus:ring-black/15",
+                  dark
+                    ? "text-white placeholder:text-white/32 ring-white/12 focus:ring-white/20"
+                    : "text-slate-900 placeholder:text-slate-500 ring-black/10 focus:ring-black/15",
                   "focus-visible:ring-2 focus-visible:ring-orange-200/20",
                 ].join(" ")}
                 style={{
@@ -406,7 +408,9 @@ function QuickFeedbackInline({
                 className={[
                   "h-10 rounded-2xl px-4 text-[13px] font-semibold border backdrop-blur-xl transition active:scale-[0.99]",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]" : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
+                  dark
+                    ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
+                    : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
                 ].join(" ")}
               >
                 Skip note
@@ -417,9 +421,9 @@ function QuickFeedbackInline({
               </button>
             </div>
 
-            {/* tiny debug-ish line (safe): lets you confirm key/shape quickly */}
             <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
-              Saved to localStorage: <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
+              Saved to localStorage:{" "}
+              <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
             </div>
           </div>
         </div>
@@ -466,7 +470,10 @@ function isScienceyTerm(term: string) {
 
 function wordColorClasses(dark: boolean, term: string) {
   if (isScienceyTerm(term)) {
-    return [dark ? "text-cyan-200/95" : "text-cyan-700/95", dark ? "drop-shadow-[0_1px_12px_rgba(0,0,0,0.38)]" : ""]
+    return [
+      dark ? "text-cyan-200/95" : "text-cyan-700/95",
+      dark ? "drop-shadow-[0_1px_12px_rgba(0,0,0,0.38)]" : "",
+    ]
       .filter(Boolean)
       .join(" ");
   }
@@ -728,8 +735,14 @@ function guessWatchoutsFromSuperpowers(superBullets: string[] | undefined | null
   const bullets = (superBullets ?? []).map((s) => (s ?? "").trim()).filter(Boolean);
 
   const patterns = [
-    { rx: /\b(detail|precise|accuracy|quality|craft)\b/i, out: "This can slide into perfection-pressure: “not ready yet” becomes the default." },
-    { rx: /\b(people|team|relationship|empath|care|support)\b/i, out: "You can over-carry the emotional load — fixing the room before naming what you need." },
+    {
+      rx: /\b(detail|precise|accuracy|quality|craft)\b/i,
+      out: "This can slide into perfection-pressure: “not ready yet” becomes the default.",
+    },
+    {
+      rx: /\b(people|team|relationship|empath|care|support)\b/i,
+      out: "You can over-carry the emotional load — fixing the room before naming what you need.",
+    },
     { rx: /\b(drive|ambit|goal|push|grit|work)\b/i, out: "Your engine can outrun your recovery — momentum turns into quiet burnout." },
     { rx: /\b(logic|analysis|think|reason|strategy)\b/i, out: "You can get stuck optimizing — the plan gets perfect while the step doesn’t happen." },
     { rx: /\b(creat|idea|vision|imagin)\b/i, out: "Ideas can multiply faster than closure — it starts to feel like you’re “behind” your own brain." },
@@ -783,17 +796,17 @@ export default function Page() {
 
   const [tab, setTab] = React.useState<LocalTab>(initialTabFromUrl);
 
-  const activeAccent = React.useMemo<RGB>(() => TABS.find((x) => x.id === tab)?.accent ?? TABS[0].accent, [tab]);
-
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
   const vmTab: InsightsTab = tab === "funFacts" ? "summary" : tab;
   const vm = React.useMemo(() => buildInsightsViewModel(vmTab, { useLocal: mounted }), [vmTab, mounted]);
 
+  // SAFETY: lens might be undefined during refactors / missing config
   const superDef = React.useMemo(() => getInsightLens("superpowers"), []);
-  const nextStepsBase = React.useMemo(() => getNextStepsDefinition("insights.summary"), []);
+  const safeSuper = superDef ?? { body: "", bullets: [] as string[] };
 
+  const nextStepsBase = React.useMemo(() => getNextStepsDefinition("insights.summary"), []);
   const nextSteps = React.useMemo(() => {
     if (!nextStepsBase) return null;
     return { ...nextStepsBase, bridgeLine: "" };
@@ -817,7 +830,7 @@ export default function Page() {
     return sorted.slice(0, 26);
   }, [wordCloud]);
 
-  const watchouts = React.useMemo(() => guessWatchoutsFromSuperpowers(superDef.bullets), [superDef.bullets]);
+  const watchouts = React.useMemo(() => guessWatchoutsFromSuperpowers(safeSuper.bullets), [safeSuper.bullets]);
 
   const signals = React.useMemo(() => normalizeSignals(vm.summary.signalBar), [vm.summary.signalBar]);
   const watchoutLine = React.useMemo(() => pickWatchoutSentence(watchouts), [watchouts]);
@@ -868,66 +881,46 @@ export default function Page() {
         }
       `}</style>
 
-      {/* Top-left Everleap mark for Insights (keeps /main footer intact) */}
-      <header className={["relative z-20 sticky top-0 border-b backdrop-blur-xl", dark ? "border-white/10 bg-black/25" : "border-black/10 bg-white/70"].join(" ")}>
-        <div className="mx-auto flex max-w-6xl items-center px-4 py-3">
-          <Link
-            href="/main"
+      {/* tighter top spacing */}
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col pb-28 pt-0">
+        {/* Page title (LEFT, calm) */}
+        <div className="mb-3 pt-0">
+          <h1
             className={[
-              "rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/20",
-              "active:scale-[0.99] transition",
+              "text-[36px] md:text-[44px] font-semibold tracking-tight",
+              "text-white/92",
+              "leading-[1.08] pb-1",
             ].join(" ")}
-            aria-label="Back to main"
+            style={{ overflow: "visible" }}
           >
-            <EverleapMark subtitle="Insights" />
-          </Link>
+            Insights
+          </h1>
+          <div className="mt-0.5 text-[14px] md:text-[15px] text-white/60">What it all means</div>
         </div>
-      </header>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col pb-28 pt-2">
+        {/* Tabs row (FLOATING: NO OUTER BOX) */}
         <div className="relative mb-5">
-          <div
-            className={[
-              "relative rounded-full border p-1.5",
-              "backdrop-blur-xl",
-              dark
-                ? "border-white/10 bg-white/[0.03] shadow-[0_18px_55px_rgba(0,0,0,0.18)]"
-                : "border-black/10 bg-white/70 shadow-[0_18px_55px_rgba(0,0,0,0.10)]",
-            ].join(" ")}
-          >
-            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full" aria-hidden>
-              <div className={["absolute -left-16 -top-10 h-24 w-40 rounded-full blur-2xl", dark ? "bg-orange-300/10" : "bg-orange-400/12"].join(" ")} />
-              <div className={["absolute -right-16 -bottom-10 h-28 w-44 rounded-full blur-2xl", dark ? "bg-sky-300/10" : "bg-sky-400/10"].join(" ")} />
-              {/* subtle track wash so the row doesn't feel flat */}
-              <div
-                className="absolute inset-1 rounded-full"
-                style={{
-                  background: dark
-                    ? "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))"
-                    : "linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02))",
-                  opacity: 0.9,
-                }}
-              />
-            </div>
-
-            <div className="relative flex gap-2 overflow-x-auto pb-0 pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {TABS.map((t) => {
-                const selected = t.id === tab;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className={tabPillBaseClass()}
-                    style={tabPillStyle({ dark, selected, accent: t.accent })}
-                    aria-current={selected ? "page" : undefined}
-                    onClick={() => setTabAndSync(t.id)}
-                  >
-                    <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={tabDotStyle({ dark, selected, accent: t.accent })} />
-                    <span className="relative">{t.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="relative flex gap-2 overflow-x-auto pb-0 pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {TABS.map((t) => {
+              const selected = t.id === tab;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={tabPillBaseClass()}
+                  style={tabPillStyle({ dark, selected, accent: t.accent })}
+                  aria-current={selected ? "page" : undefined}
+                  onClick={() => setTabAndSync(t.id)}
+                >
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={tabDotStyle({ dark, selected, accent: t.accent })}
+                  />
+                  <span className="relative">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div
@@ -942,24 +935,30 @@ export default function Page() {
         {tab === "summary" ? (
           <section className="mb-6">
             <div className={readingSurface(dark)}>
-              {/* Counselor Notes lighting + rail */}
               <div className="pointer-events-none absolute inset-0" aria-hidden>
-                <div className={["absolute -top-24 left-1/2 h-[260px] w-[680px] -translate-x-1/2 rounded-full blur-3xl", dark ? "bg-orange-300/10" : "bg-orange-400/10"].join(" ")} />
-                <div className={["absolute top-12 -left-24 h-[220px] w-[360px] rounded-full blur-3xl", dark ? "bg-sky-300/10" : "bg-sky-400/10"].join(" ")} />
-
                 <div
                   className={[
-                    "absolute inset-0",
-                    dark ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent" : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
+                    "absolute -top-24 left-1/2 h-[260px] w-[680px] -translate-x-1/2 rounded-full blur-3xl",
+                    dark ? "bg-orange-300/10" : "bg-orange-400/10",
+                  ].join(" ")}
+                />
+                <div
+                  className={[
+                    "absolute top-12 -left-24 h-[220px] w-[360px] rounded-full blur-3xl",
+                    dark ? "bg-sky-300/10" : "bg-sky-400/10",
                   ].join(" ")}
                 />
 
                 <div
-                  className="absolute left-4 top-6 bottom-6 w-px"
-                  style={{
-                    background: `linear-gradient(to bottom, rgba(${rgb(activeAccent)},0) 0%, rgba(${rgb(activeAccent)},0.35) 50%, rgba(${rgb(activeAccent)},0) 100%)`,
-                  }}
+                  className={[
+                    "absolute inset-0",
+                    dark
+                      ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent"
+                      : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
+                  ].join(" ")}
                 />
+
+                {/* SPINE REMOVED */}
               </div>
 
               <div className="relative">
@@ -987,8 +986,14 @@ export default function Page() {
 
                 <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
                   Want the zoom-in version? Open the tabs for{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Motivations</span>,{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Strengths</span>, and{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
+                    Motivations
+                  </span>
+                  ,{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
+                    Strengths
+                  </span>
+                  , and{" "}
                   <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Skills</span>.
                 </div>
               </div>
@@ -1028,13 +1033,6 @@ export default function Page() {
                     </div>
                   )}
                 </div>
-
-                {wordCloudDisplay.length ? (
-                  <div className={["mt-3 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    <span className={dark ? "text-cyan-200/85 font-semibold" : "text-cyan-700/90 font-semibold"}>Science</span>{" "}
-                    words get a consistent color.
-                  </div>
-                ) : null}
               </div>
 
               <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
@@ -1046,12 +1044,12 @@ export default function Page() {
                 </div>
 
                 <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                  {superDef.body || "What you naturally do well when it matters."}
+                  {safeSuper.body || "What you naturally do well when it matters."}
                 </div>
 
-                {superDef.bullets?.length ? (
+                {safeSuper.bullets?.length ? (
                   <ul className="mt-4 space-y-2">
-                    {superDef.bullets.map((b, i) => (
+                    {safeSuper.bullets.map((b, i) => (
                       <li key={`sp_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
                         <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
                           •
@@ -1071,9 +1069,7 @@ export default function Page() {
                   <div className={sectionKicker(dark)}>Watchouts</div>
                 </div>
 
-                <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                  {watchouts.intro}
-                </div>
+                <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>{watchouts.intro}</div>
 
                 <ul className="mt-4 space-y-2">
                   {watchouts.bullets.map((b, i) => (
@@ -1086,7 +1082,6 @@ export default function Page() {
                   ))}
                 </ul>
 
-                {/* ✅ Inline expand feedback (no overlay) */}
                 <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
               </div>
 
@@ -1125,7 +1120,8 @@ export default function Page() {
                 A lighter mirror — still grounded in how you move through the world.
               </div>
               <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                This is where we keep the “delight” layer — the stuff that helps you see yourself from a new angle without turning life into a quiz.
+                This is where we keep the “delight” layer — the stuff that helps you see yourself from a new angle
+                without turning life into a quiz.
               </div>
 
               <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
@@ -1141,12 +1137,28 @@ export default function Page() {
                 ].join(" ")}
               >
                 <div className="pointer-events-none absolute inset-0" aria-hidden>
-                  <div className={["absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl", dark ? "bg-violet-300/10" : "bg-violet-400/10"].join(" ")} />
-                  <div className={["absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl", dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8"].join(" ")} />
+                  <div
+                    className={[
+                      "absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl",
+                      dark ? "bg-violet-300/10" : "bg-violet-400/10",
+                    ].join(" ")}
+                  />
+                  <div
+                    className={[
+                      "absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl",
+                      dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8",
+                    ].join(" ")}
+                  />
                 </div>
 
                 <div className="relative flex items-start gap-3">
-                  <div className={["mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border", dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white"].join(" ")} aria-hidden>
+                  <div
+                    className={[
+                      "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border",
+                      dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
+                    ].join(" ")}
+                    aria-hidden
+                  >
                     <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
                   </div>
 
@@ -1156,14 +1168,21 @@ export default function Page() {
                       A biography-style mirror — creative + technical + real-world impact.
                     </div>
 
-                    <div className={["mt-2 inline-flex items-center gap-2 text-sm font-semibold", dark ? "text-white/70" : "text-slate-700"].join(" ")}>
+                    <div
+                      className={[
+                        "mt-2 inline-flex items-center gap-2 text-sm font-semibold",
+                        dark ? "text-white/70" : "text-slate-700",
+                      ].join(" ")}
+                    >
                       Open story <span aria-hidden className="opacity-80">↗</span>
                     </div>
                   </div>
                 </div>
               </button>
 
-              <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>More Fun Facts will live here over time.</div>
+              <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
+                More Fun Facts will live here over time.
+              </div>
             </div>
           </section>
         ) : (

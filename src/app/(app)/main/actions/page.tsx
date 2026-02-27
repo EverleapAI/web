@@ -16,17 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import { AppChrome } from "@/components/site/AppChrome";
-import { BottomNav } from "@/components/navigation/BottomNav";
-
-import {
-  INSIGHTS_THEMES,
-  GRADIENT_CONFIGS,
-  getPageBackgroundImage,
-  isDarkTheme,
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+import { isDarkTheme, type SpotlightThemeId } from "@/theme/everleapVisuals";
 
 /* ============================================================
    Types
@@ -113,13 +103,9 @@ function uid(prefix: string) {
 
 /* ============================================================
    “Knowledge” maps: align chips + rails with Insights/Explore
-   (We keep this minimal and consistent with your glow style)
    ============================================================ */
 
-const INSIGHT_META: Record<
-  InsightId,
-  { label: string; glowClass: string; dotClass: string }
-> = {
+const INSIGHT_META: Record<InsightId, { label: string; glowClass: string; dotClass: string }> = {
   career: {
     label: "Recommendations",
     glowClass: "from-sky-400 via-indigo-500 to-slate-400",
@@ -152,10 +138,7 @@ const INSIGHT_META: Record<
   },
 };
 
-const EXPLORE_META: Record<
-  ExploreId,
-  { label: string; glowClass: string; dotClass: string }
-> = {
+const EXPLORE_META: Record<ExploreId, { label: string; glowClass: string; dotClass: string }> = {
   education: {
     label: "Education & Training",
     glowClass: "from-violet-500 via-fuchsia-500 to-sky-400",
@@ -339,20 +322,17 @@ function generateFromExplore(): ActionItem[] {
    ============================================================ */
 
 export default function ActionsPage() {
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
-
-  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[3];
+  // IMPORTANT: AppChrome + BottomNav are handled by the /main layout.
+  // This page should only render the page content (prevents double header/nav).
+  const themeId: SpotlightThemeId = "nightDusk";
   const dark = isDarkTheme(themeId);
 
-  const pageBgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
-  const pageBgStyle = pageBgImage ? ({ backgroundImage: pageBgImage } as React.CSSProperties) : {};
-
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.75)]"
-    : "shadow-[0_16px_45px_rgba(0,0,0,0.18)]";
-  const surface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
+  const surface = [
+    "relative rounded-[32px] border backdrop-blur-xl",
+    dark
+      ? "border-white/10 bg-white/[0.04] shadow-[0_24px_80px_rgba(0,0,0,0.75)]"
+      : "border-slate-200 bg-white/80 shadow-[0_16px_45px_rgba(0,0,0,0.18)]",
+  ].join(" ");
 
   const sectionLabelClass = dark
     ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/60"
@@ -443,16 +423,11 @@ export default function ActionsPage() {
 
     setState((prev) => {
       // Attach generated actions to a sensible default goal if possible:
-      // - insights -> momentum goal if exists
-      // - explore -> clarity goal if exists
       const gClarity = prev.goals.find((g) => g.id === "g_clarity");
       const gEnergy = prev.goals.find((g) => g.id === "g_energy");
       const targetGoal = kind === "explore" ? gClarity : gEnergy;
 
-      const actionsWithGoal =
-        targetGoal
-          ? additions.map((a) => ({ ...a, goalId: targetGoal.id }))
-          : additions;
+      const actionsWithGoal = targetGoal ? additions.map((a) => ({ ...a, goalId: targetGoal.id })) : additions;
 
       const nextGoals = prev.goals.map((g) => {
         if (!targetGoal) return g;
@@ -490,7 +465,6 @@ export default function ActionsPage() {
   }
 
   function railForAction(a: ActionItem) {
-    // Prefer insight rail if present, else explore rail, else neutral.
     if (a.insightId) return `bg-gradient-to-b ${INSIGHT_META[a.insightId].glowClass}`;
     if (a.exploreId) return `bg-gradient-to-b ${EXPLORE_META[a.exploreId].glowClass}`;
     return dark ? "bg-white/10" : "bg-slate-200";
@@ -517,533 +491,505 @@ export default function ActionsPage() {
   }
 
   return (
-    <AppChrome
-      themeId={themeId}
-      setThemeId={setThemeId}
-      gradientLevel={gradientLevel}
-      setGradientLevel={setGradientLevel}
-      orbSource="actions_orb"
-      ambientCap={0.35}
-    >
-      <div className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`} style={pageBgStyle}>
-        {/* Ambient blobs */}
-        {gradientLevel > 0 && (
-          <div className="pointer-events-none absolute inset-0" style={{ opacity: gradient.ambientOpacity }}>
-            <div className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`} />
-            <div className={`absolute top-40 right-[-32px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`} />
-          </div>
-        )}
+    <>
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-28 pt-5 md:px-8 md:pt-7">
+        {/* Header / framing */}
+        <section className="mb-5">
+          <div className={`px-6 py-6 sm:px-7 sm:py-7 ${surface}`}>
+            <div
+              className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
+              style={{ opacity: dark ? 0.16 : 0.12 }}
+              aria-hidden
+            />
 
-        <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
-          {/* Header / framing */}
-          <section className="mb-5">
-            <div className={`relative rounded-[32px] border px-6 py-6 sm:px-7 sm:py-7 ${surface}`}>
-              <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl" style={{ opacity: 0.14 }} />
-
-              <div className="relative">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
-                      dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
-                    }`}
-                  >
-                    <ListChecks className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className={sectionLabelClass}>Actions</div>
-                    <h1 className={`mt-1 text-2xl font-semibold tracking-tight ${dark ? "text-slate-50" : "text-slate-900"}`}>
-                      Turn insights into real steps.
-                    </h1>
-                    <p className={`mt-2 text-sm ${muted} max-w-2xl`}>
-                      This is your “execution layer.” Small actions, tied to goals, tied to what you’re learning in Insights + Explore.
-                      Do → reflect → calibrate.
-                    </p>
-                  </div>
+            <div className="relative">
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
+                    dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
+                  }`}
+                >
+                  <ListChecks className="h-5 w-5" />
                 </div>
 
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      href="/main/carousel"
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                        dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
-                      }`}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Insights
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
+                <div className="min-w-0">
+                  <div className={sectionLabelClass}>Actions</div>
+                  <h1 className={`mt-1 text-2xl font-semibold tracking-tight ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                    Turn insights into real steps.
+                  </h1>
+                  <p className={`mt-2 max-w-2xl text-sm ${muted}`}>
+                    This is your “execution layer.” Small actions, tied to goals, tied to what you’re learning in Insights + Explore.
+                    Do → reflect → calibrate.
+                  </p>
+                </div>
+              </div>
 
-                    <Link
-                      href="/main/explore"
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                        dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
-                      }`}
-                    >
-                      <Target className="h-4 w-4" />
-                      Explore
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href="/main/carousel"
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                      dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
+                    }`}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Insights
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+
+                  <Link
+                    href="/main/explore"
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                      dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
+                    }`}
+                  >
+                    <Target className="h-4 w-4" />
+                    Explore
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setWhyOpen((o) => !o)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    dark ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70" : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
+                  }`}
+                  aria-expanded={whyOpen}
+                >
+                  Why this works
+                  <ChevronDown className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+
+              {whyOpen ? (
+                <div
+                  className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
+                    dark ? "border-white/10 bg-slate-950/40 text-slate-200/90" : "border-slate-200 bg-white/70 text-slate-700"
+                  }`}
+                >
+                  <div className="font-semibold">The loop</div>
+                  <div className={`mt-2 ${muted}`}>
+                    1) Insights give you a hypothesis about you. <br />
+                    2) Explore shows doors that match. <br />
+                    3) Actions create proof: you do something small, then rate how it felt. That feedback sharpens everything.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </section>
+
+        {/* This Week */}
+        <section className="mb-6">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <div className={sectionLabelClass}>This week</div>
+              <div className={`mt-1 text-sm ${muted}`}>3–5 small moves. Keep it light. Keep it real.</div>
+            </div>
+
+            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
+              Tip: try one <span className="font-semibold">10–20m</span> action today.
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {thisWeek.map((a) => {
+              const rail = railForAction(a);
+
+              return (
+                <div
+                  key={a.id}
+                  className={`relative overflow-hidden rounded-3xl border p-[1px] ${
+                    dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                  }`}
+                >
+                  <div
+                    aria-hidden
+                    className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full ${rail} opacity-90`}
+                  />
+
+                  <div className={`relative rounded-3xl px-5 py-4 ${dark ? "bg-slate-950/35" : "bg-white/70"}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className={`text-base font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                            {a.title}
+                          </div>
+
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-800"
+                            }`}
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            {a.minutes}m
+                          </span>
+
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
+                              a.status === "doing"
+                                ? dark
+                                  ? "border-sky-200/20 bg-sky-300/15 text-sky-100"
+                                  : "border-sky-200 bg-sky-50 text-sky-900"
+                                : a.status === "done"
+                                ? dark
+                                  ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                : a.status === "snoozed"
+                                ? dark
+                                  ? "border-amber-200/20 bg-amber-300/15 text-amber-100"
+                                  : "border-amber-200 bg-amber-50 text-amber-900"
+                                : dark
+                                ? "border-white/10 bg-white/5 text-slate-100"
+                                : "border-slate-200 bg-white text-slate-800"
+                            }`}
+                          >
+                            {a.status === "doing"
+                              ? "In progress"
+                              : a.status === "done"
+                              ? "Done"
+                              : a.status === "snoozed"
+                              ? "Snoozed"
+                              : "To do"}
+                          </span>
+                        </div>
+
+                        <div className={`mt-2 text-sm ${muted}`}>{a.description}</div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {a.goalId ? (
+                            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
+                              <Target className="h-3.5 w-3.5 opacity-80" />
+                              Goal
+                            </span>
+                          ) : null}
+
+                          {a.insightId ? pillForInsight(a.insightId) : null}
+                          {a.exploreId ? pillForExplore(a.exploreId) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        {a.status !== "done" ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startAction(a.id)}
+                              className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                                dark
+                                  ? "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
+                                  : "bg-sky-600 text-white hover:bg-sky-500"
+                              }`}
+                            >
+                              <Play className="h-4 w-4" /> Start
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => markDone(a.id)}
+                              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                                dark
+                                  ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                                  : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
+                              }`}
+                            >
+                              <Check className="h-4 w-4" /> Done
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => snoozeAction(a.id)}
+                              className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                                dark
+                                  ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
+                                  : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
+                              }`}
+                            >
+                              <Pause className="h-4 w-4" /> Snooze
+                            </button>
+                          </>
+                        ) : (
+                          <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
+                            {a.followUp?.rating ? (
+                              <>
+                                Felt:{" "}
+                                <span className="font-semibold">
+                                  {a.followUp.rating === "energizing"
+                                    ? "Energizing"
+                                    : a.followUp.rating === "neutral"
+                                    ? "Neutral"
+                                    : "Draining"}
+                                </span>
+                              </>
+                            ) : (
+                              "Done ✔"
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Goals */}
+        <section className="mb-6">
+          <div className="mb-3">
+            <div className={sectionLabelClass}>Goals</div>
+            <div className={`mt-1 text-sm ${muted}`}>Goals are just containers. Actions are the real game.</div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {state.goals.map((g) => {
+              const prog = goalProgress(g);
+              const pct = prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
+
+              return (
+                <div key={g.id} className={`rounded-3xl border px-5 py-4 ${surface}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-2xl border ${
+                            dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
+                          }`}
+                        >
+                          <Target className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className={`text-sm font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                            {g.title}
+                          </div>
+                          <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
+                            {g.horizon} • {prog.done}/{prog.total} actions
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={`text-xs font-semibold ${dark ? "text-slate-200/70" : "text-slate-700/70"}`}>{pct}%</div>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className={`h-2 w-full rounded-full ${dark ? "bg-white/10" : "bg-slate-200/70"}`}>
+                      <div className="h-2 rounded-full bg-sky-300 transition" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {g.actionIds.slice(0, 3).map((id) => {
+                      const a = state.actions.find((x) => x.id === id);
+                      if (!a) return null;
+                      return (
+                        <span
+                          key={id}
+                          className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
+                            a.status === "done"
+                              ? dark
+                                ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                              : chipClass(dark)
+                          }`}
+                          title={a.title}
+                        >
+                          {a.status === "done" ? "✓ " : ""}
+                          {a.title.length > 28 ? `${a.title.slice(0, 28)}…` : a.title}
+                        </span>
+                      );
+                    })}
+                    {g.actionIds.length > 3 ? (
+                      <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
+                        +{g.actionIds.length - 3} more
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Generator */}
+        <section className="mb-2">
+          <div className="mb-3">
+            <div className={sectionLabelClass}>Generate actions</div>
+            <div className={`mt-1 text-sm ${muted}`}>
+              Quick suggestions (placeholder logic). Later this comes from your real Insights + Explore data.
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => addGenerated("insights")}
+              className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
+                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
+                    dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">Give me 3 actions from my Insights</div>
+                  <div className={`mt-1 text-sm ${muted}`}>Turns your patterns into tiny experiments (momentum-friendly).</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => addGenerated("explore")}
+              className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
+                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
+                    dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <Target className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold">Give me 3 actions from Explore</div>
+                  <div className={`mt-1 text-sm ${muted}`}>Turns doors into moves (programs, local opportunities, money support).</div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between">
+            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>Want a clean slate?</div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const seeded = seedState();
+                setState(seeded);
+                saveState(seeded);
+              }}
+              className={`text-xs font-semibold ${dark ? "text-slate-200/70 hover:text-slate-50" : "text-slate-700/70 hover:text-slate-900"}`}
+            >
+              Reset Actions
+            </button>
+          </div>
+        </section>
+      </div>
+
+      {/* =========================================================
+         Follow-up sheet (post-action calibration)
+         ========================================================= */}
+      {followOpen ? (
+        <div className="fixed inset-0 z-[80]">
+          <button
+            type="button"
+            onClick={closeFollowUp}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            aria-label="Close"
+          />
+
+          <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl md:inset-0 md:flex md:items-center md:justify-center">
+            <div
+              className="relative w-full rounded-t-[28px] border border-white/10 bg-slate-950/85 shadow-[0_45px_140px_rgba(0,0,0,0.72)] backdrop-blur-2xl md:rounded-[28px] md:max-h-[82vh]"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Action follow up"
+            >
+              <div className="sticky top-0 z-10 rounded-t-[28px] border-b border-white/10 bg-slate-950/80 px-5 py-4 backdrop-blur-2xl md:rounded-t-[28px]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
+                      Quick follow-up
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-slate-50">How did that feel?</div>
+                    <div className="mt-1 text-sm text-slate-300/80">
+                      This is how Everleap gets smarter without turning your life into homework.
+                    </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setWhyOpen((o) => !o)}
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      dark ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70" : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                    }`}
-                    aria-expanded={whyOpen}
+                    onClick={closeFollowUp}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 active:scale-95"
+                    aria-label="Close"
+                    title="Close"
                   >
-                    Why this works
-                    <ChevronDown className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
-
-                {whyOpen ? (
-                  <div className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${dark ? "border-white/10 bg-slate-950/40 text-slate-200/90" : "border-slate-200 bg-white/70 text-slate-700"}`}>
-                    <div className="font-semibold">The loop</div>
-                    <div className={`mt-2 ${muted}`}>
-                      1) Insights give you a hypothesis about you. <br />
-                      2) Explore shows doors that match. <br />
-                      3) Actions create proof: you do something small, then rate how it felt. That feedback sharpens everything.
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </section>
-
-          {/* This Week */}
-          <section className="mb-6">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <div className={sectionLabelClass}>This week</div>
-                <div className={`mt-1 text-sm ${muted}`}>3–5 small moves. Keep it light. Keep it real.</div>
               </div>
 
-              <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
-                Tip: try one <span className="font-semibold">10–20m</span> action today.
-              </div>
-            </div>
+              <div className="px-5 pb-6 pt-4">
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-slate-100">Pick one</div>
 
-            <div className="flex flex-col gap-3">
-              {thisWeek.map((a) => {
-                const rail = railForAction(a);
-
-                return (
-                  <div
-                    key={a.id}
-                    className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                      dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
-                    }`}
-                  >
-                    {/* rail */}
-                    <div
-                      aria-hidden
-                      className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full ${rail} opacity-90`}
-                    />
-
-                    <div className={`relative rounded-3xl px-5 py-4 ${dark ? "bg-slate-950/35" : "bg-white/70"}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className={`text-base font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
-                              {a.title}
-                            </div>
-
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-800"
-                              }`}
-                            >
-                              <Clock className="h-3.5 w-3.5" />
-                              {a.minutes}m
-                            </span>
-
-                            <span
-                              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                                a.status === "doing"
-                                  ? dark
-                                    ? "border-sky-200/20 bg-sky-300/15 text-sky-100"
-                                    : "border-sky-200 bg-sky-50 text-sky-900"
-                                  : a.status === "done"
-                                  ? dark
-                                    ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
-                                  : a.status === "snoozed"
-                                  ? dark
-                                    ? "border-amber-200/20 bg-amber-300/15 text-amber-100"
-                                    : "border-amber-200 bg-amber-50 text-amber-900"
-                                  : dark
-                                  ? "border-white/10 bg-white/5 text-slate-100"
-                                  : "border-slate-200 bg-white text-slate-800"
-                              }`}
-                            >
-                              {a.status === "doing"
-                                ? "In progress"
-                                : a.status === "done"
-                                ? "Done"
-                                : a.status === "snoozed"
-                                ? "Snoozed"
-                                : "To do"}
-                            </span>
-                          </div>
-
-                          <div className={`mt-2 text-sm ${muted}`}>{a.description}</div>
-
-                          {/* alignment chips */}
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {a.goalId ? (
-                              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
-                                <Target className="h-3.5 w-3.5 opacity-80" />
-                                Goal
-                              </span>
-                            ) : null}
-
-                            {a.insightId ? pillForInsight(a.insightId) : null}
-                            {a.exploreId ? pillForExplore(a.exploreId) : null}
-                          </div>
-                        </div>
-
-                        {/* controls */}
-                        <div className="flex shrink-0 flex-col items-end gap-2">
-                          {a.status !== "done" ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => startAction(a.id)}
-                                className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  dark
-                                    ? "bg-sky-300 text-slate-950 hover:bg-sky-200 shadow-[0_10px_30px_rgba(56,189,248,0.25)]"
-                                    : "bg-sky-600 text-white hover:bg-sky-500"
-                                }`}
-                              >
-                                <Play className="h-4 w-4" /> Start
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => markDone(a.id)}
-                                className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  dark
-                                    ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                                    : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-                                }`}
-                              >
-                                <Check className="h-4 w-4" /> Done
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => snoozeAction(a.id)}
-                                className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                                  dark
-                                    ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
-                                    : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
-                                }`}
-                              >
-                                <Pause className="h-4 w-4" /> Snooze
-                              </button>
-                            </>
-                          ) : (
-                            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
-                              {a.followUp?.rating ? (
-                                <>
-                                  Felt:{" "}
-                                  <span className="font-semibold">
-                                    {a.followUp.rating === "energizing"
-                                      ? "Energizing"
-                                      : a.followUp.rating === "neutral"
-                                      ? "Neutral"
-                                      : "Draining"}
-                                  </span>
-                                </>
-                              ) : (
-                                "Done ✔"
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Goals */}
-          <section className="mb-6">
-            <div className="mb-3">
-              <div className={sectionLabelClass}>Goals</div>
-              <div className={`mt-1 text-sm ${muted}`}>
-                Goals are just containers. Actions are the real game.
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              {state.goals.map((g) => {
-                const prog = goalProgress(g);
-                const pct = prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
-
-                return (
-                  <div
-                    key={g.id}
-                    className={`rounded-3xl border px-5 py-4 ${surface}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`flex h-9 w-9 items-center justify-center rounded-2xl border ${
-                              dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
-                            }`}
-                          >
-                            <Target className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <div className={`text-sm font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
-                              {g.title}
-                            </div>
-                            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
-                              {g.horizon} • {prog.done}/{prog.total} actions
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={`text-xs font-semibold ${dark ? "text-slate-200/70" : "text-slate-700/70"}`}>
-                        {pct}%
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <div className={`h-2 w-full rounded-full ${dark ? "bg-white/10" : "bg-slate-200/70"}`}>
-                        <div
-                          className="h-2 rounded-full bg-sky-300 transition"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {g.actionIds.slice(0, 3).map((id) => {
-                        const a = state.actions.find((x) => x.id === id);
-                        if (!a) return null;
-                        return (
-                          <span
-                            key={id}
-                            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${
-                              a.status === "done"
-                                ? dark
-                                  ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-900"
-                                : chipClass(dark)
-                            }`}
-                            title={a.title}
-                          >
-                            {a.status === "done" ? "✓ " : ""}
-                            {a.title.length > 28 ? `${a.title.slice(0, 28)}…` : a.title}
-                          </span>
-                        );
-                      })}
-                      {g.actionIds.length > 3 ? (
-                        <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
-                          +{g.actionIds.length - 3} more
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Generator */}
-          <section className="mb-2">
-            <div className="mb-3">
-              <div className={sectionLabelClass}>Generate actions</div>
-              <div className={`mt-1 text-sm ${muted}`}>
-                Quick suggestions (placeholder logic). Later this comes from your real Insights + Explore data.
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => addGenerated("insights")}
-                className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
-                  dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"}`}>
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold">Give me 3 actions from my Insights</div>
-                    <div className={`mt-1 text-sm ${muted}`}>
-                      Turns your patterns into tiny experiments (momentum-friendly).
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => addGenerated("explore")}
-                className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
-                  dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"}`}>
-                    <Target className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold">Give me 3 actions from Explore</div>
-                    <div className={`mt-1 text-sm ${muted}`}>
-                      Turns doors into moves (programs, local opportunities, money support).
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between">
-              <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
-                Want a clean slate?
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const seeded = seedState();
-                  setState(seeded);
-                  saveState(seeded);
-                }}
-                className={`text-xs font-semibold ${
-                  dark ? "text-slate-200/70 hover:text-slate-50" : "text-slate-700/70 hover:text-slate-900"
-                }`}
-              >
-                Reset Actions
-              </button>
-            </div>
-          </section>
-        </main>
-
-        <BottomNav activeKey="actions" />
-
-        {/* =========================================================
-           Follow-up sheet (post-action calibration)
-           ========================================================= */}
-        {followOpen ? (
-          <div className="fixed inset-0 z-[80]">
-            <button
-              type="button"
-              onClick={closeFollowUp}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              aria-label="Close"
-            />
-
-            <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl md:inset-0 md:flex md:items-center md:justify-center">
-              <div
-                className="relative w-full rounded-t-[28px] border border-white/10 bg-slate-950/85 shadow-[0_45px_140px_rgba(0,0,0,0.72)] backdrop-blur-2xl md:rounded-[28px] md:max-h-[82vh]"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Action follow up"
-              >
-                <div className="sticky top-0 z-10 rounded-t-[28px] border-b border-white/10 bg-slate-950/80 px-5 py-4 backdrop-blur-2xl md:rounded-t-[28px]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
-                        Quick follow-up
-                      </div>
-                      <div className="mt-1 text-lg font-semibold text-slate-50">
-                        How did that feel?
-                      </div>
-                      <div className="mt-1 text-sm text-slate-300/80">
-                        This is how Everleap gets smarter without turning your life into homework.
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={closeFollowUp}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 active:scale-95"
-                      aria-label="Close"
-                      title="Close"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="px-5 pb-6 pt-4">
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-slate-100">
-                      Pick one
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {([
+                  <div className="flex flex-wrap gap-2">
+                    {(
+                      [
                         ["energizing", "⚡ Energizing"],
                         ["neutral", "😐 Neutral"],
                         ["draining", "🥱 Draining"],
-                      ] as Array<[FollowUpRating, string]>).map(([val, label]) => {
-                        const active = followRating === val;
-                        return (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={() => setFollowRating(val)}
-                            className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                              active
-                                ? "border-sky-200/20 bg-sky-300/15 text-sky-100"
-                                : "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                      ] as Array<[FollowUpRating, string]>
+                    ).map(([val, label]) => {
+                      const active = followRating === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setFollowRating(val)}
+                          className={`inline-flex items-center rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                            active
+                              ? "border-sky-200/20 bg-sky-300/15 text-sky-100"
+                              : "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                    <div className="pt-2">
-                      <div className="text-sm font-semibold text-slate-100">
-                        One sentence (optional)
-                      </div>
-                      <textarea
-                        value={followNote}
-                        onChange={(e) => setFollowNote(e.target.value)}
-                        rows={3}
-                        placeholder="What did you learn? What made it easy/hard?"
-                        className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-400/70"
-                      />
-                    </div>
+                  <div className="pt-2">
+                    <div className="text-sm font-semibold text-slate-100">One sentence (optional)</div>
+                    <textarea
+                      value={followNote}
+                      onChange={(e) => setFollowNote(e.target.value)}
+                      rows={3}
+                      placeholder="What did you learn? What made it easy/hard?"
+                      className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-400/70"
+                    />
+                  </div>
 
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={saveFollowUp}
-                        className="inline-flex w-full items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/40 hover:bg-amber-200 active:scale-[0.99]"
-                      >
-                        Save
-                      </button>
-                      <div className="mt-2 text-xs text-slate-300/55">
-                        Later: we’ll use this to refine recommendations and action suggestions.
-                      </div>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={saveFollowUp}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-300/40 hover:bg-amber-200 active:scale-[0.99]"
+                    >
+                      Save
+                    </button>
+                    <div className="mt-2 text-xs text-slate-300/55">
+                      Later: we’ll use this to refine recommendations and action suggestions.
                     </div>
                   </div>
                 </div>
-
-                <div className="h-3 md:hidden" />
               </div>
+
+              <div className="h-3 md:hidden" />
             </div>
           </div>
-        ) : null}
-      </div>
-    </AppChrome>
+        </div>
+      ) : null}
+    </>
   );
 }

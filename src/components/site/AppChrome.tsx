@@ -29,7 +29,6 @@ const INSIGHT_QUOTES: InsightQuote[] = [
 ];
 
 function pickSessionQuote(): InsightQuote {
-  // deterministic per session via sessionStorage
   const KEY = "everleap.insightQuote.v1";
   if (typeof window === "undefined") return INSIGHT_QUOTES[0];
 
@@ -59,7 +58,6 @@ export type EverleapMarkProps = {
 };
 
 function markWordColor(): string {
-  // RegAuth-like warm sand/orange
   return "rgba(255,214,178,0.92)";
 }
 
@@ -70,7 +68,6 @@ export function EverleapMark({ subtitle, variant = "app", className }: EverleapM
 
   return (
     <div className={cx("flex items-center gap-2.5", className)}>
-      {/* RegAuth-style ember orb (rounded-square, warm glow) */}
       <span className={cx("relative", variant === "hero" ? "h-8 w-8" : "h-7 w-7")} aria-hidden="true">
         <span
           aria-hidden="true"
@@ -152,19 +149,17 @@ function intensityForLevel(level: GradientLevel | undefined) {
   return { bloom: 0.40, wash: 0.46, vignette: 0.72 };
 }
 
+type CSSVars = React.CSSProperties & { [key: `--${string}`]: string | number };
+
 export function AppChrome({
   children,
   brandSubtitle,
   className,
-  themeId: _themeId,
-  setThemeId: _setThemeId,
-  onThemeChange: _onThemeChange,
   gradientLevel,
-  setGradientLevel: _setGradientLevel,
-  onGradientChange: _onGradientChange,
-  orbSource: _orbSource,
-  ambientCap: _ambientCap,
+  ..._unused
 }: AppChromeProps) {
+  void _unused;
+
   const intensity = intensityForLevel(gradientLevel);
 
   const [quote, setQuote] = React.useState<InsightQuote | null>(null);
@@ -172,8 +167,23 @@ export function AppChrome({
     setQuote(pickSessionQuote());
   }, []);
 
+  // Shared “chrome material” (header + footer).
+  // Important: this is what keeps them feeling like one system.
+  const chromeVars: CSSVars = {
+    "--el-chrome-bg": "rgba(255,255,255,0.032)",
+    "--el-chrome-border": "rgba(255,255,255,0.10)",
+    "--el-chrome-highlight": "rgba(255,255,255,0.12)",
+    "--el-chrome-shadow": "0 18px 60px rgba(0,0,0,0.18)",
+    "--el-chrome-blur": "26px",
+  };
+
+  const chromeBg = "var(--el-chrome-bg)";
+  const chromeHighlight = "var(--el-chrome-highlight)";
+  const chromeShadow = "var(--el-chrome-shadow)";
+  const chromeBlur = "var(--el-chrome-blur)";
+
   return (
-    <div className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)}>
+    <div className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)} style={chromeVars}>
       {/* Background */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
@@ -191,24 +201,21 @@ export function AppChrome({
         <div
           className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
           style={{
-            background:
-              "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
+            background: "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
             opacity: intensity.bloom,
           }}
         />
         <div
           className="absolute top-24 -left-48 h-[520px] w-[520px] rounded-full blur-3xl"
           style={{
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
+            background: "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
             opacity: intensity.bloom,
           }}
         />
         <div
           className="absolute bottom-0 -right-56 h-[620px] w-[720px] rounded-full blur-3xl"
           style={{
-            background:
-              "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
+            background: "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
             opacity: intensity.bloom,
           }}
         />
@@ -216,8 +223,7 @@ export function AppChrome({
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
+            background: "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
             opacity: intensity.vignette,
           }}
         />
@@ -225,16 +231,37 @@ export function AppChrome({
 
       {/* Header */}
       <header
-        className={cx(
-          "relative z-10 sticky top-0 border-b border-white/10",
-          "bg-white/[0.03] backdrop-blur-2xl"
-        )}
-        style={{ boxShadow: "0 18px 60px rgba(0,0,0,0.22)" }}
+        className={cx("relative z-10 sticky top-0")}
+        style={{
+          background: chromeBg,
+          boxShadow: chromeShadow,
+          backdropFilter: `blur(${chromeBlur})`,
+          WebkitBackdropFilter: `blur(${chromeBlur})`,
+        }}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        {/* Blend strip so header does NOT look like a separate component */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+          style={{
+            background: `linear-gradient(to bottom, ${chromeBg}, rgba(0,0,0,0))`,
+          }}
+        />
+
+        {/* Single subtle highlight (avoid “hard rule” borders) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+          style={{
+            background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`,
+            opacity: 0.9,
+          }}
+        />
+
+        {/* Slightly tighter header padding so page titles don’t feel “pushed down” */}
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
           <EverleapMark subtitle={brandSubtitle} />
 
-          {/* Session quote (desktop) */}
           <div className="hidden md:flex max-w-[52ch] items-center justify-end text-right">
             {quote ? (
               <div className="text-[12px] leading-relaxed text-white/62">
@@ -247,8 +274,8 @@ export function AppChrome({
           </div>
         </div>
 
-        {/* Session quote (mobile) */}
-        <div className="md:hidden px-4 pb-3">
+        {/* Slightly tighter on mobile as well */}
+        <div className="md:hidden px-4 pb-2">
           {quote ? (
             <div className="text-[12px] leading-relaxed text-white/62">
               <span className="italic">“{quote.text}”</span>
@@ -258,7 +285,8 @@ export function AppChrome({
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
+      {/* IMPORTANT: tighter top padding so content starts sooner; keep bottom comfy */}
+      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 pb-4">{children}</main>
     </div>
   );
 }

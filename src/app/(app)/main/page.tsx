@@ -5,7 +5,6 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { AppChrome } from "@/components/site/AppChrome";
 import { TinyTasks, type TinyTaskSummary } from "./components/TinyTasks";
 
 import {
@@ -156,9 +155,7 @@ function readVmSessionTiny(vm: unknown): SessionTinyState {
 function readSessionTinyState(): SessionTinyState {
   if (typeof window === "undefined") return { shownIds: [], completedIds: [] };
 
-  const parsed = safeJsonParse<SessionTinyState>(
-    window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY),
-  );
+  const parsed = safeJsonParse<SessionTinyState>(window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY));
   if (!parsed) return { shownIds: [], completedIds: [] };
 
   return {
@@ -214,8 +211,7 @@ function scoreAnswer(a: string) {
   if (!isMeaningfulText(t)) return 0;
 
   const len = t.length;
-  const hasEffort =
-    /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
+  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
   const hasMovement = /\b(gym|run|lift|workout|move|training|practice)\b/i.test(t);
   const hasEmotion = /\b(happy|calm|proud|stressed|anxious|excited|good|better)\b/i.test(t);
   const hasRoutine = /\b(day|daily|routine|morning|night|shower|sleep|schedule)\b/i.test(t);
@@ -249,8 +245,7 @@ function interpretAnswer(opts: {
   if (hasEffort && hasMovement) {
     interpretation = "You do best when progress feels earned — effort + momentum matter to you.";
   } else if (hasEffort) {
-    interpretation =
-      "You do best when the day feels earned — real effort, real progress, not just drifting.";
+    interpretation = "You do best when the day feels earned — real effort, real progress, not just drifting.";
   } else if (hasMovement) {
     interpretation = "You do best with momentum — when you move, your head clears and you lock in.";
   } else if (hasMood) {
@@ -264,19 +259,15 @@ function interpretAnswer(opts: {
   let extra: string | undefined;
   if (confidence >= 0.78) {
     if (lane === "high_school") {
-      extra =
-        "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
+      extra = "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
     } else if (lane === "young_adult") {
-      extra =
-        "So I’m going to bias toward paths with visible momentum — projects, routines, and environments where progress shows.";
+      extra = "So I’m going to bias toward paths with visible momentum — projects, routines, and environments where progress shows.";
     } else {
       extra = "So I’m going to recommend next steps you can actually train — not just browse.";
     }
   }
 
-  // keep it tight if signal is weak
   if (confidence < 0.45) return { interpretation, extra: undefined };
-
   return { interpretation, extra };
 }
 
@@ -339,12 +330,9 @@ function pickBestSignal(): ExtractedSignal | null {
 type NarrativeMode = "welcome_new" | "in_progress" | "complete_signals";
 
 function certaintyLine(certainty?: OnboardingV4["certainty"]) {
-  if (certainty === "strong")
-    return "You sound pretty clear on what you want — we’ll make it real, not vague.";
-  if (certainty === "kinda")
-    return "You’re not guessing, but you’re not locked in either — that’s a good place to work from.";
-  if (certainty === "no_clue")
-    return "You don’t need a “forever plan.” We just need one honest direction to test.";
+  if (certainty === "strong") return "You sound pretty clear on what you want — we’ll make it real, not vague.";
+  if (certainty === "kinda") return "You’re not guessing, but you’re not locked in either — that’s a good place to work from.";
+  if (certainty === "no_clue") return "You don’t need a “forever plan.” We just need one honest direction to test.";
   return "";
 }
 
@@ -370,8 +358,12 @@ export default function MainHomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
+  // NOTE: AppChrome is now provided by /main/layout.tsx.
+  // We keep theme values here only for page-level calculations (dark/orb glow),
+  // even though we no longer pass them into AppChrome from this page.
+  const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
+  const [gradientLevel] = React.useState<GradientLevel>(3);
+  void gradientLevel;
 
   const dark = isDarkTheme(themeId);
   const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
@@ -407,20 +399,12 @@ export default function MainHomePage() {
   const [taskOpen, setTaskOpen] = React.useState(false);
   const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
 
-  // one-shot “just logged in” line
   const [justLoggedIn, setJustLoggedIn] = React.useState(false);
-
-  /* ---------------------------------------------------------------------------
-     Mount / refresh
-     --------------------------------------------------------------------------- */
 
   React.useEffect(() => {
     setMounted(true);
-
-    // Refresh VM after mount (prevents hydration mismatch from storage/random)
     setVm(buildTodayViewModel());
 
-    // reduced motion
     const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     const reduce = !!mq?.matches;
     setMotionEnabled(!reduce);
@@ -447,17 +431,13 @@ export default function MainHomePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Detect login redirect: /main?m=login&returnTo=...
-  // Show the line once, then clean the URL so it doesn’t repeat.
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
     const m = searchParams?.get("m") ?? "";
     if (m !== "login") return;
 
-    // If we’ve already acknowledged this in the session, don’t repeat.
-    const already =
-      window.sessionStorage.getItem(JUST_LOGGED_IN_SESSION_KEY) === "1";
+    const already = window.sessionStorage.getItem(JUST_LOGGED_IN_SESSION_KEY) === "1";
 
     if (!already) {
       setJustLoggedIn(true);
@@ -468,18 +448,10 @@ export default function MainHomePage() {
       }
     }
 
-    // Strip query params to avoid re-showing on refresh/back.
-    // Keep it shallow (no scroll jump)
     router.replace("/main");
   }, [router, searchParams]);
 
-  /* ---------------------------------------------------------------------------
-     Completion + next step
-     --------------------------------------------------------------------------- */
-
-  const progress = mounted
-    ? vm.progress
-    : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
+  const progress = mounted ? vm.progress : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
 
   const motAnswered = progress.motivationsAnswered ?? 0;
   const strAnswered = progress.strengthsAnswered ?? 0;
@@ -491,12 +463,7 @@ export default function MainHomePage() {
 
   const allSignalsComplete = motComplete && strComplete && sklComplete;
 
-  const recommendedNext: RecommendedNext =
-    !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
-
-  /* ---------------------------------------------------------------------------
-     Tiny Tasks
-     --------------------------------------------------------------------------- */
+  const recommendedNext: RecommendedNext = !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
 
   const vmTiny = readVmSessionTiny(vm);
   const sprintDoneThisSession = mounted ? vmTiny.completedIds.includes("curiosity_sprint") : false;
@@ -522,20 +489,12 @@ export default function MainHomePage() {
     },
   ];
 
-  /* ---------------------------------------------------------------------------
-     Navigation helpers
-     --------------------------------------------------------------------------- */
-
   const buildQuestionsHref = (cat: RecommendedNext) => {
     const params = new URLSearchParams();
     params.set("cat", cat);
     params.set("returnTo", "/main");
     return `/main/questions?${params.toString()}`;
   };
-
-  /* ---------------------------------------------------------------------------
-     Click-driven fades
-     --------------------------------------------------------------------------- */
 
   const fadeThen = async (fn: () => void | Promise<void>) => {
     if (!motionEnabled) {
@@ -550,10 +509,6 @@ export default function MainHomePage() {
     await sleep(140);
     setTransitioning(false);
   };
-
-  /* ---------------------------------------------------------------------------
-     Coach narrative (spoken, grounded, progress-aware)
-     --------------------------------------------------------------------------- */
 
   const name = mounted ? niceName(getSnapshotName(vm.snapshot)) : "";
   const open = openingLine(name);
@@ -601,11 +556,8 @@ export default function MainHomePage() {
         ? `You’ve already done ${sprintCount} curiosity sprint${sprintCount === 1 ? "" : "s"} — that’s real momentum.`
         : "";
 
-    const signalLine = signal?.interpretation
-      ? `One pattern I’m taking seriously: ${signal.interpretation}`
-      : "";
+    const signalLine = signal?.interpretation ? `One pattern I’m taking seriously: ${signal.interpretation}` : "";
 
-    // Always start with greeting, then (optionally) login acknowledgment
     const lines: string[] = [open];
     if (justLoggedIn) lines.push(loginLine);
 
@@ -627,7 +579,6 @@ export default function MainHomePage() {
       return lines.filter(Boolean).slice(0, 6);
     }
 
-    // IN PROGRESS
     lines.push("Good — you’ve started giving me real signal. That’s how this stops feeling generic.");
     if (didLine) lines.push(didLine);
     if (actionLine) lines.push(actionLine);
@@ -640,9 +591,7 @@ export default function MainHomePage() {
     lines.push(`My recommendation: ${labelForNext(next)}. ${why}`);
 
     if (next !== "motivations") {
-      lines.push(
-        `If that doesn’t feel right today, ${next === "strengths" ? "Motivations" : "Strengths"} is still a solid move.`
-      );
+      lines.push(`If that doesn’t feel right today, ${next === "strengths" ? "Motivations" : "Strengths"} is still a solid move.`);
     }
 
     return lines.filter(Boolean).slice(0, 8);
@@ -666,19 +615,8 @@ export default function MainHomePage() {
     return primaryCtaLabel(recommendedNext, allSignalsComplete);
   }, [mounted, recommendedNext, allSignalsComplete]);
 
-  /* ---------------------------------------------------------------------------
-     Render
-     --------------------------------------------------------------------------- */
-
   return (
-    <AppChrome
-      themeId={themeId}
-      setThemeId={setThemeId}
-      gradientLevel={gradientLevel}
-      setGradientLevel={setGradientLevel}
-      orbSource="spotlight_orb"
-      ambientCap={0.35}
-    >
+    <>
       {/* Scrim fade for click transitions */}
       <AnimatePresence>
         {transitioning && motionEnabled ? (
@@ -777,6 +715,6 @@ export default function MainHomePage() {
           </section>
         </main>
       </div>
-    </AppChrome>
+    </>
   );
 }

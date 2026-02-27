@@ -3,14 +3,7 @@
 
 import * as React from "react";
 
-import { BottomNav } from "@/components/navigation/BottomNav";
-import { AppChrome } from "@/components/site/AppChrome";
-
-import {
-  isDarkTheme,
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+import { isDarkTheme, type SpotlightThemeId } from "@/theme/everleapVisuals";
 
 import type { ExploreSection } from "./content/types";
 import { EXPLORE_SECTIONS } from "./content";
@@ -18,8 +11,9 @@ import { EXPLORE_SECTIONS } from "./content";
 import { ExploreShell } from "./components/ExploreShell";
 
 export default function ExplorePage() {
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
+  // AppChrome + BottomNav are handled by the /main layout.
+  // This page should NOT render its own header/nav, and should just provide content spacing.
+  const themeId: SpotlightThemeId = "nightDusk";
   const dark = isDarkTheme(themeId);
 
   const sections: ExploreSection[] = EXPLORE_SECTIONS as ExploreSection[];
@@ -27,17 +21,8 @@ export default function ExplorePage() {
   const pageWidthClass = "max-w-5xl";
 
   return (
-    <AppChrome
-      themeId={themeId}
-      gradientLevel={gradientLevel}
-      onThemeChange={setThemeId}
-      onGradientChange={setGradientLevel}
-    >
-      <div className={`mx-auto w-full ${pageWidthClass} px-4 pb-24 pt-3`}>
-        <ExploreShell sections={sections} dark={dark} />
-      </div>
-
-      <BottomNav />
-    </AppChrome>
+    <div className={`mx-auto w-full ${pageWidthClass} px-4 pb-28 pt-2`}>
+      <ExploreShell sections={sections} dark={dark} />
+    </div>
   );
 }

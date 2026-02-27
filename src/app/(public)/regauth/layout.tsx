@@ -7,6 +7,9 @@ import { APP_ROUTES } from "@/regauth/config";
 import { sanitizeReturnTo } from "@/regauth/lib/returnTo";
 import { getAuthedCached } from "@/regauth/state/session";
 
+import PublicFooter from "@/components/site/PublicFooter";
+import { EverleapMark } from "@/components/site/AppChrome";
+
 export default function RegAuthLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,12 +59,22 @@ export default function RegAuthLayout({ children }: { children: React.ReactNode 
         style={{ boxShadow: "inset 0 0 220px rgba(0,0,0,0.55)" }}
       />
 
+      {/* Public header */}
+      <header className="relative z-10">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 pt-4 md:px-8">
+          <EverleapMark subtitle="Welcome" />
+        </div>
+      </header>
+
       {/* IMPORTANT: no max-w constraint here. Pages control their own width. */}
-      <div className="relative min-h-[100svh] w-full">
+      <div className="relative z-10 min-h-[100svh] w-full pb-[64px]">
         <div className="mx-auto flex min-h-[100svh] w-full items-center justify-center px-4 py-10 md:px-8">
           <div className="w-full">{children}</div>
         </div>
       </div>
+
+      {/* Public footer */}
+      <PublicFooter />
     </div>
   );
 }
