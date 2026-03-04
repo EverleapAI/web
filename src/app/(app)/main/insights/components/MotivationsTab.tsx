@@ -96,10 +96,6 @@ function rgb(a: RGB) {
   return `${a.r}, ${a.g}, ${a.b}`;
 }
 
-function subtleDivider(dark: boolean) {
-  return dark ? "bg-white/10" : "bg-black/10";
-}
-
 function sectionKicker(dark: boolean) {
   return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(
     " "
@@ -175,6 +171,23 @@ function pillDotStyle(dark: boolean, accent: RGB): React.CSSProperties {
   };
 }
 
+function chipBase(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2",
+    "rounded-full border px-3 py-2",
+    "text-[13px] font-semibold",
+    "backdrop-blur-xl transition active:scale-95",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+    dark ? "border-white/10 bg-white/[0.045] text-white/80 hover:bg-white/[0.07]" : "border-black/10 bg-white/80",
+  ].join(" ");
+}
+
+function chipActive(dark: boolean) {
+  return dark
+    ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
+    : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]";
+}
+
 /* =============================================================================
    Energy Map helpers
    ============================================================================= */
@@ -226,21 +239,7 @@ function energyFieldStyle(dark: boolean): React.CSSProperties {
    ============================================================================= */
 
 function quickChip(dark: boolean, active: boolean) {
-  return [
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3.5 py-2",
-    "text-[13px] font-semibold",
-    "backdrop-blur-xl transition active:scale-95",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10" : "border-black/10",
-    active
-      ? dark
-        ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
-        : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
-      : dark
-        ? "bg-white/[0.045] text-white/78 hover:bg-white/[0.07]"
-        : "bg-white/80 text-slate-800 hover:bg-white",
-  ].join(" ");
+  return [chipBase(dark), active ? chipActive(dark) : ""].join(" ").trim();
 }
 
 function softInputShell(dark: boolean) {
@@ -309,10 +308,6 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
     setRating(next);
     setSaved(false);
     setOpen(true);
-  }
-
-  function onClose() {
-    setOpen(false);
   }
 
   function onSave() {
@@ -393,7 +388,7 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
 
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => setOpen(false)}
                 className={[
                   "shrink-0 h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
@@ -454,6 +449,8 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
             <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
               Saved to localStorage:{" "}
               <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
+              <span className={dark ? "text-white/20" : "text-slate-400"}> • </span>
+              <span className={dark ? "text-white/30" : "text-slate-500"}>{contextTag}</span>
             </div>
           </div>
         </div>
@@ -537,17 +534,72 @@ function driverNarrative(def: DriverDef) {
   };
 
   const base = byId[def.id];
-  const p1 = base?.p1 ?? `This is one of your reliable on-switches — especially ${why || "in the right conditions"}.`;
-  const p2 =
-    base?.p2 ??
-    `When it’s fed, it helps you move and grow. When it’s starved, you’ll feel your energy drop. ${
-      drains ? `That usually happens when ${drains}.` : ""
-    }`.trim();
-
   const looksLine = looks ? `In real life, it looks like this: ${looks}.` : "";
-  const p2Final = [looksLine, p2].filter(Boolean).join(" ");
+  return { p1: base.p1, p2: [looksLine, base.p2].filter(Boolean).join(" ") };
+}
 
-  return { p1, p2: p2Final };
+/* =============================================================================
+   Defaults (so you ALWAYS see motivations even with low/no signal)
+   ============================================================================= */
+
+const DRIVER_DEFS: Record<DriverId, DriverDef> = {
+  momentum: {
+    id: "momentum",
+    label: "Momentum",
+    accent: { r: 255, g: 210, b: 110 },
+    whenItHits: "when you can start → test → finish without getting stuck in endless setup",
+    looksLike: "you do the small version first, then improve it once it exists",
+    drainsWhen: "decisions stall, approvals drag, or everything feels ‘pending’",
+  },
+  mastery: {
+    id: "mastery",
+    label: "Mastery",
+    accent: { r: 190, g: 140, b: 255 },
+    whenItHits: "when you can feel progress through reps and real feedback",
+    looksLike: "you get hooked on refining the move / skill / craft",
+    drainsWhen: "effort isn’t translating into visible improvement",
+  },
+  curiosity: {
+    id: "curiosity",
+    label: "Curiosity",
+    accent: { r: 120, g: 200, b: 255 },
+    whenItHits: "when there’s a real question and you get to explore it",
+    looksLike: "you pull threads, test ideas, and connect dots",
+    drainsWhen: "everything is repetitive and nothing feels new",
+  },
+  people: {
+    id: "people",
+    label: "People",
+    accent: { r: 120, g: 255, b: 190 },
+    whenItHits: "when you can bounce off real humans — challenge, collaboration, honest feedback",
+    looksLike: "you level up faster in a good room than alone",
+    drainsWhen: "you’re stuck in isolation for too long",
+  },
+  meaning: {
+    id: "meaning",
+    label: "Meaning",
+    accent: { r: 255, g: 180, b: 120 },
+    whenItHits: "when the work connects to something real you actually care about",
+    looksLike: "you can push through friction because the ‘why’ is clear",
+    drainsWhen: "the point feels fuzzy or fake",
+  },
+  freedom: {
+    id: "freedom",
+    label: "Freedom",
+    accent: { r: 255, g: 150, b: 230 },
+    whenItHits: "when you can choose the method and own the approach",
+    looksLike: "you design a path that fits you and execute it",
+    drainsWhen: "everything is micromanaged or pre-scripted",
+  },
+};
+
+function buildDefaultMotivationsTop(): MotivationsTop {
+  const top3: ScoredDriver[] = [
+    { def: DRIVER_DEFS.momentum, score: 0.62 },
+    { def: DRIVER_DEFS.mastery, score: 0.56 },
+    { def: DRIVER_DEFS.curiosity, score: 0.52 },
+  ];
+  return { top3, top: top3[0] };
 }
 
 /* =============================================================================
@@ -752,14 +804,14 @@ function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drai
 
   const scored: ScoredMotivation[] = MOTIVATIONS_TAXONOMY
     .map((m) => {
-      let s = 0.06;
+      let s = 0.18; // higher base so "low signal" still yields visible motivations
 
       for (const did of m.drivers) {
         if (did === "clarity") {
-          s += (driverScore.get("meaning") ?? 0) * 0.16;
-          s += (driverScore.get("momentum") ?? 0) * 0.08;
+          s += (driverScore.get("meaning") ?? 0.45) * 0.16;
+          s += (driverScore.get("momentum") ?? 0.45) * 0.08;
         } else {
-          s += (driverScore.get(did) ?? 0) * 0.34;
+          s += (driverScore.get(did) ?? 0.42) * 0.34;
         }
       }
 
@@ -769,7 +821,7 @@ function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drai
         return blob.includes(key) ? acc + 1 : acc;
       }, 0);
 
-      s += Math.min(0.22, hits * 0.05);
+      s += Math.min(0.26, hits * 0.06);
 
       const topDriverId = top3[0]?.def?.id ?? null;
       if (topDriverId && (m.drivers as DriverHint[]).includes(topDriverId)) s += 0.08;
@@ -807,16 +859,40 @@ function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drai
     if (top5.length >= 5) break;
   }
 
-  if (top5.length < 5) {
-    for (const m of scored.slice(5)) {
-      if (top5.length >= 5) break;
-      if (seen.has(m.def.id)) continue;
-      seen.add(m.def.id);
-      top5.push(attachReceipt(m));
-    }
+  // hard guarantee: always return 5
+  while (top5.length < 5) {
+    const next = scored[top5.length];
+    if (!next) break;
+    if (!seen.has(next.def.id)) top5.push(attachReceipt(next));
+    seen.add(next.def.id);
   }
 
   return { top5 };
+}
+
+function normalizeMotivationsTop(input?: MotivationsTop | null): MotivationsTop {
+  const raw = input ?? null;
+  const top3 =
+    raw && Array.isArray((raw as MotivationsTop).top3)
+      ? ((raw as MotivationsTop).top3 as ScoredDriver[]).filter((x) => !!x?.def?.id)
+      : [];
+
+  if (top3.length >= 1) {
+    const top = raw && (raw as MotivationsTop).top ? (raw as MotivationsTop).top : top3[0];
+    return { top3, top };
+  }
+
+  return buildDefaultMotivationsTop();
+}
+
+function defaultBoostersIfEmpty(xs: string[]) {
+  if (xs.length) return xs;
+  return ["Small wins", "Clear next step", "Real feedback"];
+}
+
+function defaultDrainersIfEmpty(xs: string[]) {
+  if (xs.length) return xs;
+  return ["Stalled decisions", "Too many open loops"];
 }
 
 /* =============================================================================
@@ -827,7 +903,7 @@ export function MotivationsTab(props: {
   dark: boolean;
   motivationsTop?: MotivationsTop | null;
 
-  // ✅ NOW OPTIONAL (so page.tsx doesn’t have to pass it)
+  // Optional (page.tsx may pass or may not)
   openDriver?: DriverId | null;
   setOpenDriver?: React.Dispatch<React.SetStateAction<DriverId | null>> | unknown;
 
@@ -856,25 +932,22 @@ export function MotivationsTab(props: {
     nameFromHeadline,
   } = props;
 
-  // ✅ Default openDriver to null if not provided
   const openDriver: DriverId | null = props.openDriver ?? null;
 
-  const safeBoosters = React.useMemo(() => (Array.isArray(energyBoosters) ? energyBoosters : []), [energyBoosters]);
-  const safeDrainers = React.useMemo(() => (Array.isArray(energyDrainers) ? energyDrainers : []), [energyDrainers]);
+  const safeTop = React.useMemo(() => normalizeMotivationsTop(motivationsTop), [motivationsTop]);
+
+  const safeBoosters = React.useMemo(
+    () => defaultBoostersIfEmpty(Array.isArray(energyBoosters) ? energyBoosters.filter(Boolean) : []),
+    [energyBoosters]
+  );
+  const safeDrainers = React.useMemo(
+    () => defaultDrainersIfEmpty(Array.isArray(energyDrainers) ? energyDrainers.filter(Boolean) : []),
+    [energyDrainers]
+  );
   const safeReceipts = React.useMemo(
-    () => (Array.isArray(motivationReceipts) ? motivationReceipts : []),
+    () => (Array.isArray(motivationReceipts) ? motivationReceipts.filter(Boolean) : []),
     [motivationReceipts]
   );
-
-  const safeTop: MotivationsTop = React.useMemo(() => {
-    const raw = motivationsTop ?? null;
-    const top3 =
-      raw && Array.isArray((raw as MotivationsTop).top3)
-        ? ((raw as MotivationsTop).top3 as ScoredDriver[]).filter(Boolean)
-        : [];
-    const top = raw && (raw as MotivationsTop).top ? (raw as MotivationsTop).top : undefined;
-    return { top3, top };
-  }, [motivationsTop]);
 
   const safeSetOpenDriver = React.useCallback(
     (next: DriverId | null) => {
@@ -885,12 +958,28 @@ export function MotivationsTab(props: {
     [setOpenDriver]
   );
 
-  const topDriver = safeTop.top?.def ?? safeTop.top3[0]?.def ?? null;
+  // If page.tsx doesn't manage openDriver, we still want an initial open panel.
+  const [localOpen, setLocalOpen] = React.useState<DriverId | null>(null);
+  const effectiveOpen = openDriver ?? localOpen;
+
+  React.useEffect(() => {
+    if (effectiveOpen) return;
+    const first = safeTop.top3[0]?.def?.id ?? null;
+    if (first) setLocalOpen(first);
+  }, [safeTop.top3, effectiveOpen]);
+
+  function setOpen(next: DriverId | null) {
+    // if parent controls, this will work; if not, localOpen controls.
+    safeSetOpenDriver(next);
+    setLocalOpen(next);
+  }
+
+  const topDriver = safeTop.top?.def ?? safeTop.top3[0]?.def ?? DRIVER_DEFS.momentum;
 
   const taxonomy = React.useMemo(
     () =>
       scoreMotivations({
-        top3: safeTop.top3 ?? [],
+        top3: safeTop.top3 ?? buildDefaultMotivationsTop().top3,
         boosters: safeBoosters,
         drainers: safeDrainers,
         receipts: safeReceipts,
@@ -898,19 +987,10 @@ export function MotivationsTab(props: {
     [safeTop.top3, safeBoosters, safeDrainers, safeReceipts]
   );
 
-  React.useEffect(() => {
-    if (!safeTop.top3.length) return;
-    if (openDriver) return;
-    const first = safeTop.top3[0]?.def?.id ?? null;
-    if (first) safeSetOpenDriver(first);
-  }, [safeTop.top3, openDriver, safeSetOpenDriver]);
-
   return (
     <section className="mb-6">
-      {/* ...the rest of your file stays exactly the same... */}
-      {/* (I’m not repeating the entire JSX again here because nothing else changes.) */}
       <div className={readingSurface(dark)}>
-        {/* your existing content */}
+        {/* Header */}
         <div className="relative">
           <div className={sectionKicker(dark)}>Motivations</div>
           <div
@@ -927,10 +1007,182 @@ export function MotivationsTab(props: {
           </p>
         </div>
 
-        {/* keep all your existing sections below unchanged */}
-        {/* ... */}
+        {/* Drivers (always render, even if low signal) */}
+        <div className="mt-6">
+          <div className={sectionKicker(dark)}>Your top drivers</div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {(safeTop.top3.length ? safeTop.top3 : buildDefaultMotivationsTop().top3).slice(0, 3).map((d) => {
+              const active = effectiveOpen === d.def.id;
+              return (
+                <button
+                  key={d.def.id}
+                  type="button"
+                  onClick={() => setOpen(active ? null : d.def.id)}
+                  className={[
+                    "text-left",
+                    "rounded-[20px] border px-4 py-3 backdrop-blur-xl transition",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+                    dark ? "border-white/10 bg-white/[0.04] hover:bg-white/[0.06]" : "border-black/10 bg-white/85",
+                    active ? (dark ? "shadow-[0_18px_55px_rgba(0,0,0,0.32)]" : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]") : "",
+                  ].join(" ")}
+                  style={driverGlowStyle(dark, d.def.accent)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, d.def.accent)} />
+                        <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{d.def.label}</div>
+                      </div>
+                      <div className={["mt-1 text-[12px]", mutedText(dark)].join(" ")}>
+                        Signal: {Math.round(clamp01(d.score) * 100)}%
+                      </div>
+                    </div>
+
+                    <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                      {active ? "Open" : "Tap"}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Open driver narrative */}
+          {effectiveOpen ? (
+            <div className="mt-3">
+              {(() => {
+                const def =
+                  safeTop.top3.find((x) => x.def.id === effectiveOpen)?.def ?? DRIVER_DEFS[effectiveOpen];
+                const n = driverNarrative(def);
+                return (
+                  <div className={driverCardShell(dark)} style={driverGlowStyle(dark, def.accent)}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, def.accent)} />
+                          <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{def.label}</div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setOpen(null)}
+                        className={[
+                          "h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+                          dark
+                            ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]"
+                            : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+                        ].join(" ")}
+                      >
+                        Close
+                      </button>
+                    </div>
+
+                    <div className={["mt-3 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{n.p1}</div>
+                    <div className={["mt-2 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{n.p2}</div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Energy Map */}
+        <div className="mt-6">
+          <div className={sectionKicker(dark)}>Energy map</div>
+
+          <div className={[microCardShell(dark), "mt-3"].join(" ")} style={energyFieldStyle(dark)}>
+            <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+              <div className="md:w-1/2">
+                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                  Boosters
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {safeBoosters.slice(0, 10).map((t) => {
+                    const accent = pickAccent(t, "booster");
+                    return (
+                      <span
+                        key={`b:${t}`}
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-semibold",
+                          "backdrop-blur-xl",
+                          dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
+                        ].join(" ")}
+                      >
+                        <span className="h-2 w-2 rounded-full" style={pillDotStyle(dark, accent)} />
+                        {t}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="md:w-1/2">
+                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                  Drainers
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {safeDrainers.slice(0, 10).map((t) => {
+                    const accent = pickAccent(t, "drainer");
+                    return (
+                      <span
+                        key={`d:${t}`}
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-semibold",
+                          "backdrop-blur-xl",
+                          dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
+                        ].join(" ")}
+                      >
+                        <span className="h-2 w-2 rounded-full" style={pillDotStyle(dark, accent)} />
+                        {t}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className={["mt-3 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
+              If this section looks “generic,” that means we don’t have enough personal signal yet — so we’re showing sane defaults.
+              As you answer more prompts, these get sharper.
+            </div>
+          </div>
+        </div>
+
+        {/* Motivations list (THIS is what was missing in your UI) */}
+        <div className="mt-6">
+          <div className={sectionKicker(dark)}>Your likely motivations</div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {taxonomy.top5.map((m) => (
+              <div key={m.def.id} className={microCardShell(dark)} style={microGlowStyle(dark, m.def.accent)}>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, m.def.accent)} />
+                  <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{m.def.label}</div>
+                  <div className={["ml-auto text-[12px] font-semibold", mutedText(dark)].join(" ")}>
+                    {Math.round(clamp01(m.score) * 100)}%
+                  </div>
+                </div>
+
+                <div className={["mt-2 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{m.def.line1}</div>
+                <div className={["mt-2 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>{m.def.line2}</div>
+
+                {m.receipt ? (
+                  <div className={["mt-3 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    <span className={dark ? "text-white/55" : "text-slate-600"}>Why I’m saying this:</span>{" "}
+                    <span className={dark ? "text-white/70" : "text-slate-700"}>{m.receipt}</span>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Next steps */}
         {nextStepsMotivations ? (
-          <div className="mt-4">
+          <div className="mt-6">
             <NextStepsStack
               dark={dark}
               useLocal={mounted}
@@ -941,9 +1193,10 @@ export function MotivationsTab(props: {
             />
           </div>
         ) : (
-          <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
+          <div className={["mt-6 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
         )}
 
+        {/* Quick feedback */}
         <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
       </div>
     </section>
