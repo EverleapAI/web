@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { Sparkles, Shield } from "lucide-react";
 
 import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 
@@ -9,15 +10,15 @@ import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsS
    Local types (kept local to avoid page.tsx exports)
    ============================================================================= */
 
-type RGB = { r: number; g: number; b: number };
-
 type SignalId = "action" | "people" | "curiosity" | "clarity";
 
-type SignalLike = {
+type Signal = {
   id: SignalId;
+  label: string;
   strength: number; // 0..1
-  why?: string;
-  examples?: string[];
+  meaning: string;
+  why: string;
+  examples: string[];
 };
 
 type WordCloudItemLike = {
@@ -29,14 +30,8 @@ type NextStepsStackProps = React.ComponentProps<typeof NextStepsStack>;
 type NextStepsDefinition = NextStepsStackProps["definition"];
 
 /* =============================================================================
-   Local UI helpers (duplicated to preserve behavior without exporting from page)
+   UI helpers (duplicated so StrengthsTab is self-contained)
    ============================================================================= */
-
-type CSSVars = React.CSSProperties & { [key: `--${string}`]: string | number };
-
-function rgb(a: RGB) {
-  return `${a.r}, ${a.g}, ${a.b}`;
-}
 
 function clamp01(n: number) {
   if (!Number.isFinite(n)) return 0;
@@ -75,6 +70,10 @@ function readingSurface(dark: boolean) {
   ].join(" ");
 }
 
+function cleanOneLine(s: string) {
+  return (s ?? "").replace(/\s+/g, " ").trim();
+}
+
 function hashString(input: string) {
   let h = 2166136261;
   for (let i = 0; i < input.length; i += 1) {
@@ -84,412 +83,108 @@ function hashString(input: string) {
   return h >>> 0;
 }
 
-function pickAccent(term: string, palette: RGB[]) {
-  const h = hashString((term ?? "").toLowerCase().trim());
-  return palette[h % palette.length] ?? palette[0]!;
+function wordSizePx(weight: number) {
+  const w = clamp01(weight);
+  return 14 + Math.round(w * 10); // 14..24
 }
 
-/* =============================================================================
-   Quick Feedback (inline expand; no overlay) — local copy
-   ============================================================================= */
-
-type QuickRating = "mostly" | "somewhat" | "not_really";
-const QUICK_FEEDBACK_STORAGE_KEY = "everleap.insights.quickFeedback.v1";
-
-function quickChip(dark: boolean, active: boolean) {
-  return [
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3.5 py-2",
-    "text-[13px] font-semibold",
-    "backdrop-blur-xl transition active:scale-95",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10" : "border-black/10",
-    active
-      ? dark
-        ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
-        : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
-      : dark
-        ? "bg-white/[0.045] text-white/78 hover:bg-white/[0.07]"
-        : "bg-white/80 text-slate-800 hover:bg-white",
-  ].join(" ");
+function wordOpacity(weight: number) {
+  const w = clamp01(weight);
+  return 0.74 + w * 0.22; // 0.74..0.96
 }
 
-function softInputShell(dark: boolean) {
-  return [
-    "relative overflow-hidden rounded-[22px] border",
-    "backdrop-blur-2xl",
-    dark ? "border-white/10 bg-white/[0.035]" : "border-black/10 bg-white/80",
-    "shadow-[0_18px_55px_rgba(0,0,0,0.18)]",
-  ].join(" ");
+function isScienceyTerm(term: string) {
+  const t = (term ?? "").toLowerCase().trim();
+
+  const rx =
+    /\b(science|physics|chem|chemistry|bio|biology|genetic|genetics|neuro|neuroscience|quantum|lab|research|experiment|data|stats|statistics|math|algebra|geometry|calculus|engineering|robot|robotics|ai|ml|model|code|coding|program|programming|algorithm|systems?)\b/;
+
+  const rx2 = /\b(stem|computer|computers|comp(?:sci)?|cs)\b/;
+
+  return rx.test(t) || rx2.test(t);
 }
 
-function saveButton(dark: boolean, disabled: boolean) {
-  return [
-    "h-10 rounded-2xl px-4 text-[13px] font-semibold",
-    "transition active:scale-[0.99]",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    disabled
-      ? dark
-        ? "cursor-not-allowed bg-white/[0.07] text-white/40 border border-white/10"
-        : "cursor-not-allowed bg-black/5 text-black/40 border border-black/10"
-      : dark
-        ? "bg-white text-black hover:bg-white/95"
-        : "bg-slate-900 text-white hover:bg-slate-900/90",
-  ].join(" ");
-}
-
-function readLocalQuickFeedback(): { rating: QuickRating; note: string; savedAt: number } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(QUICK_FEEDBACK_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return null;
-    const rec = parsed as { rating?: unknown; note?: unknown; savedAt?: unknown };
-    const rating =
-      rec.rating === "mostly" || rec.rating === "somewhat" || rec.rating === "not_really" ? rec.rating : null;
-    const note = typeof rec.note === "string" ? rec.note : "";
-    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
-    if (!rating) return null;
-    return { rating, note, savedAt };
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
-  if (typeof window === "undefined") return;
-  const payload = { ...v, savedAt: Date.now() };
-  window.localStorage.setItem(QUICK_FEEDBACK_STORAGE_KEY, JSON.stringify(payload));
-}
-
-function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: string }): React.JSX.Element {
-  const [open, setOpen] = React.useState(false);
-  const [rating, setRating] = React.useState<QuickRating | null>(null);
-  const [note, setNote] = React.useState("");
-  const [saved, setSaved] = React.useState(false);
-
-  React.useEffect(() => {
-    const existing = readLocalQuickFeedback();
-    if (!existing) return;
-    setRating(existing.rating);
-    setNote(existing.note ?? "");
-    setSaved(true);
-  }, []);
-
-  function onPick(next: QuickRating) {
-    setRating(next);
-    setSaved(false);
-    setOpen(true);
+function wordColorClasses(dark: boolean, term: string) {
+  if (isScienceyTerm(term)) {
+    return [
+      dark ? "text-cyan-200/95" : "text-cyan-700/95",
+      dark ? "drop-shadow-[0_1px_12px_rgba(0,0,0,0.38)]" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
-  function onClose() {
-    setOpen(false);
-  }
+  const paletteDark = [
+    "text-sky-200/90",
+    "text-fuchsia-200/85",
+    "text-amber-200/90",
+    "text-emerald-200/85",
+    "text-violet-200/85",
+    "text-rose-200/85",
+    "text-lime-200/85",
+  ] as const;
 
-  function onSave() {
-    if (!rating) return;
-    writeLocalQuickFeedback({
-      rating,
-      note: (note ?? "").trim(),
-    });
-    setSaved(true);
-    setOpen(false);
-  }
+  const paletteLight = [
+    "text-sky-700/95",
+    "text-fuchsia-700/90",
+    "text-amber-700/95",
+    "text-emerald-700/90",
+    "text-violet-700/90",
+    "text-rose-700/90",
+    "text-lime-700/90",
+  ] as const;
 
-  const canSave = !!rating;
-
-  return (
-    <div className="mt-5">
-      <div className={sectionKicker(dark)}>Quick Check</div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={quickChip(dark, rating === "mostly")} onClick={() => onPick("mostly")}>
-          <span aria-hidden>👍</span>
-          <span>Mostly right</span>
-        </button>
-
-        <button type="button" className={quickChip(dark, rating === "somewhat")} onClick={() => onPick("somewhat")}>
-          <span aria-hidden>🙂</span>
-          <span>Somewhat</span>
-        </button>
-
-        <button type="button" className={quickChip(dark, rating === "not_really")} onClick={() => onPick("not_really")}>
-          <span aria-hidden>👎</span>
-          <span>Not really</span>
-        </button>
-
-        {saved ? (
-          <div className={["ml-1 flex items-center text-[12px]", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
-            (Saved locally)
-          </div>
-        ) : null}
-      </div>
-
-      <div
-        className={[
-          "mt-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
-          open ? "max-h-[340px] opacity-100" : "max-h-0 opacity-0",
-        ].join(" ")}
-        aria-hidden={!open}
-      >
-        <div className={softInputShell(dark)}>
-          <div className="pointer-events-none absolute inset-0" aria-hidden>
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(520px 220px at 12% 0%, rgba(255,170,110,0.14), transparent 62%)," +
-                  "radial-gradient(520px 220px at 88% 0%, rgba(120,160,255,0.10), transparent 62%)," +
-                  "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))",
-                opacity: dark ? 1 : 0.7,
-              }}
-            />
-          </div>
-
-          <div className="relative p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div
-                  className={[
-                    "text-[12px] font-semibold uppercase tracking-[0.16em]",
-                    dark ? "text-white/55" : "text-slate-600",
-                  ].join(" ")}
-                >
-                  Quick feedback
-                </div>
-                <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  Add a note if something felt off (or especially accurate).
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className={[
-                  "shrink-0 h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark
-                    ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]"
-                    : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                ].join(" ")}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-3">
-              <textarea
-                value={note}
-                onChange={(e) => {
-                  setNote(e.target.value);
-                  if (saved) setSaved(false);
-                }}
-                rows={3}
-                placeholder="Tell us what felt off / missing / dead-on…"
-                className={[
-                  "w-full resize-none rounded-[18px] px-4 py-3 text-[14px] leading-relaxed",
-                  "bg-transparent outline-none ring-1 ring-inset",
-                  dark
-                    ? "text-white placeholder:text-white/32 ring-white/12 focus:ring-white/20"
-                    : "text-slate-900 placeholder:text-slate-500 ring-black/10 focus:ring-black/15",
-                  "focus-visible:ring-2 focus-visible:ring-orange-200/20",
-                ].join(" ")}
-                style={{
-                  boxShadow:
-                    "inset 0 0 0 1px rgba(0,0,0,0.10), " +
-                    "inset 0 14px 26px rgba(0,0,0,0.18), " +
-                    "inset 0 1px 0 rgba(255,255,255,0.10)",
-                }}
-                aria-label={`Quick feedback note (${contextTag})`}
-              />
-              <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>Tip: one sentence is enough.</div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setNote("");
-                  setSaved(false);
-                  setOpen(false);
-                }}
-                className={[
-                  "h-10 rounded-2xl px-4 text-[13px] font-semibold border backdrop-blur-xl transition active:scale-[0.99]",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark
-                    ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
-                    : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
-                ].join(" ")}
-              >
-                Skip note
-              </button>
-
-              <button type="button" onClick={onSave} disabled={!canSave} className={saveButton(dark, !canSave)}>
-                Save
-              </button>
-            </div>
-
-            <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
-              Saved to localStorage:{" "}
-              <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const i = hashString(term.toLowerCase()) % paletteDark.length;
+  return [dark ? paletteDark[i] : paletteLight[i], dark ? "drop-shadow-[0_1px_10px_rgba(0,0,0,0.34)]" : ""]
+    .filter(Boolean)
+    .join(" ");
 }
 
-/* =============================================================================
-   Strength model + derivation
-   ============================================================================= */
-
-type StrengthDef = {
-  id: string;
-  title: string;
-  accent: RGB;
-  paragraph: string;
-  helps: string[];
-  watchouts: string[];
-};
-
-const HELP_ACCENTS: RGB[] = [
-  { r: 120, g: 200, b: 255 },
-  { r: 120, g: 255, b: 190 },
-  { r: 160, g: 255, b: 140 },
-  { r: 190, g: 140, b: 255 },
-];
-
-const WATCH_ACCENTS: RGB[] = [
-  { r: 255, g: 190, b: 110 },
-  { r: 255, g: 150, b: 230 },
-  { r: 190, g: 140, b: 255 },
-];
-
-function signalMap(signals: SignalLike[]) {
-  const m = new Map<SignalId, number>();
-  for (const s of signals ?? []) m.set(s.id, clamp01(s.strength ?? 0));
-  return m;
+function topTerms(items: WordCloudItemLike[]) {
+  const sorted = [...items].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
+  return new Set(sorted.slice(0, 3).map((x) => x.term.toLowerCase()));
 }
 
-function buildStrengths(args: {
-  name: string;
-  signals: SignalLike[];
-  themes: WordCloudItemLike[];
-  superBullets: string[];
-  watchoutBullets: string[];
-}): StrengthDef[] {
-  const { name, signals, superBullets, watchoutBullets } = args;
-
-  const who = name ? `${name}, ` : "";
-  const s = signalMap(signals);
-
-  const people = s.get("people") ?? 0;
-  const action = s.get("action") ?? 0;
-  const curiosity = s.get("curiosity") ?? 0;
-  const clarity = s.get("clarity") ?? 0;
-
-  const superTxt = (superBullets ?? []).join(" | ").toLowerCase();
-  const watchTxt = (watchoutBullets ?? []).join(" | ").toLowerCase();
-
-  const feelsPressureProof =
-    /\b(pressure|stress|calm|resilien|steady|composed|centered)\b/i.test(superTxt) ||
-    /\b(pressure|stress|calm|resilien|steady|overwhelm)\b/i.test(watchTxt);
-
-  const feelsOptionParalysis = /\b(paralysis|overthink|optimiz|stuck|too many options)\b/i.test(watchTxt);
-
-  const accentViolet: RGB = { r: 190, g: 140, b: 255 };
-  const accentSky: RGB = { r: 120, g: 200, b: 255 };
-  const accentEmber: RGB = { r: 255, g: 180, b: 120 };
-  const accentMint: RGB = { r: 120, g: 255, b: 190 };
-  const accentPink: RGB = { r: 255, g: 150, b: 230 };
-  const accentLime: RGB = { r: 160, g: 255, b: 140 };
-
-  const s1: StrengthDef = {
-    id: "calm",
-    title: "Calm Under Pressure",
-    accent: accentEmber,
-    paragraph: `${who}you have a steady kind of resilience. When things get noisy, you don’t spike the room — you lower the temperature. That’s not “emotionless,” it’s regulated. It helps you make better calls when other people are panicking. The watch-out is subtle: if you stay calm by going quiet, you can delay naming what you actually need — and then it piles up.`,
-    helps: ["steady presence", "clean triage", "trust under stress", action >= 0.26 ? "decide + move" : "hold the line"],
-    watchouts: ["staying too quiet", feelsOptionParalysis ? "overthinking the call" : "waiting for certainty", "carrying it alone"],
-  };
-
-  const s2: StrengthDef = {
-    id: "strategy",
-    title: "Quiet Strategist",
-    accent: accentViolet,
-    paragraph: `You naturally think a couple steps ahead. You’re not chasing chaos — you’re trying to build a situation you can trust. That kind of planning makes you reliable, and it’s why people hand you responsibility. The tripwire is when planning becomes protection: you can keep refining the map because committing to one route feels risky.`,
-    helps: ["risk-sensing", "solid plans", "anticipate issues", "behind-the-scenes impact"],
-    watchouts: [feelsOptionParalysis ? "option paralysis" : "delayed commitment", "over-planning", "missing the moment"],
-  };
-
-  const s3: StrengthDef = {
-    id: "empathy",
-    title: "Human Radar",
-    accent: accentSky,
-    paragraph: `You pick up on people — not in a performative way, more like you can feel the subtext. That makes you good in real human situations: coaching, care, teams, hard conversations. The upside is trust. The watch-out is load: if you’re the one who notices everything, you can start carrying everyone’s feelings like they’re your job.`,
-    helps: ["build trust", "read the room", "de-escalate", people >= 0.28 ? "strong rapport" : "supportive leadership"],
-    watchouts: ["emotional over-carry", "fixing the room", "forgetting your own needs"],
-  };
-
-  const s4: StrengthDef = {
-    id: "structure",
-    title: "Structured Builder",
-    accent: accentMint,
-    paragraph: `You do well when there are clear expectations and a clean system. You’re the person who makes things work — routines, checklists, repeatable processes. That’s a strength, not a personality quirk: it’s how you protect quality. The watch-out is when structure becomes a cage. If everything is pre-scripted, your energy drops — even if you’re capable of doing it.`,
-    helps: ["consistency", "quality control", "systems thinking", "follow-through"],
-    watchouts: ["getting rigid", "resisting change", "feeling boxed in"],
-  };
-
-  const s5: StrengthDef = {
-    id: "depth",
-    title: "Depth Curiosity",
-    accent: accentPink,
-    paragraph: `You’re not “random-curious.” You’re the kind of curious that wants the real answer. You like unusual topics, deeper conversations, and understanding how things actually work. That’s where your insight comes from. The watch-out is time: if you let curiosity run the whole show, action can get postponed until it’s urgent.`,
-    helps: ["learn fast", "connect dots", "ask better questions", curiosity >= 0.28 ? "go deep" : "spot patterns"],
-    watchouts: ["disappearing into research", "delaying action", "overloading your brain"],
-  };
-
-  const s6: StrengthDef = {
-    id: "values",
-    title: "Ethical Backbone",
-    accent: accentLime,
-    paragraph: `You care about doing things the right way — not for applause, but because it matters to you. That shows up as loyalty, standards, and a low tolerance for empty status games. It makes you trustworthy. The watch-out is frustration: if you’re surrounded by noise, politics, or half-truths, you can either withdraw or get quietly exhausted.`,
-    helps: ["credibility", "good judgment", "long-game thinking", "people trust you"],
-    watchouts: ["burnout from nonsense", "staying silent too long", "taking it personally"],
-  };
-
-  const topId: SignalId =
-    people >= action && people >= curiosity && people >= clarity
-      ? "people"
-      : action >= curiosity && action >= clarity
-        ? "action"
-        : curiosity >= clarity
-          ? "curiosity"
-          : "clarity";
-
-  if (topId === "people") return [s3, feelsPressureProof ? s1 : s2, s4, s5, s6, s2].slice(0, 6);
-  if (topId === "action") return [s1, s4, s2, s3, s6, s5];
-  if (topId === "curiosity") return [s5, s2, s1, s3, s4, s6];
-  return [s2, s4, s1, s3, s6, s5].map((x) => x);
+function highlightWrap(dark: boolean) {
+  return dark ? "bg-white/8 ring-1 ring-white/10" : "bg-black/5 ring-1 ring-black/10";
 }
 
-/* =============================================================================
-   Chip styles
-   ============================================================================= */
+function labelForSignal(id: SignalId) {
+  if (id === "action") return "Action";
+  if (id === "people") return "People";
+  if (id === "curiosity") return "Curiosity";
+  return "Clarity";
+}
 
-function chipShell(dark: boolean) {
-  return [
-    "inline-flex items-center",
-    "rounded-full border px-3.5 py-1.5",
-    "text-[13px] font-semibold",
-    "backdrop-blur-xl",
-    "transition-[transform,box-shadow,background-color,border-color] duration-200",
-    "select-none",
-    "active:scale-[0.99]",
-    dark ? "text-white/92" : "text-slate-900",
-  ].join(" ");
+function iconAccentForSignal(dark: boolean, id: SignalId) {
+  if (id === "action") return dark ? "text-amber-200/85" : "text-amber-700/85";
+  if (id === "people") return dark ? "text-sky-200/85" : "text-sky-700/85";
+  if (id === "curiosity") return dark ? "text-violet-200/85" : "text-violet-700/85";
+  return dark ? "text-emerald-200/85" : "text-emerald-700/85";
+}
+
+function barBg(dark: boolean) {
+  return dark ? "bg-white/7" : "bg-black/5";
+}
+
+function barFillStyle(dark: boolean, id: SignalId, strength: number): React.CSSProperties {
+  const s = clamp01(strength);
+  const c =
+    id === "action"
+      ? "255, 191, 120"
+      : id === "people"
+        ? "120, 200, 255"
+        : id === "curiosity"
+          ? "190, 140, 255"
+          : "120, 255, 190";
+
+  return {
+    width: `${Math.round(s * 100)}%`,
+    background: dark
+      ? `linear-gradient(90deg, rgba(${c}, 0.75), rgba(${c}, 0.22))`
+      : `linear-gradient(90deg, rgba(${c}, 0.55), rgba(${c}, 0.18))`,
+    boxShadow: dark ? `0 0 24px rgba(${c}, 0.30)` : `0 0 18px rgba(${c}, 0.16)`,
+  };
 }
 
 /* =============================================================================
@@ -498,93 +193,58 @@ function chipShell(dark: boolean) {
 
 export default function StrengthsTab(props: {
   dark: boolean;
+  signals: Signal[];
+  wordCloudDisplay: WordCloudItemLike[];
+  superBullets: string[];
+  watchoutBullets: string[];
+  nextStepsStrengths: NextStepsDefinition | null;
   mounted: boolean;
   tab: string;
   nameFromHeadline: string;
-  signals: SignalLike[];
-  wordCloudDisplay: WordCloudItemLike[];
-  superBullets?: string[];
-  watchoutBullets?: string[];
-  nextStepsStrengths: NextStepsDefinition | null;
 }): React.JSX.Element {
   const {
     dark,
-    mounted,
-    tab,
-    nameFromHeadline,
     signals,
     wordCloudDisplay,
     superBullets,
     watchoutBullets,
     nextStepsStrengths,
+    mounted,
+    tab,
+    nameFromHeadline,
   } = props;
 
-  const strengthsRaw = React.useMemo(
-    () =>
-      buildStrengths({
-        name: nameFromHeadline,
-        signals,
-        themes: wordCloudDisplay,
-        superBullets: superBullets ?? [],
-        watchoutBullets: watchoutBullets ?? [],
-      }),
-    [nameFromHeadline, signals, wordCloudDisplay, superBullets, watchoutBullets]
-  );
+  const normalizedSignals = React.useMemo<Signal[]>(() => {
+    const safe = Array.isArray(signals) ? signals : [];
+    return safe
+      .map((s) => ({
+        id: s.id,
+        label: cleanOneLine(s.label || labelForSignal(s.id)),
+        strength: clamp01(s.strength ?? 0),
+        meaning: cleanOneLine(s.meaning ?? ""),
+        why: cleanOneLine(s.why ?? ""),
+        examples: Array.isArray(s.examples) ? s.examples.map(cleanOneLine).filter(Boolean).slice(0, 2) : [],
+      }))
+      .filter((s) => s.id === "action" || s.id === "people" || s.id === "curiosity" || s.id === "clarity");
+  }, [signals]);
 
-  const strengths = React.useMemo(() => {
-    const seen = new Set<string>();
-    const out: StrengthDef[] = [];
-    for (const s of strengthsRaw) {
-      if (seen.has(s.id)) continue;
-      seen.add(s.id);
-      out.push(s);
-    }
-    return out;
-  }, [strengthsRaw]);
+  const topWordSet = React.useMemo(() => topTerms(wordCloudDisplay ?? []), [wordCloudDisplay]);
 
-  const opener = React.useMemo(() => {
+  const headline = React.useMemo(() => {
     const who = nameFromHeadline ? `${nameFromHeadline}, ` : "";
-    return `${who}these are the strengths that keep showing up in how you operate — not “talents on paper,” but how you actually move when life gets real. I’ll tell you what each one is, why it’s yours, how it helps… and the version of it that can trip you up.`;
+    return `${who}here’s how you tend to show up when things get real.`;
   }, [nameFromHeadline]);
+
+  const subline = React.useMemo(() => {
+    const top = [...normalizedSignals].sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0))[0];
+    if (!top || (top.strength ?? 0) < 0.22) {
+      return "Give me a couple more real examples and this will get sharper fast.";
+    }
+    return `Your strongest signal right now: ${labelForSignal(top.id)}.`;
+  }, [normalizedSignals]);
 
   return (
     <section className="mb-6">
-      <style jsx>{`
-        .el-chip-help {
-          background: linear-gradient(
-            180deg,
-            rgba(var(--c), ${dark ? "0.28" : "0.18"}),
-            rgba(255, 255, 255, ${dark ? "0.03" : "0.86"})
-          );
-          border-color: rgba(var(--c), ${dark ? "0.54" : "0.34"});
-          box-shadow: 0 0 0 1px rgba(var(--c), ${dark ? "0.16" : "0.10"}),
-            0 14px 44px rgba(0, 0, 0, ${dark ? "0.40" : "0.10"}),
-            0 0 34px rgba(var(--c), ${dark ? "0.30" : "0.18"});
-        }
-        .el-chip-help:hover {
-          transform: translateY(-1px);
-          background: linear-gradient(
-            180deg,
-            rgba(var(--c), ${dark ? "0.36" : "0.22"}),
-            rgba(255, 255, 255, ${dark ? "0.05" : "0.92"})
-          );
-          border-color: rgba(var(--c), ${dark ? "0.64" : "0.42"});
-          box-shadow: 0 0 0 1px rgba(var(--c), ${dark ? "0.22" : "0.12"}),
-            0 18px 60px rgba(0, 0, 0, ${dark ? "0.46" : "0.12"}),
-            0 0 48px rgba(var(--c), ${dark ? "0.44" : "0.24"});
-        }
-        .el-chip-watch {
-          background: linear-gradient(
-            180deg,
-            rgba(var(--c), ${dark ? "0.18" : "0.12"}),
-            rgba(0, 0, 0, ${dark ? "0.10" : "0.00"})
-          );
-          border-color: rgba(var(--c), ${dark ? "0.40" : "0.26"});
-          box-shadow: 0 0 0 1px rgba(var(--c), ${dark ? "0.10" : "0.08"}),
-            0 14px 44px rgba(0, 0, 0, ${dark ? "0.42" : "0.10"});
-        }
-      `}</style>
-
       <div className={readingSurface(dark)}>
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div
@@ -602,7 +262,9 @@ export default function StrengthsTab(props: {
           <div
             className={[
               "absolute inset-0",
-              dark ? "bg-gradient-to-b from-white/[0.05] via-transparent to-transparent" : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
+              dark
+                ? "bg-gradient-to-b from-white/[0.05] via-transparent to-transparent"
+                : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
             ].join(" ")}
           />
         </div>
@@ -616,122 +278,184 @@ export default function StrengthsTab(props: {
               sectionTitle(dark),
             ].join(" ")}
           >
-            How you show up when it matters.
+            {headline}
           </div>
 
-          <p className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>{opener}</p>
+          <div className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>{subline}</div>
         </div>
 
         <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
 
+        {/* Signals */}
         <div className="relative">
-          <div className={sectionKicker(dark)}>Your strengths</div>
+          <div className={sectionKicker(dark)}>Signals</div>
           <div className={["mt-2 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-            Read these like a mirror — not a report card.
+            This isn’t a label — it’s a snapshot of what seems to drive your strength right now.
           </div>
 
           <div className="mt-4 space-y-3">
-            {strengths.map((st, idx) => {
-              const a = rgb(st.accent);
-              const helpsAccent = pickAccent(st.id + ":helps", HELP_ACCENTS);
-              const watchAccent = pickAccent(st.id + ":watch", WATCH_ACCENTS);
+            {normalizedSignals.map((s) => (
+              <div
+                key={`sig_${s.id}`}
+                className={[
+                  "relative overflow-hidden rounded-[22px] border px-4 py-4 backdrop-blur-xl",
+                  dark ? "border-white/10 bg-white/[0.045]" : "border-black/10 bg-white/85",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>
+                        {cleanOneLine(s.label || labelForSignal(s.id))}
+                      </span>
+                      <span className={["text-[12px] font-semibold uppercase tracking-[0.14em]", mutedText(dark)].join(" ")}>
+                        {labelForSignal(s.id)}
+                      </span>
+                    </div>
 
-              return (
-                <div
-                  key={`${st.id}_${idx}`}
-                  className={[
-                    "relative overflow-hidden rounded-[22px] border px-4 py-4 backdrop-blur-xl",
-                    dark ? "border-white/10 bg-white/[0.045]" : "border-black/10 bg-white/85",
-                  ].join(" ")}
-                >
-                  <div className="pointer-events-none absolute inset-0" aria-hidden>
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: dark
-                          ? `radial-gradient(260px 180px at 18% 18%, rgba(${a}, 0.18), transparent 60%),
-                             radial-gradient(260px 190px at 92% 74%, rgba(${a}, 0.10), transparent 66%)`
-                          : `radial-gradient(260px 180px at 18% 18%, rgba(${a}, 0.12), transparent 60%),
-                             radial-gradient(260px 190px at 92% 74%, rgba(${a}, 0.08), transparent 66%)`,
-                      }}
-                    />
+                    {s.meaning ? (
+                      <div className={["mt-1 text-[13px] leading-relaxed", bodyText(dark)].join(" ")}>{s.meaning}</div>
+                    ) : null}
                   </div>
 
-                  <div className="relative">
-                    <div className="flex items-center gap-2">
-                      <span
-                        aria-hidden
-                        className="h-2 w-2 rounded-full"
-                        style={{
-                          background: `rgba(${a}, ${dark ? 0.95 : 0.86})`,
-                          boxShadow: `0 0 22px rgba(${a}, ${dark ? "0.55" : "0.22"})`,
-                        }}
-                      />
-                      <div className={["text-[16px] font-semibold", sectionTitle(dark)].join(" ")}>{st.title}</div>
-                    </div>
-
-                    <p className={["mt-2 text-[14px] leading-relaxed", dark ? "text-white/82" : "text-slate-700"].join(" ")}>
-                      {st.paragraph}
-                    </p>
-
-                    <div className="mt-3">
-                      <div className={["text-[12px] font-semibold uppercase tracking-[0.14em]", mutedText(dark)].join(" ")}>
-                        Helps you
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {st.helps.map((t) => {
-                          const chipAccent = pickAccent(t, [helpsAccent, ...HELP_ACCENTS]);
-                          return (
-                            <span
-                              key={`${st.id}_h_${t}`}
-                              className={[chipShell(dark), "el-chip-help"].join(" ")}
-                              style={{ "--c": rgb(chipAccent) } as CSSVars}
-                            >
-                              {t}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <div className={["text-[12px] font-semibold uppercase tracking-[0.14em]", mutedText(dark)].join(" ")}>
-                        Watch-outs
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {st.watchouts.map((t) => {
-                          const chipAccent = pickAccent(t, [watchAccent, ...WATCH_ACCENTS]);
-                          return (
-                            <span
-                              key={`${st.id}_w_${t}`}
-                              className={[chipShell(dark), "el-chip-watch"].join(" ")}
-                              style={{ "--c": rgb(chipAccent) } as CSSVars}
-                            >
-                              {t}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  <div className={["shrink-0 text-[12px] font-semibold", iconAccentForSignal(dark, s.id)].join(" ")}>
+                    {Math.round(clamp01(s.strength) * 100)}%
                   </div>
                 </div>
-              );
-            })}
+
+                <div className={["mt-3 h-2 w-full rounded-full", barBg(dark)].join(" ")}>
+                  <div className="h-2 rounded-full" style={barFillStyle(dark, s.id, s.strength)} />
+                </div>
+
+                {s.why ? (
+                  <div className={["mt-3 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    <span className={dark ? "text-white/55" : "text-slate-600"}>Why it shows up: </span>
+                    {s.why}
+                  </div>
+                ) : null}
+
+                {s.examples?.length ? (
+                  <ul className="mt-3 space-y-2">
+                    {s.examples.map((ex, i) => (
+                      <li key={`ex_${s.id}_${i}`} className="flex gap-2 text-[14px] leading-relaxed">
+                        <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+                          •
+                        </span>
+                        <span className={dark ? "text-white/80" : "text-slate-700"}>{ex}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ))}
           </div>
         </div>
 
         <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
 
+        {/* Themes */}
         <div className="relative">
-          <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
+          <div className={sectionKicker(dark)}>Themes</div>
+          <div className="mt-4">
+            {wordCloudDisplay?.length ? (
+              <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                {wordCloudDisplay.map((w) => {
+                  const isTop = topWordSet.has((w.term ?? "").toLowerCase());
+                  return (
+                    <span
+                      key={w.term}
+                      className={[
+                        "select-none",
+                        wordColorClasses(dark, w.term),
+                        isTop ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ") : "",
+                      ].join(" ")}
+                      style={{
+                        fontSize: `${wordSizePx(w.weight)}px`,
+                        opacity: wordOpacity(w.weight),
+                      }}
+                    >
+                      {w.term}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={["text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+                Nothing to map yet — give me 1–2 real examples and this will fill in.
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
 
+        {/* Superpowers */}
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <Sparkles className={["h-4 w-4", dark ? "text-lime-200/80" : "text-lime-700/80"].join(" ")} />
+            <div className={sectionKicker(dark)}>Superpowers</div>
+          </div>
+
+          <div className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+            These are the moves you can trust when you’re under pressure.
+          </div>
+
+          {superBullets?.length ? (
+            <ul className="mt-4 space-y-2">
+              {superBullets.map((b, i) => (
+                <li key={`sp_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
+                  <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+                    •
+                  </span>
+                  <span className={dark ? "text-white/80" : "text-slate-700"}>{b}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Add a couple more real examples and these will become specific.
+            </div>
+          )}
+        </div>
+
+        <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
+
+        {/* Watchouts */}
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <Shield className={["h-4 w-4", dark ? "text-amber-200/80" : "text-amber-700/80"].join(" ")} />
+            <div className={sectionKicker(dark)}>Watchouts</div>
+          </div>
+
+          <div className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+            Not flaws — just what a strength can look like when it’s overused.
+          </div>
+
+          {watchoutBullets?.length ? (
+            <ul className="mt-4 space-y-2">
+              {watchoutBullets.map((b, i) => (
+                <li key={`wo_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
+                  <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+                    •
+                  </span>
+                  <span className={dark ? "text-white/80" : "text-slate-700"}>{b}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Watchouts are loading…
+            </div>
+          )}
+        </div>
+
+        <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
+
+        {/* Next steps */}
         <div className="relative">
           <div className={sectionKicker(dark)}>One small move</div>
           <div className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-            Use a strength on purpose this week. Small is fine. Real is the point.
+            Pick one strength and put it into a real rep this week. Small is fine. Real is the point.
           </div>
 
           {nextStepsStrengths ? (
@@ -746,8 +470,15 @@ export default function StrengthsTab(props: {
               />
             </div>
           ) : (
-            <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
+            <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Next steps are loading…
+            </div>
           )}
+        </div>
+
+        {/* tiny debug hint (kept subtle) */}
+        <div className={["mt-5 text-[11px] leading-relaxed", dark ? "text-white/25" : "text-slate-500"].join(" ")}>
+          {mounted ? `Context: ${tab}` : ""}
         </div>
       </div>
     </section>

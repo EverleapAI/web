@@ -1,14 +1,15 @@
+// src/app/error.tsx
 "use client";
 
-export default function GlobalError(
-  {
-    error,
-    reset,
-  }: {
-    error: Error & { digest?: string };
-    reset?: () => void;
-  }
-) {
+import * as React from "react";
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset?: () => void;
+}) {
   // Inline styles so this renders even if global CSS fails to load.
   const wrapStyle: React.CSSProperties = {
     minHeight: "100svh",
@@ -47,49 +48,41 @@ export default function GlobalError(
   };
 
   return (
-    <html lang="en" data-theme="white" suppressHydrationWarning>
-      <body>
-        <div style={wrapStyle}>
-          <div style={cardStyle} role="alert" aria-live="assertive">
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, marginBottom: 6 }}>
-              Something went wrong
-            </h1>
-            <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.85 }}>
-              Please try again in a moment.
-            </p>
+    <div style={wrapStyle} data-theme="white" suppressHydrationWarning>
+      <div style={cardStyle} role="alert" aria-live="assertive">
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, marginBottom: 6 }}>Something went wrong</h1>
+        <p style={{ marginTop: 0, marginBottom: 12, opacity: 0.85 }}>Please try again in a moment.</p>
 
-            {(process.env.NODE_ENV === "development") && (
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  fontSize: 12,
-                  background: "#F8FAFF",
-                  border: "1px solid rgba(15,23,42,.08)",
-                  borderRadius: 8,
-                  padding: 12,
-                  overflow: "auto",
-                }}
-              >
-                {String(error?.message || "Unknown error")}
-                {error?.digest ? `\n\nDigest: ${error.digest}` : ""}
-              </pre>
-            )}
+        {process.env.NODE_ENV === "development" && (
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              fontSize: 12,
+              background: "#F8FAFF",
+              border: "1px solid rgba(15,23,42,.08)",
+              borderRadius: 8,
+              padding: 12,
+              overflow: "auto",
+            }}
+          >
+            {String(error?.message || "Unknown error")}
+            {error?.digest ? `\n\nDigest: ${error.digest}` : ""}
+          </pre>
+        )}
 
-            <div>
-              <button
-                type="button"
-                style={buttonStyle}
-                onClick={() => {
-                  if (typeof reset === "function") reset();
-                  else window.location.reload();
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          </div>
+        <div>
+          <button
+            type="button"
+            style={buttonStyle}
+            onClick={() => {
+              if (typeof reset === "function") reset();
+              else window.location.reload();
+            }}
+          >
+            Try again
+          </button>
         </div>
-      </body>
-    </html>
+      </div>
+    </div>
   );
 }
