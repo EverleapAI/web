@@ -8,6 +8,7 @@ import { Sparkles, Shield, Clock3 } from "lucide-react";
 import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
 
 import { buildInsightsViewModel, type InsightsTab, type WordCloudItem } from "./app/buildInsightsViewModel";
+import { buildMotivationProfile, type MotivationProfile, type MotivationHit } from "./content/motivationsTaxonomy";
 
 import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
@@ -168,12 +169,12 @@ function mutedText(dark: boolean) {
 function counselorHeadline(dark: boolean) {
   return dark
     ? [
-        "text-[26px] md:text-[30px] font-semibold tracking-tight leading-snug",
+        "text-[22px] md:text-[26px] font-semibold tracking-tight leading-snug",
         "text-transparent bg-clip-text",
         "bg-gradient-to-b from-white/95 via-white/86 to-white/70",
         "drop-shadow-[0_10px_22px_rgba(0,0,0,0.45)]",
       ].join(" ")
-    : ["text-[26px] md:text-[30px] font-semibold tracking-tight leading-snug", "text-slate-900"].join(" ");
+    : ["text-[22px] md:text-[26px] font-semibold tracking-tight leading-snug", "text-slate-900"].join(" ");
 }
 
 function counselorPara(dark: boolean) {
@@ -628,100 +629,148 @@ function pickQuote(signals: Array<{ examples: string[] }>) {
   return "";
 }
 
-function openerForTopSignal(id: SignalId, name: string) {
-  const who = name ? `${name},` : "";
-  if (id === "people") {
-    return `${who} what stands out is how much you sharpen around other people — not for approval, but because real feedback helps you level up.`;
+function pickWatchoutSentence(watchouts: { bullets: string[] }) {
+  const first = cleanOneLine((watchouts?.bullets ?? [])[0] ?? "");
+  return first;
+}
+
+/* =============================================================================
+   Agentic Summary Note (NEW)
+   ============================================================================= */
+
+type AgenticNote = {
+  title: string;
+  paragraphs: string[];
+  motivatorsLine: string;
+  strengthsLine: string;
+  skillsLine: string;
+  confidenceTag: "strong" | "early";
+};
+
+function joinLabels(labels: string[], max = 5) {
+  const clean = labels.map((s) => cleanOneLine(s)).filter(Boolean);
+  const unique: string[] = [];
+  for (const x of clean) {
+    const k = x.toLowerCase();
+    if (unique.some((u) => u.toLowerCase() === k)) continue;
+    unique.push(x);
+    if (unique.length >= max) break;
   }
-  if (id === "action") {
-    return `${who} your answers read like someone who gets clarity through doing. You don’t just think about things — you want to build, try, and finish.`;
-  }
-  if (id === "curiosity") {
-    return `${who} the pattern I’m seeing is a real pull toward learning and figuring things out. Questions aren’t a distraction for you — they’re fuel.`;
-  }
-  return `${who} you seem to crave a clean next step you can trust. When things feel foggy, you push toward clarity.`;
+  return unique.join(" • ");
 }
 
-function motivationLineFromTop(id: SignalId) {
-  if (id === "people")
-    return "A lot of your motivation comes alive in connection — teams, mentors, coaches, someone to trade reality with.";
-  if (id === "action") return "Your motivation spikes when you can make something real — a project, a practice loop, a visible result.";
-  if (id === "curiosity") return "Your motivation shows up as curiosity — the pull to explore, understand, and go deeper.";
-  return "Your motivation is direction-driven — energy rises when the next step feels clear and meaningful.";
+function bestReceipt(profile: MotivationProfile | null) {
+  const r = profile?.top?.receipts?.[0] ? cleanOneLine(String(profile.top.receipts[0])) : "";
+  return r.replace(/^Theme:\s*/i, "").replace(/^“|”$/g, "");
 }
 
-function strengthLineFromSecond(id?: SignalId) {
-  if (!id) return "You tend to be thoughtful about what you take on, and you learn fast when you care.";
-  if (id === "clarity") return "You have a strong sense for what matters — you naturally organize toward a next step.";
-  if (id === "curiosity") return "You’re a pattern-noticer — you learn by exploring, not waiting.";
-  if (id === "action") return "You’re an iterator — you get better through reps and real attempts.";
-  return "You read people well, and you’re responsive to feedback when it’s real.";
-}
-
-function skillsLineFromTop(id: SignalId) {
-  if (id === "action") return "Skill-wise, you build momentum through reps — starting, refining, finishing. That compounds.";
-  if (id === "people") return "Skill-wise, you improve through feedback loops — you can take input and sharpen without collapsing.";
-  if (id === "curiosity") return "Skill-wise, you learn by investigation — asking better questions, finding what’s true, connecting dots.";
-  return "Skill-wise, you’re building clarity muscles — turning fog into a plan, and a plan into a first step.";
-}
-
-function buildCounselorNarrative(args: {
+function buildAgenticSummaryNote(args: {
   headline: string;
   signals: Array<{ id: SignalId; strength: number; why: string; examples: string[] }>;
+  motivationProfile: MotivationProfile | null;
+  wordCloudDisplay: WordCloudItem[];
   watchoutLine: string;
-  variant: "mobile" | "desktop";
-}) {
-  const { headline, signals, watchoutLine, variant } = args;
+  energyBoosters: string[];
+  energyDrainers: string[];
+}): AgenticNote {
+  const name = extractNameFromHeadline(args.headline || "");
+  const who = name ? `${name}, ` : "";
 
-  const { top, second } = topTwoSignals(signals);
-  const name = extractNameFromHeadline(headline);
+  const { top } = topTwoSignals(args.signals);
+  const topSignalStrength = top?.strength ?? 0;
 
-  const topStrength = top?.strength ?? 0;
-  const hasSignal = topStrength >= 0.22;
+  const topMotivationScore = args.motivationProfile?.top?.score ?? 0;
+  const hasMotivationSignal = topMotivationScore >= 0.2;
 
-  if (!hasSignal) {
-    const p1 = name
-      ? `Hey ${name} — I don’t have enough signal yet to be specific, but I can already see the outline forming.`
-      : "I don’t have enough signal yet to be specific, but I can already see the outline forming.";
-    const p2 =
-      "Give me a few real examples across Motivations, Strengths, and Skills, and I’ll reflect patterns back that actually feel like you — not generic advice.";
-    return variant === "mobile"
-      ? { paragraphs: [p1, p2] }
-      : {
-          paragraphs: [
-            p1,
-            `${p2} The goal isn’t to label you — it’s to help you notice what pulls you forward, how you operate when things get real, and what skills you’re building through action.`,
-          ],
-        };
+  const hasSignal = topSignalStrength >= 0.22 || hasMotivationSignal;
+
+  const confidenceTag: AgenticNote["confidenceTag"] = hasSignal ? "strong" : "early";
+
+  const boosters = (args.energyBoosters ?? []).map(cleanOneLine).filter(Boolean);
+  const drainers = (args.energyDrainers ?? []).map(cleanOneLine).filter(Boolean);
+
+  const topBooster = boosters[0] ?? "";
+  const topDrainer = drainers[0] ?? "";
+
+  const top5 = (args.motivationProfile?.top5 ?? []) as MotivationHit[];
+  const motivatorLabels = top5.map((h) => h?.def?.label ?? "").filter(Boolean);
+
+  const motivatorsLine =
+    motivatorLabels.length >= 2
+      ? `Right now your motivators look like: ${joinLabels(motivatorLabels, 5)}`
+      : args.wordCloudDisplay?.length
+        ? `Right now your themes look like: ${joinLabels(args.wordCloudDisplay.slice(0, 5).map((w) => w.term), 5)}`
+        : `Right now I’m still collecting signal — give me 1–2 real examples and this tightens fast.`;
+
+  const superShort = (args.signals ?? [])
+    .sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0))
+    .slice(0, 2)
+    .map((s) => s.id);
+
+  const strengthsLine =
+    superShort.includes("people")
+      ? "Strengths I’d bet on: reading the room, learning fast through feedback."
+      : superShort.includes("action")
+        ? "Strengths I’d bet on: momentum-building, shipping real progress."
+        : superShort.includes("curiosity")
+          ? "Strengths I’d bet on: pattern-spotting, learning by investigation."
+          : "Strengths I’d bet on: making fog clearer and turning it into a next step.";
+
+  const skillsLine =
+    superShort.includes("action")
+      ? "Skills you’re building: closing loops, starting before you feel ready."
+      : superShort.includes("people")
+        ? "Skills you’re building: using feedback without collapsing, getting sharper with others."
+        : superShort.includes("curiosity")
+          ? "Skills you’re building: better questions, better mental models."
+          : "Skills you’re building: decision clarity and follow-through.";
+
+  const receipt = bestReceipt(args.motivationProfile);
+  const quote = pickQuote(args.signals);
+  const proof = receipt || quote;
+
+  const opener = hasSignal
+    ? `${who}okay — here’s what I think is true about you right now.`
+    : `${who}okay — this is an early read, but it’s already pointing somewhere.`;
+
+  const p1Parts: string[] = [];
+  p1Parts.push(opener);
+
+  if (topBooster || topDrainer) {
+    const b = topBooster ? `You light up when ${topBooster}` : "";
+    const d = topDrainer ? `and you lose energy when ${topDrainer}` : "";
+    const line = [b, d].filter(Boolean).join(" ");
+    if (line) p1Parts.push(`${line}.`);
+  } else {
+    p1Parts.push("I’m watching for what reliably creates energy for you — and what quietly drains it.");
   }
 
-  const topId = top?.id ?? "clarity";
-  const secondId = second?.id;
-
-  const quote = pickQuote([top, second].filter(Boolean) as Array<{ examples: string[] }>);
-  const quoteLine = quote ? `One clue you gave me: “${quote}.”` : "";
-
-  const watchLine = cleanOneLine(watchoutLine)
-    ? `One thing to watch for: ${cleanOneLine(watchoutLine).replace(/\.$/, "")}.`
-    : "One thing to watch for: when you care deeply about getting it right, it’s easy to overthink the first step.";
-
-  const p1 = [openerForTopSignal(topId, name), motivationLineFromTop(topId), quoteLine].filter(Boolean).join(" ");
-
-  if (variant === "mobile") {
-    const p2 = [strengthLineFromSecond(secondId), skillsLineFromTop(topId), watchLine].filter(Boolean).join(" ");
-    return { paragraphs: [p1, p2] };
+  if (motivatorLabels.length) {
+    p1Parts.push(`Under that, I keep seeing ${joinLabels(motivatorLabels, 3)}.`);
   }
 
-  const p2 = [
-    strengthLineFromSecond(secondId),
-    skillsLineFromTop(topId),
-    watchLine,
-    "You don’t need the whole path figured out — just keep moving toward what feels genuinely alive to you.",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const p1 = p1Parts.join(" ");
 
-  return { paragraphs: [p1, p2] };
+  const proofLine = proof ? `I’m not guessing — you literally gave me clues like: “${proof}.”` : "";
+
+  const watch = cleanOneLine(args.watchoutLine)
+    ? `Watchout: ${cleanOneLine(args.watchoutLine).replace(/\.$/, "")}.`
+    : "Watchout: when you care about getting it right, it’s easy to overthink the first step.";
+
+  const move = hasSignal
+    ? "So here’s your move: pick one thing you care about this week and do a 15-minute rep today (start imperfect, finish real). That feeds your strongest driver — and it gives me cleaner signal."
+    : "So here’s your move: give me one real example (a time you felt locked-in, and a time you felt drained). I’ll tighten your motivators fast — and make the advice feel like you, not like a quiz.";
+
+  const paragraphs = [p1, [proofLine, watch, move].filter(Boolean).join(" ")].filter(Boolean);
+
+  return {
+    title: hasSignal ? "Counselor note" : "Counselor note (early read)",
+    paragraphs,
+    motivatorsLine,
+    strengthsLine,
+    skillsLine,
+    confidenceTag,
+  };
 }
 
 /* =============================================================================
@@ -742,10 +791,22 @@ function guessWatchoutsFromSuperpowers(superBullets: string[] | undefined | null
       rx: /\b(people|team|relationship|empath|care|support)\b/i,
       out: "You can over-carry the emotional load — fixing the room before naming what you need.",
     },
-    { rx: /\b(drive|ambit|goal|push|grit|work)\b/i, out: "Your engine can outrun your recovery — momentum turns into quiet burnout." },
-    { rx: /\b(logic|analysis|think|reason|strategy)\b/i, out: "You can get stuck optimizing — the plan gets perfect while the step doesn’t happen." },
-    { rx: /\b(creat|idea|vision|imagin)\b/i, out: "Ideas can multiply faster than closure — it starts to feel like you’re “behind” your own brain." },
-    { rx: /\b(lead|own|responsib|standard)\b/i, out: "You might take responsibility for outcomes you don’t fully control." },
+    {
+      rx: /\b(drive|ambit|goal|push|grit|work)\b/i,
+      out: "Your engine can outrun your recovery — momentum turns into quiet burnout.",
+    },
+    {
+      rx: /\b(logic|analysis|think|reason|strategy)\b/i,
+      out: "You can get stuck optimizing — the plan gets perfect while the step doesn’t happen.",
+    },
+    {
+      rx: /\b(creat|idea|vision|imagin)\b/i,
+      out: "Ideas can multiply faster than closure — it starts to feel like you’re “behind” your own brain.",
+    },
+    {
+      rx: /\b(lead|own|responsib|standard)\b/i,
+      out: "You might take responsibility for outcomes you don’t fully control.",
+    },
   ] as const;
 
   const chosen: string[] = [];
@@ -775,6 +836,140 @@ function guessWatchoutsFromSuperpowers(superBullets: string[] | undefined | null
 }
 
 /* =============================================================================
+   Motivations (Top 3 universal drivers)
+   ============================================================================= */
+
+type DriverId = "meaning" | "mastery" | "people" | "freedom" | "curiosity" | "momentum";
+
+type DriverDef = {
+  id: DriverId;
+  label: string;
+  accent: RGB;
+  whenItHits: string;
+  looksLike: string;
+  drainsWhen: string;
+  tryThis: string;
+};
+
+const MOTIVATION_DRIVERS: DriverDef[] = [
+  {
+    id: "meaning",
+    label: "Meaning",
+    accent: { r: 255, g: 180, b: 120 }, // ember
+    whenItHits: "when the work connects to real impact or a real “why.”",
+    looksLike: "You care more, stay longer, and you’ll push through friction because it matters.",
+    drainsWhen: "it’s busywork, status, or the point feels foggy.",
+    tryThis:
+      "Pick one thing you’re doing this week and write the “real reason” in one sentence. Then do one 20-minute rep.",
+  },
+  {
+    id: "mastery",
+    label: "Mastery",
+    accent: { r: 190, g: 140, b: 255 }, // violet
+    whenItHits: "when you can feel yourself getting better through reps.",
+    looksLike: "You chase feedback, refine fast, and you like a clean skill ladder.",
+    drainsWhen: "there’s no measurable improvement (same loop, same result).",
+    tryThis: "Choose one skill. Do 3 short reps this week and track one metric (speed, accuracy, clarity, time).",
+  },
+  {
+    id: "people",
+    label: "People",
+    accent: { r: 120, g: 200, b: 255 }, // sky
+    whenItHits: "when there’s real interaction: feedback, challenge, shared effort.",
+    looksLike: "You sharpen around mentors/teammates and you move faster with a real loop.",
+    drainsWhen: "it’s isolated for too long or you can’t get honest feedback.",
+    tryThis: "Get one real mirror: ask someone smart for a 30-second critique on something you made or did.",
+  },
+  {
+    id: "freedom",
+    label: "Freedom",
+    accent: { r: 120, g: 255, b: 190 }, // mint
+    whenItHits: "when you can choose the approach and own the path.",
+    looksLike: "You work best when you can design, test, and adjust your own system.",
+    drainsWhen: "everything is pre-scripted or you’re micromanaged.",
+    tryThis: "Take one task and redesign the method. Same goal — your approach. Then run it once.",
+  },
+  {
+    id: "curiosity",
+    label: "Curiosity",
+    accent: { r: 255, g: 150, b: 230 }, // pink
+    whenItHits: "when there’s something real to figure out.",
+    looksLike: "You ask better questions, connect dots, and get energy from learning.",
+    drainsWhen: "nothing new is happening and it feels repetitive without insight.",
+    tryThis: "Pick one question you actually care about. Spend 15 minutes finding one surprising answer and write it down.",
+  },
+  {
+    id: "momentum",
+    label: "Momentum",
+    accent: { r: 255, g: 210, b: 110 }, // warm gold
+    whenItHits: "when things move: start → ship → done.",
+    looksLike: "You get clarity through action and confidence through finishing.",
+    drainsWhen: "progress stalls, decisions drag, or it’s all planning.",
+    tryThis: "Choose a tiny finish line you can hit today (10–20 minutes). Ship it imperfectly.",
+  },
+];
+
+function includesAny(haystack: string, words: string[]) {
+  const s = (haystack ?? "").toLowerCase();
+  return words.some((w) => s.includes(w));
+}
+
+function scoreDrivers(args: { signals: Array<{ id: SignalId; strength: number; why: string; examples: string[] }>; terms: WordCloudItem[] }) {
+  const { signals, terms } = args;
+
+  const textFromSignals = signals
+    .flatMap((s) => [s.why, ...(s.examples ?? [])])
+    .map((x) => (x ?? "").toString())
+    .join(" | ")
+    .toLowerCase();
+
+  const termText = (terms ?? [])
+    .slice(0, 26)
+    .map((t) => (t.term ?? "").toString().toLowerCase())
+    .join(" | ");
+
+  const blob = `${textFromSignals} | ${termText}`;
+
+  const bySignal = new Map<SignalId, number>();
+  for (const s of signals) bySignal.set(s.id, clamp01(s.strength ?? 0));
+
+  const base: Record<DriverId, number> = {
+    meaning: 0.08,
+    mastery: 0.08,
+    people: 0.08,
+    freedom: 0.08,
+    curiosity: 0.08,
+    momentum: 0.08,
+  };
+
+  // Signal boosts (coarse but stable)
+  base.people += (bySignal.get("people") ?? 0) * 0.65;
+  base.curiosity += (bySignal.get("curiosity") ?? 0) * 0.65;
+
+  base.momentum += (bySignal.get("action") ?? 0) * 0.45;
+  base.mastery += (bySignal.get("action") ?? 0) * 0.35;
+
+  base.meaning += (bySignal.get("clarity") ?? 0) * 0.28;
+  base.momentum += (bySignal.get("clarity") ?? 0) * 0.18;
+
+  // Keyword boosts (small, so it doesn't get weird)
+  if (includesAny(blob, ["impact", "meaning", "purpose", "help", "contribute", "difference", "community"])) base.meaning += 0.22;
+  if (includesAny(blob, ["practice", "reps", "improve", "progress", "skill", "craft", "master"])) base.mastery += 0.22;
+  if (includesAny(blob, ["team", "people", "mentor", "coach", "friends", "collab", "together", "feedback"])) base.people += 0.22;
+  if (includesAny(blob, ["freedom", "choice", "autonomy", "independent", "own", "self", "design"])) base.freedom += 0.2;
+  if (includesAny(blob, ["learn", "curious", "explore", "research", "science", "data", "stats", "statistics", "question", "figure out"]))
+    base.curiosity += 0.22;
+  if (includesAny(blob, ["build", "ship", "finish", "done", "execute", "action", "start"])) base.momentum += 0.2;
+
+  const scored = MOTIVATION_DRIVERS.map((d) => ({ def: d, score: clamp01(base[d.id]) })).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  return {
+    top3: scored.slice(0, 3),
+    top: scored[0],
+  };
+}
+
+/* =============================================================================
    Superpowers (typed normalization)
    ============================================================================= */
 
@@ -790,10 +985,7 @@ function normalizeLens(raw: unknown): LensLike {
   const body = typeof rec.body === "string" ? rec.body : "";
 
   const bullets = Array.isArray(rec.bullets)
-    ? rec.bullets
-        .filter((x): x is string => typeof x === "string")
-        .map((s) => s.trim())
-        .filter(Boolean)
+    ? rec.bullets.filter((x): x is string => typeof x === "string").map((s) => s.trim()).filter(Boolean)
     : [];
 
   return { body, bullets };
@@ -820,7 +1012,6 @@ export default function Page() {
 
   const [tab, setTab] = React.useState<LocalTab>(initialTabFromUrl);
 
-  // keep UI state synced to URL changes (back/forward, direct URL edits, cross-nav)
   React.useEffect(() => {
     setTab((prev) => (prev === initialTabFromUrl ? prev : initialTabFromUrl));
   }, [initialTabFromUrl]);
@@ -831,7 +1022,6 @@ export default function Page() {
   const vmTab: InsightsTab = tab === "funFacts" ? "summary" : tab;
   const vm = React.useMemo(() => buildInsightsViewModel(vmTab, { useLocal: mounted }), [vmTab, mounted]);
 
-  // Superpowers lens (typed + memoized)
   const safeSuper = React.useMemo<LensLike>(() => {
     const raw = getInsightLens("superpowers");
     return normalizeLens(raw);
@@ -887,42 +1077,165 @@ export default function Page() {
   const watchouts = React.useMemo(() => guessWatchoutsFromSuperpowers(superBullets), [superBullets]);
 
   const signals = React.useMemo(() => normalizeSignals(vm.summary.signalBar), [vm.summary.signalBar]);
-
-  const watchoutLine = React.useMemo(() => {
-    const first = cleanOneLine((watchouts?.bullets ?? [])[0] ?? "");
-    return first;
-  }, [watchouts]);
-
-  const counselorMobile = React.useMemo(
-    () =>
-      buildCounselorNarrative({
-        headline: vm.summary.headline || "",
-        signals,
-        watchoutLine,
-        variant: "mobile",
-      }),
-    [vm.summary.headline, signals, watchoutLine]
-  );
-
-  const counselorDesktop = React.useMemo(
-    () =>
-      buildCounselorNarrative({
-        headline: vm.summary.headline || "",
-        signals,
-        watchoutLine,
-        variant: "desktop",
-      }),
-    [vm.summary.headline, signals, watchoutLine]
-  );
+  const watchoutLine = React.useMemo(() => pickWatchoutSentence(watchouts), [watchouts]);
 
   const nameFromHeadline = React.useMemo(() => extractNameFromHeadline(vm.summary.headline || ""), [vm.summary.headline]);
 
-  // For Skills: pass the most “complete” model we have (SkillsTab is forgiving).
+  const motivationsTop = React.useMemo(() => scoreDrivers({ signals, terms: wordCloudDisplay }), [signals, wordCloudDisplay]);
+
+  const [openDriver, setOpenDriver] = React.useState<DriverId | null>(null);
+  React.useEffect(() => {
+    const topId = motivationsTop.top?.def?.id ?? null;
+    setOpenDriver((prev) => (prev == null ? topId : prev));
+  }, [motivationsTop.top?.def?.id]);
+
+  const baseMotivationReceipts = React.useMemo(() => {
+    const receipts: string[] = [];
+
+    const q = pickQuote(signals);
+    if (q) receipts.push(q);
+
+    const more = signals
+      .flatMap((s) => (s.examples ?? []).map((x) => cleanOneLine(x)))
+      .filter((x) => x && x.length >= 6 && x.length <= 110);
+
+    for (const m of more) {
+      if (receipts.length >= 3) break;
+      if (!receipts.includes(m)) receipts.push(m);
+    }
+
+    if (receipts.length === 0 && wordCloudDisplay.length) {
+      const t = wordCloudDisplay
+        .slice(0, 3)
+        .map((w) => cleanOneLine(w.term))
+        .filter(Boolean);
+      if (t.length) receipts.push(`Themes that keep showing up: ${t.join(", ")}.`);
+    }
+
+    return receipts.slice(0, 4);
+  }, [signals, wordCloudDisplay]);
+
+  const motivationProfile = React.useMemo<MotivationProfile | null>(() => {
+    try {
+      return buildMotivationProfile({
+        name: nameFromHeadline,
+        signals,
+        terms: wordCloudDisplay,
+        receipts: baseMotivationReceipts,
+        topN: 5,
+      });
+    } catch {
+      return null;
+    }
+  }, [nameFromHeadline, signals, wordCloudDisplay, baseMotivationReceipts]);
+
+  const motivationReceipts = React.useMemo(() => {
+    const maybe = motivationProfile?.top?.receipts ?? [];
+    if (Array.isArray(maybe) && maybe.length) {
+      return maybe.map((x: unknown) => cleanOneLine(String(x))).filter(Boolean);
+    }
+    return baseMotivationReceipts;
+  }, [motivationProfile, baseMotivationReceipts]);
+
+  const energyBoosters = React.useMemo(() => {
+    const maybeRaw: unknown =
+      (motivationProfile as unknown as Record<string, unknown> | null)?.energyBoosters ??
+      (motivationProfile as unknown as Record<string, unknown> | null)?.boosters;
+
+    if (Array.isArray(maybeRaw) && maybeRaw.length) {
+      const out: string[] = [];
+      for (const raw of maybeRaw) {
+        const t = cleanOneLine(String(raw));
+        if (!t) continue;
+        const k = t.toLowerCase();
+        if (out.some((x) => x.toLowerCase() === k)) continue;
+        out.push(t);
+        if (out.length >= 6) break;
+      }
+      if (out.length) return out;
+    }
+
+    const base = wordCloudDisplay
+      .slice(0, 10)
+      .map((w) => cleanOneLine(w.term))
+      .filter((t) => t.length >= 3 && t.length <= 18);
+
+    const out: string[] = [];
+    for (const b of base) {
+      const k = b.toLowerCase();
+      if (out.some((x) => x.toLowerCase() === k)) continue;
+      out.push(b);
+      if (out.length >= 6) break;
+    }
+    return out;
+  }, [motivationProfile, wordCloudDisplay]);
+
+  const energyDrainers = React.useMemo(() => {
+    const maybeRaw: unknown =
+      (motivationProfile as unknown as Record<string, unknown> | null)?.energyDrainers ??
+      (motivationProfile as unknown as Record<string, unknown> | null)?.drainers;
+
+    if (Array.isArray(maybeRaw) && maybeRaw.length) {
+      const out: string[] = [];
+      for (const raw of maybeRaw) {
+        const t = cleanOneLine(String(raw));
+        if (!t) continue;
+        const k = t.toLowerCase();
+        if (out.some((x) => x.toLowerCase() === k)) continue;
+        out.push(t);
+        if (out.length >= 6) break;
+      }
+      if (out.length) return out;
+    }
+
+    const top3 = motivationsTop.top3.map((x) => x.def.id);
+    const map: Record<DriverId, string[]> = {
+      people: ["no feedback loop", "working in a vacuum", "group drama / fake vibes"],
+      mastery: ["no progress", "same reps forever", "unclear standards"],
+      meaning: ["busywork", "point feels fuzzy", "status games"],
+      curiosity: ["nothing new", "no questions allowed", "repeat without insight"],
+      freedom: ["micromanaged", "pre-scripted steps", "no choice"],
+      momentum: ["stalled decisions", "endless planning", "waiting on approvals"],
+    };
+
+    const out: string[] = [];
+    for (const id of top3) {
+      for (const d of map[id] ?? []) {
+        if (!out.includes(d)) out.push(d);
+        if (out.length >= 6) break;
+      }
+      if (out.length >= 6) break;
+    }
+    return out.slice(0, 6);
+  }, [motivationProfile, motivationsTop.top3]);
+
+  const agenticNote = React.useMemo(() => {
+    return buildAgenticSummaryNote({
+      headline: vm.summary.headline || "",
+      signals,
+      motivationProfile,
+      wordCloudDisplay,
+      watchoutLine,
+      energyBoosters,
+      energyDrainers,
+    });
+  }, [vm.summary.headline, signals, motivationProfile, wordCloudDisplay, watchoutLine, energyBoosters, energyDrainers]);
+
+  // Skills/Strengths model adapter: tab components can pull from vm.skills / vm.strengths if present, else use vm.
   const skillsModel = React.useMemo(() => {
     const anyVm = vm as unknown as Record<string, unknown>;
     if (anyVm && typeof anyVm === "object" && "skills" in anyVm) {
       const maybeSkills = (anyVm as { skills?: unknown }).skills;
       if (maybeSkills) return maybeSkills;
+    }
+    return vm;
+  }, [vm]);
+
+  const strengthsModel = React.useMemo(() => {
+    const anyVm = vm as unknown as Record<string, unknown>;
+    if (anyVm && typeof anyVm === "object" && "strengths" in anyVm) {
+      const maybeStrengths = (anyVm as { strengths?: unknown }).strengths;
+      if (maybeStrengths) return maybeStrengths;
     }
     return vm;
   }, [vm]);
@@ -979,11 +1292,7 @@ export default function Page() {
                   aria-current={selected ? "page" : undefined}
                   onClick={() => setTabAndSync(t.id)}
                 >
-                  <span
-                    aria-hidden
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={tabDotStyle({ dark, selected, accent: t.accent })}
-                  />
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={tabDotStyle({ dark, selected, accent: t.accent })} />
                   <span className="relative">{t.label}</span>
                 </button>
               );
@@ -1018,47 +1327,46 @@ export default function Page() {
                 <div
                   className={[
                     "absolute inset-0",
-                    dark
-                      ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent"
-                      : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
+                    dark ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent" : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
                   ].join(" ")}
                 />
               </div>
 
               <div className="relative">
-                <div className={sectionKicker(dark)}>Counselor Notes</div>
+                <div className={sectionKicker(dark)}>{agenticNote.title}</div>
 
                 <div className={["mt-2", counselorHeadline(dark)].join(" ")}>
                   {vm.summary.headline || "Here’s what I think I’m seeing."}
                 </div>
 
-                <div className="mt-4 space-y-3 md:hidden">
-                  {counselorMobile.paragraphs.map((p, i) => (
-                    <p key={`cn_m_${i}`} className={counselorPara(dark)}>
+                <div className="mt-4 space-y-3">
+                  {agenticNote.paragraphs.map((p, i) => (
+                    <p key={`an_${i}`} className={counselorPara(dark)}>
                       {p}
                     </p>
                   ))}
                 </div>
 
-                <div className="mt-4 hidden space-y-3 md:block">
-                  {counselorDesktop.paragraphs.map((p, i) => (
-                    <p key={`cn_d_${i}`} className={counselorPara(dark)}>
-                      {p}
-                    </p>
-                  ))}
-                </div>
-
-                <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  Want the zoom-in version? Open the tabs for{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
-                    Motivations
-                  </span>
-                  ,{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
-                    Strengths
-                  </span>
-                  , and{" "}
+                <div className={["mt-5 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+                  Want the zoom-in version? Open{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Motivations</span>,{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Strengths</span>, and{" "}
                   <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Skills</span>.
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Motivations:</span>{" "}
+                    {agenticNote.motivatorsLine}
+                  </div>
+                  <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Strengths:</span>{" "}
+                    {agenticNote.strengthsLine}
+                  </div>
+                  <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Skills:</span>{" "}
+                    {agenticNote.skillsLine}
+                  </div>
                 </div>
               </div>
 
@@ -1179,19 +1487,21 @@ export default function Page() {
         ) : tab === "motivations" ? (
           <MotivationsTab
             dark={dark}
+            motivationsTop={motivationsTop}
+            openDriver={openDriver}
+            setOpenDriver={setOpenDriver}
+            energyBoosters={energyBoosters}
+            energyDrainers={energyDrainers}
+            motivationReceipts={motivationReceipts}
+            nextStepsMotivations={nextStepsMotivations}
             mounted={mounted}
             tab={tab}
             nameFromHeadline={nameFromHeadline}
-            model={vm}
-            nextStepsMotivations={nextStepsMotivations}
           />
         ) : tab === "strengths" ? (
           <StrengthsTab
             dark={dark}
-            signals={signals}
-            wordCloudDisplay={wordCloudDisplay}
-            superBullets={superBullets}
-            watchoutBullets={watchouts.bullets}
+            model={strengthsModel}
             nextStepsStrengths={nextStepsStrengths}
             mounted={mounted}
             tab={tab}
@@ -1200,11 +1510,11 @@ export default function Page() {
         ) : tab === "skills" ? (
           <SkillsTab
             dark={dark}
+            model={skillsModel}
             nextStepsSkills={nextStepsSkills}
             mounted={mounted}
             tab={tab}
             nameFromHeadline={nameFromHeadline}
-            model={skillsModel}
           />
         ) : tab === "funFacts" ? (
           <section className="mb-6">
@@ -1214,8 +1524,8 @@ export default function Page() {
                 A lighter mirror — still grounded in how you move through the world.
               </div>
               <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                This is where we keep the “delight” layer — the stuff that helps you see yourself from a new angle
-                without turning life into a quiz.
+                This is where we keep the “delight” layer — the stuff that helps you see yourself from a new angle without
+                turning life into a quiz.
               </div>
 
               <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
@@ -1231,28 +1541,12 @@ export default function Page() {
                 ].join(" ")}
               >
                 <div className="pointer-events-none absolute inset-0" aria-hidden>
-                  <div
-                    className={[
-                      "absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl",
-                      dark ? "bg-violet-300/10" : "bg-violet-400/10",
-                    ].join(" ")}
-                  />
-                  <div
-                    className={[
-                      "absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl",
-                      dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8",
-                    ].join(" ")}
-                  />
+                  <div className={["absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl", dark ? "bg-violet-300/10" : "bg-violet-400/10"].join(" ")} />
+                  <div className={["absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl", dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8"].join(" ")} />
                 </div>
 
                 <div className="relative flex items-start gap-3">
-                  <div
-                    className={[
-                      "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border",
-                      dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
-                    ].join(" ")}
-                    aria-hidden
-                  >
+                  <div className={["mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border", dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white"].join(" ")} aria-hidden>
                     <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
                   </div>
 
@@ -1262,21 +1556,14 @@ export default function Page() {
                       A biography-style mirror — creative + technical + real-world impact.
                     </div>
 
-                    <div
-                      className={[
-                        "mt-2 inline-flex items-center gap-2 text-sm font-semibold",
-                        dark ? "text-white/70" : "text-slate-700",
-                      ].join(" ")}
-                    >
+                    <div className={["mt-2 inline-flex items-center gap-2 text-sm font-semibold", dark ? "text-white/70" : "text-slate-700"].join(" ")}>
                       Open story <span aria-hidden className="opacity-80">↗</span>
                     </div>
                   </div>
                 </div>
               </button>
 
-              <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
-                More Fun Facts will live here over time.
-              </div>
+              <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>More Fun Facts will live here over time.</div>
             </div>
           </section>
         ) : (

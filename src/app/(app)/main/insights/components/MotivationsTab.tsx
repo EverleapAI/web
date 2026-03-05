@@ -2,6 +2,25 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import {
+  Sparkles,
+  TrendingUp,
+  CheckCircle2,
+  Dumbbell,
+  Trophy,
+  Search,
+  Compass,
+  Palette,
+  KeyRound,
+  Users,
+  GraduationCap,
+  Handshake,
+  HeartHandshake,
+  Scale,
+  Flag,
+  Rocket,
+} from "lucide-react";
 
 import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 
@@ -39,9 +58,10 @@ type NextStepsDefinition = NextStepsStackProps["definition"];
 type QuickRating = "mostly" | "somewhat" | "not_really";
 
 const QUICK_FEEDBACK_STORAGE_KEY = "everleap.insights.quickFeedback.v1";
+const MOTIVATIONS_SELFREPORT_KEY = "everleap.insights.motivationsSelfReport.v1";
 
 /* =============================================================================
-   Motivations taxonomy (19) — local + stable IDs
+   Motivations taxonomy (teen-friendly labels + stable IDs)
    ============================================================================= */
 
 type MotivationId =
@@ -69,8 +89,10 @@ type MotivationDef = {
   id: MotivationId;
   label: string;
   accent: RGB;
-  line1: string;
-  line2: string;
+  // teen-facing copy
+  hook: string; // “what it is” but conversational
+  because: string; // “why you might be this way”
+  watchOut: string; // gentle warning
   drivers: DriverHint[];
   keywords: string[];
 };
@@ -102,10 +124,6 @@ function sectionKicker(dark: boolean) {
   );
 }
 
-function sectionTitle(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
-}
-
 function bodyText(dark: boolean) {
   return dark ? "text-slate-200/90" : "text-slate-700";
 }
@@ -124,122 +142,14 @@ function readingSurface(dark: boolean) {
   ].join(" ");
 }
 
-function driverCardShell(dark: boolean) {
+function softCard(dark: boolean) {
   return [
-    "relative overflow-hidden rounded-[22px] border px-4 py-4",
-    "backdrop-blur-xl",
-    dark ? "border-white/10 bg-white/[0.045]" : "border-black/10 bg-white/85",
-  ].join(" ");
-}
-
-function driverGlowStyle(dark: boolean, accent: RGB): React.CSSProperties {
-  const c = rgb(accent);
-  return {
-    background: dark
-      ? `radial-gradient(260px 180px at 20% 18%, rgba(${c}, 0.20), transparent 60%),
-         radial-gradient(260px 180px at 92% 70%, rgba(${c}, 0.10), transparent 64%)`
-      : `radial-gradient(260px 180px at 20% 18%, rgba(${c}, 0.14), transparent 60%),
-         radial-gradient(260px 180px at 92% 70%, rgba(${c}, 0.08), transparent 64%)`,
-  };
-}
-
-function microCardShell(dark: boolean) {
-  return [
-    "relative overflow-hidden rounded-[20px] border px-4 py-4",
+    "relative overflow-hidden rounded-[22px] border",
+    "px-4 py-4",
     "backdrop-blur-xl",
     "shadow-[0_16px_48px_rgba(0,0,0,0.14)]",
     dark ? "border-white/10 bg-white/[0.04]" : "border-black/10 bg-white/85",
   ].join(" ");
-}
-
-function microGlowStyle(dark: boolean, accent: RGB): React.CSSProperties {
-  const c = rgb(accent);
-  return {
-    background: dark
-      ? `radial-gradient(360px 220px at 16% 8%, rgba(${c}, 0.20), transparent 60%),
-         radial-gradient(300px 220px at 92% 72%, rgba(${c}, 0.12), transparent 64%)`
-      : `radial-gradient(360px 220px at 16% 8%, rgba(${c}, 0.14), transparent 60%),
-         radial-gradient(300px 220px at 92% 72%, rgba(${c}, 0.08), transparent 64%)`,
-  };
-}
-
-function pillDotStyle(dark: boolean, accent: RGB): React.CSSProperties {
-  const c = rgb(accent);
-  return {
-    background: `rgba(${c}, ${dark ? 0.95 : 0.85})`,
-    boxShadow: `0 0 20px rgba(${c}, ${dark ? 0.55 : 0.22})`,
-  };
-}
-
-function chipBase(dark: boolean) {
-  return [
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3 py-2",
-    "text-[13px] font-semibold",
-    "backdrop-blur-xl transition active:scale-95",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10 bg-white/[0.045] text-white/80 hover:bg-white/[0.07]" : "border-black/10 bg-white/80",
-  ].join(" ");
-}
-
-function chipActive(dark: boolean) {
-  return dark
-    ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
-    : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]";
-}
-
-/* =============================================================================
-   Energy Map helpers
-   ============================================================================= */
-
-function hashString(input: string) {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-const BOOSTER_ACCENTS: RGB[] = [
-  { r: 120, g: 200, b: 255 },
-  { r: 120, g: 255, b: 190 },
-  { r: 160, g: 255, b: 140 },
-  { r: 110, g: 230, b: 255 },
-];
-
-const DRAINER_ACCENTS: RGB[] = [
-  { r: 255, g: 190, b: 110 },
-  { r: 190, g: 140, b: 255 },
-  { r: 255, g: 150, b: 230 },
-];
-
-function pickAccent(term: string, kind: "booster" | "drainer"): RGB {
-  const h = hashString((term ?? "").toLowerCase().trim());
-  const palette = kind === "booster" ? BOOSTER_ACCENTS : DRAINER_ACCENTS;
-  return palette[h % palette.length] ?? palette[0]!;
-}
-
-function energyFieldStyle(dark: boolean): React.CSSProperties {
-  return {
-    background: dark
-      ? "radial-gradient(760px 300px at 6% -10%, rgba(120,200,255,0.20), transparent 62%)," +
-        "radial-gradient(620px 280px at 94% 8%, rgba(190,140,255,0.16), transparent 64%)," +
-        "radial-gradient(520px 280px at 42% 120%, rgba(120,255,190,0.10), transparent 66%)," +
-        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012))"
-      : "radial-gradient(760px 300px at 6% -10%, rgba(120,200,255,0.14), transparent 62%)," +
-        "radial-gradient(620px 280px at 94% 8%, rgba(190,140,255,0.12), transparent 64%)," +
-        "radial-gradient(520px 280px at 42% 120%, rgba(120,255,190,0.08), transparent 66%)," +
-        "linear-gradient(180deg, rgba(0,0,0,0.025), rgba(0,0,0,0.01))",
-  };
-}
-
-/* =============================================================================
-   Quick Feedback (inline expand; no overlay)
-   ============================================================================= */
-
-function quickChip(dark: boolean, active: boolean) {
-  return [chipBase(dark), active ? chipActive(dark) : ""].join(" ").trim();
 }
 
 function softInputShell(dark: boolean) {
@@ -248,6 +158,480 @@ function softInputShell(dark: boolean) {
     "backdrop-blur-2xl",
     dark ? "border-white/10 bg-white/[0.035]" : "border-black/10 bg-white/80",
     "shadow-[0_18px_55px_rgba(0,0,0,0.18)]",
+  ].join(" ");
+}
+
+function pillBase(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
+    "text-[12px] font-semibold",
+    "backdrop-blur-xl",
+    dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
+  ].join(" ");
+}
+
+function glowBg(dark: boolean, accent: RGB, strength = 0.16): React.CSSProperties {
+  const c = rgb(accent);
+  return {
+    background: dark
+      ? `radial-gradient(420px 220px at 10% 0%, rgba(${c}, ${strength}), transparent 62%),
+         radial-gradient(380px 220px at 92% 82%, rgba(${c}, ${strength * 0.6}), transparent 64%)`
+      : `radial-gradient(420px 220px at 10% 0%, rgba(${c}, ${strength * 0.85}), transparent 62%),
+         radial-gradient(380px 220px at 92% 82%, rgba(${c}, ${strength * 0.55}), transparent 64%)`,
+  };
+}
+
+function chipButton(dark: boolean) {
+  return [
+    "inline-flex items-center gap-2",
+    "rounded-full border px-3.5 py-2",
+    "text-[13px] font-semibold",
+    "backdrop-blur-xl transition active:scale-95",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+    dark ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+  ].join(" ");
+}
+
+function primaryLinkButton(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "h-10 rounded-full px-4 text-[13px] font-semibold",
+    "transition active:scale-[0.99]",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+    dark ? "bg-white text-black hover:bg-white/95" : "bg-slate-900 text-white hover:bg-slate-900/90",
+  ].join(" ");
+}
+
+function subtleLinkButton(dark: boolean) {
+  return [
+    "inline-flex items-center justify-center gap-2",
+    "h-10 rounded-full border px-4 text-[13px] font-semibold",
+    "backdrop-blur-xl transition active:scale-[0.99]",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+    dark ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+  ].join(" ");
+}
+
+/* =============================================================================
+   Copy helpers
+   ============================================================================= */
+
+/* =============================================================================
+   Copy helpers
+   ============================================================================= */
+
+function motivationsIntro(top: DriverDef | null | undefined, name: string) {
+  const hasName = !!(name ?? "").trim();
+  const n = (name ?? "").trim();
+  const prefix = hasName ? `${n}` : "Hey";
+
+  const id: DriverId = (top?.id ?? "momentum") as DriverId;
+
+  if (id === "people") {
+    return `${prefix} — here’s what I’m seeing: you get energy from real people. Not “being social,” but having a real exchange — feedback, shared effort, challenge, someone actually seeing you.
+
+When you’re stuck doing everything alone, your motivation can drop even if the opportunity is good. That doesn’t mean you’re being dramatic. It just means your signal system is built around connection.
+
+We’ll use this by building in the right kind of support: a teammate, a coach, or even one honest check-in — so your week has fuel.`;
+  }
+
+  if (id === "mastery") {
+    return `${prefix}, you’re the kind of person who gets motivated by getting better.
+
+When you can feel improvement — even small — you lock in. But when you can’t see progress, it can feel like you’re pushing a boulder uphill, even if you’re working hard.
+
+That doesn’t mean you’re doing something wrong. It just means your brain needs proof. We’ll use that by choosing goals you can measure and feel — so effort turns into confidence.`;
+  }
+
+  if (id === "meaning") {
+    return `${prefix}, your motivation isn’t random. It’s tied to why something matters.
+
+When the purpose feels real, you can do a lot. But when the “why” is fuzzy, it’s like trying to run on low battery — you might still do the thing, but it costs way more.
+
+That’s not weakness. It’s how you’re wired. We’ll use this by getting clearer on what you care about, and connecting your actions to that — so your effort actually feels worth it.`;
+  }
+
+  if (id === "curiosity") {
+    return `${prefix}, your motivation wakes up when there’s something to figure out.
+
+You’re not bored because you’re lazy. You’re bored because your brain needs a mystery, a question, a new angle. When nothing feels new or interesting, your focus slips. When there’s something to explore, you can go deep fast.
+
+We’ll use this by turning goals into questions and making learning part of the plan — so you’re pulled forward instead of pushed.`;
+  }
+
+  if (id === "freedom") {
+    return `${prefix}, you’re most motivated when you feel like you have a real choice.
+
+Not just the goal — the way you get there. When everything feels pre-scripted or controlled, your brain pushes back. That’s not you “being difficult.” It’s a real need for autonomy.
+
+We’ll use this by giving you options, letting you choose the approach, and making the plan feel like yours — because that’s when you actually show up.`;
+  }
+
+  // momentum (default)
+  return `${prefix} — quick check: your energy comes from motion.
+
+When something is moving forward, you feel more like yourself. When it stalls, it’s not that you suddenly became lazy. It’s that your brain doesn’t get a clear signal that it matters.
+
+The good news is you don’t need a huge plan to get your spark back. You usually just need one real step you can finish. We’ll use that pattern to shape your next week — and make progress feel real again.`;
+}
+
+/* =============================================================================
+   Motivation taxonomy scoring
+   ============================================================================= */
+
+const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
+  {
+    id: "impact",
+    label: "Make it matter",
+    accent: { r: 255, g: 180, b: 120 },
+    hook: "You don’t want ‘busy work.’ You want your effort to land somewhere real.",
+    because: "You tend to care about meaning — if you can’t see who it helps or what it changes, your energy drops.",
+    watchOut: "If something feels fake or pointless, you’ll stall (even if you could do it easily).",
+    drivers: ["meaning", "clarity"],
+    keywords: ["impact", "difference", "help", "change", "community", "useful", "matter"],
+  },
+  {
+    id: "purpose",
+    label: "Know the why",
+    accent: { r: 255, g: 210, b: 110 },
+    hook: "You move faster when you know what this is building toward — and why you care.",
+    because: "When the ‘why’ is clear, you can focus hard. When it’s foggy, your brain won’t fully commit.",
+    watchOut: "If goals stay vague, you might drift or procrastinate even with talent.",
+    drivers: ["meaning", "clarity"],
+    keywords: ["why", "meaning", "purpose", "direction", "values", "mission"],
+  },
+  {
+    id: "justice",
+    label: "Fairness + respect",
+    accent: { r: 190, g: 140, b: 255 },
+    hook: "You notice what’s fair — and what’s not. Respect matters to you.",
+    because: "You’re tuned to how people are treated and whether the rules actually make sense.",
+    watchOut: "Unfairness can become a focus trap — it’s hard to ignore once you see it.",
+    drivers: ["meaning", "people"],
+    keywords: ["fair", "justice", "equity", "respect", "ethics", "rules"],
+  },
+  {
+    id: "mastery",
+    label: "Leveling up",
+    accent: { r: 190, g: 140, b: 255 },
+    hook: "You lock in when you can feel yourself getting better — reps, progress, skill growth.",
+    because: "Your motivation often comes from improvement you can actually *feel*, not just ‘trying.’",
+    watchOut: "If you can’t see progress, it can start to feel pointless (even when it isn’t).",
+    drivers: ["mastery", "momentum"],
+    keywords: ["improve", "practice", "reps", "skill", "progress", "better", "training"],
+  },
+  {
+    id: "competition",
+    label: "A real test",
+    accent: { r: 255, g: 190, b: 110 },
+    hook: "A real opponent (or a real standard) wakes you up. Stakes make you sharper.",
+    because: "You respond to challenge — it turns your attention on like a switch.",
+    watchOut: "If it becomes constant comparison, it can steal your joy.",
+    drivers: ["mastery", "people", "momentum"],
+    keywords: ["win", "compete", "rank", "tournament", "prove", "challenge", "opponent"],
+  },
+  {
+    id: "craft",
+    label: "Do it right",
+    accent: { r: 120, g: 255, b: 190 },
+    hook: "You care about quality — clean, precise, done the right way (your way).",
+    because: "You notice details other people skip, and that gives you pride when it’s done well.",
+    watchOut: "Perfection pressure can slow your starts if you try to make it flawless on day one.",
+    drivers: ["mastery", "clarity"],
+    keywords: ["quality", "detail", "precise", "craft", "polish", "clean", "accuracy"],
+  },
+  {
+    id: "curiosity",
+    label: "Figure it out",
+    accent: { r: 255, g: 150, b: 230 },
+    hook: "Questions pull you forward. You want to understand what’s true — and why.",
+    because: "Learning gives you momentum. When you’re curious, effort feels lighter.",
+    watchOut: "If nothing feels new, your brain quietly checks out.",
+    drivers: ["curiosity"],
+    keywords: ["learn", "curious", "why", "how", "research", "understand", "figure out"],
+  },
+  {
+    id: "discovery",
+    label: "New terrain",
+    accent: { r: 120, g: 200, b: 255 },
+    hook: "You like exploring — new topics, new places, new angles.",
+    because: "Novelty isn’t chaos for you. It’s oxygen.",
+    watchOut: "Too many options can scatter your energy if you don’t pick a lane.",
+    drivers: ["curiosity", "freedom"],
+    keywords: ["explore", "new", "discover", "travel", "experiment", "different"],
+  },
+  {
+    id: "creativity",
+    label: "Make something",
+    accent: { r: 255, g: 150, b: 230 },
+    hook: "You want to create — an idea, a system, a design, something that didn’t exist before.",
+    because: "Making things feels like ownership and self-expression at the same time.",
+    watchOut: "Ideas can multiply faster than finishing if you don’t choose what matters most.",
+    drivers: ["curiosity", "freedom", "meaning"],
+    keywords: ["create", "design", "build", "idea", "art", "write", "invent", "make"],
+  },
+  {
+    id: "autonomy",
+    label: "Have a say",
+    accent: { r: 120, g: 255, b: 190 },
+    hook: "You work best when you can choose the method. Same goal — your approach.",
+    because: "Autonomy keeps you engaged. It feels like the work is actually yours.",
+    watchOut: "Micromanagement can shut you down fast.",
+    drivers: ["freedom"],
+    keywords: ["freedom", "autonomy", "independent", "choose", "own way"],
+  },
+  {
+    id: "ownership",
+    label: "Own the outcome",
+    accent: { r: 255, g: 210, b: 110 },
+    hook: "You like being responsible *and* having control — so you can actually deliver.",
+    because: "When you own something, your motivation gets serious.",
+    watchOut: "You can end up carrying outcomes you don’t fully control.",
+    drivers: ["freedom", "momentum"],
+    keywords: ["own", "responsibility", "lead", "ship", "deliver", "accountable"],
+  },
+  {
+    id: "variety",
+    label: "Switch it up",
+    accent: { r: 110, g: 230, b: 255 },
+    hook: "You like changing modes — different tasks, different rhythms, different kinds of thinking.",
+    because: "Variety helps you stay awake and creative.",
+    watchOut: "Constant switching can blur priorities if you never pause to choose what’s most important.",
+    drivers: ["freedom", "curiosity"],
+    keywords: ["variety", "mix", "different", "change", "switch", "multiple"],
+  },
+  {
+    id: "progress",
+    label: "See progress fast",
+    accent: { r: 255, g: 210, b: 110 },
+    hook: "You get energy from motion you can *feel*. Small wins stack into confidence.",
+    because: "Momentum makes things real for you — doing beats overthinking.",
+    watchOut: "Stalled decisions can feel like quicksand.",
+    drivers: ["momentum", "mastery"],
+    keywords: ["progress", "move", "momentum", "today", "next", "forward", "ship"],
+  },
+  {
+    id: "closure",
+    label: "Close the loop",
+    accent: { r: 255, g: 180, b: 120 },
+    hook: "You like clean endings: done, shipped, settled. Open loops itch.",
+    because: "Finishing gives you clarity — it’s how your brain relaxes.",
+    watchOut: "If everything is ‘pending,’ you’ll lose energy fast.",
+    drivers: ["momentum", "clarity"],
+    keywords: ["finish", "done", "complete", "closure", "final", "wrap up"],
+  },
+  {
+    id: "belonging",
+    label: "Your people",
+    accent: { r: 120, g: 200, b: 255 },
+    hook: "You’re not chasing popularity. You want real belonging — people who feel real.",
+    because: "When the vibe is good, you show up more fully.",
+    watchOut: "Fake energy drains you faster than hard work.",
+    drivers: ["people"],
+    keywords: ["belong", "friends", "team", "community", "together", "vibe"],
+  },
+  {
+    id: "mentorship",
+    label: "Good coaching",
+    accent: { r: 190, g: 140, b: 255 },
+    hook: "You sharpen with good mirrors: coaches, mentors, people who tell the truth with respect.",
+    because: "Feedback makes progress faster — and you like progress.",
+    watchOut: "Without signal (feedback), you can feel stuck even when you’re improving.",
+    drivers: ["people", "mastery"],
+    keywords: ["coach", "mentor", "feedback", "critique", "lesson", "teacher"],
+  },
+  {
+    id: "collaboration",
+    label: "Build together",
+    accent: { r: 120, g: 255, b: 190 },
+    hook: "You like building with others — shared standards, shared effort, shared wins.",
+    because: "Working with the right person makes everything more real and more fun.",
+    watchOut: "Misalignment creates friction fast, and then your motivation drops.",
+    drivers: ["people", "momentum"],
+    keywords: ["collab", "together", "team", "partner", "group", "build"],
+  },
+  {
+    id: "leadership",
+    label: "Set the tone",
+    accent: { r: 255, g: 190, b: 110 },
+    hook: "You like setting direction — protecting the mission from noise.",
+    because: "You notice standards. You can feel when a room needs structure.",
+    watchOut: "You can become the ‘default adult’ and end up carrying too much.",
+    drivers: ["people", "meaning", "freedom"],
+    keywords: ["lead", "organize", "standard", "guide", "protect", "direction"],
+  },
+  {
+    id: "recognition",
+    label: "Be seen (for real)",
+    accent: { r: 255, g: 150, b: 230 },
+    hook: "You’re not needy — you just want real effort to be noticed when it’s earned.",
+    because: "Being seen can validate that what you did mattered.",
+    watchOut: "If you chase applause, it can distort the goal.",
+    drivers: ["people", "momentum"],
+    keywords: ["recognition", "seen", "respect", "credit", "proud", "prove"],
+  },
+];
+
+function normalizeTextPieces(parts: string[]) {
+  return parts
+    .map((x) => (x ?? "").toString().trim())
+    .filter(Boolean)
+    .join(" | ")
+    .toLowerCase();
+}
+
+function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drainers: string[]; receipts: string[] }) {
+  const { top3, boosters, drainers, receipts } = args;
+
+  const driverScore = new Map<DriverId, number>();
+  for (const d of top3) driverScore.set(d.def.id, clamp01(d.score ?? 0));
+
+  const blob = normalizeTextPieces([
+    ...(boosters ?? []).slice(0, 12),
+    ...(drainers ?? []).slice(0, 10),
+    ...(receipts ?? []).slice(0, 10),
+    ...top3.map((x) => x.def.label),
+    ...top3.map((x) => x.def.whenItHits),
+  ]);
+
+  const scored: ScoredMotivation[] = MOTIVATIONS_TAXONOMY
+    .map((m) => {
+      // baseline: always show something even if signal is weak
+      let s = 0.10;
+
+      for (const did of m.drivers) {
+        if (did === "clarity") {
+          s += (driverScore.get("meaning") ?? 0) * 0.16;
+          s += (driverScore.get("momentum") ?? 0) * 0.08;
+        } else {
+          s += (driverScore.get(did) ?? 0) * 0.34;
+        }
+      }
+
+      // keyword hits from receipts/boosters/drainers/self-report
+      const hits = m.keywords.reduce((acc, k) => {
+        const key = k.toLowerCase();
+        if (!key) return acc;
+        return blob.includes(key) ? acc + 1 : acc;
+      }, 0);
+
+      s += Math.min(0.24, hits * 0.055);
+
+      const topDriverId = top3[0]?.def?.id ?? null;
+      if (topDriverId && (m.drivers as DriverHint[]).includes(topDriverId)) s += 0.08;
+
+      return { def: m, score: clamp01(s) };
+    })
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  const cleanReceipts = (receipts ?? [])
+    .map((r) => (r ?? "").toString().trim())
+    .filter((r) => r.length >= 6 && r.length <= 220);
+
+  const attachReceipt = (m: ScoredMotivation) => {
+    const safeKeywords = m.def.keywords
+      .map((k) => (k ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 12)
+      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+
+    if (!safeKeywords.length) return m;
+
+    const rx = new RegExp(`\\b(${safeKeywords.join("|")})\\b`, "i");
+    const found = cleanReceipts.find((r) => rx.test(r));
+    return found ? { ...m, receipt: found } : m;
+  };
+
+  const topRaw = scored.slice(0, 6).map(attachReceipt);
+
+  const seen = new Set<MotivationId>();
+  const top: ScoredMotivation[] = [];
+  for (const m of topRaw) {
+    if (seen.has(m.def.id)) continue;
+    seen.add(m.def.id);
+    top.push(m);
+    if (top.length >= 4) break; // keep it simple: 4 cards
+  }
+
+  if (top.length < 4) {
+    for (const m of scored.slice(6)) {
+      if (top.length >= 4) break;
+      if (seen.has(m.def.id)) continue;
+      seen.add(m.def.id);
+      top.push(attachReceipt(m));
+    }
+  }
+
+  return { top };
+}
+
+/* =============================================================================
+   Low-signal helpers
+   ============================================================================= */
+
+function computeSignalConfidence(top3: ScoredDriver[]): number {
+  if (!Array.isArray(top3) || top3.length === 0) return 0.18;
+  const xs = top3.map((d) => clamp01(d.score ?? 0)).filter((n) => Number.isFinite(n));
+  if (!xs.length) return 0.18;
+  const avg = xs.reduce((a, b) => a + b, 0) / xs.length;
+  // compress a bit so it's not always “high”
+  return clamp01(0.15 + avg * 0.75);
+}
+
+function signalLabel(sig: number) {
+  if (sig >= 0.72) return "High";
+  if (sig >= 0.45) return "Medium";
+  return "Low";
+}
+
+/* =============================================================================
+   Icons per motivation
+   ============================================================================= */
+
+function MotivationIcon({ id }: { id: MotivationId }) {
+  const Icon =
+    id === "impact" ? HeartHandshake
+    : id === "purpose" ? Flag
+    : id === "justice" ? Scale
+    : id === "mastery" ? Dumbbell
+    : id === "competition" ? Trophy
+    : id === "craft" ? CheckCircle2
+    : id === "curiosity" ? Search
+    : id === "discovery" ? Compass
+    : id === "creativity" ? Palette
+    : id === "autonomy" ? KeyRound
+    : id === "ownership" ? Rocket
+    : id === "variety" ? Sparkles
+    : id === "progress" ? TrendingUp
+    : id === "closure" ? CheckCircle2
+    : id === "belonging" ? Users
+    : id === "mentorship" ? GraduationCap
+    : id === "collaboration" ? Handshake
+    : id === "leadership" ? Flag
+    : Sparkles;
+
+  return <Icon className="h-4.5 w-4.5" aria-hidden />;
+}
+
+/* =============================================================================
+   Quick Feedback (inline expand; no overlay)
+   ============================================================================= */
+
+function quickChip(dark: boolean, active: boolean) {
+  return [
+    "inline-flex items-center gap-2",
+    "rounded-full border px-3.5 py-2",
+    "text-[13px] font-semibold",
+    "backdrop-blur-xl transition active:scale-95",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
+    dark ? "border-white/10" : "border-black/10",
+    active
+      ? dark
+        ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
+        : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
+      : dark
+        ? "bg-white/[0.045] text-white/78 hover:bg-white/[0.07]"
+        : "bg-white/80 text-slate-800 hover:bg-white",
   ].join(" ");
 }
 
@@ -449,8 +833,6 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
             <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
               Saved to localStorage:{" "}
               <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
-              <span className={dark ? "text-white/20" : "text-slate-400"}> • </span>
-              <span className={dark ? "text-white/30" : "text-slate-500"}>{contextTag}</span>
             </div>
           </div>
         </div>
@@ -460,439 +842,268 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
 }
 
 /* =============================================================================
-   Copy helpers
+   Self-report (inline expand; no modal)
    ============================================================================= */
 
-function motivationsIntro(top: DriverDef | null | undefined, name: string) {
-  const who = name ? `${name}, ` : "";
-  const id: DriverId = (top?.id ?? "momentum") as DriverId;
-
-  if (id === "people") {
-    return `${who}your motivation spikes when there’s real interaction — feedback, challenge, shared effort. When you’re in isolation too long, even good opportunities lose momentum. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
+function readSelfReport(): { text: string; savedAt: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(MOTIVATIONS_SELFREPORT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+    const rec = parsed as { text?: unknown; savedAt?: unknown };
+    const text = typeof rec.text === "string" ? rec.text : "";
+    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
+    if (!text.trim()) return null;
+    return { text, savedAt };
+  } catch {
+    return null;
   }
-  if (id === "mastery") {
-    return `${who}your motivation spikes when you can feel progress — reps, improvement, skill growth. When there’s no visible advancement, effort starts to feel pointless fast. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
-  }
-  if (id === "meaning") {
-    return `${who}your motivation spikes when the work connects to something real — impact, contribution, direction. When the “why” is fuzzy, motivation fades even if you’re capable. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
-  }
-  if (id === "curiosity") {
-    return `${who}your motivation spikes when you’re figuring something out — exploring, testing, understanding. When nothing new is happening, engagement drops quickly. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
-  }
-  if (id === "freedom") {
-    return `${who}your motivation spikes when you have autonomy — room to choose the approach and own the path. When everything feels pre-scripted, you disengage. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
-  }
-  return `${who}your motivation spikes when things move — start → ship → done. When progress stalls, motivation does too. These aren’t labels. They’re conditions — situations that reliably make you come alive (or go flat).`;
 }
 
-function driverNarrative(def: DriverDef) {
-  const whyRaw = (def.whenItHits ?? "").trim();
-  const looksRaw = (def.looksLike ?? "").trim();
-  const drainsRaw = (def.drainsWhen ?? "").trim();
-
-  const why = whyRaw.replace(/^when\s+/i, "when ").replace(/\.$/, "");
-  const looks = looksRaw.replace(/\.$/, "");
-  const drains = drainsRaw.replace(/\.$/, "");
-
-  const byId: Record<DriverId, { p1: string; p2: string }> = {
-    people: {
-      p1: `For you, People isn’t “social.” It’s a performance enhancer. You come alive ${why || "when there’s real interaction"} — because feedback makes things real, and real makes you sharper.`,
-      p2: `The upside: you grow faster around mentors, teammates, and honest mirrors. The watch-out: if you’re stuck working in a vacuum, your motivation can drop even when the opportunity is good. ${
-        drains ? `That shows up most when ${drains}.` : ""
-      }`.trim(),
-    },
-    curiosity: {
-      p1: `Curiosity is your fuel source. You get energy ${why || "when there’s something real to figure out"} — not because you’re distracted, but because learning gives you momentum.`,
-      p2: `The upside: you connect dots other people miss, and you get genuinely engaged. The watch-out: if nothing feels new, your brain quietly checks out. ${
-        drains ? `You’ll feel it when ${drains}.` : ""
-      }`.trim(),
-    },
-    momentum: {
-      p1: `Momentum means you trust motion more than theory. You light up ${why || "when things move"} — start → ship → done — because finishing gives you confidence and clarity at the same time.`,
-      p2: `The upside: you’re a builder. You get better by doing. The watch-out: stalled decisions can feel like quicksand, and you’ll start losing energy fast. ${
-        drains ? `That usually happens when ${drains}.` : ""
-      }`.trim(),
-    },
-    mastery: {
-      p1: `Mastery is the “I can feel myself leveling up” drive. You get energy ${why || "when you can feel progress through reps"} — because improvement is deeply satisfying for you.`,
-      p2: `The upside: you’ll stick with hard things and sharpen quickly. The watch-out: if you can’t see progress, it starts to feel pointless (even if it isn’t). ${
-        drains ? `That tends to hit when ${drains}.` : ""
-      }`.trim(),
-    },
-    meaning: {
-      p1: `Meaning is your “this matters” switch. You get energy ${why || "when the work connects to a real why"} — impact, contribution, direction — because you don’t want to spend life on empty reps.`,
-      p2: `The upside: you can push through friction when it’s for something real. The watch-out: if the point gets fuzzy, motivation fades and you’ll start procrastinating even on things you’re good at. ${
-        drains ? `That shows up when ${drains}.` : ""
-      }`.trim(),
-    },
-    freedom: {
-      p1: `Freedom is the autonomy drive. You get energy ${why || "when you can choose the approach and own the path"} — because control over the method is how you stay engaged.`,
-      p2: `The upside: you design smart systems and adapt fast. The watch-out: if you feel boxed in or micromanaged, you’ll disengage — not because you can’t do it, but because it stops feeling like yours. ${
-        drains ? `That tends to happen when ${drains}.` : ""
-      }`.trim(),
-    },
-  };
-
-  const base = byId[def.id];
-  const looksLine = looks ? `In real life, it looks like this: ${looks}.` : "";
-  return { p1: base.p1, p2: [looksLine, base.p2].filter(Boolean).join(" ") };
-}
-
-/* =============================================================================
-   Defaults (so you ALWAYS see motivations even with low/no signal)
-   ============================================================================= */
-
-const DRIVER_DEFS: Record<DriverId, DriverDef> = {
-  momentum: {
-    id: "momentum",
-    label: "Momentum",
-    accent: { r: 255, g: 210, b: 110 },
-    whenItHits: "when you can start → test → finish without getting stuck in endless setup",
-    looksLike: "you do the small version first, then improve it once it exists",
-    drainsWhen: "decisions stall, approvals drag, or everything feels ‘pending’",
-  },
-  mastery: {
-    id: "mastery",
-    label: "Mastery",
-    accent: { r: 190, g: 140, b: 255 },
-    whenItHits: "when you can feel progress through reps and real feedback",
-    looksLike: "you get hooked on refining the move / skill / craft",
-    drainsWhen: "effort isn’t translating into visible improvement",
-  },
-  curiosity: {
-    id: "curiosity",
-    label: "Curiosity",
-    accent: { r: 120, g: 200, b: 255 },
-    whenItHits: "when there’s a real question and you get to explore it",
-    looksLike: "you pull threads, test ideas, and connect dots",
-    drainsWhen: "everything is repetitive and nothing feels new",
-  },
-  people: {
-    id: "people",
-    label: "People",
-    accent: { r: 120, g: 255, b: 190 },
-    whenItHits: "when you can bounce off real humans — challenge, collaboration, honest feedback",
-    looksLike: "you level up faster in a good room than alone",
-    drainsWhen: "you’re stuck in isolation for too long",
-  },
-  meaning: {
-    id: "meaning",
-    label: "Meaning",
-    accent: { r: 255, g: 180, b: 120 },
-    whenItHits: "when the work connects to something real you actually care about",
-    looksLike: "you can push through friction because the ‘why’ is clear",
-    drainsWhen: "the point feels fuzzy or fake",
-  },
-  freedom: {
-    id: "freedom",
-    label: "Freedom",
-    accent: { r: 255, g: 150, b: 230 },
-    whenItHits: "when you can choose the method and own the approach",
-    looksLike: "you design a path that fits you and execute it",
-    drainsWhen: "everything is micromanaged or pre-scripted",
-  },
-};
-
-function buildDefaultMotivationsTop(): MotivationsTop {
-  const top3: ScoredDriver[] = [
-    { def: DRIVER_DEFS.momentum, score: 0.62 },
-    { def: DRIVER_DEFS.mastery, score: 0.56 },
-    { def: DRIVER_DEFS.curiosity, score: 0.52 },
-  ];
-  return { top3, top: top3[0] };
-}
-
-/* =============================================================================
-   Motivation taxonomy scoring
-   ============================================================================= */
-
-const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
-  {
-    id: "impact",
-    label: "Impact",
-    accent: { r: 255, g: 180, b: 120 },
-    line1: "You want your effort to land. Not “busy,” not “cute” — real effect in the real world.",
-    line2: "Upside: you’ll push through hard parts. Watch-out: if the point feels fake, you’ll stall.",
-    drivers: ["meaning", "clarity"],
-    keywords: ["impact", "difference", "help", "change", "community", "real world", "useful"],
-  },
-  {
-    id: "purpose",
-    label: "Purpose",
-    accent: { r: 255, g: 210, b: 110 },
-    line1: "You move faster when you know the ‘why’ — what this is building toward, and why it matters to you.",
-    line2: "Upside: focus. Watch-out: foggy goals drain you even if you’re capable.",
-    drivers: ["meaning", "clarity"],
-    keywords: ["why", "meaning", "purpose", "direction", "values", "mission"],
-  },
-  {
-    id: "justice",
-    label: "Fairness",
-    accent: { r: 190, g: 140, b: 255 },
-    line1: "You care about what’s right — not perfect, but fair. You notice when systems don’t make sense.",
-    line2: "Upside: you protect people and standards. Watch-out: unfairness can become a focus trap.",
-    drivers: ["meaning", "people"],
-    keywords: ["fair", "justice", "equity", "respect", "rules", "ethics"],
-  },
-  {
-    id: "mastery",
-    label: "Mastery",
-    accent: { r: 190, g: 140, b: 255 },
-    line1: "Progress is addictive. You want the reps — and the feeling of getting better on purpose.",
-    line2: "Upside: you level up fast. Watch-out: no visible progress feels like a personal insult.",
-    drivers: ["mastery", "momentum"],
-    keywords: ["improve", "practice", "reps", "skill", "progress", "better", "training"],
-  },
-  {
-    id: "competition",
-    label: "Competition",
-    accent: { r: 255, g: 190, b: 110 },
-    line1: "A real opponent (or a real standard) wakes you up. Stakes make you sharper.",
-    line2: "Upside: intensity and focus. Watch-out: constant comparison can steal your joy.",
-    drivers: ["mastery", "people", "momentum"],
-    keywords: ["win", "compete", "rank", "tournament", "best", "prove", "challenge"],
-  },
-  {
-    id: "craft",
-    label: "Craft",
-    accent: { r: 120, g: 255, b: 190 },
-    line1: "You care about how it’s done — precision, quality, and doing it the right way (your way).",
-    line2: "Upside: high standards. Watch-out: perfection-pressure can slow starts.",
-    drivers: ["mastery", "clarity"],
-    keywords: ["quality", "detail", "precise", "craft", "polish", "clean", "accuracy"],
-  },
-  {
-    id: "curiosity",
-    label: "Curiosity",
-    accent: { r: 255, g: 150, b: 230 },
-    line1: "Questions pull you forward. You want to understand what’s true — and why.",
-    line2: "Upside: you connect dots. Watch-out: boredom makes your brain disappear.",
-    drivers: ["curiosity"],
-    keywords: ["learn", "curious", "why", "how", "research", "figure out", "understand"],
-  },
-  {
-    id: "discovery",
-    label: "Discovery",
-    accent: { r: 120, g: 200, b: 255 },
-    line1: "You like new terrain — new topics, new places, new angles. Novelty isn’t chaos; it’s oxygen.",
-    line2: "Upside: exploration. Watch-out: too many options can scatter your energy.",
-    drivers: ["curiosity", "freedom"],
-    keywords: ["explore", "new", "discover", "travel", "try", "experiment", "different"],
-  },
-  {
-    id: "creativity",
-    label: "Create",
-    accent: { r: 255, g: 150, b: 230 },
-    line1: "You want to make something that didn’t exist — an idea, a system, a design, a move.",
-    line2: "Upside: originality. Watch-out: ideas can multiply faster than closure.",
-    drivers: ["curiosity", "freedom", "meaning"],
-    keywords: ["create", "design", "build", "idea", "art", "write", "invent", "make"],
-  },
-  {
-    id: "autonomy",
-    label: "Autonomy",
-    accent: { r: 120, g: 255, b: 190 },
-    line1: "You work best when you can choose the method. Same goal — your approach.",
-    line2: "Upside: smart systems. Watch-out: micromanagement makes you shut down.",
-    drivers: ["freedom"],
-    keywords: ["freedom", "autonomy", "independent", "choose", "own way", "self"],
-  },
-  {
-    id: "ownership",
-    label: "Ownership",
-    accent: { r: 255, g: 210, b: 110 },
-    line1: "You want the responsibility *and* the control — so you can actually deliver.",
-    line2: "Upside: leadership energy. Watch-out: you can over-carry outcomes you don’t control.",
-    drivers: ["freedom", "momentum"],
-    keywords: ["own", "responsibility", "lead", "build", "ship", "deliver"],
-  },
-  {
-    id: "variety",
-    label: "Variety",
-    accent: { r: 110, g: 230, b: 255 },
-    line1: "You like switching modes — different tasks, different rhythms, different kinds of thinking.",
-    line2: "Upside: adaptability. Watch-out: constant switching can blur priorities.",
-    drivers: ["freedom", "curiosity"],
-    keywords: ["variety", "mix", "different", "change", "switch", "multiple"],
-  },
-  {
-    id: "progress",
-    label: "Progress",
-    accent: { r: 255, g: 210, b: 110 },
-    line1: "You want motion you can feel. Little wins stack into confidence.",
-    line2: "Upside: momentum. Watch-out: stalled decisions drain you fast.",
-    drivers: ["momentum", "mastery"],
-    keywords: ["progress", "move", "momentum", "today", "next", "forward", "ship"],
-  },
-  {
-    id: "closure",
-    label: "Finish",
-    accent: { r: 255, g: 180, b: 120 },
-    line1: "You like clean endings: done, shipped, settled. Open loops itch.",
-    line2: "Upside: execution. Watch-out: if everything is ‘pending,’ you lose energy.",
-    drivers: ["momentum", "clarity"],
-    keywords: ["finish", "done", "complete", "ship", "closure", "final"],
-  },
-  {
-    id: "belonging",
-    label: "Belonging",
-    accent: { r: 120, g: 200, b: 255 },
-    line1: "You’re not chasing popularity — you’re chasing real belonging: people who feel real.",
-    line2: "Upside: support + growth. Watch-out: fake vibes drain you faster than hard work.",
-    drivers: ["people"],
-    keywords: ["belong", "friends", "team", "community", "together", "vibe"],
-  },
-  {
-    id: "mentorship",
-    label: "Mentorship",
-    accent: { r: 190, g: 140, b: 255 },
-    line1: "You sharpen with good mirrors: coaches, mentors, people who tell the truth with respect.",
-    line2: "Upside: rapid growth. Watch-out: without feedback, you can lose signal.",
-    drivers: ["people", "mastery"],
-    keywords: ["coach", "mentor", "feedback", "critique", "teach", "lesson"],
-  },
-  {
-    id: "collaboration",
-    label: "Collaboration",
-    accent: { r: 120, g: 255, b: 190 },
-    line1: "You like building with others — shared standards, shared effort, shared wins.",
-    line2: "Upside: speed + quality. Watch-out: misalignment creates friction fast.",
-    drivers: ["people", "momentum"],
-    keywords: ["collab", "together", "team", "partner", "group", "build"],
-  },
-  {
-    id: "leadership",
-    label: "Leadership",
-    accent: { r: 255, g: 190, b: 110 },
-    line1: "You like setting the tone: standards, direction, protecting the mission from noise.",
-    line2: "Upside: you elevate the room. Watch-out: you can become the ‘default adult.’",
-    drivers: ["people", "meaning", "freedom"],
-    keywords: ["lead", "organize", "standard", "responsible", "guide", "protect"],
-  },
-  {
-    id: "recognition",
-    label: "Recognition",
-    accent: { r: 255, g: 150, b: 230 },
-    line1: "You’re not needy — you just want your work to be *seen* when it’s real.",
-    line2: "Upside: pride + drive. Watch-out: chasing applause can distort the goal.",
-    drivers: ["people", "momentum"],
-    keywords: ["recognition", "seen", "respect", "credit", "proud", "prove"],
-  },
-];
-
-function normalizeTextPieces(parts: string[]) {
-  return parts
-    .map((x) => (x ?? "").toString().trim())
-    .filter(Boolean)
-    .join(" | ")
-    .toLowerCase();
-}
-
-function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drainers: string[]; receipts: string[] }) {
-  const { top3, boosters, drainers, receipts } = args;
-
-  const driverScore = new Map<DriverId, number>();
-  for (const d of top3) driverScore.set(d.def.id, clamp01(d.score ?? 0));
-
-  const blob = normalizeTextPieces([
-    ...(boosters ?? []).slice(0, 12),
-    ...(drainers ?? []).slice(0, 10),
-    ...(receipts ?? []).slice(0, 8),
-    ...top3.map((x) => x.def.label),
-    ...top3.map((x) => x.def.whenItHits),
-  ]);
-
-  const scored: ScoredMotivation[] = MOTIVATIONS_TAXONOMY
-    .map((m) => {
-      let s = 0.18; // higher base so "low signal" still yields visible motivations
-
-      for (const did of m.drivers) {
-        if (did === "clarity") {
-          s += (driverScore.get("meaning") ?? 0.45) * 0.16;
-          s += (driverScore.get("momentum") ?? 0.45) * 0.08;
-        } else {
-          s += (driverScore.get(did) ?? 0.42) * 0.34;
-        }
-      }
-
-      const hits = m.keywords.reduce((acc, k) => {
-        const key = k.toLowerCase();
-        if (!key) return acc;
-        return blob.includes(key) ? acc + 1 : acc;
-      }, 0);
-
-      s += Math.min(0.26, hits * 0.06);
-
-      const topDriverId = top3[0]?.def?.id ?? null;
-      if (topDriverId && (m.drivers as DriverHint[]).includes(topDriverId)) s += 0.08;
-
-      return { def: m, score: clamp01(s) };
+function writeSelfReport(text: string) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    MOTIVATIONS_SELFREPORT_KEY,
+    JSON.stringify({
+      text: (text ?? "").trim(),
+      savedAt: Date.now(),
     })
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  );
+}
 
-  const cleanReceipts = (receipts ?? [])
-    .map((r) => (r ?? "").toString().trim())
-    .filter((r) => r.length >= 6 && r.length <= 140);
+function LowSignalAssist({
+  dark,
+  isLow,
+  selfReportValue,
+  onSelfReportSaved,
+}: {
+  dark: boolean;
+  isLow: boolean;
+  selfReportValue: string;
+  onSelfReportSaved: (v: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [text, setText] = React.useState(selfReportValue ?? "");
+  const [saved, setSaved] = React.useState(!!selfReportValue);
 
-  const attachReceipt = (m: ScoredMotivation) => {
-    const safeKeywords = m.def.keywords
-      .map((k) => (k ?? "").trim())
-      .filter(Boolean)
-      .slice(0, 10)
-      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  React.useEffect(() => {
+    setText(selfReportValue ?? "");
+    setSaved(!!selfReportValue);
+  }, [selfReportValue]);
 
-    if (!safeKeywords.length) return m;
+  if (!isLow) return null;
 
-    const rx = new RegExp(`\\b(${safeKeywords.join("|")})\\b`, "i");
-    const found = cleanReceipts.find((r) => rx.test(r));
-    return found ? { ...m, receipt: found } : m;
+  const canSave = (text ?? "").trim().length >= 6;
+
+  return (
+    <div className="mt-4">
+      <div className={softCard(dark)}>
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="absolute inset-0" style={{ opacity: dark ? 1 : 0.8, background: "radial-gradient(520px 240px at 12% 0%, rgba(255,170,110,0.12), transparent 62%), radial-gradient(520px 240px at 90% 80%, rgba(120,200,255,0.10), transparent 64%)" }} />
+        </div>
+
+        <div className="relative">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className={sectionKicker(dark)}>Signal is low</div>
+              <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
+                That’s normal when we don’t have enough answers yet. Two quick ways to sharpen this:
+              </div>
+            </div>
+
+            {saved ? (
+              <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                (Saved)
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href="https://dev.everleap.ai/main/questions?cat=motivations&returnTo=/main/insights"
+              className={primaryLinkButton(dark)}
+            >
+              <Sparkles className="h-4 w-4" aria-hidden />
+              Answer more questions
+            </Link>
+
+            <button type="button" className={subtleLinkButton(dark)} onClick={() => setOpen((v) => !v)}>
+              <Users className="h-4 w-4" aria-hidden />
+              Tell us in your words
+            </button>
+          </div>
+
+          <div
+            className={[
+              "mt-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
+              open ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0",
+            ].join(" ")}
+            aria-hidden={!open}
+          >
+            <div className={softInputShell(dark)}>
+              <div className="relative p-4">
+                <div className={["text-[13px] font-semibold", dark ? "text-white" : "text-slate-900"].join(" ")}>
+                  What usually gets you moving?
+                </div>
+                <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
+                  One or two sentences is perfect. Example: “I’m motivated when ___” or “I care most about ___”.
+                </div>
+
+                <div className="mt-3">
+                  <textarea
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      if (saved) setSaved(false);
+                    }}
+                    rows={3}
+                    placeholder="Type what motivates you…"
+                    className={[
+                      "w-full resize-none rounded-[18px] px-4 py-3 text-[14px] leading-relaxed",
+                      "bg-transparent outline-none ring-1 ring-inset",
+                      dark
+                        ? "text-white placeholder:text-white/32 ring-white/12 focus:ring-white/20"
+                        : "text-slate-900 placeholder:text-slate-500 ring-black/10 focus:ring-black/15",
+                      "focus-visible:ring-2 focus-visible:ring-orange-200/20",
+                    ].join(" ")}
+                  />
+                  <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>
+                    We’ll use this to tune your motivations next time.
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className={chipButton(dark)}
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!canSave) return;
+                      const cleaned = (text ?? "").trim();
+                      writeSelfReport(cleaned);
+                      onSelfReportSaved(cleaned);
+                      setSaved(true);
+                      setOpen(false);
+                    }}
+                    disabled={!canSave}
+                    className={saveButton(dark, !canSave)}
+                  >
+                    Save
+                  </button>
+                </div>
+
+                <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
+                  Saved to localStorage:{" "}
+                  <span className={dark ? "text-white/40" : "text-slate-600"}>{MOTIVATIONS_SELFREPORT_KEY}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={["mt-3 text-[12px] leading-relaxed", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+            Tip: the more you answer, the less “generic” this gets.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =============================================================================
+   Motivation card
+   ============================================================================= */
+
+function MotivationCard({
+  dark,
+  item,
+  signal,
+}: {
+  dark: boolean;
+  item: ScoredMotivation;
+  signal: number;
+}) {
+  const { def, score, receipt } = item;
+
+  // confidence: blend model score + overall signal so it feels honest
+  const conf = clamp01(0.35 * clamp01(score) + 0.65 * clamp01(signal));
+  const pct = Math.round(conf * 100);
+
+  const badgeStyle: CSSVars = {
+    ...glowBg(dark, def.accent, 0.14),
+    ["--accent" as const]: rgb(def.accent),
   };
 
-  const top5Raw = scored.slice(0, 5).map(attachReceipt);
+  return (
+    <div className={softCard(dark)} style={badgeStyle}>
+      <div className="pointer-events-none absolute inset-0" aria-hidden style={glowBg(dark, def.accent, 0.14)} />
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div
+                className={[
+                  "inline-flex h-8 w-8 items-center justify-center rounded-full border",
+                  "backdrop-blur-xl",
+                  dark ? "border-white/10 bg-white/[0.05]" : "border-black/10 bg-white/80",
+                ].join(" ")}
+                style={{
+                  boxShadow: `0 0 30px rgba(${rgb(def.accent)}, ${dark ? 0.22 : 0.14})`,
+                }}
+                aria-hidden
+              >
+                <span className={dark ? "text-white/85" : "text-slate-800"}>
+                  <MotivationIcon id={def.id} />
+                </span>
+              </div>
 
-  const seen = new Set<MotivationId>();
-  const top5: ScoredMotivation[] = [];
-  for (const m of top5Raw) {
-    if (seen.has(m.def.id)) continue;
-    seen.add(m.def.id);
-    top5.push(m);
-    if (top5.length >= 5) break;
-  }
+              <div className={["text-[14px] font-semibold", dark ? "text-white" : "text-slate-900"].join(" ")}>
+                {def.label}
+              </div>
+            </div>
+          </div>
 
-  // hard guarantee: always return 5
-  while (top5.length < 5) {
-    const next = scored[top5.length];
-    if (!next) break;
-    if (!seen.has(next.def.id)) top5.push(attachReceipt(next));
-    seen.add(next.def.id);
-  }
+          <div className={pillBase(dark)}>
+            <span className={dark ? "text-white/70" : "text-slate-700"}>Confidence</span>
+            <span className={dark ? "text-white" : "text-slate-900"}>{pct}%</span>
+          </div>
+        </div>
 
-  return { top5 };
-}
+        <div className={["mt-3 text-[13.5px] leading-relaxed", mutedText(dark)].join(" ")}>
+          {def.hook}
+        </div>
 
-function normalizeMotivationsTop(input?: MotivationsTop | null): MotivationsTop {
-  const raw = input ?? null;
-  const top3 =
-    raw && Array.isArray((raw as MotivationsTop).top3)
-      ? ((raw as MotivationsTop).top3 as ScoredDriver[]).filter((x) => !!x?.def?.id)
-      : [];
+        <div className={["mt-2 text-[13.5px] leading-relaxed", mutedText(dark)].join(" ")}>
+          <span className={dark ? "text-white/70" : "text-slate-700"}>Why this might fit: </span>
+          {def.because}
+        </div>
 
-  if (top3.length >= 1) {
-    const top = raw && (raw as MotivationsTop).top ? (raw as MotivationsTop).top : top3[0];
-    return { top3, top };
-  }
+        {receipt ? (
+          <div
+            className={[
+              "mt-3 rounded-[16px] border px-3 py-2 text-[12.5px] leading-relaxed",
+              dark ? "border-white/10 bg-white/[0.03] text-white/70" : "border-black/10 bg-white/70 text-slate-700",
+            ].join(" ")}
+          >
+            <span className={dark ? "text-white/55" : "text-slate-600"}>From your answers: </span>
+            {receipt}
+          </div>
+        ) : null}
 
-  return buildDefaultMotivationsTop();
-}
-
-function defaultBoostersIfEmpty(xs: string[]) {
-  if (xs.length) return xs;
-  return ["Small wins", "Clear next step", "Real feedback"];
-}
-
-function defaultDrainersIfEmpty(xs: string[]) {
-  if (xs.length) return xs;
-  return ["Stalled decisions", "Too many open loops"];
+        <div className={["mt-3 text-[12.5px] leading-relaxed", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+          <span className={dark ? "text-white/55" : "text-slate-600"}>Watch-out: </span>
+          {def.watchOut}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* =============================================================================
@@ -903,7 +1114,7 @@ export function MotivationsTab(props: {
   dark: boolean;
   motivationsTop?: MotivationsTop | null;
 
-  // Optional (page.tsx may pass or may not)
+  // optional so page.tsx doesn’t have to pass it
   openDriver?: DriverId | null;
   setOpenDriver?: React.Dispatch<React.SetStateAction<DriverId | null>> | unknown;
 
@@ -922,7 +1133,7 @@ export function MotivationsTab(props: {
   const {
     dark,
     motivationsTop,
-    setOpenDriver,
+    setOpenDriver, // kept for compatibility (unused here)
     energyBoosters,
     energyDrainers,
     motivationReceipts,
@@ -932,67 +1143,72 @@ export function MotivationsTab(props: {
     nameFromHeadline,
   } = props;
 
+  // default openDriver to null if not provided
   const openDriver: DriverId | null = props.openDriver ?? null;
 
-  const safeTop = React.useMemo(() => normalizeMotivationsTop(motivationsTop), [motivationsTop]);
-
-  const safeBoosters = React.useMemo(
-    () => defaultBoostersIfEmpty(Array.isArray(energyBoosters) ? energyBoosters.filter(Boolean) : []),
-    [energyBoosters]
-  );
-  const safeDrainers = React.useMemo(
-    () => defaultDrainersIfEmpty(Array.isArray(energyDrainers) ? energyDrainers.filter(Boolean) : []),
-    [energyDrainers]
-  );
-  const safeReceipts = React.useMemo(
-    () => (Array.isArray(motivationReceipts) ? motivationReceipts.filter(Boolean) : []),
+  const safeBoosters = React.useMemo(() => (Array.isArray(energyBoosters) ? energyBoosters : []), [energyBoosters]);
+  const safeDrainers = React.useMemo(() => (Array.isArray(energyDrainers) ? energyDrainers : []), [energyDrainers]);
+  const safeReceiptsRaw = React.useMemo(
+    () => (Array.isArray(motivationReceipts) ? motivationReceipts : []),
     [motivationReceipts]
   );
 
-  const safeSetOpenDriver = React.useCallback(
-    (next: DriverId | null) => {
-      if (typeof setOpenDriver === "function") {
-        (setOpenDriver as React.Dispatch<React.SetStateAction<DriverId | null>>)(next);
-      }
-    },
-    [setOpenDriver]
-  );
-
-  // If page.tsx doesn't manage openDriver, we still want an initial open panel.
-  const [localOpen, setLocalOpen] = React.useState<DriverId | null>(null);
-  const effectiveOpen = openDriver ?? localOpen;
+  const [selfReport, setSelfReport] = React.useState<string>("");
 
   React.useEffect(() => {
-    if (effectiveOpen) return;
-    const first = safeTop.top3[0]?.def?.id ?? null;
-    if (first) setLocalOpen(first);
-  }, [safeTop.top3, effectiveOpen]);
+    const existing = readSelfReport();
+    if (existing?.text) setSelfReport(existing.text);
+  }, []);
 
-  function setOpen(next: DriverId | null) {
-    // if parent controls, this will work; if not, localOpen controls.
-    safeSetOpenDriver(next);
-    setLocalOpen(next);
-  }
+  const safeTop: MotivationsTop = React.useMemo(() => {
+    const raw = motivationsTop ?? null;
+    const top3 =
+      raw && Array.isArray((raw as MotivationsTop).top3)
+        ? ((raw as MotivationsTop).top3 as ScoredDriver[]).filter(Boolean)
+        : [];
+    const top = raw && (raw as MotivationsTop).top ? (raw as MotivationsTop).top : undefined;
+    return { top3, top };
+  }, [motivationsTop]);
 
-  const topDriver = safeTop.top?.def ?? safeTop.top3[0]?.def ?? DRIVER_DEFS.momentum;
+  const topDriver = safeTop.top?.def ?? safeTop.top3[0]?.def ?? null;
+
+  const signal = React.useMemo(() => computeSignalConfidence(safeTop.top3 ?? []), [safeTop.top3]);
+  const isLowSignal = signal < 0.45;
+
+  const receipts = React.useMemo(() => {
+    const list = [...safeReceiptsRaw];
+    if ((selfReport ?? "").trim().length >= 6) list.unshift(selfReport.trim());
+    return list;
+  }, [safeReceiptsRaw, selfReport]);
 
   const taxonomy = React.useMemo(
     () =>
       scoreMotivations({
-        top3: safeTop.top3 ?? buildDefaultMotivationsTop().top3,
+        top3: safeTop.top3 ?? [],
         boosters: safeBoosters,
         drainers: safeDrainers,
-        receipts: safeReceipts,
+        receipts,
       }),
-    [safeTop.top3, safeBoosters, safeDrainers, safeReceipts]
+    [safeTop.top3, safeBoosters, safeDrainers, receipts]
   );
+
+  // keep old behavior if a parent expects driver state to exist; we just avoid breaking types
+  React.useEffect(() => {
+    if (!safeTop.top3.length) return;
+    if (openDriver) return;
+    const first = safeTop.top3[0]?.def?.id ?? null;
+    if (!first) return;
+    if (typeof setOpenDriver === "function") {
+      (setOpenDriver as React.Dispatch<React.SetStateAction<DriverId | null>>)(first);
+    }
+  }, [safeTop.top3, openDriver, setOpenDriver]);
 
   return (
     <section className="mb-6">
       <div className={readingSurface(dark)}>
-        {/* Header */}
         <div className="relative">
           <div className={sectionKicker(dark)}>Motivations</div>
+
           <div
             className={[
               "mt-2 text-[20px] md:text-[22px] font-semibold tracking-tight leading-snug",
@@ -1005,199 +1221,81 @@ export function MotivationsTab(props: {
           <p className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
             {motivationsIntro(topDriver, nameFromHeadline)}
           </p>
-        </div>
 
-        {/* Drivers (always render, even if low signal) */}
-        <div className="mt-6">
-          <div className={sectionKicker(dark)}>Your top drivers</div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className={pillBase(dark)}>
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{
+                  background:
+                    signal >= 0.72 ? "rgba(120,255,190,0.95)" : signal >= 0.45 ? "rgba(120,200,255,0.95)" : "rgba(255,180,120,0.95)",
+                  boxShadow:
+                    signal >= 0.72
+                      ? "0 0 18px rgba(120,255,190,0.30)"
+                      : signal >= 0.45
+                        ? "0 0 18px rgba(120,200,255,0.26)"
+                        : "0 0 18px rgba(255,180,120,0.22)",
+                }}
+                aria-hidden
+              />
+              <span>Signal</span>
+              <span className={dark ? "text-white" : "text-slate-900"}>{Math.round(signal * 100)}%</span>
+              <span className={dark ? "text-white/55" : "text-slate-600"}>({signalLabel(signal)})</span>
+            </div>
 
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            {(safeTop.top3.length ? safeTop.top3 : buildDefaultMotivationsTop().top3).slice(0, 3).map((d) => {
-              const active = effectiveOpen === d.def.id;
-              return (
-                <button
-                  key={d.def.id}
-                  type="button"
-                  onClick={() => setOpen(active ? null : d.def.id)}
-                  className={[
-                    "text-left",
-                    "rounded-[20px] border px-4 py-3 backdrop-blur-xl transition",
-                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                    dark ? "border-white/10 bg-white/[0.04] hover:bg-white/[0.06]" : "border-black/10 bg-white/85",
-                    active ? (dark ? "shadow-[0_18px_55px_rgba(0,0,0,0.32)]" : "shadow-[0_14px_40px_rgba(0,0,0,0.12)]") : "",
-                  ].join(" ")}
-                  style={driverGlowStyle(dark, d.def.accent)}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, d.def.accent)} />
-                        <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{d.def.label}</div>
-                      </div>
-                      <div className={["mt-1 text-[12px]", mutedText(dark)].join(" ")}>
-                        Signal: {Math.round(clamp01(d.score) * 100)}%
-                      </div>
-                    </div>
-
-                    <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
-                      {active ? "Open" : "Tap"}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+            {isLowSignal ? (
+              <div className={["text-[12px]", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+                Low signal right now — we’ll show best-guess defaults.
+              </div>
+            ) : null}
           </div>
 
-          {/* Open driver narrative */}
-          {effectiveOpen ? (
-            <div className="mt-3">
-              {(() => {
-                const def =
-                  safeTop.top3.find((x) => x.def.id === effectiveOpen)?.def ?? DRIVER_DEFS[effectiveOpen];
-                const n = driverNarrative(def);
-                return (
-                  <div className={driverCardShell(dark)} style={driverGlowStyle(dark, def.accent)}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, def.accent)} />
-                          <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{def.label}</div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setOpen(null)}
-                        className={[
-                          "h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
-                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                          dark
-                            ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]"
-                            : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                        ].join(" ")}
-                      >
-                        Close
-                      </button>
-                    </div>
-
-                    <div className={["mt-3 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{n.p1}</div>
-                    <div className={["mt-2 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{n.p2}</div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
+          <LowSignalAssist
+            dark={dark}
+            isLow={isLowSignal}
+            selfReportValue={selfReport}
+            onSelfReportSaved={(v) => setSelfReport(v)}
+          />
         </div>
 
-        {/* Energy Map */}
         <div className="mt-6">
-          <div className={sectionKicker(dark)}>Energy map</div>
-
-          <div className={[microCardShell(dark), "mt-3"].join(" ")} style={energyFieldStyle(dark)}>
-            <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-              <div className="md:w-1/2">
-                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
-                  Boosters
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {safeBoosters.slice(0, 10).map((t) => {
-                    const accent = pickAccent(t, "booster");
-                    return (
-                      <span
-                        key={`b:${t}`}
-                        className={[
-                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-semibold",
-                          "backdrop-blur-xl",
-                          dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
-                        ].join(" ")}
-                      >
-                        <span className="h-2 w-2 rounded-full" style={pillDotStyle(dark, accent)} />
-                        {t}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="md:w-1/2">
-                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
-                  Drainers
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {safeDrainers.slice(0, 10).map((t) => {
-                    const accent = pickAccent(t, "drainer");
-                    return (
-                      <span
-                        key={`d:${t}`}
-                        className={[
-                          "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-semibold",
-                          "backdrop-blur-xl",
-                          dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
-                        ].join(" ")}
-                      >
-                        <span className="h-2 w-2 rounded-full" style={pillDotStyle(dark, accent)} />
-                        {t}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className={["mt-3 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
-              If this section looks “generic,” that means we don’t have enough personal signal yet — so we’re showing sane defaults.
-              As you answer more prompts, these get sharper.
-            </div>
-          </div>
-        </div>
-
-        {/* Motivations list (THIS is what was missing in your UI) */}
-        <div className="mt-6">
-          <div className={sectionKicker(dark)}>Your likely motivations</div>
+          <div className={sectionKicker(dark)}>Your top motivators</div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {taxonomy.top5.map((m) => (
-              <div key={m.def.id} className={microCardShell(dark)} style={microGlowStyle(dark, m.def.accent)}>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={pillDotStyle(dark, m.def.accent)} />
-                  <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>{m.def.label}</div>
-                  <div className={["ml-auto text-[12px] font-semibold", mutedText(dark)].join(" ")}>
-                    {Math.round(clamp01(m.score) * 100)}%
-                  </div>
-                </div>
-
-                <div className={["mt-2 text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>{m.def.line1}</div>
-                <div className={["mt-2 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>{m.def.line2}</div>
-
-                {m.receipt ? (
-                  <div className={["mt-3 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    <span className={dark ? "text-white/55" : "text-slate-600"}>Why I’m saying this:</span>{" "}
-                    <span className={dark ? "text-white/70" : "text-slate-700"}>{m.receipt}</span>
-                  </div>
-                ) : null}
-              </div>
+            {(taxonomy.top ?? []).map((m) => (
+              <MotivationCard key={m.def.id} dark={dark} item={m} signal={signal} />
             ))}
+          </div>
+
+          <div className={["mt-3 text-[12.5px] leading-relaxed", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+            These are “best guesses” that get sharper as you answer more prompts.
           </div>
         </div>
 
-        {/* Next steps */}
-        {nextStepsMotivations ? (
-          <div className="mt-6">
-            <NextStepsStack
-              dark={dark}
-              useLocal={mounted}
-              definition={nextStepsMotivations}
-              variant="embedded"
-              collapsible={false}
-              defaultOpen
-            />
-          </div>
-        ) : (
-          <div className={["mt-6 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
-        )}
-
-        {/* Quick feedback */}
+        {/* ✅ Quick Check should come BEFORE One Small Move */}
         <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
+
+        {/* One Small Move */}
+        <div className="mt-6">
+          <div className={sectionKicker(dark)}>One small move</div>
+
+          {nextStepsMotivations ? (
+            <div className="mt-3">
+              <NextStepsStack
+                dark={dark}
+                useLocal={mounted}
+                definition={nextStepsMotivations}
+                variant="embedded"
+                collapsible={false}
+                defaultOpen
+              />
+            </div>
+          ) : (
+            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Next steps are loading…
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
