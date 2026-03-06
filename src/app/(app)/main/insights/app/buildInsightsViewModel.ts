@@ -1,5 +1,7 @@
 "use client";
 
+import { FUN_FACTS_CONTENT } from "../insightsContent";
+
 export type InsightsTab =
   | "summary"
   | "superpowers"
@@ -42,6 +44,19 @@ export type WordCloudItem = {
   weight: number; // 0..1
 };
 
+type FunFactsVM = {
+  headline: string;
+  storySoFar: string[];
+  timeTwin: {
+    title: string;
+    subtitle: string;
+    teaser: string;
+    href: string;
+    twinId: string;
+    badges: string[];
+  };
+};
+
 export type InsightsViewModel = {
   tab: InsightsTab;
   summary: {
@@ -56,6 +71,7 @@ export type InsightsViewModel = {
     tripUps: TripUp[];
     experiment: Experiment;
   };
+  funFacts: FunFactsVM;
 };
 
 type Saved = { answer?: string; skipped?: boolean };
@@ -342,7 +358,6 @@ const STOPWORDS = new Set(
     "day",
     "days",
     "most",
-    // NOTE: leaving "some" OUT so “Coffee and some friends” still yields coffee/friends
   ].sort()
 );
 
@@ -536,16 +551,11 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const startedSkl = skl >= 1;
   const startedAllThree = startedMot && startedStr && startedSkl;
 
-  // (Optional future use) “completed” means “filled all 5”
-  // const completedAllThree = mot >= 5 && str >= 5 && skl >= 5;
-  // void completedAllThree;
-
   const signalBar = buildSignalBar(saved);
   const cloud = buildWordCloud(saved);
   const { top, second } = pickTopSignals(signalBar);
   const funRead = funReadFromSignals(top, second);
 
-  // Headline: coach-y, state-aware, light (not diagnostic)
   const headline = brandNew
     ? name
       ? `Hey ${name} — let’s build signal first.`
@@ -558,7 +568,6 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
         ? `Here’s what I’m hearing, ${name}.`
         : "Here’s what I’m hearing.";
 
-  // Primary unlock: if not all 3 foundations started, nudge missing cats (Motivations first)
   const missingCats: Array<"motivations" | "strengths" | "skills"> = [];
   if (!startedMot) missingCats.push("motivations");
   if (!startedStr) missingCats.push("strengths");
@@ -586,7 +595,6 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
       }
     : undefined;
 
-  // Secondary unlock: broader “fill in more” (still useful, but not required for the new UI)
   const unlockItems: UnlockItem[] = [];
   if (mot < 5)
     unlockItems.push({
@@ -614,7 +622,6 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
       }
     : undefined;
 
-  // Story (2–3 coach lines, no dashboard meter)
   const storySoFarRaw: string[] = [];
   if (brandNew) {
     storySoFarRaw.push("I don’t have enough signal yet.");
@@ -654,7 +661,7 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
     headline,
     receipts: [],
     signalBar,
-    wordCloud: cloud, // ✅ critical: computed cloud
+    wordCloud: cloud,
     unlock,
     primaryUnlock,
     storySoFar: shortBullets(storySoFarRaw, 3),
@@ -664,7 +671,73 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   };
 }
 
+function pickTimeTwinId(signalBar: SignalBarItem[], answeredTotal: number): string {
+  if (answeredTotal <= 0) return FUN_FACTS_CONTENT.timeTwin.twinId;
+
+  const sorted = [...signalBar].sort((a, b) => b.strength - a.strength);
+  const top = sorted[0]?.id;
+
+  switch (top) {
+    case "action":
+      return "tesla";
+    case "people":
+      return "frida";
+    case "curiosity":
+      return "leonardo";
+    case "clarity":
+      return "turing";
+    default:
+      return FUN_FACTS_CONTENT.timeTwin.twinId;
+  }
+}
+
+function buildFunFactsVM(opts: UseLocalOpts): FunFactsVM {
+  const fallback: FunFactsVM = {
+    headline: FUN_FACTS_CONTENT.headline,
+    storySoFar: FUN_FACTS_CONTENT.storySoFar,
+    timeTwin: {
+      ...FUN_FACTS_CONTENT.timeTwin,
+    },
+  };
+
+  if (!opts.useLocal || typeof window === "undefined") return fallback;
+
+  const saved = loadStorySaved();
+  const mot = countAnswered("motivations", saved);
+  const str = countAnswered("strengths", saved);
+  const skl = countAnswered("skills", saved);
+  const answeredTotal = mot + str + skl;
+
+  const signalBar = buildSignalBar(saved);
+  const twinId = pickTimeTwinId(signalBar, answeredTotal);
+
+  const top = [...signalBar].sort((a, b) => b.strength - a.strength)[0]?.id;
+
+  const subtitle =
+    top === "action"
+      ? "A historical builder mind with strong making energy."
+      : top === "people"
+        ? "A historical mind shaped by emotional truth and human signal."
+        : top === "clarity"
+          ? "A historical mind drawn to systems, logic, and hidden structure."
+          : top === "curiosity"
+            ? "A historical mind powered by wonder, exploration, and connection."
+            : FUN_FACTS_CONTENT.timeTwin.subtitle;
+
+  return {
+    headline: FUN_FACTS_CONTENT.headline,
+    storySoFar: FUN_FACTS_CONTENT.storySoFar,
+    timeTwin: {
+      ...FUN_FACTS_CONTENT.timeTwin,
+      subtitle,
+      twinId,
+      href: `${FUN_FACTS_CONTENT.timeTwin.href}?twin=${encodeURIComponent(twinId)}`,
+    },
+  };
+}
+
 export function buildInsightsViewModel(tab: InsightsTab, opts: UseLocalOpts): InsightsViewModel {
   const summary = buildSummaryVM(opts);
-  return { tab, summary };
+  const funFacts = buildFunFactsVM(opts);
+  return { tab, summary, funFacts };
 }

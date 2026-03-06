@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Sparkles, Shield, Clock3 } from "lucide-react";
+import { Sparkles, Shield } from "lucide-react";
 
 import { isDarkTheme, type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
 
@@ -17,6 +17,7 @@ import { getInsightLens } from "@/app/(app)/main/content/insightLenses";
 import MotivationsTab from "./components/MotivationsTab";
 import StrengthsTab from "./components/StrengthsTab";
 import SkillsTab from "./components/SkillsTab";
+import FunFactsTab from "./components/FunFactsTab";
 
 /* =============================================================================
    Tabs
@@ -1292,7 +1293,11 @@ export default function Page() {
                   aria-current={selected ? "page" : undefined}
                   onClick={() => setTabAndSync(t.id)}
                 >
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={tabDotStyle({ dark, selected, accent: t.accent })} />
+                  <span
+                    aria-hidden
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={tabDotStyle({ dark, selected, accent: t.accent })}
+                  />
                   <span className="relative">{t.label}</span>
                 </button>
               );
@@ -1349,22 +1354,34 @@ export default function Page() {
 
                 <div className={["mt-5 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
                   Want the zoom-in version? Open{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Motivations</span>,{" "}
-                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Strengths</span>, and{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
+                    Motivations
+                  </span>
+                  ,{" "}
+                  <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>
+                    Strengths
+                  </span>
+                  , and{" "}
                   <span className={dark ? "text-white/80 font-semibold" : "text-slate-800 font-semibold"}>Skills</span>.
                 </div>
 
                 <div className="mt-4 space-y-2">
                   <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Motivations:</span>{" "}
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>
+                      Motivations:
+                    </span>{" "}
                     {agenticNote.motivatorsLine}
                   </div>
                   <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Strengths:</span>{" "}
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>
+                      Strengths:
+                    </span>{" "}
                     {agenticNote.strengthsLine}
                   </div>
                   <div className={["text-[14px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>Skills:</span>{" "}
+                    <span className={dark ? "text-white/70 font-semibold" : "text-slate-900 font-semibold"}>
+                      Skills:
+                    </span>{" "}
                     {agenticNote.skillsLine}
                   </div>
                 </div>
@@ -1517,55 +1534,13 @@ export default function Page() {
             nameFromHeadline={nameFromHeadline}
           />
         ) : tab === "funFacts" ? (
-          <section className="mb-6">
-            <div className={readingSurface(dark)}>
-              <div className={sectionKicker(dark)}>Fun Facts</div>
-              <div className={["mt-2 text-[18px] font-semibold tracking-tight", sectionTitle(dark)].join(" ")}>
-                A lighter mirror — still grounded in how you move through the world.
-              </div>
-              <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                This is where we keep the “delight” layer — the stuff that helps you see yourself from a new angle without
-                turning life into a quiz.
-              </div>
-
-              <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
-
-              <button
-                type="button"
-                onClick={() => router.push("/main/insights/fun-facts/time-twin")}
-                className={[
-                  "w-full text-left",
-                  "relative overflow-hidden rounded-[22px] border px-4 py-4",
-                  "backdrop-blur-xl transition active:scale-[0.99]",
-                  dark ? "border-white/10 bg-white/5 hover:bg-white/8" : "border-black/10 bg-white/85 hover:bg-white",
-                ].join(" ")}
-              >
-                <div className="pointer-events-none absolute inset-0" aria-hidden>
-                  <div className={["absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl", dark ? "bg-violet-300/10" : "bg-violet-400/10"].join(" ")} />
-                  <div className={["absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl", dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8"].join(" ")} />
-                </div>
-
-                <div className="relative flex items-start gap-3">
-                  <div className={["mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border", dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white"].join(" ")} aria-hidden>
-                    <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</div>
-                    <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-                      A biography-style mirror — creative + technical + real-world impact.
-                    </div>
-
-                    <div className={["mt-2 inline-flex items-center gap-2 text-sm font-semibold", dark ? "text-white/70" : "text-slate-700"].join(" ")}>
-                      Open story <span aria-hidden className="opacity-80">↗</span>
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>More Fun Facts will live here over time.</div>
-            </div>
-          </section>
+          <FunFactsTab
+            dark={dark}
+            mounted={mounted}
+            tab={tab}
+            nameFromHeadline={nameFromHeadline}
+            wordCloudDisplay={wordCloudDisplay}
+          />
         ) : (
           <section className="mb-6">
             <div

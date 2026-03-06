@@ -915,3 +915,40 @@ export const INSIGHTS_CARDS: InsightCard[] = [
     bullets: ["Narrative reveal", "Overlap chips", "Quote + mini challenge"],
   },
 ];
+
+/* ============================================================
+   Fun Facts lane content
+   Used by FunFactsTab.tsx for the teaser surface
+   ============================================================ */
+
+export type FunFactsTimeTwinTeaser = {
+  title: string;
+  subtitle: string;
+  teaser: string;
+  href: string;
+  twinId: string;
+  badges: string[];
+};
+
+export type FunFactsContent = {
+  headline: string;
+  storySoFar: string[];
+  timeTwin: FunFactsTimeTwinTeaser;
+};
+
+export const FUN_FACTS_CONTENT: FunFactsContent = {
+  headline: "Fun facts",
+  storySoFar: [
+    "This lane is where Everleap gets a little more playful without losing the thread.",
+    "It’s still about you — just through odd mirrors, curiosity hooks, and patterns that are more fun to notice than to explain.",
+  ],
+  timeTwin: {
+    title: "Your Time Twin",
+    subtitle: "A historical mind your story seems to rhyme with.",
+    teaser:
+      "This is less “you are exactly this person” and more “your mind seems to move in a similar direction.” It’s playful, a little cinematic, and useful if it helps you notice how you think.",
+    href: "/main/insights/fun-facts/time-twin",
+    twinId: "leonardo",
+    badges: ["curiosity", "pattern-thinking", "historical mirror"],
+  },
+};

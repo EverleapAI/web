@@ -6,6 +6,7 @@ import { Sparkles, Clock3, ArrowUpRight } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 import type { InsightsTab } from "@/app/(app)/main/insights/app/buildInsightsViewModel";
+import { TIME_TWINS } from "../fun-facts/content/timeTwins";
 
 /* =============================================================================
    Types (safe extraction from VM without `any`)
@@ -20,6 +21,7 @@ type FunFactsLike = {
     teaser?: string;
     href?: string;
     badges?: string[];
+    twinId?: string;
   };
 };
 
@@ -100,6 +102,29 @@ function badge(dark: boolean) {
   ].join(" ");
 }
 
+function buildTimeTwinHref(rawHref: string, twinId: string) {
+  const trimmed = rawHref.trim();
+
+  if (!trimmed) {
+    return `/main/insights/fun-facts/time-twin?twin=${encodeURIComponent(twinId)}`;
+  }
+
+  if (trimmed.includes("/main/insights/fun-facts/time-twin")) {
+    return trimmed.includes("?")
+      ? `${trimmed}&twin=${encodeURIComponent(twinId)}`
+      : `${trimmed}?twin=${encodeURIComponent(twinId)}`;
+  }
+
+  if (trimmed.includes("/main/insights/fun/time-twin")) {
+    const corrected = trimmed.replace("/main/insights/fun/time-twin", "/main/insights/fun-facts/time-twin");
+    return corrected.includes("?")
+      ? `${corrected}&twin=${encodeURIComponent(twinId)}`
+      : `${corrected}?twin=${encodeURIComponent(twinId)}`;
+  }
+
+  return `/main/insights/fun-facts/time-twin?twin=${encodeURIComponent(twinId)}`;
+}
+
 /* =============================================================================
    Component
    ============================================================================= */
@@ -127,7 +152,14 @@ export function FunFactsTab(props: {
     timeTwin?.teaser,
     "Not a personality match. More like: a vibe + a path — the kind of person your story rhymes with."
   );
-  const ttHref = asString(timeTwin?.href, "/main/insights/fun/time-twin");
+
+  const vmTwinId = asString(timeTwin?.twinId, "").trim();
+  const defaultTwinId = vmTwinId || TIME_TWINS[0]?.id || "leonardo";
+
+  const ttHref = buildTimeTwinHref(
+    asString(timeTwin?.href, ""),
+    defaultTwinId
+  );
 
   const ttBadges =
     Array.isArray(timeTwin?.badges) && timeTwin?.badges?.length
@@ -193,7 +225,7 @@ export function FunFactsTab(props: {
 
             <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
 
-            {/* Time Twin teaser card (single surface, not nested boxes) */}
+            {/* Time Twin teaser card */}
             <div>
               <div className={tinyLabel(dark)}>Featured</div>
 
@@ -214,7 +246,9 @@ export function FunFactsTab(props: {
                     <span
                       className={[
                         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                        dark ? "bg-white/6 text-white/70 ring-1 ring-white/10" : "bg-black/5 text-slate-700 ring-1 ring-black/10",
+                        dark
+                          ? "bg-white/6 text-white/70 ring-1 ring-white/10"
+                          : "bg-black/5 text-slate-700 ring-1 ring-black/10",
                       ].join(" ")}
                     >
                       <Sparkles className="h-3.5 w-3.5 opacity-80" />
@@ -250,7 +284,6 @@ export function FunFactsTab(props: {
 
             <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
 
-            {/* Future fun facts placeholder (kept light) */}
             <div>
               <div className={tinyLabel(dark)}>Coming next</div>
               <div className={`mt-2 text-sm leading-7 ${sectionMuted(dark)}`}>
