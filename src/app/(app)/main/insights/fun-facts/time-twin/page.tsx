@@ -406,7 +406,7 @@ export default function TimeTwinPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
-            {sectionTitle("Why this person surfaced")}
+            {sectionTitle("Bio + why this fits you")}
 
             <div className="space-y-4 text-[15px] leading-7 text-white/76 sm:text-[15.5px]">
               {narrative.intro ? <p>{narrative.intro}</p> : null}
@@ -414,31 +414,18 @@ export default function TimeTwinPage() {
               {narrative.reflection ? <p>{narrative.reflection}</p> : null}
             </div>
 
-            {Array.isArray(activeLooseTwin.storyBeats) &&
-            (activeLooseTwin.storyBeats?.length ?? 0) > 0 ? (
-              <div className="mt-6">
-                {sectionTitle("Pattern notes")}
-                <div className="grid gap-3">
-                  {(activeLooseTwin.storyBeats ?? []).slice(0, 4).map((beat, index) => {
-                    const body =
-                      typeof beat === "string"
-                        ? beat
-                        : typeof beat === "object" && beat
-                          ? beat.body ?? ""
-                          : "";
-
-                    if (!body) return null;
-
-                    return (
-                      <div
-                        key={`${activeTwin.id}-beat-${index}`}
-                        className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm leading-6 text-white/72"
-                      >
-                        {body}
-                      </div>
-                    );
-                  })}
-                </div>
+            {typeof activeLooseTwin.learnMoreHref === "string" &&
+            activeLooseTwin.learnMoreHref.length > 0 ? (
+              <div className="mt-5">
+                <a
+                  href={activeLooseTwin.learnMoreHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-2 text-sm text-white/78 transition hover:border-white/20 hover:bg-white/[0.07]"
+                >
+                  Learn more about {activeTwin.name}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </div>
             ) : null}
           </section>
@@ -466,60 +453,6 @@ export default function TimeTwinPage() {
               <p className="mt-3 text-xs text-white/42">
                 Saved automatically for this Time Twin.
               </p>
-            </section>
-
-            <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
-              {sectionTitle("Other resonances")}
-
-              <div className="space-y-3">
-                {alternates.map((twin) => {
-                  const looseTwin = asLooseTwin(twin);
-                  const twinRgb = rgbString(looseTwin.accentRgb);
-
-                  return (
-                    <button
-                      key={`mobile-alt-${twin.id}`}
-                      type="button"
-                      onClick={() => handleSelectTwin(twin.id)}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition",
-                        "hover:border-white/18 hover:bg-white/[0.05]",
-                      )}
-                    >
-                      <div>
-                        <div className="text-sm font-medium text-white/84">{twin.name}</div>
-                        <div className="text-xs text-white/48">
-                          {twin.era}
-                          {twin.tagline ? ` · ${twin.tagline}` : ""}
-                        </div>
-                      </div>
-
-                      <div
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{
-                          background: `rgb(${twinRgb})`,
-                          boxShadow: `0 0 14px rgba(${twinRgb}, 0.72)`,
-                        }}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-
-              {typeof activeLooseTwin.learnMoreHref === "string" &&
-              activeLooseTwin.learnMoreHref.length > 0 ? (
-                <div className="mt-5">
-                  <a
-                    href={activeLooseTwin.learnMoreHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-2 text-sm text-white/78 transition hover:border-white/20 hover:bg-white/[0.07]"
-                  >
-                    Learn more about {activeTwin.name}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-              ) : null}
             </section>
           </aside>
         </div>
