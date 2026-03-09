@@ -1106,12 +1106,12 @@ export function StrengthsTab(props: {
           </div>
         </div>
 
-        {/* ✅ Quick Check should come BEFORE One Small Move */}
+        {/* ✅ Quick Check should come BEFORE Next Steps Move */}
         <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
 
-        {/* One Small Move */}
+        {/* Next Steps Move */}
         <div className="mt-6">
-          <div className={sectionKicker(dark)}>One small move</div>
+          <div className={sectionKicker(dark)}>Next Steps</div>
 
           {nextStepsStrengths ? (
             <div className="mt-3">

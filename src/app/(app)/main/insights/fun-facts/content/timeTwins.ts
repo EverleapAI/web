@@ -53,6 +53,66 @@ export type TimeTwinHeroPattern =
   | "paint"
   | "ink";
 
+export type MotivationId =
+  | "meaning"
+  | "mastery"
+  | "people"
+  | "freedom"
+  | "curiosity"
+  | "momentum";
+
+export type StrengthSignalId =
+  | "action"
+  | "people"
+  | "curiosity"
+  | "clarity";
+
+export type SkillTag =
+  | "observation"
+  | "systems"
+  | "abstraction"
+  | "experimentation"
+  | "pattern-recognition"
+  | "storytelling"
+  | "design"
+  | "analysis"
+  | "empathy"
+  | "strategy"
+  | "synthesis";
+
+export type ThemeTag =
+  | "nature"
+  | "future"
+  | "code"
+  | "ideas"
+  | "emotion"
+  | "history"
+  | "art"
+  | "science"
+  | "people"
+  | "systems";
+
+export type TimeTwinEnergyStyle =
+  | "quiet-deep"
+  | "focused-builder"
+  | "playful-explorer"
+  | "symbolic-creator";
+
+export type TimeTwinWatchoutStyle =
+  | "overthinking"
+  | "scattered-curiosity"
+  | "perfectionism"
+  | "intensity";
+
+export type TimeTwinMatchProfile = {
+  motivations: Partial<Record<MotivationId, number>>;
+  signals: Partial<Record<StrengthSignalId, number>>;
+  skills: SkillTag[];
+  themes: ThemeTag[];
+  energy: TimeTwinEnergyStyle;
+  watchout: TimeTwinWatchoutStyle;
+};
+
 export type TimeTwin = {
   id: string;
 
@@ -64,7 +124,7 @@ export type TimeTwin = {
   heroImage: string;
   portraitImage: string;
 
-  /** new code-driven rendering tokens */
+  /** code-driven rendering tokens */
   visualTheme: TimeTwinVisualTheme;
   portraitArchetype: TimeTwinPortraitArchetype;
   heroPattern: TimeTwinHeroPattern;
@@ -79,7 +139,7 @@ export type TimeTwin = {
 
   storyBeats: TimeTwinStoryBeat[];
 
-  /** new narrative-first copy */
+  /** narrative-first copy */
   intro: string;
   connection: string;
   reflection: string;
@@ -89,518 +149,696 @@ export type TimeTwin = {
   tryThisWeek: string;
 
   learnMore: string;
+
+  /** matching profile for future scoring */
+  matchProfile: TimeTwinMatchProfile;
 };
 
 export const TIME_TWINS: TimeTwin[] = [
   {
-    id: "leonardo",
+    id: "merian",
 
-    name: "Leonardo da Vinci",
-    era: "1452–1519",
-    tagline: "The mind that refused to stay in one box.",
+    name: "Maria Sibylla Merian",
+    era: "1647–1717",
+    tagline: "The observer who saw hidden transformation everywhere.",
 
-    heroImage: "/time-twins/leonardo-hero.jpg",
-    portraitImage: "/time-twins/leonardo-portrait.jpg",
+    heroImage: "/time-twins/merian-hero.jpg",
+    portraitImage: "/time-twins/merian-portrait.jpg",
 
     visualTheme: "inventor-parchment",
     portraitArchetype: "inventor",
     heroPattern: "sketch",
 
-    accentRgb: { r: 214, g: 180, b: 120 },
+    accentRgb: { r: 255, g: 196, b: 92 },
 
-    mindType: "Pattern Seer",
+    mindType: "Pattern Naturalist",
 
     whyYou: [
-      "You do not naturally keep art, science, and curiosity in separate rooms.",
-      "When something catches your attention, you want to understand how it works from the inside out.",
-      "You are often less interested in the approved answer than in the bigger pattern behind it.",
+      "You notice patterns other people walk past because they seem ordinary at first glance.",
+      "Curiosity for you is not abstract. It pulls you toward details, systems, and visible evidence.",
+      "You often understand something best by watching it closely over time rather than rushing to a conclusion.",
     ],
 
     tiles: [
       {
-        title: "Cross-Wired Curiosity",
-        body: "You instinctively connect ideas that most people keep in separate categories.",
+        title: "Close Observation",
+        body: "You trust what careful attention reveals over what noise or first impressions suggest.",
         icon: "Compass",
       },
       {
-        title: "Make To Understand",
-        body: "Thinking for you often becomes sketching, testing, building, or diagramming.",
-        icon: "Wrench",
+        title: "Art + Inquiry",
+        body: "You naturally connect beauty, structure, and investigation instead of separating them.",
+        icon: "Sparkles",
       },
       {
-        title: "Restless Observation",
-        body: "You look closely, keep asking questions, and do not like leaving a mystery untouched.",
-        icon: "Sparkles",
+        title: "Pattern Through Patience",
+        body: "You can stay with a subject long enough to see its deeper shape emerge.",
+        icon: "Wrench",
       },
     ],
 
     storyBeats: [
       {
-        body: "Leonardo filled notebook after notebook with studies of anatomy, machines, flight, water, architecture, and painting. He did not treat these as separate interests. To him, they were all part of the same investigation.",
+        body: "Maria Sibylla Merian studied insects, plants, and metamorphosis with a seriousness that changed science. She did not just illustrate nature — she documented transformation with precision at a time when many people still misunderstood it.",
       },
       {
-        body: "He watched the world with almost unreasonable intensity. Muscles, birds, rivers, light, engineering problems — all of it belonged in the same field of vision if it helped him see reality more clearly.",
+        body: "What makes her compelling is not only that she crossed art and science, but that she trusted direct observation. She looked closely, repeatedly, and let patterns reveal themselves through disciplined attention.",
       },
       {
-        body: "That is what makes him more than a generic genius figure. The real pattern is that he thought by connecting things, by drawing them, and by chasing the structure underneath appearances.",
+        body: "That is why this match can feel personal. Some minds are drawn toward details not because they are small, but because they are the doorway to a larger truth.",
       },
     ],
 
     intro:
-      "Leonardo da Vinci is interesting not because he fits the cliché of a genius, but because his mind moved freely across boundaries that most people keep rigid. Anatomy, painting, machines, architecture, water, flight — he studied them all as if they belonged to one giant problem.",
+      "Maria Sibylla Merian is a strong match for minds that learn through close observation. She studied the natural world with unusual patience and transformed that attention into work that was both scientifically important and visually exact.",
     connection:
-      "That is where this match starts to make sense. Some minds do not like staying inside one category. They want to see how things connect, how the surface relates to the structure underneath, and how one field can unlock another.",
+      "This match is not about liking nature in a general way. It is about the kind of mind that wants to watch carefully, notice real change, and trust patterns that reveal themselves slowly instead of dramatically.",
     reflection:
-      "The strength in that pattern is range with depth: the ability to make unusual connections and notice what other people overlook. The danger is scattering yourself across too many fascinating paths and losing momentum before one of them becomes real.",
+      "That can be a remarkable strength because it lets you see what flashier thinkers miss. The challenge is that slow fascination can turn into drift if you keep exploring without deciding where to commit.",
 
     superpower:
-      "Your curiosity can lead you to connections that people miss when they stay inside one narrow box.",
+      "You can spot meaningful patterns by staying with a subject longer and more carefully than most people do.",
 
     watchout:
-      "When too many interesting paths open at once, your attention can splinter and make completion feel less exciting than discovery.",
+      "When curiosity keeps branching outward, it can become harder to decide which thread deserves your full effort.",
 
     tryThisWeek:
-      "Take one idea you care about and sketch it three different ways — visually, verbally, and as a system — so you can see how the pattern changes.",
+      "Pick one ordinary thing you usually overlook and study it closely for a few days until you can describe a pattern in it that most people would miss.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Leonardo_da_Vinci",
+    learnMore: "https://en.wikipedia.org/wiki/Maria_Sibylla_Merian",
+
+    matchProfile: {
+      motivations: {
+        curiosity: 0.95,
+        mastery: 0.74,
+        freedom: 0.42,
+        meaning: 0.28,
+      },
+      signals: {
+        curiosity: 0.92,
+        clarity: 0.68,
+        action: 0.34,
+        people: 0.18,
+      },
+      skills: [
+        "observation",
+        "pattern-recognition",
+        "design",
+        "analysis",
+        "synthesis",
+      ],
+      themes: ["nature", "science", "art", "ideas"],
+      energy: "quiet-deep",
+      watchout: "scattered-curiosity",
+    },
   },
 
   {
-    id: "tesla",
+    id: "ayrton",
 
-    name: "Nikola Tesla",
-    era: "1856–1943",
-    tagline: "The imagination of electricity.",
+    name: "Hertha Ayrton",
+    era: "1854–1923",
+    tagline: "The experimental mind that pushed until the system gave up its secret.",
 
-    heroImage: "/time-twins/tesla-hero.jpg",
-    portraitImage: "/time-twins/tesla-portrait.jpg",
+    heroImage: "/time-twins/ayrton-hero.jpg",
+    portraitImage: "/time-twins/ayrton-portrait.jpg",
 
     visualTheme: "inventor-electric",
     portraitArchetype: "inventor",
     heroPattern: "coil",
 
-    accentRgb: { r: 120, g: 180, b: 255 },
+    accentRgb: { r: 68, g: 210, b: 255 },
 
-    mindType: "Visionary Builder",
+    mindType: "Experimental Builder",
 
     whyYou: [
-      "You often think several steps beyond what is directly in front of you.",
-      "Invisible systems interest you because they shape everything even when nobody notices them.",
-      "You can sometimes see a design in your head before the world has any proof that it should exist.",
+      "You are not satisfied by vague understanding. You want to test, refine, and see what actually holds up.",
+      "Problems can energize you when they feel real enough to push against.",
+      "You often trust iteration more than elegance at the beginning.",
     ],
 
     tiles: [
       {
-        title: "Future-Leaning Mind",
-        body: "You are energized by what something could become, not just by what it already is.",
-        icon: "Orbit",
+        title: "Test It For Real",
+        body: "You gain confidence by experimenting rather than just theorizing.",
+        icon: "Wrench",
       },
       {
-        title: "Internal Simulation",
-        body: "You can mentally run ideas before anyone else sees the prototype.",
-        icon: "Brain",
-      },
-      {
-        title: "Hidden Systems Curiosity",
-        body: "You are drawn to the forces behind things, not only the visible result.",
+        title: "Systems Under Pressure",
+        body: "You like seeing how something behaves when it is pushed, challenged, or clarified.",
         icon: "Bolt",
       },
-    ],
-
-    storyBeats: [
       {
-        body: "Tesla was not only an inventor with technical skill. He was unusually visual. He claimed he could picture machines in detail, rotate them in his mind, and test them internally before ever building them physically.",
-      },
-      {
-        body: "His work on alternating current helped transform how electrical power could be generated and distributed. That matters because he was not just solving a local problem — he was thinking at the scale of systems.",
-      },
-      {
-        body: "The real link here is not “electricity.” It is the habit of seeing hidden structure, imagining what does not exist yet, and trusting that vision long before everyone else catches up.",
-      },
-    ],
-
-    intro:
-      "Nikola Tesla did not just build machines. He was famous for visualizing them so clearly in his mind that he claimed he could test them mentally before ever touching materials. He thought in systems, forces, and futures.",
-    connection:
-      "That makes this match less about science trivia and more about the way your mind may work. Some people focus on what is already visible. Others are pulled toward hidden architecture, future possibilities, and the design that exists before the proof does.",
-    reflection:
-      "That can be a powerful way of thinking because it lets you see farther than the room around you. But it also creates friction: translating a fast internal vision into something other people can understand, trust, and help build.",
-
-    superpower:
-      "You can imagine systems, futures, and possibilities that other people do not see until much later.",
-
-    watchout:
-      "When your mind is moving far ahead of the room, you can become impatient with slower thinkers or with the practical work of translation.",
-
-    tryThisWeek:
-      "Write down one idea that feels ahead of its time, then force yourself to explain how it would work in the simplest possible terms.",
-
-    learnMore: "https://en.wikipedia.org/wiki/Nikola_Tesla",
-  },
-
-  {
-    id: "curie",
-
-    name: "Marie Curie",
-    era: "1867–1934",
-    tagline: "The quiet force of scientific curiosity.",
-
-    heroImage: "/time-twins/curie-hero.jpg",
-    portraitImage: "/time-twins/curie-portrait.jpg",
-
-    visualTheme: "scientist-luminous",
-    portraitArchetype: "scientist",
-    heroPattern: "glass",
-
-    accentRgb: { r: 140, g: 255, b: 200 },
-
-    mindType: "Relentless Discoverer",
-
-    whyYou: [
-      "You can stay with a question long after the first excitement has worn off.",
-      "You are not just curious in a playful way — you can be patient, disciplined, and deeply persistent about the truth.",
-      "Quiet intensity fits you better than loud performance.",
-    ],
-
-    tiles: [
-      {
-        title: "Patient Curiosity",
-        body: "You can keep investigating even when the answer takes time to reveal itself.",
-        icon: "Beaker",
-      },
-      {
-        title: "Deep Focus",
-        body: "When something matters, your attention can become unusually steady.",
-        icon: "Brain",
-      },
-      {
-        title: "Low-Drama Seriousness",
-        body: "You do not need noise or recognition in order to pursue meaningful work.",
+        title: "Stubborn Precision",
+        body: "Once you care about a problem, you do not let go easily.",
         icon: "Shield",
       },
     ],
 
     storyBeats: [
       {
-        body: "Marie Curie’s work required extraordinary patience. She spent years investigating radioactive materials with a level of persistence that most people could not sustain.",
+        body: "Hertha Ayrton worked on electric arcs and fluid dynamics with a stubborn, practical intelligence. She kept pushing into difficult technical questions that many people were happy to leave unresolved.",
       },
       {
-        body: "She became the first person to win two Nobel Prizes, but the deeper point is not the awards. It is the quality of attention underneath them: rigorous, stubborn, and willing to keep going when the process was slow and difficult.",
+        body: "She was not just bright. She was persistent in the engineering sense — willing to test, refine, and keep working until the system became legible.",
       },
       {
-        body: "That is why this match can feel specific. Some people are energized by novelty alone. Curie represents another kind of mind — one that can remain loyal to a hard question until it yields something real.",
+        body: "That is what makes this match interesting. Some minds want possibility. Others want proof. Ayrton belongs to the second group, but with enough imagination to keep the experiment alive.",
       },
     ],
 
     intro:
-      "Marie Curie represents a very specific kind of intelligence: not flashy, not performative, but serious, patient, and unusually loyal to a difficult question. Her discoveries were not accidents of inspiration. They were the result of sustained attention.",
+      "Hertha Ayrton is a strong match for minds that want to push past loose ideas and make something real. Her style of intelligence was practical, experimental, and unusually persistent in the face of hard technical problems.",
     connection:
-      "That is what makes this match feel different from the usual “smart person” archetype. Some people are pulled by novelty, but others are built for endurance — for staying with a hard problem long enough to get somewhere real.",
+      "This match is about more than science. It fits the kind of person who trusts testing, iteration, and repeated contact with reality more than clean talk alone.",
     reflection:
-      "That kind of mind can become extraordinarily powerful because it keeps going after other people lose interest. The cost is that intensity can begin to feel normal, and you can forget that rest, pacing, and recovery are part of serious work too.",
+      "That can make you unusually effective when something needs to be built or clarified. The risk is staying locked in problem-solving mode so long that rest starts to feel unproductive instead of necessary.",
 
     superpower:
-      "You can bring patience, seriousness, and sustained focus to questions that would exhaust most people.",
+      "You can turn uncertainty into progress by testing what is real instead of waiting for perfect certainty first.",
 
     watchout:
-      "Because you can go so deep, you may overextend yourself or start treating intensity as the only acceptable pace.",
+      "Because you are willing to push so hard, you may drift into overwork or make everything feel like a problem that needs solving immediately.",
 
     tryThisWeek:
-      "Pick one question you care about and stay with it longer than feels convenient, even if the progress is slow and quiet.",
+      "Take one idea you keep thinking about and run the smallest real experiment you can instead of polishing the theory one more time.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Marie_Curie",
+    learnMore: "https://en.wikipedia.org/wiki/Hertha_Ayrton",
+
+    matchProfile: {
+      motivations: {
+        mastery: 0.88,
+        curiosity: 0.82,
+        freedom: 0.58,
+        momentum: 0.46,
+      },
+      signals: {
+        action: 0.72,
+        clarity: 0.74,
+        curiosity: 0.62,
+        people: 0.16,
+      },
+      skills: [
+        "experimentation",
+        "systems",
+        "analysis",
+        "strategy",
+        "pattern-recognition",
+      ],
+      themes: ["science", "systems", "ideas", "future"],
+      energy: "focused-builder",
+      watchout: "perfectionism",
+    },
   },
 
   {
-    id: "ada",
+    id: "germain",
 
-    name: "Ada Lovelace",
-    era: "1815–1852",
-    tagline: "The poet of logic and machines.",
+    name: "Sophie Germain",
+    era: "1776–1831",
+    tagline: "The quiet mathematician who pursued elegance beneath resistance.",
 
-    heroImage: "/time-twins/ada-hero.jpg",
-    portraitImage: "/time-twins/ada-portrait.jpg",
+    heroImage: "/time-twins/germain-hero.jpg",
+    portraitImage: "/time-twins/germain-portrait.jpg",
 
     visualTheme: "logic-victorian",
     portraitArchetype: "mathematician",
     heroPattern: "diagram",
 
-    accentRgb: { r: 200, g: 150, b: 255 },
+    accentRgb: { r: 190, g: 110, b: 255 },
 
-    mindType: "Abstract Thinker",
+    mindType: "Elegant Abstractor",
 
     whyYou: [
-      "You are drawn to systems, but not in a cold way — you want the underlying logic and the imaginative possibility at the same time.",
-      "You tend to see what a tool, structure, or idea could become, not only what it currently does.",
-      "Pattern and creativity feel linked to you, not opposed.",
+      "You are pulled toward problems that feel clean, deep, and structurally interesting.",
+      "You often care as much about the shape of an idea as the answer itself.",
+      "Solitude can sharpen your thinking rather than drain it.",
     ],
 
     tiles: [
       {
-        title: "Logic + Imagination",
-        body: "You do not experience structure and creativity as enemies.",
+        title: "Abstract Depth",
+        body: "You enjoy ideas that sit below the surface and reward precise thinking.",
         icon: "Code",
       },
       {
-        title: "Systems Lens",
-        body: "You naturally think in terms of interactions, rules, and hidden architecture.",
+        title: "Intellectual Independence",
+        body: "You do not need external noise in order to develop a strong internal line of thought.",
         icon: "Compass",
       },
       {
-        title: "Future Possibility",
-        body: "You see the next version of things before they are obvious to everyone else.",
-        icon: "Orbit",
+        title: "Elegance Detector",
+        body: "You can feel when a solution is structurally beautiful, not just technically correct.",
+        icon: "Sparkles",
       },
     ],
 
     storyBeats: [
       {
-        body: "Ada Lovelace is often described as the first computer programmer, but the most interesting thing about her is not the title. It is the leap she made in her thinking.",
+        body: "Sophie Germain pursued mathematics at a time when access to serious intellectual life was structurally denied to her. She kept going anyway, working under a male pseudonym in order to be taken seriously.",
       },
       {
-        body: "When she looked at Charles Babbage’s analytical engine, she did not just see a machine for calculation. She imagined a machine that could work with symbols and patterns more broadly — even music, if represented correctly.",
+        body: "Her work in number theory and elasticity matters, but so does the style of mind behind it: precise, independent, and drawn to deep structure rather than spectacle.",
       },
       {
-        body: "That makes her less a “math person” stereotype and more a model of a mind that can see structure and possibility at once. That is the part of this match that actually matters.",
+        body: "This match tends to land for people who are less energized by performance than by the private satisfaction of making something difficult become clear and elegant.",
       },
     ],
 
     intro:
-      "Ada Lovelace looked at Charles Babbage’s analytical engine and saw more than a calculating machine. She imagined a system that could manipulate symbols, patterns, even music — long before the world had anything close to a modern computer.",
+      "Sophie Germain is a powerful match for minds that care about elegance, structure, and intellectual independence. She kept pursuing difficult mathematical problems even when the world around her was not built to welcome that pursuit.",
     connection:
-      "That is what makes this match interesting. The resemblance is not about being “good at math.” It is about the way your mind seems to move: toward systems, hidden structure, and the possibility inside things before everyone else can see it clearly.",
+      "This match is less about loving math specifically and more about the kind of mind that wants deep structure, internal coherence, and the feeling that an idea has finally resolved into something clean.",
     reflection:
-      "That kind of mind can be powerful because it connects imagination and logic instead of splitting them apart. The risk is staying in abstraction too long. The challenge is to bring one elegant idea down into the real world and make it usable.",
+      "That can make your thinking unusually strong and original. The challenge is that private standards can become so high that you delay sharing work before it has a chance to become useful outside your own head.",
 
     superpower:
-      "You can connect imagination and logic in a way that lets you see systems other people only partially understand.",
+      "You can go deep into abstract structure and stay with it until something difficult becomes unexpectedly elegant.",
 
     watchout:
-      "Because your mind likes abstraction, you may sometimes stay in the conceptual layer longer than the practical layer needs.",
+      "You may hold your own work back too long because the version in your head still feels cleaner than the version anyone else can see.",
 
     tryThisWeek:
-      "Take one messy system in your life and map what it is doing now, then write one sentence about what it could become if it were designed better.",
+      "Take one complicated idea you care about and reduce it to the simplest form that still feels true, even if it is not perfect yet.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Ada_Lovelace",
+    learnMore: "https://en.wikipedia.org/wiki/Sophie_Germain",
+
+    matchProfile: {
+      motivations: {
+        mastery: 0.9,
+        curiosity: 0.78,
+        meaning: 0.34,
+        freedom: 0.28,
+      },
+      signals: {
+        clarity: 0.9,
+        curiosity: 0.66,
+        action: 0.28,
+        people: 0.1,
+      },
+      skills: [
+        "abstraction",
+        "analysis",
+        "pattern-recognition",
+        "systems",
+        "strategy",
+      ],
+      themes: ["science", "ideas", "systems", "history"],
+      energy: "quiet-deep",
+      watchout: "overthinking",
+    },
   },
 
   {
-    id: "turing",
+    id: "stevens",
 
-    name: "Alan Turing",
-    era: "1912–1954",
-    tagline: "The code-breaker who looked beneath the surface.",
+    name: "Nettie Stevens",
+    era: "1861–1912",
+    tagline: "The patient researcher who stayed with the evidence until it spoke clearly.",
 
-    heroImage: "/time-twins/turing-hero.jpg",
-    portraitImage: "/time-twins/turing-portrait.jpg",
+    heroImage: "/time-twins/stevens-hero.jpg",
+    portraitImage: "/time-twins/stevens-portrait.jpg",
+
+    visualTheme: "scientist-luminous",
+    portraitArchetype: "scientist",
+    heroPattern: "glass",
+
+    accentRgb: { r: 120, g: 255, b: 210 },
+
+    mindType: "Quiet Discoverer",
+
+    whyYou: [
+      "You can stay with a hard question long after the obvious excitement has faded.",
+      "Careful evidence matters to you more than a flashy theory.",
+      "You often do your strongest work without needing a lot of external drama around it.",
+    ],
+
+    tiles: [
+      {
+        title: "Patient Inquiry",
+        body: "You can keep going when a question takes time and discipline rather than novelty.",
+        icon: "Beaker",
+      },
+      {
+        title: "Evidence Loyalty",
+        body: "You would rather know what is true than protect a prettier guess.",
+        icon: "Shield",
+      },
+      {
+        title: "Steady Focus",
+        body: "Quiet attention is one of your actual strengths, not just a default mode.",
+        icon: "Brain",
+      },
+    ],
+
+    storyBeats: [
+      {
+        body: "Nettie Stevens helped establish that chromosomes determine biological sex, work that required careful observation and disciplined scientific seriousness rather than big public mythmaking.",
+      },
+      {
+        body: "She represents a kind of intelligence that is often undervalued because it is not theatrical. It is patient, evidence-driven, and loyal to the question itself.",
+      },
+      {
+        body: "That is why this match can feel specific. Some people are energized by brilliance as a performance. Others are built for steady truth-seeking.",
+      },
+    ],
+
+    intro:
+      "Nettie Stevens is a strong match for minds that do serious work quietly. Her intelligence was disciplined, evidence-based, and patient enough to stay with a difficult biological question until the answer became clear.",
+    connection:
+      "This match is about the kind of person who does not need noise in order to be powerful. It fits minds that trust close evidence, sustained inquiry, and slow certainty.",
+    reflection:
+      "That can make you remarkably reliable when the work is real. The difficulty is that quiet seriousness can become invisible to others if you do not occasionally translate what you are doing and why it matters.",
+
+    superpower:
+      "You can bring patience and disciplined attention to hard questions until something real finally resolves.",
+
+    watchout:
+      "Because your strength is so steady and understated, you may underestimate how much your work or insight deserves to be seen and named.",
+
+    tryThisWeek:
+      "Choose one question you care about and follow the evidence farther than feels convenient instead of switching to something fresher too early.",
+
+    learnMore: "https://en.wikipedia.org/wiki/Nettie_Stevens",
+
+    matchProfile: {
+      motivations: {
+        mastery: 0.84,
+        curiosity: 0.8,
+        meaning: 0.44,
+        momentum: 0.24,
+      },
+      signals: {
+        clarity: 0.78,
+        curiosity: 0.72,
+        action: 0.32,
+        people: 0.14,
+      },
+      skills: [
+        "analysis",
+        "observation",
+        "experimentation",
+        "pattern-recognition",
+        "systems",
+      ],
+      themes: ["science", "nature", "ideas", "history"],
+      energy: "quiet-deep",
+      watchout: "perfectionism",
+    },
+  },
+
+  {
+    id: "shannon",
+
+    name: "Claude Shannon",
+    era: "1916–2001",
+    tagline: "The playful architect of information itself.",
+
+    heroImage: "/time-twins/shannon-hero.jpg",
+    portraitImage: "/time-twins/shannon-portrait.jpg",
 
     visualTheme: "code-shadow",
     portraitArchetype: "coder",
     heroPattern: "grid",
 
-    accentRgb: { r: 120, g: 220, b: 210 },
+    accentRgb: { r: 72, g: 235, b: 200 },
 
-    mindType: "Hidden-Pattern Decoder",
+    mindType: "Systems Playmaker",
 
     whyYou: [
-      "You want to know what is actually going on underneath the mess.",
-      "Puzzles are interesting to you because they imply a deeper logic waiting to be uncovered.",
-      "You trust structure even when the answer is not visible yet.",
+      "You like reducing complicated things until the hidden rules finally show themselves.",
+      "You enjoy elegant systems more than messy performance.",
+      "Play and precision may live much closer together in you than other people expect.",
     ],
 
     tiles: [
       {
-        title: "Pattern Hunter",
-        body: "You are drawn to order that is hidden inside noise.",
+        title: "Compression Mind",
+        body: "You like discovering the simplest structure underneath a large mess of information.",
         icon: "Code",
       },
       {
-        title: "Quiet Precision",
-        body: "You can tolerate complexity if it leads to a cleaner explanation.",
-        icon: "Brain",
+        title: "Playful Precision",
+        body: "You may think best when experimentation and curiosity stay alive inside the logic.",
+        icon: "Sparkles",
       },
       {
-        title: "Below-The-Surface Thinking",
-        body: "You care about the mechanism beneath the appearance.",
+        title: "Systems Instinct",
+        body: "You are drawn toward what makes the whole mechanism work, not just its surface results.",
         icon: "Orbit",
       },
     ],
 
     storyBeats: [
       {
-        body: "Alan Turing helped crack encrypted wartime communications at Bletchley Park, work that required patience, abstraction, and the ability to believe there was order inside apparent chaos.",
+        body: "Claude Shannon laid the foundations of information theory, which means he helped formalize how information itself can be measured, transmitted, and understood.",
       },
       {
-        body: "He also laid down ideas that became foundational to modern computing. In both cases, the important pattern was the same: he was interested in what could be formalized, decoded, and understood beneath the surface.",
+        body: "But part of what makes him interesting is that he was not only precise. He was playful. He liked elegant systems, but he also approached them with curiosity and experimental delight.",
       },
       {
-        body: "This match is strongest for people whose minds are naturally drawn to hidden structure — people who are less interested in noise than in the rules underneath it.",
+        body: "That is why this match can be compelling. Some minds are serious in a visibly serious way. Others are just as rigorous, but the rigor comes alive through play, reduction, and invention.",
       },
     ],
 
     intro:
-      "Alan Turing was interested in hidden order. Whether he was working on codebreaking or on ideas that would later shape modern computing, he kept asking the same kind of question: what rules are operating underneath the surface, even when the situation looks chaotic?",
+      "Claude Shannon is a strong match for minds that love elegant systems. He helped define information theory, but the deeper signature was the way he thought: reducing complexity, finding structure, and keeping play alive inside serious work.",
     connection:
-      "That is the core of this match. Some people react to complexity by stepping back from it. Others lean in because they sense there is a deeper structure waiting to be uncovered. If confusion makes you want to decode rather than retreat, that pattern matters.",
+      "This match is not only about code or math. It fits people who feel energized when a confusing thing finally compresses into something simple, powerful, and beautifully structured.",
     reflection:
-      "It can make you strong in situations that feel messy or obscure to everyone else. But it can also pull you so deeply into the inner logic of a problem that you forget to bring other people along with you.",
+      "That can make you excellent at finding order where others only see overload. The challenge is that your inner model can become so clear to you that you forget it may still feel invisible to everyone else.",
 
     superpower:
-      "You can stay with hard, complicated problems long enough to find the pattern that makes them intelligible.",
+      "You can uncover elegant hidden structure inside confusing systems and make the whole thing feel simpler than it looked at first.",
 
     watchout:
-      "You may spend so long refining the internal logic that other people lose sight of the path you took to get there.",
+      "You may move so quickly toward internal elegance that you skip the slower work of explaining the path for other people.",
 
     tryThisWeek:
-      "Take one confusing problem and reduce it to its underlying rules before you try to solve the whole thing at once.",
+      "Take one cluttered system in your life and reduce it to the few rules that actually drive most of what happens inside it.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Alan_Turing",
+    learnMore: "https://en.wikipedia.org/wiki/Claude_Shannon",
+
+    matchProfile: {
+      motivations: {
+        curiosity: 0.92,
+        freedom: 0.74,
+        mastery: 0.68,
+        momentum: 0.26,
+      },
+      signals: {
+        clarity: 0.94,
+        curiosity: 0.72,
+        action: 0.38,
+        people: 0.08,
+      },
+      skills: [
+        "abstraction",
+        "systems",
+        "pattern-recognition",
+        "analysis",
+        "strategy",
+      ],
+      themes: ["code", "systems", "ideas", "science"],
+      energy: "playful-explorer",
+      watchout: "overthinking",
+    },
   },
 
   {
-    id: "sagan",
+    id: "cannon",
 
-    name: "Carl Sagan",
-    era: "1934–1996",
-    tagline: "The cosmic storyteller of wonder and scale.",
+    name: "Annie Jump Cannon",
+    era: "1863–1941",
+    tagline: "The classifier who brought order to the stars.",
 
-    heroImage: "/time-twins/sagan-hero.jpg",
-    portraitImage: "/time-twins/sagan-portrait.jpg",
+    heroImage: "/time-twins/cannon-hero.jpg",
+    portraitImage: "/time-twins/cannon-portrait.jpg",
 
     visualTheme: "cosmic-wonder",
     portraitArchetype: "cosmic-guide",
     heroPattern: "stars",
 
-    accentRgb: { r: 110, g: 140, b: 255 },
+    accentRgb: { r: 92, g: 150, b: 255 },
 
-    mindType: "Wonder Translator",
+    mindType: "Cosmic Organizer",
 
     whyYou: [
-      "You are energized by big questions instead of scared off by them.",
-      "Facts matter to you, but meaning matters too.",
-      "You like ideas that make the world feel larger, more connected, and more alive.",
+      "Big systems do not necessarily intimidate you if there is a pattern inside them.",
+      "You often find meaning by sorting, classifying, and making the overwhelming legible.",
+      "You may enjoy scale most when it becomes coherent rather than abstractly grand.",
     ],
 
     tiles: [
       {
-        title: "Scale Thinker",
-        body: "You naturally zoom out until the bigger picture comes into view.",
+        title: "Scale With Structure",
+        body: "You can handle huge complexity when there is an organizing pattern to work with.",
         icon: "Orbit",
       },
       {
-        title: "Wonder + Clarity",
-        body: "You want depth without losing the human feeling inside it.",
-        icon: "Sparkles",
+        title: "Order From Vastness",
+        body: "You make overwhelming things feel graspable by giving them structure.",
+        icon: "Compass",
       },
       {
-        title: "Meaning-Maker",
-        body: "You care about what knowledge changes in the way people see themselves.",
-        icon: "Compass",
+        title: "Quiet System Power",
+        body: "Your influence may come through organization and clarity more than through spectacle.",
+        icon: "Sparkles",
       },
     ],
 
     storyBeats: [
       {
-        body: "Carl Sagan studied planets, atmospheres, and the possibility of life beyond Earth, but what made him memorable was not just the science. It was the way he translated scale into emotion and wonder.",
+        body: "Annie Jump Cannon classified hundreds of thousands of stars and built the stellar classification system still used in astronomy today.",
       },
       {
-        body: "He could explain the cosmos in a way that made people feel both smaller and more connected. Knowledge, in his hands, did not flatten reality. It made it more vivid.",
+        body: "What makes her fascinating is not just the scale of the work, but the kind of mind it required: patient, system-oriented, and capable of bringing order to something almost unimaginably large.",
       },
       {
-        body: "That is the real point of this match: some minds are built not only to understand large ideas, but to feel their meaning and help other people feel it too.",
+        body: "This match resonates with people who do not only dream big. They also know how to sort the big picture into something usable, clear, and real.",
       },
     ],
 
     intro:
-      "Carl Sagan was not just a scientist with a telescope. He was a translator of scale. He could talk about planets, stars, and the age of the universe in a way that made people feel wonder instead of distance.",
+      "Annie Jump Cannon is a strong match for minds that are able to handle scale by creating structure. She worked at the level of stars, but her deeper strength was classification — making vastness understandable.",
     connection:
-      "That is why this match is not really about astronomy. It is about the kind of mind that wants to connect knowledge to meaning — the mind that is energized by big questions and wants ideas to feel alive, shareable, and human.",
+      "This is a good fit for people who are not overwhelmed by complexity so long as there is a pattern to find, a framework to build, or an order waiting to be named.",
     reflection:
-      "That is a beautiful strength because it lets you hold both truth and wonder at the same time. The difficulty is that the big picture can become so compelling that the immediate next step starts to feel smaller than it really is.",
+      "That can make you powerful in environments that feel too large or messy for other people. The challenge is that your gift for structuring complexity can make you undervalue the emotional side of what people need in order to follow you.",
 
     superpower:
-      "You can connect big ideas to wonder, meaning, and a larger sense of possibility.",
+      "You can bring order to enormous complexity and make something vast feel coherent enough to work with.",
 
     watchout:
-      "You may sometimes drift so far into the big picture that the next practical move feels less compelling than the vision itself.",
+      "Because structure comes naturally to you, you may assume other people feel safe once the system makes sense, even when they still need a human bridge.",
 
     tryThisWeek:
-      "Take one huge idea you love and explain it in a way that would make someone younger feel curious rather than intimidated.",
+      "Take one area of your life that feels too big or messy and build a classification system for it before you try to change everything at once.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Carl_Sagan",
+    learnMore: "https://en.wikipedia.org/wiki/Annie_Jump_Cannon",
+
+    matchProfile: {
+      motivations: {
+        mastery: 0.82,
+        curiosity: 0.76,
+        meaning: 0.46,
+        momentum: 0.36,
+      },
+      signals: {
+        clarity: 0.82,
+        curiosity: 0.66,
+        action: 0.4,
+        people: 0.12,
+      },
+      skills: [
+        "pattern-recognition",
+        "observation",
+        "systems",
+        "analysis",
+        "synthesis",
+      ],
+      themes: ["science", "systems", "ideas", "history"],
+      energy: "focused-builder",
+      watchout: "perfectionism",
+    },
   },
 
   {
-    id: "hypatia",
+    id: "duchatelet",
 
-    name: "Hypatia",
-    era: "c. 360–415",
-    tagline: "A mind shaped by reason, geometry, and calm clarity.",
+    name: "Émilie du Châtelet",
+    era: "1706–1749",
+    tagline: "The translator of difficult ideas into living clarity.",
 
-    heroImage: "/time-twins/hypatia-hero.jpg",
-    portraitImage: "/time-twins/hypatia-portrait.jpg",
+    heroImage: "/time-twins/duchatelet-hero.jpg",
+    portraitImage: "/time-twins/duchatelet-portrait.jpg",
 
     visualTheme: "geometry-marble",
     portraitArchetype: "philosopher",
     heroPattern: "geometry",
 
-    accentRgb: { r: 175, g: 205, b: 255 },
+    accentRgb: { r: 160, g: 215, b: 255 },
 
-    mindType: "Clarity Seeker",
+    mindType: "Clarity Synthesizer",
 
     whyYou: [
-      "You feel relief when something complicated finally becomes elegant and understandable.",
-      "You are drawn toward order, proportion, and coherence.",
-      "You often want to understand before you rush into action.",
+      "You like bridging worlds that are usually treated as separate — thought and application, philosophy and science, depth and explanation.",
+      "You often want ideas to become clearer, stronger, and more usable, not just more impressive.",
+      "You may feel most alive when you are helping something difficult make real sense.",
     ],
 
     tiles: [
       {
-        title: "Calm Intelligence",
-        body: "You prefer depth and clarity to noise and speed.",
+        title: "Bridge Builder",
+        body: "You connect ideas across boundaries instead of leaving them isolated in separate camps.",
         icon: "Compass",
       },
       {
-        title: "Elegant Structure",
-        body: "You like ideas that fit together in a way that feels clean and principled.",
+        title: "Clarity Through Depth",
+        body: "You do not flatten complexity — you help it become understandable without losing what matters.",
         icon: "Code",
       },
       {
-        title: "Reasoned Presence",
-        body: "You trust thoughtfulness more than chaos or performance.",
-        icon: "Shield",
+        title: "Intellectual Translation",
+        body: "You may be strongest when turning dense ideas into something another mind can actually use.",
+        icon: "Sparkles",
       },
     ],
 
     storyBeats: [
       {
-        body: "Hypatia taught mathematics, astronomy, and philosophy in Alexandria, where she became known for intellectual discipline and unusual clarity of thought.",
+        body: "Émilie du Châtelet translated and expanded Newton’s Principia, helping bring difficult physics into broader intellectual life while also contributing her own serious thought on energy and reason.",
       },
       {
-        body: "Her legacy is not only about brilliance. It is about a style of mind: composed, structured, rigorous, and devoted to understanding rather than noise.",
+        body: "She represents a kind of intelligence that does more than master ideas privately. It clarifies them, connects them, and carries them across boundaries.",
       },
       {
-        body: "This match tends to resonate with people who are less drawn to spectacle than to the quiet satisfaction of making complex things coherent.",
+        body: "That is why this match feels specific. Some minds are built for discovery. Others are built for synthesis — for helping truth become legible, portable, and alive.",
       },
     ],
 
     intro:
-      "Hypatia represents a kind of intelligence that feels rare now: calm, rigorous, and deeply devoted to clarity. She became known in Alexandria for mathematics, astronomy, and philosophy, but the real signature was composure in thought.",
+      "Émilie du Châtelet is a strong match for minds that love clarity, synthesis, and intellectual bridge-building. Her work mattered not only because she understood difficult ideas, but because she could carry them across contexts without flattening them.",
     connection:
-      "That is the part that matters here. Some minds are not drawn to drama or spectacle. They want coherence. They want proportion. They want complexity to become elegant enough to hold without distortion.",
+      "This match fits people who do not just want to know something. They want to make it clearer, more connected, and more usable for thought, conversation, and action.",
     reflection:
-      "That can make you unusually steady in confusing situations, because clarity itself is motivating to you. But it can also make you hesitate, waiting for understanding to feel complete before you allow yourself to move.",
+      "That can make you unusually valuable because you reduce confusion without reducing depth. The challenge is that you may spend so much time improving and clarifying ideas that you forget your own original position also deserves space.",
 
     superpower:
-      "You can bring calm structure to tangled ideas and help complexity become clear without flattening it.",
+      "You can connect deep ideas across boundaries and make them clearer without making them smaller.",
 
     watchout:
-      "You may wait for complete clarity when a smaller imperfect step would already teach you something useful.",
+      "You may become so good at translation and synthesis that you under-claim the originality of your own thinking.",
 
     tryThisWeek:
-      "Take one confusing topic and reduce it to three principles that feel clean, accurate, and calm.",
+      "Take one difficult idea you care about and explain it in a way that keeps its depth but makes it truly usable to someone else.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Hypatia",
+    learnMore: "https://en.wikipedia.org/wiki/%C3%89milie_du_Ch%C3%A2telet",
+
+    matchProfile: {
+      motivations: {
+        meaning: 0.62,
+        mastery: 0.78,
+        curiosity: 0.7,
+        freedom: 0.44,
+      },
+      signals: {
+        clarity: 0.86,
+        curiosity: 0.58,
+        people: 0.26,
+        action: 0.24,
+      },
+      skills: [
+        "analysis",
+        "abstraction",
+        "synthesis",
+        "storytelling",
+        "strategy",
+      ],
+      themes: ["science", "history", "ideas", "systems"],
+      energy: "quiet-deep",
+      watchout: "overthinking",
+    },
   },
 
   {
@@ -617,7 +855,7 @@ export const TIME_TWINS: TimeTwin[] = [
     portraitArchetype: "futurist",
     heroPattern: "skyline",
 
-    accentRgb: { r: 255, g: 145, b: 120 },
+    accentRgb: { r: 255, g: 120, b: 88 },
 
     mindType: "Future Realist",
 
@@ -674,152 +912,227 @@ export const TIME_TWINS: TimeTwin[] = [
       "Write a one-page scenario about a change unfolding in your world, but force yourself to make it emotionally and socially believable, not just clever.",
 
     learnMore: "https://en.wikipedia.org/wiki/Octavia_E._Butler",
+
+    matchProfile: {
+      motivations: {
+        meaning: 0.84,
+        curiosity: 0.7,
+        freedom: 0.56,
+        people: 0.4,
+      },
+      signals: {
+        curiosity: 0.72,
+        people: 0.54,
+        clarity: 0.48,
+        action: 0.28,
+      },
+      skills: [
+        "storytelling",
+        "strategy",
+        "systems",
+        "synthesis",
+        "empathy",
+      ],
+      themes: ["future", "people", "systems", "emotion", "ideas"],
+      energy: "symbolic-creator",
+      watchout: "intensity",
+    },
   },
 
   {
-    id: "frida",
+    id: "varo",
 
-    name: "Frida Kahlo",
-    era: "1907–1954",
-    tagline: "The artist who turned inner life into vivid truth.",
+    name: "Remedios Varo",
+    era: "1908–1963",
+    tagline: "The symbolic artist who turned inner worlds into strange precision.",
 
-    heroImage: "/time-twins/frida-hero.jpg",
-    portraitImage: "/time-twins/frida-portrait.jpg",
+    heroImage: "/time-twins/varo-hero.jpg",
+    portraitImage: "/time-twins/varo-portrait.jpg",
 
     visualTheme: "painter-bloom",
     portraitArchetype: "artist",
     heroPattern: "paint",
 
-    accentRgb: { r: 255, g: 110, b: 150 },
+    accentRgb: { r: 255, g: 72, b: 145 },
 
-    mindType: "Emotional Alchemist",
+    mindType: "Symbolic Creator",
 
     whyYou: [
-      "You do not just feel things deeply — you want to turn them into something visible, meaningful, or memorable.",
-      "Your inner world carries symbols, mood, tension, and texture.",
-      "You are more interested in honesty than polish when something matters.",
+      "Your inner life may arrive not just as feelings, but as symbols, images, and strangely complete atmospheres.",
+      "You are often trying to make the invisible more visible without flattening its mystery.",
+      "Imagination for you can feel exacting, not vague.",
     ],
 
     tiles: [
       {
-        title: "Inner World Builder",
-        body: "Feelings and ideas often arrive as images, symbols, or moods.",
+        title: "Inner Architecture",
+        body: "Your imagination often has structure, mood, and symbolic logic rather than random drift.",
         icon: "Feather",
       },
       {
-        title: "Truth Over Polish",
-        body: "You would rather be real than perform neatness for approval.",
-        icon: "Shield",
-      },
-      {
-        title: "Intensity With Meaning",
-        body: "Strong emotion can become fuel instead of just pressure.",
+        title: "Precision Through Art",
+        body: "You may express subtle truth best through form, image, and composition rather than direct explanation.",
         icon: "Sparkles",
       },
-    ],
-
-    storyBeats: [
       {
-        body: "Frida Kahlo turned physical pain, memory, identity, and emotional complexity into visual language. Her work does not feel distant from her life because it was never meant to be separated from it.",
-      },
-      {
-        body: "She became iconic not because she was simply expressive, but because she could transform inner experience into something unforgettable and exacting. Her honesty had form.",
-      },
-      {
-        body: "This match tends to resonate with people whose inner lives are vivid, symbolic, and too alive to remain private forever. The real pattern is transformation: feeling something deeply, then making something from it.",
-      },
-    ],
-
-    intro:
-      "Frida Kahlo did not hide her inner life behind style. She turned pain, identity, memory, and emotional intensity into visual form. What made her powerful was not just expression, but precision — the ability to give private feeling a shape that other people could not ignore.",
-    connection:
-      "That is the reason this match can feel real. Some people experience emotion and move on. Others feel compelled to transform it — to turn it into image, language, or something vivid enough to hold the truth of it.",
-    reflection:
-      "That can be a remarkable gift because it gives your inner life form instead of leaving it trapped inside you. But it also means intensity can start to feel normal, and distance or softness can seem less meaningful than they really are.",
-
-    superpower:
-      "You can transform difficult feeling into something vivid, honest, and emotionally precise.",
-
-    watchout:
-      "When intensity becomes familiar, you may start mistaking emotional heat for depth and forget the value of rest or distance.",
-
-    tryThisWeek:
-      "Make one image, sketch, collage, or visual note that captures a real inner state without explaining it first.",
-
-    learnMore: "https://en.wikipedia.org/wiki/Frida_Kahlo",
-  },
-
-  {
-    id: "murasaki",
-
-    name: "Murasaki Shikibu",
-    era: "c. 973–c. 1014",
-    tagline: "A literary mind tuned to nuance, mood, and human complexity.",
-
-    heroImage: "/time-twins/murasaki-hero.jpg",
-    portraitImage: "/time-twins/murasaki-portrait.jpg",
-
-    visualTheme: "ink-moon",
-    portraitArchetype: "writer",
-    heroPattern: "ink",
-
-    accentRgb: { r: 205, g: 165, b: 235 },
-
-    mindType: "Subtle Observer",
-
-    whyYou: [
-      "You notice quiet details in people that others miss because they are rushing past them.",
-      "Mood, tone, and emotional texture matter to you as much as explicit action.",
-      "You often understand complexity through close observation rather than noise or spectacle.",
-    ],
-
-    tiles: [
-      {
-        title: "Detail Radar",
-        body: "You pick up small signals that reveal much larger truths.",
-        icon: "Feather",
-      },
-      {
-        title: "Emotional Nuance",
-        body: "You notice shades of feeling, not just obvious reactions.",
-        icon: "Brain",
-      },
-      {
-        title: "Quiet Depth",
-        body: "Your strongest insights may come softly rather than dramatically.",
+        title: "Symbolic Perception",
+        body: "You notice meaning in atmosphere, metaphor, and layered association.",
         icon: "Compass",
       },
     ],
 
     storyBeats: [
       {
-        body: "Murasaki Shikibu wrote The Tale of Genji, a work often described as one of the earliest novels in the world. What makes it remarkable is not spectacle, but subtlety.",
+        body: "Remedios Varo painted dreamlike worlds that felt mystical, mechanical, and psychologically exact all at once. Her work did not simply express feeling — it organized inner complexity into intricate visual logic.",
       },
       {
-        body: "Her writing is deeply attentive to status, emotion, social nuance, longing, and the atmosphere around human relationships. She was interested in how inner life moves, not only in what happens outwardly.",
+        body: "What makes her such an interesting Time Twin is that she was not chaotic in her imagination. She was precise. Her symbolic worlds felt constructed, intentional, and strangely coherent.",
       },
       {
-        body: "This match is strongest for people who notice the small shifts — the tone change, the hesitation, the feeling that lives between words. The pattern here is observation with depth, not noise.",
+        body: "This match tends to resonate with people whose inner worlds are vivid but not random — people who feel compelled to turn subtle atmosphere into something shaped and shareable.",
       },
     ],
 
     intro:
-      "Murasaki Shikibu is an unusually good match for minds that notice what other people miss. Her writing was not driven by spectacle. It was driven by nuance — by atmosphere, status, longing, emotional shifts, and the quiet movements of inner life.",
+      "Remedios Varo is a powerful match for minds that experience imagination as something structured, symbolic, and unusually alive. She transformed inner worlds into images that felt mysterious, but never careless.",
     connection:
-      "That is the real pattern here. Some people understand the world through noise and action. Others understand it by reading tone, detail, hesitation, and the meaning carried between words. If subtlety matters to you, that is not weakness. It is a way of seeing.",
+      "This match is not just about being artistic. It is about the kind of person who senses layers, metaphors, and hidden correspondences — and wants to shape them into something real enough to hold.",
     reflection:
-      "That can make you perceptive in ways that are difficult to teach, because you catch things before they become obvious. The challenge is that nuance can slow action if you start waiting for every feeling and every situation to become completely legible.",
+      "That can make your work or perception feel strikingly original because it carries an inner logic other people cannot easily predict. The challenge is that intensity and symbolism can become your default language even when something simpler would also be true.",
 
     superpower:
-      "You can detect emotional depth, small social signals, and subtle patterns that many people move past too quickly to notice.",
+      "You can transform subtle internal complexity into something symbolic, precise, and deeply memorable.",
 
     watchout:
-      "Because you register so much nuance, you may hesitate to act before everything feels fully understood or emotionally legible.",
+      "When intensity and symbolism feel natural, you may forget that not every truth needs maximum depth in order to matter.",
 
     tryThisWeek:
-      "Write a short scene in which the real meaning lives in tone, detail, and what is left unsaid rather than in direct explanation.",
+      "Make one visual or written artifact that captures a mood, symbol, or private logic without explaining it first.",
 
-    learnMore: "https://en.wikipedia.org/wiki/Murasaki_Shikibu",
+    learnMore: "https://en.wikipedia.org/wiki/Remedios_Varo",
+
+    matchProfile: {
+      motivations: {
+        meaning: 0.72,
+        freedom: 0.68,
+        curiosity: 0.64,
+        mastery: 0.4,
+      },
+      signals: {
+        curiosity: 0.7,
+        clarity: 0.36,
+        people: 0.28,
+        action: 0.18,
+      },
+      skills: [
+        "design",
+        "storytelling",
+        "synthesis",
+        "observation",
+        "pattern-recognition",
+      ],
+      themes: ["art", "emotion", "ideas", "future"],
+      energy: "symbolic-creator",
+      watchout: "intensity",
+    },
+  },
+
+  {
+    id: "sei",
+
+    name: "Sei Shōnagon",
+    era: "c. 966–1017",
+    tagline: "The observer of mood, detail, and the tiny truths people reveal without meaning to.",
+
+    heroImage: "/time-twins/sei-hero.jpg",
+    portraitImage: "/time-twins/sei-portrait.jpg",
+
+    visualTheme: "ink-moon",
+    portraitArchetype: "writer",
+    heroPattern: "ink",
+
+    accentRgb: { r: 210, g: 140, b: 255 },
+
+    mindType: "Subtle Social Observer",
+
+    whyYou: [
+      "You notice small emotional or social details that other people move past too quickly.",
+      "Tone, mood, timing, and tiny signals can matter to you as much as explicit content.",
+      "You often understand people through close observation rather than blunt declarations.",
+    ],
+
+    tiles: [
+      {
+        title: "Detail Radar",
+        body: "You catch small shifts that reveal much larger truths.",
+        icon: "Feather",
+      },
+      {
+        title: "Mood Sensitivity",
+        body: "Atmosphere and tone carry real meaning for you, not just decoration.",
+        icon: "Brain",
+      },
+      {
+        title: "Quiet Human Insight",
+        body: "Your strongest read of a situation may come softly, but not shallowly.",
+        icon: "Compass",
+      },
+    ],
+
+    storyBeats: [
+      {
+        body: "Sei Shōnagon, author of The Pillow Book, was extraordinarily attentive to human detail — to social nuance, emotional atmosphere, elegance, irritation, and the small moments that reveal how people really move through the world.",
+      },
+      {
+        body: "She is interesting because her mind was sharp without being heavy. She noticed what others overlooked, and she could make brief observations feel startlingly exact.",
+      },
+      {
+        body: "This match tends to resonate with people whose minds are tuned to subtlety — those who sense tone, texture, and social meaning before the room has fully named it.",
+      },
+    ],
+
+    intro:
+      "Sei Shōnagon is a strong match for minds that notice quiet human detail. Her writing was driven by sensitivity to mood, status, irritation, elegance, and the tiny lived texture of social life.",
+    connection:
+      "This match is not about being shy or literary in a generic way. It fits people who read situations through tone, detail, and nuance — and who often understand more than they initially say aloud.",
+    reflection:
+      "That can make you perceptive in ways that feel almost unfair because you catch the real signal before it becomes obvious. The challenge is that high sensitivity to nuance can make action harder if you keep waiting for the whole emotional picture to settle completely.",
+
+    superpower:
+      "You can detect subtle human patterns and emotional texture that most people miss in their rush toward louder signals.",
+
+    watchout:
+      "Because nuance matters so much to you, you may hesitate too long before acting, naming, or choosing a direction.",
+
+    tryThisWeek:
+      "Write down five tiny details you notice in a day that most people would not mention, then ask what larger truth each one is pointing toward.",
+
+    learnMore: "https://en.wikipedia.org/wiki/Sei_Sh%C5%8Dnagon",
+
+    matchProfile: {
+      motivations: {
+        people: 0.64,
+        curiosity: 0.66,
+        meaning: 0.58,
+        freedom: 0.34,
+      },
+      signals: {
+        people: 0.72,
+        curiosity: 0.62,
+        clarity: 0.44,
+        action: 0.18,
+      },
+      skills: [
+        "observation",
+        "storytelling",
+        "empathy",
+        "pattern-recognition",
+        "design",
+      ],
+      themes: ["people", "emotion", "history", "art", "ideas"],
+      energy: "quiet-deep",
+      watchout: "overthinking",
+    },
   },
 ];
 

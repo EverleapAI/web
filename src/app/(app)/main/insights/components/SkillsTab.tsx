@@ -1145,12 +1145,12 @@ export default function SkillsTab(props: {
           </div>
         </div>
 
-        {/* ✅ Quick Check should come BEFORE One Small Move */}
+        {/* ✅ Quick Check should come BEFORE Next Steps */}
         <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}:skills`} />
 
-        {/* One Small Move */}
+        {/* Next Steps */}
         <div className="mt-6">
-          <div className={sectionKicker(dark)}>One small move</div>
+          <div className={sectionKicker(dark)}>Next Steps</div>
 
           {nextStepsSkills ? (
             <div className="mt-3">
