@@ -203,8 +203,11 @@ export default function TimeTwinPage() {
   React.useEffect(() => {
     try {
       const profile = buildTimeTwinProfile();
-      const rawSelection = getTimeTwinSelection(profile) as any;
-      const normalized = normalizeSelection(rawSelection);
+
+      const rawSelection = getTimeTwinSelection(profile) ?? null;
+      const normalized = normalizeSelection(
+  rawSelection as unknown as SelectionLike | null,
+);
 
       const primary = normalized[0] ?? getDefaultTimeTwin();
 

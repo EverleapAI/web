@@ -28,8 +28,8 @@ export type NextStepsDefinition = {
 };
 
 export type NextStepsStackVariant =
-  | "framed" // legacy: renders its own small header + padding
-  | "embedded"; // new: section framing controlled by page.tsx
+  | "framed"
+  | "embedded";
 
 type Props = {
   dark: boolean;
@@ -39,8 +39,8 @@ type Props = {
 
   /**
    * If provided, stack can be collapsed/expanded.
-   * When embedded, page.tsx usually owns the big section header,
-   * but this small toggle can still be useful.
+   * On the home page we will usually set this to false
+   * so the whole section renders fully open.
    */
   collapsible?: boolean;
 
@@ -52,8 +52,8 @@ type Props = {
 
   /**
    * Visual treatment:
-   * - framed: small internal header + padding (legacy)
-   * - embedded: no header box / no outer framing (NEW)
+   * - framed: small internal header + padding
+   * - embedded: no header box / no outer framing
    */
   variant?: NextStepsStackVariant;
 
@@ -95,7 +95,12 @@ export function NextStepsStack({
   heading = "Next steps",
   subheading,
 }: Props) {
-  const [open, setOpen] = React.useState<boolean>(defaultOpen);
+  const alwaysOpen = !collapsible;
+  const [open, setOpen] = React.useState<boolean>(alwaysOpen ? true : defaultOpen);
+
+  React.useEffect(() => {
+    if (alwaysOpen && !open) setOpen(true);
+  }, [alwaysOpen, open]);
 
   const embedded = variant === "embedded";
   const showInternalHeader = variant === "framed";
@@ -143,7 +148,7 @@ export function NextStepsStack({
         </div>
       ) : null}
 
-      {/* Embedded mode: toggle row only (no extra subtitle — page owns that) */}
+      {/* Embedded mode: toggle row only when collapsible */}
       {!showInternalHeader && showToggle ? (
         <div className="mb-2 flex items-center justify-end">
           <button
@@ -174,40 +179,68 @@ export function NextStepsStack({
         <div className={`${hairlineClass(dark)} mb-4 h-px w-full`} />
       ) : null}
 
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            key="nextsteps-open"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.22 }}
-            className="w-full"
-          >
-            <div className="grid gap-3">
-              <TinyTaskCard
-                dark={dark}
-                useLocal={useLocal}
-                definition={definition.tinyTask}
-                embedded={embedded}
-              />
+      {alwaysOpen ? (
+        <div className="w-full">
+          <div className="grid gap-3">
+            <TinyTaskCard
+              dark={dark}
+              useLocal={useLocal}
+              definition={definition.tinyTask}
+              embedded={embedded}
+              alwaysExpanded
+            />
 
-              {definition.bridgeLine ? (
-                <div className={`px-1 text-xs ${subTextClass(dark)}`}>
-                  {definition.bridgeLine}
-                </div>
-              ) : null}
+            {definition.bridgeLine ? (
+              <div className={`px-1 text-xs ${subTextClass(dark)}`}>
+                {definition.bridgeLine}
+              </div>
+            ) : null}
 
-              <ActionCard
-                dark={dark}
-                useLocal={useLocal}
-                definition={definition.action}
-                embedded={embedded}
-              />
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+            <ActionCard
+              dark={dark}
+              useLocal={useLocal}
+              definition={definition.action}
+              embedded={embedded}
+              alwaysExpanded
+            />
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence initial={false}>
+          {open ? (
+            <motion.div
+              key="nextsteps-open"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.22 }}
+              className="w-full"
+            >
+              <div className="grid gap-3">
+                <TinyTaskCard
+                  dark={dark}
+                  useLocal={useLocal}
+                  definition={definition.tinyTask}
+                  embedded={embedded}
+                />
+
+                {definition.bridgeLine ? (
+                  <div className={`px-1 text-xs ${subTextClass(dark)}`}>
+                    {definition.bridgeLine}
+                  </div>
+                ) : null}
+
+                <ActionCard
+                  dark={dark}
+                  useLocal={useLocal}
+                  definition={definition.action}
+                  embedded={embedded}
+                />
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      )}
     </div>
   );
 }

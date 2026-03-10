@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Compass, ListChecks, User, Plus } from "lucide-react";
+import { Home, Sparkles, Compass, ListChecks, User } from "lucide-react";
 
 import {
   DEFAULT_THEME_ID,
@@ -13,8 +13,6 @@ import {
   type SpotlightThemeId,
   type GradientLevel,
 } from "@/theme/everleapVisuals";
-
-import MoreMenuPopover from "@/components/navigation/MoreMenuPopover";
 
 /* ============================================================
    Types
@@ -30,9 +28,8 @@ type BottomNavProps = {
   gradientLevel?: GradientLevel;
 
   /**
-   * Legacy props (kept for compatibility).
-   * - showGuideFab is now a no-op (we removed the bottom-right “guide” icon)
-   * - showMoreButton controls the + FAB (More menu)
+   * Legacy props kept for compatibility.
+   * Both are now no-ops.
    */
   showGuideFab?: boolean;
   showMoreButton?: boolean;
@@ -91,16 +88,18 @@ export function BottomNav({
   activeKey,
   themeId = DEFAULT_THEME_ID,
   gradientLevel = DEFAULT_GRADIENT_LEVEL,
-  showGuideFab = false, // no-op now, kept for compatibility
-  showMoreButton = true,
+  showGuideFab = false,
+  showMoreButton = false,
   className,
 }: BottomNavProps) {
   void showGuideFab;
+  void showMoreButton;
 
   const pathname = usePathname();
   const inMainShell = pathname.startsWith("/main");
 
-  const resolvedActiveKey = normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
+  const resolvedActiveKey =
+    normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
 
   const theme = getThemeById(themeId);
   const grad = getGradientConfig(gradientLevel);
@@ -116,145 +115,100 @@ export function BottomNav({
   ];
 
   const [mounted, setMounted] = React.useState(false);
-  const [moreOpen, setMoreOpen] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  React.useEffect(() => {
-    if (!inMainShell) return;
-    if (!mounted) return;
-    setMoreOpen(false);
-  }, [pathname, inMainShell, mounted]);
-
   if (!inMainShell) return null;
   if (!mounted) return null;
 
   const chromeBg = "var(--el-chrome-bg, rgba(255,255,255,0.03))";
-  const chromeBorder = "var(--el-chrome-border, rgba(255,255,255,0.10))";
   const chromeHighlight = "var(--el-chrome-highlight, rgba(255,255,255,0.12))";
   const chromeShadow = "var(--el-chrome-shadow, 0 18px 60px rgba(0,0,0,0.22))";
   const chromeBlur = "var(--el-chrome-blur, 24px)";
 
-  // Lift the nav slightly off the absolute bottom so it doesn’t feel “stuck” to the edge.
   const LIFT_PX = 12;
 
   return (
-    <>
-      <MoreMenuPopover open={moreOpen} onClose={() => setMoreOpen(false)} themeId={themeId} gradientLevel={gradientLevel} />
-
-      {/* + FAB */}
-      {showMoreButton ? (
-        <button
-          type="button"
-          aria-label="More"
-          aria-expanded={moreOpen}
-          onClick={() => setMoreOpen((v) => !v)}
-          className={[
-            "fixed z-[60]",
-            "right-4",
-            "h-14 w-14 rounded-full",
-            "grid place-items-center",
-            "transition hover:bg-white/[0.06] active:scale-95",
-          ].join(" ")}
-          style={{
-            bottom: `calc(76px + env(safe-area-inset-bottom) + ${LIFT_PX}px)`,
-            background: chromeBg,
-            border: `1px solid ${chromeBorder}`,
-            boxShadow: chromeShadow,
-            backdropFilter: `blur(${chromeBlur})`,
-            WebkitBackdropFilter: `blur(${chromeBlur})`,
-          }}
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -inset-6 rounded-full blur-2xl"
-            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%)", opacity: 0.9 }}
-          />
-          <div className="absolute inset-0 rounded-full ring-1" style={{ borderColor: chromeHighlight }} />
-          <Plus className="relative h-6 w-6 text-white" />
-        </button>
-      ) : null}
-
-      <nav
-        aria-label="Bottom navigation"
-        className={["fixed left-0 right-0 z-50", className ?? ""].join(" ")}
-        style={{ bottom: `calc(env(safe-area-inset-bottom) + ${LIFT_PX}px)` }}
+    <nav
+      aria-label="Bottom navigation"
+      className={["fixed left-0 right-0 z-50", className ?? ""].join(" ")}
+      style={{ bottom: `calc(env(safe-area-inset-bottom) + ${LIFT_PX}px)` }}
+    >
+      <div
+        className="relative backdrop-blur-2xl"
+        style={{
+          background: chromeBg,
+          boxShadow: chromeShadow,
+          backdropFilter: `blur(${chromeBlur})`,
+          WebkitBackdropFilter: `blur(${chromeBlur})`,
+        }}
       >
         <div
-          className="relative backdrop-blur-2xl"
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-12 h-12"
           style={{
-            background: chromeBg,
-            // NO hard borderTop — we’ll do the same “single highlight line” as header.
-            boxShadow: chromeShadow,
-            backdropFilter: `blur(${chromeBlur})`,
-            WebkitBackdropFilter: `blur(${chromeBlur})`,
+            background: `linear-gradient(to top, ${chromeBg}, rgba(0,0,0,0))`,
           }}
-        >
-          {/* Blend INTO the page (this is the key to not looking like a separate component) */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-12 h-12"
-            style={{
-              background: `linear-gradient(to top, ${chromeBg}, rgba(0,0,0,0))`,
-            }}
-          />
+        />
 
-          {/* Single subtle highlight (matches header) */}
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{ background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`, opacity: 0.9 }}
-            aria-hidden
-          />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`,
+            opacity: 0.9,
+          }}
+          aria-hidden
+        />
 
-          {/* Ambient tints (quiet) */}
-          {ambient > 0 && (
-            <>
-              <div
-                aria-hidden="true"
+        {ambient > 0 && (
+          <>
+            <div
+              aria-hidden="true"
+              className={[
+                "pointer-events-none absolute -left-24 -top-28 h-[260px] w-[260px] rounded-full blur-[90px]",
+                theme.ambientTopLeftClass,
+              ].join(" ")}
+              style={{ opacity: ambient * 0.22 }}
+            />
+            <div
+              aria-hidden="true"
+              className={[
+                "pointer-events-none absolute -right-28 -bottom-28 h-[320px] w-[320px] rounded-full blur-[100px]",
+                theme.ambientRightClass,
+              ].join(" ")}
+              style={{ opacity: ambient * 0.22 }}
+            />
+          </>
+        )}
+
+        <div className="mx-auto flex w-full items-center justify-between px-2 py-2">
+          {items.map(({ key, href, label, Icon }) => {
+            const active = resolvedActiveKey === key;
+
+            return (
+              <Link
+                key={key}
+                href={href}
                 className={[
-                  "pointer-events-none absolute -left-24 -top-28 h-[260px] w-[260px] rounded-full blur-[90px]",
-                  theme.ambientTopLeftClass,
+                  "flex w-full flex-col items-center justify-center gap-1 rounded-xl",
+                  "px-1.5 py-2",
+                  "transition hover:bg-white/[0.04]",
+                  active ? "bg-white/[0.06]" : "",
                 ].join(" ")}
-                style={{ opacity: ambient * 0.22 }}
-              />
-              <div
-                aria-hidden="true"
-                className={[
-                  "pointer-events-none absolute -right-28 -bottom-28 h-[320px] w-[320px] rounded-full blur-[100px]",
-                  theme.ambientRightClass,
-                ].join(" ")}
-                style={{ opacity: ambient * 0.22 }}
-              />
-            </>
-          )}
-
-          <div className="mx-auto flex w-full items-center justify-between px-2 py-2">
-            {items.map(({ key, href, label, Icon }) => {
-              const active = resolvedActiveKey === key;
-
-              return (
-                <Link
-                  key={key}
-                  href={href}
-                  className={[
-                    "flex w-full flex-col items-center justify-center gap-1 rounded-xl",
-                    "px-1.5 py-2",
-                    "transition hover:bg-white/[0.04]",
-                    active ? "bg-white/[0.06]" : "",
-                  ].join(" ")}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <Icon className={active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"} />
-                  <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>{label}</span>
-                </Link>
-              );
-            })}
-          </div>
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon className={active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"} />
+                <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 }
 

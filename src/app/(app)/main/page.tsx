@@ -5,8 +5,6 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { TinyTasks, type TinyTaskSummary } from "./components/TinyTasks";
-
 import {
   isDarkTheme,
   type SpotlightThemeId,
@@ -14,28 +12,18 @@ import {
   INSIGHTS_THEMES,
 } from "@/theme/everleapVisuals";
 
-import {
-  TaskRunnerModal,
-  type TinyTaskId,
-  type OnboardingSnapshot as ModalOnboardingSnapshot,
-} from "./TaskRunnerModal";
-
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
 import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
 import { SignalsCard } from "./components/SignalsCard";
+import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
+import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 
 /* =============================================================================
    Storage keys
    ============================================================================= */
 
-// localStorage
 const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 const STORY_STORAGE_KEY_V3 = "everleap.story.answers.v3";
-
-// sessionStorage
-const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
-
-// login banner (session)
 const JUST_LOGGED_IN_SESSION_KEY = "everleap.main.justLoggedIn.v1";
 
 /* =============================================================================
@@ -47,11 +35,6 @@ const SIGNAL_COMPLETE_COUNT = 5;
 /* =============================================================================
    Types
    ============================================================================= */
-
-type SessionTinyState = {
-  shownIds: string[];
-  completedIds: string[];
-};
 
 type Saved = { answer?: string; skipped?: boolean };
 
@@ -65,14 +48,6 @@ function safeJsonParse<T>(raw: string | null): T | null {
     return JSON.parse(raw) as T;
   } catch {
     return null;
-  }
-}
-
-function safeJsonStringify(value: unknown) {
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return "";
   }
 }
 
@@ -100,12 +75,16 @@ function getSnapshotName(snapshot: unknown): string {
 }
 
 function labelForNext(next: RecommendedNext) {
-  return next === "motivations" ? "Motivations" : next === "strengths" ? "Strengths" : "Skills";
+  return next === "motivations"
+    ? "Motivations"
+    : next === "strengths"
+      ? "Strengths"
+      : "Skills";
 }
 
 function openingLine(name: string) {
   const n = (name ?? "").trim();
-  return n ? `Hey ${n}.` : "Welcome — I’m your Everleap counselor.";
+  return n ? `Hey ${n}.` : "Welcome to Everleap.";
 }
 
 function cleanOneLine(s: string) {
@@ -125,56 +104,7 @@ function isMeaningfulText(value: string): boolean {
 }
 
 /* =============================================================================
-   SessionTiny normalizer (NO any)
-   ============================================================================= */
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((x): x is string => typeof x === "string");
-}
-
-function readVmSessionTiny(vm: unknown): SessionTinyState {
-  if (!vm || typeof vm !== "object") return { shownIds: [], completedIds: [] };
-
-  const obj = vm as Record<string, unknown>;
-  const st = obj["sessionTiny"];
-
-  if (!st || typeof st !== "object") return { shownIds: [], completedIds: [] };
-
-  const stObj = st as Record<string, unknown>;
-  return {
-    shownIds: toStringArray(stObj["shownIds"]),
-    completedIds: toStringArray(stObj["completedIds"]),
-  };
-}
-
-/* =============================================================================
-   Tiny task session state (sessionStorage)
-   ============================================================================= */
-
-function readSessionTinyState(): SessionTinyState {
-  if (typeof window === "undefined") return { shownIds: [], completedIds: [] };
-
-  const parsed = safeJsonParse<SessionTinyState>(window.sessionStorage.getItem(TINY_TASKS_SESSION_KEY));
-  if (!parsed) return { shownIds: [], completedIds: [] };
-
-  return {
-    shownIds: parsed.shownIds ?? [],
-    completedIds: parsed.completedIds ?? [],
-  };
-}
-
-function writeSessionTinyState(next: SessionTinyState) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(TINY_TASKS_SESSION_KEY, safeJsonStringify(next));
-  } catch {
-    // ignore
-  }
-}
-
-/* =============================================================================
-   Story + onboarding readers (for meaningful copy)
+   Story + onboarding readers
    ============================================================================= */
 
 type OnboardingV4 = {
@@ -201,7 +131,7 @@ type ExtractedSignal = {
   category: RecommendedNext;
   questionId: string;
   answer: string;
-  confidence: number; // 0..1
+  confidence: number;
   interpretation: string;
   extraInterpretation?: string;
 };
@@ -211,10 +141,16 @@ function scoreAnswer(a: string) {
   if (!isMeaningfulText(t)) return 0;
 
   const len = t.length;
-  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(t);
-  const hasMovement = /\b(gym|run|lift|workout|move|training|practice)\b/i.test(t);
-  const hasEmotion = /\b(happy|calm|proud|stressed|anxious|excited|good|better)\b/i.test(t);
-  const hasRoutine = /\b(day|daily|routine|morning|night|shower|sleep|schedule)\b/i.test(t);
+  const hasEffort =
+    /\b(hard|work|earned|effort|discipline|practice|train|grind|progress)\b/i.test(
+      t
+    );
+  const hasMovement =
+    /\b(gym|run|lift|workout|move|training|practice)\b/i.test(t);
+  const hasEmotion =
+    /\b(happy|calm|proud|stressed|anxious|excited|good|better)\b/i.test(t);
+  const hasRoutine =
+    /\b(day|daily|routine|morning|night|shower|sleep|schedule)\b/i.test(t);
 
   let score = 0;
   score += Math.min(50, len) / 50;
@@ -234,36 +170,41 @@ function interpretAnswer(opts: {
   const { answer, lane, confidence } = opts;
   const t = cleanOneLine(answer);
 
-  const hasEffort = /\b(hard|work|earned|effort|discipline|practice|train|progress)\b/i.test(t);
+  const hasEffort =
+    /\b(hard|work|earned|effort|discipline|practice|train|progress)\b/i.test(
+      t
+    );
   const hasMovement = /\b(gym|run|lift|workout|move|training)\b/i.test(t);
-  const hasReset = /\b(shower|sleep|reset|clean|fresh)\b/i.test(t);
   const hasMood = /\b(happy|calm|good|better|peace|ok)\b/i.test(t);
 
   let interpretation =
-    "You do best when there’s a clear win in the day — something you can point to and say, “I did that.”";
+    "You seem to do best when there’s something real to move toward, not just vague activity.";
 
   if (hasEffort && hasMovement) {
-    interpretation = "You do best when progress feels earned — effort + momentum matter to you.";
+    interpretation =
+      "You seem to come alive when effort turns into momentum and you can feel progress happening.";
   } else if (hasEffort) {
-    interpretation = "You do best when the day feels earned — real effort, real progress, not just drifting.";
+    interpretation =
+      "You seem to trust effort more than hype. Progress matters when it feels earned.";
   } else if (hasMovement) {
-    interpretation = "You do best with momentum — when you move, your head clears and you lock in.";
+    interpretation =
+      "You seem to think more clearly once things are in motion. Movement creates clarity for you.";
   } else if (hasMood) {
-    interpretation = "Your mood isn’t random — it tracks with what your day actually contains.";
-  }
-
-  if (hasReset) {
-    interpretation += " You also have a reset ritual — that’s you protecting your headspace.";
+    interpretation =
+      "Your energy seems tied to what your days actually contain, not just what you say you want.";
   }
 
   let extra: string | undefined;
   if (confidence >= 0.78) {
     if (lane === "high_school") {
-      extra = "So I’m going to steer you toward options you can build over time — skills you can level up, not vibes.";
+      extra =
+        "That usually means you’ll respond better to real reps, real feedback, and real environments than abstract advice.";
     } else if (lane === "young_adult") {
-      extra = "So I’m going to bias toward paths with visible momentum — projects, routines, and environments where progress shows.";
+      extra =
+        "That usually means the best next moves will be the ones you can actually test in real life.";
     } else {
-      extra = "So I’m going to recommend next steps you can actually train — not just browse.";
+      extra =
+        "That usually means Everleap should point you toward things you can try, build, or act on — not just think about.";
     }
   }
 
@@ -284,7 +225,12 @@ function pickBestSignal(): ExtractedSignal | null {
         ? "young_adult"
         : "unknown";
 
-  const candidates: Array<{ id: string; cat: RecommendedNext; answer: string; score: number }> = [];
+  const candidates: Array<{
+    id: string;
+    cat: RecommendedNext;
+    answer: string;
+    score: number;
+  }> = [];
 
   const addIf = (id: string, cat: RecommendedNext) => {
     const s = saved[id];
@@ -324,30 +270,47 @@ function pickBestSignal(): ExtractedSignal | null {
 }
 
 /* =============================================================================
-   Coach copy helpers (spoken, grounded, progress-aware)
+   Coach copy helpers
    ============================================================================= */
 
 type NarrativeMode = "welcome_new" | "in_progress" | "complete_signals";
 
 function certaintyLine(certainty?: OnboardingV4["certainty"]) {
-  if (certainty === "strong") return "You sound pretty clear on what you want — we’ll make it real, not vague.";
-  if (certainty === "kinda") return "You’re not guessing, but you’re not locked in either — that’s a good place to work from.";
-  if (certainty === "no_clue") return "You don’t need a “forever plan.” We just need one honest direction to test.";
+  if (certainty === "strong") {
+    return "You already sound pretty clear on what you want. Now the point is to make that usable inside the platform.";
+  }
+  if (certainty === "kinda") {
+    return "You’ve got signal already. The point now is to sharpen it until the next moves feel more obvious.";
+  }
+  if (certainty === "no_clue") {
+    return "That’s okay. Everleap is built for finding signal before forcing a big answer.";
+  }
   return "";
 }
 
 function nextWhy(next: RecommendedNext) {
   if (next === "motivations") {
-    return "Motivations tells me what actually pulls you forward (and what drains you) — it’s how I stop guessing.";
+    return "Motivations shows what actually pulls you forward and what tends to drain you.";
   }
   if (next === "strengths") {
-    return "Strengths is how we make sure options fit how you operate day to day — not just what sounds interesting.";
+    return "Strengths shows how you naturally operate when things are working.";
   }
-  return "Skills is where we turn direction into something concrete — what to try, build, or practice next.";
+  return "Skills turns self-knowledge into something more concrete, trainable, and usable.";
 }
 
 function primaryCtaLabel(next: RecommendedNext, allComplete: boolean) {
   return allComplete ? "Go to Insights" : `Continue to ${labelForNext(next)}`;
+}
+
+function sectionKicker(dark: boolean) {
+  return [
+    "text-[12px] font-semibold uppercase tracking-[0.16em]",
+    dark ? "text-white/50" : "text-slate-600",
+  ].join(" ");
+}
+
+function mutedText(dark: boolean) {
+  return dark ? "text-white/65" : "text-slate-600";
 }
 
 /* =============================================================================
@@ -358,15 +321,13 @@ export default function MainHomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // NOTE: AppChrome is now provided by /main/layout.tsx.
-  // We keep theme values here only for page-level calculations (dark/orb glow),
-  // even though we no longer pass them into AppChrome from this page.
   const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel] = React.useState<GradientLevel>(3);
   void gradientLevel;
 
   const dark = isDarkTheme(themeId);
-  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
+  const theme =
+    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
   const orbGlowClass =
     "orbGlowClass" in (theme as unknown as Record<string, unknown>)
@@ -395,10 +356,6 @@ export default function MainHomePage() {
 
   const [motionEnabled, setMotionEnabled] = React.useState(true);
   const [transitioning, setTransitioning] = React.useState(false);
-
-  const [taskOpen, setTaskOpen] = React.useState(false);
-  const [activeTaskId, setActiveTaskId] = React.useState<TinyTaskId | null>(null);
-
   const [justLoggedIn, setJustLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
@@ -410,7 +367,9 @@ export default function MainHomePage() {
     setMotionEnabled(!reduce);
 
     const onChange = () => {
-      setMotionEnabled(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      setMotionEnabled(
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      );
     };
     mq?.addEventListener?.("change", onChange);
 
@@ -437,7 +396,8 @@ export default function MainHomePage() {
     const m = searchParams?.get("m") ?? "";
     if (m !== "login") return;
 
-    const already = window.sessionStorage.getItem(JUST_LOGGED_IN_SESSION_KEY) === "1";
+    const already =
+      window.sessionStorage.getItem(JUST_LOGGED_IN_SESSION_KEY) === "1";
 
     if (!already) {
       setJustLoggedIn(true);
@@ -451,7 +411,9 @@ export default function MainHomePage() {
     router.replace("/main");
   }, [router, searchParams]);
 
-  const progress = mounted ? vm.progress : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
+  const progress = mounted
+    ? vm.progress
+    : { motivationsAnswered: 0, strengthsAnswered: 0, skillsAnswered: 0 };
 
   const motAnswered = progress.motivationsAnswered ?? 0;
   const strAnswered = progress.strengthsAnswered ?? 0;
@@ -463,31 +425,11 @@ export default function MainHomePage() {
 
   const allSignalsComplete = motComplete && strComplete && sklComplete;
 
-  const recommendedNext: RecommendedNext = !motComplete ? "motivations" : !strComplete ? "strengths" : "skills";
-
-  const vmTiny = readVmSessionTiny(vm);
-  const sprintDoneThisSession = mounted ? vmTiny.completedIds.includes("curiosity_sprint") : false;
-
-  const weeklyFocusSet = !!(vm.weeklyFocus?.vibe && vm.weeklyFocus?.target);
-  const sprintCount = vm.sprintCount ?? 0;
-  const shownTinyCount = vmTiny.shownIds.length;
-
-  const tasks: TinyTaskSummary[] = [
-    {
-      id: "weekly_focus",
-      title: "Weekly focus",
-      subtitle: "Pick a vibe + a target for this week.",
-      status: weeklyFocusSet ? "set" : "start",
-    },
-    {
-      id: "curiosity_sprint",
-      title: "Curiosity sprint",
-      subtitle: "10 minutes. One small experiment you can actually do.",
-      count: sprintCount,
-      disabled: sprintDoneThisSession,
-      status: sprintDoneThisSession ? "done" : "start",
-    },
-  ];
+  const recommendedNext: RecommendedNext = !motComplete
+    ? "motivations"
+    : !strComplete
+      ? "strengths"
+      : "skills";
 
   const buildQuestionsHref = (cat: RecommendedNext) => {
     const params = new URLSearchParams();
@@ -517,15 +459,13 @@ export default function MainHomePage() {
   const signal = mounted ? pickBestSignal() : null;
 
   const hasAnyProgress = motAnswered > 0 || strAnswered > 0 || sklAnswered > 0;
-  const hasAnyAction = weeklyFocusSet || sprintCount > 0 || shownTinyCount > 0;
   const hasOnboarded = mounted ? !!(onboarding.name || vm.snapshot) : false;
 
-  const mode: NarrativeMode =
-    allSignalsComplete
-      ? "complete_signals"
-      : hasOnboarded && !hasAnyProgress && !signal && !hasAnyAction
-        ? "welcome_new"
-        : "in_progress";
+  const mode: NarrativeMode = allSignalsComplete
+    ? "complete_signals"
+    : hasOnboarded && !hasAnyProgress && !signal
+      ? "welcome_new"
+      : "in_progress";
 
   const loginLine = "Alright — you’re in. Let’s pick up where you left off.";
 
@@ -533,79 +473,79 @@ export default function MainHomePage() {
     if (!mounted) return ["…"];
 
     const next = recommendedNext;
-    const why = nextWhy(next);
     const certainty = certaintyLine(onboarding.certainty);
-
-    const didLineParts: string[] = [];
-    if (motComplete) didLineParts.push("Motivations");
-    if (strComplete) didLineParts.push("Strengths");
-    if (sklComplete) didLineParts.push("Skills");
-
-    const didLine =
-      didLineParts.length === 0
-        ? ""
-        : didLineParts.length === 1
-          ? `You’ve already locked in ${didLineParts[0]}.`
-          : didLineParts.length === 2
-            ? `You’ve already locked in ${didLineParts[0]} + ${didLineParts[1]}.`
-            : "You’ve already locked in Motivations + Strengths + Skills.";
-
-    const actionLine = weeklyFocusSet
-      ? "And you’ve got a weekly focus set — that’s where progress starts showing up."
-      : sprintCount > 0
-        ? `You’ve already done ${sprintCount} curiosity sprint${sprintCount === 1 ? "" : "s"} — that’s real momentum.`
-        : "";
-
-    const signalLine = signal?.interpretation ? `One pattern I’m taking seriously: ${signal.interpretation}` : "";
-
     const lines: string[] = [open];
+
     if (justLoggedIn) lines.push(loginLine);
 
     if (mode === "complete_signals") {
-      lines.push("You’ve got the full set — Motivations, Strengths, and Skills.");
-      lines.push("Insights is where I translate that into patterns + next steps you can actually act on.");
-      return lines.filter(Boolean).slice(0, 5);
+      lines.push(
+        "Your foundation is in. Motivations, Strengths, and Skills are all complete — which means Everleap can stop asking who you might be and start showing you what fits."
+      );
+
+      lines.push(
+        "This is where the platform opens up. Insights helps you read deeper patterns. Explore helps you test directions and possibilities. Careers, Community, and Hobbies help turn that signal into real life."
+      );
+
+      if (signal?.interpretation) {
+        lines.push(signal.interpretation);
+      } else {
+        lines.push(
+          "You’re not here to collect labels. You’re here to find directions that feel real."
+        );
+      }
+
+      lines.push("Best next step: go to Insights and start connecting the dots.");
+      return lines.filter(Boolean).slice(0, 4);
     }
 
     if (mode === "welcome_new") {
-      lines.push("Welcome to Everleap. I’ll be your coach here — the goal is a direction that feels real, not random.");
-      lines.push("We’ll go Motivations → Strengths → Skills, then turn that into small actions you can actually do.");
       lines.push(
-        next === "motivations"
-          ? "We start with Motivations because it tells me what actually pulls you forward — it’s the foundation for everything else."
-          : `Next I want ${labelForNext(next)} so I’m building from you, not a template.`
+        "Welcome to Everleap."
       );
-      if (certainty) lines.push(certainty);
-      return lines.filter(Boolean).slice(0, 6);
+
+      lines.push(
+        "This is where we start building your map — what drives you, how you move through the world, and what kinds of futures may actually fit."
+      );
+
+      lines.push(
+        "The first step is simple: give the platform real signal. Once that foundation is in, the rest of Everleap gets sharper, more personal, and more useful."
+      );
+
+      if (certainty) {
+        lines.push(certainty);
+      } else {
+        lines.push(`Best next step: start with ${labelForNext(next)}.`);
+      }
+
+      return lines.filter(Boolean).slice(0, 4);
     }
 
-    lines.push("Good — you’ve started giving me real signal. That’s how this stops feeling generic.");
-    if (didLine) lines.push(didLine);
-    if (actionLine) lines.push(actionLine);
+    lines.push("Your map is underway.");
 
-    if (signalLine) {
-      lines.push(signalLine);
-      if (signal?.extraInterpretation) lines.push(signal.extraInterpretation);
+    lines.push(
+      "Everleap works best when the foundation is real: Motivations shows what pulls you, Strengths shows how you naturally operate, and Skills shows what wants to be built."
+    );
+
+    if (signal?.interpretation) {
+      lines.push(signal.interpretation);
+    } else {
+      lines.push(
+        `Best next step: finish ${labelForNext(next)}. ${nextWhy(next)}`
+      );
     }
 
-    lines.push(`My recommendation: ${labelForNext(next)}. ${why}`);
+    lines.push(
+      `Best next step: finish ${labelForNext(next)} so the rest of the platform gets more specific — and less generic.`
+    );
 
-    if (next !== "motivations") {
-      lines.push(`If that doesn’t feel right today, ${next === "strengths" ? "Motivations" : "Strengths"} is still a solid move.`);
-    }
-
-    return lines.filter(Boolean).slice(0, 8);
+    return lines.filter(Boolean).slice(0, 4);
   }, [
     mounted,
     mode,
     open,
     recommendedNext,
     onboarding.certainty,
-    motComplete,
-    strComplete,
-    sklComplete,
-    weeklyFocusSet,
-    sprintCount,
     signal,
     justLoggedIn,
   ]);
@@ -615,9 +555,23 @@ export default function MainHomePage() {
     return primaryCtaLabel(recommendedNext, allSignalsComplete);
   }, [mounted, recommendedNext, allSignalsComplete]);
 
+  const nextStepsPageId = allSignalsComplete
+    ? "main.home.complete"
+    : recommendedNext === "motivations"
+      ? "main.home.need_motivations"
+      : recommendedNext === "strengths"
+        ? "main.home.need_strengths"
+        : "main.home.need_skills";
+
+  const nextStepsDefinition = React.useMemo(() => {
+    return (
+      getNextStepsDefinition(nextStepsPageId) ??
+      getNextStepsDefinition("insights.summary")
+    );
+  }, [nextStepsPageId]);
+
   return (
     <>
-      {/* Scrim fade for click transitions */}
       <AnimatePresence>
         {transitioning && motionEnabled ? (
           <motion.div
@@ -628,31 +582,16 @@ export default function MainHomePage() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <div className={dark ? "h-full w-full bg-black" : "h-full w-full bg-white"} />
+            <div
+              className={dark ? "h-full w-full bg-black" : "h-full w-full bg-white"}
+            />
           </motion.div>
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {taskOpen && activeTaskId ? (
-          <TaskRunnerModal
-            open={taskOpen}
-            onClose={() => {
-              setTaskOpen(false);
-              setActiveTaskId(null);
-              setVm(buildTodayViewModel());
-            }}
-            taskId={activeTaskId}
-            snapshot={vm.snapshot as unknown as ModalOnboardingSnapshot | null}
-            dark={dark}
-          />
         ) : null}
       </AnimatePresence>
 
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pt-8">
           <section className="relative">
-            {/* agent presence */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute -left-1 top-2 h-10 w-10 rounded-full"
@@ -684,31 +623,61 @@ export default function MainHomePage() {
                 }}
               />
 
-              {mounted ? (
-                <>
-                  {!allSignalsComplete ? (
-                    <div className="mt-1">
-                      <SignalsCard dark={dark} progress={vm.progress} nextKey={vm.nextKey} />
-                    </div>
-                  ) : null}
+              {!allSignalsComplete ? (
+                <section className="mt-6">
+                  <div className={sectionKicker(dark)}>Build Your Map</div>
+                  <div
+                    className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(
+                      " "
+                    )}
+                  >
+                    Finish the foundation first. The more complete this gets, the more
+                    specific Everleap can be.
+                  </div>
 
-                  <div className="mt-5">
-                    <TinyTasks
-                      tasks={tasks}
-                      onOpenTask={(id) => {
-                        const s = readSessionTinyState();
-                        writeSessionTinyState({
-                          shownIds: Array.from(new Set([...s.shownIds, String(id)])),
-                          completedIds: s.completedIds,
-                        });
-                        setActiveTaskId(id);
-                        setTaskOpen(true);
-                      }}
+                  <div className="mt-4">
+                    <SignalsCard
                       dark={dark}
+                      progress={vm.progress}
+                      nextKey={vm.nextKey}
                     />
                   </div>
-                </>
+                </section>
               ) : null}
+
+              <section className="mt-8">
+                <div className={sectionKicker(dark)}>Next Steps</div>
+                <div
+                  className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(
+                    " "
+                  )}
+                >
+                  {allSignalsComplete
+                    ? "One real move. Small is fine. Real is the point."
+                    : "Finish the map, then make one real move with it."}
+                </div>
+
+                {nextStepsDefinition ? (
+                  <div className="mt-4">
+                    <NextStepsStack
+                      dark={dark}
+                      useLocal={mounted}
+                      definition={nextStepsDefinition}
+                      variant="embedded"
+                      collapsible={false}
+                      defaultOpen
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={["mt-4 text-[15px] leading-relaxed", mutedText(dark)].join(
+                      " "
+                    )}
+                  >
+                    Next steps are loading…
+                  </div>
+                )}
+              </section>
 
               <div className="h-3" />
             </div>
