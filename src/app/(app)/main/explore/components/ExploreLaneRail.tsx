@@ -3,18 +3,45 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 type Lane = {
   href: string;
   label: string;
+  color: string;
 };
 
 const LANES: Lane[] = [
-  { href: "/main/explore/work", label: "Work" },
-  { href: "/main/explore/learning", label: "Learning" },
-  { href: "/main/explore/world", label: "World" },
-  { href: "/main/explore/impact", label: "Impact" },
-  { href: "/main/explore/play", label: "Play" },
+  {
+    href: "/main/explore/work",
+    label: "Work",
+    color:
+      "border-cyan-300/20 bg-cyan-300/12 text-cyan-100 shadow-[0_0_30px_rgba(80,180,255,0.25)]",
+  },
+  {
+    href: "/main/explore/learning",
+    label: "Learning",
+    color:
+      "border-emerald-300/20 bg-emerald-300/12 text-emerald-100 shadow-[0_0_30px_rgba(70,255,200,0.25)]",
+  },
+  {
+    href: "/main/explore/world",
+    label: "World",
+    color:
+      "border-amber-300/20 bg-amber-300/12 text-amber-100 shadow-[0_0_30px_rgba(255,190,120,0.25)]",
+  },
+  {
+    href: "/main/explore/impact",
+    label: "Impact",
+    color:
+      "border-violet-300/20 bg-violet-300/12 text-violet-100 shadow-[0_0_30px_rgba(180,140,255,0.25)]",
+  },
+  {
+    href: "/main/explore/play",
+    label: "Play",
+    color:
+      "border-pink-300/20 bg-pink-300/12 text-pink-100 shadow-[0_0_30px_rgba(255,140,200,0.25)]",
+  },
 ];
 
 function railWrap() {
@@ -26,22 +53,22 @@ function railWrap() {
 
 function railTrack() {
   return [
-    "relative inline-flex min-w-full items-center gap-1.5 rounded-full border p-1",
-    "backdrop-blur-2xl",
+    "relative inline-flex min-w-max items-center gap-2 rounded-full border p-1.5",
     "border-white/10 bg-white/[0.035]",
-    "shadow-[0_16px_50px_rgba(0,0,0,0.18)]",
+    "backdrop-blur-2xl",
+    "shadow-[0_18px_60px_rgba(0,0,0,0.22)]",
   ].join(" ");
 }
 
-function laneLink(active: boolean) {
+function laneBase(active: boolean) {
   return [
-    "relative z-10 inline-flex shrink-0 items-center justify-center",
-    "whitespace-nowrap rounded-full px-4 py-2.5",
+    "relative inline-flex h-11 shrink-0 items-center justify-center",
+    "whitespace-nowrap rounded-full px-5",
     "text-sm font-semibold tracking-[-0.01em]",
-    "transition-[color,transform,opacity] duration-200",
-    "active:scale-[0.985]",
+    "transition-all duration-200",
+    "active:scale-[0.97]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/18",
-    active ? "text-white" : "text-white/58 hover:text-white/82",
+    active ? "" : "text-white/65 hover:text-white/85",
   ].join(" ");
 }
 
@@ -68,51 +95,55 @@ export default function ExploreLaneRail() {
 
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1 right-1 top-1 bottom-1"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-full"
           >
-            <div
-              className="absolute top-0 bottom-0 rounded-full border border-white/12 bg-white/[0.08] shadow-[0_10px_30px_rgba(0,0,0,0.16),0_0_30px_rgba(255,255,255,0.03)] transition-all duration-300 ease-out"
+            <motion.div
+              className="absolute inset-y-0 w-[34%]"
               style={{
-                width: `calc((100% - ${1.5 * (LANES.length - 1)}px) / ${LANES.length})`,
-                transform: `translateX(calc(${activeIndex} * (100% + 1.5px)))`,
+                background:
+                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.00) 10%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.00) 90%, transparent 100%)",
+                filter: "blur(12px)",
               }}
-            >
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-                }}
-              />
-              <div
-                className="absolute inset-x-6 top-0 h-px rounded-full bg-white/22"
-                aria-hidden
-              />
-            </div>
+              animate={{ x: ["-140%", "340%"] }}
+              transition={{
+                duration: 7.5,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
           </div>
 
-          {LANES.map((lane, index) => {
-            const active = index === activeIndex;
+          <div className="relative z-10 flex items-center gap-2">
+            {LANES.map((lane, index) => {
+              const active = index === activeIndex;
 
-            return (
-              <Link
-                key={lane.href}
-                href={lane.href}
-                className={laneLink(active)}
-                aria-current={active ? "page" : undefined}
-              >
-                <span className="relative">
-                  {lane.label}
-                  {active ? (
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute left-1/2 top-full mt-1 h-1 w-1 -translate-x-1/2 rounded-full bg-white/70"
-                    />
-                  ) : null}
-                </span>
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={lane.href}
+                  href={lane.href}
+                  className={[
+                    laneBase(active),
+                    active
+                      ? [
+                          "border",
+                          lane.color,
+                          "bg-white/[0.06]",
+                          "shadow-[0_10px_30px_rgba(0,0,0,0.18)]",
+                        ].join(" ")
+                      : "border border-transparent",
+                  ].join(" ")}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span className="relative">
+                    {lane.label}
+                    {active ? (
+                      <span className="absolute left-1/2 top-full mt-1 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-white/80" />
+                    ) : null}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

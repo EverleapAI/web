@@ -1,11 +1,14 @@
-// src/app/main/components/nextSteps/ActionCard.tsx
 "use client";
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Rocket } from "lucide-react";
 
-import type { ActionItem, ActionProof, ActionStatus } from "@/app/(app)/main/domain/actions";
+import type {
+  ActionItem,
+  ActionProof,
+  ActionStatus,
+} from "@/app/(app)/main/domain/actions";
 import {
   loadActions,
   saveActions,
@@ -46,6 +49,12 @@ type Props = {
    * - removes nested sub-cards in expanded content
    */
   embedded?: boolean;
+
+  /**
+   * When true, render the full card open with no Details/Hide control.
+   * Use this on the main home page.
+   */
+  alwaysExpanded?: boolean;
 };
 
 /* =============================================================================
@@ -57,7 +66,6 @@ function ring(dark: boolean) {
 }
 
 function calmSurface(dark: boolean) {
-  // Weather-like: calm, predictable contrast
   return dark ? "bg-slate-950/22" : "bg-white/85";
 }
 
@@ -93,7 +101,6 @@ function pill(dark: boolean, selected = false) {
 }
 
 function headerChip(dark: boolean) {
-  // Compact chip: "Action"
   return [
     "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
     "text-xs font-semibold",
@@ -105,7 +112,6 @@ function headerChip(dark: boolean) {
 }
 
 function statusBadge(dark: boolean, status: ActionStatus) {
-  // Subtle status badge (secondary)
   const base =
     "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold";
 
@@ -125,7 +131,6 @@ function statusLabel(status: ActionStatus) {
 }
 
 function headerToggle(dark: boolean) {
-  // Small, unobtrusive control (left-aligned with chips, like TinyTask)
   return [
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5",
     "text-xs font-semibold",
@@ -217,9 +222,10 @@ export function ActionCard({
   label = "Action",
   subtitle = "Bigger than a Tiny Task — something real you can do and log.",
   embedded = false,
+  alwaysExpanded = false,
 }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(alwaysExpanded);
 
   const [proofOpen, setProofOpen] = React.useState(false);
   const [proofText, setProofText] = React.useState("");
@@ -228,6 +234,10 @@ export function ActionCard({
     const loaded = loadActions({ useLocal });
     setItems(loaded);
   }, [useLocal]);
+
+  React.useEffect(() => {
+    if (alwaysExpanded && !open) setOpen(true);
+  }, [alwaysExpanded, open]);
 
   const current = React.useMemo(() => {
     const latest = findLatestActionForPage(items, definition.pageId);
@@ -266,7 +276,7 @@ export function ActionCard({
     const next = setActionStatus(
       items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
       persisted.id,
-      "started",
+      "started"
     );
     persist(next);
   }
@@ -276,7 +286,7 @@ export function ActionCard({
     const next = setActionStatus(
       items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
       persisted.id,
-      "done",
+      "done"
     );
     persist(next);
   }
@@ -335,7 +345,6 @@ export function ActionCard({
       ].join(" ")}
       aria-labelledby={titleId}
     >
-      {/* Accent rail + subtle glow + watermark */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className={[
@@ -376,7 +385,6 @@ export function ActionCard({
       </div>
 
       <div className="relative">
-        {/* Header row: left-aligned controls (match TinyTask) */}
         <div className="flex flex-wrap items-center gap-2">
           <span className={headerChip(dark)}>
             <span aria-hidden className="opacity-90">
@@ -402,18 +410,20 @@ export function ActionCard({
             {statusLabel(status)}
           </span>
 
-          <button
-            type="button"
-            className={headerToggle(dark)}
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls={`${titleId}-panel`}
-          >
-            <span aria-hidden className="opacity-80">
-              {open ? "▾" : "▸"}
-            </span>
-            {open ? "Hide" : "Details"}
-          </button>
+          {!alwaysExpanded ? (
+            <button
+              type="button"
+              className={headerToggle(dark)}
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls={`${titleId}-panel`}
+            >
+              <span aria-hidden className="opacity-80">
+                {open ? "▾" : "▸"}
+              </span>
+              {open ? "Hide" : "Details"}
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-3 min-w-0">
@@ -425,131 +435,232 @@ export function ActionCard({
             <span className={`font-semibold ${text(dark)}`}>Goal:</span> {definition.goal}
           </div>
 
-          {/* Keep the collapsed card calm; only show subtitle when open */}
           {open && subtitle ? (
             <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
           ) : null}
         </div>
 
-        <AnimatePresence initial={false}>
-          {open ? (
-            <motion.div
-              id={`${titleId}-panel`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.18 }}
-              className="mt-4"
-            >
-              {/* Steps (inline, no nested "card") */}
-              {definition.steps?.length ? (
-                <div className="mt-1">
-                  <div
-                    className={[
-                      "text-xs font-semibold uppercase tracking-[0.18em]",
-                      dark ? "text-white/50" : "text-slate-500",
-                    ].join(" ")}
-                  >
-                    Steps
-                  </div>
-
-                  <ul className="mt-3 space-y-2">
-                    {definition.steps.map((s, idx) => (
-                      <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
-                        <span
-                          aria-hidden
-                          className={[
-                            "mt-2 inline-block h-1.5 w-1.5 rounded-full",
-                            dark ? "bg-white/30" : "bg-black/20",
-                          ].join(" ")}
-                        />
-                        <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
-                      </li>
-                    ))}
-                  </ul>
+        {alwaysExpanded ? (
+          <div id={`${titleId}-panel`} className="mt-4">
+            {definition.steps?.length ? (
+              <div className="mt-1">
+                <div
+                  className={[
+                    "text-xs font-semibold uppercase tracking-[0.18em]",
+                    dark ? "text-white/50" : "text-slate-500",
+                  ].join(" ")}
+                >
+                  Steps
                 </div>
-              ) : null}
 
-              {/* Logs */}
-              {proofEntries.length ? (
-                <div className="mt-5">
-                  <div
-                    className={[
-                      "flex items-center justify-between gap-3",
-                      "text-xs font-semibold uppercase tracking-[0.18em]",
-                      dark ? "text-white/50" : "text-slate-500",
-                    ].join(" ")}
-                  >
-                    <span>Your logs</span>
-                    <span className="normal-case tracking-normal font-semibold">
-                      {proofEntries.length}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 space-y-3">
-                    {proofEntries.slice(0, 3).map((e, idx) => {
-                      const tsOk = Number.isFinite(e.ts);
-                      return (
-                        <div
-                          key={`${tsOk ? e.ts : "legacy"}_${idx}`}
-                          className={[
-                            "rounded-2xl border px-3.5 py-3",
-                            "backdrop-blur-xl",
-                            dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
-                          ].join(" ")}
-                        >
-                          <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
-                          <div className={`mt-1 text-xs ${muted(dark)}`}>
-                            {tsOk ? relativeTime(e.ts) : "Earlier"}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {proofEntries.length > 3 ? (
-                    <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
-                  ) : null}
-                  {typeof updatedAt === "number" ? (
-                    <div className={`mt-2 text-xs ${muted(dark)}`}>
-                      Updated {relativeTime(updatedAt)}.
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {/* Actions */}
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {status !== "started" ? (
-                  <button type="button" className={pill(dark)} onClick={onStart}>
-                    <span aria-hidden className="opacity-80">
-                      ▶
-                    </span>
-                    Start
-                  </button>
-                ) : null}
-
-                {status !== "done" ? (
-                  <button type="button" className={pill(dark)} onClick={onDone}>
-                    <span aria-hidden className="opacity-80">
-                      ✓
-                    </span>
-                    Mark done
-                  </button>
-                ) : null}
-
-                <button type="button" className={pill(dark)} onClick={onLogProof}>
-                  <span aria-hidden className="opacity-80">
-                    ✎
-                  </span>
-                  Log result
-                </button>
+                <ul className="mt-3 space-y-2">
+                  {definition.steps.map((s, idx) => (
+                    <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
+                      <span
+                        aria-hidden
+                        className={[
+                          "mt-2 inline-block h-1.5 w-1.5 rounded-full",
+                          dark ? "bg-white/30" : "bg-black/20",
+                        ].join(" ")}
+                      />
+                      <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+            ) : null}
 
-        {/* Proof modal (kept as-is, just calm surface + consistent rings) */}
+            {proofEntries.length ? (
+              <div className="mt-5">
+                <div
+                  className={[
+                    "flex items-center justify-between gap-3",
+                    "text-xs font-semibold uppercase tracking-[0.18em]",
+                    dark ? "text-white/50" : "text-slate-500",
+                  ].join(" ")}
+                >
+                  <span>Your logs</span>
+                  <span className="normal-case tracking-normal font-semibold">
+                    {proofEntries.length}
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  {proofEntries.slice(0, 3).map((e, idx) => {
+                    const tsOk = Number.isFinite(e.ts);
+                    return (
+                      <div
+                        key={`${tsOk ? e.ts : "legacy"}_${idx}`}
+                        className={[
+                          "rounded-2xl border px-3.5 py-3",
+                          "backdrop-blur-xl",
+                          dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
+                        ].join(" ")}
+                      >
+                        <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
+                        <div className={`mt-1 text-xs ${muted(dark)}`}>
+                          {tsOk ? relativeTime(e.ts) : "Earlier"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {proofEntries.length > 3 ? (
+                  <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
+                ) : null}
+                {typeof updatedAt === "number" ? (
+                  <div className={`mt-2 text-xs ${muted(dark)}`}>
+                    Updated {relativeTime(updatedAt)}.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {status !== "started" ? (
+                <button type="button" className={pill(dark)} onClick={onStart}>
+                  <span aria-hidden className="opacity-80">
+                    ▶
+                  </span>
+                  Start
+                </button>
+              ) : null}
+
+              {status !== "done" ? (
+                <button type="button" className={pill(dark)} onClick={onDone}>
+                  <span aria-hidden className="opacity-80">
+                    ✓
+                  </span>
+                  Mark done
+                </button>
+              ) : null}
+
+              <button type="button" className={pill(dark)} onClick={onLogProof}>
+                <span aria-hidden className="opacity-80">
+                  ✎
+                </span>
+                Log result
+              </button>
+            </div>
+          </div>
+        ) : (
+          <AnimatePresence initial={false}>
+            {open ? (
+              <motion.div
+                id={`${titleId}-panel`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.18 }}
+                className="mt-4"
+              >
+                {definition.steps?.length ? (
+                  <div className="mt-1">
+                    <div
+                      className={[
+                        "text-xs font-semibold uppercase tracking-[0.18em]",
+                        dark ? "text-white/50" : "text-slate-500",
+                      ].join(" ")}
+                    >
+                      Steps
+                    </div>
+
+                    <ul className="mt-3 space-y-2">
+                      {definition.steps.map((s, idx) => (
+                        <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
+                          <span
+                            aria-hidden
+                            className={[
+                              "mt-2 inline-block h-1.5 w-1.5 rounded-full",
+                              dark ? "bg-white/30" : "bg-black/20",
+                            ].join(" ")}
+                          />
+                          <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {proofEntries.length ? (
+                  <div className="mt-5">
+                    <div
+                      className={[
+                        "flex items-center justify-between gap-3",
+                        "text-xs font-semibold uppercase tracking-[0.18em]",
+                        dark ? "text-white/50" : "text-slate-500",
+                      ].join(" ")}
+                    >
+                      <span>Your logs</span>
+                      <span className="normal-case tracking-normal font-semibold">
+                        {proofEntries.length}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 space-y-3">
+                      {proofEntries.slice(0, 3).map((e, idx) => {
+                        const tsOk = Number.isFinite(e.ts);
+                        return (
+                          <div
+                            key={`${tsOk ? e.ts : "legacy"}_${idx}`}
+                            className={[
+                              "rounded-2xl border px-3.5 py-3",
+                              "backdrop-blur-xl",
+                              dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
+                            ].join(" ")}
+                          >
+                            <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
+                            <div className={`mt-1 text-xs ${muted(dark)}`}>
+                              {tsOk ? relativeTime(e.ts) : "Earlier"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {proofEntries.length > 3 ? (
+                      <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
+                    ) : null}
+                    {typeof updatedAt === "number" ? (
+                      <div className={`mt-2 text-xs ${muted(dark)}`}>
+                        Updated {relativeTime(updatedAt)}.
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {status !== "started" ? (
+                    <button type="button" className={pill(dark)} onClick={onStart}>
+                      <span aria-hidden className="opacity-80">
+                        ▶
+                      </span>
+                      Start
+                    </button>
+                  ) : null}
+
+                  {status !== "done" ? (
+                    <button type="button" className={pill(dark)} onClick={onDone}>
+                      <span aria-hidden className="opacity-80">
+                        ✓
+                      </span>
+                      Mark done
+                    </button>
+                  ) : null}
+
+                  <button type="button" className={pill(dark)} onClick={onLogProof}>
+                    <span aria-hidden className="opacity-80">
+                      ✎
+                    </span>
+                    Log result
+                  </button>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        )}
+
         {proofOpen ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div
