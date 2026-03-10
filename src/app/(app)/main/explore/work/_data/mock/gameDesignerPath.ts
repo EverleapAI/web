@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/_data/mock/gameDesignerPath.ts
-
 import type { WorkPathContent } from "../workPathSchema";
 
 export const GAME_DESIGNER_PATH: WorkPathContent = {
@@ -17,22 +15,22 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
 
   card: {
     title: "Game Designer",
-    hook: "Build worlds people can feel, test, and return to.",
+    hook: "Build worlds, systems, tension, and delight.",
     description:
-      "A path for people who love imagination with structure — systems, story, tension, reward, and the strange magic of shaping an experience someone else can step inside.",
+      "A path for people who love imagination with structure — story, mechanics, player psychology, balance, and the feeling of making something others want to enter.",
   },
 
   hero: {
     eyebrow: "Work Path",
     title: "Game Designer",
     hook:
-      "You are not just playing the experience. You are shaping the rules, rhythm, tension, and wonder that make someone want to stay inside it.",
+      "You are not just playing the experience. You are shaping the rules, the feeling, and the world around it.",
     summary:
-      "Game design lives where creativity meets structure. It is part worldbuilding, part psychology, part systems thinking, and part taste. You might design mechanics, levels, progression loops, interfaces, story choices, or the emotional cadence of a player’s journey — but the deeper job is always the same: create an experience that feels alive.",
+      "Game design sits at the intersection of creativity, systems thinking, psychology, and taste. It can mean designing mechanics, levels, progression loops, interfaces, stories, economies, or the emotional rhythm of a player’s experience.",
     whyItPullsYouIn: [
-      "You do not just enjoy games — you notice what makes them click, drag, frustrate, or become impossible to stop thinking about.",
-      "You like turning ideas into something interactive, where choice, consequence, and feeling all matter.",
-      "You are drawn to both imagination and structure: not just dreaming up the world, but shaping how it actually works.",
+      "You like making ideas interactive instead of just describing them.",
+      "You notice what makes something addictive, frustrating, or satisfying.",
+      "You care about both imagination and structure.",
     ],
   },
 
@@ -45,25 +43,25 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
 
   fitSignals: [
     {
-      id: "interactive-imagination",
-      label: "Interactive imagination",
-      score: 91,
+      id: "creative-structure",
+      label: "Creative + structured",
+      score: 89,
       explanation:
-        "A strong fit signal here is wanting ideas to become playable. You do not just want to describe a world or concept — you want people to move through it, test it, and feel it.",
+        "This path fits people who want room for invention, but also enjoy rules, balance, and cause-and-effect.",
     },
     {
       id: "taste-and-critique",
       label: "Taste + critique",
-      score: 86,
+      score: 84,
       explanation:
-        "Game design rewards people who can sense why something feels elegant, flat, unfair, addictive, generous, or unforgettable — and who can explain that instinct clearly.",
+        "A strong signal here is noticing why certain games feel elegant, immersive, unfair, sticky, or alive.",
     },
     {
-      id: "iteration-energy",
-      label: "Iteration energy",
-      score: 88,
+      id: "iterative-builder",
+      label: "Iterative builder",
+      score: 87,
       explanation:
-        "This path fits people who can revise without losing excitement. The work gets better through testing, tuning, feedback, and trying again.",
+        "Game design rewards people who like trying versions, testing, adjusting, and improving rather than getting everything perfect on the first pass.",
     },
   ],
 
@@ -71,20 +69,20 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
     {
       id: "focus-mode",
       label: "Best mode",
-      value: "Concept + iteration",
-      note: "Imagine it, test it, refine it",
+      value: "Idea + iteration",
+      note: "Imagining, testing, refining",
     },
     {
       id: "daily-shape",
       label: "Work rhythm",
       value: "Solo + collaborative",
-      note: "Deep design time mixed with review",
+      note: "Concept work mixed with review",
     },
     {
       id: "output",
       label: "Typical output",
-      value: "Mechanics, levels, docs",
-      note: "Rules, pacing, flow, player experience",
+      value: "Systems, levels, docs",
+      note: "Mechanics, balance, player flow",
     },
   ],
 
@@ -93,27 +91,30 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
       id: "systems-designer",
       slug: "systems-designer",
       title: "Systems Designer",
-      oneLiner: "Designs the invisible logic beneath the experience: progression, balance, rewards, economies, and long-term loops.",
+      oneLiner:
+        "Shapes rules, progression, balance, economies, and long-term player loops.",
       whyItCouldFit:
-        "This branch is especially strong if you like hidden structure — the math, tradeoffs, tuning, and player motivation underneath what looks simple on the surface.",
+        "Great for someone who likes invisible structure — the math, logic, and reward design underneath the experience.",
       energy: "systems",
     },
     {
       id: "level-designer",
       slug: "level-designer",
       title: "Level Designer",
-      oneLiner: "Shapes the player's movement through space: pacing, discovery, pressure, surprise, and flow.",
+      oneLiner:
+        "Builds spaces, pacing, challenge curves, and player movement through the world.",
       whyItCouldFit:
-        "This branch fits people who think spatially and emotionally at the same time — noticing how an environment can guide action, tension, and memory.",
+        "Great for someone who thinks spatially and notices how environments guide emotion and action.",
       energy: "craft",
     },
     {
       id: "narrative-designer",
       slug: "narrative-designer",
       title: "Narrative Designer",
-      oneLiner: "Builds story into gameplay through choices, dialogue, quests, characters, and emotional arcs.",
+      oneLiner:
+        "Connects story, choice, dialogue, and emotional arcs inside gameplay.",
       whyItCouldFit:
-        "This branch fits people who love story but do not want it to stay passive. You want story to respond, branch, and change the player experience.",
+        "Great for someone who loves story but wants it to feel playable rather than passive.",
       energy: "high-creative",
     },
   ],
@@ -124,11 +125,11 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
       slug: "systems-designer",
       title: "Systems Designer",
       summary:
-        "Systems designers shape the underlying logic of the game: progression, resources, rewards, difficulty curves, risk, fairness, and the relationships between mechanics over time.",
+        "Systems designers create the underlying logic of the game: progression, resources, rewards, difficulty curves, and the relationships between mechanics.",
       whatYouActuallyDo: [
-        "Design progression loops that keep players engaged without making rewards feel random or empty.",
-        "Tune balance between challenge, effort, choice, and payoff across a longer player journey.",
-        "Prototype mechanics and adjust variables until the experience feels clear, fair, and compelling.",
+        "Design progression loops that keep players engaged over time.",
+        "Tune balance between challenge, rewards, and fairness.",
+        "Prototype mechanics and test how different variables affect the experience.",
       ],
       skillsThatGrowHere: [
         "Systems thinking",
@@ -137,23 +138,23 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         "Player psychology",
       ],
       starterProjects: [
-        "Design a resource economy for a small survival or farming game.",
-        "Create a progression system for a school club challenge, classroom game, or personal project.",
-        "Reverse-engineer the reward loop of a favorite game and redesign it to feel more satisfying or more fair.",
+        "Design a resource economy for a small survival game.",
+        "Create a progression system for a school club or class game project.",
+        "Rebuild the reward loop of a favorite game on paper and improve it.",
       ],
       atmosphere:
-        "More logic-heavy than people expect, but deeply creative when you enjoy invisible structure and player motivation.",
+        "More logic-heavy than people expect — but still deeply creative when done well.",
     },
     {
       id: "level-designer",
       slug: "level-designer",
       title: "Level Designer",
       summary:
-        "Level designers shape how a player moves, discovers, hesitates, recovers, and advances through a space. The work is part architecture, part choreography, part emotional pacing.",
+        "Level designers shape the player’s movement, discoveries, pressure, and flow through physical or digital spaces.",
       whatYouActuallyDo: [
-        "Block out playable spaces and test how layout changes the way players explore, fight, learn, or get lost.",
-        "Control pacing through distance, visibility, surprise, pressure, rhythm, and moments of relief.",
-        "Work with art, systems, and narrative so environments do not just look good — they actively guide experience.",
+        "Block out playable spaces and test how players move through them.",
+        "Control pacing, sightlines, surprise, tension, and rest.",
+        "Work closely with art, systems, and narrative to make environments feel intentional.",
       ],
       skillsThatGrowHere: [
         "Spatial thinking",
@@ -162,23 +163,23 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         "Environmental storytelling",
       ],
       starterProjects: [
-        "Sketch a tutorial level for a simple platformer or puzzle game.",
-        "Map a multiplayer arena with zones of safety, risk, and strategic control.",
-        "Redesign a favorite level to improve flow, tension, clarity, or emotional payoff.",
+        "Sketch a tutorial level for a simple platformer.",
+        "Map a multiplayer arena with different risk zones.",
+        "Redesign a favorite level to improve flow or emotional rhythm.",
       ],
       atmosphere:
-        "Tactile, spatial, and highly experiential — a branch for people who want to shape what the player feels through movement and place.",
+        "A blend of architecture, choreography, and emotional pacing.",
     },
     {
       id: "narrative-designer",
       slug: "narrative-designer",
       title: "Narrative Designer",
       summary:
-        "Narrative designers build story into the player experience through choices, dialogue, quests, world lore, and emotional progression. The goal is not just to tell a story, but to make it playable.",
+        "Narrative designers build story into the player experience through choices, dialogue, quests, world lore, and emotional progression.",
       whatYouActuallyDo: [
-        "Write dialogue, branching moments, and character-driven choices that feel responsive rather than decorative.",
-        "Connect story beats to mechanics, stakes, and player goals so the narrative has weight inside the experience.",
-        "Shape emotional arcs that change how the player sees the world, the characters, or their own decisions.",
+        "Write dialogue, branching moments, and character-based decisions.",
+        "Connect story beats to mechanics and player goals.",
+        "Make story feel interactive rather than pasted on top.",
       ],
       skillsThatGrowHere: [
         "Interactive writing",
@@ -187,47 +188,47 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         "Emotional design",
       ],
       starterProjects: [
-        "Write a short branching scene where the player can resolve a conflict in three very different ways.",
-        "Create a tiny original world with lore, quests, and one meaningful player choice.",
-        "Turn a story idea into a playable dialogue map instead of a traditional script.",
+        "Write a branching scene where the player can solve a conflict in three ways.",
+        "Create lore and quest structure for a tiny original world.",
+        "Turn a short story idea into a playable choice map.",
       ],
       atmosphere:
-        "Story-rich and expressive, but strongest when paired with systems awareness and a real respect for player agency.",
+        "Story-rich, but strongest when paired with player choice and systems awareness.",
     },
   ],
 
   dayInLife: {
     title: "A day in the life",
     summary:
-      "The work is rarely one giant flash of inspiration. It is more often a cycle of noticing, shaping, testing, discussing, and refining until the experience starts to feel inevitable.",
+      "The work is usually a mix of ideas, iteration, feedback, and detail. It is less about having one giant flash of genius and more about shaping a player experience over time.",
     moments: [
       {
         id: "morning-review",
         timeLabel: "9:30 AM",
-        title: "Review the latest build",
+        title: "Review yesterday’s build",
         body:
-          "You play what the team has now, watching for drag, confusion, friction, surprise, and payoff. Sometimes the issue is obvious. Sometimes the feeling is off before the cause is clear.",
+          "You play the latest version, notice where the pacing drags, where the reward lands well, and where players may get confused.",
       },
       {
         id: "midday-design",
         timeLabel: "11:30 AM",
-        title: "Refine a mechanic, loop, or level idea",
+        title: "Refine a system or level concept",
         body:
-          "This is where concept turns practical. You sketch, rewrite, tune values, revise a design doc, or test whether a better rule creates a better player decision.",
+          "You sketch new ideas, update a design doc, or tune the numbers and logic behind progression or challenge.",
       },
       {
         id: "afternoon-collab",
         timeLabel: "2:00 PM",
         title: "Talk with art, engineering, or narrative",
         body:
-          "Good design rarely happens in isolation. You align the intended feeling with what is buildable, readable, and strong across the wider experience.",
+          "Good design usually happens in conversation. You align the intended feeling with what is actually possible and what the team is building.",
       },
       {
         id: "late-test",
         timeLabel: "4:30 PM",
-        title: "Playtest and adjust again",
+        title: "Playtest and adjust",
         body:
-          "A small change in difficulty, timing, layout, wording, or reward can completely change how something feels. This is where the work gets sharper.",
+          "A small change in timing, difficulty, layout, or reward can completely change how the experience feels.",
       },
     ],
   },
@@ -235,18 +236,18 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
   forecast: {
     title: "What growth can look like",
     summary:
-      "This path usually starts with curiosity and taste, but it becomes real through evidence. Momentum grows when you can show how you think, not just say you love games.",
+      "This path often starts with small prototypes, critique, and portfolio samples. Momentum grows when you can show how you think, not just say you love games.",
     stages: [
       {
         id: "stage-1",
         label: "Early signal",
         timeframe: "Now → 2 months",
         summary:
-          "You start studying games more actively. You move from pure consumption into observation, critique, and tiny experiments.",
+          "You begin studying games more actively and making small experiments instead of only consuming them.",
         signalsOfProgress: [
-          "You can explain why a mechanic, level, or reward loop works.",
-          "You start collecting references, breakdowns, and design questions.",
-          "You make your first paper prototype, redesign, or tiny playable idea.",
+          "You can explain why a mechanic works.",
+          "You start collecting references and design ideas.",
+          "You make your first tiny prototype or paper system.",
         ],
       },
       {
@@ -254,11 +255,11 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         label: "Real traction",
         timeframe: "2 → 6 months",
         summary:
-          "You begin building a body of work: redesigns, mechanic concepts, small prototypes, level maps, quest flows, or balance docs that reveal your thinking.",
+          "You start building a body of work: redesigns, concepts, simple prototypes, level maps, quest flows, or balance documents.",
         signalsOfProgress: [
-          "You can show process instead of only talking about interest.",
-          "You revise based on feedback instead of defending the first version.",
-          "Your work starts to show a recognizable design instinct or point of view.",
+          "You can show rather than just describe your thinking.",
+          "You iterate based on feedback.",
+          "Your work starts having a recognizable point of view.",
         ],
       },
       {
@@ -266,11 +267,11 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         label: "Deeper commitment",
         timeframe: "6+ months",
         summary:
-          "You begin seeing your strongest branch more clearly and building a portfolio that shows both taste and structure.",
+          "You begin identifying your strongest specialty and develop a portfolio that shows both taste and process.",
         signalsOfProgress: [
-          "You can tell whether systems, levels, or narrative currently feels most alive to you.",
-          "Your projects feel more intentional, coherent, and specific.",
-          "You can talk clearly about player experience, tradeoffs, and what you were trying to achieve.",
+          "You know whether systems, levels, or narrative pulls you most.",
+          "Your projects feel more polished and intentional.",
+          "You can talk clearly about player experience and tradeoffs.",
         ],
       },
     ],
@@ -279,48 +280,117 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
   nextSteps: {
     title: "Real next steps",
     summary:
-      "Do not start with a giant dream plan. Start with proof. The point is to build evidence that this path energizes you — and to begin showing how you think.",
+      "The best next move is usually something small but concrete — not a huge dream plan. Build evidence. Show how you think.",
+
     actions: [
       {
         id: "game-designer-next-1",
-        title: "Break down one game you know well",
+        title: "Break down one game you love",
         type: "tiny-task",
         effort: "light",
         timeEstimate: "20–30 min",
         whyThisMatters:
-          "This turns you from a passive fan into an active observer. Designers grow fast when they can notice structure, intention, and emotional effect.",
+          "This shifts you from passive fan to active observer. Designers learn by noticing structure and intent.",
         instructions: [
-          "Pick one game, mode, or level you know well.",
-          "Write down what keeps the player engaged or emotionally hooked.",
-          "Identify one part you would redesign and explain why.",
+          "Pick one game or mode you know well.",
+          "Write down what keeps the player engaged.",
+          "Identify one thing you would improve and why.",
         ],
       },
       {
         id: "game-designer-next-2",
-        title: "Invent one tiny playable system",
+        title: "Create a tiny original mechanic",
         type: "project",
         effort: "medium",
         timeEstimate: "45–90 min",
         whyThisMatters:
-          "Even a paper prototype proves more than vague interest. It gives you something to test, critique, and improve.",
+          "Even a paper prototype proves more than vague interest. It lets you start testing your ideas.",
         instructions: [
-          "Choose one player action and one clear goal.",
-          "Add one rule that creates tension, strategy, or tradeoff.",
-          "Test it for a few rounds and note where it becomes boring, confusing, or unexpectedly fun.",
+          "Invent one simple player action and one goal.",
+          "Add one rule that creates tension or choice.",
+          "Test whether it becomes boring, confusing, or interesting after a few rounds.",
         ],
       },
       {
         id: "game-designer-next-3",
-        title: "Choose the branch that feels most alive",
+        title: "Choose your strongest specialty signal",
         type: "conversation",
         effort: "light",
         timeEstimate: "15–20 min",
         whyThisMatters:
-          "You do not need to commit forever, but naming your current pull makes the path feel more real and helps you choose what to test next.",
+          "You do not need to lock yourself in, but naming your strongest pull helps the rest of Explore feel more personal and directional.",
         instructions: [
           "Compare systems, levels, and narrative.",
-          "Ask which one feels most energizing right now.",
-          "Write one sentence about why that branch stands out to you.",
+          "Ask which one feels most alive to you right now.",
+          "Write one sentence about why that specialty stands out.",
+        ],
+      },
+    ],
+
+    opportunityGroups: [
+      {
+        id: "near-you",
+        title: "Near you",
+        description:
+          "Places nearby where people experiment with games, coding, or interactive design.",
+        items: [
+          {
+            id: "marin-library-coding",
+            title: "Coding or game club",
+            mode: "local",
+            provider: "Marin County Library",
+            locationLabel: "San Rafael",
+            distanceLabel: "≈5–10 minutes",
+            summary:
+              "Libraries often host beginner coding, robotics, and game development meetups.",
+            whyItHelps:
+              "Game design grows quickly when you can show ideas to other builders and see what they are making.",
+          },
+          {
+            id: "sf-game-dev-meetup",
+            title: "Game dev meetup or indie showcase",
+            mode: "local",
+            provider: "San Francisco developer community",
+            locationLabel: "San Francisco",
+            distanceLabel: "≈35–40 minutes",
+            summary:
+              "Small developer meetups often include demos, talks, and game jam announcements.",
+            whyItHelps:
+              "Seeing unfinished prototypes and hearing designers explain decisions is one of the fastest ways to learn.",
+          },
+        ],
+      },
+
+      {
+        id: "online-now",
+        title: "Online",
+        description:
+          "Places you can start experimenting with game design today from anywhere.",
+        items: [
+          {
+            id: "itch-game-jams",
+            title: "Join a beginner game jam",
+            mode: "virtual",
+            provider: "itch.io",
+            formatLabel: "Online event",
+            summary:
+              "Game jams challenge you to build a small game idea in a short time window.",
+            whyItHelps:
+              "You learn quickly when you move from ideas to prototypes and see how other creators approach the same challenge.",
+            href: "https://itch.io/jams",
+          },
+          {
+            id: "unity-learn",
+            title: "Try a Unity beginner project",
+            mode: "virtual",
+            provider: "Unity Learn",
+            formatLabel: "Interactive tutorials",
+            summary:
+              "Unity offers guided beginner projects that teach core mechanics and level design basics.",
+            whyItHelps:
+              "You start understanding how mechanics actually become playable systems.",
+            href: "https://learn.unity.com",
+          },
         ],
       },
     ],

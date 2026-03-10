@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Rocket } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Monitor, Rocket } from "lucide-react";
 
 import { requireWorkPath } from "../../_data/workPaths";
 import { WorkPathSubnav } from "../../components/WorkPathSubnav";
@@ -138,9 +138,11 @@ export default function WorkPathNextStepsPage() {
                       {action.type.replace("-", " ")}
                     </div>
 
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                      {action.timeEstimate}
-                    </div>
+                    {action.timeEstimate ? (
+                      <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                        {action.timeEstimate}
+                      </div>
+                    ) : null}
 
                     <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
                       Step {index + 1}
@@ -168,6 +170,117 @@ export default function WorkPathNextStepsPage() {
             </div>
           ))}
         </section>
+
+        {/* local + virtual opportunities */}
+        {path.nextSteps.opportunityGroups?.length ? (
+          <section className="grid gap-4">
+            {path.nextSteps.opportunityGroups.map((group) => (
+              <div
+                key={group.id}
+                className={[
+                  "rounded-[28px] px-6 py-6",
+                  shellSurface(dark),
+                ].join(" ")}
+              >
+                <div className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`}>
+                  {group.title}
+                </div>
+
+                {group.description ? (
+                  <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                    {group.description}
+                  </p>
+                ) : null}
+
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  {group.items.map((item) => {
+                    const isLocal = item.mode === "local";
+                    const Icon = isLocal ? MapPin : Monitor;
+
+                    const content = (
+                      <div
+                        className={[
+                          "rounded-[22px] border border-white/8 bg-white/[0.035] px-5 py-5 transition",
+                          item.href ? "hover:bg-white/[0.06]" : "",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
+                            <Icon className="h-4 w-4 text-white/70" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className={`text-base font-semibold ${textMain(dark)}`}>
+                                {item.title}
+                              </div>
+
+                              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                                {item.mode}
+                              </div>
+
+                              {item.locationLabel ? (
+                                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                                  {item.locationLabel}
+                                </div>
+                              ) : null}
+
+                              {item.formatLabel ? (
+                                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                                  {item.formatLabel}
+                                </div>
+                              ) : null}
+                            </div>
+
+                            {item.provider || item.distanceLabel ? (
+                              <div className={`mt-2 text-sm ${textFaint(dark)}`}>
+                                {[item.provider, item.distanceLabel].filter(Boolean).join(" • ")}
+                              </div>
+                            ) : null}
+
+                            <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                              {item.summary}
+                            </p>
+
+                            <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3">
+                              <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(dark)}`}>
+                                Why it helps
+                              </div>
+                              <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                                {item.whyItHelps}
+                              </p>
+                            </div>
+
+                            {item.href ? (
+                              <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
+                                Open resource
+                                <ArrowUpRightMini />
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+
+                    return item.href ? (
+                      <a
+                        key={item.id}
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div key={item.id}>{content}</div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
 
         {/* navigation */}
         <section className="grid gap-4 lg:grid-cols-2">
@@ -223,5 +336,24 @@ export default function WorkPathNextStepsPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function ArrowUpRightMini() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M6 14L14 6M8 6H14V12"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

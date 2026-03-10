@@ -170,6 +170,39 @@ export type WorkPathForecast = {
    Next steps
 ============================================================================= */
 
+export type WorkPathOpportunityMode = "local" | "virtual";
+
+export type WorkPathOpportunity = {
+  id: string;
+
+  title: string;
+
+  mode: WorkPathOpportunityMode;
+
+  provider?: string;
+
+  locationLabel?: string;
+  distanceLabel?: string;
+
+  formatLabel?: string;
+
+  summary: string;
+
+  whyItHelps: string;
+
+  href?: string;
+};
+
+export type WorkPathOpportunityGroup = {
+  id: string;
+
+  title: string;
+
+  description?: string;
+
+  items: WorkPathOpportunity[];
+};
+
 export type WorkPathNextStep = {
   id: string;
 
@@ -192,6 +225,8 @@ export type WorkPathNextSteps = {
   summary: string;
 
   actions: WorkPathNextStep[];
+
+  opportunityGroups?: WorkPathOpportunityGroup[];
 };
 
 /* =============================================================================
@@ -236,9 +271,7 @@ export function getWorkPathById(
   paths: WorkPathContent[],
   idOrSlug: string
 ): WorkPathContent | undefined {
-  return paths.find(
-    (p) => p.id === idOrSlug || p.slug === idOrSlug
-  );
+  return paths.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
 }
 
 export function getWorkSpecialtyBySlug(
