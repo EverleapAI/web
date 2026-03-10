@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles, ArrowUpRight } from "lucide-react";
 
 export type ExplorePathPanelData = {
   id: string;
@@ -24,6 +25,21 @@ function sectionKicker() {
   return "text-[12px] font-semibold uppercase tracking-[0.16em] text-white/50";
 }
 
+function getPathHref(pathId: string) {
+  switch (pathId) {
+    case "game-designer":
+      return "/main/explore/work/game-designer";
+    case "product-builder":
+      return "/main/explore/work/product-ux-builder";
+    case "health-support":
+      return "/main/explore/work/health-human-support";
+    case "teaching":
+      return "/main/explore/work/teaching-mentorship";
+    default:
+      return `/main/explore/work/${pathId}`;
+  }
+}
+
 function pathTheme(id: string) {
   switch (id) {
     case "game-designer":
@@ -40,6 +56,8 @@ function pathTheme(id: string) {
         `,
         inner:
           "bg-[linear-gradient(180deg,rgba(12,22,44,0.84),rgba(8,14,28,0.84))]",
+        enter:
+          "border-cyan-300/22 bg-cyan-300/10 text-cyan-100/95 hover:border-cyan-300/30 hover:bg-cyan-300/16 hover:shadow-[0_0_24px_rgba(120,200,255,0.18)]",
       };
 
     case "product-builder":
@@ -56,6 +74,8 @@ function pathTheme(id: string) {
         `,
         inner:
           "bg-[linear-gradient(180deg,rgba(10,28,30,0.82),rgba(8,14,24,0.84))]",
+        enter:
+          "border-emerald-300/22 bg-emerald-300/10 text-emerald-100/95 hover:border-emerald-300/30 hover:bg-emerald-300/16 hover:shadow-[0_0_24px_rgba(120,255,210,0.18)]",
       };
 
     case "health-support":
@@ -72,6 +92,8 @@ function pathTheme(id: string) {
         `,
         inner:
           "bg-[linear-gradient(180deg,rgba(34,20,18,0.82),rgba(12,12,24,0.84))]",
+        enter:
+          "border-amber-300/22 bg-amber-300/10 text-amber-100/95 hover:border-amber-300/30 hover:bg-amber-300/16 hover:shadow-[0_0_24px_rgba(255,200,120,0.18)]",
       };
 
     case "teaching":
@@ -88,6 +110,8 @@ function pathTheme(id: string) {
         `,
         inner:
           "bg-[linear-gradient(180deg,rgba(28,18,40,0.82),rgba(10,14,28,0.84))]",
+        enter:
+          "border-violet-300/22 bg-violet-300/10 text-violet-100/95 hover:border-violet-300/30 hover:bg-violet-300/16 hover:shadow-[0_0_24px_rgba(190,150,255,0.18)]",
       };
 
     default:
@@ -104,12 +128,15 @@ function pathTheme(id: string) {
         `,
         inner:
           "bg-[linear-gradient(180deg,rgba(14,18,34,0.82),rgba(8,12,24,0.84))]",
+        enter:
+          "border-white/12 bg-white/[0.08] text-white/92 hover:bg-white/[0.12]",
       };
   }
 }
 
 export default function ExplorePathPanel({ path, open, onToggle }: Props) {
   const theme = pathTheme(path.id);
+  const href = getPathHref(path.id);
 
   return (
     <div
@@ -264,7 +291,7 @@ export default function ExplorePathPanel({ path, open, onToggle }: Props) {
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2.5">
+              <div className="mt-5 flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
                   className="rounded-full border border-white/12 bg-white/[0.10] px-4 py-2.5 text-sm font-semibold text-white/92 transition hover:bg-white/[0.14]"
@@ -285,6 +312,19 @@ export default function ExplorePathPanel({ path, open, onToggle }: Props) {
                 >
                   Not for me
                 </button>
+
+                <div className="ml-auto">
+                  <Link
+                    href={href}
+                    className={[
+                      "group inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold backdrop-blur-xl transition",
+                      theme.enter,
+                    ].join(" ")}
+                  >
+                    <span>Enter {path.title} path</span>
+                    <ArrowUpRight className="h-4 w-4 opacity-85 transition group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" />
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>

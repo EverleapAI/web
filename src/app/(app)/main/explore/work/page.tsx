@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   BriefcaseBusiness,
   Sparkles,
@@ -74,6 +75,21 @@ const PATHS: ExplorePathPanelData[] = [
 
 function sectionKicker() {
   return "text-[12px] font-semibold uppercase tracking-[0.16em] text-white/50";
+}
+
+function getPathHref(pathId: string) {
+  switch (pathId) {
+    case "game-designer":
+      return "/main/explore/work/game-designer";
+    case "product-builder":
+      return "/main/explore/work/product-ux-builder";
+    case "health-support":
+      return "/main/explore/work/health-human-support";
+    case "teaching":
+      return "/main/explore/work/teaching-mentorship";
+    default:
+      return `/main/explore/work/${pathId}`;
+  }
 }
 
 export default function ExploreWorkPage() {
@@ -200,16 +216,44 @@ export default function ExploreWorkPage() {
             </div>
 
             <div className="space-y-4 pt-1">
-              {PATHS.map((path) => (
-                <ExplorePathPanel
-                  key={path.id}
-                  path={path}
-                  open={openId === path.id}
-                  onToggle={() =>
-                    setOpenId((prev) => (prev === path.id ? "" : path.id))
-                  }
-                />
-              ))}
+              {PATHS.map((path) => {
+                const href = getPathHref(path.id);
+
+                return (
+                  <div key={path.id} className="space-y-3">
+                    <ExplorePathPanel
+                      path={path}
+                      open={openId === path.id}
+                      onToggle={() =>
+                        setOpenId((prev) => (prev === path.id ? "" : path.id))
+                      }
+                    />
+
+                    <div className="mt-3 px-1">
+                      <Link
+                        href={href}
+                        className="
+                          group flex items-center justify-between
+                          rounded-2xl
+                          border border-cyan-300/20
+                          bg-cyan-300/10
+                          px-4 py-3
+                          text-sm font-semibold text-cyan-100/95
+                          backdrop-blur-xl
+                          transition
+                          hover:bg-cyan-300/16
+                          hover:border-cyan-300/30
+                          hover:shadow-[0_0_24px_rgba(120,200,255,0.25)]
+                        "
+                      >
+                        <span>Enter path</span>
+
+                        <ArrowUpRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         </div>
