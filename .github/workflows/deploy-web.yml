@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci
@@ -28,22 +28,32 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
-      - name: Prepare standalone deployment package
+      - name: Prepare deployment package
         run: |
-          mkdir -p deploy
-          echo "=== .next ==="
-          ls -la .next
-          echo "=== .next/standalone ==="
-          ls -la .next/standalone || true
-          echo "=== find .next/standalone ==="
-          find .next/standalone -maxdepth 4 -type f | sort || true
-          cp -r .next/standalone/* deploy/
+          mkdir deploy
+          cp -r .next/standalone/. deploy/
           mkdir -p deploy/.next
           cp -r .next/static deploy/.next/static
           if [ -d public ]; then cp -r public deploy/public; fi
+
           cat > deploy/package.json <<'EOF'
           {
             "name": "web-standalone",
             "private": true,
             "scripts": {
-              "start":
+              "start": "node server.js"
+            }
+          }
+          EOF
+
+      - name: Create deployment zip
+        run: |
+          cd deploy
+          zip -r ../release.zip .
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'front-end'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip
