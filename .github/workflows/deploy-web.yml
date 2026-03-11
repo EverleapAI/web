@@ -11,6 +11,7 @@ jobs:
 
     env:
       NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+      NEXT_STANDALONE: "1"
 
     steps:
       - name: Checkout code
@@ -27,16 +28,18 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
+      - name: Prepare standalone deployment package
+        run: |
+          mkdir -p deploy
+          cp -r .next/standalone/* deploy/
+          mkdir -p deploy/.next
+          cp -r .next/static deploy/.next/static
+          if [ -d public ]; then cp -r public deploy/public; fi
+
       - name: Create deployment zip
         run: |
-          zip -r release.zip . \
-            -x "*.git*" \
-            -x "node_modules/*" \
-            -x ".next/cache/*" \
-            -x ".next/**/*.map" \
-            -x "**/*.map" \
-            -x ".env*" \
-            -x "coverage/*"
+          cd deploy
+          zip -r ../release.zip .
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
