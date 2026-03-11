@@ -119,9 +119,10 @@ function rgb(a: RGB) {
 }
 
 function sectionKicker(dark: boolean) {
-  return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(
-    " "
-  );
+  return [
+    "text-[12px] font-semibold uppercase tracking-[0.16em]",
+    dark ? "text-white/50" : "text-slate-600",
+  ].join(" ");
 }
 
 function bodyText(dark: boolean) {
@@ -166,7 +167,9 @@ function pillBase(dark: boolean) {
     "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
     "text-[12px] font-semibold",
     "backdrop-blur-xl",
-    dark ? "border-white/10 bg-white/[0.04] text-white/80" : "border-black/10 bg-white/80 text-slate-800",
+    dark
+      ? "border-white/10 bg-white/[0.04] text-white/80"
+      : "border-black/10 bg-white/80 text-slate-800",
   ].join(" ");
 }
 
@@ -188,7 +191,9 @@ function chipButton(dark: boolean) {
     "text-[13px] font-semibold",
     "backdrop-blur-xl transition active:scale-95",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+    dark
+      ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]"
+      : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
   ].join(" ");
 }
 
@@ -208,7 +213,9 @@ function subtleLinkButton(dark: boolean) {
     "h-10 rounded-full border px-4 text-[13px] font-semibold",
     "backdrop-blur-xl transition active:scale-[0.99]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]" : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
+    dark
+      ? "border-white/10 bg-white/[0.04] text-white/78 hover:bg-white/[0.07]"
+      : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
   ].join(" ");
 }
 
@@ -285,8 +292,10 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Make it matter",
     accent: { r: 255, g: 180, b: 120 },
     hook: "You don’t want ‘busy work.’ You want your effort to land somewhere real.",
-    because: "You tend to care about meaning — if you can’t see who it helps or what it changes, your energy drops.",
-    watchOut: "If something feels fake or pointless, you’ll stall (even if you could do it easily).",
+    because:
+      "You tend to care about meaning — if you can’t see who it helps or what it changes, your energy drops.",
+    watchOut:
+      "If something feels fake or pointless, you’ll stall (even if you could do it easily).",
     drivers: ["meaning", "clarity"],
     keywords: ["impact", "difference", "help", "change", "community", "useful", "matter"],
   },
@@ -295,7 +304,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Know the why",
     accent: { r: 255, g: 210, b: 110 },
     hook: "You move faster when you know what this is building toward — and why you care.",
-    because: "When the ‘why’ is clear, you can focus hard. When it’s foggy, your brain won’t fully commit.",
+    because:
+      "When the ‘why’ is clear, you can focus hard. When it’s foggy, your brain won’t fully commit.",
     watchOut: "If goals stay vague, you might drift or procrastinate even with talent.",
     drivers: ["meaning", "clarity"],
     keywords: ["why", "meaning", "purpose", "direction", "values", "mission"],
@@ -305,7 +315,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Fairness + respect",
     accent: { r: 190, g: 140, b: 255 },
     hook: "You notice what’s fair — and what’s not. Respect matters to you.",
-    because: "You’re tuned to how people are treated and whether the rules actually make sense.",
+    because:
+      "You’re tuned to how people are treated and whether the rules actually make sense.",
     watchOut: "Unfairness can become a focus trap — it’s hard to ignore once you see it.",
     drivers: ["meaning", "people"],
     keywords: ["fair", "justice", "equity", "respect", "ethics", "rules"],
@@ -315,8 +326,10 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Leveling up",
     accent: { r: 190, g: 140, b: 255 },
     hook: "You lock in when you can feel yourself getting better — reps, progress, skill growth.",
-    because: "Your motivation often comes from improvement you can actually *feel*, not just ‘trying.’",
-    watchOut: "If you can’t see progress, it can start to feel pointless (even when it isn’t).",
+    because:
+      "Your motivation often comes from improvement you can actually *feel*, not just ‘trying.’",
+    watchOut:
+      "If you can’t see progress, it can start to feel pointless (even when it isn’t).",
     drivers: ["mastery", "momentum"],
     keywords: ["improve", "practice", "reps", "skill", "progress", "better", "training"],
   },
@@ -335,8 +348,10 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Do it right",
     accent: { r: 120, g: 255, b: 190 },
     hook: "You care about quality — clean, precise, done the right way (your way).",
-    because: "You notice details other people skip, and that gives you pride when it’s done well.",
-    watchOut: "Perfection pressure can slow your starts if you try to make it flawless on day one.",
+    because:
+      "You notice details other people skip, and that gives you pride when it’s done well.",
+    watchOut:
+      "Perfection pressure can slow your starts if you try to make it flawless on day one.",
     drivers: ["mastery", "clarity"],
     keywords: ["quality", "detail", "precise", "craft", "polish", "clean", "accuracy"],
   },
@@ -356,7 +371,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     accent: { r: 120, g: 200, b: 255 },
     hook: "You like exploring — new topics, new places, new angles.",
     because: "Novelty isn’t chaos for you. It’s oxygen.",
-    watchOut: "Too many options can scatter your energy if you don’t pick a lane.",
+    watchOut:
+      "Too many options can scatter your energy if you don’t pick a lane.",
     drivers: ["curiosity", "freedom"],
     keywords: ["explore", "new", "discover", "travel", "experiment", "different"],
   },
@@ -364,9 +380,12 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     id: "creativity",
     label: "Make something",
     accent: { r: 255, g: 150, b: 230 },
-    hook: "You want to create — an idea, a system, a design, something that didn’t exist before.",
-    because: "Making things feels like ownership and self-expression at the same time.",
-    watchOut: "Ideas can multiply faster than finishing if you don’t choose what matters most.",
+    hook:
+      "You want to create — an idea, a system, a design, something that didn’t exist before.",
+    because:
+      "Making things feels like ownership and self-expression at the same time.",
+    watchOut:
+      "Ideas can multiply faster than finishing if you don’t choose what matters most.",
     drivers: ["curiosity", "freedom", "meaning"],
     keywords: ["create", "design", "build", "idea", "art", "write", "invent", "make"],
   },
@@ -394,9 +413,11 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     id: "variety",
     label: "Switch it up",
     accent: { r: 110, g: 230, b: 255 },
-    hook: "You like changing modes — different tasks, different rhythms, different kinds of thinking.",
+    hook:
+      "You like changing modes — different tasks, different rhythms, different kinds of thinking.",
     because: "Variety helps you stay awake and creative.",
-    watchOut: "Constant switching can blur priorities if you never pause to choose what’s most important.",
+    watchOut:
+      "Constant switching can blur priorities if you never pause to choose what’s most important.",
     drivers: ["freedom", "curiosity"],
     keywords: ["variety", "mix", "different", "change", "switch", "multiple"],
   },
@@ -424,7 +445,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     id: "belonging",
     label: "Your people",
     accent: { r: 120, g: 200, b: 255 },
-    hook: "You’re not chasing popularity. You want real belonging — people who feel real.",
+    hook:
+      "You’re not chasing popularity. You want real belonging — people who feel real.",
     because: "When the vibe is good, you show up more fully.",
     watchOut: "Fake energy drains you faster than hard work.",
     drivers: ["people"],
@@ -434,9 +456,11 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     id: "mentorship",
     label: "Good coaching",
     accent: { r: 190, g: 140, b: 255 },
-    hook: "You sharpen with good mirrors: coaches, mentors, people who tell the truth with respect.",
+    hook:
+      "You sharpen with good mirrors: coaches, mentors, people who tell the truth with respect.",
     because: "Feedback makes progress faster — and you like progress.",
-    watchOut: "Without signal (feedback), you can feel stuck even when you’re improving.",
+    watchOut:
+      "Without signal (feedback), you can feel stuck even when you’re improving.",
     drivers: ["people", "mastery"],
     keywords: ["coach", "mentor", "feedback", "critique", "lesson", "teacher"],
   },
@@ -445,8 +469,10 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     label: "Build together",
     accent: { r: 120, g: 255, b: 190 },
     hook: "You like building with others — shared standards, shared effort, shared wins.",
-    because: "Working with the right person makes everything more real and more fun.",
-    watchOut: "Misalignment creates friction fast, and then your motivation drops.",
+    because:
+      "Working with the right person makes everything more real and more fun.",
+    watchOut:
+      "Misalignment creates friction fast, and then your motivation drops.",
     drivers: ["people", "momentum"],
     keywords: ["collab", "together", "team", "partner", "group", "build"],
   },
@@ -456,7 +482,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     accent: { r: 255, g: 190, b: 110 },
     hook: "You like setting direction — protecting the mission from noise.",
     because: "You notice standards. You can feel when a room needs structure.",
-    watchOut: "You can become the ‘default adult’ and end up carrying too much.",
+    watchOut:
+      "You can become the ‘default adult’ and end up carrying too much.",
     drivers: ["people", "meaning", "freedom"],
     keywords: ["lead", "organize", "standard", "guide", "protect", "direction"],
   },
@@ -464,7 +491,8 @@ const MOTIVATIONS_TAXONOMY: MotivationDef[] = [
     id: "recognition",
     label: "Be seen (for real)",
     accent: { r: 255, g: 150, b: 230 },
-    hook: "You’re not needy — you just want real effort to be noticed when it’s earned.",
+    hook:
+      "You’re not needy — you just want real effort to be noticed when it’s earned.",
     because: "Being seen can validate that what you did mattered.",
     watchOut: "If you chase applause, it can distort the goal.",
     drivers: ["people", "momentum"],
@@ -480,7 +508,12 @@ function normalizeTextPieces(parts: string[]) {
     .toLowerCase();
 }
 
-function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drainers: string[]; receipts: string[] }) {
+function scoreMotivations(args: {
+  top3: ScoredDriver[];
+  boosters: string[];
+  drainers: string[];
+  receipts: string[];
+}) {
   const { top3, boosters, drainers, receipts } = args;
 
   const driverScore = new Map<DriverId, number>();
@@ -571,7 +604,9 @@ function scoreMotivations(args: { top3: ScoredDriver[]; boosters: string[]; drai
 
 function computeSignalConfidence(top3: ScoredDriver[]): number {
   if (!Array.isArray(top3) || top3.length === 0) return 0.18;
-  const xs = top3.map((d) => clamp01(d.score ?? 0)).filter((n) => Number.isFinite(n));
+  const xs = top3
+    .map((d) => clamp01(d.score ?? 0))
+    .filter((n) => Number.isFinite(n));
   if (!xs.length) return 0.18;
   const avg = xs.reduce((a, b) => a + b, 0) / xs.length;
   // compress a bit so it's not always “high”
@@ -590,25 +625,43 @@ function signalLabel(sig: number) {
 
 function MotivationIcon({ id }: { id: MotivationId }) {
   const Icon =
-    id === "impact" ? HeartHandshake
-    : id === "purpose" ? Flag
-    : id === "justice" ? Scale
-    : id === "mastery" ? Dumbbell
-    : id === "competition" ? Trophy
-    : id === "craft" ? CheckCircle2
-    : id === "curiosity" ? Search
-    : id === "discovery" ? Compass
-    : id === "creativity" ? Palette
-    : id === "autonomy" ? KeyRound
-    : id === "ownership" ? Rocket
-    : id === "variety" ? Sparkles
-    : id === "progress" ? TrendingUp
-    : id === "closure" ? CheckCircle2
-    : id === "belonging" ? Users
-    : id === "mentorship" ? GraduationCap
-    : id === "collaboration" ? Handshake
-    : id === "leadership" ? Flag
-    : Sparkles;
+    id === "impact"
+      ? HeartHandshake
+      : id === "purpose"
+        ? Flag
+        : id === "justice"
+          ? Scale
+          : id === "mastery"
+            ? Dumbbell
+            : id === "competition"
+              ? Trophy
+              : id === "craft"
+                ? CheckCircle2
+                : id === "curiosity"
+                  ? Search
+                  : id === "discovery"
+                    ? Compass
+                    : id === "creativity"
+                      ? Palette
+                      : id === "autonomy"
+                        ? KeyRound
+                        : id === "ownership"
+                          ? Rocket
+                          : id === "variety"
+                            ? Sparkles
+                            : id === "progress"
+                              ? TrendingUp
+                              : id === "closure"
+                                ? CheckCircle2
+                                : id === "belonging"
+                                  ? Users
+                                  : id === "mentorship"
+                                    ? GraduationCap
+                                    : id === "collaboration"
+                                      ? Handshake
+                                      : id === "leadership"
+                                        ? Flag
+                                        : Sparkles;
 
   return <Icon className="h-4.5 w-4.5" aria-hidden />;
 }
@@ -658,9 +711,13 @@ function readLocalQuickFeedback(): { rating: QuickRating; note: string; savedAt:
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return null;
     const rec = parsed as { rating?: unknown; note?: unknown; savedAt?: unknown };
-    const rating = rec.rating === "mostly" || rec.rating === "somewhat" || rec.rating === "not_really" ? rec.rating : null;
+    const rating =
+      rec.rating === "mostly" || rec.rating === "somewhat" || rec.rating === "not_really"
+        ? rec.rating
+        : null;
     const note = typeof rec.note === "string" ? rec.note : "";
-    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
+    const savedAt =
+      typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
     if (!rating) return null;
     return { rating, note, savedAt };
   } catch {
@@ -674,7 +731,7 @@ function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
   window.localStorage.setItem(QUICK_FEEDBACK_STORAGE_KEY, JSON.stringify(payload));
 }
 
-function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: string }): React.JSX.Element {
+function QuickFeedbackInline({ dark }: { dark: boolean }): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
@@ -711,23 +768,40 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
       <div className={sectionKicker(dark)}>Quick Check</div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={quickChip(dark, rating === "mostly")} onClick={() => onPick("mostly")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "mostly")}
+          onClick={() => onPick("mostly")}
+        >
           <span aria-hidden>👍</span>
           <span>Mostly right</span>
         </button>
 
-        <button type="button" className={quickChip(dark, rating === "somewhat")} onClick={() => onPick("somewhat")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "somewhat")}
+          onClick={() => onPick("somewhat")}
+        >
           <span aria-hidden>🙂</span>
           <span>Somewhat</span>
         </button>
 
-        <button type="button" className={quickChip(dark, rating === "not_really")} onClick={() => onPick("not_really")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "not_really")}
+          onClick={() => onPick("not_really")}
+        >
           <span aria-hidden>👎</span>
           <span>Not really</span>
         </button>
 
         {saved ? (
-          <div className={["ml-1 flex items-center text-[12px]", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+          <div
+            className={[
+              "ml-1 flex items-center text-[12px]",
+              dark ? "text-white/45" : "text-slate-600",
+            ].join(" ")}
+          >
             (Saved locally)
           </div>
         ) : null}
@@ -803,7 +877,9 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
                   "focus-visible:ring-2 focus-visible:ring-orange-200/20",
                 ].join(" ")}
               />
-              <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>Tip: one sentence is enough.</div>
+              <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>
+                Tip: one sentence is enough.
+              </div>
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
@@ -825,14 +901,26 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
                 Skip note
               </button>
 
-              <button type="button" onClick={onSave} disabled={!canSave} className={saveButton(dark, !canSave)}>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!canSave}
+                className={saveButton(dark, !canSave)}
+              >
                 Save
               </button>
             </div>
 
-            <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
+            <div
+              className={[
+                "mt-3 text-[11px] leading-relaxed",
+                dark ? "text-white/30" : "text-slate-500",
+              ].join(" ")}
+            >
               Saved to localStorage:{" "}
-              <span className={dark ? "text-white/40" : "text-slate-600"}>{QUICK_FEEDBACK_STORAGE_KEY}</span>
+              <span className={dark ? "text-white/40" : "text-slate-600"}>
+                {QUICK_FEEDBACK_STORAGE_KEY}
+              </span>
             </div>
           </div>
         </div>
@@ -854,7 +942,8 @@ function readSelfReport(): { text: string; savedAt: number } | null {
     if (!parsed || typeof parsed !== "object") return null;
     const rec = parsed as { text?: unknown; savedAt?: unknown };
     const text = typeof rec.text === "string" ? rec.text : "";
-    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
+    const savedAt =
+      typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
     if (!text.trim()) return null;
     return { text, savedAt };
   } catch {
@@ -901,7 +990,14 @@ function LowSignalAssist({
     <div className="mt-4">
       <div className={softCard(dark)}>
         <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div className="absolute inset-0" style={{ opacity: dark ? 1 : 0.8, background: "radial-gradient(520px 240px at 12% 0%, rgba(255,170,110,0.12), transparent 62%), radial-gradient(520px 240px at 90% 80%, rgba(120,200,255,0.10), transparent 64%)" }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              opacity: dark ? 1 : 0.8,
+              background:
+                "radial-gradient(520px 240px at 12% 0%, rgba(255,170,110,0.12), transparent 62%), radial-gradient(520px 240px at 90% 80%, rgba(120,200,255,0.10), transparent 64%)",
+            }}
+          />
         </div>
 
         <div className="relative">
@@ -914,7 +1010,12 @@ function LowSignalAssist({
             </div>
 
             {saved ? (
-              <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+              <div
+                className={[
+                  "text-[12px] font-semibold",
+                  dark ? "text-white/55" : "text-slate-600",
+                ].join(" ")}
+              >
                 (Saved)
               </div>
             ) : null}
@@ -929,7 +1030,11 @@ function LowSignalAssist({
               Answer more questions
             </Link>
 
-            <button type="button" className={subtleLinkButton(dark)} onClick={() => setOpen((v) => !v)}>
+            <button
+              type="button"
+              className={subtleLinkButton(dark)}
+              onClick={() => setOpen((v) => !v)}
+            >
               <Users className="h-4 w-4" aria-hidden />
               Tell us in your words
             </button>
@@ -944,11 +1049,17 @@ function LowSignalAssist({
           >
             <div className={softInputShell(dark)}>
               <div className="relative p-4">
-                <div className={["text-[13px] font-semibold", dark ? "text-white" : "text-slate-900"].join(" ")}>
+                <div
+                  className={[
+                    "text-[13px] font-semibold",
+                    dark ? "text-white" : "text-slate-900",
+                  ].join(" ")}
+                >
                   What usually gets you moving?
                 </div>
                 <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  One or two sentences is perfect. Example: “I’m motivated when ___” or “I care most about ___”.
+                  One or two sentences is perfect. Example: “I’m motivated when ___” or “I care
+                  most about ___”.
                 </div>
 
                 <div className="mt-3">
@@ -1000,15 +1111,27 @@ function LowSignalAssist({
                   </button>
                 </div>
 
-                <div className={["mt-3 text-[11px] leading-relaxed", dark ? "text-white/30" : "text-slate-500"].join(" ")}>
+                <div
+                  className={[
+                    "mt-3 text-[11px] leading-relaxed",
+                    dark ? "text-white/30" : "text-slate-500",
+                  ].join(" ")}
+                >
                   Saved to localStorage:{" "}
-                  <span className={dark ? "text-white/40" : "text-slate-600"}>{MOTIVATIONS_SELFREPORT_KEY}</span>
+                  <span className={dark ? "text-white/40" : "text-slate-600"}>
+                    {MOTIVATIONS_SELFREPORT_KEY}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className={["mt-3 text-[12px] leading-relaxed", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+          <div
+            className={[
+              "mt-3 text-[12px] leading-relaxed",
+              dark ? "text-white/45" : "text-slate-600",
+            ].join(" ")}
+          >
             Tip: the more you answer, the less “generic” this gets.
           </div>
         </div>
@@ -1043,7 +1166,11 @@ function MotivationCard({
 
   return (
     <div className={softCard(dark)} style={badgeStyle}>
-      <div className="pointer-events-none absolute inset-0" aria-hidden style={glowBg(dark, def.accent, 0.14)} />
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={glowBg(dark, def.accent, 0.14)}
+      />
       <div className="relative">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -1064,7 +1191,12 @@ function MotivationCard({
                 </span>
               </div>
 
-              <div className={["text-[14px] font-semibold", dark ? "text-white" : "text-slate-900"].join(" ")}>
+              <div
+                className={[
+                  "text-[14px] font-semibold",
+                  dark ? "text-white" : "text-slate-900",
+                ].join(" ")}
+              >
                 {def.label}
               </div>
             </div>
@@ -1089,7 +1221,9 @@ function MotivationCard({
           <div
             className={[
               "mt-3 rounded-[16px] border px-3 py-2 text-[12.5px] leading-relaxed",
-              dark ? "border-white/10 bg-white/[0.03] text-white/70" : "border-black/10 bg-white/70 text-slate-700",
+              dark
+                ? "border-white/10 bg-white/[0.03] text-white/70"
+                : "border-black/10 bg-white/70 text-slate-700",
             ].join(" ")}
           >
             <span className={dark ? "text-white/55" : "text-slate-600"}>From your answers: </span>
@@ -1097,7 +1231,12 @@ function MotivationCard({
           </div>
         ) : null}
 
-        <div className={["mt-3 text-[12.5px] leading-relaxed", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+        <div
+          className={[
+            "mt-3 text-[12.5px] leading-relaxed",
+            dark ? "text-white/55" : "text-slate-600",
+          ].join(" ")}
+        >
           <span className={dark ? "text-white/55" : "text-slate-600"}>Watch-out: </span>
           {def.watchOut}
         </div>
@@ -1130,24 +1269,29 @@ export function MotivationsTab(props: {
   tab: string;
   nameFromHeadline: string;
 }): React.JSX.Element {
-  const {
-    dark,
-    motivationsTop,
-    setOpenDriver, // kept for compatibility (unused here)
-    energyBoosters,
-    energyDrainers,
-    motivationReceipts,
-    nextStepsMotivations,
-    mounted,
-    tab,
-    nameFromHeadline,
-  } = props;
+const {
+  dark,
+  motivationsTop,
+  setOpenDriver, // kept for compatibility (unused here)
+  energyBoosters,
+  energyDrainers,
+  motivationReceipts,
+  nextStepsMotivations,
+  mounted,
+  nameFromHeadline,
+} = props;
 
   // default openDriver to null if not provided
   const openDriver: DriverId | null = props.openDriver ?? null;
 
-  const safeBoosters = React.useMemo(() => (Array.isArray(energyBoosters) ? energyBoosters : []), [energyBoosters]);
-  const safeDrainers = React.useMemo(() => (Array.isArray(energyDrainers) ? energyDrainers : []), [energyDrainers]);
+  const safeBoosters = React.useMemo(
+    () => (Array.isArray(energyBoosters) ? energyBoosters : []),
+    [energyBoosters]
+  );
+  const safeDrainers = React.useMemo(
+    () => (Array.isArray(energyDrainers) ? energyDrainers : []),
+    [energyDrainers]
+  );
   const safeReceiptsRaw = React.useMemo(
     () => (Array.isArray(motivationReceipts) ? motivationReceipts : []),
     [motivationReceipts]
@@ -1166,13 +1310,18 @@ export function MotivationsTab(props: {
       raw && Array.isArray((raw as MotivationsTop).top3)
         ? ((raw as MotivationsTop).top3 as ScoredDriver[]).filter(Boolean)
         : [];
-    const top = raw && (raw as MotivationsTop).top ? (raw as MotivationsTop).top : undefined;
+    const top = raw && (raw as MotivationsTop).top
+      ? (raw as MotivationsTop).top
+      : undefined;
     return { top3, top };
   }, [motivationsTop]);
 
   const topDriver = safeTop.top?.def ?? safeTop.top3[0]?.def ?? null;
 
-  const signal = React.useMemo(() => computeSignalConfidence(safeTop.top3 ?? []), [safeTop.top3]);
+  const signal = React.useMemo(
+    () => computeSignalConfidence(safeTop.top3 ?? []),
+    [safeTop.top3]
+  );
   const isLowSignal = signal < 0.45;
 
   const receipts = React.useMemo(() => {
@@ -1228,7 +1377,11 @@ export function MotivationsTab(props: {
                 className="inline-block h-2 w-2 rounded-full"
                 style={{
                   background:
-                    signal >= 0.72 ? "rgba(120,255,190,0.95)" : signal >= 0.45 ? "rgba(120,200,255,0.95)" : "rgba(255,180,120,0.95)",
+                    signal >= 0.72
+                      ? "rgba(120,255,190,0.95)"
+                      : signal >= 0.45
+                        ? "rgba(120,200,255,0.95)"
+                        : "rgba(255,180,120,0.95)",
                   boxShadow:
                     signal >= 0.72
                       ? "0 0 18px rgba(120,255,190,0.30)"
@@ -1239,8 +1392,12 @@ export function MotivationsTab(props: {
                 aria-hidden
               />
               <span>Signal</span>
-              <span className={dark ? "text-white" : "text-slate-900"}>{Math.round(signal * 100)}%</span>
-              <span className={dark ? "text-white/55" : "text-slate-600"}>({signalLabel(signal)})</span>
+              <span className={dark ? "text-white" : "text-slate-900"}>
+                {Math.round(signal * 100)}%
+              </span>
+              <span className={dark ? "text-white/55" : "text-slate-600"}>
+                ({signalLabel(signal)})
+              </span>
             </div>
 
             {isLowSignal ? (
@@ -1267,13 +1424,18 @@ export function MotivationsTab(props: {
             ))}
           </div>
 
-          <div className={["mt-3 text-[12.5px] leading-relaxed", dark ? "text-white/45" : "text-slate-600"].join(" ")}>
+          <div
+            className={[
+              "mt-3 text-[12.5px] leading-relaxed",
+              dark ? "text-white/45" : "text-slate-600",
+            ].join(" ")}
+          >
             These are “best guesses” that get sharper as you answer more prompts.
           </div>
         </div>
 
         {/* ✅ Quick Check should come BEFORE Next Steps Move */}
-        <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
+        <QuickFeedbackInline dark={dark} />
 
         {/* Next Steps Move */}
         <div className="mt-6">

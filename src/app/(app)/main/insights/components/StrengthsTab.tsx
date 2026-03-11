@@ -568,7 +568,7 @@ function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
   window.localStorage.setItem(QUICK_FEEDBACK_STORAGE_KEY, JSON.stringify(payload));
 }
 
-function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: string }): React.JSX.Element {
+function QuickFeedbackInline({ dark }: { dark: boolean }): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
@@ -861,7 +861,9 @@ function LowSignalAssist({
                       "focus-visible:ring-2 focus-visible:ring-orange-200/20",
                     ].join(" ")}
                   />
-                  <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>We’ll use this to tune your strengths next time.</div>
+                  <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>
+                    We’ll use this to tune your strengths next time.
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between gap-3">
@@ -1004,7 +1006,6 @@ export function StrengthsTab(props: {
     strengthsReceipts,
     nextStepsStrengths,
     mounted,
-    tab,
     nameFromHeadline,
   } = props;
 
@@ -1107,7 +1108,7 @@ export function StrengthsTab(props: {
         </div>
 
         {/* ✅ Quick Check should come BEFORE Next Steps Move */}
-        <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
+        <QuickFeedbackInline dark={dark} />
 
         {/* Next Steps Move */}
         <div className="mt-6">
@@ -1125,7 +1126,9 @@ export function StrengthsTab(props: {
               />
             </div>
           ) : (
-            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
+            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Next steps are loading…
+            </div>
           )}
         </div>
       </div>

@@ -5,13 +5,10 @@ import Link from "next/link";
 import {
   Sparkles,
   Zap,
-  Shield,
   Lightbulb,
   Users,
   MessageCircle,
-  Target,
   Compass,
-  Wrench,
   Brain,
   HeartHandshake,
   Trophy,
@@ -404,7 +401,8 @@ function scoreSkills(args: { signals: SkillSignalLike[]; receipts: string[] }) {
 
       s += Math.min(0.22, hits * 0.055);
 
-      const topSignal = [...(signals ?? [])].sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0))[0]?.id ?? null;
+      const topSignal =
+        [...(signals ?? [])].sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0))[0]?.id ?? null;
       if (topSignal && sk.signals.includes(topSignal)) s += 0.08;
 
       return { def: sk, score: clamp01(s) };
@@ -476,19 +474,31 @@ function signalLabel(sig: number) {
 
 function SkillIcon({ id }: { id: SkillId }) {
   const Icon =
-    id === "start_small" ? Zap
-    : id === "close_loops" ? CheckCircle2
-    : id === "ask_clean_questions" ? ScanSearch
-    : id === "sensemake" ? Brain
-    : id === "focus_block" ? Compass
-    : id === "feedback_rep" ? MessageCircle
-    : id === "collab_lead" ? Users
-    : id === "calm_under_pressure" ? Flame
-    : id === "build_systems" ? Layers
-    : id === "communicate_clean" ? Lightbulb
-    : id === "fair_play_boundaries" ? HeartHandshake
-    : id === "explore_then_choose" ? Trophy
-    : Repeat;
+    id === "start_small"
+      ? Zap
+      : id === "close_loops"
+        ? CheckCircle2
+        : id === "ask_clean_questions"
+          ? ScanSearch
+          : id === "sensemake"
+            ? Brain
+            : id === "focus_block"
+              ? Compass
+              : id === "feedback_rep"
+                ? MessageCircle
+                : id === "collab_lead"
+                  ? Users
+                  : id === "calm_under_pressure"
+                    ? Flame
+                    : id === "build_systems"
+                      ? Layers
+                      : id === "communicate_clean"
+                        ? Lightbulb
+                        : id === "fair_play_boundaries"
+                          ? HeartHandshake
+                          : id === "explore_then_choose"
+                            ? Trophy
+                            : Repeat;
 
   return <Icon className="h-4.5 w-4.5" aria-hidden />;
 }
@@ -538,9 +548,13 @@ function readLocalQuickFeedback(): { rating: QuickRating; note: string; savedAt:
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return null;
     const rec = parsed as { rating?: unknown; note?: unknown; savedAt?: unknown };
-    const rating = rec.rating === "mostly" || rec.rating === "somewhat" || rec.rating === "not_really" ? rec.rating : null;
+    const rating =
+      rec.rating === "mostly" || rec.rating === "somewhat" || rec.rating === "not_really"
+        ? rec.rating
+        : null;
     const note = typeof rec.note === "string" ? rec.note : "";
-    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
+    const savedAt =
+      typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
     if (!rating) return null;
     return { rating, note, savedAt };
   } catch {
@@ -554,7 +568,7 @@ function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
   window.localStorage.setItem(QUICK_FEEDBACK_STORAGE_KEY, JSON.stringify(payload));
 }
 
-function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: string }): React.JSX.Element {
+function QuickFeedbackInline({ dark }: { dark: boolean }): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
@@ -593,12 +607,20 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
           <span>Mostly right</span>
         </button>
 
-        <button type="button" className={quickChip(dark, rating === "somewhat")} onClick={() => onPick("somewhat")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "somewhat")}
+          onClick={() => onPick("somewhat")}
+        >
           <span aria-hidden>🙂</span>
           <span>Somewhat</span>
         </button>
 
-        <button type="button" className={quickChip(dark, rating === "not_really")} onClick={() => onPick("not_really")}>
+        <button
+          type="button"
+          className={quickChip(dark, rating === "not_really")}
+          onClick={() => onPick("not_really")}
+        >
           <span aria-hidden>👎</span>
           <span>Not really</span>
         </button>
@@ -634,7 +656,12 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
           <div className="relative p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className={["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                <div
+                  className={[
+                    "text-[12px] font-semibold uppercase tracking-[0.16em]",
+                    dark ? "text-white/55" : "text-slate-600",
+                  ].join(" ")}
+                >
                   Quick feedback
                 </div>
                 <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
@@ -689,7 +716,9 @@ function QuickFeedbackInline({ dark, contextTag }: { dark: boolean; contextTag: 
                 className={[
                   "h-10 rounded-2xl px-4 text-[13px] font-semibold border backdrop-blur-xl transition active:scale-[0.99]",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]" : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
+                  dark
+                    ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
+                    : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
                 ].join(" ")}
               >
                 Skip note
@@ -724,7 +753,8 @@ function readSelfReport(): { text: string; savedAt: number } | null {
     if (!parsed || typeof parsed !== "object") return null;
     const rec = parsed as { text?: unknown; savedAt?: unknown };
     const text = typeof rec.text === "string" ? rec.text : "";
-    const savedAt = typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
+    const savedAt =
+      typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt) ? rec.savedAt : 0;
     if (!text.trim()) return null;
     return { text, savedAt };
   } catch {
@@ -792,7 +822,9 @@ function LowSignalAssist({
             </div>
 
             {saved ? (
-              <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>(Saved)</div>
+              <div className={["text-[12px] font-semibold", dark ? "text-white/55" : "text-slate-600"].join(" ")}>
+                (Saved)
+              </div>
             ) : null}
           </div>
 
@@ -845,7 +877,9 @@ function LowSignalAssist({
                       "focus-visible:ring-2 focus-visible:ring-orange-200/20",
                     ].join(" ")}
                   />
-                  <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>We’ll use this to tune your skills next time.</div>
+                  <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>
+                    We’ll use this to tune your skills next time.
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between gap-3">
@@ -1044,7 +1078,7 @@ export default function SkillsTab(props: {
   model: unknown; // matches page.tsx: model={skillsModel}
   nextStepsSkills: NextStepsDefinition | null;
 }): React.JSX.Element {
-  const { dark, mounted, tab, nameFromHeadline, model, nextStepsSkills } = props;
+  const { dark, mounted, nameFromHeadline, model, nextStepsSkills } = props;
 
   const safeSignals = React.useMemo(() => readSkillSignalsFromModel(model), [model]);
 
@@ -1146,7 +1180,7 @@ export default function SkillsTab(props: {
         </div>
 
         {/* ✅ Quick Check should come BEFORE Next Steps */}
-        <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}:skills`} />
+        <QuickFeedbackInline dark={dark} />
 
         {/* Next Steps */}
         <div className="mt-6">
@@ -1164,7 +1198,9 @@ export default function SkillsTab(props: {
               />
             </div>
           ) : (
-            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>Next steps are loading…</div>
+            <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+              Next steps are loading…
+            </div>
           )}
         </div>
       </div>
