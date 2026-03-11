@@ -28,14 +28,13 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
-      - name: Prepare deployment package
+      - name: Prepare standalone deployment package
         run: |
-          mkdir deploy
-          cp -r .next/standalone/. deploy/
+          mkdir -p deploy
+          cp -r .next/standalone/apps/web/* deploy/
           mkdir -p deploy/.next
           cp -r .next/static deploy/.next/static
           if [ -d public ]; then cp -r public deploy/public; fi
-
           cat > deploy/package.json <<'EOF'
           {
             "name": "web-standalone",
