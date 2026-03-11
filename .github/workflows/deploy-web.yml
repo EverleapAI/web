@@ -29,10 +29,22 @@ jobs:
       - name: Build Next.js application
         run: npm run build
 
+      - name: Inspect standalone output
+        run: |
+          echo "PWD=$(pwd)"
+          echo "=== top level ==="
+          ls -la
+          echo "=== .next ==="
+          ls -la .next || true
+          echo "=== .next/standalone ==="
+          ls -la .next/standalone || true
+          echo "=== find .next/standalone ==="
+          find .next/standalone -maxdepth 4 -type f | sort || true
+
       - name: Prepare standalone deployment package
         run: |
           mkdir -p deploy
-          cp -r .next/standalone/apps/web/* deploy/
+          cp -r .next/standalone/* deploy/
           mkdir -p deploy/.next
           cp -r .next/static deploy/.next/static
           if [ -d public ]; then cp -r public deploy/public; fi
