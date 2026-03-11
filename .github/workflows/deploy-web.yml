@@ -35,6 +35,15 @@ jobs:
           mkdir -p deploy/.next
           cp -r .next/static deploy/.next/static
           if [ -d public ]; then cp -r public deploy/public; fi
+          cat > deploy/package.json <<'EOF'
+          {
+            "name": "web-standalone",
+            "private": true,
+            "scripts": {
+              "start": "node server.js"
+            }
+          }
+          EOF
 
       - name: Create deployment zip
         run: |
