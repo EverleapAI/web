@@ -1,0 +1,35 @@
+name: Deploy Everleap Web Container
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-everleap-web
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to ACR
+        run: az acr login --name everleapregistry
+
+      - name: Build Docker image
+        run: docker build -t everleapregistry.azurecr.io/everleap-web:latest ./apps/web
+
+      - name: Push Docker image
+        run: docker push everleapregistry.azurecr.io/everleap-web:latest
+
+      - name: Restart web app
+        run: az webapp restart --name front-end --resource-group Everleap
