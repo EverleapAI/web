@@ -7,7 +7,12 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
 ENV NEXT_STANDALONE=1
+
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
