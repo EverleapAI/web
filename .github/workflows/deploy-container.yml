@@ -26,7 +26,7 @@ jobs:
         run: az acr login --name everleapregistry
 
       - name: Build Docker image
-        run: docker build -t everleapregistry.azurecr.io/everleap-web:latest ./apps/web
+        run: docker build -t everleapregistry.azurecr.io/everleap-web:latest .
 
       - name: Push Docker image
         run: docker push everleapregistry.azurecr.io/everleap-web:latest
