@@ -10,9 +10,16 @@ export type ExplorePathPanelData = {
   title: string;
   hook: string;
   description: string;
-  testLabel: string;
-  testMinutes: string;
-  testSteps: string[];
+
+  // New preview-oriented fields
+  previewLabel?: string;
+  previewMeta?: string;
+  previewItems?: string[];
+
+  // Backward-compatible legacy fields
+  testLabel?: string;
+  testMinutes?: string;
+  testSteps?: string[];
 };
 
 type Props = {
@@ -138,6 +145,10 @@ export default function ExplorePathPanel({ path, open, onToggle }: Props) {
   const theme = pathTheme(path.id);
   const href = getPathHref(path.id);
 
+  const previewLabel = path.previewLabel ?? path.testLabel ?? "Inside this path";
+  const previewMeta = path.previewMeta ?? path.testMinutes ?? "";
+  const previewItems = path.previewItems ?? path.testSteps ?? [];
+
   return (
     <div
       className={[
@@ -204,7 +215,7 @@ export default function ExplorePathPanel({ path, open, onToggle }: Props) {
             </div>
 
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/84">
-              <span>{open ? "Hide" : "Try this"}</span>
+              <span>{open ? "Close" : "Open preview"}</span>
               <ChevronRight
                 className={[
                   "h-4 w-4 transition duration-200",
@@ -272,59 +283,38 @@ export default function ExplorePathPanel({ path, open, onToggle }: Props) {
                 </div>
 
                 <div className="relative">
-                  <div className={sectionKicker()}>{path.testLabel}</div>
-                  <div className="mt-1 text-sm font-medium text-white/60">
-                    {path.testMinutes}
-                  </div>
+                  <div className={sectionKicker()}>{previewLabel}</div>
+                  {previewMeta ? (
+                    <div className="mt-1 text-sm font-medium text-white/60">
+                      {previewMeta}
+                    </div>
+                  ) : null}
 
                   <ul className="mt-4 space-y-3">
-                    {path.testSteps.map((step, i) => (
+                    {previewItems.map((item, i) => (
                       <li
                         key={i}
                         className="flex gap-3 text-[15px] leading-relaxed text-white/82 sm:text-[15.5px]"
                       >
                         <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-white/38" />
-                        <span>{step}</span>
+                        <span>{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  className="rounded-full border border-white/12 bg-white/[0.10] px-4 py-2.5 text-sm font-semibold text-white/92 transition hover:bg-white/[0.14]"
+              <div className="mt-5 flex justify-end">
+                <Link
+                  href={href}
+                  className={[
+                    "group inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold backdrop-blur-xl transition",
+                    theme.enter,
+                  ].join(" ")}
                 >
-                  Start
-                </button>
-
-                <button
-                  type="button"
-                  className="rounded-full border border-white/12 bg-white/[0.08] px-4 py-2.5 text-sm font-semibold text-white/88 transition hover:bg-white/[0.12]"
-                >
-                  Add to Actions
-                </button>
-
-                <button
-                  type="button"
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white/66 transition hover:bg-white/[0.07] hover:text-white/80"
-                >
-                  Not for me
-                </button>
-
-                <div className="ml-auto">
-                  <Link
-                    href={href}
-                    className={[
-                      "group inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold backdrop-blur-xl transition",
-                      theme.enter,
-                    ].join(" ")}
-                  >
-                    <span>Enter {path.title} path</span>
-                    <ArrowUpRight className="h-4 w-4 opacity-85 transition group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" />
-                  </Link>
-                </div>
+                  <span>Enter {path.title} path</span>
+                  <ArrowUpRight className="h-4 w-4 opacity-85 transition group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" />
+                </Link>
               </div>
             </div>
           </motion.div>

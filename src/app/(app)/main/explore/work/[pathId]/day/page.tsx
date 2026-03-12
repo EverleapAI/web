@@ -8,6 +8,10 @@ import { notFound, useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 
 import { requireWorkPath } from "../../_data/workPaths";
+import {
+  getWorkAgenticOpening,
+  readStoredFirstName,
+} from "../../_data/getWorkAgenticOpening";
 import { WorkPathSubnav } from "../../components/WorkPathSubnav";
 
 /* =============================================================================
@@ -54,10 +58,24 @@ export default function WorkPathDayPage() {
   }
 
   const dark = true;
+  const [firstName, setFirstName] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setFirstName(readStoredFirstName());
+  }, []);
+
+  const opening = React.useMemo(
+    () =>
+      getWorkAgenticOpening({
+        pageKind: "day",
+        pathId: path.id,
+        firstName,
+      }),
+    [path.id, firstName]
+  );
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
-      {/* background */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute inset-0"
@@ -73,11 +91,10 @@ export default function WorkPathDayPage() {
       </div>
 
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-        {/* back */}
         <Link
           href={`/main/explore/work/${path.slug}`}
           className={[
-            "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition w-fit",
+            "inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition",
             shellSurface(dark),
             textSoft(dark),
             "hover:bg-white/[0.08]",
@@ -87,10 +104,8 @@ export default function WorkPathDayPage() {
           Back to overview
         </Link>
 
-        {/* subnav */}
         <WorkPathSubnav pathSlug={path.slug} />
 
-        {/* hero */}
         <section
           className={[
             "relative overflow-hidden rounded-[32px] px-6 py-8",
@@ -98,12 +113,45 @@ export default function WorkPathDayPage() {
             "shadow-[0_30px_120px_rgba(0,0,0,0.34)]",
           ].join(" ")}
         >
-          <div className="max-w-3xl">
-            <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(dark)}`}>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-90"
+            style={{
+              background: `
+                radial-gradient(circle at 14% 18%, ${rgb(path.theme.accent, 0.16)} 0%, transparent 30%),
+                radial-gradient(circle at 84% 18%, ${rgb(path.theme.glow, 0.14)} 0%, transparent 28%)
+              `,
+            }}
+          />
+
+          <div className="relative max-w-3xl">
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
+                Everleap guide
+              </div>
+              <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
+                {opening.intro}
+              </p>
+              <p className="mt-2 text-sm leading-7 text-white/70 sm:text-[15px]">
+                {opening.body}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-white/62 sm:text-[15px]">
+                {opening.bridge}
+              </p>
+            </div>
+
+            <div
+              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
+                dark
+              )}`}
+            >
               Day in the life
             </div>
 
-            <h1 className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(dark)}`}>
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
               {path.dayInLife.title}
             </h1>
 
@@ -113,7 +161,27 @@ export default function WorkPathDayPage() {
           </div>
         </section>
 
-        {/* timeline */}
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <div
+            className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
+              dark
+            )}`}
+          >
+            Rhythm of the day
+          </div>
+          <p className={`mt-2 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
+            This is not meant to be a literal minute-by-minute schedule. It is a
+            way of feeling the pattern of the work — where attention goes, where
+            decisions happen, where collaboration matters, and where the day starts
+            becoming interesting.
+          </p>
+        </section>
+
         <section className="grid gap-4">
           {path.dayInLife.moments.map((moment) => (
             <div
@@ -124,7 +192,7 @@ export default function WorkPathDayPage() {
               ].join(" ")}
             >
               <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center rounded-full border border-white/10 bg-white/[0.05] h-10 w-10 shrink-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
                   <Clock className="h-4 w-4 text-white/70" />
                 </div>
 
@@ -134,12 +202,16 @@ export default function WorkPathDayPage() {
                       {moment.title}
                     </div>
 
-                    <div className={`text-xs font-medium ${textFaint(dark)}`}>
+                    <div
+                      className={`rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium ${textFaint(
+                        dark
+                      )}`}
+                    >
                       {moment.timeLabel}
                     </div>
                   </div>
 
-                  <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                  <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
                     {moment.body}
                   </p>
                 </div>
@@ -148,7 +220,6 @@ export default function WorkPathDayPage() {
           ))}
         </section>
 
-        {/* navigation forward */}
         <section className="grid gap-4 lg:grid-cols-2">
           <Link
             href={`/main/explore/work/${path.slug}/forecast`}
@@ -157,7 +228,9 @@ export default function WorkPathDayPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}>
+            <div
+              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
+            >
               Forecast
             </div>
 
@@ -182,7 +255,9 @@ export default function WorkPathDayPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}>
+            <div
+              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
+            >
               Next steps
             </div>
 

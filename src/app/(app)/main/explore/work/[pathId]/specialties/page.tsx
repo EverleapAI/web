@@ -8,6 +8,10 @@ import { notFound, useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { requireWorkPath } from "../../_data/workPaths";
+import {
+  getWorkAgenticOpening,
+  readStoredFirstName,
+} from "../../_data/getWorkAgenticOpening";
 import { WorkPathSubnav } from "../../components/WorkPathSubnav";
 
 /* =============================================================================
@@ -54,10 +58,24 @@ export default function WorkPathSpecialtiesPage() {
   }
 
   const dark = true;
+  const [firstName, setFirstName] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setFirstName(readStoredFirstName());
+  }, []);
+
+  const opening = React.useMemo(
+    () =>
+      getWorkAgenticOpening({
+        pageKind: "specialties",
+        pathId: path.id,
+        firstName,
+      }),
+    [path.id, firstName]
+  );
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
-      {/* background */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute inset-0"
@@ -73,7 +91,6 @@ export default function WorkPathSpecialtiesPage() {
       </div>
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-        {/* back */}
         <div className="flex items-center justify-between">
           <Link
             href={`/main/explore/work/${path.slug}`}
@@ -89,10 +106,8 @@ export default function WorkPathSpecialtiesPage() {
           </Link>
         </div>
 
-        {/* subnav */}
         <WorkPathSubnav pathSlug={path.slug} />
 
-        {/* hero */}
         <section
           className={[
             "relative overflow-hidden rounded-[32px] px-6 py-8",
@@ -100,62 +115,121 @@ export default function WorkPathSpecialtiesPage() {
             "shadow-[0_30px_120px_rgba(0,0,0,0.34)]",
           ].join(" ")}
         >
-          <div className="max-w-3xl">
-            <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(dark)}`}>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-90"
+            style={{
+              background: `
+                radial-gradient(circle at 12% 18%, ${rgb(path.theme.accent, 0.16)} 0%, transparent 30%),
+                radial-gradient(circle at 85% 15%, ${rgb(path.theme.glow, 0.14)} 0%, transparent 26%)
+              `,
+            }}
+          />
+
+          <div className="relative max-w-3xl">
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
+                Everleap guide
+              </div>
+              <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
+                {opening.intro}
+              </p>
+              <p className="mt-2 text-sm leading-7 text-white/70 sm:text-[15px]">
+                {opening.body}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-white/62 sm:text-[15px]">
+                {opening.bridge}
+              </p>
+            </div>
+
+            <div
+              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
+                dark
+              )}`}
+            >
               Specialties
             </div>
 
-            <h1 className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(dark)}`}>
-              Different branches of this path
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              Different versions of this path
             </h1>
 
             <p className={`mt-4 text-lg leading-8 ${textSoft(dark)}`}>
-              Game design is not one single job. People who enter this world
-              often discover different directions depending on whether they
-              love systems, environments, or story.
+              Broad paths usually become more useful once you can feel their internal
+              branches. The question here is not just what this career is called —
+              it is which version of it seems to fit your energy best.
             </p>
           </div>
         </section>
 
-        {/* specialties */}
         <section className="grid gap-4 lg:grid-cols-3">
-          {path.specialties.map((specialty) => (
-            <div
-              key={specialty.id}
-              className={[
-                "rounded-[26px] px-5 py-5",
-                shellSurface(dark),
-                "transition hover:bg-white/[0.08]",
-              ].join(" ")}
-            >
-              <div className={`text-xl font-semibold ${textMain(dark)}`}>
-                {specialty.title}
-              </div>
+          {path.specialtyPreviews.map((preview) => {
+            const detail = path.specialties.find((s) => s.slug === preview.slug);
 
-              <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-                {specialty.summary}
-              </p>
-
-              <div className="mt-4 space-y-1">
-                {specialty.skillsThatGrowHere.slice(0, 3).map((skill) => (
-                  <div
-                    key={skill}
-                    className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/75 mr-2"
-                  >
-                    {skill}
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href={`/main/explore/work/${path.slug}/specialties/${specialty.slug}`}
-                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white"
+            return (
+              <div
+                key={preview.id}
+                className={[
+                  "rounded-[26px] px-5 py-5",
+                  shellSurface(dark),
+                  "transition hover:bg-white/[0.08]",
+                ].join(" ")}
               >
-                Explore specialty
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          ))}
+                <div className="flex items-center justify-between gap-3">
+                  <div className={`text-xl font-semibold ${textMain(dark)}`}>
+                    {preview.title}
+                  </div>
+
+                  {preview.energy ? (
+                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/56">
+                      {preview.energy.replace("-", " ")}
+                    </span>
+                  ) : null}
+                </div>
+
+                <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                  {preview.oneLiner}
+                </p>
+
+                <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.035] px-4 py-4">
+                  <div
+                    className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(
+                      dark
+                    )}`}
+                  >
+                    Why this version might fit
+                  </div>
+                  <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                    {preview.whyItCouldFit}
+                  </p>
+                </div>
+
+                {detail?.skillsThatGrowHere?.length ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {detail.skillsThatGrowHere.slice(0, 3).map((skill) => (
+                      <div
+                        key={skill}
+                        className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/75"
+                      >
+                        {skill}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                <Link
+                  href={`/main/explore/work/${path.slug}/specialties/${preview.slug}`}
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white"
+                >
+                  Explore specialty
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            );
+          })}
         </section>
       </div>
     </main>

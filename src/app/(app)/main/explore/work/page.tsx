@@ -13,6 +13,10 @@ import { isDarkTheme, type SpotlightThemeId } from "@/theme/everleapVisuals";
 import ExploreLaneRail from "../components/ExploreLaneRail";
 import ExplorePathPanel from "../components/ExplorePathPanel";
 import type { ExplorePathPanelData } from "../components/ExplorePathPanel";
+import {
+  getWorkAgenticOpening,
+  readStoredFirstName,
+} from "./_data/getWorkAgenticOpening";
 
 const PATHS: ExplorePathPanelData[] = [
   {
@@ -20,13 +24,13 @@ const PATHS: ExplorePathPanelData[] = [
     title: "Game Designer",
     hook: "You shape rules, rewards, and challenges so curiosity becomes play.",
     description:
-      "Game designers create systems that make people curious, challenged, and proud. It is part psychology, part logic, part creativity.",
-    testLabel: "Tiny Test",
-    testMinutes: "10–20 minutes",
-    testSteps: [
-      "Pick a simple game you already know.",
-      "Change one rule, one scoring system, or one limit.",
-      "Notice whether the game becomes more interesting, harder, or more chaotic.",
+      "Game designers create systems that make people curious, challenged, and proud. It blends imagination, psychology, and logic to shape experiences people want to explore again and again.",
+    previewLabel: "Inside this path",
+    previewMeta: "Common directions",
+    previewItems: [
+      "Systems design — shaping progression, rewards, and balance.",
+      "Level design — crafting spaces that guide tension, discovery, and flow.",
+      "Narrative design — weaving story and player choice into the world.",
     ],
   },
   {
@@ -34,13 +38,13 @@ const PATHS: ExplorePathPanelData[] = [
     title: "Product / UX Builder",
     hook: "You make tools, apps, and systems easier and better for real people.",
     description:
-      "Product builders shape experiences people use every day. They notice friction, simplify it, and make systems feel better.",
-    testLabel: "Tiny Test",
-    testMinutes: "10 minutes",
-    testSteps: [
-      "Open an app you use every day.",
-      "Find one thing that feels annoying or slow.",
-      "Sketch one improvement that would make it clearer or easier.",
+      "Product builders shape experiences people rely on every day. They notice friction, simplify complexity, and design systems that feel natural instead of confusing.",
+    previewLabel: "Inside this path",
+    previewMeta: "Common directions",
+    previewItems: [
+      "UX design — shaping how people move through apps and tools.",
+      "Product strategy — deciding what problems a product should solve.",
+      "Interaction design — crafting how systems respond to human behavior.",
     ],
   },
   {
@@ -48,13 +52,13 @@ const PATHS: ExplorePathPanelData[] = [
     title: "Health + Human Support",
     hook: "Some people build careers helping others recover, grow, or feel less alone.",
     description:
-      "Support work is about helping people through pain, stress, change, or recovery. It requires care, steadiness, and trust.",
-    testLabel: "Tiny Test",
-    testMinutes: "10–15 minutes",
-    testSteps: [
-      "Think about a time someone helped you through something hard.",
-      "Write down what they actually did that helped.",
-      "Notice whether what worked was advice, calmness, listening, or action.",
+      "Support work focuses on helping people through pain, change, and recovery. It requires steadiness, trust, and the ability to listen and guide people through difficult moments.",
+    previewLabel: "Inside this path",
+    previewMeta: "Common directions",
+    previewItems: [
+      "Therapeutic support — helping people navigate emotional challenges.",
+      "Rehabilitation work — supporting physical recovery and resilience.",
+      "Community health — helping groups of people stay healthier together.",
     ],
   },
   {
@@ -62,13 +66,13 @@ const PATHS: ExplorePathPanelData[] = [
     title: "Teaching / Mentorship",
     hook: "You help someone else understand something they didn’t before.",
     description:
-      "Teaching is not just giving information. It is helping another person grow confidence, skill, and clarity.",
-    testLabel: "Tiny Test",
-    testMinutes: "10 minutes",
-    testSteps: [
-      "Explain something you know well to someone else.",
-      "Notice where they get confused or ask questions.",
-      "Pay attention to whether you enjoy helping them get it.",
+      "Teaching is about helping people grow confidence and skill. Great mentors guide understanding, challenge thinking, and help others discover what they’re capable of.",
+    previewLabel: "Inside this path",
+    previewMeta: "Common directions",
+    previewItems: [
+      "Education — guiding learning in schools or programs.",
+      "Coaching — helping people improve skills through feedback and practice.",
+      "Mentorship — supporting someone's growth over time.",
     ],
   },
 ];
@@ -96,6 +100,21 @@ export default function ExploreWorkPage() {
   const themeId: SpotlightThemeId = "nightDusk";
   const dark = isDarkTheme(themeId);
   const [openId, setOpenId] = React.useState<string>(PATHS[0].id);
+  const [firstName, setFirstName] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setFirstName(readStoredFirstName());
+  }, []);
+
+  const opening = React.useMemo(
+    () =>
+      getWorkAgenticOpening({
+        pageKind: "lane",
+        pathId: "work",
+        firstName,
+      }),
+    [firstName]
+  );
 
   return (
     <div className="relative min-h-screen">
@@ -149,7 +168,21 @@ export default function ExploreWorkPage() {
                 <div className={sectionKicker()}>Explore</div>
               </div>
 
-              <h1 className="text-[2.15rem] font-semibold tracking-tight text-white drop-shadow-[0_8px_24px_rgba(120,180,255,0.12)] md:text-[2.8rem]">
+              <div className="max-w-2xl">
+                <p className="text-[15px] leading-7 text-white/82 md:text-[16px]">
+                  {opening.intro}
+                </p>
+
+                <p className="mt-3 text-[14px] leading-6 text-white/66 md:text-[15px]">
+                  {opening.body}
+                </p>
+
+                <p className="mt-3 text-[14px] leading-6 text-white/58 md:text-[15px]">
+                  {opening.bridge}
+                </p>
+              </div>
+
+              <h1 className="mt-5 text-[2.15rem] font-semibold tracking-tight text-white drop-shadow-[0_8px_24px_rgba(120,180,255,0.12)] md:text-[2.8rem]">
                 Work
               </h1>
 
@@ -161,8 +194,8 @@ export default function ExploreWorkPage() {
                 }
               >
                 Ways people turn curiosity into real work. This is not about picking
-                a forever answer. It is about trying a direction, noticing what
-                feels alive, and learning from that signal.
+                a forever answer. It is about following a direction, noticing what
+                feels alive, and going deeper when something starts to click.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2.5">
@@ -173,7 +206,7 @@ export default function ExploreWorkPage() {
 
                 <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/16 bg-amber-300/10 px-3 py-1.5 text-[12px] font-semibold text-amber-100/90">
                   <Orbit className="h-3.5 w-3.5" />
-                  Test directions first
+                  Explore directions
                 </div>
 
                 <div className="inline-flex items-center gap-2 rounded-full border border-violet-300/16 bg-violet-300/10 px-3 py-1.5 text-[12px] font-semibold text-violet-100/90">
@@ -183,8 +216,8 @@ export default function ExploreWorkPage() {
               </div>
 
               <p className="mt-4 text-sm leading-6 text-white/52">
-                Start with one path. Open it. Try the tiny test. Then go deeper into
-                roles, specialties, day-in-the-life, forecast, and real next steps.
+                Start with one path. Open it. See what lives inside it. If it
+                pulls you in, step deeper into the path.
               </p>
             </div>
           </header>
@@ -210,7 +243,7 @@ export default function ExploreWorkPage() {
                 <div className={sectionKicker()}>Paths in work</div>
                 <p className="mt-1.5 max-w-2xl text-sm leading-6 text-white/62">
                   These are not job titles to commit to. They are directions for
-                  testing how your energy meets the world.
+                  exploring how your energy, taste, and mind might meet the world.
                 </p>
               </div>
             </div>
