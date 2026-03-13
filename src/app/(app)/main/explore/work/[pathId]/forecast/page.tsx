@@ -40,6 +40,10 @@ function textFaint(dark: boolean) {
   return dark ? "text-white/50" : "text-slate-500";
 }
 
+function sectionKicker(dark: boolean) {
+  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
+}
+
 /* =============================================================================
    Page
 ============================================================================= */
@@ -123,10 +127,24 @@ export default function WorkPathForecastPage() {
             }}
           />
 
-          <div className="relative max-w-3xl">
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+          <div className="relative max-w-4xl">
+            <div className={sectionKicker(dark)}>Forecast</div>
+
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              {path.forecast.title}
+            </h1>
+
+            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+              {path.forecast.summary}
+            </p>
+
+            <div className="mt-7 max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Everleap guide
+                What this arc may tell you
               </div>
               <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
                 {opening.intro}
@@ -138,25 +156,29 @@ export default function WorkPathForecastPage() {
                 {opening.bridge}
               </p>
             </div>
+          </div>
+        </section>
 
-            <div
-              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <div className="max-w-3xl">
+            <div className={sectionKicker(dark)}>How momentum usually builds</div>
+            <h2
+              className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
                 dark
               )}`}
             >
-              Forecast
-            </div>
-
-            <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                dark
-              )}`}
-            >
-              {path.forecast.title}
-            </h1>
-
-            <p className={`mt-4 text-lg leading-8 ${textSoft(dark)}`}>
-              {path.forecast.summary}
+              How a path starts feeling more real over time
+            </h2>
+            <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+              These stages are not rigid checkpoints. They are a way of seeing how
+              interest often becomes traction: first through signals, then through
+              repeated contact, and eventually through a clearer sense of identity
+              inside the work.
             </p>
           </div>
         </section>
@@ -167,80 +189,71 @@ export default function WorkPathForecastPage() {
             shellSurface(dark),
           ].join(" ")}
         >
-          <div
-            className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-              dark
-            )}`}
-          >
-            How momentum usually builds
-          </div>
-          <p className={`mt-2 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-            These stages are not rigid checkpoints. They are a way of seeing how
-            interest often becomes traction: first through signals, then through
-            repeated work, and eventually through a clearer sense of identity inside
-            the path.
-          </p>
-        </section>
-
-        <section className="grid gap-4">
-          {path.forecast.stages.map((stage, index) => (
-            <div
-              key={stage.id}
-              className={[
-                "rounded-[28px] px-6 py-6",
-                shellSurface(dark),
-              ].join(" ")}
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
-                  <TrendingUp className="h-4 w-4 text-white/70" />
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className={`text-lg font-semibold ${textMain(dark)}`}>
-                      {stage.label}
-                    </div>
-
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                      {stage.timeframe}
-                    </div>
-
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                      Stage {index + 1}
-                    </div>
+          <div className="divide-y divide-white/8">
+            {path.forecast.stages.map((stage, index) => (
+              <div
+                key={stage.id}
+                className={index === 0 ? "pb-6" : "pt-6"}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
+                    <TrendingUp className="h-4 w-4 text-white/70" />
                   </div>
 
-                  <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                    {stage.summary}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className={`text-lg font-semibold ${textMain(dark)}`}>
+                        {stage.label}
+                      </div>
 
-                  <div className="mt-4">
-                    <div
-                      className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(
-                        dark
-                      )}`}
-                    >
-                      Signals of progress
+                      <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                        {stage.timeframe}
+                      </div>
+
+                      <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
+                        Stage {index + 1}
+                      </div>
                     </div>
 
-                    <div className="mt-3 space-y-2">
-                      {stage.signalsOfProgress.map((signal) => (
-                        <div
-                          key={signal}
-                          className="rounded-[18px] border border-white/8 bg-white/[0.035] px-4 py-3"
-                        >
-                          <div className={`text-sm leading-6 ${textSoft(dark)}`}>
-                            {signal}
+                    <p className={`mt-3 max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
+                      {stage.summary}
+                    </p>
+
+                    <div className="mt-4">
+                      <div className={sectionKicker(dark)}>Signals of progress</div>
+
+                      <div className="mt-3 divide-y divide-white/8">
+                        {stage.signalsOfProgress.map((signal, signalIndex) => (
+                          <div
+                            key={signal}
+                            className={signalIndex === 0 ? "pb-3" : "pt-3"}
+                          >
+                            <div className={`text-sm leading-7 ${textSoft(dark)}`}>
+                              {signal}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </section>
+
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <p className={`max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
+            The point is not to rush toward a finished identity. It is to notice
+            whether your evidence is getting stronger — whether the work keeps
+            becoming more recognizable, more absorbing, and more worth moving
+            toward as you get closer.
+          </p>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
@@ -251,11 +264,7 @@ export default function WorkPathForecastPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Day in the life
-            </div>
+            <div className={sectionKicker(dark)}>Day in the life</div>
 
             <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
               {path.dayInLife.title}
@@ -266,7 +275,7 @@ export default function WorkPathForecastPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Explore
+              See the rhythm
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>
@@ -278,11 +287,7 @@ export default function WorkPathForecastPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Next steps
-            </div>
+            <div className={sectionKicker(dark)}>Next steps</div>
 
             <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
               {path.nextSteps.title}
@@ -293,7 +298,7 @@ export default function WorkPathForecastPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Continue
+              See the next moves
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>

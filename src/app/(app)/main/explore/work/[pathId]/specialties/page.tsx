@@ -40,6 +40,10 @@ function textFaint(dark: boolean) {
   return dark ? "text-white/52" : "text-slate-500";
 }
 
+function sectionKicker(dark: boolean) {
+  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
+}
+
 /* =============================================================================
    Page
 ============================================================================= */
@@ -125,10 +129,27 @@ export default function WorkPathSpecialtiesPage() {
             }}
           />
 
-          <div className="relative max-w-3xl">
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+          <div className="relative max-w-4xl">
+            <div className={sectionKicker(dark)}>Specialties</div>
+
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              Where this path starts to branch
+            </h1>
+
+            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+              Broad paths usually become more useful once you can feel their
+              internal branches. The question here is not only what this career is
+              called — it is which version seems to match your attention, energy,
+              and way of thinking most closely.
+            </p>
+
+            <div className="mt-7 max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Everleap guide
+                Why this gets more personal
               </div>
               <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
                 {opening.intro}
@@ -140,96 +161,92 @@ export default function WorkPathSpecialtiesPage() {
                 {opening.bridge}
               </p>
             </div>
-
-            <div
-              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
-                dark
-              )}`}
-            >
-              Specialties
-            </div>
-
-            <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                dark
-              )}`}
-            >
-              Different versions of this path
-            </h1>
-
-            <p className={`mt-4 text-lg leading-8 ${textSoft(dark)}`}>
-              Broad paths usually become more useful once you can feel their internal
-              branches. The question here is not just what this career is called —
-              it is which version of it seems to fit your energy best.
-            </p>
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
-          {path.specialtyPreviews.map((preview) => {
-            const detail = path.specialties.find((s) => s.slug === preview.slug);
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <div className="max-w-3xl">
+            <div className={sectionKicker(dark)}>Choose a branch to feel more closely</div>
+            <h2
+              className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
+                dark
+              )}`}
+            >
+              Different minds tend to come alive in different parts of the same path
+            </h2>
+            <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+              You do not need to choose perfectly. You are looking for the branch
+              that feels most magnetic, most natural, or most like your kind of
+              attention once the broad path starts splitting into real versions.
+            </p>
+          </div>
 
-            return (
-              <div
-                key={preview.id}
-                className={[
-                  "rounded-[26px] px-5 py-5",
-                  shellSurface(dark),
-                  "transition hover:bg-white/[0.08]",
-                ].join(" ")}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className={`text-xl font-semibold ${textMain(dark)}`}>
-                    {preview.title}
-                  </div>
+          <div className="mt-5 divide-y divide-white/8">
+            {path.specialtyPreviews.map((preview, index) => {
+              const detail = path.specialties.find((s) => s.slug === preview.slug);
 
-                  {preview.energy ? (
-                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/56">
-                      {preview.energy.replace("-", " ")}
-                    </span>
-                  ) : null}
-                </div>
-
-                <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                  {preview.oneLiner}
-                </p>
-
-                <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.035] px-4 py-4">
-                  <div
-                    className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(
-                      dark
-                    )}`}
-                  >
-                    Why this version might fit
-                  </div>
-                  <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-                    {preview.whyItCouldFit}
-                  </p>
-                </div>
-
-                {detail?.skillsThatGrowHere?.length ? (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {detail.skillsThatGrowHere.slice(0, 3).map((skill) => (
-                      <div
-                        key={skill}
-                        className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/75"
-                      >
-                        {skill}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
+              return (
                 <Link
+                  key={preview.id}
                   href={`/main/explore/work/${path.slug}/specialties/${preview.slug}`}
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white/80 hover:text-white"
+                  className={[
+                    "group block transition hover:bg-white/[0.03]",
+                    index === 0 ? "pb-5" : "pt-5",
+                  ].join(" ")}
                 >
-                  Explore specialty
-                  <ArrowRight className="h-4 w-4" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <div className={`text-base font-semibold ${textMain(dark)}`}>
+                          {preview.title}
+                        </div>
+
+                        {preview.energy ? (
+                          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/56">
+                            {preview.energy.replace("-", " ")}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                        {preview.oneLiner}
+                      </p>
+
+                      <div className="mt-4">
+                        <div className={sectionKicker(dark)}>Why this branch may feel close</div>
+                        <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                          {preview.whyItCouldFit}
+                        </p>
+                      </div>
+
+                      {detail?.skillsThatGrowHere?.length ? (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {detail.skillsThatGrowHere.slice(0, 3).map((skill) => (
+                            <div
+                              key={skill}
+                              className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/75"
+                            >
+                              {skill}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-white/76 transition group-hover:text-white">
+                      <span>Explore</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </div>
                 </Link>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </section>
       </div>
     </main>

@@ -5,7 +5,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, MapPin, Monitor, Rocket } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  Monitor,
+  Rocket,
+  Sparkles,
+  Puzzle,
+  CalendarDays,
+} from "lucide-react";
 
 import { requireWorkPath } from "../../_data/workPaths";
 import {
@@ -38,6 +47,41 @@ function textSoft(dark: boolean) {
 
 function textFaint(dark: boolean) {
   return dark ? "text-white/50" : "text-slate-500";
+}
+
+function orbBase() {
+  return "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl";
+}
+
+function metaChip() {
+  return "inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60";
+}
+
+function sectionKicker(dark: boolean) {
+  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
+}
+
+function actionIcon(index: number) {
+  if (index === 0) return Sparkles;
+  if (index === 1) return Puzzle;
+  return Rocket;
+}
+
+function opportunityIcon(mode: string, index: number) {
+  if (mode === "local") {
+    return index % 2 === 0 ? MapPin : CalendarDays;
+  }
+  return index % 2 === 0 ? Monitor : Rocket;
+}
+
+function sectionIntroTone(groupId: string) {
+  if (groupId === "self-starters") {
+    return "Small moves create the fastest signal. The point is not to commit your whole identity — it is to see whether the work gets more alive when you touch it directly.";
+  }
+  if (groupId === "near-you") {
+    return "Real places change the feeling of a path. Once you can see people building, gathering, or learning in the same world, the idea becomes much less abstract.";
+  }
+  return "Online doors are useful when you want momentum now. These work best when they pull you toward making, showing, or joining — not just reading forever.";
 }
 
 /* =============================================================================
@@ -73,6 +117,23 @@ export default function WorkPathNextStepsPage() {
       }),
     [path.id, firstName]
   );
+
+  const selfStarters = path.nextSteps.actions.slice(0, 2);
+
+  const localGroup =
+    path.nextSteps.opportunityGroups?.find((group) => group.id === "near-you") ??
+    path.nextSteps.opportunityGroups?.find((group) =>
+      group.items.some((item) => item.mode === "local")
+    );
+
+  const onlineGroup =
+    path.nextSteps.opportunityGroups?.find((group) => group.id === "online-now") ??
+    path.nextSteps.opportunityGroups?.find((group) =>
+      group.items.some((item) => item.mode === "virtual")
+    );
+
+  const localItems = localGroup?.items.slice(0, 4) ?? [];
+  const onlineItems = onlineGroup?.items.slice(0, 4) ?? [];
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
@@ -123,10 +184,24 @@ export default function WorkPathNextStepsPage() {
             }}
           />
 
-          <div className="relative max-w-3xl">
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+          <div className="relative max-w-4xl">
+            <div className={sectionKicker(dark)}>Next steps</div>
+
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              {path.nextSteps.title}
+            </h1>
+
+            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+              {path.nextSteps.summary}
+            </p>
+
+            <div className="mt-7 max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Everleap guide
+                Why these first moves matter
               </div>
               <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
                 {opening.intro}
@@ -138,28 +213,275 @@ export default function WorkPathNextStepsPage() {
                 {opening.bridge}
               </p>
             </div>
-
-            <div
-              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
-                dark
-              )}`}
-            >
-              Next steps
-            </div>
-
-            <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                dark
-              )}`}
-            >
-              {path.nextSteps.title}
-            </h1>
-
-            <p className={`mt-4 text-lg leading-8 ${textSoft(dark)}`}>
-              {path.nextSteps.summary}
-            </p>
           </div>
         </section>
+
+        {selfStarters.length ? (
+          <section
+            className={[
+              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+              shellSurface(dark),
+            ].join(" ")}
+          >
+            <div className={sectionKicker(dark)}>Start on your own</div>
+
+            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
+              Begin where the path feels closest
+            </h2>
+
+            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
+              {sectionIntroTone("self-starters")}
+            </p>
+
+            <div className="mt-6 divide-y divide-white/8">
+              {selfStarters.map((action, index) => {
+                const Icon = actionIcon(index);
+
+                return (
+                  <div key={action.id} className={index === 0 ? "pb-6" : "pt-6"}>
+                    <div className="flex items-start gap-4">
+                      <div className={orbBase()}>
+                        <Icon className="h-4 w-4 text-white/75" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <div className={`text-base font-semibold ${textMain(dark)}`}>
+                            {action.title}
+                          </div>
+
+                          {index === 0 ? (
+                            <span className={metaChip()}>First move</span>
+                          ) : null}
+
+                          {action.timeEstimate ? (
+                            <span className={metaChip()}>{action.timeEstimate}</span>
+                          ) : null}
+
+                          {action.effort ? (
+                            <span className={metaChip()}>{action.effort}</span>
+                          ) : null}
+                        </div>
+
+                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                          {action.whyThisMatters}
+                        </p>
+
+                        <div className="mt-4">
+                          <div className={sectionKicker(dark)}>One way to test it</div>
+                          <div className="mt-2 space-y-2">
+                            {action.instructions.map((instruction) => (
+                              <div
+                                key={instruction}
+                                className={`text-sm leading-6 ${textSoft(dark)}`}
+                              >
+                                {instruction}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {localGroup ? (
+          <section
+            className={[
+              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+              shellSurface(dark),
+            ].join(" ")}
+          >
+            <div className={sectionKicker(dark)}>Near you</div>
+
+            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
+              Let the world get more concrete
+            </h2>
+
+            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
+              {sectionIntroTone("near-you")}
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className={metaChip()}>{localItems.length} local options</span>
+              <span className={metaChip()}>In-person energy</span>
+            </div>
+
+            <div className="mt-6 divide-y divide-white/8">
+              {localItems.map((item, index) => {
+                const Icon = opportunityIcon(item.mode, index);
+
+                const content = (
+                  <div
+                    className={[
+                      index === 0 ? "pb-6" : "pt-6",
+                      item.href
+                        ? "transition duration-200 hover:translate-x-[2px]"
+                        : "",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={orbBase()}>
+                        <Icon className="h-4 w-4 text-white/75" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <div className={`text-base font-semibold ${textMain(dark)}`}>
+                            {item.title}
+                          </div>
+
+                          <span className={metaChip()}>Local</span>
+
+                          {item.locationLabel ? (
+                            <span className={metaChip()}>{item.locationLabel}</span>
+                          ) : null}
+
+                          {item.distanceLabel ? (
+                            <span className={metaChip()}>{item.distanceLabel}</span>
+                          ) : null}
+                        </div>
+
+                        {item.provider ? (
+                          <div className={`mt-2 text-sm ${textFaint(dark)}`}>{item.provider}</div>
+                        ) : null}
+
+                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                          {item.summary}
+                        </p>
+
+                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                          <span className="font-semibold text-white/84">Why it helps:</span>{" "}
+                          {item.whyItHelps}
+                        </p>
+
+                        {item.href ? (
+                          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
+                            Open resource
+                            <ArrowUpRightMini />
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+                return item.href ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block"
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <div key={item.id}>{content}</div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {onlineGroup ? (
+          <section
+            className={[
+              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+              shellSurface(dark),
+            ].join(" ")}
+          >
+            <div className={sectionKicker(dark)}>Online</div>
+
+            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
+              Open a door today
+            </h2>
+
+            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
+              {sectionIntroTone("online-now")}
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className={metaChip()}>{onlineItems.length} online options</span>
+              <span className={metaChip()}>Start right away</span>
+            </div>
+
+            <div className="mt-6 divide-y divide-white/8">
+              {onlineItems.map((item, index) => {
+                const Icon = opportunityIcon(item.mode, index);
+
+                const content = (
+                  <div
+                    className={[
+                      index === 0 ? "pb-6" : "pt-6",
+                      item.href
+                        ? "transition duration-200 hover:translate-x-[2px]"
+                        : "",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={orbBase()}>
+                        <Icon className="h-4 w-4 text-white/75" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <div className={`text-base font-semibold ${textMain(dark)}`}>
+                            {item.title}
+                          </div>
+
+                          <span className={metaChip()}>Online</span>
+
+                          {item.formatLabel ? (
+                            <span className={metaChip()}>{item.formatLabel}</span>
+                          ) : null}
+                        </div>
+
+                        {item.provider ? (
+                          <div className={`mt-2 text-sm ${textFaint(dark)}`}>{item.provider}</div>
+                        ) : null}
+
+                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                          {item.summary}
+                        </p>
+
+                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
+                          <span className="font-semibold text-white/84">Why it helps:</span>{" "}
+                          {item.whyItHelps}
+                        </p>
+
+                        {item.href ? (
+                          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
+                            Open resource
+                            <ArrowUpRightMini />
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+
+                return item.href ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block"
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <div key={item.id}>{content}</div>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
         <section
           className={[
@@ -167,230 +489,12 @@ export default function WorkPathNextStepsPage() {
             shellSurface(dark),
           ].join(" ")}
         >
-          <div
-            className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-              dark
-            )}`}
-          >
-            Start small
-          </div>
-          <p className={`mt-2 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-            Pick one action that feels real and doable right now. You are not trying
-            to impress anyone yet. You are looking for proof that this world becomes
-            more interesting when you move one step closer to it.
+          <p className={`max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
+            The point is not to do all of this. Pick one move that feels interesting,
+            believable, and close enough to try — then notice whether the path becomes
+            more magnetic once you are a little nearer to the work itself.
           </p>
         </section>
-
-        <section className="grid gap-4">
-          {path.nextSteps.actions.map((action) => (
-            <div
-              key={action.id}
-              className={[
-                "rounded-[28px] px-6 py-6",
-                shellSurface(dark),
-              ].join(" ")}
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
-                  <Rocket className="h-4 w-4 text-white/70" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className={`text-lg font-semibold ${textMain(dark)}`}>
-                      {action.title}
-                    </div>
-
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                      {action.type.replace("-", " ")}
-                    </div>
-
-                    {action.timeEstimate ? (
-                      <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                        {action.timeEstimate}
-                      </div>
-                    ) : null}
-
-                    {action.effort ? (
-                      <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                        {action.effort}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                    {action.whyThisMatters}
-                  </p>
-
-                  <div className="mt-4">
-                    <div
-                      className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(
-                        dark
-                      )}`}
-                    >
-                      One way in
-                    </div>
-
-                    <div className="mt-3 space-y-2">
-                      {action.instructions.map((instruction) => (
-                        <div
-                          key={instruction}
-                          className="rounded-[18px] border border-white/8 bg-white/[0.035] px-4 py-3"
-                        >
-                          <div className={`text-sm leading-6 ${textSoft(dark)}`}>
-                            {instruction}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {path.nextSteps.opportunityGroups?.length ? (
-          <>
-            <section
-              className={[
-                "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-                shellSurface(dark),
-              ].join(" ")}
-            >
-              <div
-                className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                  dark
-                )}`}
-              >
-                Step into the world
-              </div>
-              <p className={`mt-2 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-                Once something feels interesting, getting closer to real people,
-                tools, events, or communities can make the path feel much more vivid.
-                These are places you can begin around you or from anywhere.
-              </p>
-            </section>
-
-            <section className="grid gap-4">
-              {path.nextSteps.opportunityGroups.map((group) => (
-                <div
-                  key={group.id}
-                  className={[
-                    "rounded-[28px] px-6 py-6",
-                    shellSurface(dark),
-                  ].join(" ")}
-                >
-                  <div
-                    className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                      dark
-                    )}`}
-                  >
-                    {group.title}
-                  </div>
-
-                  {group.description ? (
-                    <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-                      {group.description}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                    {group.items.map((item) => {
-                      const isLocal = item.mode === "local";
-                      const Icon = isLocal ? MapPin : Monitor;
-
-                      const content = (
-                        <div
-                          className={[
-                            "rounded-[22px] border border-white/8 bg-white/[0.035] px-5 py-5 transition",
-                            item.href ? "hover:bg-white/[0.06]" : "",
-                          ].join(" ")}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
-                              <Icon className="h-4 w-4 text-white/70" />
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className={`text-base font-semibold ${textMain(dark)}`}>
-                                  {item.title}
-                                </div>
-
-                                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                                  {item.mode}
-                                </div>
-
-                                {item.locationLabel ? (
-                                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                                    {item.locationLabel}
-                                  </div>
-                                ) : null}
-
-                                {item.formatLabel ? (
-                                  <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60">
-                                    {item.formatLabel}
-                                  </div>
-                                ) : null}
-                              </div>
-
-                              {item.provider || item.distanceLabel ? (
-                                <div className={`mt-2 text-sm ${textFaint(dark)}`}>
-                                  {[item.provider, item.distanceLabel]
-                                    .filter(Boolean)
-                                    .join(" • ")}
-                                </div>
-                              ) : null}
-
-                              <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                                {item.summary}
-                              </p>
-
-                              <div className="mt-4 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3">
-                                <div
-                                  className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textFaint(
-                                    dark
-                                  )}`}
-                                >
-                                  Why it helps
-                                </div>
-                                <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-                                  {item.whyItHelps}
-                                </p>
-                              </div>
-
-                              {item.href ? (
-                                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
-                                  Open resource
-                                  <ArrowUpRightMini />
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      );
-
-                      return item.href ? (
-                        <a
-                          key={item.id}
-                          href={item.href}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block"
-                        >
-                          {content}
-                        </a>
-                      ) : (
-                        <div key={item.id}>{content}</div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </section>
-          </>
-        ) : null}
 
         <section className="grid gap-4 lg:grid-cols-2">
           <Link
@@ -415,7 +519,7 @@ export default function WorkPathNextStepsPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Explore
+              See the rhythm
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>
@@ -442,7 +546,7 @@ export default function WorkPathNextStepsPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Explore
+              See the arc
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>

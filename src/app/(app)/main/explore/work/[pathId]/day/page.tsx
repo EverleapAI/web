@@ -40,6 +40,10 @@ function textFaint(dark: boolean) {
   return dark ? "text-white/50" : "text-slate-500";
 }
 
+function sectionKicker(dark: boolean) {
+  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
+}
+
 /* =============================================================================
    Page
 ============================================================================= */
@@ -123,10 +127,24 @@ export default function WorkPathDayPage() {
             }}
           />
 
-          <div className="relative max-w-3xl">
-            <div className="rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
+          <div className="relative max-w-4xl">
+            <div className={sectionKicker(dark)}>Day in the life</div>
+
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              {path.dayInLife.title}
+            </h1>
+
+            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+              {path.dayInLife.summary}
+            </p>
+
+            <div className="mt-7 max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Everleap guide
+                What this rhythm may tell you
               </div>
               <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
                 {opening.intro}
@@ -138,25 +156,29 @@ export default function WorkPathDayPage() {
                 {opening.bridge}
               </p>
             </div>
+          </div>
+        </section>
 
-            <div
-              className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <div className="max-w-3xl">
+            <div className={sectionKicker(dark)}>Rhythm of the day</div>
+            <h2
+              className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
                 dark
               )}`}
             >
-              Day in the life
-            </div>
-
-            <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                dark
-              )}`}
-            >
-              {path.dayInLife.title}
-            </h1>
-
-            <p className={`mt-4 text-lg leading-8 ${textSoft(dark)}`}>
-              {path.dayInLife.summary}
+              What the work starts feeling like once it becomes real
+            </h2>
+            <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+              This is not a minute-by-minute schedule. It is a way of feeling the
+              pattern of the work — where attention goes, where decisions happen,
+              where collaboration matters, and whether the rhythm feels energizing,
+              flat, or quietly absorbing from the inside.
             </p>
           </div>
         </section>
@@ -167,57 +189,53 @@ export default function WorkPathDayPage() {
             shellSurface(dark),
           ].join(" ")}
         >
-          <div
-            className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-              dark
-            )}`}
-          >
-            Rhythm of the day
-          </div>
-          <p className={`mt-2 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-            This is not meant to be a literal minute-by-minute schedule. It is a
-            way of feeling the pattern of the work — where attention goes, where
-            decisions happen, where collaboration matters, and where the day starts
-            becoming interesting.
-          </p>
-        </section>
-
-        <section className="grid gap-4">
-          {path.dayInLife.moments.map((moment) => (
-            <div
-              key={moment.id}
-              className={[
-                "rounded-[26px] px-6 py-6",
-                shellSurface(dark),
-              ].join(" ")}
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
-                  <Clock className="h-4 w-4 text-white/70" />
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className={`text-sm font-semibold ${textMain(dark)}`}>
-                      {moment.title}
-                    </div>
-
-                    <div
-                      className={`rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium ${textFaint(
-                        dark
-                      )}`}
-                    >
-                      {moment.timeLabel}
-                    </div>
+          <div className="divide-y divide-white/8">
+            {path.dayInLife.moments.map((moment, index) => (
+              <div
+                key={moment.id}
+                className={index === 0 ? "pb-5" : "pt-5"}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05]">
+                    <Clock className="h-4 w-4 text-white/70" />
                   </div>
 
-                  <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                    {moment.body}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className={`text-sm font-semibold ${textMain(dark)}`}>
+                        {moment.title}
+                      </div>
+
+                      <div
+                        className={`rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium ${textFaint(
+                          dark
+                        )}`}
+                      >
+                        {moment.timeLabel}
+                      </div>
+                    </div>
+
+                    <p className={`mt-3 max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
+                      {moment.body}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </section>
+
+        <section
+          className={[
+            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <p className={`max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
+            The useful question is not whether every part of the day sounds exciting.
+            It is whether the pattern of attention, collaboration, iteration, and
+            problem-solving feels like a rhythm you could grow into.
+          </p>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-2">
@@ -228,11 +246,7 @@ export default function WorkPathDayPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Forecast
-            </div>
+            <div className={sectionKicker(dark)}>Forecast</div>
 
             <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
               {path.forecast.title}
@@ -243,7 +257,7 @@ export default function WorkPathDayPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Continue
+              See the arc
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>
@@ -255,11 +269,7 @@ export default function WorkPathDayPage() {
               shellSurface(dark),
             ].join(" ")}
           >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Next steps
-            </div>
+            <div className={sectionKicker(dark)}>Next steps</div>
 
             <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
               {path.nextSteps.title}
@@ -270,7 +280,7 @@ export default function WorkPathDayPage() {
             </p>
 
             <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              Continue
+              See the next moves
               <ArrowRight className="h-4 w-4" />
             </div>
           </Link>

@@ -97,11 +97,11 @@ function getLaneOpening(firstName?: string | null): WorkAgenticOpening {
   const lead = withLead(firstName);
 
   return {
-    intro: `${lead}this is less about picking a permanent answer and more about noticing where your attention comes alive.`,
+    intro: `${lead}this is not about picking a forever answer before you have enough signal.`,
     body:
-      "The strongest paths usually start as a pattern: what you keep thinking about, what you naturally analyze, and what kinds of worlds pull you in.",
+      "Work becomes easier to explore when you stop asking which title sounds impressive and start asking which kinds of problems, people, systems, or worlds keep catching your attention in a real way. The goal here is to notice where your mind already leans — then give that instinct something more concrete to move toward.",
     bridge:
-      "Work gets more interesting when it feels like a direction that already understands something about you.",
+      "Start with the directions that feel unusually close. You are not choosing your whole future here. You are finding the paths that seem to recognize something true about you.",
   };
 }
 
@@ -114,31 +114,31 @@ function getOverviewOpening(
   switch (pathId) {
     case "game-designer":
       return {
-        intro: `${lead}something about this path may already feel familiar.`,
+        intro: `${lead}this path usually pulls people who notice the structure underneath the experience.`,
         body:
-          "People drawn here usually notice more than whether something is fun. They notice why a level becomes tense, why a reward lands, and why one world pulls people deeper while another falls flat.",
+          "It is rarely just about liking games. It is more often about noticing pacing, reward, friction, balance, challenge, atmosphere, and the invisible logic that makes someone want to keep going. People drawn here often care about systems, emotion, story, or world-building in a way that feels hard to switch off.",
         bridge:
-          "Game design lives right in that space between imagination, structure, and the feeling of experience.",
+          "Use this page to feel whether game design is simply interesting to you — or whether it feels like a world your mind already keeps trying to step inside.",
       };
 
     case "product-ux-builder":
     case "product-builder":
       return {
-        intro: `${lead}this path often begins with a certain kind of irritation.`,
+        intro: `${lead}this path often begins with the feeling that something should work better than it does.`,
         body:
-          "You notice when something should feel simple but doesn’t. You see the friction, the confusing step, the extra tap, the missed opportunity for clarity.",
+          "People drawn here usually notice friction fast. They see the extra step, the awkward flow, the confusing screen, or the tool that almost helps but does not quite land. Over time, that instinct can become product judgment, design clarity, and a real ability to make systems feel more human.",
         bridge:
-          "Product and UX work turn that instinct into something real: systems, tools, and experiences that make everyday life feel better.",
+          "This page is here to help you sense whether that mix of structure, empathy, and improvement feels deeper than a passing interest.",
       };
 
     case "health-human-support":
     case "health-support":
       return {
-        intro: `${lead}this path tends to pull people who feel the human side of things deeply.`,
+        intro: `${lead}this path tends to pull people who do not automatically look away from the human side of things.`,
         body:
-          "You may already notice when someone is overwhelmed, disconnected, discouraged, or quietly trying to hold it together. Not everyone slows down enough to meet people there.",
+          "Some people naturally notice overwhelm, pain, discouragement, recovery, or the quiet effort it takes for someone to stay steady. This kind of work turns trust, grounded care, and real presence into something people can actually rely on.",
         bridge:
-          "Health and human support work turn steadiness, care, and trust into something people can actually lean on.",
+          "Use this page to feel whether that kind of role feels heavy in the wrong way — or meaningful in the kind of way that keeps calling you closer.",
       };
 
     case "teaching-mentorship":
@@ -146,16 +146,16 @@ function getOverviewOpening(
       return {
         intro: `${lead}this path often starts with the instinct to help understanding happen.`,
         body:
-          "Some people naturally notice where someone gets stuck, what they almost understand, and what kind of explanation would finally make it click.",
+          "People drawn here often notice where someone is stuck, what they almost understand, and what kind of explanation, challenge, or encouragement would help something finally click. Teaching and mentorship turn that instinct into guidance, clarity, growth, and trust over time.",
         bridge:
-          "Teaching and mentorship turn that instinct into guidance, challenge, and real growth over time.",
+          "As you move through this page, notice whether helping people learn feels merely admirable to you — or whether it feels surprisingly natural from the inside.",
       };
 
     default:
       return {
         intro: `${lead}there is usually a reason this path surfaced for you.`,
         body:
-          "The strongest directions often begin as a pattern: what keeps your attention, what you naturally analyze, and what kinds of problems or worlds pull you in.",
+          "The strongest directions often begin as a pattern: what keeps your attention, what you naturally analyze, and what kinds of problems or worlds keep pulling you back.",
         bridge:
           "This page is here to help you feel what this path is really about before deciding how deeply you want to go.",
       };
@@ -171,21 +171,21 @@ function getDayOpening(
   switch (pathId) {
     case "game-designer":
       return {
-        intro: `${lead}one of the best ways to understand this path is to feel the rhythm of a real day inside it.`,
+        intro: `${lead}one of the clearest ways to understand this path is to feel the rhythm of a real day inside it.`,
         body:
-          "This work is usually less about one giant flash of inspiration and more about patterns: noticing what feels off, shaping an experience, talking through tradeoffs, then testing what actually lands.",
+          "This work is usually less about one giant flash of inspiration and more about pattern recognition, iteration, tradeoffs, playtesting, feedback, and constant refinement. You notice something, shape it, test it, and reshape it until the experience starts landing the way it should.",
         bridge:
-          "As you read this page, notice whether the energy of the day feels draining, neutral, or quietly alive to you. That signal matters.",
+          "As you read this page, notice whether the rhythm feels draining, flat, or quietly energizing. That reaction matters more than whether the title sounds impressive.",
       };
 
     case "product-ux-builder":
     case "product-builder":
       return {
-        intro: `${lead}sometimes the clearest way to understand a path is to imagine the flow of a day inside it.`,
+        intro: `${lead}sometimes the clearest way to understand a path is to imagine the flow of an actual day inside it.`,
         body:
-          "Product and UX work often move between observation, decision-making, design thinking, collaboration, and refinement. It is a rhythm of noticing friction and trying to make things clearer.",
+          "Product and UX work often move between observation, design thinking, prioritization, collaboration, feedback, and refining what helps a person move through a system more clearly.",
         bridge:
-          "Pay attention to whether that pattern feels interesting from the inside, not just impressive from the outside.",
+          "Pay attention to whether that rhythm feels interesting from the inside, not just smart from the outside.",
       };
 
     case "health-human-support":
@@ -201,9 +201,9 @@ function getDayOpening(
     case "teaching-mentorship":
     case "teaching":
       return {
-        intro: `${lead}one of the best ways to understand this path is to feel the rhythm of helping understanding happen across a day.`,
+        intro: `${lead}one of the best ways to understand this path is to feel the daily rhythm of helping understanding happen.`,
         body:
-          "Teaching and mentorship usually move through explanation, feedback, adjustment, encouragement, and small moments when something finally clicks for another person.",
+          "Teaching and mentorship usually move through explanation, feedback, adjustment, encouragement, and small moments where something finally clicks for another person.",
         bridge:
           "Notice whether that rhythm feels tiring in the wrong way, or satisfying in the kind of way that keeps pulling you back.",
       };
@@ -230,17 +230,17 @@ function getForecastOpening(
       return {
         intro: `${lead}this page is less about predicting everything and more about showing how momentum usually builds in this world.`,
         body:
-          "Most people do not begin with a finished identity. They start with curiosity, small experiments, better questions, and a body of work that slowly becomes more recognizable.",
+          "Most people do not begin with a finished identity. They begin with curiosity, small experiments, stronger questions, feedback, and a body of work that slowly becomes more recognizable over time.",
         bridge:
-          "The point of a forecast is not pressure. It is perspective — a way to see how this path can deepen over time if it keeps feeling alive.",
+          "The point of a forecast is not pressure. It is perspective — a way to see how this path can deepen if it keeps feeling more alive as you get closer to it.",
       };
 
     case "product-ux-builder":
     case "product-builder":
       return {
-        intro: `${lead}growth in this path usually comes from repeated exposure to real problems, better judgment, and stronger clarity about what matters.`,
+        intro: `${lead}growth in this path usually comes from repeated contact with real problems and stronger judgment over time.`,
         body:
-          "People often begin by noticing friction, then move toward designing better flows, making stronger product decisions, and thinking more strategically about systems over time.",
+          "People often begin by noticing friction, then move toward designing better flows, making sharper product decisions, and thinking more strategically about systems as their confidence grows.",
         bridge:
           "This forecast is here to help you imagine the arc of the path, not to suggest you need to rush to the end of it.",
       };
@@ -252,7 +252,7 @@ function getForecastOpening(
         body:
           "Growth here often means becoming steadier, more skillful, and more capable of helping in ways that are both practical and emotionally real.",
         bridge:
-          "A forecast can help you see whether the long-term shape of this path still feels meaningful as it becomes more demanding and more important.",
+          "A forecast helps you feel whether the long-term shape of this path still feels meaningful as it becomes more demanding, more skillful, and more important.",
       };
 
     case "teaching-mentorship":
@@ -287,7 +287,7 @@ function getNextStepsOpening(
       return {
         intro: `${lead}you do not need a master plan to move toward this path.`,
         body:
-          "Momentum usually starts with one small real signal: noticing a mechanic, building a tiny experiment, joining a space where other people are making things, or testing whether your curiosity gets stronger when you get closer.",
+          "Momentum usually starts with one real signal: noticing a mechanic, changing a system, making a tiny experiment, joining a space where people are building, or testing whether your curiosity gets stronger when you get closer to the work itself.",
         bridge:
           "Think of this page as a set of believable doors into the world of game design. You are not trying to prove everything at once — just choose the next door that feels alive.",
       };
@@ -295,11 +295,11 @@ function getNextStepsOpening(
     case "product-ux-builder":
     case "product-builder":
       return {
-        intro: `${lead}you do not need to map out the whole future before taking a useful step.`,
+        intro: `${lead}you do not need to map the whole future before taking a useful step.`,
         body:
           "The strongest momentum here often starts with one real act of noticing: friction in an app, a flow that could be clearer, or a system that should feel easier for the person using it.",
         bridge:
-          "This page is meant to give you a few believable doors into the world of product and UX work so you can move from instinct to evidence.",
+          "This page is meant to give you a few believable doors into product and UX work so you can move from instinct to evidence.",
       };
 
     case "health-human-support":
@@ -307,9 +307,9 @@ function getNextStepsOpening(
       return {
         intro: `${lead}the next step here does not have to be dramatic to matter.`,
         body:
-          "Support-oriented paths usually become real through small signals: being trusted, showing up steadily, learning how care actually works, and getting closer to the environments where people need help.",
+          "Support-oriented paths usually become real through small signals: being trusted, showing up steadily, learning how care actually works, and getting closer to the environments where people genuinely need help.",
         bridge:
-          "Use this page to find one door that lets you move from empathy and instinct into something real and grounded.",
+          "Use this page to find one door that lets you move from empathy and instinct into something grounded and real.",
       };
 
     case "teaching-mentorship":
@@ -401,29 +401,29 @@ function getSpecialtyDetailOpening(
     switch (specialtySlug) {
       case "systems-designer":
         return {
-          intro: `${lead}this version of the path tends to attract people who quietly care about the invisible structure underneath the experience.`,
+          intro: `${lead}this version of the path usually pulls people who care about the invisible structure underneath the experience.`,
           body:
             "You may be less interested in surface flash and more interested in why a loop works, why a reward lands, why progression keeps pulling someone forward, or why a system suddenly feels unfair.",
           bridge:
-            "If this specialty fits, you are probably drawn to the logic, balance, and tradeoffs that make the whole world hold together.",
+            "If this branch fits, you are probably drawn to the logic, balance, and tradeoffs that make the whole world hold together.",
         };
 
       case "level-designer":
         return {
-          intro: `${lead}this version of the path tends to attract people who feel space, movement, and pacing very intuitively.`,
+          intro: `${lead}this version of the path usually pulls people who feel space, movement, and pacing very intuitively.`,
           body:
             "You may notice how an environment guides attention, where tension builds, where players get relief, and how layout alone can change what the experience feels like.",
           bridge:
-            "If this specialty fits, you are probably drawn to the choreography of the player moving through a world.",
+            "If this branch fits, you are probably drawn to the choreography of a player moving through a world.",
         };
 
       case "narrative-designer":
         return {
-          intro: `${lead}this version of the path tends to attract people who care about emotion, choice, and what a story feels like when the player is inside it.`,
+          intro: `${lead}this version of the path usually pulls people who care about emotion, choice, and what a story feels like when the player is inside it.`,
           body:
             "You may be drawn not just to plot, but to consequence, character logic, emotional timing, and the difference between watching a story and inhabiting one.",
           bridge:
-            "If this specialty fits, you are probably interested in how writing, systems, and player agency begin to overlap.",
+            "If this branch fits, you are probably interested in how writing, systems, and player agency begin to overlap.",
         };
     }
   }

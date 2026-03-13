@@ -12,8 +12,15 @@ export type RGB = {
    Theme
 ============================================================================= */
 
+export type WorkPathThemeTone =
+  | "electric-play"
+  | "creative-systems"
+  | "human-guidance"
+  | "future-build"
+  | string;
+
 export type WorkPathTheme = {
-  tone: string;
+  tone: WorkPathThemeTone;
 
   accent: RGB;
   accentStrong: RGB;
@@ -86,6 +93,14 @@ export type WorkPathSnapshotStat = {
    Specialty preview (shown on overview)
 ============================================================================= */
 
+export type WorkPathSpecialtyEnergy =
+  | "systems"
+  | "craft"
+  | "high-creative"
+  | "people"
+  | "strategy"
+  | string;
+
 export type WorkPathSpecialtyPreview = {
   id: string;
   slug: string;
@@ -96,7 +111,7 @@ export type WorkPathSpecialtyPreview = {
 
   whyItCouldFit: string;
 
-  energy?: "systems" | "craft" | "high-creative" | string;
+  energy?: WorkPathSpecialtyEnergy;
 };
 
 /* =============================================================================
@@ -170,7 +185,40 @@ export type WorkPathForecast = {
    Next steps
 ============================================================================= */
 
+export type WorkPathNextStepType =
+  | "tiny-task"
+  | "project"
+  | "conversation"
+  | "prototype"
+  | "reflection"
+  | string;
+
+export type WorkPathNextStepEffort = "light" | "medium" | "deep";
+
+export type WorkPathNextStep = {
+  id: string;
+
+  title: string;
+
+  type: WorkPathNextStepType;
+
+  effort?: WorkPathNextStepEffort;
+
+  timeEstimate?: string;
+
+  whyThisMatters: string;
+
+  instructions: string[];
+};
+
 export type WorkPathOpportunityMode = "local" | "virtual";
+
+export type WorkPathOpportunityBadgeTone =
+  | "neutral"
+  | "glow"
+  | "local"
+  | "online"
+  | string;
 
 export type WorkPathOpportunity = {
   id: string;
@@ -191,32 +239,24 @@ export type WorkPathOpportunity = {
   whyItHelps: string;
 
   href?: string;
+
+  badge?: string;
+  badgeTone?: WorkPathOpportunityBadgeTone;
 };
 
+export type WorkPathOpportunityGroupId =
+  | "near-you"
+  | "online-now"
+  | string;
+
 export type WorkPathOpportunityGroup = {
-  id: string;
+  id: WorkPathOpportunityGroupId;
 
   title: string;
 
   description?: string;
 
   items: WorkPathOpportunity[];
-};
-
-export type WorkPathNextStep = {
-  id: string;
-
-  title: string;
-
-  type: "tiny-task" | "project" | "conversation" | string;
-
-  effort?: "light" | "medium" | "deep";
-
-  timeEstimate?: string;
-
-  whyThisMatters: string;
-
-  instructions: string[];
 };
 
 export type WorkPathNextSteps = {
@@ -227,6 +267,29 @@ export type WorkPathNextSteps = {
   actions: WorkPathNextStep[];
 
   opportunityGroups?: WorkPathOpportunityGroup[];
+};
+
+/* =============================================================================
+   Optional future-facing UI copy/config
+============================================================================= */
+
+export type WorkPathUiSectionTitles = {
+  selfStart?: string;
+  local?: string;
+  online?: string;
+};
+
+export type WorkPathUiOverviewConfig = {
+  branchIntro?: string;
+};
+
+export type WorkPathUiNextStepsConfig = {
+  sectionTitles?: WorkPathUiSectionTitles;
+};
+
+export type WorkPathUiConfig = {
+  overview?: WorkPathUiOverviewConfig;
+  nextSteps?: WorkPathUiNextStepsConfig;
 };
 
 /* =============================================================================
@@ -261,6 +324,8 @@ export type WorkPathContent = {
   forecast: WorkPathForecast;
 
   nextSteps: WorkPathNextSteps;
+
+  ui?: WorkPathUiConfig;
 };
 
 /* =============================================================================

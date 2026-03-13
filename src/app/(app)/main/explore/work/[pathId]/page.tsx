@@ -5,14 +5,20 @@
 import * as React from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Briefcase,
+  CalendarClock,
+  Compass,
+  TrendingUp,
+} from "lucide-react";
 
 import { requireWorkPath } from "../_data/workPaths";
 import {
   getWorkAgenticOpening,
   readStoredFirstName,
 } from "../_data/getWorkAgenticOpening";
-import { WorkPathSubnav } from "../components/WorkPathSubnav";
 
 /* =============================================================================
    Helpers
@@ -42,6 +48,74 @@ function textFaint(dark: boolean) {
 
 function scoreWidth(score: number) {
   return `${Math.max(0, Math.min(100, score))}%`;
+}
+
+function sectionKicker(dark: boolean) {
+  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
+}
+
+function firstSentence(text: string) {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^.*?[.!?](?:\s|$)/);
+  return match ? match[0].trim() : trimmed;
+}
+
+/* =============================================================================
+   Hero constellation
+============================================================================= */
+
+type Point = {
+  x: number;
+  y: number;
+  size: number;
+  glow: number;
+  color: "accent" | "strong" | "glow" | "white";
+};
+
+const HERO_POINTS: Point[] = [
+  { x: 70, y: 16, size: 3.2, glow: 18, color: "accent" },
+  { x: 82, y: 24, size: 2.8, glow: 16, color: "glow" },
+  { x: 74, y: 36, size: 3.4, glow: 20, color: "strong" },
+  { x: 88, y: 42, size: 2.4, glow: 14, color: "white" },
+  { x: 67, y: 52, size: 2.8, glow: 16, color: "glow" },
+  { x: 80, y: 60, size: 3.8, glow: 22, color: "accent" },
+  { x: 90, y: 66, size: 2.6, glow: 14, color: "strong" },
+  { x: 73, y: 74, size: 2.4, glow: 14, color: "white" },
+];
+
+type Segment = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: "accent" | "strong" | "glow" | "white";
+};
+
+const HERO_SEGMENTS: Segment[] = [
+  { x1: 70, y1: 16, x2: 82, y2: 24, color: "accent" },
+  { x1: 82, y1: 24, x2: 74, y2: 36, color: "glow" },
+  { x1: 74, y1: 36, x2: 88, y2: 42, color: "strong" },
+  { x1: 74, y1: 36, x2: 67, y2: 52, color: "accent" },
+  { x1: 67, y1: 52, x2: 80, y2: 60, color: "glow" },
+  { x1: 80, y1: 60, x2: 90, y2: 66, color: "strong" },
+  { x1: 80, y1: 60, x2: 73, y2: 74, color: "accent" },
+];
+
+function heroColor(
+  path: {
+    theme: {
+      accent: { r: number; g: number; b: number };
+      accentStrong: { r: number; g: number; b: number };
+      glow: { r: number; g: number; b: number };
+    };
+  },
+  key: Point["color"] | Segment["color"],
+  alpha: number
+) {
+  if (key === "accent") return rgb(path.theme.accent, alpha);
+  if (key === "strong") return rgb(path.theme.accentStrong, alpha);
+  if (key === "glow") return rgb(path.theme.glow, alpha);
+  return `rgba(255,255,255,${alpha})`;
 }
 
 /* =============================================================================
@@ -78,6 +152,43 @@ export default function WorkPathDetailPage() {
     [path.id, firstName]
   );
 
+  const exploreLinks = [
+    {
+      href: `/main/explore/work/${path.slug}/specialties`,
+      title: "Roles within this world",
+      description:
+        "See the different versions of this work and what each one focuses on.",
+      icon: Briefcase,
+      glow: path.theme.accent,
+      tint: path.theme.glow,
+    },
+    {
+      href: `/main/explore/work/${path.slug}/day`,
+      title: "A day in the life",
+      description: "See what the rhythm of the work actually feels like.",
+      icon: CalendarClock,
+      glow: path.theme.glow,
+      tint: path.theme.accentStrong,
+    },
+    {
+      href: `/main/explore/work/${path.slug}/forecast`,
+      title: "The future of this career",
+      description:
+        "Demand, salary ranges, AI pressure, and where the field is heading.",
+      icon: TrendingUp,
+      glow: path.theme.accentStrong,
+      tint: path.theme.accent,
+    },
+    {
+      href: `/main/explore/work/${path.slug}/next-steps`,
+      title: "Next steps",
+      description: "Real ways to start exploring this direction.",
+      icon: Compass,
+      glow: path.theme.accent,
+      tint: path.theme.accentStrong,
+    },
+  ];
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
       <div className="pointer-events-none absolute inset-0">
@@ -95,8 +206,8 @@ export default function WorkPathDetailPage() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.16]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-        <div className="flex items-center justify-between gap-4">
+      <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+        <div className="flex items-center justify-start">
           <Link
             href="/main/explore/work"
             className={[
@@ -109,20 +220,7 @@ export default function WorkPathDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             Back to Work
           </Link>
-
-          <div
-            className={[
-              "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.18em]",
-              shellSurface(dark),
-              "text-white/70",
-            ].join(" ")}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {path.theme.surfaceLabel}
-          </div>
         </div>
-
-        <WorkPathSubnav pathSlug={path.slug} />
 
         <section
           className={[
@@ -141,163 +239,204 @@ export default function WorkPathDetailPage() {
             }}
           />
 
-          <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="min-w-0">
-              <div className="max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                  Everleap read
-                </div>
-                <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
-                  {agenticOpening.intro}
-                </p>
-                <p className="mt-2 text-sm leading-7 text-white/70 sm:text-[15px]">
-                  {agenticOpening.body}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-white/62 sm:text-[15px]">
-                  {agenticOpening.bridge}
-                </p>
-              </div>
+          <div className="pointer-events-none absolute inset-0">
+            <div
+              className="absolute -right-[20%] top-[6%] h-[42%] w-[52%] rounded-full blur-3xl sm:-right-[6%] sm:top-[6%] sm:h-[52%] sm:w-[44%] lg:right-[4%] lg:top-[8%] lg:h-[78%] lg:w-[38%]"
+              style={{
+                background: `
+                  radial-gradient(circle at 45% 35%, ${rgb(path.theme.accent, 0.12)} 0%, transparent 42%),
+                  radial-gradient(circle at 72% 62%, ${rgb(path.theme.glow, 0.1)} 0%, transparent 38%)
+                `,
+                opacity: 0.72,
+              }}
+            />
 
+            {HERO_SEGMENTS.map((segment, index) => {
+              const isMobile = segment.x1 < 72;
+              const mobileLeft = `${segment.x1 + 17}%`;
+              const mobileTop = `${segment.y1 - 6}%`;
+              const dx = segment.x2 - segment.x1;
+              const dy = segment.y2 - segment.y1;
+              const mobileLength = Math.sqrt(dx * dx + dy * dy) * 0.56;
+              const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+              return (
+                <div
+                  key={`hero_segment_${index}`}
+                  className="absolute origin-left rounded-full opacity-30 sm:opacity-45 lg:opacity-90"
+                  style={{
+                    left: mobileLeft,
+                    top: mobileTop,
+                    width: `${mobileLength}%`,
+                    height: "1.5px",
+                    transform: `rotate(${angle}deg)`,
+                    background: `linear-gradient(90deg, ${heroColor(
+                      path,
+                      segment.color,
+                      0.08
+                    )} 0%, ${heroColor(path, segment.color, 0.2)} 50%, ${heroColor(
+                      path,
+                      segment.color,
+                      0.08
+                    )} 100%)`,
+                    boxShadow: `0 0 12px ${heroColor(path, segment.color, 0.08)}`,
+                  }}
+                  data-mobile-shift={isMobile ? "true" : "false"}
+                />
+              );
+            })}
+
+            {HERO_POINTS.map((point, index) => (
               <div
-                className={`mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] ${textFaint(
-                  dark
-                )}`}
-              >
-                {path.hero.eyebrow}
-              </div>
+                key={`hero_point_${index}`}
+                className="absolute rounded-full opacity-35 sm:opacity-55 lg:opacity-100"
+                style={{
+                  left: `${point.x + 15}%`,
+                  top: `${point.y - 6}%`,
+                  width: `${point.size * 1.7}px`,
+                  height: `${point.size * 1.7}px`,
+                  transform: "translate(-50%, -50%)",
+                  background: heroColor(
+                    path,
+                    point.color,
+                    point.color === "white" ? 0.58 : 0.78
+                  ),
+                  boxShadow: `
+                    0 0 ${point.glow * 0.65}px ${heroColor(path, point.color, 0.12)},
+                    0 0 ${point.glow}px ${heroColor(path, point.color, 0.04)}
+                  `,
+                }}
+              />
+            ))}
 
-              <h1
-                className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                  dark
-                )}`}
-              >
-                {path.hero.title}
-              </h1>
+            <div
+              className="absolute right-[6%] top-[24%] h-10 w-10 rounded-full border opacity-18 sm:right-[10%] sm:h-12 sm:w-12 sm:opacity-3० lg:right-[11%] lg:top-[26%] lg:h-16 lg:w-16 lg:opacity-60"
+              style={{
+                borderColor: rgb(path.theme.accentStrong, 0.1),
+                boxShadow: `0 0 18px ${rgb(path.theme.accentStrong, 0.05)}`,
+              }}
+            />
+            <div
+              className="absolute right-[12%] top-[48%] h-12 w-12 rounded-full border opacity-16 sm:right-[16%] sm:h-14 sm:w-14 sm:opacity-24 lg:right-[19%] lg:top-[50%] lg:h-20 lg:w-20 lg:opacity-55"
+              style={{
+                borderColor: rgb(path.theme.glow, 0.08),
+                boxShadow: `0 0 18px ${rgb(path.theme.glow, 0.05)}`,
+              }}
+            />
+          </div>
 
-              <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
-                {path.hero.hook}
-              </p>
+          <div className="relative max-w-[100%] sm:max-w-[84%] lg:max-w-[72%]">
+            <div className={sectionKicker(dark)}>{path.hero.eyebrow}</div>
 
-              <p
-                className={`mt-5 max-w-3xl text-sm leading-7 sm:text-[15px] ${textSoft(
-                  dark
-                )}`}
-              >
-                {path.hero.summary}
-              </p>
+            <h1
+              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+                dark
+              )}`}
+            >
+              {path.hero.title}
+            </h1>
 
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                {path.traitChips.map((chip) => (
-                  <span
-                    key={chip.id}
-                    className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white/80 backdrop-blur-xl"
-                  >
-                    {chip.label}
-                  </span>
-                ))}
-              </div>
+            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+              {path.hero.hook}
+            </p>
+
+            <p
+              className={`mt-5 max-w-3xl text-sm leading-7 sm:text-[15px] ${textSoft(
+                dark
+              )}`}
+            >
+              {path.hero.summary}
+            </p>
+
+            <div className="mt-6 flex max-w-3xl flex-wrap gap-x-4 gap-y-3">
+              {path.traitChips.map((chip, index) => (
+                <span
+                  key={chip.id}
+                  className="relative inline-flex items-center text-[13px] font-semibold tracking-[0.01em] sm:text-[13.5px]"
+                  style={{
+                    color:
+                      index % 4 === 0
+                        ? rgb(path.theme.accent, 0.98)
+                        : index % 4 === 1
+                          ? rgb(path.theme.accentStrong, 0.96)
+                          : index % 4 === 2
+                            ? "rgba(255,255,255,0.82)"
+                            : rgb(path.theme.glow, 0.96),
+                    textShadow: `0 0 18px ${rgb(
+                      index % 2 === 0 ? path.theme.accent : path.theme.glow,
+                      0.28
+                    )}`,
+                  }}
+                >
+                  {chip.label}
+                </span>
+              ))}
             </div>
 
-            <div className="grid gap-3 self-start">
-              {path.hero.whyItPullsYouIn.map((item, index) => (
-                <div
-                  key={`${path.id}_pull_${index}`}
-                  className="rounded-[24px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl"
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                    What in you this may be answering
-                  </div>
-                  <div className="mt-2 text-sm leading-6 text-white/82">{item}</div>
-                </div>
-              ))}
+            <div
+              className="mt-7 max-w-3xl rounded-[28px] px-4 py-4 sm:px-5 sm:py-5"
+              style={{
+                background: `linear-gradient(180deg, ${rgb(
+                  path.theme.accent,
+                  0.1
+                )} 0%, rgba(255,255,255,0.045) 100%)`,
+                border: `1px solid ${rgb(path.theme.accent, 0.2)}`,
+                boxShadow: `0 14px 40px ${rgb(path.theme.glow, 0.14)}`,
+              }}
+            >
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
+                Why this may feel close
+              </div>
+              <p className="mt-3 text-[16px] font-medium leading-7 text-white/95 sm:text-[17px]">
+                “{agenticOpening.intro}”
+              </p>
+              <p className="mt-3 text-sm leading-7 text-white/68 sm:text-[15px]">
+                {agenticOpening.body}
+              </p>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div
-            className={[
-              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                dark
-              )}`}
-            >
-              Fit signals
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {path.fitSignals.map((signal) => (
-                <div
-                  key={signal.id}
-                  className="rounded-[22px] border border-white/8 bg-white/[0.04] px-4 py-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className={`text-sm font-semibold ${textMain(dark)}`}>
-                      {signal.label}
-                    </div>
-                    <div className="text-xs font-semibold text-white/58">
-                      {signal.score}
-                    </div>
+        <section
+          className={[
+            "rounded-[28px] px-5 py-4 sm:px-6 sm:py-5",
+            shellSurface(dark),
+          ].join(" ")}
+        >
+          <div className="space-y-3">
+            {path.fitSignals.map((signal) => (
+              <div
+                key={signal.id}
+                className="rounded-[22px] border border-white/8 bg-white/[0.04] px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className={`text-sm font-semibold ${textMain(dark)}`}>
+                    {signal.label}
                   </div>
-
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/8">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: scoreWidth(signal.score),
-                        background: `linear-gradient(90deg, ${rgb(
-                          path.theme.accent,
-                          0.95
-                        )} 0%, ${rgb(path.theme.accentStrong, 0.98)} 100%)`,
-                        boxShadow: `0 0 24px ${rgb(path.theme.glow, 0.45)}`,
-                      }}
-                    />
+                  <div className="text-xs font-semibold text-white/58">
+                    {signal.score}
                   </div>
-
-                  <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                    {signal.explanation}
-                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div
-            className={[
-              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                dark
-              )}`}
-            >
-              Snapshot
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              {path.snapshotStats.map((stat) => (
-                <div
-                  key={stat.id}
-                  className="rounded-[22px] border border-white/8 bg-white/[0.04] px-4 py-4"
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
-                    {stat.label}
-                  </div>
-                  <div className={`mt-2 text-base font-semibold ${textMain(dark)}`}>
-                    {stat.value}
-                  </div>
-                  {stat.note ? (
-                    <div className={`mt-1 text-sm ${textSoft(dark)}`}>{stat.note}</div>
-                  ) : null}
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: scoreWidth(signal.score),
+                      background: `linear-gradient(90deg, ${rgb(
+                        path.theme.accent,
+                        0.95
+                      )} 0%, ${rgb(path.theme.accentStrong, 0.98)} 100%)`,
+                      boxShadow: `0 0 24px ${rgb(path.theme.glow, 0.45)}`,
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
+
+                <p className="mt-2 text-sm leading-6 text-white/66">
+                  {firstSentence(signal.explanation)}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -307,153 +446,80 @@ export default function WorkPathDetailPage() {
             shellSurface(dark),
           ].join(" ")}
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <div
-                className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                  dark
-                )}`}
-              >
-                Specialties
-              </div>
-              <h2
-                className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
-                  dark
-                )}`}
-              >
-                Where this path can branch
-              </h2>
-              <p className={`mt-2 max-w-2xl text-sm leading-6 ${textSoft(dark)}`}>
-                Different versions of this work emphasize different strengths. Some
-                people light up around systems, some around space and pacing, and
-                some around story and player emotion.
-              </p>
-            </div>
-
-            <Link
-              href={`/main/explore/work/${path.slug}/specialties`}
-              className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/[0.1]"
+          <div className="max-w-3xl">
+            <div className={sectionKicker(dark)}>Keep exploring</div>
+            <h2
+              className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
+                dark
+              )}`}
             >
-              All specialties
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+              If this still feels interesting, here&apos;s where to go next
+            </h2>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            {path.specialtyPreviews.map((specialty) => (
-              <div
-                key={specialty.id}
-                className="rounded-[24px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className={`text-base font-semibold ${textMain(dark)}`}>
-                    {specialty.title}
-                  </div>
+          <div className="mt-5 divide-y divide-white/8">
+            {exploreLinks.map((item, index) => {
+              const Icon = item.icon;
 
-                  {specialty.energy ? (
-                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/56">
-                      {specialty.energy.replace("-", " ")}
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-                  {specialty.oneLiner}
-                </div>
-                <div className={`mt-3 text-sm leading-6 ${textFaint(dark)}`}>
-                  {specialty.whyItCouldFit}
-                </div>
-
+              return (
                 <Link
-                  href={`/main/explore/work/${path.slug}/specialties/${specialty.slug}`}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 transition hover:text-white"
+                  key={item.href}
+                  href={item.href}
+                  className={[
+                    "group block transition hover:bg-white/[0.03]",
+                    index === 0
+                      ? "pt-0 pb-4"
+                      : index === exploreLinks.length - 1
+                        ? "pt-4 pb-0"
+                        : "py-4",
+                  ].join(" ")}
                 >
-                  Open specialty
-                  <ArrowRight className="h-4 w-4" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 gap-3.5">
+                      <div
+                        className="relative mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border"
+                        style={{
+                          borderColor: rgb(item.glow, 0.18),
+                          background: `linear-gradient(180deg, ${rgb(
+                            item.glow,
+                            0.14
+                          )} 0%, ${rgb(item.tint, 0.08)} 100%)`,
+                          boxShadow: `0 0 24px ${rgb(item.glow, 0.14)}`,
+                        }}
+                      >
+                        <div
+                          className="pointer-events-none absolute inset-0 rounded-2xl"
+                          style={{
+                            background: `radial-gradient(circle at 30% 25%, ${rgb(
+                              item.tint,
+                              0.18
+                            )} 0%, transparent 65%)`,
+                          }}
+                        />
+                        <Icon
+                          className="relative h-[18px] w-[18px]"
+                          style={{ color: rgb(item.glow, 0.94) }}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="text-base font-semibold text-white/90">
+                          {item.title}
+                        </div>
+                        <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="inline-flex shrink-0 items-center pt-1 text-white/72 transition group-hover:text-white">
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </div>
                 </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-3">
-          <Link
-            href={`/main/explore/work/${path.slug}/day`}
-            className={[
-              "group rounded-[26px] px-5 py-5 transition hover:bg-white/[0.08]",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                dark
-              )}`}
-            >
-              Day in the life
-            </div>
-            <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
-              {path.dayInLife.title}
-            </div>
-            <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-              {path.dayInLife.summary}
-            </div>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/78 group-hover:text-white">
-              Open page
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-
-          <Link
-            href={`/main/explore/work/${path.slug}/forecast`}
-            className={[
-              "group rounded-[26px] px-5 py-5 transition hover:bg-white/[0.08]",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                dark
-              )}`}
-            >
-              Forecast
-            </div>
-            <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
-              {path.forecast.title}
-            </div>
-            <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-              {path.forecast.summary}
-            </div>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/78 group-hover:text-white">
-              Open page
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-
-          <Link
-            href={`/main/explore/work/${path.slug}/next-steps`}
-            className={[
-              "group rounded-[26px] px-5 py-5 transition hover:bg-white/[0.08]",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(
-                dark
-              )}`}
-            >
-              Next steps
-            </div>
-            <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
-              {path.nextSteps.title}
-            </div>
-            <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-              {path.nextSteps.summary}
-            </div>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/78 group-hover:text-white">
-              Open page
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
         </section>
       </div>
     </main>
