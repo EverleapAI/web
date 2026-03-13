@@ -61,61 +61,127 @@ function firstSentence(text: string) {
 }
 
 /* =============================================================================
-   Hero constellation
+   Hero emblem
 ============================================================================= */
 
-type Point = {
-  x: number;
-  y: number;
-  size: number;
-  glow: number;
-  color: "accent" | "strong" | "glow" | "white";
-};
+function WorkPathHeroEmblem({
+  accent,
+  accentStrong,
+  glow,
+}: {
+  accent: { r: number; g: number; b: number };
+  accentStrong: { r: number; g: number; b: number };
+  glow: { r: number; g: number; b: number };
+}) {
+  return (
+    <div className="pointer-events-none absolute right-4 top-4 h-20 w-20 sm:right-5 sm:top-5 sm:h-24 sm:w-24 lg:right-6 lg:top-6 lg:h-28 lg:w-28">
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, ${rgb(
+            glow,
+            0.18
+          )} 0%, transparent 68%)`,
+          filter: "blur(8px)",
+        }}
+      />
 
-const HERO_POINTS: Point[] = [
-  { x: 70, y: 16, size: 3.2, glow: 18, color: "accent" },
-  { x: 82, y: 24, size: 2.8, glow: 16, color: "glow" },
-  { x: 74, y: 36, size: 3.4, glow: 20, color: "strong" },
-  { x: 88, y: 42, size: 2.4, glow: 14, color: "white" },
-  { x: 67, y: 52, size: 2.8, glow: 16, color: "glow" },
-  { x: 80, y: 60, size: 3.8, glow: 22, color: "accent" },
-  { x: 90, y: 66, size: 2.6, glow: 14, color: "strong" },
-  { x: 73, y: 74, size: 2.4, glow: 14, color: "white" },
-];
+      <div
+        className="absolute inset-[10%] rounded-full border"
+        style={{
+          borderColor: rgb(accent, 0.14),
+          boxShadow: `0 0 18px ${rgb(accent, 0.08)}`,
+        }}
+      />
 
-type Segment = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  color: "accent" | "strong" | "glow" | "white";
-};
+      <div
+        className="absolute inset-[24%] rounded-full border"
+        style={{
+          borderColor: rgb(glow, 0.12),
+          boxShadow: `0 0 14px ${rgb(glow, 0.06)}`,
+        }}
+      />
 
-const HERO_SEGMENTS: Segment[] = [
-  { x1: 70, y1: 16, x2: 82, y2: 24, color: "accent" },
-  { x1: 82, y1: 24, x2: 74, y2: 36, color: "glow" },
-  { x1: 74, y1: 36, x2: 88, y2: 42, color: "strong" },
-  { x1: 74, y1: 36, x2: 67, y2: 52, color: "accent" },
-  { x1: 67, y1: 52, x2: 80, y2: 60, color: "glow" },
-  { x1: 80, y1: 60, x2: 90, y2: 66, color: "strong" },
-  { x1: 80, y1: 60, x2: 73, y2: 74, color: "accent" },
-];
+      <div
+        className="absolute left-[28%] top-[28%] h-[10px] w-[10px] rounded-full sm:h-[11px] sm:w-[11px]"
+        style={{
+          background: rgb(accent, 0.92),
+          boxShadow: `0 0 12px ${rgb(accent, 0.34)}`,
+        }}
+      />
 
-function heroColor(
-  path: {
-    theme: {
-      accent: { r: number; g: number; b: number };
-      accentStrong: { r: number; g: number; b: number };
-      glow: { r: number; g: number; b: number };
-    };
-  },
-  key: Point["color"] | Segment["color"],
-  alpha: number
-) {
-  if (key === "accent") return rgb(path.theme.accent, alpha);
-  if (key === "strong") return rgb(path.theme.accentStrong, alpha);
-  if (key === "glow") return rgb(path.theme.glow, alpha);
-  return `rgba(255,255,255,${alpha})`;
+      <div
+        className="absolute right-[20%] top-[30%] h-[8px] w-[8px] rounded-full sm:h-[9px] sm:w-[9px]"
+        style={{
+          background: "rgba(255,255,255,0.62)",
+          boxShadow: `0 0 10px rgba(255,255,255,0.14)`,
+        }}
+      />
+
+      <div
+        className="absolute left-[32%] bottom-[20%] h-[9px] w-[9px] rounded-full sm:h-[10px] sm:w-[10px]"
+        style={{
+          background: rgb(accentStrong, 0.84),
+          boxShadow: `0 0 10px ${rgb(accentStrong, 0.24)}`,
+        }}
+      />
+
+      <div
+        className="absolute left-[40%] top-[34%] h-px origin-left"
+        style={{
+          width: "34%",
+          transform: "rotate(8deg)",
+          background: `linear-gradient(90deg, ${rgb(accent, 0.34)} 0%, ${rgb(
+            glow,
+            0.12
+          )} 100%)`,
+        }}
+      />
+
+      <div
+        className="absolute left-[36%] top-[38%] h-px origin-left"
+        style={{
+          width: "16%",
+          transform: "rotate(96deg)",
+          background: `linear-gradient(90deg, ${rgb(glow, 0.26)} 0%, ${rgb(
+            accentStrong,
+            0.12
+          )} 100%)`,
+        }}
+      />
+
+      <div
+        className="absolute bottom-[18%] right-[10%] flex h-7 w-7 items-center justify-center rounded-full border sm:h-8 sm:w-8"
+        style={{
+          borderColor: rgb(accent, 0.2),
+          background: `linear-gradient(180deg, ${rgb(accent, 0.1)} 0%, ${rgb(
+            glow,
+            0.06
+          )} 100%)`,
+          boxShadow: `0 0 14px ${rgb(glow, 0.08)}`,
+        }}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M7 9.5c0-1.7 1.3-3 3-3h4c1.7 0 3 1.3 3 3v5c0 1.7-1.3 3-3 3h-4c-1.7 0-3-1.3-3-3v-5Z"
+            stroke={rgb(glow, 0.88)}
+            strokeWidth="1.5"
+          />
+          <path
+            d="M9.4 12h.01M14.6 12h.01M10.2 14.2c.6.45 1.15.67 1.8.67.65 0 1.2-.22 1.8-.67"
+            stroke={rgb(glow, 0.88)}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 /* =============================================================================
@@ -196,17 +262,17 @@ export default function WorkPathDetailPage() {
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(circle at 14% 18%, ${rgb(path.theme.accent, 0.18)} 0%, transparent 30%),
-              radial-gradient(circle at 82% 16%, ${rgb(path.theme.glow, 0.2)} 0%, transparent 26%),
-              radial-gradient(circle at 68% 78%, ${rgb(path.theme.accentStrong, 0.14)} 0%, transparent 28%),
+              radial-gradient(circle at 12% 18%, ${rgb(path.theme.accent, 0.18)} 0%, transparent 30%),
+              radial-gradient(circle at 82% 14%, ${rgb(path.theme.glow, 0.2)} 0%, transparent 26%),
+              radial-gradient(circle at 72% 82%, ${rgb(path.theme.accentStrong, 0.14)} 0%, transparent 30%),
               linear-gradient(180deg, rgba(4,10,18,0.96) 0%, rgba(7,17,31,0.98) 38%, rgba(4,9,18,1) 100%)
             `,
           }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.028)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.028)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.16]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.022)_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.12]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-5 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 pb-12 pt-5 sm:px-6 lg:px-8 lg:pt-6">
         <div className="flex items-center justify-start">
           <Link
             href="/main/explore/work"
@@ -224,9 +290,9 @@ export default function WorkPathDetailPage() {
 
         <section
           className={[
-            "relative overflow-hidden rounded-[32px] px-5 py-6 sm:px-7 sm:py-8 lg:px-10 lg:py-10",
+            "relative overflow-hidden rounded-[30px] px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-6",
             shellSurface(dark),
-            "shadow-[0_30px_120px_rgba(0,0,0,0.34)]",
+            "shadow-[0_24px_96px_rgba(0,0,0,0.32)]",
           ].join(" ")}
         >
           <div
@@ -234,191 +300,140 @@ export default function WorkPathDetailPage() {
             style={{
               background: `
                 radial-gradient(circle at 12% 18%, ${rgb(path.theme.accent, 0.2)} 0%, transparent 30%),
-                radial-gradient(circle at 85% 15%, ${rgb(path.theme.glow, 0.18)} 0%, transparent 26%)
+                radial-gradient(circle at 84% 14%, ${rgb(path.theme.glow, 0.18)} 0%, transparent 28%)
               `,
             }}
           />
 
           <div className="pointer-events-none absolute inset-0">
             <div
-              className="absolute -right-[20%] top-[6%] h-[42%] w-[52%] rounded-full blur-3xl sm:-right-[6%] sm:top-[6%] sm:h-[52%] sm:w-[44%] lg:right-[4%] lg:top-[8%] lg:h-[78%] lg:w-[38%]"
+              className="absolute right-[-8%] top-[-6%] h-[170px] w-[170px] rounded-full blur-3xl sm:h-[220px] sm:w-[220px] lg:right-[-6%] lg:top-[-4%] lg:h-[260px] lg:w-[260px]"
               style={{
                 background: `
-                  radial-gradient(circle at 45% 35%, ${rgb(path.theme.accent, 0.12)} 0%, transparent 42%),
-                  radial-gradient(circle at 72% 62%, ${rgb(path.theme.glow, 0.1)} 0%, transparent 38%)
+                  radial-gradient(circle at 45% 35%, ${rgb(path.theme.accent, 0.16)} 0%, transparent 42%),
+                  radial-gradient(circle at 72% 62%, ${rgb(path.theme.glow, 0.12)} 0%, transparent 38%)
                 `,
                 opacity: 0.72,
               }}
             />
-
-            {HERO_SEGMENTS.map((segment, index) => {
-              const isMobile = segment.x1 < 72;
-              const mobileLeft = `${segment.x1 + 17}%`;
-              const mobileTop = `${segment.y1 - 6}%`;
-              const dx = segment.x2 - segment.x1;
-              const dy = segment.y2 - segment.y1;
-              const mobileLength = Math.sqrt(dx * dx + dy * dy) * 0.56;
-              const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-
-              return (
-                <div
-                  key={`hero_segment_${index}`}
-                  className="absolute origin-left rounded-full opacity-30 sm:opacity-45 lg:opacity-90"
-                  style={{
-                    left: mobileLeft,
-                    top: mobileTop,
-                    width: `${mobileLength}%`,
-                    height: "1.5px",
-                    transform: `rotate(${angle}deg)`,
-                    background: `linear-gradient(90deg, ${heroColor(
-                      path,
-                      segment.color,
-                      0.08
-                    )} 0%, ${heroColor(path, segment.color, 0.2)} 50%, ${heroColor(
-                      path,
-                      segment.color,
-                      0.08
-                    )} 100%)`,
-                    boxShadow: `0 0 12px ${heroColor(path, segment.color, 0.08)}`,
-                  }}
-                  data-mobile-shift={isMobile ? "true" : "false"}
-                />
-              );
-            })}
-
-            {HERO_POINTS.map((point, index) => (
-              <div
-                key={`hero_point_${index}`}
-                className="absolute rounded-full opacity-35 sm:opacity-55 lg:opacity-100"
-                style={{
-                  left: `${point.x + 15}%`,
-                  top: `${point.y - 6}%`,
-                  width: `${point.size * 1.7}px`,
-                  height: `${point.size * 1.7}px`,
-                  transform: "translate(-50%, -50%)",
-                  background: heroColor(
-                    path,
-                    point.color,
-                    point.color === "white" ? 0.58 : 0.78
-                  ),
-                  boxShadow: `
-                    0 0 ${point.glow * 0.65}px ${heroColor(path, point.color, 0.12)},
-                    0 0 ${point.glow}px ${heroColor(path, point.color, 0.04)}
-                  `,
-                }}
-              />
-            ))}
-
-            <div
-              className="absolute right-[6%] top-[24%] h-10 w-10 rounded-full border opacity-18 sm:right-[10%] sm:h-12 sm:w-12 sm:opacity-3० lg:right-[11%] lg:top-[26%] lg:h-16 lg:w-16 lg:opacity-60"
-              style={{
-                borderColor: rgb(path.theme.accentStrong, 0.1),
-                boxShadow: `0 0 18px ${rgb(path.theme.accentStrong, 0.05)}`,
-              }}
-            />
-            <div
-              className="absolute right-[12%] top-[48%] h-12 w-12 rounded-full border opacity-16 sm:right-[16%] sm:h-14 sm:w-14 sm:opacity-24 lg:right-[19%] lg:top-[50%] lg:h-20 lg:w-20 lg:opacity-55"
-              style={{
-                borderColor: rgb(path.theme.glow, 0.08),
-                boxShadow: `0 0 18px ${rgb(path.theme.glow, 0.05)}`,
-              }}
-            />
           </div>
 
-          <div className="relative max-w-[100%] sm:max-w-[84%] lg:max-w-[72%]">
+          <WorkPathHeroEmblem
+            accent={path.theme.accent}
+            accentStrong={path.theme.accentStrong}
+            glow={path.theme.glow}
+          />
+
+          <div className="relative max-w-[100%] pr-0 sm:pr-24 lg:max-w-[84%] lg:pr-20">
             <div className={sectionKicker(dark)}>{path.hero.eyebrow}</div>
 
             <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
+              className={`mt-2 text-[2.35rem] font-semibold tracking-tight sm:text-[3.4rem] ${textMain(
                 dark
               )}`}
             >
               {path.hero.title}
             </h1>
 
-            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
+            <p
+              className={`mt-3 max-w-4xl text-[1.55rem] leading-[1.55] sm:text-[1.8rem] sm:leading-[1.52] ${textSoft(
+                dark
+              )}`}
+            >
               {path.hero.hook}
             </p>
 
             <p
-              className={`mt-5 max-w-3xl text-sm leading-7 sm:text-[15px] ${textSoft(
+              className={`mt-4 max-w-4xl text-[15px] leading-7 sm:text-[15.5px] ${textSoft(
                 dark
               )}`}
             >
               {path.hero.summary}
             </p>
 
-            <div className="mt-6 flex max-w-3xl flex-wrap gap-x-4 gap-y-3">
-              {path.traitChips.map((chip, index) => (
-                <span
-                  key={chip.id}
-                  className="relative inline-flex items-center text-[13px] font-semibold tracking-[0.01em] sm:text-[13.5px]"
-                  style={{
-                    color:
-                      index % 4 === 0
-                        ? rgb(path.theme.accent, 0.98)
-                        : index % 4 === 1
-                          ? rgb(path.theme.accentStrong, 0.96)
-                          : index % 4 === 2
-                            ? "rgba(255,255,255,0.82)"
-                            : rgb(path.theme.glow, 0.96),
-                    textShadow: `0 0 18px ${rgb(
-                      index % 2 === 0 ? path.theme.accent : path.theme.glow,
-                      0.28
-                    )}`,
-                  }}
-                >
-                  {chip.label}
-                </span>
-              ))}
+            <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-3.5 sm:px-5 sm:py-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+                Signals I&apos;m picking up
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
+                {path.traitChips.map((chip, index) => (
+                  <React.Fragment key={chip.id}>
+                    <span
+                      className="relative inline-flex items-center text-[13px] font-semibold tracking-[0.01em]"
+                      style={{
+                        color:
+                          index % 4 === 0
+                            ? rgb(path.theme.accent, 0.98)
+                            : index % 4 === 1
+                              ? rgb(path.theme.accentStrong, 0.96)
+                              : index % 4 === 2
+                                ? "rgba(255,255,255,0.82)"
+                                : rgb(path.theme.glow, 0.96),
+                        textShadow: `0 0 14px ${rgb(
+                          index % 2 === 0 ? path.theme.accent : path.theme.glow,
+                          0.22
+                        )}`,
+                      }}
+                    >
+                      {chip.label}
+                    </span>
+                    {index < path.traitChips.length - 1 ? (
+                      <span className="text-[12px] text-white/26">•</span>
+                    ) : null}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
 
-            <div
-              className="mt-7 max-w-3xl rounded-[28px] px-4 py-4 sm:px-5 sm:py-5"
-              style={{
-                background: `linear-gradient(180deg, ${rgb(
-                  path.theme.accent,
-                  0.1
-                )} 0%, rgba(255,255,255,0.045) 100%)`,
-                border: `1px solid ${rgb(path.theme.accent, 0.2)}`,
-                boxShadow: `0 14px 40px ${rgb(path.theme.glow, 0.14)}`,
-              }}
-            >
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Why this may feel close
+            <div className="mt-4 max-w-4xl">
+              <div className="h-px w-full bg-gradient-to-r from-white/14 via-white/7 to-transparent" />
+              <div className="mt-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/38">
+                  Why this may feel close
+                </div>
+
+                <p className="mt-2 text-[16px] font-medium leading-7 text-white/94 sm:text-[17px]">
+                  “{agenticOpening.intro}”
+                </p>
+
+                <p className="mt-2 text-[14px] leading-6 text-white/66 sm:text-[15px] sm:leading-7">
+                  {agenticOpening.body}
+                </p>
               </div>
-              <p className="mt-3 text-[16px] font-medium leading-7 text-white/95 sm:text-[17px]">
-                “{agenticOpening.intro}”
-              </p>
-              <p className="mt-3 text-sm leading-7 text-white/68 sm:text-[15px]">
-                {agenticOpening.body}
-              </p>
             </div>
           </div>
         </section>
 
         <section
           className={[
-            "rounded-[28px] px-5 py-4 sm:px-6 sm:py-5",
+            "rounded-[26px] px-4 py-4 sm:px-5 sm:py-4",
             shellSurface(dark),
           ].join(" ")}
         >
-          <div className="space-y-3">
-            {path.fitSignals.map((signal) => (
+          <div className="max-w-4xl">
+            <div className={sectionKicker(dark)}>What this path tends to reward</div>
+          </div>
+
+          <div className="mt-3 grid gap-x-6 gap-y-4 md:grid-cols-3">
+            {path.fitSignals.map((signal, index) => (
               <div
                 key={signal.id}
-                className="rounded-[22px] border border-white/8 bg-white/[0.04] px-4 py-3"
+                className={[
+                  "min-w-0",
+                  index > 0 ? "md:border-l md:border-white/8 md:pl-6" : "",
+                ].join(" ")}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className={`text-sm font-semibold ${textMain(dark)}`}>
+                  <div className={`text-[13px] font-semibold ${textMain(dark)}`}>
                     {signal.label}
                   </div>
-                  <div className="text-xs font-semibold text-white/58">
+                  <div className="text-[11px] font-semibold text-white/56">
                     {signal.score}
                   </div>
                 </div>
 
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+                <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-white/8">
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -427,12 +442,12 @@ export default function WorkPathDetailPage() {
                         path.theme.accent,
                         0.95
                       )} 0%, ${rgb(path.theme.accentStrong, 0.98)} 100%)`,
-                      boxShadow: `0 0 24px ${rgb(path.theme.glow, 0.45)}`,
+                      boxShadow: `0 0 18px ${rgb(path.theme.glow, 0.34)}`,
                     }}
                   />
                 </div>
 
-                <p className="mt-2 text-sm leading-6 text-white/66">
+                <p className="mt-2 text-[13px] leading-6 text-white/62 sm:text-sm sm:leading-6">
                   {firstSentence(signal.explanation)}
                 </p>
               </div>
@@ -442,14 +457,14 @@ export default function WorkPathDetailPage() {
 
         <section
           className={[
-            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
+            "rounded-[26px] px-4 py-4 sm:px-5 sm:py-4.5",
             shellSurface(dark),
           ].join(" ")}
         >
-          <div className="max-w-3xl">
+          <div className="max-w-4xl">
             <div className={sectionKicker(dark)}>Keep exploring</div>
             <h2
-              className={`mt-2 text-2xl font-semibold tracking-tight ${textMain(
+              className={`mt-1 text-[1.35rem] font-semibold tracking-tight sm:text-[1.8rem] ${textMain(
                 dark
               )}`}
             >
@@ -457,7 +472,7 @@ export default function WorkPathDetailPage() {
             </h2>
           </div>
 
-          <div className="mt-5 divide-y divide-white/8">
+          <div className="mt-3.5 divide-y divide-white/8">
             {exploreLinks.map((item, index) => {
               const Icon = item.icon;
 
@@ -468,23 +483,23 @@ export default function WorkPathDetailPage() {
                   className={[
                     "group block transition hover:bg-white/[0.03]",
                     index === 0
-                      ? "pt-0 pb-4"
+                      ? "pt-0 pb-3"
                       : index === exploreLinks.length - 1
-                        ? "pt-4 pb-0"
-                        : "py-4",
+                        ? "pt-3 pb-0"
+                        : "py-3",
                   ].join(" ")}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 gap-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 gap-3">
                       <div
-                        className="relative mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border"
+                        className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border"
                         style={{
                           borderColor: rgb(item.glow, 0.18),
                           background: `linear-gradient(180deg, ${rgb(
                             item.glow,
                             0.14
                           )} 0%, ${rgb(item.tint, 0.08)} 100%)`,
-                          boxShadow: `0 0 24px ${rgb(item.glow, 0.14)}`,
+                          boxShadow: `0 0 20px ${rgb(item.glow, 0.12)}`,
                         }}
                       >
                         <div
@@ -497,22 +512,26 @@ export default function WorkPathDetailPage() {
                           }}
                         />
                         <Icon
-                          className="relative h-[18px] w-[18px]"
+                          className="relative h-[16px] w-[16px]"
                           style={{ color: rgb(item.glow, 0.94) }}
                         />
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-base font-semibold text-white/90">
+                        <div className="text-[15px] font-semibold text-white/90">
                           {item.title}
                         </div>
-                        <div className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
+                        <div
+                          className={`mt-1 text-[13px] leading-5.5 sm:text-sm sm:leading-6 ${textSoft(
+                            dark
+                          )}`}
+                        >
                           {item.description}
                         </div>
                       </div>
                     </div>
 
-                    <div className="inline-flex shrink-0 items-center pt-1 text-white/72 transition group-hover:text-white">
+                    <div className="inline-flex shrink-0 items-center pt-1 text-white/68 transition group-hover:text-white">
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
