@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
+import { Compass } from "lucide-react";
 import { isDarkTheme, type SpotlightThemeId } from "@/theme/everleapVisuals";
 
 import ExploreLaneRail from "../components/ExploreLaneRail";
@@ -85,6 +87,59 @@ function counselorPara(dark: boolean) {
     : "text-[15px] md:text-[15.5px] leading-relaxed text-slate-700";
 }
 
+function WorkLaneMotif() {
+  return (
+    <>
+      <div className="pointer-events-none absolute right-3 top-3 h-20 w-20 opacity-[0.82] sm:right-5 sm:top-5 sm:h-24 sm:w-24 md:h-28 md:w-28">
+        <div className="absolute inset-0 rounded-full border border-cyan-300/12 bg-cyan-300/[0.03] blur-[1px]" />
+        <div className="absolute inset-[12%] rounded-full border border-white/8" />
+
+        <motion.div
+          className="absolute left-[18%] top-[22%] h-[9px] w-[9px] rounded-full bg-cyan-200/80 shadow-[0_0_14px_rgba(120,220,255,0.45)]"
+          animate={{ opacity: [0.35, 0.9, 0.35], scale: [1, 1.08, 1] }}
+          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute right-[20%] top-[28%] h-[8px] w-[8px] rounded-full bg-white/70 shadow-[0_0_12px_rgba(255,255,255,0.28)]"
+          animate={{ opacity: [0.3, 0.8, 0.3], scale: [1, 1.1, 1] }}
+          transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute left-[30%] bottom-[20%] h-[8px] w-[8px] rounded-full bg-cyan-100/70 shadow-[0_0_12px_rgba(120,220,255,0.3)]"
+          animate={{ opacity: [0.3, 0.85, 0.3], scale: [1, 1.06, 1] }}
+          transition={{ duration: 4.7, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <svg
+          className="absolute inset-0 h-full w-full opacity-45"
+          viewBox="0 0 128 128"
+          fill="none"
+        >
+          <path
+            d="M31 38C44 33 57 34 69 40C81 45 89 54 95 68"
+            stroke="rgba(140,220,255,0.24)"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M38 90C53 78 69 72 92 73"
+            stroke="rgba(255,255,255,0.16)"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M42 43L82 47L71 86L35 82L42 43Z"
+            stroke="rgba(120,210,255,0.14)"
+            strokeWidth="1"
+          />
+        </svg>
+
+        <div className="absolute bottom-[2%] right-[0%] rounded-full border border-cyan-300/16 bg-cyan-300/10 p-2 text-cyan-100/80 shadow-[0_0_20px_rgba(120,220,255,0.14)]">
+          <Compass className="h-4 w-4" />
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function ExploreWorkPage() {
   const themeId: SpotlightThemeId = "nightDusk";
   const dark = isDarkTheme(themeId);
@@ -158,7 +213,9 @@ export default function ExploreWorkPage() {
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] via-transparent to-transparent" />
             </div>
 
-            <div className="relative max-w-5xl">
+            <WorkLaneMotif />
+
+            <div className="relative max-w-5xl pr-20 sm:pr-28 md:pr-32">
               <div className={sectionKicker(dark)}>Work</div>
 
               <div className={["mt-2", counselorHeadline(dark)].join(" ")}>
