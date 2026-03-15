@@ -1,23 +1,65 @@
 // apps/web/src/app/(app)/main/explore/work/_data/workPaths.ts
 
 import { GAME_DESIGNER_PATH } from "./mock/gameDesignerPath";
+import { SOFTWARE_DEVELOPER_PATH } from "./mock/softwareDeveloperPath";
+import { FILM_VIDEO_PRODUCER_PATH } from "./mock/filmVideoProducerPath";
+import { TEACHER_PATH } from "./mock/teacherPath";
+import { GRAPHIC_DESIGNER_PATH } from "./mock/graphicDesignerPath";
+import { PHYSICAL_THERAPIST_PATH } from "./mock/physicalTherapistPath";
 import type { WorkPathContent } from "./workPathSchema";
 import {
   getWorkPathById,
   getWorkSpecialtyBySlug,
 } from "./workPathSchema";
 
-export { GAME_DESIGNER_PATH };
+export {
+  GAME_DESIGNER_PATH,
+  SOFTWARE_DEVELOPER_PATH,
+  FILM_VIDEO_PRODUCER_PATH,
+  TEACHER_PATH,
+  GRAPHIC_DESIGNER_PATH,
+  PHYSICAL_THERAPIST_PATH,
+};
 
-export const WORK_PATHS: WorkPathContent[] = [GAME_DESIGNER_PATH];
+export const WORK_PATHS: WorkPathContent[] = [
+  GAME_DESIGNER_PATH,
+  SOFTWARE_DEVELOPER_PATH,
+  FILM_VIDEO_PRODUCER_PATH,
+  TEACHER_PATH,
+  GRAPHIC_DESIGNER_PATH,
+  PHYSICAL_THERAPIST_PATH,
+];
 
 const WORK_PATH_ALIAS_ENTRIES = [
   ["game-designer", "game-designer"],
+
+  ["software-developer", "software-developer"],
+  ["software-engineer", "software-developer"],
+  ["developer", "software-developer"],
+
+  ["film-video-producer", "film-video-producer"],
+  ["film-producer", "film-video-producer"],
+  ["video-producer", "film-video-producer"],
+  ["producer", "film-video-producer"],
+
+  ["teacher", "teacher"],
+  ["teaching", "teacher"],
+  ["educator", "teacher"],
+
+  ["graphic-designer", "graphic-designer"],
+  ["designer", "graphic-designer"],
+  ["visual-designer", "graphic-designer"],
+  ["brand-designer", "graphic-designer"],
+
+  ["physical-therapist", "physical-therapist"],
+  ["physical-therapy", "physical-therapist"],
+  ["pt", "physical-therapist"],
+  ["rehab", "physical-therapist"],
+
   ["product-builder", "product-ux-builder"],
   ["product-ux-builder", "product-ux-builder"],
   ["health-support", "health-human-support"],
   ["health-human-support", "health-human-support"],
-  ["teaching", "teaching-mentorship"],
   ["teaching-mentorship", "teaching-mentorship"],
 ] as const;
 
