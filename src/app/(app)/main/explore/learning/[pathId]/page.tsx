@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Compass,
-  Lightbulb,
   Map,
   Radar,
   Sparkles,

@@ -30,16 +30,14 @@ export default function PlayPathPage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden px-5 pb-28 pt-8">
-      {/* Back */}
       <Link
         href="/main/explore/play"
-        className="mb-6 inline-flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition"
+        className="mb-6 inline-flex items-center gap-2 text-sm opacity-70 transition hover:opacity-100"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Play
       </Link>
 
-      {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-2 text-sm opacity-70">
           <Sparkles className="h-4 w-4" />
@@ -50,23 +48,22 @@ export default function PlayPathPage() {
           {pathId ? pathId.replace(/-/g, " ") : "Play"}
         </h1>
 
-        <p className="mt-3 max-w-[520px] text-sm opacity-75 leading-relaxed">
+        <p className="mt-3 max-w-[520px] text-sm leading-relaxed opacity-75">
           This Play path is being built. Soon this space will explore what it
           feels like to pursue this activity, how people get started, how skills
           grow over time, and where it can lead if you keep going.
         </p>
       </div>
 
-      {/* Coming Soon Card */}
       <section
         className={`rounded-3xl p-6 ${shellSurface(
           dark
         )} shadow-[0_10px_30px_rgba(0,0,0,0.12)]`}
       >
-        <h2 className="text-lg font-semibold mb-2">Coming Soon</h2>
+        <h2 className="mb-2 text-lg font-semibold">Coming Soon</h2>
 
-        <p className="text-sm opacity-80 leading-relaxed">
-          The Play lane is still under construction. Soon you'll be able to
+        <p className="text-sm leading-relaxed opacity-80">
+          The Play lane is still under construction. Soon you will be able to
           explore sports, creative pursuits, and skill-based hobbies — from the
           first steps of learning to the deeper path of mastery and community.
         </p>
