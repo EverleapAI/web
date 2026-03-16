@@ -1,107 +1,847 @@
+// apps/web/src/app/(app)/main/explore/world/page.tsx
+
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
-import { isDarkTheme, type SpotlightThemeId } from "@/theme/everleapVisuals";
+import {
+  ArrowRight,
+  Globe,
+  Languages,
+  Map,
+  Monitor,
+  Users,
+} from "lucide-react";
 
-import ExploreLaneRail from "../components/ExploreLaneRail";
-import ExplorePathPanel from "../components/ExplorePathPanel";
-import type { ExplorePathPanelData } from "../components/ExplorePathPanel";
+import { WORLD_PATHS } from "./_data/worldPaths";
+import type { WorldPathContent, Rgb as SchemaRgb } from "./_data/worldPathSchema";
 
-const PATHS: ExplorePathPanelData[] = [
-  {
-    id: "cultural-explorer",
-    title: "Cultural Explorer",
-    hook: "You are drawn to how different people live, think, speak, and make meaning.",
-    description:
-      "Some people feel most alive when they step into another culture and try to understand how life works there. Travel becomes perspective, not just movement.",
-    testLabel: "Tiny Test",
-    testMinutes: "15 minutes",
-    testSteps: [
-      "Pick a country or culture you know very little about.",
-      "Learn one thing about daily life there.",
-      "Notice whether difference energizes your curiosity.",
-    ],
-  },
-  {
-    id: "nature-wanderer",
-    title: "Nature Wanderer",
-    hook: "You may feel most clear when you are out in landscapes bigger than your normal routine.",
-    description:
-      "For some people, the world opens up most in mountains, oceans, forests, deserts, and long quiet spaces. Nature shifts perspective.",
-    testLabel: "Tiny Test",
-    testMinutes: "20 minutes",
-    testSteps: [
-      "Go somewhere outdoors with less noise than usual.",
-      "Stay there without multitasking.",
-      "Notice whether space and landscape change how you think.",
-    ],
-  },
-  {
-    id: "global-worker",
-    title: "Global Worker",
-    hook: "Some paths connect work and the wider world — across borders, languages, and places.",
-    description:
-      "Some people are energized by work that connects them to different regions, cultures, and global systems. Travel becomes part of the path, not just a break from it.",
-    testLabel: "Tiny Test",
-    testMinutes: "15 minutes",
-    testSteps: [
-      "Look up one job that regularly connects people across countries.",
-      "Notice what part attracts you: movement, culture, mission, or problem-solving.",
-      "Ask yourself whether a more global life sounds exciting or exhausting.",
-    ],
-  },
-  {
-    id: "story-collector",
-    title: "Story Collector",
-    hook: "You may be someone who travels to notice, document, and tell stories.",
-    description:
-      "Some people are less interested in checking places off a list and more interested in paying attention. They collect moments, stories, images, and meaning.",
-    testLabel: "Tiny Test",
-    testMinutes: "10–15 minutes",
-    testSteps: [
-      "Write about a place that already matters to you.",
-      "Describe what makes it feel the way it does.",
-      "Notice whether observing and translating experience feels natural to you.",
-    ],
-  },
+type Rgb = SchemaRgb;
+
+type SignalNode = {
+  x: number;
+  y: number;
+  size: number;
+  alpha: number;
+};
+
+type QuickCheckChoice = "mostly-right" | "somewhat" | "not-really";
+
+type WorldExperience = Pick<
+  WorldPathContent,
+  "id" | "slug" | "theme" | "card" | "fitSignals"
+> & {
+  insideExperiencePreviews?: string[];
+};
+
+const LOCAL_PLACE_LABEL = "94901";
+const MAX_VISIBLE_WORLD_EXPERIENCES = 4;
+
+const CONSTELLATION_NODES: SignalNode[] = [
+  { x: 18, y: 28, size: 8, alpha: 0.95 },
+  { x: 68, y: 18, size: 6, alpha: 0.72 },
+  { x: 108, y: 50, size: 7, alpha: 0.82 },
+  { x: 54, y: 66, size: 5, alpha: 0.66 },
+  { x: 26, y: 98, size: 7, alpha: 0.8 },
+  { x: 94, y: 96, size: 6, alpha: 0.7 },
 ];
 
-export default function ExploreWorldPage() {
-  const themeId: SpotlightThemeId = "nightDusk";
-  const dark = isDarkTheme(themeId);
+const CONSTELLATION_LINES = [
+  { x1: 18, y1: 28, x2: 68, y2: 18, alpha: 0.34 },
+  { x1: 68, y1: 18, x2: 108, y2: 50, alpha: 0.24 },
+  { x1: 18, y1: 28, x2: 54, y2: 66, alpha: 0.28 },
+  { x1: 54, y1: 66, x2: 108, y2: 50, alpha: 0.22 },
+  { x1: 54, y1: 66, x2: 26, y2: 98, alpha: 0.24 },
+  { x1: 54, y1: 66, x2: 94, y2: 96, alpha: 0.2 },
+];
 
-  const [openId, setOpenId] = React.useState<string>(PATHS[0].id);
+const EXPLORE_LANES = [
+  {
+    id: "work",
+    label: "Work",
+    href: "/main/explore/work",
+    active: false,
+    dotClass: "bg-cyan-300",
+  },
+  {
+    id: "learning",
+    label: "Learning",
+    href: "/main/explore/learning",
+    active: false,
+    dotClass: "bg-violet-300",
+  },
+  {
+    id: "world",
+    label: "World",
+    href: "/main/explore/world",
+    active: true,
+    dotClass: "bg-amber-300",
+  },
+  {
+    id: "impact",
+    label: "Impact",
+    href: "/main/explore/impact",
+    active: false,
+    dotClass: "bg-emerald-300",
+  },
+  {
+    id: "play",
+    label: "Play",
+    href: "/main/explore/play",
+    active: false,
+    dotClass: "bg-pink-300",
+  },
+] as const;
+
+const QUICK_CHECK_OPTIONS: Array<{
+  id: QuickCheckChoice;
+  label: string;
+  emoji: string;
+}> = [
+  { id: "mostly-right", label: "Mostly right", emoji: "👍" },
+  { id: "somewhat", label: "Somewhat", emoji: "🙂" },
+  { id: "not-really", label: "Not really", emoji: "👎" },
+];
+
+function pagePadding() {
+  return "pb-24 pt-3";
+}
+
+function rgb(value: Rgb, alpha = 1) {
+  return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function readStoredFirstName(): string | null {
+  if (typeof window === "undefined") return null;
+
+  const candidateKeys = [
+    "everleapOnboarding_v4_convo_min",
+    "everleap.story.answers.v3",
+    "everleap.story.answers.v2",
+    "everleap.onboarding.answers",
+    "everleap.user.profile",
+  ];
+
+  for (const key of candidateKeys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+      const candidates = [
+        parsed.firstName,
+        parsed.firstname,
+        parsed.first_name,
+        parsed.name,
+        asRecord(parsed.profile)?.firstName,
+        asRecord(parsed.profile)?.name,
+        asRecord(parsed.answers)?.firstName,
+        asRecord(parsed.answers)?.name,
+      ];
+
+      for (const value of candidates) {
+        const found = asString(value);
+        if (found) return found.split(" ")[0];
+      }
+    } catch {}
+  }
+
+  return null;
+}
+
+function getWorldAgenticOpening(firstName: string | null) {
+  if (firstName) {
+    return {
+      title: `${firstName}, the world gets bigger when you actually step into it.`,
+      bodyA:
+        "This is not just about choosing a destination that looks cool. It is about noticing how you might want to experience life beyond your current bubble — through travel, language, culture, policy, environment, health, or a strong place-based curiosity.",
+      bodyB:
+        "The goal here is to help you find world paths that feel real for you — including options that can begin through local exploration, online momentum, and questions that keep getting bigger.",
+    };
+  }
+
+  return {
+    title: "The world gets bigger when you actually step into it.",
+    bodyA:
+      "This is not just about choosing a destination that looks cool. It is about noticing how you might want to experience life beyond your current bubble — through travel, language, culture, policy, environment, health, or a strong place-based curiosity.",
+    bodyB:
+      "The goal here is to help you find world paths that feel real for you — including options that can begin through local exploration, online momentum, and questions that keep getting bigger.",
+  };
+}
+
+function extractCardField(
+  experience: WorldExperience,
+  field: "title" | "hook" | "description"
+): string {
+  const card = asRecord(experience.card);
+  return asString(card?.[field]) ?? "";
+}
+
+function pathAccent(experience: WorldExperience): Rgb {
+  const theme = asRecord(experience.theme);
+  const accent = asRecord(theme?.accent);
+
+  if (
+    typeof accent?.r === "number" &&
+    typeof accent?.g === "number" &&
+    typeof accent?.b === "number"
+  ) {
+    return { r: accent.r, g: accent.g, b: accent.b };
+  }
+
+  return { r: 244, g: 176, b: 64 };
+}
+
+function deriveFitSignals(experience: WorldExperience): string[] {
+  return experience.fitSignals
+    .slice(0, 3)
+    .map((signal) => signal.label)
+    .filter(Boolean);
+}
+
+function deriveInsideExperiencePreviews(experience: WorldExperience): string[] {
+  if (experience.insideExperiencePreviews?.length) {
+    return experience.insideExperiencePreviews.slice(0, 4);
+  }
+
+  return [
+    "What this kind of world path feels like",
+    "Ways to start",
+    `Local and online steps near ${LOCAL_PLACE_LABEL}`,
+    "Where this can lead",
+  ];
+}
+
+function getQuickCheckPrompt(choice: QuickCheckChoice) {
+  switch (choice) {
+    case "mostly-right":
+      return "What part feels exciting or real?";
+    case "somewhat":
+      return "What part fits, and what part doesn't?";
+    case "not-really":
+      return "Give us reasons why — we’ll use that to bring in another path.";
+  }
+}
+
+function getQuickCheckSubmitLabel(choice: QuickCheckChoice) {
+  switch (choice) {
+    case "mostly-right":
+      return "Submit";
+    case "somewhat":
+      return "Submit";
+    case "not-really":
+      return "Submit and show another";
+  }
+}
+
+function SectionKicker({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.19em] text-white/42 sm:text-[12px]">
+      {children}
+    </p>
+  );
+}
+
+function ExploreLaneTabs() {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2.5">
+      {EXPLORE_LANES.map((lane) => (
+        <Link
+          key={lane.id}
+          href={lane.href}
+          aria-current={lane.active ? "page" : undefined}
+          className={[
+            "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[14px] font-medium tracking-[-0.01em] transition",
+            lane.active
+              ? "border-amber-300/30 bg-amber-300/[0.12] text-amber-50 shadow-[0_0_0_1px_rgba(252,211,77,0.06)]"
+              : "border-white/12 bg-white/[0.04] text-white/72 hover:bg-white/[0.07]",
+          ].join(" ")}
+        >
+          <span className={`h-2.5 w-2.5 rounded-full ${lane.dotClass}`} />
+          <span>{lane.label}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function IntroOrbitArt() {
+  return (
+    <div className="pointer-events-none absolute right-3 top-3 hidden h-[112px] w-[112px] sm:block">
+      <div className="absolute inset-0 rounded-full border border-amber-300/10" />
+      <div className="absolute inset-[15px] rounded-full border border-amber-300/11" />
+      <div className="absolute left-[16px] top-[20px] h-2.5 w-2.5 rounded-full bg-amber-200/60 shadow-[0_0_16px_rgba(253,230,138,0.5)]" />
+      <div className="absolute left-[72px] top-[26px] h-2 w-2 rounded-full bg-white/24" />
+      <div className="absolute left-[40px] top-[72px] h-2.5 w-2.5 rounded-full bg-amber-100/70 shadow-[0_0_14px_rgba(254,243,199,0.42)]" />
+      <div className="absolute left-[28px] top-[32px] h-px w-[40px] bg-gradient-to-r from-amber-300/26 to-transparent" />
+      <div className="absolute left-[48px] top-[43px] h-px w-[24px] rotate-[12deg] bg-gradient-to-r from-amber-300/20 to-transparent" />
+      <div className="absolute left-[48px] top-[64px] h-px w-[26px] -rotate-[9deg] bg-gradient-to-r from-amber-300/16 to-transparent" />
+
+      <div className="absolute bottom-[10px] right-[2px] flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/14 bg-amber-300/[0.06] text-amber-100/72">
+        <Globe className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
+function WorldIntroPanel({ firstName }: { firstName: string | null }) {
+  const opening = getWorldAgenticOpening(firstName);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pb-28 pt-4">
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/40">
-            Explore
+    <section className="relative mt-6 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-7 sm:py-7">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(245,158,11,0.14),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(251,191,36,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
+      <IntroOrbitArt />
+
+      <div className="relative max-w-4xl pr-0 sm:pr-24">
+        <SectionKicker>World</SectionKicker>
+
+        <h2 className="mt-3 max-w-3xl text-[28px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[34px] lg:text-[36px]">
+          {opening.title}
+        </h2>
+
+        <p className="mt-5 max-w-3xl text-[15px] leading-[1.75] text-white/74 sm:text-[16px]">
+          {opening.bodyA}
+        </p>
+
+        <p className="mt-4 max-w-3xl text-[15px] leading-[1.75] text-white/78 sm:text-[16px]">
+          {opening.bodyB}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function SignalConstellation({
+  accent,
+  mobile = false,
+}: {
+  accent: Rgb;
+  mobile?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "pointer-events-none absolute opacity-95",
+        mobile
+          ? "right-2 top-10 h-[88px] w-[92px] sm:hidden"
+          : "right-3 top-8 hidden h-[110px] w-[116px] sm:block",
+      ].join(" ")}
+    >
+      <div
+        className="absolute inset-0 rounded-full blur-3xl"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, ${rgb(
+            accent,
+            0.18
+          )} 0%, ${rgb(accent, 0.05)} 42%, transparent 74%)`,
+        }}
+      />
+
+      <svg
+        viewBox="0 0 128 120"
+        className="absolute inset-0 h-full w-full overflow-visible"
+        aria-hidden="true"
+      >
+        {CONSTELLATION_LINES.map((line, index) => (
+          <line
+            key={`line-${mobile ? "m" : "d"}-${index}`}
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            stroke={rgb(accent, mobile ? line.alpha * 0.96 : line.alpha)}
+            strokeWidth={mobile ? "1.35" : "1.2"}
+            strokeLinecap="round"
+          />
+        ))}
+
+        {CONSTELLATION_NODES.map((node, index) => (
+          <g key={`node-${mobile ? "m" : "d"}-${index}`}>
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={mobile ? node.size + 4 : node.size + 4.5}
+              fill={rgb(accent, node.alpha * 0.11)}
+            />
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={mobile ? node.size * 0.92 : node.size * 0.96}
+              fill={rgb(accent, mobile ? node.alpha * 0.98 : node.alpha)}
+            />
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={mobile ? node.size * 0.26 : node.size * 0.3}
+              fill="white"
+            />
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function QuickCheckPill({
+  choice,
+  active,
+  accent,
+  onClick,
+}: {
+  choice: { id: QuickCheckChoice; label: string; emoji: string };
+  active: boolean;
+  accent: Rgb;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[14px] font-medium tracking-[-0.01em] text-white/84 transition hover:bg-white/[0.07]"
+      style={{
+        borderColor: active ? rgb(accent, 0.3) : "rgba(255,255,255,0.10)",
+        backgroundColor: active ? rgb(accent, 0.12) : "rgba(255,255,255,0.035)",
+        boxShadow: active ? `0 0 0 1px ${rgb(accent, 0.08)}` : "none",
+      }}
+    >
+      <span className="text-[15px]" aria-hidden="true">
+        {choice.emoji}
+      </span>
+      <span>{choice.label}</span>
+    </button>
+  );
+}
+
+function ExperienceGlyph({
+  title,
+  accent,
+}: {
+  title: string;
+  accent: Rgb;
+}) {
+  const iconClass = "h-[15px] w-[15px]";
+
+  const sharedStyle = {
+    borderColor: rgb(accent, 0.24),
+    backgroundColor: rgb(accent, 0.1),
+    color: rgb(accent, 0.94),
+  };
+
+  if (
+    title.includes("Language") ||
+    title.includes("Translation")
+  ) {
+    return (
+      <div
+        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={sharedStyle}
+      >
+        <Languages className={`${iconClass} mr-1.5`} />
+        World path
+      </div>
+    );
+  }
+
+  if (
+    title.includes("Cultures") ||
+    title.includes("Culture")
+  ) {
+    return (
+      <div
+        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={sharedStyle}
+      >
+        <Users className={`${iconClass} mr-1.5`} />
+        World path
+      </div>
+    );
+  }
+
+  if (
+    title.includes("Environment") ||
+    title.includes("Expeditions")
+  ) {
+    return (
+      <div
+        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={sharedStyle}
+      >
+        <Map className={`${iconClass} mr-1.5`} />
+        World path
+      </div>
+    );
+  }
+
+  if (
+    title.includes("Policy") ||
+    title.includes("Development") ||
+    title.includes("Health")
+  ) {
+    return (
+      <div
+        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={sharedStyle}
+      >
+        <Globe className={`${iconClass} mr-1.5`} />
+        World path
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+      style={sharedStyle}
+    >
+      <Monitor className={`${iconClass} mr-1.5`} />
+      World path
+    </div>
+  );
+}
+
+function WorldExperienceCard({
+  experience,
+  onDismiss,
+}: {
+  experience: WorldExperience;
+  onDismiss: (experienceId: string) => void;
+}) {
+  const accent = pathAccent(experience);
+
+  const title = extractCardField(experience, "title");
+  const hook = extractCardField(experience, "hook");
+  const description = extractCardField(experience, "description");
+
+  const fitSignals = deriveFitSignals(experience);
+  const insideExperiencePreviews = deriveInsideExperiencePreviews(experience);
+
+  const [quickCheck, setQuickCheck] = React.useState<QuickCheckChoice | null>(
+    null
+  );
+  const [comment, setComment] = React.useState("");
+
+  function handleQuickCheck(choice: QuickCheckChoice) {
+    setQuickCheck(choice);
+  }
+
+  function handleSubmitQuickCheck() {
+    if (!quickCheck) return;
+
+    if (quickCheck === "not-really") {
+      setComment("");
+      setQuickCheck(null);
+      onDismiss(experience.id);
+      return;
+    }
+
+    setComment("");
+    setQuickCheck(null);
+  }
+
+  return (
+    <article
+      className="group relative overflow-hidden rounded-[30px] border bg-white/[0.055] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
+      style={{
+        borderColor: rgb(accent, 0.18),
+        boxShadow: `0 24px 80px rgba(0,0,0,0.32), 0 0 0 1px ${rgb(accent, 0.065)}`,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute -left-10 -top-12 h-36 w-36 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(accent, 0.17) }}
+      />
+      <div
+        className="pointer-events-none absolute right-[-32px] top-[-18px] h-28 w-28 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(accent, 0.13) }}
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-28"
+        style={{
+          background: `linear-gradient(180deg, ${rgb(
+            accent,
+            0.2
+          )} 0%, ${rgb(accent, 0.08)} 44%, transparent 100%)`,
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-px"
+        style={{
+          background: `linear-gradient(180deg, transparent 0%, ${rgb(
+            accent,
+            0.44
+          )} 24%, ${rgb(accent, 0.18)} 72%, transparent 100%)`,
+        }}
+      />
+
+      <SignalConstellation accent={accent} mobile />
+      <SignalConstellation accent={accent} />
+
+      <div className="relative">
+        <div className="min-w-0 pr-14 sm:pr-28">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <ExperienceGlyph title={title} accent={accent} />
+
+              <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+                {title}
+              </h2>
+            </div>
+
+            <Link
+              href={`/main/explore/world/${experience.slug}`}
+              className="hidden shrink-0 items-center gap-2 rounded-full border border-white/12 bg-white/[0.085] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12] sm:inline-flex"
+            >
+              Explore this path
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
-          <h1 className="text-3xl font-semibold">World</h1>
+          {hook ? (
+            <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
+              {hook}
+            </p>
+          ) : null}
 
-          <p className={dark ? "text-white/70" : "text-slate-700"}>
-            Places, cultures, and experiences that can widen how you see life.
-          </p>
+          {description ? (
+            <p className="mt-3 max-w-[44rem] text-[14px] leading-[1.7] text-white/68 sm:text-[14px]">
+              {description}
+            </p>
+          ) : null}
         </div>
 
-        <ExploreLaneRail />
+        {fitSignals.length > 0 ? (
+          <section className="mt-5 rounded-[22px] border border-white/10 bg-black/18 px-4 py-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p
+                  className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                  style={{
+                    borderColor: rgb(accent, 0.2),
+                    background: `linear-gradient(180deg, ${rgb(
+                      accent,
+                      0.12
+                    )} 0%, ${rgb(accent, 0.045)} 100%)`,
+                    color: rgb(accent, 0.92),
+                    boxShadow: `inset 0 1px 0 ${rgb(accent, 0.09)}`,
+                  }}
+                >
+                  Signals I&apos;m hearing
+                </p>
+              </div>
+            </div>
 
-        <div className="space-y-4">
-          {PATHS.map((path) => (
-            <ExplorePathPanel
-              key={path.id}
-              path={path}
-              open={openId === path.id}
-              onToggle={() =>
-                setOpenId((prev) => (prev === path.id ? "" : path.id))
-              }
-            />
-          ))}
+            <ul className="mt-3 space-y-2.5">
+              {fitSignals.map((signal, index) => (
+                <li
+                  key={`${signal}-${index}`}
+                  className="flex gap-3 text-[14px] leading-[1.65] text-white/80"
+                >
+                  <span
+                    className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: rgb(accent, 0.9) }}
+                  />
+                  <span>{signal}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {insideExperiencePreviews.length > 0 ? (
+          <section className="mt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
+              Inside this path
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {insideExperiencePreviews.map((item, index) => (
+                <span
+                  key={`${item}-${index}`}
+                  className="rounded-full border px-3 py-1.5 text-[12px] font-medium text-white/74"
+                  style={{
+                    borderColor: rgb(accent, 0.18),
+                    backgroundColor: rgb(accent, 0.09),
+                    boxShadow: `inset 0 1px 0 ${rgb(accent, 0.07)}`,
+                  }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
+            Quick check
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2.5">
+            {QUICK_CHECK_OPTIONS.map((choice) => (
+              <QuickCheckPill
+                key={choice.id}
+                choice={choice}
+                active={quickCheck === choice.id}
+                accent={accent}
+                onClick={() => handleQuickCheck(choice.id)}
+              />
+            ))}
+          </div>
+
+          {quickCheck ? (
+            <div className="mt-3 rounded-[20px] border border-white/10 bg-black/16 px-3.5 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[13px] font-medium leading-relaxed text-white/72">
+                  {getQuickCheckPrompt(quickCheck)}
+                </p>
+                <span className="shrink-0 text-[12px] text-white/38">
+                  Optional
+                </span>
+              </div>
+
+              <textarea
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+                rows={3}
+                placeholder={
+                  quickCheck === "not-really"
+                    ? "Tell us what feels off so we can bring in a better path..."
+                    : "Add a quick note..."
+                }
+                className="mt-3 w-full resize-none rounded-[16px] border border-white/10 bg-white/[0.035] px-3.5 py-3 text-[14px] leading-relaxed text-white outline-none placeholder:text-white/28"
+                style={{
+                  boxShadow: `inset 0 1px 0 ${rgb(accent, 0.06)}`,
+                }}
+              />
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSubmitQuickCheck}
+                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
+                  style={{
+                    borderColor: rgb(accent, 0.26),
+                    background: `linear-gradient(180deg, ${rgb(
+                      accent,
+                      0.22
+                    )} 0%, ${rgb(accent, 0.12)} 100%)`,
+                    boxShadow: `0 10px 24px ${rgb(accent, 0.16)}`,
+                  }}
+                >
+                  {getQuickCheckSubmitLabel(quickCheck)}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <div className="mt-5">
+          <Link
+            href={`/main/explore/world/${experience.slug}`}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border px-4 py-3 text-[14px] font-medium text-white transition hover:translate-y-[-1px]"
+            style={{
+              borderColor: rgb(accent, 0.26),
+              background: `linear-gradient(180deg, ${rgb(
+                accent,
+                0.22
+              )} 0%, ${rgb(accent, 0.12)} 100%)`,
+              boxShadow: `0 10px 28px ${rgb(accent, 0.18)}`,
+            }}
+          >
+            Explore this path
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
+    </article>
+  );
+}
+
+export default function WorldExplorePage() {
+  const [firstName, setFirstName] = React.useState<string | null>(null);
+  const [dismissedExperienceIds, setDismissedExperienceIds] = React.useState<
+    string[]
+  >([]);
+
+  React.useEffect(() => {
+    setFirstName(readStoredFirstName());
+  }, []);
+
+  const allExperiences = React.useMemo<WorldExperience[]>(() => {
+    return WORLD_PATHS.map((path) => ({
+      id: path.id,
+      slug: path.slug,
+      theme: path.theme,
+      card: path.card,
+      fitSignals: path.fitSignals,
+    }));
+  }, []);
+
+  const visibleExperiences = React.useMemo(() => {
+    return allExperiences
+      .filter((experience) => !dismissedExperienceIds.includes(experience.id))
+      .slice(0, MAX_VISIBLE_WORLD_EXPERIENCES);
+  }, [allExperiences, dismissedExperienceIds]);
+
+  function handleDismissExperience(experienceId: string) {
+    setDismissedExperienceIds((current) =>
+      current.includes(experienceId) ? current : [...current, experienceId]
+    );
+  }
+
+  return (
+    <div className={pagePadding()}>
+      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(245,158,11,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
+
+        <div className="relative">
+          <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+            Explore
+          </h1>
+          <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
+            How I could explore the world
+          </p>
+
+          <ExploreLaneTabs />
+        </div>
+      </section>
+
+      <WorldIntroPanel firstName={firstName} />
+
+      <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5">
+        {visibleExperiences.map((experience) => (
+          <WorldExperienceCard
+            key={experience.id}
+            experience={experience}
+            onDismiss={handleDismissExperience}
+          />
+        ))}
+
+        {allExperiences.length === 0 ? (
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+            No world paths are registered yet.
+          </div>
+        ) : null}
+
+        {allExperiences.length > 0 && visibleExperiences.length === 0 ? (
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+            You&apos;ve cleared the current set of world paths.
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }

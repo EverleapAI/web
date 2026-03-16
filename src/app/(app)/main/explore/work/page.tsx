@@ -25,6 +25,7 @@ type SignalNode = {
 type QuickCheckChoice = "mostly-right" | "somewhat" | "not-really";
 
 const LOCAL_PLACE_LABEL = "San Rafael";
+const MAX_VISIBLE_WORK_PATHS = 4;
 
 const CONSTELLATION_NODES: SignalNode[] = [
   { x: 18, y: 28, size: 8, alpha: 0.95 },
@@ -187,7 +188,7 @@ function normalizePaths(input: unknown): WorkPathContent[] {
 
 function extractCardField(
   path: WorkPathContent,
-  field: "title" | "hook" | "description",
+  field: "title" | "hook" | "description"
 ): string {
   const card = asRecord((path as unknown as Record<string, unknown>).card);
   return asString(card?.[field]) ?? "";
@@ -268,14 +269,14 @@ function humanizeSignal(signal: string): string {
 function deriveFitSignals(path: WorkPathContent): string[] {
   const fitSignals = extractTextItems(
     (path as unknown as Record<string, unknown>).fitSignals,
-    3,
+    3
   ).map(humanizeSignal);
 
   if (fitSignals.length > 0) return fitSignals;
 
   const traitChips = extractTextItems(
     (path as unknown as Record<string, unknown>).traitChips,
-    3,
+    3
   ).map(humanizeSignal);
 
   return traitChips;
@@ -297,7 +298,18 @@ function getQuickCheckPrompt(choice: QuickCheckChoice) {
     case "somewhat":
       return "What part fits, and what part doesn't?";
     case "not-really":
-      return "What feels off?";
+      return "Give us reasons why — we’ll use that to bring in another suggestion.";
+  }
+}
+
+function getQuickCheckSubmitLabel(choice: QuickCheckChoice) {
+  switch (choice) {
+    case "mostly-right":
+      return "Submit";
+    case "somewhat":
+      return "Submit";
+    case "not-really":
+      return "Submit and show another";
   }
 }
 
@@ -406,7 +418,7 @@ function SignalConstellation({
         style={{
           background: `radial-gradient(circle at 50% 50%, ${rgb(
             accent,
-            0.17,
+            0.17
           )} 0%, ${rgb(accent, 0.055)} 42%, transparent 74%)`,
         }}
       />
@@ -486,7 +498,13 @@ function QuickCheckPill({
   );
 }
 
-function WorkPathCard({ path }: { path: WorkPathContent }) {
+function WorkPathCard({
+  path,
+  onDismiss,
+}: {
+  path: WorkPathContent;
+  onDismiss: (pathId: string) => void;
+}) {
   const accent = pathAccent(path);
 
   const title = extractCardField(path, "title");
@@ -497,9 +515,27 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
   const insidePathPreviews = deriveInsidePathPreviews(path);
 
   const [quickCheck, setQuickCheck] = React.useState<QuickCheckChoice | null>(
-    null,
+    null
   );
   const [comment, setComment] = React.useState("");
+
+  function handleQuickCheck(choice: QuickCheckChoice) {
+    setQuickCheck(choice);
+  }
+
+  function handleSubmitQuickCheck() {
+    if (!quickCheck) return;
+
+    if (quickCheck === "not-really") {
+      setComment("");
+      setQuickCheck(null);
+      onDismiss(path.id);
+      return;
+    }
+
+    setComment("");
+    setQuickCheck(null);
+  }
 
   return (
     <article
@@ -521,7 +557,7 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
         style={{
           background: `linear-gradient(180deg, ${rgb(
             accent,
-            0.18,
+            0.18
           )} 0%, ${rgb(accent, 0.07)} 44%, transparent 100%)`,
         }}
       />
@@ -530,7 +566,7 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
         style={{
           background: `linear-gradient(180deg, transparent 0%, ${rgb(
             accent,
-            0.42,
+            0.42
           )} 24%, ${rgb(accent, 0.18)} 72%, transparent 100%)`,
         }}
       />
@@ -590,7 +626,7 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
                     borderColor: rgb(accent, 0.18),
                     background: `linear-gradient(180deg, ${rgb(
                       accent,
-                      0.11,
+                      0.11
                     )} 0%, ${rgb(accent, 0.04)} 100%)`,
                     color: rgb(accent, 0.9),
                     boxShadow: `inset 0 1px 0 ${rgb(accent, 0.08)}`,
@@ -654,7 +690,7 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
                 choice={choice}
                 active={quickCheck === choice.id}
                 accent={accent}
-                onClick={() => setQuickCheck(choice.id)}
+                onClick={() => handleQuickCheck(choice.id)}
               />
             ))}
           </div>
@@ -674,12 +710,34 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
                 rows={3}
-                placeholder="Add a quick note..."
+                placeholder={
+                  quickCheck === "not-really"
+                    ? "Tell us what feels off so we can bring in a better suggestion..."
+                    : "Add a quick note..."
+                }
                 className="mt-3 w-full resize-none rounded-[16px] border border-white/10 bg-white/[0.035] px-3.5 py-3 text-[14px] leading-relaxed text-white outline-none placeholder:text-white/28"
                 style={{
                   boxShadow: `inset 0 1px 0 ${rgb(accent, 0.05)}`,
                 }}
               />
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSubmitQuickCheck}
+                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
+                  style={{
+                    borderColor: rgb(accent, 0.24),
+                    background: `linear-gradient(180deg, ${rgb(
+                      accent,
+                      0.2
+                    )} 0%, ${rgb(accent, 0.11)} 100%)`,
+                    boxShadow: `0 10px 24px ${rgb(accent, 0.14)}`,
+                  }}
+                >
+                  {getQuickCheckSubmitLabel(quickCheck)}
+                </button>
+              </div>
             </div>
           ) : null}
         </section>
@@ -692,7 +750,7 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
               borderColor: rgb(accent, 0.24),
               background: `linear-gradient(180deg, ${rgb(
                 accent,
-                0.2,
+                0.2
               )} 0%, ${rgb(accent, 0.11)} 100%)`,
               boxShadow: `0 10px 28px ${rgb(accent, 0.16)}`,
             }}
@@ -708,12 +766,25 @@ function WorkPathCard({ path }: { path: WorkPathContent }) {
 
 export default function WorkExplorePage() {
   const [firstName, setFirstName] = React.useState<string | null>(null);
+  const [dismissedPathIds, setDismissedPathIds] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     setFirstName(readStoredFirstName());
   }, []);
 
-  const paths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
+  const allPaths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
+
+  const visiblePaths = React.useMemo(() => {
+    return allPaths
+      .filter((path) => !dismissedPathIds.includes(path.id))
+      .slice(0, MAX_VISIBLE_WORK_PATHS);
+  }, [allPaths, dismissedPathIds]);
+
+  function handleDismissPath(pathId: string) {
+    setDismissedPathIds((current) =>
+      current.includes(pathId) ? current : [...current, pathId]
+    );
+  }
 
   return (
     <div className={pagePadding()}>
@@ -735,13 +806,23 @@ export default function WorkExplorePage() {
       <WorkIntroPanel firstName={firstName} />
 
       <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5">
-        {paths.map((path) => (
-          <WorkPathCard key={path.id} path={path} />
+        {visiblePaths.map((path) => (
+          <WorkPathCard
+            key={path.id}
+            path={path}
+            onDismiss={handleDismissPath}
+          />
         ))}
 
-        {paths.length === 0 ? (
+        {allPaths.length === 0 ? (
           <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
             No work paths are registered yet.
+          </div>
+        ) : null}
+
+        {allPaths.length > 0 && visiblePaths.length === 0 ? (
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+            You&apos;ve cleared the current set of work paths.
           </div>
         ) : null}
       </section>
