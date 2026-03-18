@@ -28,10 +28,9 @@ jobs:
       - name: Build Next.js
         run: npm run build
 
-      # Find where Next.js actually created the standalone runtime
       - name: Detect standalone output
         run: |
-          echo "Searching for server.js inside .next..."
+          echo "Searching for server.js in .next..."
           find .next -name "server.js"
 
           if [ -f ".next/standalone/apps/web/server.js" ]; then
@@ -39,7 +38,7 @@ jobs:
           elif [ -f ".next/standalone/server.js" ]; then
             echo "STANDALONE_DIR=.next/standalone" >> $GITHUB_ENV
           else
-            echo "ERROR: Could not find standalone server.js"
+            echo "ERROR: standalone server.js not found"
             find .next -maxdepth 5
             exit 1
           fi
@@ -59,7 +58,6 @@ jobs:
           cp -R "$STANDALONE_DIR"/* deploy/
           cp -R "$STANDALONE_DIR"/.[!.]* deploy/ || true
 
-      # THIS STEP TELLS US IF SERVER.JS IS PRESENT
       - name: Validate deploy folder
         run: |
           echo "Contents of deploy folder:"
