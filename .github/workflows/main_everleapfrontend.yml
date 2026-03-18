@@ -52,6 +52,21 @@ jobs:
           name: node-app
           path: .
 
+      - name: Inspect downloaded artifact
+        run: |
+          echo "PWD=$(pwd)"
+          echo "Top level files:"
+          ls -la
+          echo ""
+          echo "Finding server.js:"
+          find . -name server.js
+          echo ""
+          echo "Finding package.json:"
+          find . -name package.json
+          echo ""
+          echo "Top 3 directory levels:"
+          find . -maxdepth 3 | sort
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
