@@ -34,11 +34,18 @@ jobs:
           cp -R .next/static .next/standalone/apps/web/.next/static
           if [ -d public ]; then cp -R public .next/standalone/apps/web/public; fi
 
+      - name: Prepare flat deploy folder
+        run: |
+          rm -rf deploy
+          mkdir -p deploy
+          cp -R .next/standalone/apps/web/* deploy/
+          cp -R .next/standalone/apps/web/.[!.]* deploy/ || true
+
       - name: Upload standalone artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .next/standalone/apps/web
+          path: deploy
           include-hidden-files: true
 
   deploy:
