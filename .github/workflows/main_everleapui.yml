@@ -10,23 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node
+      # 2. Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install + Build
-        run: |
-          cd apps/web
-          npm install
-          npm run build
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: npm install
 
-      - name: Deploy to Azure
+      # 4. Build Next.js app
+      - name: Build app
+        run: npm run build
+
+      # 5. Deploy to Azure App Service
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "EverleapUI"
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_907494C4D91D422CB5AA91EEA851CB8 }}
-          package: apps/web
+          package: .
