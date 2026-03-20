@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -17,9 +18,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Build app
         run: |
@@ -30,9 +33,15 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
 
+      - name: Verify standalone output
+        run: |
+          test -f .next/standalone/server.js
+          test -d .next/standalone/public
+          test -d .next/standalone/.next/static
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "EverleapUI"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: .next/standalone
