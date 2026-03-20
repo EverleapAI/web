@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   // Required for Azure standalone deployment
   output: "standalone",
+
+  // Ensure tracing resolves from the monorepo/workspace root
+  outputFileTracingRoot: path.join(__dirname, "../../"),
 
   trailingSlash: false,
 
