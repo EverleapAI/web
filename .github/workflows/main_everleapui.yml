@@ -18,22 +18,57 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --include=optional
+        run: npm ci --include=optional
 
       - name: Build app
         run: |
           npm run build
-          mkdir -p .next/standalone/.next
-          cp -r public .next/standalone/public
-          cp -r .next/static .next/standalone/.next/static
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+
+      - name: Prepare flat deploy folder
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SERVER_PATH="$(find .next/standalone -type f -name server.js | head -n 1)"
+
+          if [ -z "$SERVER_PATH" ]; then
+            echo "Could not find server.js under .next/standalone"
+            exit 1
+          fi
+
+          SERVER_DIR="$(dirname "$SERVER_PATH")"
+
+          echo "Found server.js at: $SERVER_PATH"
+          echo "Using standalone root: $SERVER_DIR"
+
+          rm -rf deploy
+          mkdir -p deploy
+
+          cp -R "$SERVER_DIR"/. deploy/
+
+          rm -rf deploy/.next/static
+          mkdir -p deploy/.next
+          cp -R .next/static deploy/.next/static
+
+          rm -rf deploy/public
+          cp -R public deploy/public
+
+          test -f deploy/server.js
+          test -d deploy/.next/static
+          test -d deploy/public
+
+          echo "Deploy folder ready:"
+          ls -la deploy
+          ls -la deploy/.next
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: "EverleapUI"
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: deploy
