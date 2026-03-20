@@ -1040,7 +1040,6 @@ function LearningDirectionCard({
 
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="min-w-0">
-                <DirectionGlyph title={title} accent={atmosphere.border} />
 
                 <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
                   {title}

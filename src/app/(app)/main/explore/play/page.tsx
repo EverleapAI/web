@@ -6,28 +6,31 @@ import Link from "next/link";
 import * as React from "react";
 import {
   ArrowRight,
+  CalendarDays,
+  ChevronDown,
+  CircleHelp,
   Dumbbell,
+  ExternalLink,
   Gamepad2,
   Heart,
+  MapPin,
+  MonitorPlay,
   Mountain,
   Music4,
   Wrench,
 } from "lucide-react";
 
-type Rgb = {
-  r: number;
-  g: number;
-  b: number;
-};
-
-type SignalNode = {
-  x: number;
-  y: number;
-  size: number;
-  alpha: number;
-};
-
-type QuickCheckChoice = "mostly-right" | "somewhat" | "not-really";
+import {
+  CardSectionHeader,
+  ExploreLaneTabs,
+  OpportunityMetaPill,
+  SectionKicker,
+  SignalConstellation,
+  SignalMeter,
+  rgb,
+  type ExploreLaneTab,
+  type Rgb,
+} from "../_components/ExploreShared";
 
 type PlayActivity = {
   id: string;
@@ -46,28 +49,41 @@ type PlayActivity = {
   insideActivityPreviews?: string[];
 };
 
+type PlayProfileSignals = {
+  firstName: string | null;
+  motivations: string[];
+  strengths: string[];
+  skills: string[];
+  fullText: string;
+};
+
+type PlayTryItem = {
+  title: string;
+  format: "Local" | "Online" | "Local + Online";
+  locationLabel: string;
+  timing: string;
+  whyItFits: string;
+  howToTry: string;
+  actionLabel: string;
+  href: string;
+};
+
+type ActivityAtmosphere = {
+  border: Rgb;
+  topGlow: Rgb;
+  sideGlow: Rgb;
+  washA: Rgb;
+  washB: Rgb;
+  tryGlow: Rgb;
+  tryNode: Rgb;
+  futureGlow: Rgb;
+  futureNode: Rgb;
+};
+
 const LOCAL_PLACE_LABEL = "94901";
 const MAX_VISIBLE_PLAY_ACTIVITIES = 4;
 
-const CONSTELLATION_NODES: SignalNode[] = [
-  { x: 18, y: 28, size: 8, alpha: 0.95 },
-  { x: 68, y: 18, size: 6, alpha: 0.72 },
-  { x: 108, y: 50, size: 7, alpha: 0.82 },
-  { x: 54, y: 66, size: 5, alpha: 0.66 },
-  { x: 26, y: 98, size: 7, alpha: 0.8 },
-  { x: 94, y: 96, size: 6, alpha: 0.7 },
-];
-
-const CONSTELLATION_LINES = [
-  { x1: 18, y1: 28, x2: 68, y2: 18, alpha: 0.34 },
-  { x1: 68, y1: 18, x2: 108, y2: 50, alpha: 0.24 },
-  { x1: 18, y1: 28, x2: 54, y2: 66, alpha: 0.28 },
-  { x1: 54, y1: 66, x2: 108, y2: 50, alpha: 0.22 },
-  { x1: 54, y1: 66, x2: 26, y2: 98, alpha: 0.24 },
-  { x1: 54, y1: 66, x2: 94, y2: 96, alpha: 0.2 },
-];
-
-const EXPLORE_LANES = [
+const EXPLORE_LANES: readonly ExploreLaneTab[] = [
   {
     id: "work",
     label: "Work",
@@ -105,18 +121,62 @@ const EXPLORE_LANES = [
   },
 ] as const;
 
-const QUICK_CHECK_OPTIONS: Array<{
-  id: QuickCheckChoice;
-  label: string;
-  emoji: string;
-}> = [
-  { id: "mostly-right", label: "Mostly right", emoji: "👍" },
-  { id: "somewhat", label: "Somewhat", emoji: "🙂" },
-  { id: "not-really", label: "Not really", emoji: "👎" },
-];
+const STOP_WORDS = new Set([
+  "about",
+  "after",
+  "also",
+  "and",
+  "are",
+  "around",
+  "because",
+  "been",
+  "being",
+  "between",
+  "both",
+  "build",
+  "could",
+  "does",
+  "doing",
+  "each",
+  "even",
+  "feel",
+  "from",
+  "good",
+  "have",
+  "into",
+  "just",
+  "kind",
+  "like",
+  "make",
+  "more",
+  "most",
+  "much",
+  "need",
+  "only",
+  "over",
+  "really",
+  "seem",
+  "some",
+  "something",
+  "still",
+  "that",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "want",
+  "with",
+  "work",
+  "would",
+  "your",
+  "you",
+]);
 
-// IMPORTANT: order matters.
-// The first 4 are the visible set, so keep the opening mix broad and inviting.
 const PLAY_ACTIVITIES: PlayActivity[] = [
   {
     id: "sports-competition",
@@ -280,10 +340,6 @@ function pagePadding() {
   return "pb-24 pt-3";
 }
 
-function rgb(value: Rgb, alpha = 1) {
-  return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
-}
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object"
     ? (value as Record<string, unknown>)
@@ -296,8 +352,56 @@ function asString(value: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
-function readStoredFirstName(): string | null {
-  if (typeof window === "undefined") return null;
+function normalizeWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function splitIntoUsefulTokens(value: string): string[] {
+  return normalizeWhitespace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/[\s-]+/)
+    .filter((token) => token.length > 2 && !STOP_WORDS.has(token));
+}
+
+function collectStringsDeep(
+  value: unknown,
+  bucket: string[],
+  depth = 0,
+  maxDepth = 5
+) {
+  if (depth > maxDepth || value == null) return;
+
+  if (typeof value === "string") {
+    const text = normalizeWhitespace(value);
+    if (text) bucket.push(text);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectStringsDeep(item, bucket, depth + 1, maxDepth);
+    }
+    return;
+  }
+
+  if (typeof value === "object") {
+    for (const child of Object.values(value as Record<string, unknown>)) {
+      collectStringsDeep(child, bucket, depth + 1, maxDepth);
+    }
+  }
+}
+
+function readStoredPlaySignals(): PlayProfileSignals {
+  if (typeof window === "undefined") {
+    return {
+      firstName: null,
+      motivations: [],
+      strengths: [],
+      skills: [],
+      fullText: "",
+    };
+  }
 
   const candidateKeys = [
     "everleapOnboarding_v4_convo_min",
@@ -307,32 +411,89 @@ function readStoredFirstName(): string | null {
     "everleap.user.profile",
   ];
 
+  let firstName: string | null = null;
+  const motivations: string[] = [];
+  const strengths: string[] = [];
+  const skills: string[] = [];
+  const allStrings: string[] = [];
+
   for (const key of candidateKeys) {
     try {
       const raw = window.localStorage.getItem(key);
       if (!raw) continue;
 
       const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const profile = asRecord(parsed.profile);
+      const answers = asRecord(parsed.answers);
 
-      const candidates = [
+      const nameCandidates = [
         parsed.firstName,
         parsed.firstname,
         parsed.first_name,
         parsed.name,
-        asRecord(parsed.profile)?.firstName,
-        asRecord(parsed.profile)?.name,
-        asRecord(parsed.answers)?.firstName,
-        asRecord(parsed.answers)?.name,
+        profile?.firstName,
+        profile?.name,
+        answers?.firstName,
+        answers?.name,
       ];
 
-      for (const value of candidates) {
-        const found = asString(value);
-        if (found) return found.split(" ")[0];
+      if (!firstName) {
+        for (const value of nameCandidates) {
+          const found = asString(value);
+          if (found) {
+            firstName = found.split(" ")[0];
+            break;
+          }
+        }
       }
+
+      const motivationSources = [
+        parsed.motivations,
+        parsed.motivation,
+        profile?.motivations,
+        answers?.motivations,
+        answers?.motivation,
+      ];
+
+      const strengthSources = [
+        parsed.strengths,
+        parsed.strength,
+        profile?.strengths,
+        answers?.strengths,
+        answers?.strength,
+      ];
+
+      const skillSources = [
+        parsed.skills,
+        parsed.skill,
+        profile?.skills,
+        answers?.skills,
+        answers?.skill,
+      ];
+
+      for (const source of motivationSources) {
+        collectStringsDeep(source, motivations);
+      }
+
+      for (const source of strengthSources) {
+        collectStringsDeep(source, strengths);
+      }
+
+      for (const source of skillSources) {
+        collectStringsDeep(source, skills);
+      }
+
+      collectStringsDeep(parsed, allStrings);
     } catch {}
   }
 
-  return null;
+  return {
+    firstName,
+    motivations: Array.from(new Set(motivations)).slice(0, 24),
+    strengths: Array.from(new Set(strengths)).slice(0, 24),
+    skills: Array.from(new Set(skills)).slice(0, 24),
+    fullText: allStrings.join(" ").toLowerCase(),
+  };
 }
 
 function getPlayAgenticOpening(firstName: string | null) {
@@ -350,8 +511,8 @@ function getPlayAgenticOpening(firstName: string | null) {
     title: "Play matters more than people sometimes admit.",
     bodyA:
       "This is not just about killing time. It is about noticing what kinds of fun make you feel energized, challenged, calm, connected, curious, creative, or more like yourself.",
-      bodyB:
-        "The goal here is to surface activities you could actually get into — whether that means sports, hobbies, strategy, outdoor adventure, hands-on making, or quieter ways to reset.",
+    bodyB:
+      "The goal here is to surface activities you could actually get into — whether that means sports, hobbies, strategy, outdoor adventure, hands-on making, or quieter ways to reset.",
   };
 }
 
@@ -378,74 +539,283 @@ function pathAccent(activity: PlayActivity): Rgb {
   return { r: 255, g: 96, b: 139 };
 }
 
-function deriveFitSignals(activity: PlayActivity): string[] {
-  return activity.fitSignals.slice(0, 3);
-}
+function buildActivityKeywordSet(activity: PlayActivity): string[] {
+  const title = extractCardField(activity, "title");
+  const hook = extractCardField(activity, "hook");
+  const description = extractCardField(activity, "description");
+  const fitSignals = activity.fitSignals.slice(0, 6).filter(Boolean);
+  const previewTokens = (activity.insideActivityPreviews ?? [])
+    .slice(0, 6)
+    .filter(Boolean);
+  const slugWords = splitIntoUsefulTokens(activity.slug.replace(/_/g, " "));
 
-function deriveInsideActivityPreviews(activity: PlayActivity): string[] {
-  if (activity.insideActivityPreviews?.length) {
-    return activity.insideActivityPreviews.slice(0, 4);
-  }
-
-  return [
-    "What this kind of play feels like",
-    "Ways to start",
-    `Local and online entry points near ${LOCAL_PLACE_LABEL}`,
-    "Where this can lead",
-  ];
-}
-
-function getQuickCheckPrompt(choice: QuickCheckChoice) {
-  switch (choice) {
-    case "mostly-right":
-      return "What part feels fun or energizing?";
-    case "somewhat":
-      return "What part fits, and what part doesn't?";
-    case "not-really":
-      return "Give us reasons why — we’ll use that to bring in another activity.";
-  }
-}
-
-function getQuickCheckSubmitLabel(choice: QuickCheckChoice) {
-  switch (choice) {
-    case "mostly-right":
-      return "Submit";
-    case "somewhat":
-      return "Submit";
-    case "not-really":
-      return "Submit and show another";
-  }
-}
-
-function SectionKicker({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.19em] text-white/42 sm:text-[12px]">
-      {children}
-    </p>
+  return Array.from(
+    new Set(
+      [
+        ...splitIntoUsefulTokens(title),
+        ...splitIntoUsefulTokens(hook),
+        ...splitIntoUsefulTokens(description),
+        ...splitIntoUsefulTokens(fitSignals.join(" ")),
+        ...splitIntoUsefulTokens(previewTokens.join(" ")),
+        ...slugWords,
+      ].filter(Boolean)
+    )
   );
 }
 
-function ExploreLaneTabs() {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2.5">
-      {EXPLORE_LANES.map((lane) => (
-        <Link
-          key={lane.id}
-          href={lane.href}
-          aria-current={lane.active ? "page" : undefined}
-          className={[
-            "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[14px] font-medium tracking-[-0.01em] transition",
-            lane.active
-              ? "border-pink-300/30 bg-pink-300/[0.12] text-pink-50 shadow-[0_0_0_1px_rgba(249,168,212,0.06)]"
-              : "border-white/12 bg-white/[0.04] text-white/72 hover:bg-white/[0.07]",
-          ].join(" ")}
-        >
-          <span className={`h-2.5 w-2.5 rounded-full ${lane.dotClass}`} />
-          <span>{lane.label}</span>
-        </Link>
-      ))}
-    </div>
-  );
+function getSignalStrength(
+  activity: PlayActivity,
+  profile: PlayProfileSignals
+) {
+  const keywords = buildActivityKeywordSet(activity);
+  const profileText = [
+    profile.motivations.join(" "),
+    profile.strengths.join(" "),
+    profile.skills.join(" "),
+    profile.fullText,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (!profileText.trim()) {
+    let hash = 0;
+    for (let i = 0; i < activity.id.length; i += 1) {
+      hash = (hash << 5) - hash + activity.id.charCodeAt(i);
+      hash |= 0;
+    }
+    return 66 + Math.abs(hash % 17);
+  }
+
+  let score = 54;
+  let matches = 0;
+
+  for (const keyword of keywords) {
+    if (profileText.includes(keyword)) {
+      matches += 1;
+    }
+  }
+
+  score += Math.min(matches * 5, 24);
+
+  const motivationText = profile.motivations.join(" ").toLowerCase();
+  const strengthText = profile.strengths.join(" ").toLowerCase();
+  const skillText = profile.skills.join(" ").toLowerCase();
+
+  if (keywords.some((keyword) => motivationText.includes(keyword))) score += 5;
+  if (keywords.some((keyword) => strengthText.includes(keyword))) score += 5;
+  if (keywords.some((keyword) => skillText.includes(keyword))) score += 4;
+
+  return Math.max(50, Math.min(93, score));
+}
+
+function getSignalLabel(score: number) {
+  if (score >= 84) return "Very strong";
+  if (score >= 74) return "Strong";
+  if (score >= 64) return "Worth exploring";
+  return "Possible fit";
+}
+
+function getActivityAtmosphere(
+  activity: PlayActivity,
+  accent: Rgb
+): ActivityAtmosphere {
+  const title = extractCardField(activity, "title").toLowerCase();
+
+  if (title.includes("sports") || title.includes("competition")) {
+    return {
+      border: { r: 255, g: 111, b: 151 },
+      topGlow: { r: 244, g: 63, b: 94 },
+      sideGlow: { r: 230, g: 61, b: 108 },
+      washA: { r: 255, g: 112, b: 149 },
+      washB: { r: 219, g: 59, b: 108 },
+      tryGlow: { r: 255, g: 126, b: 164 },
+      tryNode: { r: 251, g: 207, b: 232 },
+      futureGlow: { r: 255, g: 120, b: 158 },
+      futureNode: { r: 252, g: 231, b: 243 },
+    };
+  }
+
+  if (title.includes("creative")) {
+    return {
+      border: { r: 255, g: 157, b: 94 },
+      topGlow: { r: 249, g: 115, b: 22 },
+      sideGlow: { r: 222, g: 101, b: 40 },
+      washA: { r: 255, g: 155, b: 88 },
+      washB: { r: 214, g: 109, b: 46 },
+      tryGlow: { r: 255, g: 170, b: 107 },
+      tryNode: { r: 254, g: 215, b: 170 },
+      futureGlow: { r: 255, g: 164, b: 100 },
+      futureNode: { r: 255, g: 237, b: 213 },
+    };
+  }
+
+  if (title.includes("games") || title.includes("strategy")) {
+    return {
+      border: { r: 103, g: 195, b: 255 },
+      topGlow: { r: 59, g: 130, b: 246 },
+      sideGlow: { r: 46, g: 157, b: 232 },
+      washA: { r: 97, g: 182, b: 255 },
+      washB: { r: 78, g: 128, b: 230 },
+      tryGlow: { r: 116, g: 203, b: 255 },
+      tryNode: { r: 191, g: 219, b: 254 },
+      futureGlow: { r: 108, g: 192, b: 255 },
+      futureNode: { r: 219, g: 234, b: 254 },
+    };
+  }
+
+  if (title.includes("calm") || title.includes("reset")) {
+    return {
+      border: { r: 151, g: 133, b: 255 },
+      topGlow: { r: 139, g: 92, b: 246 },
+      sideGlow: { r: 97, g: 80, b: 230 },
+      washA: { r: 148, g: 121, b: 255 },
+      washB: { r: 112, g: 91, b: 230 },
+      tryGlow: { r: 165, g: 146, b: 255 },
+      tryNode: { r: 221, g: 214, b: 254 },
+      futureGlow: { r: 156, g: 138, b: 255 },
+      futureNode: { r: 237, g: 233, b: 254 },
+    };
+  }
+
+  if (title.includes("outdoor") || title.includes("adventure")) {
+    return {
+      border: { r: 106, g: 225, b: 143 },
+      topGlow: { r: 34, g: 197, b: 94 },
+      sideGlow: { r: 51, g: 181, b: 92 },
+      washA: { r: 95, g: 214, b: 132 },
+      washB: { r: 72, g: 177, b: 104 },
+      tryGlow: { r: 120, g: 232, b: 154 },
+      tryNode: { r: 187, g: 247, b: 208 },
+      futureGlow: { r: 113, g: 228, b: 148 },
+      futureNode: { r: 220, g: 252, b: 231 },
+    };
+  }
+
+  if (title.includes("making") || title.includes("tinkering")) {
+    return {
+      border: { r: 240, g: 224, b: 111 },
+      topGlow: { r: 234, g: 179, b: 8 },
+      sideGlow: { r: 205, g: 182, b: 38 },
+      washA: { r: 235, g: 217, b: 95 },
+      washB: { r: 196, g: 171, b: 46 },
+      tryGlow: { r: 244, g: 228, b: 118 },
+      tryNode: { r: 254, g: 240, b: 138 },
+      futureGlow: { r: 239, g: 222, b: 108 },
+      futureNode: { r: 254, g: 249, b: 195 },
+    };
+  }
+
+  return {
+    border: accent,
+    topGlow: accent,
+    sideGlow: { r: Math.max(0, accent.r - 12), g: accent.g, b: accent.b },
+    washA: accent,
+    washB: { r: accent.r, g: Math.max(0, accent.g - 26), b: accent.b },
+    tryGlow: accent,
+    tryNode: { r: 251, g: 207, b: 232 },
+    futureGlow: accent,
+    futureNode: { r: 251, g: 207, b: 232 },
+  };
+}
+
+function getTryPlayItem(activity: PlayActivity): PlayTryItem {
+  const title = extractCardField(activity, "title");
+  const hook = extractCardField(activity, "hook");
+  const lowerTitle = title.toLowerCase();
+
+  if (lowerTitle.includes("sports") || lowerTitle.includes("competition")) {
+    return {
+      title: "Try one real beginner class or drop-in session",
+      format: "Local",
+      locationLabel: LOCAL_PLACE_LABEL,
+      timing: "This week",
+      whyItFits:
+        hook ||
+        "This lets you test whether movement, challenge, and getting sharper through repetition actually gives you energy in real life.",
+      howToTry:
+        "Pick one class, league, lesson, or open gym and notice whether your body and brain both want to come back.",
+      actionLabel: "Find local classes",
+      href: "https://www.classpass.com/",
+    };
+  }
+
+  if (lowerTitle.includes("creative")) {
+    return {
+      title: "Start one tiny creative project",
+      format: "Local + Online",
+      locationLabel: "At home",
+      timing: "30–60 minutes",
+      whyItFits:
+        hook ||
+        "Creative play gets real fast when you stop browsing and start making something imperfect but alive.",
+      howToTry:
+        "Choose one medium — sketch, beat, video edit, photo set, poem, or craft — and make one small thing all the way through.",
+      actionLabel: "Browse inspiration",
+      href: "https://www.skillshare.com/",
+    };
+  }
+
+  if (lowerTitle.includes("games") || lowerTitle.includes("strategy")) {
+    return {
+      title: "Join one real game night or online match session",
+      format: "Local + Online",
+      locationLabel: LOCAL_PLACE_LABEL,
+      timing: "This week",
+      whyItFits:
+        hook ||
+        "This tests whether strategic play feels satisfying when you are actually adapting, reading situations, and improving against real opponents.",
+      howToTry:
+        "Play one game with intention — not just to kill time, but to notice whether the challenge makes you more alert and energized.",
+      actionLabel: "Find a game event",
+      href: "https://www.meetup.com/",
+    };
+  }
+
+  if (lowerTitle.includes("calm") || lowerTitle.includes("reset")) {
+    return {
+      title: "Try one guided reset practice",
+      format: "Local + Online",
+      locationLabel: "At home or nearby",
+      timing: "10–20 minutes",
+      whyItFits:
+        hook ||
+        "This gives you a real way to notice whether quiet, restorative play helps you feel more like yourself instead of less stimulated.",
+      howToTry:
+        "Pick one short breathwork, yoga, journaling, or meditation session and notice how you feel an hour later.",
+      actionLabel: "Open guided session",
+      href: "https://www.youtube.com/results?search_query=10+minute+guided+meditation",
+    };
+  }
+
+  if (lowerTitle.includes("outdoor") || lowerTitle.includes("adventure")) {
+    return {
+      title: "Do one simple outdoor outing",
+      format: "Local",
+      locationLabel: LOCAL_PLACE_LABEL,
+      timing: "Weekend-friendly",
+      whyItFits:
+        hook ||
+        "Outdoor play becomes easier to understand once the world itself becomes part of the fun instead of just the backdrop.",
+      howToTry:
+        "Pick one hike, ride, beach visit, climb gym, or trail outing and notice whether being outside changes your energy in a good way.",
+      actionLabel: "Find a trail or route",
+      href: "https://www.alltrails.com/",
+    };
+  }
+
+  return {
+    title: "Make or fix one thing with your hands",
+    format: "Local + Online",
+    locationLabel: "At home",
+    timing: "45–90 minutes",
+    whyItFits:
+      hook ||
+      "Hands-on play gets real when you stop thinking about it and start building, adjusting, testing, and making something tangible.",
+    howToTry:
+      "Choose one small project — recipe, DIY build, repair, robotics step, sewing fix, or maker experiment — and finish one real piece of it.",
+    actionLabel: "Browse projects",
+    href: "https://www.instructables.com/",
+  };
 }
 
 function IntroOrbitArt() {
@@ -494,108 +864,7 @@ function PlayIntroPanel({ firstName }: { firstName: string | null }) {
   );
 }
 
-function SignalConstellation({
-  accent,
-  mobile = false,
-}: {
-  accent: Rgb;
-  mobile?: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "pointer-events-none absolute opacity-95",
-        mobile
-          ? "right-2 top-10 h-[88px] w-[92px] sm:hidden"
-          : "right-3 top-8 hidden h-[110px] w-[116px] sm:block",
-      ].join(" ")}
-    >
-      <div
-        className="absolute inset-0 rounded-full blur-3xl"
-        style={{
-          background: `radial-gradient(circle at 50% 50%, ${rgb(
-            accent,
-            0.18
-          )} 0%, ${rgb(accent, 0.05)} 42%, transparent 74%)`,
-        }}
-      />
-
-      <svg
-        viewBox="0 0 128 120"
-        className="absolute inset-0 h-full w-full overflow-visible"
-        aria-hidden="true"
-      >
-        {CONSTELLATION_LINES.map((line, index) => (
-          <line
-            key={`line-${mobile ? "m" : "d"}-${index}`}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            stroke={rgb(accent, mobile ? line.alpha * 0.96 : line.alpha)}
-            strokeWidth={mobile ? "1.35" : "1.2"}
-            strokeLinecap="round"
-          />
-        ))}
-
-        {CONSTELLATION_NODES.map((node, index) => (
-          <g key={`node-${mobile ? "m" : "d"}-${index}`}>
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size + 4 : node.size + 4.5}
-              fill={rgb(accent, node.alpha * 0.11)}
-            />
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size * 0.92 : node.size * 0.96}
-              fill={rgb(accent, mobile ? node.alpha * 0.98 : node.alpha)}
-            />
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size * 0.26 : node.size * 0.3}
-              fill="white"
-            />
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-function QuickCheckPill({
-  choice,
-  active,
-  accent,
-  onClick,
-}: {
-  choice: { id: QuickCheckChoice; label: string; emoji: string };
-  active: boolean;
-  accent: Rgb;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[14px] font-medium tracking-[-0.01em] text-white/84 transition hover:bg-white/[0.07]"
-      style={{
-        borderColor: active ? rgb(accent, 0.3) : "rgba(255,255,255,0.10)",
-        backgroundColor: active ? rgb(accent, 0.12) : "rgba(255,255,255,0.035)",
-        boxShadow: active ? `0 0 0 1px ${rgb(accent, 0.08)}` : "none",
-      }}
-    >
-      <span className="text-[15px]" aria-hidden="true">
-        {choice.emoji}
-      </span>
-      <span>{choice.label}</span>
-    </button>
-  );
-}
-
-function ActivityGlyph({
+function PlayGlyph({
   title,
   accent,
 }: {
@@ -681,101 +950,354 @@ function ActivityGlyph({
   );
 }
 
+function InlineTryPlayDetails({
+  atmosphere,
+  item,
+}: {
+  atmosphere: ActivityAtmosphere;
+  item: PlayTryItem;
+}) {
+  return (
+    <div className="relative mt-4 overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
+            atmosphere.tryGlow,
+            0.36
+          )} 18%, ${rgb(atmosphere.tryGlow, 0.15)} 84%, transparent 100%)`,
+        }}
+      />
+      <div
+        className="pointer-events-none absolute left-[-34px] top-4 h-28 w-28 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.12) }}
+      />
+      <div
+        className="pointer-events-none absolute right-[-10px] top-2 h-32 w-40 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.08) }}
+      />
+
+      <div className="relative px-0 pt-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap gap-2.5">
+              <OpportunityMetaPill glow={atmosphere.tryGlow}>
+                <MapPin className="h-3.5 w-3.5" />
+                {item.locationLabel}
+              </OpportunityMetaPill>
+              <OpportunityMetaPill glow={atmosphere.tryGlow}>
+                <CalendarDays className="h-3.5 w-3.5" />
+                {item.timing}
+              </OpportunityMetaPill>
+              <OpportunityMetaPill glow={atmosphere.tryGlow}>
+                <MonitorPlay className="h-3.5 w-3.5" />
+                {item.format}
+              </OpportunityMetaPill>
+            </div>
+
+            <p className="mt-4 max-w-2xl text-[14px] leading-[1.72] text-white/82 sm:text-[15px]">
+              {item.whyItFits}
+            </p>
+
+            <p className="mt-3 max-w-2xl text-[14px] leading-[1.72] text-white/64 sm:text-[15px]">
+              {item.howToTry}
+            </p>
+
+            <div className="mt-4">
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
+                style={{
+                  borderColor: rgb(atmosphere.tryGlow, 0.24),
+                  background: `linear-gradient(180deg, ${rgb(
+                    atmosphere.tryGlow,
+                    0.18
+                  )} 0%, ${rgb(atmosphere.tryGlow, 0.08)} 100%)`,
+                  boxShadow: `0 10px 24px ${rgb(atmosphere.tryGlow, 0.16)}`,
+                }}
+              >
+                {item.actionLabel}
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+
+          <div
+            className="pointer-events-none relative hidden h-20 w-24 shrink-0 sm:block"
+            aria-hidden="true"
+          >
+            <div
+              className="absolute left-0 top-9 h-px w-16"
+              style={{
+                background: `linear-gradient(90deg, ${rgb(
+                  atmosphere.tryGlow,
+                  0.34
+                )} 0%, transparent 100%)`,
+              }}
+            />
+            <div
+              className="absolute right-4 top-2 h-2.5 w-2.5 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.tryNode, 0.98),
+                boxShadow: `0 0 16px ${rgb(atmosphere.tryGlow, 0.5)}`,
+              }}
+            />
+            <div
+              className="absolute left-10 top-8 h-2 w-2 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.tryGlow, 0.72),
+                boxShadow: `0 0 12px ${rgb(atmosphere.tryGlow, 0.36)}`,
+              }}
+            />
+            <div
+              className="absolute left-2 top-12 h-3 w-3 rounded-full border"
+              style={{
+                borderColor: rgb(atmosphere.tryGlow, 0.34),
+                backgroundColor: rgb(atmosphere.tryGlow, 0.08),
+              }}
+            />
+            <div
+              className="absolute right-12 top-14 h-1.5 w-1.5 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.tryNode, 0.82),
+                boxShadow: `0 0 10px ${rgb(atmosphere.tryGlow, 0.34)}`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayPathForwardSection({
+  activity,
+  atmosphere,
+}: {
+  activity: PlayActivity;
+  atmosphere: ActivityAtmosphere;
+}) {
+  return (
+    <div className="relative mt-8">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
+            atmosphere.futureGlow,
+            0.22
+          )} 18%, ${rgb(atmosphere.futureGlow, 0.06)} 82%, transparent 100%)`,
+        }}
+      />
+      <Link
+        href={`/main/explore/play/${activity.slug}`}
+        className="group relative block px-1 pt-4"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 18% 18%, ${rgb(
+              atmosphere.futureGlow,
+              0.12
+            )} 0%, transparent 28%), radial-gradient(circle at 88% 82%, ${rgb(
+              atmosphere.futureGlow,
+              0.09
+            )} 0%, transparent 20%)`,
+          }}
+        />
+
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <CardSectionHeader color={atmosphere.futureGlow}>
+              What this path could really look like
+            </CardSectionHeader>
+
+            <h3 className="mt-3 text-[22px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px]">
+              See the full path ahead
+            </h3>
+
+            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 sm:text-[14px]">
+              Go deeper into branches, next steps, and ways to explore this path
+              in a more real way.
+            </p>
+          </div>
+
+          <div className="relative hidden h-20 w-28 shrink-0 sm:block">
+            <div
+              className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full blur-2xl"
+              style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.16) }}
+            />
+            <div
+              className="pointer-events-none absolute left-0 top-10 h-px w-[72px]"
+              style={{
+                background: `linear-gradient(90deg, ${rgb(
+                  atmosphere.futureGlow,
+                  0.28
+                )} 0%, transparent 100%)`,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute left-2 top-8 h-2 w-2 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.futureNode, 0.95),
+                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.42)}`,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute left-16 top-2 h-2.5 w-2.5 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.futureGlow, 0.74),
+                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.28)}`,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute right-2 top-16 h-2 w-2 rounded-full"
+              style={{
+                backgroundColor: rgb(atmosphere.futureNode, 0.9),
+                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.35)}`,
+              }}
+            />
+            <div
+              className="absolute right-0 top-4 flex h-9 w-9 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
+              style={{
+                borderColor: rgb(atmosphere.futureGlow, 0.2),
+                backgroundColor: rgb(atmosphere.futureGlow, 0.08),
+              }}
+            >
+              <ArrowRight className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 function PlayActivityCard({
   activity,
+  profile,
   onDismiss,
 }: {
   activity: PlayActivity;
+  profile: PlayProfileSignals;
   onDismiss: (activityId: string) => void;
 }) {
   const accent = pathAccent(activity);
+  const atmosphere = getActivityAtmosphere(activity, accent);
 
   const title = extractCardField(activity, "title");
   const hook = extractCardField(activity, "hook");
   const description = extractCardField(activity, "description");
+  const signalStrength = getSignalStrength(activity, profile);
+  const signalLabel = getSignalLabel(signalStrength);
+  const tryItem = getTryPlayItem(activity);
 
-  const fitSignals = deriveFitSignals(activity);
-  const insideActivityPreviews = deriveInsideActivityPreviews(activity);
-
-  const [quickCheck, setQuickCheck] = React.useState<QuickCheckChoice | null>(
-    null
-  );
-  const [comment, setComment] = React.useState("");
-
-  function handleQuickCheck(choice: QuickCheckChoice) {
-    setQuickCheck(choice);
-  }
-
-  function handleSubmitQuickCheck() {
-    if (!quickCheck) return;
-
-    if (quickCheck === "not-really") {
-      setComment("");
-      setQuickCheck(null);
-      onDismiss(activity.id);
-      return;
-    }
-
-    setComment("");
-    setQuickCheck(null);
-  }
+  const [showSignalHelp, setShowSignalHelp] = React.useState(false);
+  const [showTryDrawer, setShowTryDrawer] = React.useState(false);
 
   return (
     <article
-      className="group relative overflow-hidden rounded-[30px] border bg-white/[0.055] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
+      className="group relative overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
       style={{
-        borderColor: rgb(accent, 0.18),
-        boxShadow: `0 24px 80px rgba(0,0,0,0.32), 0 0 0 1px ${rgb(accent, 0.065)}`,
+        borderColor: rgb(atmosphere.border, 0.22),
+        background: `
+          radial-gradient(circle at 18% 0%, ${rgb(atmosphere.washA, 0.16)} 0%, transparent 28%),
+          radial-gradient(circle at 92% 12%, ${rgb(atmosphere.washB, 0.16)} 0%, transparent 24%),
+          linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%)
+        `,
+        boxShadow: `0 24px 80px rgba(0,0,0,0.32), 0 0 0 1px ${rgb(
+          atmosphere.border,
+          0.08
+        )}`,
       }}
     >
-      <div
-        className="pointer-events-none absolute -left-10 -top-12 h-36 w-36 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(accent, 0.17) }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-32px] top-[-18px] h-28 w-28 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(accent, 0.13) }}
-      />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-28"
         style={{
           background: `linear-gradient(180deg, ${rgb(
-            accent,
+            atmosphere.topGlow,
             0.2
-          )} 0%, ${rgb(accent, 0.08)} 44%, transparent 100%)`,
+          )} 0%, ${rgb(atmosphere.topGlow, 0.06)} 42%, transparent 100%)`,
         }}
       />
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-px"
+        className="pointer-events-none absolute inset-y-0 left-0 w-[2px]"
         style={{
           background: `linear-gradient(180deg, transparent 0%, ${rgb(
-            accent,
-            0.44
-          )} 24%, ${rgb(accent, 0.18)} 72%, transparent 100%)`,
+            atmosphere.border,
+            0.5
+          )} 20%, ${rgb(atmosphere.sideGlow, 0.2)} 72%, transparent 100%)`,
         }}
       />
+      <div
+        className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(atmosphere.washA, 0.15) }}
+      />
+      <div
+        className="pointer-events-none absolute right-[-28px] top-[-14px] h-32 w-32 rounded-full blur-3xl"
+        style={{ backgroundColor: rgb(atmosphere.washB, 0.14) }}
+      />
+      <div
+        className="pointer-events-none absolute left-[22%] top-0 h-24 w-40 blur-3xl"
+        style={{ backgroundColor: rgb(atmosphere.topGlow, 0.1) }}
+      />
 
-      <SignalConstellation accent={accent} mobile />
-      <SignalConstellation accent={accent} />
+      <SignalConstellation accent={atmosphere.border} mobile />
+      <SignalConstellation accent={atmosphere.border} />
 
       <div className="relative">
         <div className="min-w-0 pr-14 sm:pr-28">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <ActivityGlyph title={title} accent={accent} />
+            <div className="min-w-0 flex-1">
+              <CardSectionHeader color={atmosphere.border}>
+                Play activity
+              </CardSectionHeader>
 
-              <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-                {title}
-              </h2>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="min-w-0">
+
+                  <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+                    {title}
+                  </h2>
+                </div>
+
+                <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
+                  <SignalMeter
+                    score={signalStrength}
+                    accent={atmosphere.border}
+                  />
+
+                  <button
+                    type="button"
+                    aria-label="What signal means"
+                    onClick={() => setShowSignalHelp((current) => !current)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
+                  >
+                    <CircleHelp className="h-3.5 w-3.5" />
+                  </button>
+
+                  {showSignalHelp ? (
+                    <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
+                      This is Everleap&apos;s best guess, right now, of how well
+                      this path fits your profile.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
+                {signalLabel}
+              </p>
             </div>
 
-            <Link
-              href={`/main/explore/play/${activity.slug}`}
-              className="hidden shrink-0 items-center gap-2 rounded-full border border-white/12 bg-white/[0.085] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12] sm:inline-flex"
+            <button
+              type="button"
+              onClick={() => onDismiss(activity.id)}
+              className="mt-7 hidden shrink-0 rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12] sm:inline-flex"
             >
-              Explore this activity
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+              Not for me
+            </button>
           </div>
 
           {hook ? (
@@ -791,171 +1313,118 @@ function PlayActivityCard({
           ) : null}
         </div>
 
-        {fitSignals.length > 0 ? (
-          <section className="mt-5 rounded-[22px] border border-white/10 bg-black/18 px-4 py-3.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p
-                  className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]"
-                  style={{
-                    borderColor: rgb(accent, 0.2),
-                    background: `linear-gradient(180deg, ${rgb(
-                      accent,
-                      0.12
-                    )} 0%, ${rgb(accent, 0.045)} 100%)`,
-                    color: rgb(accent, 0.92),
-                    boxShadow: `inset 0 1px 0 ${rgb(accent, 0.09)}`,
-                  }}
-                >
-                  Signals I&apos;m hearing
-                </p>
-              </div>
-            </div>
-
-            <ul className="mt-3 space-y-2.5">
-              {fitSignals.map((signal, index) => (
-                <li
-                  key={`${signal}-${index}`}
-                  className="flex gap-3 text-[14px] leading-[1.65] text-white/80"
-                >
-                  <span
-                    className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: rgb(accent, 0.9) }}
-                  />
-                  <span>{signal}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {insideActivityPreviews.length > 0 ? (
-          <section className="mt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
-              Inside this activity
-            </p>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {insideActivityPreviews.map((item, index) => (
-                <span
-                  key={`${item}-${index}`}
-                  className="rounded-full border px-3 py-1.5 text-[12px] font-medium text-white/74"
-                  style={{
-                    borderColor: rgb(accent, 0.18),
-                    backgroundColor: rgb(accent, 0.09),
-                    boxShadow: `inset 0 1px 0 ${rgb(accent, 0.07)}`,
-                  }}
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
-            Quick check
-          </p>
-
-          <div className="mt-3 flex flex-wrap gap-2.5">
-            {QUICK_CHECK_OPTIONS.map((choice) => (
-              <QuickCheckPill
-                key={choice.id}
-                choice={choice}
-                active={quickCheck === choice.id}
-                accent={accent}
-                onClick={() => handleQuickCheck(choice.id)}
-              />
-            ))}
-          </div>
-
-          {quickCheck ? (
-            <div className="mt-3 rounded-[20px] border border-white/10 bg-black/16 px-3.5 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[13px] font-medium leading-relaxed text-white/72">
-                  {getQuickCheckPrompt(quickCheck)}
-                </p>
-                <span className="shrink-0 text-[12px] text-white/38">
-                  Optional
-                </span>
-              </div>
-
-              <textarea
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                rows={3}
-                placeholder={
-                  quickCheck === "not-really"
-                    ? "Tell us what feels off so we can bring in a better activity..."
-                    : "Add a quick note..."
-                }
-                className="mt-3 w-full resize-none rounded-[16px] border border-white/10 bg-white/[0.035] px-3.5 py-3 text-[14px] leading-relaxed text-white outline-none placeholder:text-white/28"
-                style={{
-                  boxShadow: `inset 0 1px 0 ${rgb(accent, 0.06)}`,
-                }}
-              />
-
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleSubmitQuickCheck}
-                  className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
-                  style={{
-                    borderColor: rgb(accent, 0.26),
-                    background: `linear-gradient(180deg, ${rgb(
-                      accent,
-                      0.22
-                    )} 0%, ${rgb(accent, 0.12)} 100%)`,
-                    boxShadow: `0 10px 24px ${rgb(accent, 0.16)}`,
-                  }}
-                >
-                  {getQuickCheckSubmitLabel(quickCheck)}
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </section>
-
-        <div className="mt-5">
-          <Link
-            href={`/main/explore/play/${activity.slug}`}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border px-4 py-3 text-[14px] font-medium text-white transition hover:translate-y-[-1px]"
-            style={{
-              borderColor: rgb(accent, 0.26),
-              background: `linear-gradient(180deg, ${rgb(
-                accent,
-                0.22
-              )} 0%, ${rgb(accent, 0.12)} 100%)`,
-              boxShadow: `0 10px 28px ${rgb(accent, 0.18)}`,
-            }}
+        <div className="mt-4 sm:hidden">
+          <button
+            type="button"
+            onClick={() => onDismiss(activity.id)}
+            className="inline-flex rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12]"
           >
-            Explore this activity
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+            Not for me
+          </button>
         </div>
+
+        <div className="relative mt-6">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{
+              background: `linear-gradient(90deg, transparent 0%, ${rgb(
+                atmosphere.tryGlow,
+                0.2
+              )} 18%, ${rgb(atmosphere.tryGlow, 0.06)} 82%, transparent 100%)`,
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowTryDrawer((current) => !current)}
+            aria-expanded={showTryDrawer}
+            className="relative w-full px-1 pt-3 text-left"
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-full"
+              style={{
+                background: `radial-gradient(circle at 12% 26%, ${rgb(
+                  atmosphere.tryGlow,
+                  showTryDrawer ? 0.1 : 0.06
+                )} 0%, transparent 34%), radial-gradient(circle at 92% 82%, ${rgb(
+                  atmosphere.tryGlow,
+                  showTryDrawer ? 0.08 : 0.04
+                )} 0%, transparent 26%)`,
+              }}
+            />
+            <div className="relative flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <CardSectionHeader color={atmosphere.tryGlow}>
+                  Try this for real
+                </CardSectionHeader>
+
+                <p className="mt-3 text-[16px] font-medium leading-[1.45] text-white">
+                  {tryItem.title}
+                </p>
+
+                <p className="mt-1 text-[13px] leading-[1.55] text-white/68">
+                  Start small. See whether the energy gets stronger when this
+                  path becomes real.
+                </p>
+              </div>
+
+              <span
+                className="inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[13px] font-medium text-white/90"
+                style={{
+                  borderColor: rgb(atmosphere.tryGlow, 0.16),
+                  backgroundColor: rgb(atmosphere.tryGlow, 0.08),
+                }}
+              >
+                {showTryDrawer ? "Hide details" : "See details"}
+                <ChevronDown
+                  className={[
+                    "h-4 w-4 transition-transform duration-200",
+                    showTryDrawer ? "rotate-180" : "",
+                  ].join(" ")}
+                />
+              </span>
+            </div>
+          </button>
+
+          {showTryDrawer ? (
+            <InlineTryPlayDetails atmosphere={atmosphere} item={tryItem} />
+          ) : null}
+        </div>
+
+        <PlayPathForwardSection activity={activity} atmosphere={atmosphere} />
       </div>
     </article>
   );
 }
 
 export default function PlayExplorePage() {
-  const [firstName, setFirstName] = React.useState<string | null>(null);
+  const [profile, setProfile] = React.useState<PlayProfileSignals>({
+    firstName: null,
+    motivations: [],
+    strengths: [],
+    skills: [],
+    fullText: "",
+  });
   const [dismissedActivityIds, setDismissedActivityIds] = React.useState<
     string[]
   >([]);
 
   React.useEffect(() => {
-    setFirstName(readStoredFirstName());
+    setProfile(readStoredPlaySignals());
   }, []);
 
-  const allActivities = React.useMemo(() => PLAY_ACTIVITIES, []);
-
   const visibleActivities = React.useMemo(() => {
-    return allActivities
-      .filter((activity) => !dismissedActivityIds.includes(activity.id))
-      .slice(0, MAX_VISIBLE_PLAY_ACTIVITIES);
-  }, [allActivities, dismissedActivityIds]);
+    return PLAY_ACTIVITIES.map((activity, index) => ({
+      activity,
+      score: getSignalStrength(activity, profile),
+      index,
+    }))
+      .filter((item) => !dismissedActivityIds.includes(item.activity.id))
+      .sort((a, b) =>
+        b.score !== a.score ? b.score - a.score : a.index - b.index
+      )
+      .slice(0, MAX_VISIBLE_PLAY_ACTIVITIES)
+      .map((item) => item.activity);
+  }, [profile, dismissedActivityIds]);
 
   function handleDismissActivity(activityId: string) {
     setDismissedActivityIds((current) =>
@@ -976,28 +1445,32 @@ export default function PlayExplorePage() {
             Things I could get into
           </p>
 
-          <ExploreLaneTabs />
+          <ExploreLaneTabs
+            lanes={EXPLORE_LANES}
+            activeClassName="border-pink-300/30 bg-pink-300/[0.12] text-pink-50 shadow-[0_0_0_1px_rgba(249,168,212,0.06)]"
+          />
         </div>
       </section>
 
-      <PlayIntroPanel firstName={firstName} />
+      <PlayIntroPanel firstName={profile.firstName} />
 
-      <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5">
+      <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
         {visibleActivities.map((activity) => (
           <PlayActivityCard
             key={activity.id}
             activity={activity}
+            profile={profile}
             onDismiss={handleDismissActivity}
           />
         ))}
 
-        {allActivities.length === 0 ? (
+        {PLAY_ACTIVITIES.length === 0 ? (
           <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
             No play activities are registered yet.
           </div>
         ) : null}
 
-        {allActivities.length > 0 && visibleActivities.length === 0 ? (
+        {PLAY_ACTIVITIES.length > 0 && visibleActivities.length === 0 ? (
           <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
             You&apos;ve cleared the current set of play activities.
           </div>
