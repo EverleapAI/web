@@ -1609,10 +1609,20 @@ export default function WorkExplorePage() {
   }, []);
 
   const allPaths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
-  const visiblePaths = React.useMemo(
-    () => allPaths.slice(0, MAX_VISIBLE_WORK_PATHS),
-    [allPaths]
-  );
+  const visiblePaths = React.useMemo(() => {
+  return allPaths
+    .map((path, index) => ({
+      path,
+      index,
+      score: getSignalStrength(path, profile),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.index - b.index; // stable tie-break (prevents jitter)
+    })
+    .slice(0, MAX_VISIBLE_WORK_PATHS)
+    .map((item) => item.path);
+}, [allPaths, profile]);
 
   return (
     <div className={pagePadding()}>
