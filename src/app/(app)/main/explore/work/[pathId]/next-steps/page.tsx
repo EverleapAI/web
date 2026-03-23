@@ -3,574 +3,353 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  ArrowRight,
+  ArrowUpRight,
+  Compass,
   MapPin,
   Monitor,
-  Rocket,
   Sparkles,
-  Puzzle,
-  CalendarDays,
 } from "lucide-react";
 
 import { requireWorkPath } from "../../_data/workPaths";
-import {
-  getWorkAgenticOpening,
-  readStoredFirstName,
-} from "../../_data/getWorkAgenticOpening";
-import { WorkPathSubnav } from "../../components/WorkPathSubnav";
+
+/* =============================================================================
+   Types
+============================================================================= */
+
+type OpportunityItem = {
+  id: string;
+  title: string;
+  href: string;
+  note: string;
+  badge?: string;
+};
+
+type OpportunitySection = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  icon: "local" | "remote";
+  items: OpportunityItem[];
+};
 
 /* =============================================================================
    Helpers
 ============================================================================= */
 
-function rgb(value: { r: number; g: number; b: number }, alpha = 1) {
-  return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
+function normalizeParam(value: string | string[] | undefined) {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
-function shellSurface(dark: boolean) {
-  return dark
-    ? "border border-white/10 bg-white/[0.055] backdrop-blur-2xl"
-    : "border border-black/10 bg-white/80 backdrop-blur-2xl";
-}
-
-function textMain(dark: boolean) {
-  return dark ? "text-white/92" : "text-slate-950";
-}
-
-function textSoft(dark: boolean) {
-  return dark ? "text-white/70" : "text-slate-700";
-}
-
-function textFaint(dark: boolean) {
-  return dark ? "text-white/50" : "text-slate-500";
-}
-
-function orbBase() {
-  return "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl";
-}
-
-function metaChip() {
-  return "inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60";
-}
-
-function sectionKicker(dark: boolean) {
-  return `text-[11px] font-semibold uppercase tracking-[0.2em] ${textFaint(dark)}`;
-}
-
-function actionIcon(index: number) {
-  if (index === 0) return Sparkles;
-  if (index === 1) return Puzzle;
-  return Rocket;
-}
-
-function opportunityIcon(mode: string, index: number) {
-  if (mode === "local") {
-    return index % 2 === 0 ? MapPin : CalendarDays;
+function sectionIcon(icon: OpportunitySection["icon"]) {
+  if (icon === "local") {
+    return <MapPin className="h-4 w-4" />;
   }
-  return index % 2 === 0 ? Monitor : Rocket;
+
+  return <Monitor className="h-4 w-4" />;
 }
 
-function sectionIntroTone(groupId: string) {
-  if (groupId === "self-starters") {
-    return "Small moves create the fastest signal. The point is not to commit your whole identity — it is to see whether the work gets more alive when you touch it directly.";
-  }
-  if (groupId === "near-you") {
-    return "Real places change the feeling of a path. Once you can see people building, gathering, or learning in the same world, the idea becomes much less abstract.";
-  }
-  return "Online doors are useful when you want momentum now. These work best when they pull you toward making, showing, or joining — not just reading forever.";
+/* =============================================================================
+   Software developer opportunities
+============================================================================= */
+
+const SOFTWARE_DEVELOPER_SECTIONS: OpportunitySection[] = [
+  {
+    id: "local",
+    eyebrow: "Near 94901",
+    title: "Real-world ways in around Marin and the Bay",
+    description:
+      "These are the kinds of places where this path stops being theoretical. Some are year-round, some are event-based, and some are seasonal — but all of them can get you closer to actually doing the work.",
+    icon: "local",
+    items: [
+      {
+        id: "marin-library-lab",
+        title: "The Lab at Marin County Free Library",
+        href: "https://marinlibrary.org/the-lab/",
+        note:
+          "A real Marin makerspace with coding, tech, and build-oriented tools. Great if you want a nearby place to start making things instead of just reading about them.",
+        badge: "Local",
+      },
+      {
+        id: "esporterz",
+        title: "Esporterz Marin STEM, Coding & Robotics",
+        href: "https://www.esporterz.com/",
+        note:
+          "Marin-based esports and STEM center with coding and robotics programs for kids and teens. Strong option if you want a social, in-person entry point.",
+        badge: "Local",
+      },
+      {
+        id: "dominican-idtech",
+        title: "iD Tech Camps at Dominican University, San Rafael",
+        href: "https://www.idtech.com/locations/california-summer-camps/dominican-university",
+        note:
+          "Coding, game development, robotics, and tech camps in San Rafael. More structured and seasonal, but very tangible.",
+        badge: "Seasonal",
+      },
+      {
+        id: "codeday-bay-area",
+        title: "CodeDay Bay Area",
+        href: "https://event.codeday.org/ba",
+        note:
+          "One of the most beginner-friendly ways to actually build something with other students. Good for meeting peers and shipping a first project.",
+        badge: "Bay Area",
+      },
+      {
+        id: "bapc",
+        title: "Bay Area Programming Contest",
+        href: "https://bapc.gunncpc.com/",
+        note:
+          "A Bay Area programming contest designed for high school students at different levels. Best if you want a more challenge-oriented route.",
+        badge: "High School",
+      },
+      {
+        id: "marin-library-teen-leadership",
+        title: "Marin County Free Library Teen Leadership & Volunteer Opportunities",
+        href: "https://marinlibrary.org/teen-volunteer-leadership-opportunities/",
+        note:
+          "Not software-only, but a real local route to responsibility, community involvement, and leadership — useful if you want nearby experience while building technical skills on the side.",
+        badge: "Local",
+      },
+    ],
+  },
+  {
+    id: "remote",
+    eyebrow: "Online / Remote",
+    title: "Start from anywhere, including tonight",
+    description:
+      "These are live links to real communities, programs, tutorials, and events that can get a teen building, learning, or meeting people in this field right now.",
+    icon: "remote",
+    items: [
+      {
+        id: "hack-club",
+        title: "Hack Club",
+        href: "https://hackclub.com/",
+        note:
+          "One of the best real communities for high school coders. Join a club, start one, build projects, and find other teens who are already making things.",
+        badge: "Community",
+      },
+      {
+        id: "hack-club-hackathons",
+        title: "Hack Club Hackathons",
+        href: "https://hackathons.hackclub.com/",
+        note:
+          "Live list of upcoming high school hackathons. Good if you want a deadline, teammates, and a real reason to build something fast.",
+        badge: "Events",
+      },
+      {
+        id: "girls-who-code-pathways",
+        title: "Girls Who Code Pathways",
+        href: "https://girlswhocode.com/programs/pathways",
+        note:
+          "Free online coding pathway for high school students. Strong option for beginners who want structure and community, especially girls and nonbinary students.",
+        badge: "Free",
+      },
+      {
+        id: "mit-app-inventor",
+        title: "MIT App Inventor Beginner Tutorials",
+        href: "https://appinventor.mit.edu/explore/ai2/beginner-videos",
+        note:
+          "One of the fastest ways to go from zero to making an app. Great for a first tangible project that feels real quickly.",
+        badge: "Beginner",
+      },
+      {
+        id: "kaggle-learn",
+        title: "Kaggle Learn",
+        href: "https://www.kaggle.com/learn",
+        note:
+          "Free, practical coding and data lessons. Good if you want short, hands-on modules instead of a giant course that drags on forever.",
+        badge: "Free",
+      },
+      {
+        id: "mlh-events",
+        title: "Major League Hacking Event Schedule",
+        href: "https://www.mlh.com/seasons/2026/events",
+        note:
+          "Live schedule of hackathons and digital events. Some skew older, but it is still a strong place to see where the student builder world is moving.",
+        badge: "Live events",
+      },
+      {
+        id: "codeday",
+        title: "CodeDay",
+        href: "https://www.codeday.org/",
+        note:
+          "Beginner-friendly student coding events and programs. Good if you want momentum without needing to already feel like an expert.",
+        badge: "Beginner-friendly",
+      },
+      {
+        id: "girls-who-code-home",
+        title: "Girls Who Code Programs",
+        href: "https://girlswhocode.com/programs",
+        note:
+          "Broader hub for clubs, summer programs, and online options. Worth checking if you want more than one way in.",
+        badge: "Programs",
+      },
+    ],
+  },
+];
+
+/* =============================================================================
+   UI
+============================================================================= */
+
+function OpportunitySectionBlock({ section }: { section: OpportunitySection }) {
+  return (
+    <section className="space-y-5">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 rounded-2xl border border-white/10 bg-white/8 p-2 text-white/86">
+          {sectionIcon(section.icon)}
+        </div>
+
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100/72">
+            {section.eyebrow}
+          </div>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+            {section.title}
+          </h2>
+          <p className="mt-3 max-w-3xl text-[15px] leading-7 text-white/72">
+            {section.description}
+          </p>
+        </div>
+      </div>
+
+      <div className="divide-y divide-white/8 rounded-[28px] border border-white/10 bg-white/[0.04] px-4 sm:px-5">
+        {section.items.map((item) => (
+          <a
+            key={item.id}
+            href={item.href}
+            target="_blank"
+            rel="noreferrer"
+            className="group flex items-start gap-4 py-4 transition first:pt-4 last:pb-4 hover:bg-white/[0.02]"
+          >
+            <div className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.55)]" />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[15px] font-semibold text-white transition group-hover:text-cyan-100">
+                  {item.title}
+                </h3>
+
+                {item.badge ? (
+                  <span className="rounded-full border border-white/10 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/58">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </div>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-white/72">
+                {item.note}
+              </p>
+            </div>
+
+            <div className="mt-1 shrink-0 text-white/42 transition group-hover:translate-x-0.5 group-hover:text-white">
+              <ArrowUpRight className="h-4 w-4" />
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 /* =============================================================================
    Page
 ============================================================================= */
 
-export default function WorkPathNextStepsPage() {
-  const params = useParams<{ pathId: string }>();
-  const pathId = typeof params?.pathId === "string" ? params.pathId : "";
+export default function WorkNextStepsPage() {
+  const router = useRouter();
+  const params = useParams();
+  const pathId = normalizeParam(params?.pathId);
 
   if (!pathId) notFound();
 
-  let path;
-  try {
-    path = requireWorkPath(pathId);
-  } catch {
-    notFound();
-  }
+  const workPath = requireWorkPath(pathId);
+  const isSoftwareDeveloper = workPath.id === "software-developer";
 
-  const dark = true;
-  const [firstName, setFirstName] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    setFirstName(readStoredFirstName());
-  }, []);
-
-  const opening = React.useMemo(
-    () =>
-      getWorkAgenticOpening({
-        pageKind: "nextSteps",
-        pathId: path.id,
-        firstName,
-      }),
-    [path.id, firstName]
-  );
-
-  const selfStarters = path.nextSteps.actions.slice(0, 2);
-
-  const localGroup =
-    path.nextSteps.opportunityGroups?.find((group) => group.id === "near-you") ??
-    path.nextSteps.opportunityGroups?.find((group) =>
-      group.items.some((item) => item.mode === "local")
-    );
-
-  const onlineGroup =
-    path.nextSteps.opportunityGroups?.find((group) => group.id === "online-now") ??
-    path.nextSteps.opportunityGroups?.find((group) =>
-      group.items.some((item) => item.mode === "virtual")
-    );
-
-  const localItems = localGroup?.items.slice(0, 4) ?? [];
-  const onlineItems = onlineGroup?.items.slice(0, 4) ?? [];
+  const sections = isSoftwareDeveloper ? SOFTWARE_DEVELOPER_SECTIONS : [];
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(circle at 16% 20%, ${rgb(path.theme.accent, 0.18)} 0%, transparent 30%),
-              radial-gradient(circle at 82% 16%, ${rgb(path.theme.glow, 0.18)} 0%, transparent 28%),
-              radial-gradient(circle at 68% 78%, ${rgb(path.theme.accentStrong, 0.14)} 0%, transparent 30%),
-              linear-gradient(180deg, rgba(4,10,18,0.96) 0%, rgba(7,17,31,0.98) 40%, rgba(4,9,18,1) 100%)
-            `,
-          }}
-        />
-      </div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(87,83,255,0.18),_transparent_30%),radial-gradient(circle_at_20%_32%,_rgba(56,189,248,0.12),_transparent_28%),radial-gradient(circle_at_80%_22%,_rgba(244,114,182,0.1),_transparent_24%),linear-gradient(180deg,_#0a1222_0%,_#07111f_42%,_#050b16_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-56 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent)]" />
+      <div className="absolute left-[-8rem] top-24 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="absolute right-[-6rem] top-16 h-72 w-72 rounded-full bg-violet-500/12 blur-3xl" />
+      <div className="absolute bottom-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-fuchsia-500/8 blur-3xl" />
 
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-        <Link
-          href={`/main/explore/work/${path.slug}`}
-          className={[
-            "inline-flex w-fit items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition",
-            shellSurface(dark),
-            textSoft(dark),
-            "hover:bg-white/[0.08]",
-          ].join(" ")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to overview
-        </Link>
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/6 px-3 py-2 text-sm font-medium text-white/86 transition hover:border-white/22 hover:bg-white/10"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+        </div>
 
-        <WorkPathSubnav pathSlug={path.slug} />
+        <section className="relative overflow-hidden rounded-[32px] border border-white/12 bg-[linear-gradient(160deg,rgba(16,24,40,0.9)_0%,rgba(18,32,57,0.88)_36%,rgba(25,22,49,0.82)_100%)] px-5 py-6 shadow-[0_20px_90px_rgba(0,0,0,0.34)] sm:px-7 sm:py-7">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-y-0 right-0 w-[50%] bg-[radial-gradient(circle_at_28%_26%,rgba(56,189,248,0.26),transparent_32%),radial-gradient(circle_at_64%_48%,rgba(168,85,247,0.22),transparent_34%),radial-gradient(circle_at_72%_78%,rgba(244,114,182,0.16),transparent_24%)]" />
+            <div className="absolute left-0 top-0 h-20 w-full bg-[linear-gradient(180deg,rgba(255,255,255,0.06),transparent)]" />
+          </div>
 
-        <section
-          className={[
-            "relative overflow-hidden rounded-[32px] px-6 py-8",
-            shellSurface(dark),
-            "shadow-[0_30px_120px_rgba(0,0,0,0.34)]",
-          ].join(" ")}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-90"
-            style={{
-              background: `
-                radial-gradient(circle at 14% 18%, ${rgb(path.theme.accent, 0.16)} 0%, transparent 30%),
-                radial-gradient(circle at 84% 18%, ${rgb(path.theme.glow, 0.14)} 0%, transparent 28%)
-              `,
-            }}
-          />
-
-          <div className="relative max-w-4xl">
-            <div className={sectionKicker(dark)}>Next steps</div>
-
-            <h1
-              className={`mt-3 text-4xl font-semibold tracking-tight sm:text-5xl ${textMain(
-                dark
-              )}`}
-            >
-              {path.nextSteps.title}
-            </h1>
-
-            <p className={`mt-4 max-w-3xl text-lg leading-8 ${textSoft(dark)}`}>
-              {path.nextSteps.summary}
-            </p>
-
-            <div className="mt-7 max-w-3xl rounded-[26px] border border-white/10 bg-white/[0.05] px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
-                Why these first moves matter
+          <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0 max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/18 bg-cyan-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100/90">
+                <Compass className="h-3.5 w-3.5" />
+                Next steps
               </div>
-              <p className="mt-2 text-[15px] leading-7 text-white/90 sm:text-[16px]">
-                {opening.intro}
+
+              <h1 className="mt-4 text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-white sm:text-[3.2rem]">
+                There are real ways into{" "}
+                <span className="bg-gradient-to-r from-cyan-200 via-white to-violet-200 bg-clip-text text-transparent">
+                  {workPath.card.title}
+                </span>{" "}
+                right now
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-white/82">
+                You do not need to wait until college, until you feel ready, or until
+                someone hands you permission. There are real places to build, learn,
+                meet people, and start moving now. Pick one. Click through. Get involved.
               </p>
-              <p className="mt-2 text-sm leading-7 text-white/70 sm:text-[15px]">
-                {opening.body}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-white/62 sm:text-[15px]">
-                {opening.bridge}
-              </p>
+            </div>
+
+            <div className="shrink-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-medium text-white/88">
+                <Sparkles className="h-4 w-4 text-cyan-200" />
+                Why wait?
+              </div>
             </div>
           </div>
         </section>
 
-        {selfStarters.length ? (
-          <section
-            className={[
-              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div className={sectionKicker(dark)}>Start on your own</div>
-
-            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
-              Begin where the path feels closest
+        {sections.length ? (
+          <div className="space-y-10">
+            {sections.map((section) => (
+              <OpportunitySectionBlock key={section.id} section={section} />
+            ))}
+          </div>
+        ) : (
+          <section className="rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/62">
+              Next steps
+            </div>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+              This path still needs live opportunity links
             </h2>
-
-            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-              {sectionIntroTone("self-starters")}
+            <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/74">
+              The new Next Steps page is designed to land the plane with real local and
+              remote opportunities. This path has not been migrated yet.
             </p>
-
-            <div className="mt-6 divide-y divide-white/8">
-              {selfStarters.map((action, index) => {
-                const Icon = actionIcon(index);
-
-                return (
-                  <div key={action.id} className={index === 0 ? "pb-6" : "pt-6"}>
-                    <div className="flex items-start gap-4">
-                      <div className={orbBase()}>
-                        <Icon className="h-4 w-4 text-white/75" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <div className={`text-base font-semibold ${textMain(dark)}`}>
-                            {action.title}
-                          </div>
-
-                          {index === 0 ? (
-                            <span className={metaChip()}>First move</span>
-                          ) : null}
-
-                          {action.timeEstimate ? (
-                            <span className={metaChip()}>{action.timeEstimate}</span>
-                          ) : null}
-
-                          {action.effort ? (
-                            <span className={metaChip()}>{action.effort}</span>
-                          ) : null}
-                        </div>
-
-                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                          {action.whyThisMatters}
-                        </p>
-
-                        <div className="mt-4">
-                          <div className={sectionKicker(dark)}>One way to test it</div>
-                          <div className="mt-2 space-y-2">
-                            {action.instructions.map((instruction) => (
-                              <div
-                                key={instruction}
-                                className={`text-sm leading-6 ${textSoft(dark)}`}
-                              >
-                                {instruction}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </section>
-        ) : null}
-
-        {localGroup ? (
-          <section
-            className={[
-              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div className={sectionKicker(dark)}>Near you</div>
-
-            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
-              Let the world get more concrete
-            </h2>
-
-            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-              {sectionIntroTone("near-you")}
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className={metaChip()}>{localItems.length} local options</span>
-              <span className={metaChip()}>In-person energy</span>
-            </div>
-
-            <div className="mt-6 divide-y divide-white/8">
-              {localItems.map((item, index) => {
-                const Icon = opportunityIcon(item.mode, index);
-
-                const content = (
-                  <div
-                    className={[
-                      index === 0 ? "pb-6" : "pt-6",
-                      item.href
-                        ? "transition duration-200 hover:translate-x-[2px]"
-                        : "",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={orbBase()}>
-                        <Icon className="h-4 w-4 text-white/75" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <div className={`text-base font-semibold ${textMain(dark)}`}>
-                            {item.title}
-                          </div>
-
-                          <span className={metaChip()}>Local</span>
-
-                          {item.locationLabel ? (
-                            <span className={metaChip()}>{item.locationLabel}</span>
-                          ) : null}
-
-                          {item.distanceLabel ? (
-                            <span className={metaChip()}>{item.distanceLabel}</span>
-                          ) : null}
-                        </div>
-
-                        {item.provider ? (
-                          <div className={`mt-2 text-sm ${textFaint(dark)}`}>{item.provider}</div>
-                        ) : null}
-
-                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                          {item.summary}
-                        </p>
-
-                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                          <span className="font-semibold text-white/84">Why it helps:</span>{" "}
-                          {item.whyItHelps}
-                        </p>
-
-                        {item.href ? (
-                          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
-                            Open resource
-                            <ArrowUpRightMini />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                );
-
-                return item.href ? (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block"
-                  >
-                    {content}
-                  </a>
-                ) : (
-                  <div key={item.id}>{content}</div>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-
-        {onlineGroup ? (
-          <section
-            className={[
-              "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div className={sectionKicker(dark)}>Online</div>
-
-            <h2 className={`mt-2 text-[24px] font-semibold tracking-tight ${textMain(dark)}`}>
-              Open a door today
-            </h2>
-
-            <p className={`mt-3 max-w-3xl text-sm leading-6 ${textSoft(dark)}`}>
-              {sectionIntroTone("online-now")}
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className={metaChip()}>{onlineItems.length} online options</span>
-              <span className={metaChip()}>Start right away</span>
-            </div>
-
-            <div className="mt-6 divide-y divide-white/8">
-              {onlineItems.map((item, index) => {
-                const Icon = opportunityIcon(item.mode, index);
-
-                const content = (
-                  <div
-                    className={[
-                      index === 0 ? "pb-6" : "pt-6",
-                      item.href
-                        ? "transition duration-200 hover:translate-x-[2px]"
-                        : "",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={orbBase()}>
-                        <Icon className="h-4 w-4 text-white/75" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <div className={`text-base font-semibold ${textMain(dark)}`}>
-                            {item.title}
-                          </div>
-
-                          <span className={metaChip()}>Online</span>
-
-                          {item.formatLabel ? (
-                            <span className={metaChip()}>{item.formatLabel}</span>
-                          ) : null}
-                        </div>
-
-                        {item.provider ? (
-                          <div className={`mt-2 text-sm ${textFaint(dark)}`}>{item.provider}</div>
-                        ) : null}
-
-                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                          {item.summary}
-                        </p>
-
-                        <p className={`mt-3 text-sm leading-6 ${textSoft(dark)}`}>
-                          <span className="font-semibold text-white/84">Why it helps:</span>{" "}
-                          {item.whyItHelps}
-                        </p>
-
-                        {item.href ? (
-                          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/82">
-                            Open resource
-                            <ArrowUpRightMini />
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                );
-
-                return item.href ? (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block"
-                  >
-                    {content}
-                  </a>
-                ) : (
-                  <div key={item.id}>{content}</div>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-
-        <section
-          className={[
-            "rounded-[28px] px-5 py-5 sm:px-6 sm:py-6",
-            shellSurface(dark),
-          ].join(" ")}
-        >
-          <p className={`max-w-3xl text-sm leading-7 ${textSoft(dark)}`}>
-            The point is not to do all of this. Pick one move that feels interesting,
-            believable, and close enough to try — then notice whether the path becomes
-            more magnetic once you are a little nearer to the work itself.
-          </p>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-2">
-          <Link
-            href={`/main/explore/work/${path.slug}/day`}
-            className={[
-              "group rounded-[26px] px-5 py-5 transition hover:bg-white/[0.08]",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Day in the life
-            </div>
-
-            <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
-              {path.dayInLife.title}
-            </div>
-
-            <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-              {path.dayInLife.summary}
-            </p>
-
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              See the rhythm
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-
-          <Link
-            href={`/main/explore/work/${path.slug}/forecast`}
-            className={[
-              "group rounded-[26px] px-5 py-5 transition hover:bg-white/[0.08]",
-              shellSurface(dark),
-            ].join(" ")}
-          >
-            <div
-              className={`text-[11px] uppercase tracking-[0.2em] ${textFaint(dark)}`}
-            >
-              Forecast
-            </div>
-
-            <div className={`mt-2 text-xl font-semibold ${textMain(dark)}`}>
-              {path.forecast.title}
-            </div>
-
-            <p className={`mt-2 text-sm leading-6 ${textSoft(dark)}`}>
-              {path.forecast.summary}
-            </p>
-
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80 group-hover:text-white">
-              See the arc
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-        </section>
+        )}
       </div>
     </main>
-  );
-}
-
-function ArrowUpRightMini() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path
-        d="M6 14L14 6M8 6H14V12"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

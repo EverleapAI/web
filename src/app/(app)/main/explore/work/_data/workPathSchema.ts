@@ -158,7 +158,7 @@ export type WorkPathDayInLife = {
 };
 
 /* =============================================================================
-   Forecast
+   Forecast (existing / backward-compatible)
 ============================================================================= */
 
 export type WorkPathForecastStage = {
@@ -179,6 +179,73 @@ export type WorkPathForecast = {
   summary: string;
 
   stages: WorkPathForecastStage[];
+};
+
+/* =============================================================================
+   Forecast V2 (new industry-trends model)
+============================================================================= */
+
+export type WorkPathForecastMetricTone =
+  | "positive"
+  | "mixed"
+  | "warning"
+  | "neutral";
+
+export type WorkPathForecastMetric = {
+  id: string;
+  label: string;
+  value: string;
+  tone?: WorkPathForecastMetricTone;
+  note: string;
+};
+
+export type WorkPathForecastSalaryRange = {
+  low: string;
+  median: string;
+  high: string;
+  note?: string;
+};
+
+export type WorkPathForecastIndustryOutlook = {
+  sourceLabel: string;
+  sourceUrl: string;
+  growthPercent?: string;
+  annualOpenings?: string;
+  medianPay?: string;
+  educationTypical?: string;
+};
+
+export type WorkPathForecastAiImpact = {
+  level: "low" | "medium" | "high";
+  summary: string;
+  helpsWith: string[];
+  putsPressureOn: string[];
+  humansStillOwn: string[];
+};
+
+export type WorkPathForecastV2 = {
+  outlookLabel:
+    | "Rising"
+    | "Strong but changing"
+    | "Mixed"
+    | "Shifting fast"
+    | "Under pressure";
+
+  outlookSummary: string;
+
+  metrics: WorkPathForecastMetric[];
+
+  salaryRange: WorkPathForecastSalaryRange;
+
+  industry: WorkPathForecastIndustryOutlook;
+
+  whatIsGrowing: string[];
+  whatIsUnderPressure: string[];
+
+  aiImpact: WorkPathForecastAiImpact;
+
+  whyThisCouldFeelExciting: string[];
+  whyThisCouldFeelRisky: string[];
 };
 
 /* =============================================================================
@@ -322,6 +389,8 @@ export type WorkPathContent = {
   dayInLife: WorkPathDayInLife;
 
   forecast: WorkPathForecast;
+
+  forecastV2?: WorkPathForecastV2;
 
   nextSteps: WorkPathNextSteps;
 
