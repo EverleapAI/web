@@ -1,3 +1,5 @@
+// apps/web/src/app/(app)/main/explore/work/_data/mock/softwareDeveloperPath.ts
+
 import type { WorkPathContent } from "../workPathSchema";
 
 export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
@@ -112,10 +114,100 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
       slug: "product-engineer",
       title: "Product Engineer",
       oneLiner:
-        "Moves between user needs, interface decisions, and technical implementation to help shape the product itself.",
+        "Moves between user needs, interface decisions, and technical implementation to shape the product itself.",
       whyItCouldFit:
         "Great for someone who likes building with context — not just coding features, but understanding why the feature matters.",
       energy: "craft",
+    },
+    {
+      id: "full-stack-developer",
+      slug: "full-stack-developer",
+      title: "Full-Stack Developer",
+      oneLiner:
+        "Builds across both front-end and back-end to create complete working products.",
+      whyItCouldFit:
+        "Great for someone who likes seeing the full picture and moving fluidly between interface and system logic.",
+      energy: "builder",
+    },
+    {
+      id: "mobile-developer",
+      slug: "mobile-developer",
+      title: "Mobile Developer",
+      oneLiner:
+        "Builds apps for phones and tablets with a focus on performance and user experience.",
+      whyItCouldFit:
+        "Great for someone who notices how apps feel in the hand and wants to shape that experience directly.",
+      energy: "high-creative",
+    },
+    {
+      id: "game-developer",
+      slug: "game-developer",
+      title: "Game Developer",
+      oneLiner:
+        "Builds interactive systems, mechanics, and player experiences inside games.",
+      whyItCouldFit:
+        "Great for someone who likes systems, creativity, and designing how people interact with challenges and worlds.",
+      energy: "creative",
+    },
+    {
+      id: "ai-ml-engineer",
+      slug: "ai-ml-engineer",
+      title: "AI / ML Engineer",
+      oneLiner:
+        "Builds systems that learn from data and automate decisions or predictions.",
+      whyItCouldFit:
+        "Great for someone curious about intelligence, patterns, and how systems can adapt instead of being fully hard-coded.",
+      energy: "logic",
+    },
+    {
+      id: "data-engineer",
+      slug: "data-engineer",
+      title: "Data Engineer",
+      oneLiner:
+        "Builds pipelines and systems that collect, organize, and move data reliably.",
+      whyItCouldFit:
+        "Great for someone who likes structure, scale, and making large flows of information usable.",
+      energy: "systems",
+    },
+    {
+      id: "devops-engineer",
+      slug: "devops-engineer",
+      title: "DevOps / Platform Engineer",
+      oneLiner:
+        "Builds infrastructure that lets software deploy, scale, and run smoothly.",
+      whyItCouldFit:
+        "Great for someone who cares about reliability, performance, and how systems behave in real environments.",
+      energy: "systems",
+    },
+    {
+      id: "security-engineer",
+      slug: "security-engineer",
+      title: "Security Engineer",
+      oneLiner:
+        "Protects systems, data, and users by finding and fixing vulnerabilities.",
+      whyItCouldFit:
+        "Great for someone who thinks adversarially and enjoys uncovering hidden weaknesses.",
+      energy: "logic",
+    },
+    {
+      id: "qa-automation-engineer",
+      slug: "qa-automation-engineer",
+      title: "QA / Automation Engineer",
+      oneLiner:
+        "Builds tests and systems that ensure software works reliably under real conditions.",
+      whyItCouldFit:
+        "Great for someone detail-oriented who likes catching edge cases and improving quality.",
+      energy: "structured",
+    },
+    {
+      id: "developer-tools-engineer",
+      slug: "developer-tools-engineer",
+      title: "Developer Tools Engineer",
+      oneLiner:
+        "Builds tools that help other developers work faster and more effectively.",
+      whyItCouldFit:
+        "Great for someone who enjoys improving workflows and making complex work easier for others.",
+      energy: "builder",
     },
   ],
 
@@ -195,6 +287,177 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
       atmosphere:
         "Fast-moving and practical — strong for people who want code to stay close to real human use.",
     },
+    {
+  id: "full-stack-developer",
+  slug: "full-stack-developer",
+  title: "Full-Stack Developer",
+  summary:
+    "Builds complete applications from front to back — connecting user experience to data and systems.",
+  whatYouActuallyDo: [
+    "Build UI and backend systems that work together",
+    "Design APIs and connect them to interfaces",
+    "Ship full features end-to-end",
+  ],
+  skillsThatGrowHere: ["Versatility", "Systems Thinking", "Integration"],
+  starterProjects: [
+    "Build a full app (frontend + backend)",
+    "Create a login/auth system",
+    "Deploy a working product online",
+  ],
+  atmosphere: "Fast-moving, holistic, product-focused",
+},
+{
+  id: "mobile-developer",
+  slug: "mobile-developer",
+  title: "Mobile Developer",
+  summary:
+    "Designs and builds apps that live on phones — optimized for touch, speed, and real-world use.",
+  whatYouActuallyDo: [
+    "Build iOS and/or Android apps",
+    "Design responsive mobile experiences",
+    "Optimize performance and battery use",
+  ],
+  skillsThatGrowHere: ["User Experience", "Performance", "Platform Design"],
+  starterProjects: [
+    "Build a simple iOS or Android app",
+    "Create a habit tracker or game",
+    "Publish an app to the app store",
+  ],
+  atmosphere: "User-focused, tactile, real-world impact",
+},
+{
+  id: "game-developer",
+  slug: "game-developer",
+  title: "Game Developer",
+  summary:
+    "Creates interactive worlds, systems, and mechanics that players experience in real time.",
+  whatYouActuallyDo: [
+    "Design gameplay mechanics and systems",
+    "Build interactive environments",
+    "Optimize performance for real-time play",
+  ],
+  skillsThatGrowHere: ["Creativity", "Physics/Systems", "Iteration"],
+  starterProjects: [
+    "Build a simple 2D game",
+    "Create a physics-based mechanic",
+    "Use Unity or Unreal to prototype a game",
+  ],
+  atmosphere: "Creative, experimental, highly iterative",
+},
+{
+  id: "ai-ml-engineer",
+  slug: "ai-ml-engineer",
+  title: "AI / ML Engineer",
+  summary:
+    "Builds systems that learn from data — powering recommendations, predictions, and intelligent behavior.",
+  whatYouActuallyDo: [
+    "Train and deploy machine learning models",
+    "Work with large datasets",
+    "Integrate AI into real products",
+  ],
+  skillsThatGrowHere: ["Data Thinking", "Math/Logic", "Modeling"],
+  starterProjects: [
+    "Train a simple prediction model",
+    "Build a recommendation engine",
+    "Use an API to add AI features to an app",
+  ],
+  atmosphere: "Analytical, experimental, future-facing",
+},
+{
+  id: "data-engineer",
+  slug: "data-engineer",
+  title: "Data Engineer",
+  summary:
+    "Builds the pipelines and infrastructure that move and organize data behind the scenes.",
+  whatYouActuallyDo: [
+    "Design data pipelines and systems",
+    "Clean and structure large datasets",
+    "Ensure data flows reliably",
+  ],
+  skillsThatGrowHere: ["Systems", "Data Architecture", "Reliability"],
+  starterProjects: [
+    "Build a data pipeline from an API",
+    "Create a dashboard from structured data",
+    "Work with databases at scale",
+  ],
+  atmosphere: "Structured, backend-heavy, system reliability",
+},
+{
+  id: "devops-engineer",
+  slug: "devops-engineer",
+  title: "DevOps Engineer",
+  summary:
+    "Keeps systems running smoothly — managing deployment, infrastructure, and reliability.",
+  whatYouActuallyDo: [
+    "Automate deployments and workflows",
+    "Manage cloud infrastructure",
+    "Monitor system performance and uptime",
+  ],
+  skillsThatGrowHere: ["Automation", "Infrastructure", "Reliability"],
+  starterProjects: [
+    "Deploy an app using cloud services",
+    "Set up CI/CD pipelines",
+    "Monitor a live system",
+  ],
+  atmosphere: "Operational, fast-response, high responsibility",
+},
+{
+  id: "security-engineer",
+  slug: "security-engineer",
+  title: "Security Engineer",
+  summary:
+    "Protects systems, data, and users by identifying and fixing vulnerabilities.",
+  whatYouActuallyDo: [
+    "Test systems for weaknesses",
+    "Secure applications and infrastructure",
+    "Respond to security incidents",
+  ],
+  skillsThatGrowHere: ["Risk Thinking", "Analysis", "Defense"],
+  starterProjects: [
+    "Learn basic ethical hacking",
+    "Secure a web app",
+    "Analyze vulnerabilities in a system",
+  ],
+  atmosphere: "High-stakes, investigative, detail-oriented",
+},
+{
+  id: "qa-automation-engineer",
+  slug: "qa-automation-engineer",
+  title: "QA / Automation Engineer",
+  summary:
+    "Ensures software works reliably by building automated tests and catching issues early.",
+  whatYouActuallyDo: [
+    "Write automated tests",
+    "Identify bugs and edge cases",
+    "Ensure product quality before release",
+  ],
+  skillsThatGrowHere: ["Attention to Detail", "Systems Thinking", "Testing"],
+  starterProjects: [
+    "Write tests for an app",
+    "Automate repetitive testing tasks",
+    "Build a testing suite",
+  ],
+  atmosphere: "Precision-focused, systematic, quality-driven",
+},
+{
+  id: "developer-tools-engineer",
+  slug: "developer-tools-engineer",
+  title: "Developer Tools Engineer",
+  summary:
+    "Builds tools that help other developers work faster and more effectively.",
+  whatYouActuallyDo: [
+    "Create tools, libraries, or frameworks",
+    "Improve developer workflows",
+    "Optimize build systems and tooling",
+  ],
+  skillsThatGrowHere: ["Abstraction", "Efficiency", "Systems Design"],
+  starterProjects: [
+    "Build a CLI tool",
+    "Create a reusable library",
+    "Improve a dev workflow with automation",
+  ],
+  atmosphere: "Meta-level, efficiency-driven, builder-focused",
+},
   ],
 
   dayInLife: {
