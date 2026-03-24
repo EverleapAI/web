@@ -121,65 +121,144 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
     },
   ],
 
-  specialties: [],
-
-  dayInLife: {
-  title: "A day shaping how something feels",
-  summary:
-    "Game design is not about one big idea. It is testing, adjusting, and refining until something actually feels good to play.",
-
-  moments: [
+  specialties: [
     {
-      id: "morning-playtest",
-      timeLabel: "9:30 AM",
-      title: "Play it and feel what is off",
-      body:
-        "You start by playing the current build. Something feels slow, confusing, or flat. You cannot always explain it immediately, but you can feel it.",
+      id: "systems-designer",
+      slug: "systems-designer",
+      title: "Systems Designer",
+      summary:
+        "This version of game design is about shaping the invisible structure underneath the player experience - progression, rewards, balance, economies, upgrades, and the logic that keeps the whole thing engaging over time.",
+      whatYouActuallyDo: [
+        "Design progression systems like levels, unlocks, rewards, currencies, and upgrade loops.",
+        "Balance numbers and rules so the game feels fair, challenging, and satisfying instead of chaotic or flat.",
+        "Think through how one system affects another, because small rule changes can shift the entire player experience.",
+        "Use testing and feedback to tune what is too easy, too punishing, too slow, or too rewarding.",
+      ],
+      skillsThatGrowHere: [
+        "Systems thinking",
+        "Game balance",
+        "Player psychology",
+        "Iterative tuning",
+      ],
+      starterProjects: [
+        "Design a progression or reward system for a simple game concept and test whether it keeps people engaged.",
+        "Take an existing game and map out how its economy, unlocks, or difficulty systems actually work.",
+        "Build a tiny prototype focused on one mechanic and keep tuning the numbers until the experience changes in noticeable ways.",
+      ],
+      atmosphere:
+        "Analytical, experimental, and structure-heavy. This is where design starts to feel like hidden architecture that players can sense even when they do not see it directly.",
     },
     {
-      id: "diagnose",
-      timeLabel: "10:45 AM",
-      title: "Figure out why it is not working",
-      body:
-        "Is the mechanic unclear? Is the reward too weak? Is the pacing off? You break down the experience to understand what is actually happening.",
+      id: "level-designer",
+      slug: "level-designer",
+      title: "Level Designer",
+      summary:
+        "This version is about space, flow, pacing, and how the player physically moves through the world. You are shaping what happens next, where tension rises, where curiosity pulls forward, and how a place teaches the player without lecturing them.",
+      whatYouActuallyDo: [
+        "Design spaces that guide movement, discovery, difficulty, and player choices.",
+        "Control pacing through layout, obstacles, encounters, checkpoints, and visual cues.",
+        "Test how players actually move through a space instead of assuming they will understand it the way you intended.",
+        "Work with artists and engineers so the level feels playable, readable, and emotionally right.",
+      ],
+      skillsThatGrowHere: [
+        "Spatial thinking",
+        "Pacing and flow",
+        "Player guidance",
+        "Level iteration",
+      ],
+      starterProjects: [
+        "Build a small level in Unity, Roblox, Fortnite Creative, or another accessible tool and watch how real players move through it.",
+        "Recreate or sketch a favorite level and analyze how it creates tension, teaches mechanics, or directs attention.",
+        "Practice building one environment that changes how it feels through layout alone, not just visuals.",
+      ],
+      atmosphere:
+        "Creative, spatial, and tactile. You are constantly thinking about movement, tension, surprise, and what the player is feeling from one moment to the next.",
     },
     {
-      id: "iterate",
-      timeLabel: "12:15 PM",
-      title: "Change one thing",
-      body:
-        "You adjust a number, a rule, or a sequence. Small changes can shift the entire experience. This is where design lives.",
-    },
-    {
-      id: "midday-test",
-      timeLabel: "1:30 PM",
-      title: "Test it again",
-      body:
-        "You play it again. Sometimes it is better. Sometimes it is worse. You keep going. This loop happens over and over.",
-    },
-    {
-      id: "collab",
-      timeLabel: "2:45 PM",
-      title: "Align with the team",
-      body:
-        "You talk with engineers, artists, or writers. What you want has to connect to what can actually be built. Good design works with constraints.",
-    },
-    {
-      id: "breakthrough",
-      timeLabel: "4:15 PM",
-      title: "It finally feels right",
-      body:
-        "There is a moment when it clicks. The pacing works. The feedback feels satisfying. The player experience lands. That is the payoff.",
-    },
-    {
-      id: "end",
-      timeLabel: "End of day",
-      title: "You are never fully done",
-      body:
-        "Even when it works, you see ways to improve it. Game design is constant refinement - chasing something that feels just right.",
+      id: "narrative-designer",
+      slug: "narrative-designer",
+      title: "Narrative Designer",
+      summary:
+        "This version connects story to interaction. It is not just about writing lore or dialogue - it is about making the story feel alive through player choices, pacing, consequences, and the emotional rhythm of gameplay.",
+      whatYouActuallyDo: [
+        "Design story structures that respond to player choice, progression, and interaction instead of just moving in a straight line.",
+        "Write dialogue, scenes, world details, and character beats that fit how the game is actually played.",
+        "Connect narrative to mechanics so the story feels embedded in the experience, not pasted on top of it.",
+        "Collaborate with designers, writers, and developers to protect emotional clarity while the game keeps evolving.",
+      ],
+      skillsThatGrowHere: [
+        "Interactive storytelling",
+        "Dialogue writing",
+        "Narrative structure",
+        "Choice and consequence design",
+      ],
+      starterProjects: [
+        "Create a branching story in Twine or another simple narrative tool so you can feel how interactive story structure works.",
+        "Take a favorite game moment and rewrite it with different player choices and consequences.",
+        "Build a small prototype where one mechanic changes the story instead of leaving gameplay and narrative separate.",
+      ],
+      atmosphere:
+        "Expressive, collaborative, and emotionally tuned. The work feels creative, but it still demands structure because the story has to survive contact with real gameplay.",
     },
   ],
-},
+
+  dayInLife: {
+    title: "A day shaping how something feels",
+    summary:
+      "Game design is not about one big idea. It is testing, adjusting, and refining until something actually feels good to play.",
+
+    moments: [
+      {
+        id: "morning-playtest",
+        timeLabel: "9:30 AM",
+        title: "Play it and feel what is off",
+        body:
+          "You start by playing the current build. Something feels slow, confusing, or flat. You cannot always explain it immediately, but you can feel it.",
+      },
+      {
+        id: "diagnose",
+        timeLabel: "10:45 AM",
+        title: "Figure out why it is not working",
+        body:
+          "Is the mechanic unclear? Is the reward too weak? Is the pacing off? You break down the experience to understand what is actually happening.",
+      },
+      {
+        id: "iterate",
+        timeLabel: "12:15 PM",
+        title: "Change one thing",
+        body:
+          "You adjust a number, a rule, or a sequence. Small changes can shift the entire experience. This is where design lives.",
+      },
+      {
+        id: "midday-test",
+        timeLabel: "1:30 PM",
+        title: "Test it again",
+        body:
+          "You play it again. Sometimes it is better. Sometimes it is worse. You keep going. This loop happens over and over.",
+      },
+      {
+        id: "collab",
+        timeLabel: "2:45 PM",
+        title: "Align with the team",
+        body:
+          "You talk with engineers, artists, or writers. What you want has to connect to what can actually be built. Good design works with constraints.",
+      },
+      {
+        id: "breakthrough",
+        timeLabel: "4:15 PM",
+        title: "It finally feels right",
+        body:
+          "There is a moment when it clicks. The pacing works. The feedback feels satisfying. The player experience lands. That is the payoff.",
+      },
+      {
+        id: "end",
+        timeLabel: "End of day",
+        title: "You are never fully done",
+        body:
+          "Even when it works, you see ways to improve it. Game design is constant refinement - chasing something that feels just right.",
+      },
+    ],
+  },
 
   forecast: {
     title: "What growth can look like",
@@ -260,10 +339,7 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
         "Generating assets and variations",
         "Reducing production friction",
       ],
-      putsPressureOn: [
-        "Basic content creation",
-        "Low-skill production work",
-      ],
+      putsPressureOn: ["Basic content creation", "Low-skill production work"],
       humansStillOwn: [
         "Game feel and player experience",
         "System design and balance",
@@ -311,8 +387,7 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
             id: "marin-library",
             title: "Marin County Library - The Lab",
             href: "https://marinlibrary.org/the-lab/",
-            note:
-              "Free maker space to experiment with creative tech.",
+            note: "Free maker space to experiment with creative tech.",
             badge: "Local",
             mode: "local",
           },
@@ -330,8 +405,7 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
             id: "itch",
             title: "itch.io Game Jams",
             href: "https://itch.io/jams",
-            note:
-              "Build small playable games with real deadlines.",
+            note: "Build small playable games with real deadlines.",
             badge: "Jams",
             mode: "remote",
           },

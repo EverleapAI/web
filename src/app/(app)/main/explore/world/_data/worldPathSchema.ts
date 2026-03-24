@@ -1,59 +1,57 @@
 // apps/web/src/app/(app)/main/explore/world/_data/worldPathSchema.ts
 
-export type Rgb = {
-  r: number;
-  g: number;
-  b: number;
-};
-
 export type WorldPathEnergy =
   | "adventure"
-  | "high-energy"
   | "grounded"
-  | "reflective"
-  | "builder"
   | "people"
-  | "creative";
-
-export type WorldPathActionType =
-  | "project"
-  | "experiment"
-  | "visit"
-  | "join"
-  | "research"
-  | "conversation"
-  | "plan";
+  | "creative"
+  | "reflective"
+  | "builder";
 
 export type WorldOpportunityMode =
   | "local"
   | "virtual"
-  | "hybrid"
-  | "travel";
+  | "travel"
+  | "hybrid";
 
-export type WorldTheme = {
-  tone: string;
-  accent: Rgb;
-  accentStrong: Rgb;
-  glow: Rgb;
+export type WorldOpportunityType =
+  | "program"
+  | "experience"
+  | "volunteer"
+  | "exchange"
+  | "expedition"
+  | "class"
+  | "event"
+  | "project"
+  | "trip"
+  | "resource"
+  | "research"
+  | "conversation"
+  | "visit";
+
+export type WorldPathTheme = {
   surfaceLabel: string;
+  accent: string;
+  accentStrong: string;
+  glow: string;
 };
 
-export type WorldCard = {
+export type WorldPathCard = {
   title: string;
   hook: string;
   description: string;
 };
 
-export type WorldHero = {
+export type WorldPathHero = {
   eyebrow: string;
   title: string;
-  hook: string;
-  summary: string;
-  whyItPullsYouIn: string[];
+  subtitle: string;
+  body: string;
+  ambientLabel: string;
+  pullQuote: string;
 };
 
 export type WorldTraitChip = {
-  id: string;
   label: string;
 };
 
@@ -64,109 +62,57 @@ export type WorldFitSignal = {
   explanation: string;
 };
 
-export type WorldBranchPreview = {
-  id: string;
-  slug: string;
+export type WorldExploreItem = {
   title: string;
-  oneLiner: string;
-  whyItCouldFit: string;
-  energy: WorldPathEnergy;
+  description: string;
 };
 
-export type WorldBranch = {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string;
-  whatYouActuallyExplore: string[];
-  skillsThatGrowHere: string[];
-  starterProjects: string[];
-  atmosphere: string;
-};
-
-export type WorldAction = {
-  id: string;
-  title: string;
-  type: WorldPathActionType;
-  effort: "light" | "medium" | "stretch";
-  timeEstimate: string;
-  whyThisMatters: string;
-  instructions: string[];
-};
-
-export type WorldFeelingMoment = {
-  id: string;
-  title: string;
-  body: string;
-};
-
-export type WorldHowItFeels = {
-  title: string;
-  summary: string;
-  moments: WorldFeelingMoment[];
-};
-
-export type WorldGrowthStage = {
-  id: string;
+export type WorldWhatYouExplore = {
   label: string;
-  timeframe: string;
-  summary: string;
-  signalsOfProgress: string[];
+  title: string;
+  intro: string;
+  items: WorldExploreItem[];
 };
 
-export type WorldGrowthPath = {
+export type WorldFeaturedOpportunity = {
+  label: string;
   title: string;
-  summary: string;
-  stages: WorldGrowthStage[];
+  description: string;
+  href: string;
+  ctaLabel: string;
+  mode: WorldOpportunityMode;
+  type: WorldOpportunityType;
 };
 
 export type WorldOpportunity = {
-  id: string;
   title: string;
-  mode: WorldOpportunityMode;
-  provider: string;
-  summary: string;
-  whyItHelps: string;
+  description: string;
   href: string;
-  formatLabel: string;
+  ctaLabel: string;
+  mode: WorldOpportunityMode;
+  type: WorldOpportunityType;
+  locationLabel?: string;
+  ageNote?: string;
 };
 
 export type WorldOpportunityGroup = {
   id: string;
+  label: string;
   title: string;
   description: string;
-  items: WorldOpportunity[];
-};
-
-export type WorldNextSteps = {
-  title: string;
-  summary: string;
-  actions: WorldAction[];
-  opportunityGroups: WorldOpportunityGroup[];
+  opportunities: WorldOpportunity[];
 };
 
 export type WorldPathContent = {
   id: string;
   slug: string;
-  lane: "world";
-
-  theme: WorldTheme;
-  card: WorldCard;
-  hero: WorldHero;
-
+  energy: WorldPathEnergy;
+  theme: WorldPathTheme;
+  card: WorldPathCard;
+  hero: WorldPathHero;
   traitChips: WorldTraitChip[];
   fitSignals: WorldFitSignal[];
-
-  branchPreviews: WorldBranchPreview[];
-  branches: WorldBranch[];
-
-  tryNow: {
-    title: string;
-    summary: string;
-    actions: WorldAction[];
-  };
-
-  howItFeels: WorldHowItFeels;
-  growthPath: WorldGrowthPath;
-  nextSteps: WorldNextSteps;
+  whatYouExplore: WorldWhatYouExplore;
+  featuredOpportunity: WorldFeaturedOpportunity;
+  opportunityGroups: WorldOpportunityGroup[];
 };

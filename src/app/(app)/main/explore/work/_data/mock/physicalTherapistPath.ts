@@ -48,22 +48,19 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
       id: "helping-instinct",
       label: "Helping instinct",
       score: 90,
-      explanation:
-        "You get energy from helping people improve physically.",
+      explanation: "You get energy from helping people improve physically.",
     },
     {
       id: "human-biology",
       label: "Human biology interest",
       score: 88,
-      explanation:
-        "Understanding muscles, joints, and movement matters here.",
+      explanation: "Understanding muscles, joints, and movement matters here.",
     },
     {
       id: "patience-and-guidance",
       label: "Patience + guidance",
       score: 87,
-      explanation:
-        "Recovery takes time - you help people stay consistent.",
+      explanation: "Recovery takes time - you help people stay consistent.",
     },
   ],
 
@@ -93,8 +90,7 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
       id: "sports-therapy",
       slug: "sports-therapy",
       title: "Sports Physical Therapy",
-      oneLiner:
-        "Helps athletes recover and return to performance.",
+      oneLiner: "Helps athletes recover and return to performance.",
       whyItCouldFit:
         "Strong if you are drawn to sports and performance.",
       energy: "active",
@@ -103,78 +99,128 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
       id: "rehabilitation-therapy",
       slug: "rehabilitation-therapy",
       title: "Rehabilitation Therapy",
-      oneLiner:
-        "Helps patients recover from surgery, illness, or injury.",
-      whyItCouldFit:
-        "Strong if you care about long-term recovery.",
+      oneLiner: "Helps patients recover from surgery, illness, or injury.",
+      whyItCouldFit: "Strong if you care about long-term recovery.",
       energy: "human",
     },
   ],
 
-  specialties: [],
-
-  dayInLife: {
-  title: "A day helping people move again",
-  summary:
-    "This work is hands-on, human, and visible. You are helping someone rebuild strength, movement, and confidence step by step.",
-
-  moments: [
+  specialties: [
     {
-      id: "morning-start",
-      timeLabel: "9:00 AM",
-      title: "Meet someone where they are",
-      body:
-        "Every session starts differently. Some people are improving, others are frustrated or in pain. You assess movement, but you are also reading mindset.",
+      id: "sports-therapy",
+      slug: "sports-therapy",
+      title: "Sports Physical Therapy",
+      summary:
+        "This specialty is about getting athletes and active people back to movement, training, and performance after injury. You are working where recovery meets competition, confidence, and physical goals.",
+      whatYouActuallyDo: [
+        "Assess how someone moves, where they are compensating, and what is slowing recovery down.",
+        "Guide rehab exercises that rebuild strength, mobility, balance, and confidence step by step.",
+        "Help athletes return to practice or competition safely instead of just rushing them back too early.",
+        "Work with coaches, trainers, and families so recovery fits the real demands of sport.",
+      ],
+      skillsThatGrowHere: [
+        "Movement analysis",
+        "Exercise progression",
+        "Coaching under pressure",
+        "Clear communication with driven people",
+      ],
+      starterProjects: [
+        "Volunteer around sports teams, athletic training rooms, or adaptive athletics programs.",
+        "Learn the basics of kinesiology, recovery, and common sports injuries.",
+        "Observe how movement quality changes before and after fatigue, pain, or rehab work.",
+      ],
+      atmosphere:
+        "Fast-moving, active, and goal-driven. The energy is often high because people want to get back to the version of themselves they know.",
     },
     {
-      id: "first-session",
-      timeLabel: "10:00 AM",
-      title: "Guide the first movement",
-      body:
-        "You walk someone through exercises that feel small but matter. Even basic movement can be difficult. Your job is to guide, correct, and encourage.",
-    },
-    {
-      id: "midday-progress",
-      timeLabel: "11:45 AM",
-      title: "Notice real progress",
-      body:
-        "A movement becomes smoother. Strength improves slightly. Sometimes it is subtle, but it is real. These moments build momentum.",
-    },
-    {
-      id: "midday-challenge",
-      timeLabel: "1:15 PM",
-      title: "Push without breaking trust",
-      body:
-        "Recovery is uncomfortable. You need to push someone enough to improve, but not so much that they shut down. This balance is a core skill.",
-    },
-    {
-      id: "afternoon-variety",
-      timeLabel: "2:30 PM",
-      title: "Every person is different",
-      body:
-        "No two patients are the same. Different injuries, different goals, different attitudes. You are constantly adapting your approach.",
-    },
-    {
-      id: "visible-result",
-      timeLabel: "4:00 PM",
-      title: "See what changed",
-      body:
-        "At the end of a session, you can often see it. Better range, more confidence, less hesitation. Progress is physical and visible.",
-    },
-    {
-      id: "long-term",
-      timeLabel: "Ongoing",
-      title: "Watch someone get their life back",
-      body:
-        "The real payoff happens over time. Someone who struggled to move starts walking, training, or living normally again. That is the impact of the work.",
+      id: "rehabilitation-therapy",
+      slug: "rehabilitation-therapy",
+      title: "Rehabilitation Therapy",
+      summary:
+        "This specialty is about longer recovery arcs - after surgery, illness, injury, or life-changing physical setbacks. The work is slower, steadier, and often deeply human.",
+      whatYouActuallyDo: [
+        "Help patients rebuild movement after major injuries, surgeries, or health events.",
+        "Break long-term recovery into smaller, manageable wins that people can actually stick with.",
+        "Adapt exercises to the patient in front of you, not just the textbook version of recovery.",
+        "Support people emotionally as well as physically when progress feels slow or frustrating.",
+      ],
+      skillsThatGrowHere: [
+        "Patience under uncertainty",
+        "Clinical observation",
+        "Relationship-building",
+        "Long-term progress planning",
+      ],
+      starterProjects: [
+        "Volunteer in hospital, rehab, or community recovery environments.",
+        "Learn anatomy and basic movement science so you can understand what recovery is asking of the body.",
+        "Spend time noticing how people respond differently to pain, frustration, encouragement, and progress.",
+      ],
+      atmosphere:
+        "Grounded, personal, and emotionally meaningful. You are often helping someone get everyday life back, not just performance.",
     },
   ],
-},
+
+  dayInLife: {
+    title: "A day helping people move again",
+    summary:
+      "This work is hands-on, human, and visible. You are helping someone rebuild strength, movement, and confidence step by step.",
+
+    moments: [
+      {
+        id: "morning-start",
+        timeLabel: "9:00 AM",
+        title: "Meet someone where they are",
+        body:
+          "Every session starts differently. Some people are improving, others are frustrated or in pain. You assess movement, but you are also reading mindset.",
+      },
+      {
+        id: "first-session",
+        timeLabel: "10:00 AM",
+        title: "Guide the first movement",
+        body:
+          "You walk someone through exercises that feel small but matter. Even basic movement can be difficult. Your job is to guide, correct, and encourage.",
+      },
+      {
+        id: "midday-progress",
+        timeLabel: "11:45 AM",
+        title: "Notice real progress",
+        body:
+          "A movement becomes smoother. Strength improves slightly. Sometimes it is subtle, but it is real. These moments build momentum.",
+      },
+      {
+        id: "midday-challenge",
+        timeLabel: "1:15 PM",
+        title: "Push without breaking trust",
+        body:
+          "Recovery is uncomfortable. You need to push someone enough to improve, but not so much that they shut down. This balance is a core skill.",
+      },
+      {
+        id: "afternoon-variety",
+        timeLabel: "2:30 PM",
+        title: "Every person is different",
+        body:
+          "No two patients are the same. Different injuries, different goals, different attitudes. You are constantly adapting your approach.",
+      },
+      {
+        id: "visible-result",
+        timeLabel: "4:00 PM",
+        title: "See what changed",
+        body:
+          "At the end of a session, you can often see it. Better range, more confidence, less hesitation. Progress is physical and visible.",
+      },
+      {
+        id: "long-term",
+        timeLabel: "Ongoing",
+        title: "Watch someone get their life back",
+        body:
+          "The real payoff happens over time. Someone who struggled to move starts walking, training, or living normally again. That is the impact of the work.",
+      },
+    ],
+  },
 
   forecast: {
     title: "What growth can look like",
-    summary:
-      "This is a stable, in-demand healthcare path.",
+    summary: "This is a stable, in-demand healthcare path.",
     stages: [],
   },
 
@@ -226,8 +272,7 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
 
     industry: {
       sourceLabel: "Bureau of Labor Statistics",
-      sourceUrl:
-        "https://www.bls.gov/ooh/healthcare/physical-therapists.htm",
+      sourceUrl: "https://www.bls.gov/ooh/healthcare/physical-therapists.htm",
       growthPercent: "15%",
       annualOpenings: "24,200",
       medianPay: "$97,720",
@@ -255,9 +300,7 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
         "Program planning support",
         "Data and recovery insights",
       ],
-      putsPressureOn: [
-        "Basic program templating",
-      ],
+      putsPressureOn: ["Basic program templating"],
       humansStillOwn: [
         "Hands-on physical guidance",
         "Reading patient movement and response",
@@ -280,15 +323,13 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
 
   nextSteps: {
     title: "Real next steps",
-    summary:
-      "Start by getting close to real recovery and movement environments.",
+    summary: "Start by getting close to real recovery and movement environments.",
     actions: [],
     opportunityGroups: [],
   },
 
   nextStepsV2: {
-    heroTitle:
-      "You can step into real recovery environments now",
+    heroTitle: "You can step into real recovery environments now",
     heroSummary:
       "This path becomes real when you are around people improving, recovering, and moving. Get close to that world.",
     heroBadge: "See it in action",
@@ -371,8 +412,7 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
             id: "coursera",
             title: "Coursera Health Courses",
             href: "https://www.coursera.org/browse/health",
-            note:
-              "More structured, deeper learning if you want it.",
+            note: "More structured, deeper learning if you want it.",
             badge: "Courses",
             mode: "remote",
           },

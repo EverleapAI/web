@@ -19,18 +19,18 @@ export const ENVIRONMENT_FIELD_SCIENCE_PATH: LearningPathContent = {
     title: "Environment + Field Science",
     hook: "Understand ecosystems, climate, and the living world outdoors.",
     description:
-      "A learning path for people drawn to nature, ecosystems, climate science, wildlife, and outdoor exploration. It blends science, observation, and real-world environmental problem solving.",
+      "A learning path for people drawn to nature, ecosystems, climate, wildlife, and real-world environmental problem solving.",
   },
 
   hero: {
     eyebrow: "Learning path",
     title: "Environment + Field Science",
-    hook: "For people curious about nature, ecosystems, and the planet.",
+    hook: "For people who learn best by being outside and paying attention.",
     summary:
-      "Some people feel most curious outdoors — noticing patterns in weather, landscapes, animals, plants, or ecosystems. Environment + Field Science explores how the natural world works and how humans interact with it.",
+      "This path starts outside. You observe patterns in nature, ask questions, and slowly build understanding of ecosystems, climate, and how everything connects.",
     whyItPullsYouIn: [
       "You enjoy being outdoors and observing nature.",
-      "You are curious about ecosystems and climate patterns.",
+      "You notice patterns in weather, plants, or animals.",
       "You like science connected to real environments.",
       "You care about environmental challenges and solutions.",
     ],
@@ -41,363 +41,189 @@ export const ENVIRONMENT_FIELD_SCIENCE_PATH: LearningPathContent = {
     { id: "field-observer", label: "Field observer" },
     { id: "systems-thinking", label: "Systems thinking" },
     { id: "explorer", label: "Explorer energy" },
-    { id: "climate-awareness", label: "Climate awareness" },
-    { id: "science-outdoors", label: "Outdoor science" },
   ],
 
   fitSignals: [
     {
-      id: "nature-observer",
-      label: "You enjoy observing nature closely.",
+      id: "observe-nature",
+      label: "You naturally observe nature closely",
       score: 94,
       explanation:
-        "You naturally notice plants, animals, weather patterns, and environmental changes.",
+        "You notice patterns in plants, animals, and environments.",
     },
     {
-      id: "ecosystem-curiosity",
-      label: "You are curious about ecosystems.",
+      id: "ecosystem-thinking",
+      label: "You think about how systems connect",
       score: 91,
       explanation:
-        "You like understanding how living things interact with each other and their environment.",
-    },
-    {
-      id: "climate-interest",
-      label: "You are interested in climate and environmental systems.",
-      score: 88,
-      explanation:
-        "You want to understand how natural systems change and adapt.",
+        "You see relationships between living things and environments.",
     },
     {
       id: "outdoor-learning",
-      label: "You enjoy learning through outdoor exploration.",
-      score: 86,
+      label: "You learn best through real environments",
+      score: 88,
       explanation:
-        "Field observation and real environments make science more exciting.",
+        "Being outside makes ideas more real and interesting.",
     },
   ],
 
-  branchPreviews: [
+  whatYouLearn: [
     {
-      id: "ecology",
-      slug: "ecology",
-      title: "Ecology",
-      oneLiner: "Study how organisms interact with ecosystems.",
-      whyItCouldFit:
-        "Great if you enjoy observing plants, animals, and natural habitats.",
-      energy: "exploration",
+      id: "ecosystems",
+      title: "How ecosystems actually work",
+      description:
+        "Food webs, habitats, and how living things interact.",
     },
     {
-      id: "climate-science",
-      slug: "climate-science",
-      title: "Climate Science",
-      oneLiner: "Understand weather patterns, climate systems, and global change.",
-      whyItCouldFit:
-        "Good for people curious about Earth's changing climate.",
-      energy: "analysis",
+      id: "climate",
+      title: "How climate and weather systems behave",
+      description:
+        "Patterns, changes, and environmental forces over time.",
     },
     {
-      id: "conservation",
-      slug: "conservation",
-      title: "Conservation",
-      oneLiner: "Protect ecosystems, wildlife, and natural resources.",
-      whyItCouldFit:
-        "Strong for people who care about preserving natural environments.",
-      energy: "people",
+      id: "field-skills",
+      title: "How to observe and document nature",
+      description:
+        "Field notes, pattern recognition, and data collection.",
     },
     {
-      id: "field-research",
-      slug: "field-research",
-      title: "Field Research",
-      oneLiner: "Study ecosystems through direct observation and investigation.",
-      whyItCouldFit:
-        "Ideal if you enjoy collecting data outdoors.",
-      energy: "exploration",
+      id: "human-impact",
+      title: "How humans affect environments",
+      description:
+        "Conservation, sustainability, and environmental change.",
+    },
+    {
+      id: "real-world-science",
+      title: "How science connects to real environments",
+      description:
+        "Turning observation into understanding and action.",
     },
   ],
 
-  branches: [
+  featuredOpportunity: {
+    title: "Use your environment as your classroom",
+    provider: "Real world",
+    summary:
+      "Pick a local outdoor space and observe it like a scientist.",
+    whyStartHere:
+      "This path only makes sense when you are actually in the environment.",
+    mode: "local",
+    formatLabel: "Outdoor observation",
+    locationLabel: "Near 94901",
+  },
+
+  opportunityGroups: [
     {
-      id: "ecology",
-      slug: "ecology",
-      title: "Ecology",
-      summary:
-        "Ecology focuses on how organisms interact with each other and their environments.",
-      whatYouActuallyExplore: [
-        "Food webs and ecosystems",
-        "Species interactions",
-        "Habitat dynamics",
+      id: "try-this-week",
+      title: "Try this this week",
+      description:
+        "Simple ways to test if this path feels real to you.",
+      items: [
+        {
+          id: "ecosystem-observation",
+          title: "Observe a local ecosystem",
+          provider: "Self-directed",
+          summary:
+            "Spend time in a park, trail, or coastline observing patterns.",
+          whyItFits:
+            "You will quickly feel whether this kind of learning clicks.",
+          mode: "local",
+          locationLabel: "Near 94901",
+          formatLabel: "Field observation",
+          tags: ["beginner-friendly", "hands-on", "local"],
+        },
+        {
+          id: "weather-tracking",
+          title: "Track weather patterns for a week",
+          provider: "Self-directed",
+          summary:
+            "Record daily weather and look for patterns.",
+          whyItFits:
+            "Builds awareness of environmental systems quickly.",
+          mode: "local",
+          formatLabel: "Daily tracking",
+          tags: ["hands-on"],
+        },
       ],
-      skillsThatGrowHere: [
-        "Observation",
-        "Environmental science basics",
-        "Systems thinking",
-        "Field documentation",
-      ],
-      starterProjects: [
-        "Observe plant and insect interactions in a park",
-        "Map a local ecosystem",
-        "Track seasonal changes in nature",
-      ],
-      atmosphere:
-        "Curious, exploratory, and outdoors-focused.",
     },
+
     {
-      id: "climate-science",
-      slug: "climate-science",
-      title: "Climate Science",
-      summary:
-        "Climate science explores how weather systems and global climate patterns function.",
-      whatYouActuallyExplore: [
-        "Weather systems",
-        "Climate data patterns",
-        "Global environmental change",
+      id: "build-skill",
+      title: "Build real understanding",
+      description:
+        "Ways to deepen your knowledge of environmental systems.",
+      items: [
+        {
+          id: "khan-ecology",
+          title: "Khan Academy Ecology",
+          provider: "Khan Academy",
+          summary:
+            "Learn core concepts of ecosystems and environmental science.",
+          whyItFits:
+            "Gives structure to what you observe in real life.",
+          mode: "virtual",
+          href: "https://www.khanacademy.org/science/ap-biology/ecology-ap",
+          formatLabel: "Self-paced learning",
+          tags: ["free", "structured"],
+        },
+        {
+          id: "natgeo",
+          title: "National Geographic Learning",
+          provider: "National Geographic",
+          summary:
+            "Explore real-world environmental science and ecosystems.",
+          whyItFits:
+            "Connects science to real exploration and discovery.",
+          mode: "virtual",
+          formatLabel: "Articles + video",
+          tags: ["self-paced"],
+        },
       ],
-      skillsThatGrowHere: [
-        "Data interpretation",
-        "Environmental analysis",
-        "Scientific research",
-        "Systems thinking",
-      ],
-      starterProjects: [
-        "Track local weather trends",
-        "Study climate change impacts in your region",
-        "Analyze climate data online",
-      ],
-      atmosphere:
-        "Analytical and global in perspective.",
     },
+
     {
-      id: "conservation",
-      slug: "conservation",
-      title: "Conservation",
-      summary:
-        "Conservation focuses on protecting ecosystems, wildlife, and natural resources.",
-      whatYouActuallyExplore: [
-        "Habitat preservation",
-        "Wildlife protection",
-        "Environmental stewardship",
+      id: "near-you",
+      title: "Near you (Marin / Bay Area)",
+      description:
+        "Real environments where environmental science comes alive.",
+      items: [
+        {
+          id: "state-parks",
+          title: "California State Parks exploration",
+          provider: "California State Parks",
+          summary:
+            "Explore ecosystems like forests, coastlines, and wetlands.",
+          whyItFits:
+            "You experience ecosystems directly instead of reading about them.",
+          mode: "local",
+          locationLabel: "Marin / North Bay",
+          tags: ["local", "hands-on"],
+        },
+        {
+          id: "conservation",
+          title: "Local conservation or cleanup projects",
+          provider: "Community orgs",
+          summary:
+            "Participate in real environmental efforts.",
+          whyItFits:
+            "Connects knowledge to real-world impact.",
+          mode: "local",
+          locationLabel: "Near 94901",
+          tags: ["local"],
+        },
+        {
+          id: "nature-groups",
+          title: "Nature or environmental groups",
+          provider: "Local organizations",
+          summary:
+            "Join guided outdoor learning or citizen science.",
+          whyItFits:
+            "Learn faster with others who share the same curiosity.",
+          mode: "local",
+          locationLabel: "Bay Area",
+          tags: ["local", "hands-on"],
+        },
       ],
-      skillsThatGrowHere: [
-        "Environmental awareness",
-        "Community engagement",
-        "Ecological knowledge",
-        "Practical conservation",
-      ],
-      starterProjects: [
-        "Participate in a habitat restoration project",
-        "Research endangered species",
-        "Organize a local cleanup",
-      ],
-      atmosphere:
-        "Purposeful and nature-focused.",
-    },
-    {
-      id: "field-research",
-      slug: "field-research",
-      title: "Field Research",
-      summary:
-        "Field research involves studying ecosystems through direct observation and data collection.",
-      whatYouActuallyExplore: [
-        "Data collection in natural environments",
-        "Scientific field methods",
-        "Ecosystem monitoring",
-      ],
-      skillsThatGrowHere: [
-        "Field observation",
-        "Scientific documentation",
-        "Research design",
-        "Environmental measurement",
-      ],
-      starterProjects: [
-        "Collect data on local biodiversity",
-        "Document plant species in a park",
-        "Track environmental conditions over time",
-      ],
-      atmosphere:
-        "Exploratory and investigative.",
     },
   ],
-
-  tryNow: {
-    title: "Try this path now",
-    summary:
-      "The fastest way to explore environmental science is to observe real ecosystems and ask questions about them.",
-    actions: [
-      {
-        id: "nature-observation",
-        title: "Observe a small ecosystem",
-        type: "experiment",
-        effort: "light",
-        timeEstimate: "20–30 min",
-        whyThisMatters:
-          "Observation is the foundation of field science.",
-        instructions: [
-          "Visit a park or natural area.",
-          "Observe plants, animals, and environmental conditions.",
-          "Write down patterns you notice.",
-        ],
-      },
-      {
-        id: "weather-log",
-        title: "Track weather patterns for a week",
-        type: "project",
-        effort: "medium",
-        timeEstimate: "7 days",
-        whyThisMatters:
-          "Weather tracking helps reveal climate patterns.",
-        instructions: [
-          "Record temperature and weather conditions daily.",
-          "Look for patterns across the week.",
-        ],
-      },
-      {
-        id: "research-ecosystem",
-        title: "Research a local ecosystem",
-        type: "read",
-        effort: "light",
-        timeEstimate: "30–45 min",
-        whyThisMatters:
-          "Understanding ecosystems deepens environmental awareness.",
-        instructions: [
-          "Choose a local habitat like forest or coastline.",
-          "Research key species and interactions.",
-        ],
-      },
-    ],
-  },
-
-  howItFeels: {
-    title: "What this path tends to feel like",
-    summary:
-      "Environmental science often feels like discovering hidden connections in nature.",
-    moments: [
-      {
-        id: "nature-patterns",
-        title: "You start noticing patterns in nature",
-        body:
-          "Weather, plants, animals, and ecosystems begin to feel interconnected.",
-      },
-      {
-        id: "ecosystem-awareness",
-        title: "You see ecosystems as systems",
-        body:
-          "Nature begins to look like a complex network of interactions.",
-      },
-      {
-        id: "environmental-responsibility",
-        title: "You feel more connected to environmental responsibility",
-        body:
-          "Understanding ecosystems often strengthens your desire to protect them.",
-      },
-    ],
-  },
-
-  growthPath: {
-    title: "How people grow in this path",
-    summary:
-      "Environmental learning often starts with curiosity about nature and grows into scientific understanding.",
-    stages: [
-      {
-        id: "observation",
-        label: "Observe nature",
-        timeframe: "First weeks",
-        summary:
-          "You start paying attention to environmental patterns.",
-        signalsOfProgress: [
-          "You notice ecological patterns",
-          "You ask questions about ecosystems",
-        ],
-      },
-      {
-        id: "learning",
-        label: "Learn environmental science",
-        timeframe: "Next months",
-        summary:
-          "You develop knowledge of ecosystems and environmental systems.",
-        signalsOfProgress: [
-          "You understand key ecological concepts",
-          "You read environmental science materials",
-        ],
-      },
-      {
-        id: "action",
-        label: "Apply knowledge in real contexts",
-        timeframe: "Later exploration",
-        summary:
-          "You begin applying environmental knowledge to conservation or research projects.",
-        signalsOfProgress: [
-          "You participate in environmental projects",
-          "You connect science to real environmental challenges",
-        ],
-      },
-    ],
-  },
-
-  nextSteps: {
-    title: "Next steps",
-    summary:
-      "Environmental learning grows through observation, exploration, and scientific curiosity.",
-    actions: [
-      {
-        id: "nature-journal",
-        title: "Start a nature observation journal",
-        type: "tiny-task",
-        effort: "light",
-        timeEstimate: "10 min per observation",
-        whyThisMatters:
-          "Recording observations strengthens environmental awareness.",
-        instructions: [
-          "Write down what you observe outdoors.",
-          "Track patterns in weather, plants, or animals.",
-        ],
-      },
-      {
-        id: "eco-learning",
-        title: "Explore an online environmental science course",
-        type: "join",
-        effort: "medium",
-        timeEstimate: "1–2 hours",
-        whyThisMatters:
-          "Structured learning deepens scientific understanding.",
-        instructions: [
-          "Choose a beginner environmental science course.",
-          "Explore the first lessons.",
-        ],
-      },
-    ],
-
-    opportunityGroups: [
-      {
-        id: "online-environment",
-        title: "Online places to explore environmental science",
-        description:
-          "These resources introduce environmental science and ecology.",
-        items: [
-          {
-            id: "khan-ecology",
-            title: "Khan Academy Ecology",
-            mode: "virtual",
-            provider: "Khan Academy",
-            summary:
-              "Lessons explaining ecological systems and environmental science.",
-            whyItHelps:
-              "Accessible introduction to environmental science concepts.",
-            href: "https://www.khanacademy.org/science/ap-biology/ecology-ap",
-            formatLabel: "Self-paced lessons",
-          },
-          {
-            id: "natgeo-learning",
-            title: "National Geographic Learning",
-            mode: "virtual",
-            provider: "National Geographic",
-            summary:
-              "Educational resources about ecosystems and exploration.",
-            whyItHelps:
-              "Connects environmental science with real-world exploration.",
-            formatLabel: "Articles and videos",
-          },
-        ],
-      },
-    ],
-  },
 };

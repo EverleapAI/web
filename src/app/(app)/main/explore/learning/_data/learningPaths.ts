@@ -117,30 +117,3 @@ export function requireLearningPath(idOrSlug: string) {
 
   return path;
 }
-
-export function getLearningBranch(
-  pathIdOrSlug: string,
-  branchSlug: string
-) {
-  const path = requireLearningPath(pathIdOrSlug);
-  const normalizedBranchSlug = branchSlug.trim().toLowerCase();
-
-  return path.branches.find(
-    (branch) => branch.slug.trim().toLowerCase() === normalizedBranchSlug
-  );
-}
-
-export function requireLearningBranch(
-  pathIdOrSlug: string,
-  branchSlug: string
-) {
-  const branch = getLearningBranch(pathIdOrSlug, branchSlug);
-
-  if (!branch) {
-    throw new Error(
-      `Unknown branch "${branchSlug}" for learning path "${pathIdOrSlug}"`
-    );
-  }
-
-  return branch;
-}

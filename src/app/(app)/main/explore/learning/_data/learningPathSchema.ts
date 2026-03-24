@@ -46,101 +46,44 @@ export type LearningFitSignal = {
   explanation: string;
 };
 
-export type LearningBranchPreview = {
-  id: string;
-  slug: string;
-  title: string;
-  oneLiner: string;
-  whyItCouldFit: string;
-  energy:
-    | "systems"
-    | "people"
-    | "creative"
-    | "high-creative"
-    | "craft"
-    | "analysis"
-    | "exploration"
-    | "communication"
-    | "builder"
-    | "calm";
-};
-
-export type LearningBranch = {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string;
-  whatYouActuallyExplore: string[];
-  skillsThatGrowHere: string[];
-  starterProjects: string[];
-  atmosphere: string;
-};
-
-export type LearningTryNowActionType =
-  | "tiny-task"
-  | "experiment"
-  | "project"
-  | "watch"
-  | "read"
-  | "join";
-
-export type LearningEffort = "light" | "medium" | "stretch";
-
-export type LearningTryNowAction = {
+export type LearningWhatYouLearnItem = {
   id: string;
   title: string;
-  type: LearningTryNowActionType;
-  effort: LearningEffort;
-  timeEstimate: string;
-  whyThisMatters: string;
-  instructions: string[];
-};
-
-export type LearningTryNow = {
-  title: string;
-  summary: string;
-  actions: LearningTryNowAction[];
-};
-
-export type LearningFeelingMoment = {
-  id: string;
-  title: string;
-  body: string;
-};
-
-export type LearningHowItFeels = {
-  title: string;
-  summary: string;
-  moments: LearningFeelingMoment[];
-};
-
-export type LearningGrowthStage = {
-  id: string;
-  label: string;
-  timeframe: string;
-  summary: string;
-  signalsOfProgress: string[];
-};
-
-export type LearningGrowthPath = {
-  title: string;
-  summary: string;
-  stages: LearningGrowthStage[];
+  description: string;
 };
 
 export type LearningOpportunityMode = "local" | "virtual" | "hybrid";
 
+export type LearningOpportunityTag =
+  | "beginner-friendly"
+  | "free"
+  | "low-cost"
+  | "local"
+  | "online"
+  | "hybrid"
+  | "short-commitment"
+  | "structured"
+  | "hands-on"
+  | "self-paced"
+  | "with-mentor"
+  | "portfolio-building"
+  | "career-connected";
+
 export type LearningOpportunityItem = {
   id: string;
   title: string;
-  mode: LearningOpportunityMode;
   provider: string;
   summary: string;
-  whyItHelps: string;
+  whyItFits: string;
+  mode: LearningOpportunityMode;
   href?: string;
   locationLabel?: string;
   distanceLabel?: string;
   formatLabel?: string;
+  ageLabel?: string;
+  costLabel?: string;
+  commitmentLabel?: string;
+  tags?: LearningOpportunityTag[];
 };
 
 export type LearningOpportunityGroup = {
@@ -150,21 +93,15 @@ export type LearningOpportunityGroup = {
   items: LearningOpportunityItem[];
 };
 
-export type LearningNextStepAction = {
-  id: string;
-  title: string;
-  type: LearningTryNowActionType;
-  effort: LearningEffort;
-  timeEstimate: string;
-  whyThisMatters: string;
-  instructions: string[];
-};
-
-export type LearningNextSteps = {
+export type LearningFeaturedOpportunity = {
   title: string;
   summary: string;
-  actions: LearningNextStepAction[];
-  opportunityGroups: LearningOpportunityGroup[];
+  whyStartHere: string;
+  href?: string;
+  mode: LearningOpportunityMode;
+  provider: string;
+  locationLabel?: string;
+  formatLabel?: string;
 };
 
 export type LearningPathContent = {
@@ -179,11 +116,8 @@ export type LearningPathContent = {
   traitChips: LearningTraitChip[];
   fitSignals: LearningFitSignal[];
 
-  branchPreviews: LearningBranchPreview[];
-  branches: LearningBranch[];
+  whatYouLearn: LearningWhatYouLearnItem[];
 
-  tryNow: LearningTryNow;
-  howItFeels: LearningHowItFeels;
-  growthPath: LearningGrowthPath;
-  nextSteps: LearningNextSteps;
+  featuredOpportunity: LearningFeaturedOpportunity;
+  opportunityGroups: LearningOpportunityGroup[];
 };

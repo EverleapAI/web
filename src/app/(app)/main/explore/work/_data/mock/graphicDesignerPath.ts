@@ -121,65 +121,144 @@ export const GRAPHIC_DESIGNER_PATH: WorkPathContent = {
     },
   ],
 
-  specialties: [],
-
-  dayInLife: {
-  title: "A day in the life",
-  summary:
-    "Design is not just making things look good. It is making decisions, refining taste, and turning ideas into something people feel instantly.",
-
-  moments: [
+  specialties: [
     {
-      id: "morning-start",
-      timeLabel: "9:00 AM",
-      title: "Look at it with fresh eyes",
-      body:
-        "You open your work from yesterday and immediately see things you want to change. Spacing feels off. Colors feel slightly wrong. That is normal. Taste sharpens with distance.",
+      id: "brand-designer",
+      slug: "brand-designer",
+      title: "Brand Designer",
+      summary:
+        "This version of design is about shaping how a company, product, or idea feels the moment someone sees it. You are building identity - logos, color systems, typography, and visual language that make something feel recognizable, intentional, and emotionally clear.",
+      whatYouActuallyDo: [
+        "Design logos, color palettes, typography systems, and flexible brand guidelines.",
+        "Translate abstract ideas like tone, personality, and audience into visual choices people can immediately feel.",
+        "Build identity systems that stay consistent across websites, packaging, social posts, presentations, and campaigns.",
+        "Refine visual direction until the brand feels clear and memorable instead of generic or scattered.",
+      ],
+      skillsThatGrowHere: [
+        "Visual identity systems",
+        "Typography",
+        "Color judgment",
+        "Brand consistency",
+      ],
+      starterProjects: [
+        "Create a full brand identity for a fictional company, club, or local business.",
+        "Redesign an existing brand and explain what feels stronger in your version and why.",
+        "Build a small brand guide showing the logo system, colors, typography, and how the identity should be used.",
+      ],
+      atmosphere:
+        "Taste-driven, strategic, and concept-heavy. The work is creative, but every visual choice has to communicate something real.",
     },
     {
-      id: "concept",
-      timeLabel: "10:15 AM",
-      title: "Explore directions",
-      body:
-        "You sketch ideas, pull references, and try different visual directions. This is not about being right yet. It is about exploring what it could be.",
+      id: "digital-designer",
+      slug: "digital-designer",
+      title: "Digital Designer",
+      summary:
+        "This version focuses on visuals for screens - websites, apps, campaigns, and social content. You are designing for attention, clarity, motion, and how people actually move through digital spaces.",
+      whatYouActuallyDo: [
+        "Design layouts and visual systems for websites, apps, and digital products.",
+        "Create graphics, campaigns, and social assets that feel sharp, current, and easy to understand quickly.",
+        "Think about hierarchy, spacing, rhythm, and what pulls the eye first on a screen.",
+        "Work with developers or digital tools to make sure the design holds up once it becomes real.",
+      ],
+      skillsThatGrowHere: [
+        "Layout systems",
+        "UI awareness",
+        "Digital composition",
+        "Screen-based visual hierarchy",
+      ],
+      starterProjects: [
+        "Design a homepage, landing page, or app concept in Figma and explain your layout choices.",
+        "Create a short social campaign with multiple assets that feel visually connected.",
+        "Take an existing website and redesign it so the content feels clearer, stronger, and more modern.",
+      ],
+      atmosphere:
+        "Fast-moving, screen-native, and current. This work rewards people who can make digital experiences feel both beautiful and easy to follow.",
     },
     {
-      id: "build",
-      timeLabel: "11:45 AM",
-      title: "Make it real",
-      body:
-        "You start building the design - layout, typography, color, hierarchy. Decisions stack quickly. Every small choice changes how it feels.",
-    },
-    {
-      id: "midday-reset",
-      timeLabel: "1:00 PM",
-      title: "Step back and reset",
-      body:
-        "You step away, come back, and see it differently. What felt strong might now feel average. This loop is constant - make, step back, refine.",
-    },
-    {
-      id: "feedback",
-      timeLabel: "2:30 PM",
-      title: "Take feedback and adjust",
-      body:
-        "Someone else looks at it. They notice different things. Some feedback helps, some does not. The skill is knowing what to keep and what to ignore.",
-    },
-    {
-      id: "refine",
-      timeLabel: "3:45 PM",
-      title: "Push it past average",
-      body:
-        "You adjust spacing, alignment, contrast, and details. This is where design goes from okay to strong. The difference is usually subtle but important.",
-    },
-    {
-      id: "end",
-      timeLabel: "5:30 PM",
-      title: "You can feel the difference",
-      body:
-        "At the end of the day, the design is clearer, sharper, and more intentional. It communicates faster. That is the signal you are getting better.",
+      id: "illustrative-designer",
+      slug: "illustrative-designer",
+      title: "Illustrative Designer",
+      summary:
+        "This version blends graphic design with drawing, image-making, and visual storytelling. You are not just arranging design elements - you are creating original visual language that adds personality, style, and emotional distinctiveness.",
+      whatYouActuallyDo: [
+        "Create custom illustrations that support brands, stories, campaigns, or products.",
+        "Combine drawing with typography, layout, and design systems so the work still communicates clearly.",
+        "Develop a visual style that feels recognizable and expressive instead of generic.",
+        "Use illustration to clarify ideas, create mood, and give projects a stronger point of view.",
+      ],
+      skillsThatGrowHere: [
+        "Illustration",
+        "Visual storytelling",
+        "Style development",
+        "Expressive communication",
+      ],
+      starterProjects: [
+        "Create a poster or campaign series that uses your own illustration style instead of stock visuals.",
+        "Design an illustrated brand or product concept with packaging, graphics, and supporting assets.",
+        "Build a small portfolio set of pieces that all feel like they came from the same visual mind.",
+      ],
+      atmosphere:
+        "Expressive, creative, and style-forward. This is where design becomes more personal and where your visual voice matters a lot.",
     },
   ],
-},
+
+  dayInLife: {
+    title: "A day in the life",
+    summary:
+      "Design is not just making things look good. It is making decisions, refining taste, and turning ideas into something people feel instantly.",
+
+    moments: [
+      {
+        id: "morning-start",
+        timeLabel: "9:00 AM",
+        title: "Look at it with fresh eyes",
+        body:
+          "You open your work from yesterday and immediately see things you want to change. Spacing feels off. Colors feel slightly wrong. That is normal. Taste sharpens with distance.",
+      },
+      {
+        id: "concept",
+        timeLabel: "10:15 AM",
+        title: "Explore directions",
+        body:
+          "You sketch ideas, pull references, and try different visual directions. This is not about being right yet. It is about exploring what it could be.",
+      },
+      {
+        id: "build",
+        timeLabel: "11:45 AM",
+        title: "Make it real",
+        body:
+          "You start building the design - layout, typography, color, hierarchy. Decisions stack quickly. Every small choice changes how it feels.",
+      },
+      {
+        id: "midday-reset",
+        timeLabel: "1:00 PM",
+        title: "Step back and reset",
+        body:
+          "You step away, come back, and see it differently. What felt strong might now feel average. This loop is constant - make, step back, refine.",
+      },
+      {
+        id: "feedback",
+        timeLabel: "2:30 PM",
+        title: "Take feedback and adjust",
+        body:
+          "Someone else looks at it. They notice different things. Some feedback helps, some does not. The skill is knowing what to keep and what to ignore.",
+      },
+      {
+        id: "refine",
+        timeLabel: "3:45 PM",
+        title: "Push it past average",
+        body:
+          "You adjust spacing, alignment, contrast, and details. This is where design goes from okay to strong. The difference is usually subtle but important.",
+      },
+      {
+        id: "end",
+        timeLabel: "5:30 PM",
+        title: "You can feel the difference",
+        body:
+          "At the end of the day, the design is clearer, sharper, and more intentional. It communicates faster. That is the signal you are getting better.",
+      },
+    ],
+  },
 
   forecast: {
     title: "What growth can look like",

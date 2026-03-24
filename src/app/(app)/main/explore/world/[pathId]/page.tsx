@@ -1,71 +1,74 @@
-// apps/web/src/app/(app)/main/explore/world/[pathId]/page.tsx
+// web/src/app/(app)/main/explore/world/[pathId]/page.tsx
 
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { notFound, useParams, useRouter } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   Compass,
-  Globe,
+  ExternalLink,
+  Globe2,
   Radar,
 } from "lucide-react";
 
 import { requireWorldPath } from "../_data/worldPaths";
-import type { Rgb, WorldFitSignal, WorldPathContent } from "../_data/worldPathSchema";
-
-/* =============================================================================
-   Types + Storage
-============================================================================= */
-
-type WorldReaction = "liked" | "maybe" | "dismissed";
-
-type WorldReactionFeedback = {
-  reaction: WorldReaction;
-  reasons: string[];
-  note: string;
-  savedAt: number;
-};
-
-type WorldReactionState = {
-  dismissed: string[];
-  maybe: string[];
-  liked: string[];
-  feedbackBySlug?: Record<string, WorldReactionFeedback>;
-};
-
-const WORLD_REACTIONS_STORAGE_KEY = "everleap.explore.world.reactions.v1";
 
 /* =============================================================================
    Helpers
 ============================================================================= */
 
+type Rgb = {
+  r: number;
+  g: number;
+  b: number;
+};
+
+type ExploreEntry = {
+  id: string;
+  title: string;
+  body: string;
+};
+
+type FeaturedOpportunity = {
+  title: string;
+  description: string;
+  href: string;
+  ctaLabel: string;
+  meta: string[];
+};
+
+type OpportunityItem = {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  meta: string[];
+};
+
+type OpportunityGroup = {
+  id: string;
+  title: string;
+  description: string;
+  items: OpportunityItem[];
+};
+
+type TraitChip = {
+  id: string;
+  label: string;
+};
+
+type FitSignal = {
+  id: string;
+  label: string;
+  score: number;
+  explanation: string;
+};
+
 function rgb(value: Rgb, alpha = 1) {
   return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
-}
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function clampScore(score: number) {
-  return Math.max(0, Math.min(100, score));
-}
-
-function scoreWidth(score: number) {
-  return `${clampScore(score)}%`;
-}
-
-function sectionKicker() {
-  return "text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40";
-}
-
-function firstSentence(text: string) {
-  const trimmed = text.trim();
-  const match = trimmed.match(/^.*?[.!?](?:\s|$)/);
-  return match ? match[0].trim() : trimmed;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -74,14 +77,29 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function asString(value: unknown): string | null {
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function asOptionalString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
 }
 
-function readStoredFirstName(): string {
-  if (typeof window === "undefined") return "";
+function firstSentence(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^.*?[.!?](?:\s|$)/);
+  return match ? match[0].trim() : trimmed;
+}
+
+function sectionKicker() {
+  return "text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40";
+}
+
+function readStoredFirstName(): string | null {
+  if (typeof window === "undefined") return null;
 
   const candidateKeys = [
     "everleapOnboarding_v4_convo_min",
@@ -97,39 +115,43 @@ function readStoredFirstName(): string {
       if (!raw) continue;
 
       const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const profile = asRecord(parsed.profile);
+      const answers = asRecord(parsed.answers);
 
       const candidates = [
         parsed.firstName,
         parsed.firstname,
         parsed.first_name,
         parsed.name,
-        asRecord(parsed.profile)?.firstName,
-        asRecord(parsed.profile)?.name,
-        asRecord(parsed.answers)?.firstName,
-        asRecord(parsed.answers)?.name,
+        profile?.firstName,
+        profile?.name,
+        answers?.firstName,
+        answers?.name,
       ];
 
-      for (const value of candidates) {
-        const found = asString(value);
+      for (const candidate of candidates) {
+        const found = asOptionalString(candidate);
         if (found) return found.split(" ")[0];
       }
     } catch {
-      // ignore parse issues
+      // ignore malformed local data
     }
   }
 
-  return "";
+  return null;
 }
 
-function getOverallSignalScore(
-  fitSignals: Array<{ score: number }> | undefined
-): number {
-  if (!fitSignals?.length) return 72;
+function scoreWidth(score: number) {
+  return `${Math.max(0, Math.min(100, score))}%`;
+}
 
-  const total = fitSignals.reduce(
-    (sum, signal) => sum + clampScore(signal.score),
-    0
-  );
+function getOverallSignalScore(fitSignals: Array<{ score: number }> | undefined) {
+  if (!fitSignals?.length) return 74;
+
+  const total = fitSignals.reduce((sum, signal) => {
+    const next = typeof signal.score === "number" ? signal.score : 0;
+    return sum + Math.max(0, Math.min(100, next));
+  }, 0);
 
   return Math.round(total / fitSignals.length);
 }
@@ -141,160 +163,200 @@ function getSignalLabel(score: number) {
   return "Possible fit";
 }
 
-function getSignalStoryLead(score: number) {
-  if (score >= 84) {
-    return "This world path is showing up with unusual consistency.";
+/* =============================================================================
+   Normalizers
+============================================================================= */
+
+function normalizeWhatYouExplore(value: unknown): ExploreEntry[] {
+  if (!value) return [];
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item, index) => {
+        if (typeof item === "string") {
+          return {
+            id: `explore-${index}`,
+            title: `Explore ${index + 1}`,
+            body: item,
+          };
+        }
+
+        const record = asRecord(item);
+        if (!record) return null;
+
+        const title =
+          asOptionalString(record.title) ??
+          asOptionalString(record.label) ??
+          asOptionalString(record.headline) ??
+          `Explore ${index + 1}`;
+
+        const body =
+          asOptionalString(record.body) ??
+          asOptionalString(record.description) ??
+          asOptionalString(record.summary) ??
+          asOptionalString(record.note) ??
+          "";
+
+        if (!title && !body) return null;
+
+        return {
+          id: asOptionalString(record.id) ?? `explore-${index}`,
+          title,
+          body,
+        };
+      })
+      .filter((item): item is ExploreEntry => Boolean(item))
+      .filter((item) => item.title || item.body);
   }
 
-  if (score >= 74) {
-    return "There is a real pattern here, not just a passing curiosity spike.";
-  }
+  const record = asRecord(value);
+  if (!record) return [];
 
-  if (score >= 64) {
-    return "There is enough here to test in real life, not just admire from a distance.";
-  }
+  return Object.entries(record)
+    .map(([key, raw], index) => {
+      if (typeof raw === "string") {
+        return {
+          id: key || `explore-${index}`,
+          title: key
+            .replace(/[-_]/g, " ")
+            .replace(/\b\w/g, (char) => char.toUpperCase()),
+          body: raw,
+        };
+      }
 
-  return "This may start quieter, but there is still something here worth checking.";
+      const child = asRecord(raw);
+      if (!child) return null;
+
+      return {
+        id: asOptionalString(child.id) ?? key ?? `explore-${index}`,
+        title:
+          asOptionalString(child.title) ??
+          asOptionalString(child.label) ??
+          key.replace(/[-_]/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+        body:
+          asOptionalString(child.body) ??
+          asOptionalString(child.description) ??
+          asOptionalString(child.summary) ??
+          "",
+      };
+    })
+    .filter((item): item is ExploreEntry => Boolean(item))
+    .filter((item) => item.title || item.body);
 }
 
-function getWorldAgenticOpening(firstName: string, path: WorldPathContent) {
-  const titleBase = path.hero.title.toLowerCase();
+function normalizeFeaturedOpportunity(value: unknown): FeaturedOpportunity | null {
+  const record = asRecord(value);
+  if (!record) return null;
 
-  if (firstName) {
-    return `${firstName}, this path is not about having your whole future mapped. It is about noticing whether ${titleBase} makes your questions bigger, your attention sharper, and the world around you feel more alive.`;
-  }
+  const title =
+    asOptionalString(record.title) ??
+    asOptionalString(record.name) ??
+    asOptionalString(record.label);
 
-  return `This path is not about having your whole future mapped. It is about noticing whether ${titleBase} makes your questions bigger, your attention sharper, and the world around you feel more alive.`;
-}
+  const description =
+    asOptionalString(record.description) ??
+    asOptionalString(record.summary) ??
+    asOptionalString(record.note) ??
+    "";
 
-function emptyWorldReactionState(): WorldReactionState {
+  const href =
+    asOptionalString(record.href) ??
+    asOptionalString(record.url) ??
+    asOptionalString(record.link);
+
+  if (!title || !href) return null;
+
+  const ctaLabel =
+    asOptionalString(record.ctaLabel) ??
+    asOptionalString(record.cta) ??
+    "Open opportunity";
+
+  const meta = [
+    asOptionalString(record.mode),
+    asOptionalString(record.locationLabel),
+    asOptionalString(record.formatLabel),
+    asOptionalString(record.badge),
+  ].filter((item): item is string => Boolean(item));
+
   return {
-    dismissed: [],
-    maybe: [],
-    liked: [],
-    feedbackBySlug: {},
+    title,
+    description,
+    href,
+    ctaLabel,
+    meta,
   };
 }
 
-function normalizeSlugList(input: unknown): string[] {
-  if (!Array.isArray(input)) return [];
-  return Array.from(
-    new Set(
-      input
-        .filter((value): value is string => typeof value === "string")
-        .map((value) => value.trim())
-        .filter(Boolean)
-    )
-  );
-}
+function normalizeOpportunityGroups(value: unknown): OpportunityGroup[] {
+  if (!Array.isArray(value)) return [];
 
-function normalizeFeedbackBySlug(
-  input: unknown
-): Record<string, WorldReactionFeedback> {
-  if (!input || typeof input !== "object") return {};
+  return value
+    .map((group, groupIndex) => {
+      const record = asRecord(group);
+      if (!record) return null;
 
-  const result: Record<string, WorldReactionFeedback> = {};
+      const rawItems = Array.isArray(record.items) ? record.items : [];
+      const items = rawItems
+        .map((item, itemIndex) => {
+          const child = asRecord(item);
+          if (!child) return null;
 
-  for (const [slug, value] of Object.entries(
-    input as Record<string, unknown>
-  )) {
-    if (!slug.trim() || !value || typeof value !== "object") continue;
+          const title =
+            asOptionalString(child.title) ??
+            asOptionalString(child.name) ??
+            asOptionalString(child.label);
 
-    const raw = value as Record<string, unknown>;
-    const reaction =
-      raw.reaction === "liked" ||
-      raw.reaction === "maybe" ||
-      raw.reaction === "dismissed"
-        ? raw.reaction
-        : null;
+          const href =
+            asOptionalString(child.href) ??
+            asOptionalString(child.url) ??
+            asOptionalString(child.link);
 
-    if (!reaction) continue;
+          if (!title || !href) return null;
 
-    const reasons = Array.isArray(raw.reasons)
-      ? raw.reasons
-          .filter((item): item is string => typeof item === "string")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : [];
+          const description =
+            asOptionalString(child.description) ??
+            asOptionalString(child.summary) ??
+            asOptionalString(child.note) ??
+            "";
 
-    const note = typeof raw.note === "string" ? raw.note : "";
-    const savedAt =
-      typeof raw.savedAt === "number" && Number.isFinite(raw.savedAt)
-        ? raw.savedAt
-        : Date.now();
+          const meta = [
+            asOptionalString(child.mode),
+            asOptionalString(child.locationLabel),
+            asOptionalString(child.formatLabel),
+            asOptionalString(child.badge),
+            asOptionalString(child.provider),
+          ].filter((entry): entry is string => Boolean(entry));
 
-    result[slug] = {
-      reaction,
-      reasons,
-      note,
-      savedAt,
-    };
-  }
+          return {
+            id: asOptionalString(child.id) ?? `item-${groupIndex}-${itemIndex}`,
+            title,
+            description,
+            href,
+            meta,
+          };
+        })
+        .filter((item): item is OpportunityItem => Boolean(item));
 
-  return result;
-}
+      if (!items.length) return null;
 
-function readWorldReactionState(): WorldReactionState {
-  if (typeof window === "undefined") return emptyWorldReactionState();
-
-  try {
-    const raw = window.localStorage.getItem(WORLD_REACTIONS_STORAGE_KEY);
-    if (!raw) return emptyWorldReactionState();
-
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-
-    return {
-      dismissed: normalizeSlugList(parsed.dismissed),
-      maybe: normalizeSlugList(parsed.maybe),
-      liked: normalizeSlugList(parsed.liked),
-      feedbackBySlug: normalizeFeedbackBySlug(parsed.feedbackBySlug),
-    };
-  } catch {
-    return emptyWorldReactionState();
-  }
-}
-
-function writeWorldReactionState(state: WorldReactionState) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    WORLD_REACTIONS_STORAGE_KEY,
-    JSON.stringify(state)
-  );
-}
-
-function saveWorldReactionFeedback(args: {
-  slug: string;
-  reaction: WorldReaction;
-  reasons: string[];
-  note: string;
-}) {
-  const current = readWorldReactionState();
-
-  const next: WorldReactionState = {
-    dismissed: current.dismissed.filter((item) => item !== args.slug),
-    maybe: current.maybe.filter((item) => item !== args.slug),
-    liked: current.liked.filter((item) => item !== args.slug),
-    feedbackBySlug: {
-      ...(current.feedbackBySlug ?? {}),
-    },
-  };
-
-  next[args.reaction] = Array.from(new Set([...next[args.reaction], args.slug]));
-  next.feedbackBySlug![args.slug] = {
-    reaction: args.reaction,
-    reasons: Array.from(
-      new Set(args.reasons.map((item) => item.trim()).filter(Boolean))
-    ),
-    note: args.note.trim(),
-    savedAt: Date.now(),
-  };
-
-  writeWorldReactionState(next);
-  return next;
+      return {
+        id: asOptionalString(record.id) ?? `group-${groupIndex}`,
+        title:
+          asOptionalString(record.title) ??
+          asOptionalString(record.label) ??
+          "Opportunities",
+        description:
+          asOptionalString(record.description) ??
+          asOptionalString(record.summary) ??
+          "",
+        items,
+      };
+    })
+    .filter((group): group is OpportunityGroup => Boolean(group));
 }
 
 /* =============================================================================
-   Surface Card
+   UI Pieces
 ============================================================================= */
 
 function SurfaceCard({
@@ -310,12 +372,9 @@ function SurfaceCard({
 }) {
   return (
     <section
-      className={cx(
-        "relative overflow-hidden rounded-[26px] border border-white/10 bg-[#08111d]/88 backdrop-blur-2xl",
-        className
-      )}
+      className={`relative overflow-hidden rounded-[28px] border border-white/10 bg-[#08111d]/88 backdrop-blur-2xl ${className}`}
       style={{
-        boxShadow: `0 20px 56px rgba(0,0,0,0.28), 0 0 28px ${rgb(glow, 0.08)}`,
+        boxShadow: `0 22px 64px rgba(0,0,0,0.28), 0 0 30px ${rgb(glow, 0.08)}`,
       }}
     >
       <div
@@ -324,11 +383,11 @@ function SurfaceCard({
           background: `linear-gradient(180deg, transparent 0%, ${rgb(
             accent,
             0.42
-          )} 18%, ${rgb(glow, 0.16)} 75%, transparent 100%)`,
+          )} 18%, ${rgb(glow, 0.16)} 78%, transparent 100%)`,
         }}
       />
       <div
-        className="pointer-events-none absolute right-[-28px] top-[-26px] h-28 w-28 rounded-full blur-3xl"
+        className="pointer-events-none absolute right-[-24px] top-[-18px] h-28 w-28 rounded-full blur-3xl"
         style={{ background: rgb(glow, 0.08) }}
       />
       <div className="relative">{children}</div>
@@ -336,73 +395,7 @@ function SurfaceCard({
   );
 }
 
-/* =============================================================================
-   Section Header
-============================================================================= */
-
-function SectionHeader({
-  icon: Icon,
-  kicker,
-  title,
-  accent,
-  description,
-}: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  kicker: string;
-  title?: string;
-  accent: Rgb;
-  description?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div
-        className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10"
-        style={{
-          borderColor: rgb(accent, 0.24),
-          background: `linear-gradient(180deg, ${rgb(
-            accent,
-            0.16
-          )} 0%, ${rgb(accent, 0.05)} 100%)`,
-          boxShadow: `0 0 20px ${rgb(accent, 0.14)}`,
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 rounded-2xl"
-          style={{
-            background: `radial-gradient(circle at 30% 25%, ${rgb(
-              accent,
-              0.2
-            )} 0%, transparent 68%)`,
-          }}
-        />
-        <Icon
-          className="relative h-4 w-4 sm:h-[17px] sm:w-[17px]"
-          style={{ color: rgb(accent, 0.96) }}
-        />
-      </div>
-
-      <div className="min-w-0">
-        <div className={sectionKicker()}>{kicker}</div>
-        {title ? (
-          <h2 className="mt-0.5 text-[1.04rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.14rem]">
-            {title}
-          </h2>
-        ) : null}
-        {description ? (
-          <p className="mt-0.5 text-[12px] leading-4.5 text-white/56 sm:text-[13px] sm:leading-5">
-            {description}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-/* =============================================================================
-   Hero Emblem
-============================================================================= */
-
-function WorldPathHeroEmblem({
+function WorldHeroOrb({
   accent,
   accentStrong,
   glow,
@@ -416,60 +409,43 @@ function WorldPathHeroEmblem({
       <div
         className="absolute inset-0 rounded-full"
         style={{
-          background: `radial-gradient(circle, ${rgb(
-            glow,
-            0.22
-          )} 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${rgb(glow, 0.22)} 0%, transparent 70%)`,
           filter: "blur(8px)",
         }}
       />
-
       <div
-        className="absolute inset-[16%] rounded-full border"
-        style={{ borderColor: rgb(accent, 0.2) }}
+        className="absolute inset-[18%] rounded-full border"
+        style={{ borderColor: rgb(accent, 0.22) }}
       />
-
       <div
-        className="absolute inset-[34%] rounded-full border"
-        style={{ borderColor: rgb(accentStrong, 0.16) }}
-      />
-
-      <div
-        className="absolute left-[22%] top-[28%] h-[8px] w-[8px] rounded-full"
+        className="absolute left-[28%] top-[30%] h-[8px] w-[8px] rounded-full"
         style={{
           background: rgb(accent, 0.96),
-          boxShadow: `0 0 12px ${rgb(glow, 0.45)}`,
+          boxShadow: `0 0 12px ${rgb(accent, 0.45)}`,
         }}
       />
-
       <div
-        className="absolute right-[20%] top-[30%] h-[7px] w-[7px] rounded-full"
+        className="absolute right-[22%] top-[34%] h-[7px] w-[7px] rounded-full"
         style={{
           background: "white",
           boxShadow: "0 0 8px rgba(255,255,255,0.55)",
         }}
       />
-
       <div
-        className="absolute left-[38%] bottom-[22%] h-[8px] w-[8px] rounded-full"
+        className="absolute left-[36%] bottom-[24%] h-[8px] w-[8px] rounded-full"
         style={{
           background: rgb(accentStrong, 0.95),
           boxShadow: `0 0 12px ${rgb(accentStrong, 0.42)}`,
         }}
       />
-
       <div
-        className="absolute left-[28%] top-[38%] h-px w-[28px] rotate-[10deg]"
+        className="absolute left-[36%] top-[36%] h-px w-[18px] rotate-[22deg]"
         style={{
-          background: `linear-gradient(90deg, ${rgb(
-            accent,
-            0.3
-          )} 0%, transparent 100%)`,
+          background: `linear-gradient(90deg, ${rgb(accent, 0.34)} 0%, transparent 100%)`,
         }}
       />
-
       <div
-        className="absolute left-[42%] top-[56%] h-px w-[18px] -rotate-[18deg]"
+        className="absolute left-[40%] top-[56%] h-px w-[20px] -rotate-[18deg]"
         style={{
           background: `linear-gradient(90deg, ${rgb(
             accentStrong,
@@ -477,26 +453,9 @@ function WorldPathHeroEmblem({
           )} 0%, transparent 100%)`,
         }}
       />
-
-      <div
-        className="absolute bottom-[8%] right-[8%] flex h-7 w-7 items-center justify-center rounded-full border"
-        style={{
-          borderColor: rgb(accent, 0.18),
-          background: rgb(accent, 0.08),
-        }}
-      >
-        <Globe
-          className="h-3.5 w-3.5"
-          style={{ color: rgb(accent, 0.92) }}
-        />
-      </div>
     </div>
   );
 }
-
-/* =============================================================================
-   Hero Inline Signal
-============================================================================= */
 
 function HeroInlineSignal({
   score,
@@ -550,23 +509,13 @@ function HeroInlineSignal({
   );
 }
 
-/* =============================================================================
-   Signal Detail Row
-============================================================================= */
-
-function SignalDetailRow({
-  id,
-  label,
-  score,
-  explanation,
+function SignalRow({
+  signal,
   accent,
   accentStrong,
   glow,
 }: {
-  id: string;
-  label: string;
-  score: number;
-  explanation: string;
+  signal: FitSignal;
   accent: Rgb;
   accentStrong: Rgb;
   glow: Rgb;
@@ -579,14 +528,13 @@ function SignalDetailRow({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <div className="truncate text-[13px] font-semibold text-white/92">
-              {label}
+              {signal.label}
             </div>
 
             <button
               type="button"
-              aria-expanded={open}
-              aria-controls={`signal-detail-${id}`}
               onClick={() => setOpen((current) => !current)}
+              aria-expanded={open}
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold text-white/76 transition hover:text-white"
               style={{
                 borderColor: open
@@ -608,7 +556,7 @@ function SignalDetailRow({
             background: rgb(accentStrong, 0.07),
           }}
         >
-          {score}
+          {signal.score}
         </div>
       </div>
 
@@ -616,7 +564,7 @@ function SignalDetailRow({
         <div
           className="h-full rounded-full"
           style={{
-            width: scoreWidth(score),
+            width: scoreWidth(signal.score),
             background: `linear-gradient(90deg, ${rgb(
               accent,
               0.92
@@ -627,384 +575,206 @@ function SignalDetailRow({
       </div>
 
       <div
-        id={`signal-detail-${id}`}
         className={[
           "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
-          open ? "mt-1.5 max-h-24 opacity-100" : "mt-0 max-h-0 opacity-0",
+          open ? "mt-1.5 max-h-20 opacity-100" : "mt-0 max-h-0 opacity-0",
         ].join(" ")}
       >
         <p className="text-[12px] leading-4.5 text-white/58">
-          {firstSentence(explanation)}
+          {firstSentence(signal.explanation)}
         </p>
       </div>
     </div>
   );
 }
 
-/* =============================================================================
-   Quick Check
-============================================================================= */
-
-function quickChipClass(isActive: boolean) {
-  return [
-    "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
-    isActive
-      ? "text-white"
-      : "text-white/78 hover:text-white hover:bg-white/[0.06]",
-  ].join(" ");
-}
-
-function QuickCheckCard({
+function ExploreCard({
+  item,
   accent,
   glow,
-  selectedReaction,
-  initialReasons,
-  initialNote,
-  isSaving,
-  onSubmit,
 }: {
+  item: ExploreEntry;
   accent: Rgb;
   glow: Rgb;
-  selectedReaction: WorldReaction | null;
-  initialReasons: string[];
-  initialNote: string;
-  isSaving: boolean;
-  onSubmit: (payload: {
-    reaction: WorldReaction;
-    reasons: string[];
-    note: string;
-  }) => void;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [draftReaction, setDraftReaction] =
-    React.useState<WorldReaction | null>(selectedReaction);
-  const [reasons, setReasons] = React.useState<string[]>(initialReasons);
-  const [note, setNote] = React.useState(initialNote);
-
-  React.useEffect(() => {
-    setDraftReaction(selectedReaction);
-    setReasons(initialReasons);
-    setNote(initialNote);
-  }, [selectedReaction, initialReasons, initialNote]);
-
-  const reactionConfig = React.useMemo(() => {
-    const map: Record<
-      WorldReaction,
-      {
-        title: string;
-        helper: string;
-        submitLabel: string;
-        reasonOptions: string[];
-      }
-    > = {
-      liked: {
-        title: "What part feels most alive?",
-        helper: "Pick a reason or add one quick note. One sentence is enough.",
-        submitLabel: "Save",
-        reasonOptions: [
-          "This world feels exciting",
-          "I want to know more",
-          "The vibe fits me",
-          "I could see myself exploring this",
-          "The signal feels real",
-        ],
-      },
-      maybe: {
-        title: "What feels close, but not fully there yet?",
-        helper: "This helps Everleap understand what still needs real-world testing.",
-        submitLabel: "Save",
-        reasonOptions: [
-          "Interesting but unsure",
-          "I need more real examples",
-          "I like parts of it",
-          "I want to compare it to others",
-          "I am not sure it matches my curiosity style",
-        ],
-      },
-      dismissed: {
-        title: "What feels off about this one?",
-        helper: "Tell Everleap why this path misses, then it will step aside.",
-        submitLabel: "Remove this path",
-        reasonOptions: [
-          "I do not relate to this path",
-          "The vibe feels wrong",
-          "It is not pulling me in",
-          "Another path fits better",
-          "I would not keep exploring this",
-        ],
-      },
-    };
-
-    return draftReaction ? map[draftReaction] : null;
-  }, [draftReaction]);
-
-  function pickReaction(reaction: WorldReaction) {
-    setDraftReaction(reaction);
-    setOpen(true);
-
-    if (reaction !== selectedReaction) {
-      setReasons([]);
-      setNote("");
-    }
-  }
-
-  function toggleReason(reason: string) {
-    setReasons((current) =>
-      current.includes(reason)
-        ? current.filter((item) => item !== reason)
-        : [...current, reason]
-    );
-  }
-
-  function handleSubmit() {
-    if (!draftReaction) return;
-    onSubmit({
-      reaction: draftReaction,
-      reasons,
-      note,
-    });
-    setOpen(false);
-  }
-
-  function closeDrawer() {
-    setOpen(false);
-  }
-
   return (
-    <section
-      className="relative overflow-hidden rounded-[24px] border border-emerald-300/12 bg-[#08130f]/90 px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5"
+    <div
+      className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
       style={{
-        boxShadow: `0 18px 48px rgba(0,0,0,0.22), 0 0 24px ${rgb(glow, 0.08)}`,
+        boxShadow: `0 12px 30px rgba(0,0,0,0.18), 0 0 16px ${rgb(glow, 0.06)}`,
       }}
     >
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-px"
-        style={{
-          background: `linear-gradient(180deg, transparent 0%, ${rgb(
-            accent,
-            0.36
-          )} 24%, ${rgb(glow, 0.14)} 78%, transparent 100%)`,
-        }}
-      />
-      <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: `
-            radial-gradient(circle at 12% 0%, ${rgb(accent, 0.14)} 0%, transparent 28%),
-            radial-gradient(circle at 88% 8%, ${rgb(glow, 0.14)} 0%, transparent 26%),
-            linear-gradient(90deg, rgba(16,52,41,0.16) 0%, rgba(6,18,18,0) 36%)
-          `,
+          background: `radial-gradient(circle at 86% 14%, ${rgb(
+            accent,
+            0.12
+          )} 0%, transparent 26%)`,
         }}
       />
-      <div
-        className="pointer-events-none absolute right-[-28px] top-[-14px] h-28 w-28 rounded-full blur-3xl"
-        style={{ background: rgb(glow, 0.12) }}
-      />
-
       <div className="relative">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">
-          Quick check
-        </div>
+        <div className={sectionKicker()}>{item.title}</div>
+        <p className="mt-2 text-[14px] leading-6 text-white/72">{item.body}</p>
+      </div>
+    </div>
+  );
+}
 
-        <div className="mt-2 text-[15px] font-semibold tracking-[-0.02em] text-white/94 sm:text-[16px]">
-          Does this world feel like it could pull you in?
-        </div>
-
-        <p className="mt-1 text-[12px] leading-5.5 text-white/56 sm:text-[13px]">
-          This is not a test. It just helps Everleap sharpen what to show next.
+function FeaturedOpportunityCard({
+  opportunity,
+  accent,
+  glow,
+}: {
+  opportunity: FeaturedOpportunity | null;
+  accent: Rgb;
+  glow: Rgb;
+}) {
+  if (!opportunity) {
+    return (
+      <SurfaceCard accent={accent} glow={glow} className="px-5 py-5 sm:px-6 sm:py-6">
+        <div className={sectionKicker()}>Best first move</div>
+        <h2 className="mt-2 text-[1.08rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.18rem]">
+          Start with one real-world step
+        </h2>
+        <p className="mt-2 text-[14px] leading-6 text-white/62">
+          This path is ready for a first move, but the live opportunity is not
+          wired in yet.
         </p>
+      </SurfaceCard>
+    );
+  }
 
-        <div className="mt-4 flex flex-wrap gap-2.5">
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => pickReaction("liked")}
-            className={quickChipClass(draftReaction === "liked")}
+  return (
+    <SurfaceCard accent={accent} glow={glow} className="px-5 py-5 sm:px-6 sm:py-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className={sectionKicker()}>Best first move</div>
+          <h2 className="mt-2 text-[1.08rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.18rem]">
+            {opportunity.title}
+          </h2>
+          {opportunity.description ? (
+            <p className="mt-2 text-[14px] leading-6 text-white/68">
+              {opportunity.description}
+            </p>
+          ) : null}
+
+          {opportunity.meta.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {opportunity.meta.map((entry) => (
+                <span
+                  key={entry}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/72"
+                >
+                  {entry}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <a
+            href={opportunity.href}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-semibold text-white transition hover:translate-y-[-1px]"
             style={{
-              borderColor:
-                draftReaction === "liked"
-                  ? rgb(accent, 0.3)
-                  : "rgba(255,255,255,0.10)",
-              background:
-                draftReaction === "liked"
-                  ? `linear-gradient(180deg, ${rgb(
-                      accent,
-                      0.16
-                    )} 0%, rgba(255,255,255,0.03) 100%)`
-                  : "rgba(255,255,255,0.02)",
-              boxShadow:
-                draftReaction === "liked"
-                  ? `0 0 22px ${rgb(glow, 0.14)}`
-                  : "none",
+              borderColor: rgb(accent, 0.22),
+              background: `linear-gradient(180deg, ${rgb(accent, 0.18)} 0%, ${rgb(
+                accent,
+                0.08
+              )} 100%)`,
+              boxShadow: `0 12px 28px ${rgb(glow, 0.12)}`,
             }}
           >
-            <span aria-hidden>👍</span>
-            <span>Yes, this feels right</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => pickReaction("maybe")}
-            className={quickChipClass(draftReaction === "maybe")}
-            style={{
-              borderColor:
-                draftReaction === "maybe"
-                  ? rgb(accent, 0.26)
-                  : "rgba(255,255,255,0.10)",
-              background:
-                draftReaction === "maybe"
-                  ? `linear-gradient(180deg, ${rgb(
-                      accent,
-                      0.12
-                    )} 0%, rgba(255,255,255,0.03) 100%)`
-                  : "rgba(255,255,255,0.02)",
-            }}
-          >
-            <span aria-hidden>🙂</span>
-            <span>Maybe</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => pickReaction("dismissed")}
-            className={quickChipClass(draftReaction === "dismissed")}
-            style={{
-              borderColor:
-                draftReaction === "dismissed"
-                  ? "rgba(255,255,255,0.18)"
-                  : "rgba(255,255,255,0.10)",
-              background:
-                draftReaction === "dismissed"
-                  ? "rgba(255,255,255,0.07)"
-                  : "rgba(255,255,255,0.02)",
-            }}
-          >
-            <span aria-hidden>👎</span>
-            <span>No, not for me</span>
-          </button>
+            {opportunity.ctaLabel}
+            <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
 
         <div
-          className={[
-            "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
-            open && reactionConfig
-              ? "mt-4 max-h-[420px] opacity-100"
-              : "mt-0 max-h-0 opacity-0",
-          ].join(" ")}
-          aria-hidden={!open}
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border sm:flex"
+          style={{
+            borderColor: rgb(accent, 0.16),
+            background: rgb(accent, 0.08),
+          }}
         >
-          {reactionConfig ? (
-            <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)]">
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(circle at 12% 0%, ${rgb(
-                      accent,
-                      0.1
-                    )} 0%, transparent 34%),
-                    radial-gradient(circle at 88% 0%, ${rgb(
-                      glow,
-                      0.08
-                    )} 0%, transparent 30%)
-                  `,
-                }}
-              />
-
-              <div className="relative">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-semibold text-white/92">
-                      {reactionConfig.title}
-                    </div>
-                    <p className="mt-1 text-[12px] leading-5 text-white/56">
-                      {reactionConfig.helper}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeDrawer}
-                    className="h-9 shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 text-[12px] font-semibold text-white/76 transition hover:bg-white/[0.07]"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {reactionConfig.reasonOptions.map((reason) => {
-                    const active = reasons.includes(reason);
-                    return (
-                      <button
-                        key={reason}
-                        type="button"
-                        onClick={() => toggleReason(reason)}
-                        className="rounded-full border px-3 py-1.5 text-[12px] font-medium transition"
-                        style={{
-                          borderColor: active
-                            ? rgb(accent, 0.24)
-                            : "rgba(255,255,255,0.10)",
-                          background: active
-                            ? rgb(accent, 0.12)
-                            : "rgba(255,255,255,0.03)",
-                          color: active
-                            ? "rgba(255,255,255,0.96)"
-                            : "rgba(255,255,255,0.74)",
-                        }}
-                      >
-                        {reason}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3">
-                  <textarea
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    rows={3}
-                    placeholder="Anything else that feels important?"
-                    className="w-full resize-none rounded-[18px] border border-white/10 bg-black/12 px-4 py-3 text-[13px] leading-5.5 text-white outline-none placeholder:text-white/28 focus:border-white/16"
-                  />
-                  <div className="mt-2 text-[11px] text-white/38">
-                    One sentence is enough.
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={closeDrawer}
-                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[13px] font-semibold text-white/72 transition hover:bg-white/[0.06]"
-                  >
-                    Skip note
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isSaving || !draftReaction}
-                    onClick={handleSubmit}
-                    className="h-10 rounded-2xl px-4 text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
-                    style={{
-                      background: `linear-gradient(180deg, ${rgb(
-                        accent,
-                        0.24
-                      )} 0%, ${rgb(accent, 0.12)} 100%)`,
-                      border: `1px solid ${rgb(accent, 0.18)}`,
-                      boxShadow: `0 12px 28px ${rgb(glow, 0.14)}`,
-                    }}
-                  >
-                    {reactionConfig.submitLabel}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          <Compass className="h-5 w-5 text-white/86" />
         </div>
       </div>
-    </section>
+    </SurfaceCard>
+  );
+}
+
+function OpportunityGroupCard({
+  group,
+  accent,
+  glow,
+}: {
+  group: OpportunityGroup;
+  accent: Rgb;
+  glow: Rgb;
+}) {
+  return (
+    <SurfaceCard accent={accent} glow={glow} className="px-5 py-5 sm:px-6 sm:py-6">
+      <div className={sectionKicker()}>{group.title}</div>
+      {group.description ? (
+        <p className="mt-2 text-[14px] leading-6 text-white/62">
+          {group.description}
+        </p>
+      ) : null}
+
+      <div className="mt-4 space-y-4">
+        {group.items.map((item, index) => (
+          <a
+            key={item.id}
+            href={item.href}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="group relative block"
+          >
+            {index > 0 ? <div className="mb-4 h-px w-full bg-white/8" /> : null}
+
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="text-[17px] font-semibold leading-[1.2] text-white/94 transition group-hover:text-white">
+                  {item.title}
+                </h3>
+
+                {item.description ? (
+                  <p className="mt-1.5 max-w-[42rem] text-[13px] leading-5.5 text-white/62 transition group-hover:text-white/72">
+                    {item.description}
+                  </p>
+                ) : null}
+
+                {item.meta.length ? (
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {item.meta.map((entry) => (
+                      <span
+                        key={entry}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/72"
+                      >
+                        {entry}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div
+                className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border sm:flex"
+                style={{
+                  borderColor: rgb(accent, 0.18),
+                  background: rgb(accent, 0.08),
+                  boxShadow: `0 0 18px ${rgb(glow, 0.08)}`,
+                }}
+              >
+                <ArrowRight className="h-4 w-4 text-white/84 transition group-hover:translate-x-0.5" />
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </SurfaceCard>
   );
 }
 
@@ -1013,7 +783,6 @@ function QuickCheckCard({
 ============================================================================= */
 
 export default function WorldPathDetailPage() {
-  const router = useRouter();
   const params = useParams<{ pathId: string }>();
   const pathId = typeof params?.pathId === "string" ? params.pathId : "";
 
@@ -1028,35 +797,65 @@ export default function WorldPathDetailPage() {
   }, [pathId]);
 
   const [firstName, setFirstName] = React.useState<string | null>(null);
-  const [selectedReaction, setSelectedReaction] =
-    React.useState<WorldReaction | null>(null);
-  const [savedReasons, setSavedReasons] = React.useState<string[]>([]);
-  const [savedNote, setSavedNote] = React.useState("");
-  const [isSavingReaction, setIsSavingReaction] = React.useState(false);
 
   React.useEffect(() => {
     setFirstName(readStoredFirstName());
+  }, []);
 
-    const reactions = readWorldReactionState();
-    const savedFeedback = reactions.feedbackBySlug?.[path.slug];
+  const accent = React.useMemo(() => {
+    const theme = asRecord(path.theme);
+    const accentValue = asRecord(theme?.accent);
+    const accentStrongValue = asRecord(theme?.accentStrong);
+    const glowValue = asRecord(theme?.glow);
 
-    if (reactions.dismissed.includes(path.slug)) {
-      setSelectedReaction("dismissed");
-    } else if (reactions.liked.includes(path.slug)) {
-      setSelectedReaction("liked");
-    } else if (reactions.maybe.includes(path.slug)) {
-      setSelectedReaction("maybe");
-    } else {
-      setSelectedReaction(null);
+    if (
+      typeof accentValue?.r === "number" &&
+      typeof accentValue?.g === "number" &&
+      typeof accentValue?.b === "number"
+    ) {
+      const safeAccent: Rgb = {
+        r: accentValue.r,
+        g: accentValue.g,
+        b: accentValue.b,
+      };
+
+      const safeAccentStrong: Rgb =
+        accentStrongValue &&
+        typeof accentStrongValue.r === "number" &&
+        typeof accentStrongValue.g === "number" &&
+        typeof accentStrongValue.b === "number"
+          ? {
+              r: accentStrongValue.r,
+              g: accentStrongValue.g,
+              b: accentStrongValue.b,
+            }
+          : safeAccent;
+
+      const safeGlow: Rgb =
+        glowValue &&
+        typeof glowValue.r === "number" &&
+        typeof glowValue.g === "number" &&
+        typeof glowValue.b === "number"
+          ? {
+              r: glowValue.r,
+              g: glowValue.g,
+              b: glowValue.b,
+            }
+          : safeAccent;
+
+      return {
+        accent: safeAccent,
+        accentStrong: safeAccentStrong,
+        glow: safeGlow,
+      };
     }
 
-    setSavedReasons(savedFeedback?.reasons ?? []);
-    setSavedNote(savedFeedback?.note ?? "");
-  }, [path.slug]);
-
-  const accent = path.theme.accent;
-  const accentStrong = path.theme.accentStrong ?? path.theme.accent;
-  const glow = path.theme.glow ?? path.theme.accent;
+    return {
+      accent: { r: 251, g: 191, b: 36 },
+      accentStrong: { r: 245, g: 158, b: 11 },
+      glow: { r: 252, g: 211, b: 77 },
+    };
+  }, [path.theme]);
 
   const overallSignalScore = React.useMemo(
     () => getOverallSignalScore(path.fitSignals),
@@ -1068,122 +867,91 @@ export default function WorldPathDetailPage() {
     [overallSignalScore]
   );
 
-  const heroStoryLead = React.useMemo(
-    () => getSignalStoryLead(overallSignalScore),
-    [overallSignalScore]
+  const whatYouExplore = React.useMemo(
+    () => normalizeWhatYouExplore((path as Record<string, unknown>).whatYouExplore),
+    [path]
   );
 
-  const agenticOpening = React.useMemo(
-    () => getWorldAgenticOpening(firstName ?? "", path),
-    [firstName, path]
+  const featuredOpportunity = React.useMemo(
+    () =>
+      normalizeFeaturedOpportunity(
+        (path as Record<string, unknown>).featuredOpportunity
+      ),
+    [path]
   );
 
-  const fitSignalIntro = React.useMemo(() => {
-    const topSignal = [...path.fitSignals].sort((a, b) => b.score - a.score)[0];
-    if (!topSignal) {
-      return "A few smaller signals are clustering around this path.";
-    }
-    return `${topSignal.label} is one of the clearest reasons this world path is showing up right now.`;
-  }, [path.fitSignals]);
+  const opportunityGroups = React.useMemo(
+    () =>
+      normalizeOpportunityGroups(
+        (path as Record<string, unknown>).opportunityGroups
+      ),
+    [path]
+  );
 
-  const worldPayoffDescription = React.useMemo(() => {
-    const branchLead = path.branchPreviews?.[0]?.title;
-    const actionLead = path.tryNow?.actions?.[0]?.title;
+  const hero = asRecord(path.hero);
+  const card = asRecord(path.card);
 
-    if (branchLead && actionLead) {
-      return `From ${branchLead.toLowerCase()} to first experiments like ${actionLead.toLowerCase()}, this is where curiosity starts turning into real-world motion.`;
-    }
+  const traitChips: TraitChip[] = Array.isArray(path.traitChips)
+    ? (path.traitChips as TraitChip[])
+    : [];
 
-    if (branchLead) {
-      return `Different branches inside this world path can pull in different directions. This is where you can start seeing which one feels most alive.`;
-    }
+  const fitSignals: FitSignal[] = Array.isArray(path.fitSignals)
+    ? (path.fitSignals as FitSignal[])
+    : [];
 
-    if (actionLead) {
-      return `You do not need a giant plan to begin. This opens real next steps so curiosity can move into action.`;
-    }
-
-    return "Real next steps, deeper branches, and concrete ways to test whether this world belongs in your life for real.";
-  }, [path]);
-
-  function handleQuickCheckSubmit(payload: {
-    reaction: WorldReaction;
-    reasons: string[];
-    note: string;
-  }) {
-    setIsSavingReaction(true);
-
-    saveWorldReactionFeedback({
-      slug: path.slug,
-      reaction: payload.reaction,
-      reasons: payload.reasons,
-      note: payload.note,
-    });
-
-    setSelectedReaction(payload.reaction);
-    setSavedReasons(payload.reasons);
-    setSavedNote(payload.note);
-
-    if (payload.reaction === "dismissed") {
-      router.push("/main/explore/world");
-      return;
-    }
-
-    setIsSavingReaction(false);
-  }
-
-  React.useEffect(() => {
-    if (selectedReaction !== "dismissed") {
-      setIsSavingReaction(false);
-    }
-  }, [selectedReaction]);
+  const openingLead = firstName
+    ? `${firstName}, this is not about picking a forever answer. It is about noticing signal.`
+    : "This is not about picking a forever answer. It is about noticing signal.";
 
   return (
     <main className="relative text-white">
-      <div className="flex w-full flex-col gap-5 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-14 pt-5 sm:px-6">
         <Link
           href="/main/explore/world"
-          className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to World
         </Link>
 
         <SurfaceCard
-          accent={accent}
-          glow={glow}
-          className="px-4 py-4 sm:px-5 sm:py-5"
+          accent={accent.accent}
+          glow={accent.glow}
+          className="px-5 py-5 sm:px-6 sm:py-6"
         >
           <div
             className="pointer-events-none absolute -left-10 -top-10 h-36 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(accent, 0.12) }}
+            style={{ background: rgb(accent.accent, 0.12) }}
           />
           <div
             className="pointer-events-none absolute right-[18%] top-[-24px] h-28 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.08) }}
+            style={{ background: rgb(accent.accentStrong, 0.08) }}
           />
           <div
             className="pointer-events-none absolute right-10 top-0 h-24 w-32 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
+            style={{ background: rgb(accent.glow, 0.08) }}
           />
 
-          <WorldPathHeroEmblem
-            accent={accent}
-            accentStrong={accentStrong}
-            glow={glow}
+          <WorldHeroOrb
+            accent={accent.accent}
+            accentStrong={accent.accentStrong}
+            glow={accent.glow}
           />
 
           <div className="pr-14 sm:pr-20">
-            <div className={sectionKicker()}>{path.hero.eyebrow}</div>
+            <div className={sectionKicker()}>
+              {asString(hero?.eyebrow) || "World Path"}
+            </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="max-w-[11ch] text-[2rem] font-semibold leading-[0.98] tracking-[-0.05em] text-white/97 sm:max-w-none sm:text-[2.35rem]">
-                {path.hero.title}
+              <h1 className="max-w-[12ch] text-[2rem] font-semibold leading-[0.98] tracking-[-0.05em] text-white/97 sm:max-w-none sm:text-[2.35rem]">
+                {asString(hero?.title) || asString(card?.title) || "World Path"}
               </h1>
 
               <HeroInlineSignal
                 score={overallSignalScore}
-                accent={accent}
-                glow={glow}
+                accent={accent.accent}
+                glow={accent.glow}
               />
             </div>
 
@@ -1191,138 +959,171 @@ export default function WorldPathDetailPage() {
               {signalLabel}
             </div>
 
-            <p className="mt-3 text-[1rem] leading-6.5 text-white/80 sm:text-[1.06rem]">
-              {path.hero.hook}
-            </p>
+            {asString(hero?.hook) ? (
+              <p className="mt-3 text-[1rem] leading-6.5 text-white/80 sm:text-[1.06rem]">
+                {asString(hero?.hook)}
+              </p>
+            ) : null}
 
             <div className="mt-3 space-y-3 text-[14px] leading-6 text-white/62 sm:text-[15px]">
-              <p>{path.hero.summary}</p>
-              <p>
-                {heroStoryLead} {agenticOpening}
-              </p>
+              <p>{openingLead}</p>
+              {asString(hero?.summary) ? <p>{asString(hero?.summary)}</p> : null}
             </div>
-
-            {path.hero.whyItPullsYouIn?.length ? (
-              <ul className="mt-4 space-y-2.5">
-                {path.hero.whyItPullsYouIn.slice(0, 3).map((item, index) => (
-                  <li
-                    key={`${path.id}-pull-${index}`}
-                    className="flex gap-3 text-[13px] leading-5.5 text-white/66 sm:text-[14px]"
-                  >
-                    <span
-                      className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: rgb(accent, 0.92) }}
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
           </div>
         </SurfaceCard>
 
         <SurfaceCard
-          accent={accentStrong}
-          glow={glow}
-          className="px-4 py-3 sm:px-5 sm:py-3.5"
+          accent={accent.accentStrong}
+          glow={accent.glow}
+          className="px-5 py-5 sm:px-6 sm:py-6"
         >
           <div
             className="pointer-events-none absolute -left-8 top-0 h-28 w-28 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.11) }}
+            style={{ background: rgb(accent.accentStrong, 0.11) }}
           />
           <div
             className="pointer-events-none absolute right-0 top-0 h-28 w-36 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
+            style={{ background: rgb(accent.glow, 0.08) }}
           />
 
-          <SectionHeader
-            icon={Radar}
-            kicker="Why this could fit"
-            title="A quick read on the match"
-            description={fitSignalIntro}
-            accent={accentStrong}
-          />
+          <div className="flex items-start gap-3">
+            <div
+              className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10"
+              style={{
+                borderColor: rgb(accent.accentStrong, 0.24),
+                background: `linear-gradient(180deg, ${rgb(
+                  accent.accentStrong,
+                  0.16
+                )} 0%, ${rgb(accent.accentStrong, 0.05)} 100%)`,
+                boxShadow: `0 0 20px ${rgb(accent.accentStrong, 0.14)}`,
+              }}
+            >
+              <Radar
+                className="relative h-4 w-4 sm:h-[17px] sm:w-[17px]"
+                style={{ color: rgb(accent.accentStrong, 0.96) }}
+              />
+            </div>
 
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {path.traitChips.map((chip) => (
-              <span
-                key={chip.id}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/74"
-              >
-                {chip.label}
-              </span>
-            ))}
+            <div className="min-w-0">
+              <div className={sectionKicker()}>Why this could fit</div>
+              <h2 className="mt-0.5 text-[1.04rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.14rem]">
+                A quick read on the match
+              </h2>
+              <p className="mt-0.5 text-[12px] leading-4.5 text-white/56 sm:text-[13px] sm:leading-5">
+                These are the strongest signals this world path is picking up.
+              </p>
+            </div>
           </div>
 
+          {traitChips.length ? (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {traitChips.map((chip) => (
+                <span
+                  key={chip.id}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/74"
+                >
+                  {chip.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2.5 space-y-2.5">
-            {path.fitSignals.map((signal: WorldFitSignal) => (
-              <SignalDetailRow
+            {fitSignals.map((signal) => (
+              <SignalRow
                 key={signal.id}
-                id={signal.id}
-                label={signal.label}
-                score={signal.score}
-                explanation={signal.explanation}
-                accent={accent}
-                accentStrong={accentStrong}
-                glow={glow}
+                signal={signal}
+                accent={accent.accent}
+                accentStrong={accent.accentStrong}
+                glow={accent.glow}
               />
             ))}
           </div>
         </SurfaceCard>
 
-        <QuickCheckCard
-          accent={accent}
-          glow={glow}
-          selectedReaction={selectedReaction}
-          initialReasons={savedReasons}
-          initialNote={savedNote}
-          isSaving={isSavingReaction}
-          onSubmit={handleQuickCheckSubmit}
-        />
-
         <SurfaceCard
-          accent={glow}
-          glow={accentStrong}
+          accent={accent.glow}
+          glow={accent.accentStrong}
           className="px-5 py-5 sm:px-6 sm:py-6"
         >
-          <div
-            className="pointer-events-none absolute -left-8 top-[-10px] h-28 w-32 rounded-full blur-3xl"
-            style={{ background: rgb(accent, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[-18px] top-[-18px] h-32 w-36 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[14%] bottom-[-22px] h-24 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
-          />
+          <div className="flex items-start gap-3">
+            <div
+              className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10"
+              style={{
+                borderColor: rgb(accent.glow, 0.24),
+                background: `linear-gradient(180deg, ${rgb(
+                  accent.glow,
+                  0.16
+                )} 0%, ${rgb(accent.glow, 0.05)} 100%)`,
+                boxShadow: `0 0 20px ${rgb(accent.glow, 0.14)}`,
+              }}
+            >
+              <Globe2
+                className="relative h-4 w-4 sm:h-[17px] sm:w-[17px]"
+                style={{ color: rgb(accent.glow, 0.96) }}
+              />
+            </div>
 
-          <div className={sectionKicker()}>World payoff</div>
+            <div className="min-w-0">
+              <div className={sectionKicker()}>What you&apos;ll actually explore</div>
+              <h2 className="mt-0.5 text-[1.04rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.14rem]">
+                The parts of this world you would really step into
+              </h2>
+            </div>
+          </div>
 
-          <h2 className="mt-1.5 text-[1.12rem] font-semibold tracking-[-0.03em] text-white/96 sm:text-[1.24rem]">
-            See where this path can go in real life
-          </h2>
-
-          <p className="mt-2 max-w-[58ch] text-[13px] leading-5.5 text-white/62 sm:text-[14px] sm:leading-6">
-            {worldPayoffDescription}
-          </p>
-
-          <Link
-            href={`/main/explore/world/${path.slug}/next-steps`}
-            className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-white/90 transition hover:text-white"
-          >
-            <span>Open world next steps</span>
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
-
-          {path.branchPreviews?.[0] ? (
-            <p className="mt-3 text-[12px] leading-5 text-white/42 sm:text-[13px]">
-              One direction inside this path:{" "}
-              <span className="text-white/62">{path.branchPreviews[0].title}</span>
+          {whatYouExplore.length ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {whatYouExplore.map((item) => (
+                <ExploreCard
+                  key={item.id}
+                  item={item}
+                  accent={accent.glow}
+                  glow={accent.accentStrong}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-[14px] leading-6 text-white/62">
+              Add `whatYouExplore` content in the world path data and it will
+              render here automatically.
             </p>
-          ) : null}
+          )}
         </SurfaceCard>
+
+        <FeaturedOpportunityCard
+          opportunity={featuredOpportunity}
+          accent={accent.accent}
+          glow={accent.glow}
+        />
+
+        {opportunityGroups.map((group) => (
+          <OpportunityGroupCard
+            key={group.id}
+            group={group}
+            accent={accent.accentStrong}
+            glow={accent.glow}
+          />
+        ))}
+
+        {!opportunityGroups.length ? (
+          <SurfaceCard
+            accent={accent.accentStrong}
+            glow={accent.glow}
+            className="px-5 py-5 sm:px-6 sm:py-6"
+          >
+            <div className={sectionKicker()}>Ways to step in</div>
+            <h2 className="mt-2 text-[1.08rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.18rem]">
+              Opportunity groups will show here
+            </h2>
+            <p className="mt-2 text-[14px] leading-6 text-white/62">
+              Add `opportunityGroups` to this world path and the full set of
+              local and online options will render inline here.
+            </p>
+          </SurfaceCard>
+        ) : null}
+
+        <div className="pb-2" />
       </div>
     </main>
   );

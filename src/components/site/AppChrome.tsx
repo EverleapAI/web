@@ -286,7 +286,7 @@ export function AppChrome({
       </header>
 
       {/* IMPORTANT: tighter top padding so content starts sooner; keep bottom comfy */}
-      <main className="relative z-10 w-full px-4 pt-2 pb-4">
+      <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-2 pb-4">
   {children}
 </main>
     </div>

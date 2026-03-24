@@ -121,65 +121,144 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
     },
   ],
 
-  specialties: [],
-
-  dayInLife: {
-  title: "A day on set",
-  summary:
-    "It is not calm creative work. It is momentum, coordination, and making something real under pressure.",
-
-  moments: [
+  specialties: [
     {
-      id: "morning-setup",
-      timeLabel: "8:30 AM",
-      title: "Everything starts moving at once",
-      body:
-        "People arrive, gear is set up, locations get checked. You are not just watching - you are making sure everything is ready before the first shot even happens.",
+      id: "content-producer",
+      slug: "content-producer",
+      title: "Content Producer",
+      summary:
+        "This version is about taking an idea from rough concept to something people can actually watch, click, share, or remember. The pace is usually fast, the formats are shorter, and the pressure is making something that lands quickly without feeling disposable.",
+      whatYouActuallyDo: [
+        "Turn loose ideas into clear video plans with a hook, structure, shoot needs, and a release goal.",
+        "Coordinate shoots, talent, edits, deadlines, and revisions so content actually gets finished instead of stalling in endless ideas.",
+        "Shape videos around audience attention - what pulls someone in, what keeps the energy up, and what makes them keep watching.",
+        "Work across concept, production, and post so the final video feels intentional instead of random.",
+      ],
+      skillsThatGrowHere: [
+        "Fast concept development",
+        "Short-form storytelling",
+        "Production planning",
+        "Creative execution under deadline",
+      ],
+      starterProjects: [
+        "Produce a short video series around one theme and actually publish it on a regular rhythm.",
+        "Take one event, product, club, or person and create a full mini content package around it.",
+        "Practice building clear shot lists and edit plans before you start filming.",
+      ],
+      atmosphere:
+        "Fast-moving, practical, and output-driven. The work feels alive because your ideas become real quickly, but only if you stay organized enough to finish them.",
     },
     {
-      id: "first-shot",
-      timeLabel: "10:00 AM",
-      title: "Get the first real moment",
-      body:
-        "The first shot matters. It sets tone and momentum. Something will not go exactly as planned. You adjust quickly and keep things moving.",
+      id: "field-producer",
+      slug: "field-producer",
+      title: "Field Producer",
+      summary:
+        "This version is about making the shoot itself work in the real world. You are handling location reality, time pressure, people coordination, and constant change while protecting the quality of what gets captured.",
+      whatYouActuallyDo: [
+        "Keep the shoot moving by coordinating people, timing, logistics, gear, and next steps in real time.",
+        "Solve location, scheduling, access, and communication problems before they slow everything down.",
+        "Support the director or creative lead by making sure the real-world execution stays aligned with the plan.",
+        "Adapt instantly when weather, talent, timing, energy, or location conditions shift.",
+      ],
+      skillsThatGrowHere: [
+        "Live coordination",
+        "Problem-solving under pressure",
+        "Set communication",
+        "Logistical awareness",
+      ],
+      starterProjects: [
+        "Help organize and run a real shoot for a school event, club, interview, or community project.",
+        "Practice making run-of-show plans, call sheets, or simple production schedules.",
+        "Notice what usually causes chaos on shoots and how stronger prep reduces it.",
+      ],
+      atmosphere:
+        "High-energy, unpredictable, and momentum-heavy. This is for people who like being in the middle of action and staying useful when things get messy.",
     },
     {
-      id: "midday-pressure",
-      timeLabel: "12:30 PM",
-      title: "Stay ahead of the problems",
-      body:
-        "Time is tight. People are waiting. Something always goes wrong - lighting, timing, energy. Your job is to solve it without slowing everything down.",
-    },
-    {
-      id: "coordination",
-      timeLabel: "2:00 PM",
-      title: "Keep everyone aligned",
-      body:
-        "You are talking to multiple people constantly - crew, talent, whoever is involved. Everyone needs clarity, and you are the one holding it together.",
-    },
-    {
-      id: "capture-moment",
-      timeLabel: "3:30 PM",
-      title: "Get the shot that makes it work",
-      body:
-        "There is usually one moment where it comes together. The timing, the energy, the framing. You know it when you see it. That is what makes the whole project worth it.",
-    },
-    {
-      id: "wrap",
-      timeLabel: "5:30 PM",
-      title: "Wrap and move forward",
-      body:
-        "You are not done. You make sure everything is captured, organized, and ready for editing. Momentum matters after the shoot too.",
-    },
-    {
-      id: "after",
-      timeLabel: "Evening",
-      title: "It becomes real later",
-      body:
-        "The final payoff comes in the edit. When the story actually lands and people watch it - that is when the work really hits.",
+      id: "creative-producer",
+      slug: "creative-producer",
+      title: "Creative Producer",
+      summary:
+        "This version is about shaping how the project feels - the concept, tone, pacing, references, emotional arc, and creative decisions that make the final work worth watching.",
+      whatYouActuallyDo: [
+        "Develop the concept so the project has a clear emotional direction, not just a vague visual idea.",
+        "Guide decisions around tone, pacing, references, structure, and what moments need to hit hardest.",
+        "Work with directors, editors, shooters, and clients to keep the creative vision strong all the way through production.",
+        "Protect what makes the story interesting when time, budget, and logistics try to flatten it.",
+      ],
+      skillsThatGrowHere: [
+        "Taste and creative judgment",
+        "Story shaping",
+        "Pacing instinct",
+        "Creative direction across collaborators",
+      ],
+      starterProjects: [
+        "Create treatment decks or moodboards for real concepts and explain why each creative choice matters.",
+        "Study edits, ads, trailers, and short films to understand how emotion and pacing are being controlled.",
+        "Take a simple video concept and push it into something stronger through framing, rhythm, and story choices.",
+      ],
+      atmosphere:
+        "Cinematic, collaborative, and taste-driven. The work is less about doing one technical task and more about steering the project toward something memorable.",
     },
   ],
-},
+
+  dayInLife: {
+    title: "A day on set",
+    summary:
+      "It is not calm creative work. It is momentum, coordination, and making something real under pressure.",
+
+    moments: [
+      {
+        id: "morning-setup",
+        timeLabel: "8:30 AM",
+        title: "Everything starts moving at once",
+        body:
+          "People arrive, gear is set up, locations get checked. You are not just watching - you are making sure everything is ready before the first shot even happens.",
+      },
+      {
+        id: "first-shot",
+        timeLabel: "10:00 AM",
+        title: "Get the first real moment",
+        body:
+          "The first shot matters. It sets tone and momentum. Something will not go exactly as planned. You adjust quickly and keep things moving.",
+      },
+      {
+        id: "midday-pressure",
+        timeLabel: "12:30 PM",
+        title: "Stay ahead of the problems",
+        body:
+          "Time is tight. People are waiting. Something always goes wrong - lighting, timing, energy. Your job is to solve it without slowing everything down.",
+      },
+      {
+        id: "coordination",
+        timeLabel: "2:00 PM",
+        title: "Keep everyone aligned",
+        body:
+          "You are talking to multiple people constantly - crew, talent, whoever is involved. Everyone needs clarity, and you are the one holding it together.",
+      },
+      {
+        id: "capture-moment",
+        timeLabel: "3:30 PM",
+        title: "Get the shot that makes it work",
+        body:
+          "There is usually one moment where it comes together. The timing, the energy, the framing. You know it when you see it. That is what makes the whole project worth it.",
+      },
+      {
+        id: "wrap",
+        timeLabel: "5:30 PM",
+        title: "Wrap and move forward",
+        body:
+          "You are not done. You make sure everything is captured, organized, and ready for editing. Momentum matters after the shoot too.",
+      },
+      {
+        id: "after",
+        timeLabel: "Evening",
+        title: "It becomes real later",
+        body:
+          "The final payoff comes in the edit. When the story actually lands and people watch it - that is when the work really hits.",
+      },
+    ],
+  },
 
   forecast: {
     title: "What growth can look like",

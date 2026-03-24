@@ -7,21 +7,12 @@ import * as React from "react";
 import {
   ArrowRight,
   BookOpen,
-  Brain,
-  CalendarDays,
-  ChevronDown,
   CircleHelp,
-  ExternalLink,
-  Lightbulb,
-  MapPin,
-  MonitorPlay,
-  PenTool,
 } from "lucide-react";
 
 import {
   CardSectionHeader,
   ExploreLaneTabs,
-  OpportunityMetaPill,
   SectionKicker,
   SignalConstellation,
   SignalMeter,
@@ -32,10 +23,7 @@ import {
 import { LEARNING_PATHS } from "./_data/learningPaths";
 import type { LearningPathContent } from "./_data/learningPathSchema";
 
-type LearningDirection = Pick<
-  LearningPathContent,
-  "id" | "slug" | "theme" | "card" | "fitSignals"
->;
+type LearningDirection = LearningPathContent;
 
 type LearningProfileSignals = {
   firstName: string | null;
@@ -45,15 +33,11 @@ type LearningProfileSignals = {
   fullText: string;
 };
 
-type LearningTryItem = {
+type LearningOpportunityPreview = {
+  id: string;
   title: string;
-  format: "Local" | "Online" | "Local + Online";
-  locationLabel: string;
-  timing: string;
-  whyItFits: string;
-  howToTry: string;
-  actionLabel: string;
   href: string;
+  note: string;
 };
 
 type DirectionAtmosphere = {
@@ -62,13 +46,12 @@ type DirectionAtmosphere = {
   sideGlow: Rgb;
   washA: Rgb;
   washB: Rgb;
-  tryGlow: Rgb;
-  tryNode: Rgb;
+  opportunityGlow: Rgb;
+  opportunityNode: Rgb;
   futureGlow: Rgb;
   futureNode: Rgb;
 };
 
-const LOCAL_PLACE_LABEL = "94901";
 const MAX_VISIBLE_LEARNING_DIRECTIONS = 4;
 
 const EXPLORE_LANES: readonly ExploreLaneTab[] = [
@@ -461,8 +444,8 @@ function getDirectionAtmosphere(
       sideGlow: { r: 88, g: 119, b: 255 },
       washA: { r: 96, g: 154, b: 255 },
       washB: { r: 122, g: 96, b: 255 },
-      tryGlow: { r: 108, g: 190, b: 255 },
-      tryNode: { r: 176, g: 228, b: 255 },
+      opportunityGlow: { r: 108, g: 190, b: 255 },
+      opportunityNode: { r: 176, g: 228, b: 255 },
       futureGlow: { r: 110, g: 169, b: 255 },
       futureNode: { r: 182, g: 226, b: 255 },
     };
@@ -479,8 +462,8 @@ function getDirectionAtmosphere(
       sideGlow: { r: 181, g: 92, b: 255 },
       washA: { r: 230, g: 112, b: 255 },
       washB: { r: 168, g: 106, b: 255 },
-      tryGlow: { r: 246, g: 142, b: 255 },
-      tryNode: { r: 255, g: 207, b: 255 },
+      opportunityGlow: { r: 246, g: 142, b: 255 },
+      opportunityNode: { r: 255, g: 207, b: 255 },
       futureGlow: { r: 238, g: 128, b: 255 },
       futureNode: { r: 255, g: 210, b: 255 },
     };
@@ -498,8 +481,8 @@ function getDirectionAtmosphere(
       sideGlow: { r: 79, g: 187, b: 143 },
       washA: { r: 114, g: 205, b: 152 },
       washB: { r: 96, g: 182, b: 145 },
-      tryGlow: { r: 142, g: 226, b: 162 },
-      tryNode: { r: 203, g: 245, b: 214 },
+      opportunityGlow: { r: 142, g: 226, b: 162 },
+      opportunityNode: { r: 203, g: 245, b: 214 },
       futureGlow: { r: 138, g: 218, b: 160 },
       futureNode: { r: 206, g: 247, b: 220 },
     };
@@ -511,14 +494,143 @@ function getDirectionAtmosphere(
     sideGlow: { r: Math.max(0, accent.r - 12), g: accent.g, b: accent.b },
     washA: accent,
     washB: { r: accent.r, g: Math.max(0, accent.g - 26), b: accent.b },
-    tryGlow: accent,
-    tryNode: { r: 234, g: 226, b: 255 },
+    opportunityGlow: accent,
+    opportunityNode: { r: 234, g: 226, b: 255 },
     futureGlow: accent,
     futureNode: { r: 234, g: 226, b: 255 },
   };
 }
 
-function getTryLearningItem(direction: LearningDirection): LearningTryItem {
+function extractHref(value: unknown): string | null {
+  const direct = asString(value);
+  if (direct && /^https?:\/\//i.test(direct)) return direct;
+
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const candidates = [
+    record.href,
+    record.url,
+    record.link,
+    record.website,
+    record.path,
+  ];
+
+  for (const candidate of candidates) {
+    const found = asString(candidate);
+    if (found && /^https?:\/\//i.test(found)) {
+      return found;
+    }
+  }
+
+  return null;
+}
+
+function normalizeOpportunityItem(
+  value: unknown,
+  fallbackId: string
+): LearningOpportunityPreview | null {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const href = extractHref(record);
+  if (!href) return null;
+
+  const title =
+    asString(record.title) ??
+    asString(record.name) ??
+    asString(record.label) ??
+    asString(record.headline);
+
+  if (!title) return null;
+
+  const note =
+    asString(record.note) ??
+    asString(record.description) ??
+    asString(record.summary) ??
+    asString(record.body) ??
+    asString(record.oneLiner) ??
+    asString(record.whyItFits) ??
+    "";
+
+  return {
+    id: asString(record.id) ?? fallbackId,
+    title,
+    href,
+    note,
+  };
+}
+
+function collectOpportunityCandidates(
+  value: unknown,
+  bucket: LearningOpportunityPreview[],
+  seen: Set<string>,
+  depth = 0,
+  maxDepth = 4
+) {
+  if (depth > maxDepth || value == null) return;
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      const normalized = normalizeOpportunityItem(item, `item-${depth}-${index}`);
+      if (normalized && !seen.has(normalized.href)) {
+        seen.add(normalized.href);
+        bucket.push(normalized);
+      }
+
+      collectOpportunityCandidates(item, bucket, seen, depth + 1, maxDepth);
+    });
+    return;
+  }
+
+  const record = asRecord(value);
+  if (!record) return;
+
+  const preferredKeys = [
+    "tryNow",
+    "starterExperiences",
+    "opportunities",
+    "opportunityGroups",
+    "actions",
+    "experiments",
+    "resources",
+    "links",
+    "waysToTry",
+    "tryThisForReal",
+    "nextSteps",
+  ];
+
+  for (const key of preferredKeys) {
+    if (key in record) {
+      collectOpportunityCandidates(record[key], bucket, seen, depth + 1, maxDepth);
+    }
+  }
+
+  const direct = normalizeOpportunityItem(record, `record-${depth}-${bucket.length}`);
+  if (direct && !seen.has(direct.href)) {
+    seen.add(direct.href);
+    bucket.push(direct);
+  }
+
+  for (const child of Object.values(record)) {
+    if (typeof child === "object" && child !== null) {
+      collectOpportunityCandidates(child, bucket, seen, depth + 1, maxDepth);
+    }
+  }
+}
+
+function extractLearningOpportunities(
+  direction: LearningDirection
+): LearningOpportunityPreview[] {
+  const bucket: LearningOpportunityPreview[] = [];
+  const seen = new Set<string>();
+
+  collectOpportunityCandidates(direction, bucket, seen);
+
+  return bucket.slice(0, 2);
+}
+
+function getLearningPayoffIntro(direction: LearningDirection) {
   const title = extractCardField(direction, "title");
   const hook = extractCardField(direction, "hook");
   const lowerTitle = title.toLowerCase();
@@ -528,19 +640,9 @@ function getTryLearningItem(direction: LearningDirection): LearningTryItem {
     lowerTitle.includes("software") ||
     lowerTitle.includes("systems")
   ) {
-    return {
-      title: "CS50: Introduction to Computer Science",
-      format: "Online",
-      locationLabel: "edX",
-      timing: "Self-paced",
-      whyItFits:
-        hook ||
-        "This is one of the best real starting points for testing whether logic, systems, and building things actually feels energizing to you.",
-      howToTry:
-        "Start with one lecture or problem set and notice whether solving those kinds of puzzles pulls you in or drains you.",
-      actionLabel: "Open course",
-      href: "https://cs50.harvard.edu/x/",
-    };
+    return hook
+      ? hook
+      : "Two real ways to test this path: one nearby and one you can start online.";
   }
 
   if (
@@ -548,35 +650,9 @@ function getTryLearningItem(direction: LearningDirection): LearningTryItem {
     lowerTitle.includes("media") ||
     lowerTitle.includes("story")
   ) {
-    return {
-      title: "Google UX Design Certificate",
-      format: "Online",
-      locationLabel: "Coursera",
-      timing: "Flexible",
-      whyItFits:
-        hook ||
-        "This gives you a real taste of visual thinking, user experience, and creative problem-solving in a structured way.",
-      howToTry:
-        "Watch the intro, try one short activity, and see whether shaping experiences for other people feels naturally interesting.",
-      actionLabel: "Open course",
-      href: "https://www.coursera.org/professional-certificates/google-ux-design",
-    };
-  }
-
-  if (lowerTitle.includes("business") || lowerTitle.includes("innovation")) {
-    return {
-      title: "Startup School",
-      format: "Online",
-      locationLabel: "Y Combinator",
-      timing: "On demand",
-      whyItFits:
-        hook ||
-        "This is a real-world way to test whether ideas, decision-making, momentum, and building something from zero feels exciting to you.",
-      howToTry:
-        "Go through one module and ask yourself whether thinking this way makes you want to keep going.",
-      actionLabel: "Open program",
-      href: "https://www.startupschool.org/",
-    };
+    return hook
+      ? hook
+      : "Two real ways to test this path: one nearby and one you can start online.";
   }
 
   if (
@@ -585,34 +661,14 @@ function getTryLearningItem(direction: LearningDirection): LearningTryItem {
     lowerTitle.includes("environment") ||
     lowerTitle.includes("science")
   ) {
-    return {
-      title: "Khan Academy Biology",
-      format: "Online",
-      locationLabel: "Khan Academy",
-      timing: "Flexible",
-      whyItFits:
-        hook ||
-        "This is a low-friction way to test whether questions, systems, evidence, and living processes actually hold your attention.",
-      howToTry:
-        "Pick one unit, follow the thread, and notice whether your curiosity deepens as the ideas connect.",
-      actionLabel: "Open course",
-      href: "https://www.khanacademy.org/science/biology",
-    };
+    return hook
+      ? hook
+      : "Two real ways to test this path: one nearby and one you can start online.";
   }
 
-  return {
-    title: `${title} starter path`,
-    format: "Online",
-    locationLabel: "Coursera",
-    timing: "Flexible",
-    whyItFits:
-      hook ||
-      "A real first step makes it easier to tell whether this direction feels alive in practice, not just interesting in theory.",
-    howToTry:
-      "Start with one short lesson or assignment and see whether it makes you want another hour with it.",
-    actionLabel: "Browse courses",
-    href: "https://www.coursera.org/",
-  };
+  return hook
+    ? hook
+    : "Two real ways to test this path: one nearby and one you can start online.";
 }
 
 function IntroOrbitArt() {
@@ -661,204 +717,6 @@ function LearningIntroPanel({ firstName }: { firstName: string | null }) {
   );
 }
 
-function DirectionGlyph({
-  title,
-  accent,
-}: {
-  title: string;
-  accent: Rgb;
-}) {
-  const iconClass = "h-[15px] w-[15px]";
-
-  const sharedStyle = {
-    borderColor: rgb(accent, 0.24),
-    backgroundColor: rgb(accent, 0.1),
-    color: rgb(accent, 0.94),
-  };
-
-  if (
-    title.includes("Code") ||
-    title.includes("Systems") ||
-    title.includes("Business") ||
-    title.includes("Innovation")
-  ) {
-    return (
-      <div
-        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-        style={sharedStyle}
-      >
-        <Brain className={`${iconClass} mr-1.5`} />
-        Learning path
-      </div>
-    );
-  }
-
-  if (
-    title.includes("Design") ||
-    title.includes("Media") ||
-    title.includes("Story")
-  ) {
-    return (
-      <div
-        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-        style={sharedStyle}
-      >
-        <PenTool className={`${iconClass} mr-1.5`} />
-        Learning path
-      </div>
-    );
-  }
-
-  if (
-    title.includes("Bio") ||
-    title.includes("Health") ||
-    title.includes("Environment") ||
-    title.includes("Science")
-  ) {
-    return (
-      <div
-        className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-        style={sharedStyle}
-      >
-        <Lightbulb className={`${iconClass} mr-1.5`} />
-        Learning path
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
-      style={sharedStyle}
-    >
-      <BookOpen className={`${iconClass} mr-1.5`} />
-      Learning path
-    </div>
-  );
-}
-
-function InlineTryLearningDetails({
-  atmosphere,
-  item,
-}: {
-  atmosphere: DirectionAtmosphere;
-  item: LearningTryItem;
-}) {
-  return (
-    <div className="relative mt-4 overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
-            atmosphere.tryGlow,
-            0.36
-          )} 18%, ${rgb(atmosphere.tryGlow, 0.15)} 84%, transparent 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute left-[-34px] top-4 h-28 w-28 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.12) }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-10px] top-2 h-32 w-40 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.08) }}
-      />
-
-      <div className="relative px-0 pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap gap-2.5">
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <MapPin className="h-3.5 w-3.5" />
-                {item.locationLabel}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <CalendarDays className="h-3.5 w-3.5" />
-                {item.timing}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <MonitorPlay className="h-3.5 w-3.5" />
-                {item.format}
-              </OpportunityMetaPill>
-            </div>
-
-            <p className="mt-4 max-w-2xl text-[14px] leading-[1.72] text-white/82 sm:text-[15px]">
-              {item.whyItFits}
-            </p>
-
-            <p className="mt-3 max-w-2xl text-[14px] leading-[1.72] text-white/64 sm:text-[15px]">
-              {item.howToTry}
-            </p>
-
-            <div className="mt-4">
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
-                style={{
-                  borderColor: rgb(atmosphere.tryGlow, 0.24),
-                  background: `linear-gradient(180deg, ${rgb(
-                    atmosphere.tryGlow,
-                    0.18
-                  )} 0%, ${rgb(atmosphere.tryGlow, 0.08)} 100%)`,
-                  boxShadow: `0 10px 24px ${rgb(atmosphere.tryGlow, 0.16)}`,
-                }}
-              >
-                {item.actionLabel}
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          <div
-            className="pointer-events-none relative hidden h-20 w-24 shrink-0 sm:block"
-            aria-hidden="true"
-          >
-            <div
-              className="absolute left-0 top-9 h-px w-16"
-              style={{
-                background: `linear-gradient(90deg, ${rgb(
-                  atmosphere.tryGlow,
-                  0.34
-                )} 0%, transparent 100%)`,
-              }}
-            />
-            <div
-              className="absolute right-4 top-2 h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryNode, 0.98),
-                boxShadow: `0 0 16px ${rgb(atmosphere.tryGlow, 0.5)}`,
-              }}
-            />
-            <div
-              className="absolute left-10 top-8 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryGlow, 0.72),
-                boxShadow: `0 0 12px ${rgb(atmosphere.tryGlow, 0.36)}`,
-              }}
-            />
-            <div
-              className="absolute left-2 top-12 h-3 w-3 rounded-full border"
-              style={{
-                borderColor: rgb(atmosphere.tryGlow, 0.34),
-                backgroundColor: rgb(atmosphere.tryGlow, 0.08),
-              }}
-            />
-            <div
-              className="absolute right-12 top-14 h-1.5 w-1.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryNode, 0.82),
-                boxShadow: `0 0 10px ${rgb(atmosphere.tryGlow, 0.34)}`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function LearningPathForwardSection({
   direction,
   atmosphere,
@@ -867,7 +725,7 @@ function LearningPathForwardSection({
   atmosphere: DirectionAtmosphere;
 }) {
   return (
-    <div className="relative mt-8">
+    <div className="relative mt-6">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
@@ -900,13 +758,13 @@ function LearningPathForwardSection({
               What this path could really look like
             </CardSectionHeader>
 
-            <h3 className="mt-3 text-[22px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px]">
+            <h3 className="mt-3 text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[22px]">
               See the full path ahead
             </h3>
 
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 sm:text-[14px]">
-              Go deeper into branches, next steps, and ways to explore this path
-              in a more real way.
+            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72">
+              Go deeper into what you would study, where it could lead, and how
+              to keep testing whether this direction feels right.
             </p>
           </div>
 
@@ -961,6 +819,82 @@ function LearningPathForwardSection({
   );
 }
 
+function OpportunityRow({
+  item,
+  atmosphere,
+  isFirst,
+}: {
+  item: LearningOpportunityPreview;
+  atmosphere: DirectionAtmosphere;
+  isFirst: boolean;
+}) {
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group/opportunity relative block px-1 py-4"
+    >
+      {!isFirst ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.2
+            )} 18%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.08
+            )} 82%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 92% 20%, ${rgb(
+            atmosphere.opportunityGlow,
+            0.09
+          )} 0%, transparent 24%)`,
+        }}
+      />
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[20px]">
+            {item.title}
+          </h4>
+
+          {item.note ? (
+            <p className="mt-2 max-w-[40rem] text-[13px] leading-[1.65] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
+              {item.note}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="relative mt-1 hidden h-10 w-10 shrink-0 sm:block">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+            style={{
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.14),
+            }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover/opportunity:translate-x-0.5"
+            style={{
+              borderColor: rgb(atmosphere.opportunityGlow, 0.22),
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.07),
+            }}
+          >
+            <ArrowRight className="h-4.5 w-4.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 function LearningDirectionCard({
   direction,
   profile,
@@ -976,10 +910,10 @@ function LearningDirectionCard({
   const description = extractCardField(direction, "description");
   const signalStrength = getSignalStrength(direction, profile);
   const signalLabel = getSignalLabel(signalStrength);
-  const tryItem = getTryLearningItem(direction);
+  const opportunities = extractLearningOpportunities(direction);
+  const payoffIntro = getLearningPayoffIntro(direction);
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
-  const [showTryDrawer, setShowTryDrawer] = React.useState(false);
 
   return (
     <article
@@ -1033,44 +967,39 @@ function LearningDirectionCard({
 
       <div className="relative">
         <div className="min-w-0 pr-14 sm:pr-28">
-          <div className="min-w-0">
-            <CardSectionHeader color={atmosphere.border}>
-              Learning path
-            </CardSectionHeader>
+          <CardSectionHeader color={atmosphere.border}>
+            Learning path
+          </CardSectionHeader>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <div className="min-w-0">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+              {title}
+            </h2>
 
-                <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-                  {title}
-                </h2>
-              </div>
+            <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
+              <SignalMeter score={signalStrength} accent={atmosphere.border} />
 
-              <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
-                <SignalMeter score={signalStrength} accent={atmosphere.border} />
+              <button
+                type="button"
+                aria-label="What signal means"
+                onClick={() => setShowSignalHelp((current) => !current)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
+              >
+                <CircleHelp className="h-3.5 w-3.5" />
+              </button>
 
-                <button
-                  type="button"
-                  aria-label="What signal means"
-                  onClick={() => setShowSignalHelp((current) => !current)}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
-                >
-                  <CircleHelp className="h-3.5 w-3.5" />
-                </button>
-
-                {showSignalHelp ? (
-                  <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
-                    This is Everleap&apos;s best guess, right now, of how well
-                    this path fits your profile.
-                  </div>
-                ) : null}
-              </div>
+              {showSignalHelp ? (
+                <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
+                  This is Everleap&apos;s best guess, right now, of how well
+                  this path fits your profile.
+                </div>
+              ) : null}
             </div>
-
-            <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
-              {signalLabel}
-            </p>
           </div>
+
+          <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
+            {signalLabel}
+          </p>
 
           {hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
@@ -1079,77 +1008,37 @@ function LearningDirectionCard({
           ) : null}
 
           {description ? (
-            <p className="mt-3 max-w-[44rem] text-[14px] leading-[1.7] text-white/68 sm:text-[14px]">
+            <p className="mt-3 max-w-[44rem] text-[13px] leading-[1.6] text-white/68">
               {description}
             </p>
           ) : null}
         </div>
 
-        <div className="relative mt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{
-              background: `linear-gradient(90deg, transparent 0%, ${rgb(
-                atmosphere.tryGlow,
-                0.2
-              )} 18%, ${rgb(atmosphere.tryGlow, 0.06)} 82%, transparent 100%)`,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowTryDrawer((current) => !current)}
-            aria-expanded={showTryDrawer}
-            className="relative w-full px-1 pt-3 text-left"
-          >
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-full"
-              style={{
-                background: `radial-gradient(circle at 12% 26%, ${rgb(
-                  atmosphere.tryGlow,
-                  showTryDrawer ? 0.1 : 0.06
-                )} 0%, transparent 34%), radial-gradient(circle at 92% 82%, ${rgb(
-                  atmosphere.tryGlow,
-                  showTryDrawer ? 0.08 : 0.04
-                )} 0%, transparent 26%)`,
-              }}
-            />
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <CardSectionHeader color={atmosphere.tryGlow}>
-                  Try this for real
-                </CardSectionHeader>
+        <div className="mt-6">
+          <CardSectionHeader color={atmosphere.opportunityGlow}>
+            Try this for real
+          </CardSectionHeader>
 
-                <p className="mt-3 text-[16px] font-medium leading-[1.45] text-white">
-                  {tryItem.title}
-                </p>
+          <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-white/72">
+            {payoffIntro}
+          </p>
 
-                <p className="mt-1 text-[13px] leading-[1.55] text-white/68">
-                  Start small. See whether the energy gets stronger when this
-                  path becomes real.
-                </p>
+          <div className="mt-3">
+            {opportunities.map((item, index) => (
+              <OpportunityRow
+                key={item.id}
+                item={item}
+                atmosphere={atmosphere}
+                isFirst={index === 0}
+              />
+            ))}
+
+            {opportunities.length === 0 ? (
+              <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
+                No live opportunities are wired into this path yet.
               </div>
-
-              <span
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[13px] font-medium text-white/90"
-                style={{
-                  borderColor: rgb(atmosphere.tryGlow, 0.16),
-                  backgroundColor: rgb(atmosphere.tryGlow, 0.08),
-                }}
-              >
-                {showTryDrawer ? "Hide details" : "See details"}
-                <ChevronDown
-                  className={[
-                    "h-4 w-4 transition-transform duration-200",
-                    showTryDrawer ? "rotate-180" : "",
-                  ].join(" ")}
-                />
-              </span>
-            </div>
-          </button>
-
-          {showTryDrawer ? (
-            <InlineTryLearningDetails atmosphere={atmosphere} item={tryItem} />
-          ) : null}
+            ) : null}
+          </div>
         </div>
 
         <LearningPathForwardSection
@@ -1189,41 +1078,43 @@ export default function LearningExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(147,51,234,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(196,181,253,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(147,51,234,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(196,181,253,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
-        <div className="relative">
-          <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
-            Explore
-          </h1>
-          <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
-            What I want to understand
-          </p>
+          <div className="relative">
+            <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+              Explore
+            </h1>
+            <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
+              What I want to understand
+            </p>
 
-          <ExploreLaneTabs
-            lanes={EXPLORE_LANES}
-            activeClassName="border-violet-300/30 bg-violet-300/[0.12] text-violet-50 shadow-[0_0_0_1px_rgba(196,181,253,0.06)]"
-          />
-        </div>
-      </section>
-
-      <LearningIntroPanel firstName={profile.firstName} />
-
-      <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
-        {visibleDirections.map((direction) => (
-          <LearningDirectionCard
-            key={direction.id}
-            direction={direction}
-            profile={profile}
-          />
-        ))}
-
-        {LEARNING_PATHS.length === 0 ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-            No learning paths are registered yet.
+            <ExploreLaneTabs
+              lanes={EXPLORE_LANES}
+              activeClassName="border-violet-300/30 bg-violet-300/[0.12] text-violet-50 shadow-[0_0_0_1px_rgba(196,181,253,0.06)]"
+            />
           </div>
-        ) : null}
-      </section>
+        </section>
+
+        <LearningIntroPanel firstName={profile.firstName} />
+
+        <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
+          {visibleDirections.map((direction) => (
+            <LearningDirectionCard
+              key={direction.id}
+              direction={direction}
+              profile={profile}
+            />
+          ))}
+
+          {LEARNING_PATHS.length === 0 ? (
+            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+              No learning paths are registered yet.
+            </div>
+          ) : null}
+        </section>
+      </div>
     </div>
   );
 }
