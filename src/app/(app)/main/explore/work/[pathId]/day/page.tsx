@@ -406,46 +406,6 @@ export default function WorkPathDayPage() {
             })}
           </div>
         </section>
-
-        <section className="mt-16 grid gap-8 sm:grid-cols-2">
-          <Link
-            href={`/main/explore/work/${path.slug}/forecast`}
-            className="group relative"
-          >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
-              Forecast
-            </div>
-            <div className="mt-2 text-[1.1rem] font-semibold text-white sm:text-[1.2rem]">
-              {path.forecast.title}
-            </div>
-            <p className="mt-2 max-w-md text-sm leading-6 text-white/62">
-              {path.forecast.summary}
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/78 transition group-hover:text-white">
-              See the arc
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-
-          <Link
-            href={`/main/explore/work/${path.slug}/next-steps`}
-            className="group relative"
-          >
-            <div className="text-[11px] uppercase tracking-[0.22em] text-white/38">
-              Next steps
-            </div>
-            <div className="mt-2 text-[1.1rem] font-semibold text-white sm:text-[1.2rem]">
-              {path.nextSteps.title}
-            </div>
-            <p className="mt-2 max-w-md text-sm leading-6 text-white/62">
-              {path.nextSteps.summary}
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/78 transition group-hover:text-white">
-              See the next moves
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </Link>
-        </section>
       </div>
     </main>
   );

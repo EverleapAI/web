@@ -17,6 +17,10 @@ export type WorkPathThemeTone =
   | "creative-systems"
   | "human-guidance"
   | "future-build"
+  | "visual-creative"
+  | "cinematic-pulse"
+  | "guiding-light"
+  | "health-human"
   | string;
 
 export type WorkPathTheme = {
@@ -99,6 +103,9 @@ export type WorkPathSpecialtyEnergy =
   | "high-creative"
   | "people"
   | "strategy"
+  | "creative"
+  | "active"
+  | "human"
   | string;
 
 export type WorkPathSpecialtyPreview = {
@@ -182,7 +189,7 @@ export type WorkPathForecast = {
 };
 
 /* =============================================================================
-   Forecast V2 (new industry-trends model)
+   Forecast V2 (industry-trends model)
 ============================================================================= */
 
 export type WorkPathForecastMetricTone =
@@ -224,12 +231,7 @@ export type WorkPathForecastAiImpact = {
 };
 
 export type WorkPathForecastV2 = {
-  outlookLabel:
-    | "Rising"
-    | "Strong but changing"
-    | "Mixed"
-    | "Shifting fast"
-    | "Under pressure";
+  outlookLabel: string;
 
   outlookSummary: string;
 
@@ -249,7 +251,7 @@ export type WorkPathForecastV2 = {
 };
 
 /* =============================================================================
-   Next steps
+   Next steps (existing / backward-compatible)
 ============================================================================= */
 
 export type WorkPathNextStepType =
@@ -337,6 +339,48 @@ export type WorkPathNextSteps = {
 };
 
 /* =============================================================================
+   Next steps V2 (live-link landing page model)
+============================================================================= */
+
+export type WorkPathLiveOpportunityMode = "local" | "remote";
+
+export type WorkPathLiveOpportunityBadgeTone =
+  | "neutral"
+  | "local"
+  | "remote"
+  | "free"
+  | "paid"
+  | "seasonal"
+  | string;
+
+export type WorkPathLiveOpportunity = {
+  id: string;
+  title: string;
+  href: string;
+  note: string;
+  badge?: string;
+  badgeTone?: WorkPathLiveOpportunityBadgeTone;
+  provider?: string;
+  mode: WorkPathLiveOpportunityMode;
+};
+
+export type WorkPathLiveOpportunitySection = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  mode: WorkPathLiveOpportunityMode;
+  items: WorkPathLiveOpportunity[];
+};
+
+export type WorkPathNextStepsV2 = {
+  heroTitle?: string;
+  heroSummary?: string;
+  heroBadge?: string;
+  sections: WorkPathLiveOpportunitySection[];
+};
+
+/* =============================================================================
    Optional future-facing UI copy/config
 ============================================================================= */
 
@@ -393,6 +437,8 @@ export type WorkPathContent = {
   forecastV2?: WorkPathForecastV2;
 
   nextSteps: WorkPathNextSteps;
+
+  nextStepsV2?: WorkPathNextStepsV2;
 
   ui?: WorkPathUiConfig;
 };

@@ -4,31 +4,20 @@
 
 import Link from "next/link";
 import * as React from "react";
-import {
-  ArrowRight,
-  CalendarDays,
-  ChevronDown,
-  CircleHelp,
-  ExternalLink,
-  MapPin,
-  MonitorPlay,
-} from "lucide-react";
+import { ArrowRight, CircleHelp } from "lucide-react";
 
+import {
+  CardSectionHeader,
+  ExploreLaneTabs,
+  SectionKicker,
+  SignalConstellation,
+  SignalMeter,
+  rgb,
+  type ExploreLaneTab,
+  type Rgb,
+} from "../_components/ExploreShared";
 import { WORK_PATHS } from "./_data/workPaths";
 import type { WorkPathContent } from "./_data/workPathSchema";
-
-type Rgb = {
-  r: number;
-  g: number;
-  b: number;
-};
-
-type SignalNode = {
-  x: number;
-  y: number;
-  size: number;
-  alpha: number;
-};
 
 type UserProfileSignals = {
   firstName: string | null;
@@ -41,15 +30,19 @@ type UserProfileSignals = {
   statedCareerReason: string | null;
 };
 
-type OpportunityItem = {
+type LiveOpportunityPreview = {
+  id: string;
   title: string;
-  format: "Local" | "Online" | "Local + Online";
-  locationLabel: string;
-  timing: string;
-  whyItFits: string;
-  howToJoin: string;
-  actionLabel: string;
   href: string;
+  note: string;
+  badge: string | null;
+  provider: string | null;
+  mode: "local" | "remote";
+};
+
+type LiveOpportunityPair = {
+  local: LiveOpportunityPreview | null;
+  remote: LiveOpportunityPreview | null;
 };
 
 type PathAtmosphere = {
@@ -64,8 +57,6 @@ type PathAtmosphere = {
   futureNode: Rgb;
 };
 
-const LOCAL_PLACE_LABEL = "San Rafael";
-const LOCAL_ZIP = "94901";
 const MAX_VISIBLE_WORK_PATHS = 4;
 
 const MOCK_DOCTOR_PROFILE: UserProfileSignals = {
@@ -80,31 +71,12 @@ const MOCK_DOCTOR_PROFILE: UserProfileSignals = {
   statedCareerReason: "because it pays a lot of money",
 };
 
-const CONSTELLATION_NODES: SignalNode[] = [
-  { x: 18, y: 28, size: 8, alpha: 0.95 },
-  { x: 68, y: 18, size: 6, alpha: 0.72 },
-  { x: 108, y: 50, size: 7, alpha: 0.82 },
-  { x: 54, y: 66, size: 5, alpha: 0.66 },
-  { x: 26, y: 98, size: 7, alpha: 0.8 },
-  { x: 94, y: 96, size: 6, alpha: 0.7 },
-];
-
-const CONSTELLATION_LINES = [
-  { x1: 18, y1: 28, x2: 68, y2: 18, alpha: 0.34 },
-  { x1: 68, y1: 18, x2: 108, y2: 50, alpha: 0.24 },
-  { x1: 18, y1: 28, x2: 54, y2: 66, alpha: 0.28 },
-  { x1: 54, y1: 66, x2: 108, y2: 50, alpha: 0.22 },
-  { x1: 54, y1: 66, x2: 26, y2: 98, alpha: 0.24 },
-  { x1: 54, y1: 66, x2: 94, y2: 96, alpha: 0.2 },
-];
-
-const EXPLORE_LANES = [
+const EXPLORE_LANES: readonly ExploreLaneTab[] = [
   {
     id: "work",
     label: "Work",
     href: "/main/explore/work",
     active: true,
-    available: true,
     dotClass: "bg-cyan-300",
   },
   {
@@ -112,7 +84,6 @@ const EXPLORE_LANES = [
     label: "Learning",
     href: "/main/explore/learning",
     active: false,
-    available: true,
     dotClass: "bg-violet-300",
   },
   {
@@ -120,7 +91,6 @@ const EXPLORE_LANES = [
     label: "World",
     href: "/main/explore/world",
     active: false,
-    available: true,
     dotClass: "bg-amber-300",
   },
   {
@@ -128,7 +98,6 @@ const EXPLORE_LANES = [
     label: "Impact",
     href: "/main/explore/impact",
     active: false,
-    available: true,
     dotClass: "bg-emerald-300",
   },
   {
@@ -136,7 +105,6 @@ const EXPLORE_LANES = [
     label: "Play",
     href: "/main/explore/play",
     active: false,
-    available: true,
     dotClass: "bg-pink-300",
   },
 ] as const;
@@ -247,10 +215,6 @@ const SLUG_KEYWORDS: Record<string, string[]> = {
 
 function pagePadding() {
   return "pb-24 pt-3";
-}
-
-function rgb(value: Rgb, alpha = 1) {
-  return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -596,13 +560,13 @@ function getAgenticOpening(profile: UserProfileSignals) {
 
   if (profile.firstName && goal && looksLikeMedicineGoal(goal)) {
     return {
-      title: `${profile.firstName}, doctor is already on your mind — and that matters.`,
+      title: `${profile.firstName}, doctor is already on your mind - and that matters.`,
       bodyA:
         "You came in with a clear ambition, which is a big advantage. Medicine suggests you want a future that feels " +
         (reasonSummary ?? "meaningful, successful, and financially strong") +
         ".",
       bodyB:
-        "That’s a great place to start. I pulled a few nearby paths that seem to match that same drive — not instead of doctor, but alongside it, in case one of them surprises you.",
+        "That is a great place to start. I pulled a few nearby paths that seem to match that same drive - not instead of doctor, but alongside it, in case one of them surprises you.",
       bodyC:
         "Work usually gets clearer when you look past the title and notice what actually holds your attention. The goal here is to follow that instinct and give it something real to move toward.",
     };
@@ -610,13 +574,13 @@ function getAgenticOpening(profile: UserProfileSignals) {
 
   if (profile.firstName && goal) {
     return {
-      title: `${profile.firstName}, ${goal} is already on your mind — and that matters.`,
+      title: `${profile.firstName}, ${goal} is already on your mind - and that matters.`,
       bodyA:
         "You came in with a clear ambition, which is a big advantage. That tells me you want a future that feels " +
         (reasonSummary ?? "meaningful, substantial, and worth building") +
         ".",
       bodyB:
-        "That’s a great place to start. I pulled a few nearby paths that seem to match that same drive — not instead of your goal, but alongside it, in case one of them surprises you.",
+        "That is a great place to start. I pulled a few nearby paths that seem to match that same drive - not instead of your goal, but alongside it, in case one of them surprises you.",
       bodyC:
         "Work usually gets clearer when you look past the title and notice what actually holds your attention. The goal here is to follow that instinct and give it something real to move toward.",
     };
@@ -626,7 +590,7 @@ function getAgenticOpening(profile: UserProfileSignals) {
     return {
       title: `${profile.firstName}, having a direction already is a great sign.`,
       bodyA:
-        "You may already have a strong idea of what you want to do — and that matters. This section is here to pressure-test that instinct against a few other paths that fit how you think, build, and move through the world.",
+        "You may already have a strong idea of what you want to do - and that matters. This section is here to pressure-test that instinct against a few other paths that fit how you think, build, and move through the world.",
       bodyB:
         "Sometimes the right answer stays the same. Sometimes a nearby path opens up and gives you a stronger version of what you were already reaching for.",
       bodyC: null,
@@ -639,7 +603,7 @@ function getAgenticOpening(profile: UserProfileSignals) {
       bodyA:
         "Work becomes easier to explore when you stop asking which title sounds impressive and start asking which kinds of problems, people, systems, or worlds keep catching your attention in a real way.",
       bodyB:
-        "The goal here is to notice where your mind already leans — then give that instinct something more concrete to move toward.",
+        "The goal here is to notice where your mind already leans - then give that instinct something more concrete to move toward.",
       bodyC: null,
     };
   }
@@ -649,8 +613,8 @@ function getAgenticOpening(profile: UserProfileSignals) {
     bodyA:
       "Work becomes easier to explore when you stop asking which title sounds impressive and start asking which kinds of problems, people, systems, or worlds keep catching your attention in a real way.",
     bodyB:
-      "The goal here is to notice where your mind already leans — then give that instinct something more concrete to move toward.",
-      bodyC: null,
+      "The goal here is to notice where your mind already leans - then give that instinct something more concrete to move toward.",
+    bodyC: null,
   };
 }
 
@@ -852,136 +816,65 @@ function getSignalLabel(score: number) {
   return "Possible fit";
 }
 
-function getOpportunityForPath(path: WorkPathContent): OpportunityItem {
-  const pathTitle = extractCardField(path, "title");
+function isUsableHref(href: string | null) {
+  if (!href) return false;
+  return href.trim() !== "#" && href.trim() !== "";
+}
 
-  const bySlug: Record<string, OpportunityItem> = {
-    "game-designer": {
-      title: "Indie Game Jam Sprint",
-      format: "Online",
-      locationLabel: `Online · prioritized near ${LOCAL_ZIP} when possible`,
-      timing: "This weekend",
-      whyItFits:
-        "A short challenge like this lets you test whether building mechanics, story beats, and player experience actually feels energizing when it becomes real.",
-      howToJoin:
-        "Join solo or with a small team, pick a theme, and submit a tiny playable concept or prototype.",
-      actionLabel: "See how to join",
-      href: "https://itch.io/jams",
-    },
-    "software-developer": {
-      title: "Teen Build Night + Open Source Starter Session",
-      format: "Local + Online",
-      locationLabel: `${LOCAL_PLACE_LABEL} / Online`,
-      timing: "This week",
-      whyItFits:
-        "This is a low-pressure way to try real coding momentum — building, debugging, and seeing whether solving problems on screen gives you that satisfying locked-in feeling.",
-      howToJoin:
-        "Drop into the intro session, pick a small project prompt, and leave with one thing you actually built.",
-      actionLabel: "See the session details",
-      href: "https://github.com/goodfirstissue/goodfirstissue.dev",
-    },
-    "film-video-producer": {
-      title: "Short Form Story Lab",
-      format: "Local + Online",
-      locationLabel: `${LOCAL_PLACE_LABEL} / Remote edit option`,
-      timing: "Coming up soon",
-      whyItFits:
-        "It gives you a fast look at the real rhythm of planning, shooting, shaping, and tightening a story until it works emotionally.",
-      howToJoin:
-        "Watch the kickoff, choose a prompt, then create a short visual piece or help produce one with a team.",
-      actionLabel: "See how to get involved",
-      href: "https://www.48hourfilm.com/",
-    },
-  };
+function extractOpportunityPair(path: WorkPathContent): LiveOpportunityPair {
+  const nextStepsV2 = asRecord(
+    (path as unknown as Record<string, unknown>).nextStepsV2
+  );
+  const rawSections = nextStepsV2?.sections;
 
-  return (
-    bySlug[path.slug] ?? {
-      title: `${pathTitle} discovery session`,
-      format: "Local + Online",
-      locationLabel: `${LOCAL_PLACE_LABEL} / Online`,
-      timing: "Coming up soon",
-      whyItFits:
-        "This is the kind of small real-world step that helps you find out whether the energy of this field feels good in practice, not just in theory.",
-      howToJoin:
-        "Start with the intro session, ask one good question, and see whether you want to go deeper after a first taste.",
-      actionLabel: "See the details",
-      href: "https://www.coursera.org/",
+  if (!Array.isArray(rawSections)) {
+    return { local: null, remote: null };
+  }
+
+  const sections = rawSections
+    .map((section) => asRecord(section))
+    .filter((section): section is Record<string, unknown> => Boolean(section));
+
+  function pickFromSection(mode: "local" | "remote"): LiveOpportunityPreview | null {
+    const section =
+      sections.find((item) => asString(item.mode) === mode) ??
+      sections.find((item) => asString(item.id) === mode);
+
+    if (!section) return null;
+
+    const rawItems = section.items;
+    if (!Array.isArray(rawItems)) return null;
+
+    for (const item of rawItems) {
+      const record = asRecord(item);
+      if (!record) continue;
+
+      const title = asString(record.title);
+      const href = asString(record.href);
+      const note = asString(record.note);
+      const itemMode = asString(record.mode);
+
+      if (!title || !note || !isUsableHref(href)) continue;
+      if (itemMode && itemMode !== mode) continue;
+
+      return {
+        id: asString(record.id) ?? `${mode}-${title}`,
+        title,
+        href: href!,
+        note,
+        badge: asString(record.badge),
+        provider: asString(record.provider),
+        mode,
+      };
     }
-  );
-}
 
-function SectionKicker({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.19em] text-white/42 sm:text-[12px]">
-      {children}
-    </p>
-  );
-}
+    return null;
+  }
 
-function CardSectionHeader({
-  children,
-  color,
-}: {
-  children: React.ReactNode;
-  color: Rgb;
-}) {
-  return (
-    <div className="inline-flex items-center gap-2.5">
-      <span
-        className="h-[7px] w-[7px] rounded-full"
-        style={{
-          backgroundColor: rgb(color, 0.95),
-          boxShadow: `0 0 12px ${rgb(color, 0.38)}`,
-        }}
-      />
-      <span
-        className="text-[11px] font-semibold uppercase tracking-[0.19em]"
-        style={{ color: rgb(color, 0.92) }}
-      >
-        {children}
-      </span>
-      <span
-        className="h-px w-8"
-        style={{
-          background: `linear-gradient(90deg, ${rgb(
-            color,
-            0.24
-          )} 0%, transparent 100%)`,
-        }}
-      />
-    </div>
-  );
-}
-
-function ExploreLaneTabs() {
-  return (
-    <div className="mt-4 flex flex-wrap gap-2.5">
-      {EXPLORE_LANES.map((lane) => {
-        const content = (
-          <>
-            <span className={`h-2.5 w-2.5 rounded-full ${lane.dotClass}`} />
-            <span>{lane.label}</span>
-          </>
-        );
-
-        return (
-          <Link
-            key={lane.id}
-            href={lane.href}
-            aria-current={lane.active ? "page" : undefined}
-            className={[
-              "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[14px] font-medium tracking-[-0.01em] transition",
-              lane.active
-                ? "border-cyan-300/30 bg-cyan-300/[0.11] text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.05)]"
-                : "border-white/12 bg-white/[0.04] text-white/72 hover:bg-white/[0.07]",
-            ].join(" ")}
-          >
-            {content}
-          </Link>
-        );
-      })}
-    </div>
-  );
+  return {
+    local: pickFromSection("local"),
+    remote: pickFromSection("remote"),
+  };
 }
 
 function IntroOrbitArt() {
@@ -1035,272 +928,6 @@ function WorkIntroPanel({ profile }: { profile: UserProfileSignals }) {
   );
 }
 
-function SignalConstellation({
-  accent,
-  mobile = false,
-}: {
-  accent: Rgb;
-  mobile?: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "pointer-events-none absolute opacity-95",
-        mobile
-          ? "right-2 top-10 h-[88px] w-[92px] sm:hidden"
-          : "right-3 top-8 hidden h-[110px] w-[116px] sm:block",
-      ].join(" ")}
-    >
-      <div
-        className="absolute inset-0 rounded-full blur-3xl"
-        style={{
-          background: `radial-gradient(circle at 50% 50%, ${rgb(
-            accent,
-            0.17
-          )} 0%, ${rgb(accent, 0.055)} 42%, transparent 74%)`,
-        }}
-      />
-
-      <svg
-        viewBox="0 0 128 120"
-        className="absolute inset-0 h-full w-full overflow-visible"
-        aria-hidden="true"
-      >
-        {CONSTELLATION_LINES.map((line, index) => (
-          <line
-            key={`line-${mobile ? "m" : "d"}-${index}`}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            stroke={rgb(accent, mobile ? line.alpha * 0.92 : line.alpha)}
-            strokeWidth={mobile ? "1.25" : "1.15"}
-            strokeLinecap="round"
-          />
-        ))}
-
-        {CONSTELLATION_NODES.map((node, index) => (
-          <g key={`node-${mobile ? "m" : "d"}-${index}`}>
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size + 4 : node.size + 4.5}
-              fill={rgb(accent, node.alpha * 0.1)}
-            />
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size * 0.9 : node.size * 0.94}
-              fill={rgb(accent, mobile ? node.alpha * 0.95 : node.alpha)}
-            />
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={mobile ? node.size * 0.26 : node.size * 0.3}
-              fill="white"
-            />
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-function SignalMeter({
-  score,
-  accent,
-}: {
-  score: number;
-  accent: Rgb;
-}) {
-  const normalized = Math.max(0, Math.min(100, score));
-  const activeBars = Math.max(1, Math.round(normalized / 20));
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-end gap-1.5" aria-hidden="true">
-        {[0, 1, 2, 3, 4].map((index) => {
-          const active = index < activeBars;
-          return (
-            <span
-              key={index}
-              className="w-2 rounded-full transition-all"
-              style={{
-                height: `${10 + index * 4}px`,
-                background: active
-                  ? `linear-gradient(180deg, ${rgb(accent, 0.98)} 0%, ${rgb(
-                      accent,
-                      0.36
-                    )} 100%)`
-                  : "rgba(255,255,255,0.12)",
-                boxShadow: active ? `0 0 14px ${rgb(accent, 0.2)}` : "none",
-              }}
-            />
-          );
-        })}
-      </div>
-
-      <div className="flex items-baseline gap-2">
-        <span className="text-[20px] font-semibold tracking-[-0.03em] text-white">
-          {normalized}
-        </span>
-        <span className="text-[12px] uppercase tracking-[0.16em] text-white/42">
-          Signal
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function OpportunityMetaPill({
-  children,
-  glow,
-}: {
-  children: React.ReactNode;
-  glow: Rgb;
-}) {
-  return (
-    <span
-      className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] text-white/78"
-      style={{
-        borderColor: rgb(glow, 0.16),
-        background: `linear-gradient(180deg, ${rgb(
-          glow,
-          0.11
-        )} 0%, rgba(255,255,255,0.025) 100%)`,
-        boxShadow: `inset 0 1px 0 ${rgb(glow, 0.06)}`,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function InlineOpportunityDetails({
-  atmosphere,
-  opportunity,
-}: {
-  atmosphere: PathAtmosphere;
-  opportunity: OpportunityItem;
-}) {
-  return (
-    <div className="relative mt-4 overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
-            atmosphere.opportunityGlow,
-            0.36
-          )} 18%, ${rgb(atmosphere.opportunityGlow, 0.15)} 84%, transparent 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute left-[-34px] top-4 h-28 w-28 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.opportunityGlow, 0.12) }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-10px] top-2 h-32 w-40 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.opportunityGlow, 0.08) }}
-      />
-
-      <div className="relative px-0 pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap gap-2.5">
-              <OpportunityMetaPill glow={atmosphere.opportunityGlow}>
-                <MapPin className="h-3.5 w-3.5" />
-                {opportunity.locationLabel}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.opportunityGlow}>
-                <CalendarDays className="h-3.5 w-3.5" />
-                {opportunity.timing}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.opportunityGlow}>
-                <MonitorPlay className="h-3.5 w-3.5" />
-                {opportunity.format}
-              </OpportunityMetaPill>
-            </div>
-
-            <p className="mt-4 max-w-2xl text-[14px] leading-[1.72] text-white/82 sm:text-[15px]">
-              {opportunity.whyItFits}
-            </p>
-
-            <p className="mt-3 max-w-2xl text-[14px] leading-[1.72] text-white/64 sm:text-[15px]">
-              {opportunity.howToJoin}
-            </p>
-
-            <div className="mt-4">
-              <a
-                href={opportunity.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
-                style={{
-                  borderColor: rgb(atmosphere.opportunityGlow, 0.24),
-                  background: `linear-gradient(180deg, ${rgb(
-                    atmosphere.opportunityGlow,
-                    0.18
-                  )} 0%, ${rgb(atmosphere.opportunityGlow, 0.08)} 100%)`,
-                  boxShadow: `0 10px 24px ${rgb(
-                    atmosphere.opportunityGlow,
-                    0.16
-                  )}`,
-                }}
-              >
-                {opportunity.actionLabel}
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          <div
-            className="pointer-events-none relative hidden h-20 w-24 shrink-0 sm:block"
-            aria-hidden="true"
-          >
-            <div
-              className="absolute left-0 top-9 h-px w-16"
-              style={{
-                background: `linear-gradient(90deg, ${rgb(
-                  atmosphere.opportunityGlow,
-                  0.34
-                )} 0%, transparent 100%)`,
-              }}
-            />
-            <div
-              className="absolute right-4 top-2 h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.opportunityNode, 0.98),
-                boxShadow: `0 0 16px ${rgb(atmosphere.opportunityGlow, 0.5)}`,
-              }}
-            />
-            <div
-              className="absolute left-10 top-8 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.opportunityGlow, 0.72),
-                boxShadow: `0 0 12px ${rgb(atmosphere.opportunityGlow, 0.36)}`,
-              }}
-            />
-            <div
-              className="absolute left-2 top-12 h-3 w-3 rounded-full border"
-              style={{
-                borderColor: rgb(atmosphere.opportunityGlow, 0.34),
-                backgroundColor: rgb(atmosphere.opportunityGlow, 0.08),
-              }}
-            />
-            <div
-              className="absolute right-12 top-14 h-1.5 w-1.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.opportunityNode, 0.82),
-                boxShadow: `0 0 10px ${rgb(atmosphere.opportunityGlow, 0.34)}`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function PathForwardSection({
   path,
   atmosphere,
@@ -1309,7 +936,7 @@ function PathForwardSection({
   atmosphere: PathAtmosphere;
 }) {
   return (
-    <div className="relative mt-8">
+    <div className="relative mt-6">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
@@ -1342,11 +969,11 @@ function PathForwardSection({
               What this path could really look like
             </CardSectionHeader>
 
-            <h3 className="mt-3 text-[22px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px]">
+            <h3 className="mt-3 text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[22px]">
               See the full path ahead
             </h3>
 
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 sm:text-[14px]">
+            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72">
               Go deeper into specialties, training, day-to-day life, and where
               this path can lead.
             </p>
@@ -1403,6 +1030,80 @@ function PathForwardSection({
   );
 }
 
+function OpportunityRow({
+  item,
+  atmosphere,
+  isFirst,
+}: {
+  item: LiveOpportunityPreview;
+  atmosphere: PathAtmosphere;
+  isFirst: boolean;
+}) {
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group/opportunity relative block px-1 py-4"
+    >
+      {!isFirst ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.2
+            )} 18%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.08
+            )} 82%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 92% 20%, ${rgb(
+            atmosphere.opportunityGlow,
+            0.09
+          )} 0%, transparent 24%)`,
+        }}
+      />
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[20px]">
+            {item.title}
+          </h4>
+
+          <p className="mt-2 max-w-[40rem] text-[13px] leading-[1.65] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
+            {item.note}
+          </p>
+        </div>
+
+        <div className="relative mt-1 hidden h-10 w-10 shrink-0 sm:block">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+            style={{
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.14),
+            }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover/opportunity:translate-x-0.5"
+            style={{
+              borderColor: rgb(atmosphere.opportunityGlow, 0.22),
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.07),
+            }}
+          >
+            <ArrowRight className="h-4.5 w-4.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 function WorkPathCard({
   path,
   profile,
@@ -1418,10 +1119,14 @@ function WorkPathCard({
   const description = extractCardField(path, "description");
   const signalStrength = getSignalStrength(path, profile);
   const signalLabel = getSignalLabel(signalStrength);
-  const opportunity = getOpportunityForPath(path);
+  const opportunities = extractOpportunityPair(path);
+
+  const renderedOpportunities = [
+    opportunities.local,
+    opportunities.remote,
+  ].filter((item): item is LiveOpportunityPreview => Boolean(item));
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
-  const [showOpportunityDrawer, setShowOpportunityDrawer] = React.useState(false);
 
   return (
     <article
@@ -1475,41 +1180,39 @@ function WorkPathCard({
 
       <div className="relative">
         <div className="min-w-0 pr-14 sm:pr-28">
-          <div className="min-w-0">
-            <CardSectionHeader color={atmosphere.border}>
-              Work path
-            </CardSectionHeader>
+          <CardSectionHeader color={atmosphere.border}>
+            Work path
+          </CardSectionHeader>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-                {title}
-              </h2>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+              {title}
+            </h2>
 
-              <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
-                <SignalMeter score={signalStrength} accent={atmosphere.border} />
+            <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
+              <SignalMeter score={signalStrength} accent={atmosphere.border} />
 
-                <button
-                  type="button"
-                  aria-label="What signal means"
-                  onClick={() => setShowSignalHelp((current) => !current)}
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
-                >
-                  <CircleHelp className="h-3.5 w-3.5" />
-                </button>
+              <button
+                type="button"
+                aria-label="What signal means"
+                onClick={() => setShowSignalHelp((current) => !current)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
+              >
+                <CircleHelp className="h-3.5 w-3.5" />
+              </button>
 
-                {showSignalHelp ? (
-                  <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
-                    This is Everleap&apos;s best guess, right now, of how well
-                    this path fits your profile.
-                  </div>
-                ) : null}
-              </div>
+              {showSignalHelp ? (
+                <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
+                  This is Everleap&apos;s best guess, right now, of how well
+                  this path fits your profile.
+                </div>
+              ) : null}
             </div>
-
-            <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
-              {signalLabel}
-            </p>
           </div>
+
+          <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
+            {signalLabel}
+          </p>
 
           {hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
@@ -1518,79 +1221,37 @@ function WorkPathCard({
           ) : null}
 
           {description ? (
-            <p className="mt-3 max-w-[44rem] text-[14px] leading-[1.7] text-white/68 sm:text-[14px]">
+            <p className="mt-3 max-w-[44rem] text-[13px] leading-[1.6] text-white/68">
               {description}
             </p>
           ) : null}
         </div>
 
-        <div className="relative mt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{
-              background: `linear-gradient(90deg, transparent 0%, ${rgb(
-                atmosphere.opportunityGlow,
-                0.2
-              )} 18%, ${rgb(atmosphere.opportunityGlow, 0.06)} 82%, transparent 100%)`,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowOpportunityDrawer((current) => !current)}
-            aria-expanded={showOpportunityDrawer}
-            className="relative w-full px-1 pt-3 text-left"
-          >
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-full"
-              style={{
-                background: `radial-gradient(circle at 12% 26%, ${rgb(
-                  atmosphere.opportunityGlow,
-                  showOpportunityDrawer ? 0.1 : 0.06
-                )} 0%, transparent 34%), radial-gradient(circle at 92% 82%, ${rgb(
-                  atmosphere.opportunityGlow,
-                  showOpportunityDrawer ? 0.08 : 0.04
-                )} 0%, transparent 26%)`,
-              }}
-            />
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <CardSectionHeader color={atmosphere.opportunityGlow}>
-                  Try this for real
-                </CardSectionHeader>
+        <div className="mt-6">
+          <CardSectionHeader color={atmosphere.opportunityGlow}>
+            Try this for real
+          </CardSectionHeader>
 
-                <p className="mt-3 text-[16px] font-medium leading-[1.45] text-white">
-                  {opportunity.title}
-                </p>
+          <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-white/72">
+            Two real ways to test this path: one nearby and one you can start online.
+          </p>
 
-                <p className="mt-1 text-[13px] leading-[1.55] text-white/68">
-                  Near your zip code when possible. Online when not.
-                </p>
+          <div className="mt-3">
+            {renderedOpportunities.map((item, index) => (
+              <OpportunityRow
+                key={item.id}
+                item={item}
+                atmosphere={atmosphere}
+                isFirst={index === 0}
+              />
+            ))}
+
+            {renderedOpportunities.length === 0 ? (
+              <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
+                No live opportunities are wired into this path yet.
               </div>
-
-              <span
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[13px] font-medium text-white/90"
-                style={{
-                  borderColor: rgb(atmosphere.opportunityGlow, 0.16),
-                  backgroundColor: rgb(atmosphere.opportunityGlow, 0.08),
-                }}
-              >
-                {showOpportunityDrawer ? "Hide details" : "See details"}
-                <ChevronDown
-                  className={[
-                    "h-4 w-4 transition-transform duration-200",
-                    showOpportunityDrawer ? "rotate-180" : "",
-                  ].join(" ")}
-                />
-              </span>
-            </div>
-          </button>
-
-          {showOpportunityDrawer ? (
-            <InlineOpportunityDetails
-              atmosphere={atmosphere}
-              opportunity={opportunity}
-            />
-          ) : null}
+            ) : null}
+          </div>
         </div>
 
         <PathForwardSection path={path} atmosphere={atmosphere} />
@@ -1605,59 +1266,70 @@ export default function WorkExplorePage() {
   );
 
   React.useEffect(() => {
-    setProfile(MOCK_DOCTOR_PROFILE);
+    const stored = readStoredProfileSignals();
+    const hasRealProfile =
+      Boolean(stored.firstName) ||
+      stored.knowsDirection ||
+      stored.motivations.length > 0 ||
+      stored.strengths.length > 0 ||
+      stored.skills.length > 0 ||
+      Boolean(stored.statedCareerGoal) ||
+      Boolean(stored.statedCareerReason) ||
+      Boolean(stored.fullText.trim());
+
+    setProfile(hasRealProfile ? stored : MOCK_DOCTOR_PROFILE);
   }, []);
 
   const allPaths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
   const visiblePaths = React.useMemo(() => {
-  return allPaths
-    .map((path, index) => ({
-      path,
-      index,
-      score: getSignalStrength(path, profile),
-    }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.index - b.index; // stable tie-break (prevents jitter)
-    })
-    .slice(0, MAX_VISIBLE_WORK_PATHS)
-    .map((item) => item.path);
-}, [allPaths, profile]);
+    return allPaths
+      .map((path, index) => ({
+        path,
+        index,
+        score: getSignalStrength(path, profile),
+      }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.index - b.index;
+      })
+      .slice(0, MAX_VISIBLE_WORK_PATHS)
+      .map((item) => item.path);
+  }, [allPaths, profile]);
 
   return (
     <div className={pagePadding()}>
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(129,93,255,0.10),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(56,189,248,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(129,93,255,0.10),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(56,189,248,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
-        <div className="relative">
-          <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
-            Explore
-          </h1>
-          <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
-            Where I can go
-          </p>
+          <div className="relative">
+            <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+              Explore
+            </h1>
+            <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
+              Where I can go
+            </p>
 
-          <ExploreLaneTabs />
-        </div>
-      </section>
-
-      <WorkIntroPanel profile={profile} />
-
-      <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
-        {visiblePaths.map((path) => (
-          <WorkPathCard key={path.id} path={path} profile={profile} />
-        ))}
-
-        {allPaths.length === 0 ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-            No work paths are registered yet.
+            <ExploreLaneTabs
+              lanes={EXPLORE_LANES}
+              activeClassName="border-cyan-300/30 bg-cyan-300/[0.11] text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.05)]"
+            />
           </div>
-        ) : null}
-      </section>
+        </section>
 
-      <div className="mt-6 px-1 text-[12px] leading-relaxed text-white/38">
-        Prototype note: local opportunity previews are currently centered around{" "}
-        {LOCAL_ZIP}.
+        <WorkIntroPanel profile={profile} />
+
+        <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
+          {visiblePaths.map((path) => (
+            <WorkPathCard key={path.id} path={path} profile={profile} />
+          ))}
+
+          {allPaths.length === 0 ? (
+            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+              No work paths are registered yet.
+            </div>
+          ) : null}
+        </section>
       </div>
     </div>
   );
