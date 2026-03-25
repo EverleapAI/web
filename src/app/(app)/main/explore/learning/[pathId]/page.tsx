@@ -5,7 +5,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Sparkles,
+  Compass,
+  Laptop,
+} from "lucide-react";
 
 import { requireLearningPath } from "../_data/learningPaths";
 import type { LearningPathContent } from "../_data/learningPathSchema";
@@ -163,7 +169,7 @@ function HeroRadar({
   const polygonPoints = makePolygonPoints(values, cx, cy, 88);
 
   return (
-    <div className="relative mx-auto w-full max-w-[280px]">
+    <div className="relative mx-auto w-full max-w-[250px]">
       <div
         className="pointer-events-none absolute inset-0 rounded-full blur-3xl"
         style={{
@@ -244,14 +250,6 @@ function HeroRadar({
           style={{ filter: `drop-shadow(0 0 10px ${rgb(glow, 0.6)})` }}
         />
       </svg>
-
-      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-white/54">
-        {labels.map((label) => (
-          <div key={label} className="truncate">
-            {label}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -280,39 +278,81 @@ function OpportunityGroup({
   glow: { r: number; g: number; b: number };
   tone: "local" | "online";
 }) {
-  const anchorGradient =
+  const surfaceBackground =
     tone === "local"
-      ? `radial-gradient(circle at 16% 18%, ${rgb(accent, 0.18)} 0%, transparent 34%),
-         radial-gradient(circle at 84% 78%, ${rgb(glow, 0.12)} 0%, transparent 26%)`
-      : `radial-gradient(circle at 84% 18%, ${rgb(accentStrong, 0.18)} 0%, transparent 32%),
-         radial-gradient(circle at 18% 78%, ${rgb(glow, 0.1)} 0%, transparent 24%)`;
+      ? `
+        linear-gradient(180deg, rgba(9,22,20,0.92) 0%, rgba(7,17,18,0.82) 100%),
+        radial-gradient(circle at 14% 18%, ${rgb(accent, 0.18)} 0%, transparent 34%),
+        radial-gradient(circle at 86% 82%, ${rgb(glow, 0.1)} 0%, transparent 28%)
+      `
+      : `
+        linear-gradient(180deg, rgba(8,18,30,0.92) 0%, rgba(7,15,25,0.82) 100%),
+        radial-gradient(circle at 86% 18%, ${rgb(accentStrong, 0.18)} 0%, transparent 32%),
+        radial-gradient(circle at 18% 82%, ${rgb(glow, 0.08)} 0%, transparent 24%)
+      `;
+
+  const topLine =
+    tone === "local"
+      ? `linear-gradient(90deg, transparent 0%, ${rgb(
+          accent,
+          0.34
+        )} 22%, ${rgb(glow, 0.2)} 78%, transparent 100%)`
+      : `linear-gradient(90deg, transparent 0%, ${rgb(
+          accentStrong,
+          0.34
+        )} 22%, ${rgb(accent, 0.16)} 78%, transparent 100%)`;
+
+  const sideGlowColor = tone === "local" ? accent : accentStrong;
+  const anchorGlowColor = tone === "local" ? glow : accentStrong;
+  const NodeIcon = tone === "local" ? Compass : Laptop;
 
   return (
-    <section className="relative overflow-hidden rounded-[26px] border border-white/10 bg-[#08111b]/72 px-4 py-4 shadow-[0_18px_56px_rgba(0,0,0,0.22)] sm:px-5 sm:py-5">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-90"
-        style={{ background: anchorGradient }}
-      />
+    <section
+      className="relative overflow-hidden rounded-[26px] border shadow-[0_18px_56px_rgba(0,0,0,0.22)]"
+      style={{
+        borderColor:
+          tone === "local" ? rgb(accent, 0.18) : rgb(accentStrong, 0.18),
+        background: surfaceBackground,
+      }}
+    >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: topLine }}
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-px"
         style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
-            accentStrong,
-            0.28
-          )} 24%, ${rgb(accent, 0.18)} 76%, transparent 100%)`,
+          background: `linear-gradient(180deg, transparent 0%, ${rgb(
+            sideGlowColor,
+            0.22
+          )} 18%, transparent 100%)`,
         }}
       />
       <div
         className="pointer-events-none absolute right-[-36px] top-[-26px] h-28 w-28 rounded-full blur-3xl"
-        style={{ background: rgb(glow, 0.1) }}
+        style={{ background: rgb(anchorGlowColor, 0.12) }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-[-42px] left-[10%] h-24 w-24 rounded-full blur-3xl"
+        style={{ background: rgb(glow, tone === "local" ? 0.08 : 0.05) }}
       />
 
-      <div className="relative">
-        <div className="text-[11px] uppercase tracking-[0.22em] text-white/40">
-          {title}
+      <div className="relative px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex items-center gap-2">
+          <div
+            className="h-2 w-2 rounded-full"
+            style={{
+              background:
+                tone === "local" ? rgb(accent, 0.95) : rgb(accentStrong, 0.95),
+              boxShadow: `0 0 12px ${rgb(anchorGlowColor, 0.45)}`,
+            }}
+          />
+          <div className="text-[11px] uppercase tracking-[0.22em] text-white/44">
+            {title}
+          </div>
         </div>
 
-        <p className="mt-2 max-w-[44rem] text-[13px] leading-5.5 text-white/60 sm:text-[14px]">
+        <p className="mt-2 max-w-[44rem] text-[13px] leading-5.5 text-white/62 sm:text-[14px]">
           {intro}
         </p>
 
@@ -323,9 +363,41 @@ function OpportunityGroup({
               href={item.href}
               target="_blank"
               rel="noreferrer noopener"
-              className="group block py-4 transition hover:translate-x-[2px]"
+              className="group relative block overflow-hidden py-4 transition hover:translate-x-[2px]"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div
+                className="pointer-events-none absolute left-0 top-3 bottom-3 w-[3px] rounded-full opacity-70 transition duration-200 group-hover:opacity-100"
+                style={{
+                  background:
+                    tone === "local"
+                      ? `linear-gradient(180deg, ${rgb(
+                          accent,
+                          0.9
+                        )} 0%, ${rgb(glow, 0.55)} 100%)`
+                      : `linear-gradient(180deg, ${rgb(
+                          accentStrong,
+                          0.9
+                        )} 0%, ${rgb(glow, 0.42)} 100%)`,
+                  boxShadow: `0 0 14px ${rgb(anchorGlowColor, 0.28)}`,
+                }}
+              />
+              <div
+                className="pointer-events-none absolute left-2 right-10 top-1 bottom-1 rounded-[18px] opacity-0 blur-2xl transition duration-200 group-hover:opacity-100"
+                style={{
+                  background:
+                    tone === "local"
+                      ? `radial-gradient(circle at 0% 50%, ${rgb(
+                          accent,
+                          0.12
+                        )} 0%, transparent 42%)`
+                      : `radial-gradient(circle at 0% 50%, ${rgb(
+                          accentStrong,
+                          0.12
+                        )} 0%, transparent 42%)`,
+                }}
+              />
+
+              <div className="relative flex items-start justify-between gap-4 pl-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <div className="text-[16px] font-semibold tracking-[-0.02em] text-white/94">
@@ -338,24 +410,64 @@ function OpportunityGroup({
                     ) : null}
                   </div>
 
-                  <p className="mt-1 text-[13px] leading-5.5 text-white/66 sm:text-[14px] sm:leading-6">
+                  <p className="mt-1 text-[13px] leading-5.5 text-white/68 sm:text-[14px] sm:leading-6">
                     {item.summary}
                   </p>
 
                   {item.whyItFits ? (
-                    <p className="mt-1 text-[12px] leading-5 text-white/44 sm:text-[13px]">
+                    <p className="mt-1 text-[12px] leading-5 text-white/46 sm:text-[13px]">
                       {item.whyItFits}
                     </p>
                   ) : null}
                 </div>
 
                 <div
-                  className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] transition group-hover:border-white/20 group-hover:bg-white/[0.07]"
+                  className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition group-hover:scale-[1.04] group-hover:bg-white/[0.07]"
                   style={{
-                    boxShadow: `0 0 18px ${rgb(glow, 0.08)}`,
+                    borderColor:
+                      tone === "local"
+                        ? rgb(accent, 0.16)
+                        : rgb(accentStrong, 0.16),
+                    background:
+                      tone === "local"
+                        ? rgb(accent, 0.05)
+                        : rgb(accentStrong, 0.05),
+                    boxShadow: `0 0 18px ${rgb(anchorGlowColor, 0.1)}`,
                   }}
                 >
-                  <ExternalLink className="h-4 w-4 text-white/42 transition group-hover:text-white/76" />
+                  <NodeIcon
+                    className="h-[15px] w-[15px]"
+                    style={{
+                      color:
+                        tone === "local"
+                          ? rgb(accent, 0.82)
+                          : rgb(accentStrong, 0.82),
+                    }}
+                  />
+                </div>
+
+                <div
+                  className="absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border transition group-hover:bg-white/[0.07]"
+                  style={{
+                    borderColor:
+                      tone === "local"
+                        ? rgb(accent, 0.12)
+                        : rgb(accentStrong, 0.12),
+                    background:
+                      tone === "local"
+                        ? rgb(accent, 0.03)
+                        : rgb(accentStrong, 0.03),
+                  }}
+                >
+                  <ExternalLink
+                    className="h-3.5 w-3.5 transition group-hover:text-white/80"
+                    style={{
+                      color:
+                        tone === "local"
+                          ? rgb(accent, 0.54)
+                          : rgb(accentStrong, 0.54),
+                    }}
+                  />
                 </div>
               </div>
             </a>
@@ -443,7 +555,7 @@ export default function LearningPathPage() {
         </Link>
 
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#07131f]/92 px-6 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:px-7 sm:py-7">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#07131f]/92 px-6 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:px-7 sm:py-7 lg:py-6">
           <div
             className="pointer-events-none absolute -left-16 top-[-88px] h-56 w-56 rounded-full blur-3xl"
             style={{
@@ -483,8 +595,23 @@ export default function LearningPathPage() {
               `,
             }}
           />
+          <div
+            className="pointer-events-none absolute inset-0 lg:hidden"
+            style={{
+              background: `
+                radial-gradient(circle at 82% 24%, ${rgb(
+                  path.theme.accentStrong ?? path.theme.accent,
+                  0.1
+                )} 0%, transparent 20%),
+                radial-gradient(circle at 26% 92%, ${rgb(
+                  path.theme.glow ?? path.theme.accent,
+                  0.08
+                )} 0%, transparent 24%)
+              `,
+            }}
+          />
 
-          <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_300px] lg:items-center">
+          <div className="relative lg:grid lg:grid-cols-[minmax(0,1fr)_250px] lg:items-end lg:gap-8">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.24em] text-white/42">
                 {path.hero.eyebrow}
@@ -514,7 +641,8 @@ export default function LearningPathPage() {
               </div>
             </div>
 
-            <div className="relative lg:justify-self-end">
+            {/* DESKTOP RADAR ONLY */}
+            <div className="relative hidden lg:flex lg:justify-end lg:self-end lg:pb-1">
               <HeroRadar
                 labels={signalLabels.slice(0, 5)}
                 values={radarValues}
