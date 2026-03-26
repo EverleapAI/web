@@ -16,6 +16,27 @@ import {
 import { requireWorkPath } from "../../_data/workPaths";
 
 /* =============================================================================
+   Types
+============================================================================= */
+
+type OpportunityItem = {
+  id: string;
+  href: string;
+  title: string;
+  note: string;
+  badge?: string | null;
+};
+
+type OpportunitySection = {
+  id: string;
+  mode: "local" | "remote";
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: OpportunityItem[];
+};
+
+/* =============================================================================
    Helpers
 ============================================================================= */
 
@@ -25,16 +46,18 @@ function normalizeParam(value: string | string[] | undefined) {
 }
 
 function sectionIcon(mode: "local" | "remote") {
-  return mode === "local"
-    ? <MapPin className="h-4 w-4" />
-    : <Monitor className="h-4 w-4" />;
+  return mode === "local" ? (
+    <MapPin className="h-4 w-4" />
+  ) : (
+    <Monitor className="h-4 w-4" />
+  );
 }
 
 /* =============================================================================
    UI
 ============================================================================= */
 
-function OpportunitySectionBlock({ section }: { section: any }) {
+function OpportunitySectionBlock({ section }: { section: OpportunitySection }) {
   return (
     <section className="space-y-5">
       <div className="flex items-start gap-3">
@@ -56,7 +79,7 @@ function OpportunitySectionBlock({ section }: { section: any }) {
       </div>
 
       <div className="divide-y divide-white/8 rounded-[28px] border border-white/10 bg-white/[0.04] px-4 sm:px-5">
-        {section.items.map((item: any) => (
+        {section.items.map((item: OpportunityItem) => (
           <a
             key={item.id}
             href={item.href}
@@ -110,11 +133,9 @@ export default function WorkNextStepsPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
-      {/* background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(87,83,255,0.18),_transparent_30%),radial-gradient(circle_at_20%_32%,_rgba(56,189,248,0.12),_transparent_28%),radial-gradient(circle_at_80%_22%,_rgba(244,114,182,0.1),_transparent_24%),linear-gradient(180deg,_#0a1222_0%,_#07111f_42%,_#050b16_100%)]" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-4 sm:px-6 lg:px-8">
-        {/* back */}
         <div>
           <button
             onClick={() => router.back()}
@@ -125,7 +146,6 @@ export default function WorkNextStepsPage() {
           </button>
         </div>
 
-        {/* hero */}
         <section className="rounded-[32px] border border-white/12 bg-white/[0.05] px-6 py-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:justify-between">
             <div className="max-w-3xl">
@@ -154,10 +174,9 @@ export default function WorkNextStepsPage() {
           </div>
         </section>
 
-        {/* sections */}
         {nextStepsV2 ? (
           <div className="space-y-10">
-            {nextStepsV2.sections.map((section) => (
+            {nextStepsV2.sections.map((section: OpportunitySection) => (
               <OpportunitySectionBlock key={section.id} section={section} />
             ))}
           </div>

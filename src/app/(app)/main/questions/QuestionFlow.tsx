@@ -37,9 +37,7 @@ declare global {
 
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 
-// ✅ FIX: align with onboarding snapshot key used in src/app/onboarding/page.tsx
 const ONBOARDING_KEY_PRIMARY = "everleapOnboarding_v4_convo_min";
-// Optional legacy fallback (keeps older installs working if they still wrote v1)
 const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
 
 /* ============================================================
@@ -116,6 +114,7 @@ function saveOne(id: string, payload: Saved) {
 
 function readNameFromOnboarding(): string {
   if (typeof window === "undefined") return "";
+
   const tryRead = (key: string): string => {
     try {
       const raw = window.localStorage.getItem(key);
@@ -186,24 +185,24 @@ function safeReturnTo(raw: string | null): string {
 function completionCopy(cat: Category) {
   if (cat === "motivations") {
     return [
-      "This gives us a clear starting point for how you function day to day — what supports energy and focus, and what tends to drain it.",
-      "That’s how Everleap avoids generic advice. We’ll recommend options that fit your rhythm and real life, not just what sounds good on paper.",
-      "Next, we’ll turn this into a few practical possibilities and small experiments to test what actually fits.",
+      "This gives us a clearer read on what supports your energy, focus, and day-to-day rhythm.",
+      "That helps Everleap avoid generic advice. We can look for paths that fit the way you actually move through life, not just what sounds impressive.",
+      "Next, we’ll turn this into a few practical possibilities and small experiments worth trying.",
     ];
   }
 
   if (cat === "strengths") {
     return [
-      "This helps us understand how you tend to show up at your best, and the kinds of situations where your strengths come through naturally.",
-      "From here, Everleap can focus recommendations on roles, projects, and communities where those strengths are likely to be used — not overlooked.",
-      "We’ll suggest a few low-pressure ways to validate fit.",
+      "This gives us a better picture of how you tend to show up when you are at your best.",
+      "From here, Everleap can look for roles, projects, and communities where those strengths are more likely to be used and noticed.",
+      "Next, we’ll turn that into a few grounded directions you can test without pressure.",
     ];
   }
 
   return [
-    "This gives us a practical picture of where you want to grow, and how that growth might realistically happen.",
-    "From here, Everleap will recommend skill paths and next steps that are doable, not overwhelming — built around momentum, not pressure.",
-    "This is a starting point, and we’ll refine as you go.",
+    "This gives us a more practical read on where you want to grow and what kind of growth might actually feel worth it.",
+    "From here, Everleap can suggest skill paths and next steps that feel doable, not overwhelming.",
+    "This is a starting point. We’ll keep refining it as we learn more about you.",
   ];
 }
 
@@ -213,7 +212,7 @@ function completionCopy(cat: Category) {
 
 function CategoryPill({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-white/15 bg-white/6 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/70">
+    <span className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-medium tracking-[0.16em] text-white/68 backdrop-blur-sm">
       {label}
     </span>
   );
@@ -233,15 +232,18 @@ function ProgressDashes({
       {Array.from({ length: total }).map((_, i) => {
         const active = i === current;
         const done = isDone(i);
+
         return (
           <span
             key={i}
             aria-hidden="true"
             className={[
-              "rounded-full transition",
-              active ? "h-[10px] w-8 bg-white/70" : "h-[8px] w-7",
-              !active && done ? "bg-white/35" : "",
-              !active && !done ? "bg-white/12" : "",
+              "rounded-full transition-all duration-300",
+              active
+                ? "h-[8px] w-9 bg-white/72 shadow-[0_0_22px_rgba(255,255,255,0.18)]"
+                : "h-[6px] w-7",
+              !active && done ? "bg-white/28" : "",
+              !active && !done ? "bg-white/10" : "",
             ].join(" ")}
           />
         );
@@ -253,15 +255,48 @@ function ProgressDashes({
 function PauseLine({ show }: { show: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: show ? 1 : 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      initial={{ opacity: 0, scaleX: 0.92 }}
+      animate={{ opacity: show ? 1 : 0, scaleX: show ? 1 : 0.92 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       aria-hidden="true"
-      className="mt-8"
+      className="mt-8 origin-left"
     >
-      <div className="h-px w-44 rounded-full bg-white/18" />
+      <div className="h-px w-44 rounded-full bg-gradient-to-r from-white/24 via-white/12 to-transparent" />
     </motion.div>
   );
+}
+
+function leadInForCategory(category: Category) {
+  if (category === "motivations") return "Take a second with this.";
+  if (category === "strengths") return "Answer from what feels true.";
+  return "No rush. Start where your mind goes first.";
+}
+
+function ambientToneForCategory(category: Category) {
+  if (category === "motivations") {
+    return {
+      orbA: "bg-amber-300/10",
+      orbB: "bg-orange-400/10",
+      ring: "from-amber-200/14 via-white/8 to-transparent",
+      glow: "shadow-[0_0_80px_rgba(251,191,36,0.08)]",
+    };
+  }
+
+  if (category === "strengths") {
+    return {
+      orbA: "bg-sky-300/10",
+      orbB: "bg-cyan-400/10",
+      ring: "from-sky-200/14 via-white/8 to-transparent",
+      glow: "shadow-[0_0_80px_rgba(56,189,248,0.08)]",
+    };
+  }
+
+  return {
+    orbA: "bg-violet-300/10",
+    orbB: "bg-fuchsia-400/10",
+    ring: "from-violet-200/14 via-white/8 to-transparent",
+    glow: "shadow-[0_0_80px_rgba(167,139,250,0.08)]",
+  };
 }
 
 /* ============================================================
@@ -335,11 +370,11 @@ export default function QuestionFlow() {
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
 
-  function refreshSaved() {
+  const refreshSaved = React.useCallback(() => {
     const next = loadSaved();
     setSavedMap(next);
     return next;
-  }
+  }, []);
 
   React.useEffect(() => {
     refreshSaved();
@@ -349,7 +384,7 @@ export default function QuestionFlow() {
       window.removeEventListener("storage", refreshSaved);
       window.removeEventListener("focus", refreshSaved);
     };
-  }, []);
+  }, [refreshSaved]);
 
   React.useEffect(() => {
     setIndex(0);
@@ -379,8 +414,10 @@ export default function QuestionFlow() {
       setCtaReady(false);
       return;
     }
+
     const t1 = window.setTimeout(() => setShowPauseLine(true), 450);
     const t2 = window.setTimeout(() => setCtaReady(true), 3000);
+
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
@@ -388,6 +425,7 @@ export default function QuestionFlow() {
   }, [screenMode, category]);
 
   const completionParagraphs = React.useMemo(() => completionCopy(category), [category]);
+  const tone = React.useMemo(() => ambientToneForCategory(category), [category]);
 
   function exitNow() {
     stopListening();
@@ -431,6 +469,7 @@ export default function QuestionFlow() {
   function toggleMic() {
     focusAnswer();
     lastFinalRef.current = "";
+
     if (isListening) {
       stopListening();
       return;
@@ -450,8 +489,10 @@ export default function QuestionFlow() {
         const res = event.results[i];
         if (res.isFinal) finalChunk += res[0]?.transcript ?? "";
       }
+
       const cleaned = finalChunk.trim();
       if (!cleaned || cleaned === lastFinalRef.current) return;
+
       lastFinalRef.current = cleaned;
       setDraft((prev) => (prev ? `${prev} ${cleaned}` : cleaned));
     };
@@ -461,6 +502,7 @@ export default function QuestionFlow() {
 
     recognitionRef.current = rec;
     setIsListening(true);
+
     try {
       rec.start();
     } catch {
@@ -471,107 +513,172 @@ export default function QuestionFlow() {
   const screenKey = screenMode === "final" ? `final_${category}` : qId || "q";
 
   return (
-    <div className="mx-auto w-full max-w-[980px] px-6 pt-10 pb-24">
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-        <div className="text-sm font-semibold text-white/80">Everleap</div>
-        <div className="flex flex-col items-center gap-3">
-          <ProgressDashes current={index} total={total} isDone={isDoneDash} />
-          <CategoryPill label={categoryLabel} />
-        </div>
+    <div className="relative mx-auto w-full max-w-[980px] px-5 pt-8 pb-24 sm:px-6 sm:pt-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div
+          className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ${tone.orbA}`}
+        />
+        <div
+          className={`absolute bottom-[-5rem] right-[10%] h-[15rem] w-[15rem] rounded-full blur-3xl ${tone.orbB}`}
+        />
+        <div className="absolute inset-x-0 top-[24%] h-40 bg-gradient-to-b from-white/[0.02] via-white/[0.015] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+      </div>
+
+      <div className="flex items-start justify-between gap-4">
         <button
           type="button"
           onClick={exitNow}
-          className="text-sm font-semibold text-white/60 hover:text-white transition"
+          className="pt-1 text-sm font-medium text-white/52 transition hover:text-white/80"
         >
           Exit
         </button>
+
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
+          <ProgressDashes current={index} total={total} isDone={isDoneDash} />
+          <CategoryPill label={categoryLabel} />
+        </div>
+
+        <div className="w-[44px]" aria-hidden="true" />
       </div>
 
-      <div className="mt-10">
+      <div className="mt-10 sm:mt-14">
         <AnimatePresence mode="wait">
           <motion.div
             key={screenKey}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
           >
             {screenMode === "final" ? (
-              <div className="flex min-h-[60svh] items-center">
+              <div className="flex min-h-[62svh] items-center">
                 <div className="w-full max-w-3xl">
-                  <h1 className="mt-4 text-4xl font-semibold text-white">
-                    {categoryLabel} done{firstName(name) ? `, ${firstName(name)}` : ""}.
-                  </h1>
+                  <div
+                    className={`rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-7 backdrop-blur-sm sm:px-8 sm:py-9 ${tone.glow}`}
+                  >
+                    <p className="text-sm font-medium tracking-[0.12em] text-white/46 uppercase">
+                      Reflection complete
+                    </p>
 
-                  <div className="mt-6 space-y-4">
-                    {completionParagraphs.map((p, i) => (
-                      <p key={i} className="text-[15px] leading-7 text-white/75">
-                        {p}
-                      </p>
-                    ))}
-                  </div>
+                    <h1 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                      That gives us something real
+                      {firstName(name) ? `, ${firstName(name)}` : ""}.
+                    </h1>
 
-                  <PauseLine show={showPauseLine} />
+                    <div className="mt-6 space-y-4">
+                      {completionParagraphs.map((p, i) => (
+                        <p key={i} className="max-w-2xl text-[15px] leading-7 text-white/72">
+                          {p}
+                        </p>
+                      ))}
+                    </div>
 
-                  <div className="mt-8">
-                    <button
-                      type="button"
-                      onClick={exitNow}
-                      disabled={!ctaReady}
-                      className={`text-sm font-semibold ${
-                        ctaReady ? "text-white/85 hover:text-white" : "text-white/35"
-                      }`}
-                    >
-                      → Return
-                    </button>
+                    <PauseLine show={showPauseLine} />
+
+                    <div className="mt-8">
+                      <button
+                        type="button"
+                        onClick={exitNow}
+                        disabled={!ctaReady}
+                        className={[
+                          "inline-flex items-center gap-2 text-sm font-medium transition",
+                          ctaReady
+                            ? "text-white/84 hover:text-white"
+                            : "cursor-default text-white/30",
+                        ].join(" ")}
+                      >
+                        Continue
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[60svh] items-center">
+              <div className="flex min-h-[62svh] items-center">
                 <div className="w-full max-w-3xl">
-                  <h1 className="text-3xl font-semibold text-white">{q?.question}</h1>
+                  <div className="max-w-2xl">
+                    <p className="text-sm font-medium tracking-[0.08em] text-white/44">
+                      {leadInForCategory(category)}
+                    </p>
 
-                  <div className="mt-7 flex items-end gap-3">
-                    <div className="flex-1 border-b border-white/18">
-                      <textarea
-                        ref={textareaRef}
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            completeAndAdvance({ skipped: false });
-                          }
-                        }}
-                        rows={2}
-                        className="w-full bg-transparent py-3 text-white/90 outline-none"
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={toggleMic}
-                      disabled={!speechSupported}
-                      className="h-10 w-10 rounded-full border border-white/18 text-white/80"
-                    >
-                      {isListening ? <MicOff /> : <Mic />}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => completeAndAdvance({ skipped: false })}
-                      disabled={!draft.trim()}
-                      className="h-10 w-10 rounded-full bg-white/80 text-black disabled:opacity-40"
-                    >
-                      <Send />
-                    </button>
+                    <h1 className="mt-4 text-[2rem] font-semibold leading-[1.16] text-white sm:text-[2.5rem]">
+                      {q?.question}
+                    </h1>
                   </div>
 
-                  <div className="mt-6 text-sm text-white/60">
-                    <button type="button" onClick={() => completeAndAdvance({ skipped: true })}>
-                      Skip for now
-                    </button>
+                  <div className="mt-9 max-w-2xl">
+                    <div
+                      className={[
+                        "relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-sm sm:p-5",
+                        tone.glow,
+                      ].join(" ")}
+                    >
+                      <div
+                        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${tone.ring}`}
+                      />
+                      <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+
+                      <div className="relative">
+                        <textarea
+                          ref={textareaRef}
+                          value={draft}
+                          onChange={(e) => setDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              completeAndAdvance({ skipped: false });
+                            }
+                          }}
+                          rows={4}
+                          placeholder="Write whatever feels true first."
+                          className="min-h-[128px] w-full resize-none bg-transparent px-1 py-1 text-[16px] leading-7 text-white/90 outline-none placeholder:text-white/26"
+                        />
+
+                        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
+                          <button
+                            type="button"
+                            onClick={toggleMic}
+                            disabled={!speechSupported}
+                            className={[
+                              "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-sm transition",
+                              speechSupported
+                                ? "text-white/58 hover:bg-white/[0.04] hover:text-white/82"
+                                : "cursor-not-allowed text-white/24",
+                            ].join(" ")}
+                          >
+                            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                            <span>{isListening ? "Listening…" : "Speak"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => completeAndAdvance({ skipped: false })}
+                            disabled={!draft.trim()}
+                            className={[
+                              "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition",
+                              draft.trim()
+                                ? "border-white/16 bg-white/[0.08] text-white/86 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
+                                : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
+                            ].join(" ")}
+                          >
+                            <span>Continue</span>
+                            <Send size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => completeAndAdvance({ skipped: true })}
+                        className="text-sm font-medium text-white/46 transition hover:text-white/74"
+                      >
+                        Skip for now
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
