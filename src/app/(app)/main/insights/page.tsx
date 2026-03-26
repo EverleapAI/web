@@ -239,6 +239,88 @@ function counselorPara(dark: boolean) {
     : "text-[15px] leading-relaxed text-slate-700";
 }
 
+function summaryZoneShell(
+  dark: boolean,
+  tone: "themes" | "strengths" | "watchouts" | "next"
+) {
+  const toneMap = {
+    themes: dark
+      ? "border-white/6 bg-white/[0.025]"
+      : "border-black/6 bg-black/[0.02]",
+    strengths: dark
+      ? "border-emerald-300/12 bg-emerald-300/[0.03]"
+      : "border-emerald-500/12 bg-emerald-500/[0.04]",
+    watchouts: dark
+      ? "border-amber-300/12 bg-amber-300/[0.03]"
+      : "border-amber-500/12 bg-amber-500/[0.04]",
+    next: dark
+      ? "border-orange-300/12 bg-orange-300/[0.03]"
+      : "border-orange-500/12 bg-orange-500/[0.04]",
+  } as const;
+
+  return [
+    "relative overflow-hidden rounded-[26px] border px-4 py-4 md:px-5 md:py-5",
+    "backdrop-blur-xl shadow-[0_16px_44px_rgba(0,0,0,0.18)]",
+    toneMap[tone],
+  ].join(" ");
+}
+
+function summaryZoneGlow(
+  tone: "themes" | "strengths" | "watchouts" | "next"
+): string {
+  switch (tone) {
+    case "themes":
+      return "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.12) 0%, transparent 28%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.08) 0%, transparent 24%)";
+    case "strengths":
+      return "radial-gradient(circle at 10% 0%, rgba(120,255,190,0.14) 0%, transparent 28%), radial-gradient(circle at 92% 18%, rgba(120,200,255,0.06) 0%, transparent 22%)";
+    case "watchouts":
+      return "radial-gradient(circle at 10% 0%, rgba(255,200,120,0.12) 0%, transparent 28%), radial-gradient(circle at 88% 100%, rgba(255,150,120,0.06) 0%, transparent 22%)";
+    case "next":
+      return "radial-gradient(circle at 14% 0%, rgba(255,180,120,0.14) 0%, transparent 30%), radial-gradient(circle at 88% 10%, rgba(255,150,230,0.06) 0%, transparent 22%)";
+  }
+}
+
+function summaryZoneTitle(
+  dark: boolean,
+  tone: "themes" | "strengths" | "watchouts" | "next"
+) {
+  const toneMap = {
+    themes: dark ? "text-white/92" : "text-slate-900",
+    strengths: dark ? "text-emerald-50" : "text-slate-900",
+    watchouts: dark ? "text-amber-50" : "text-slate-900",
+    next: dark ? "text-orange-50" : "text-slate-900",
+  } as const;
+
+  return [
+    "text-[16px] font-semibold tracking-[-0.02em]",
+    toneMap[tone],
+  ].join(" ");
+}
+
+function summaryZoneKicker(
+  dark: boolean,
+  tone: "themes" | "strengths" | "watchouts" | "next"
+) {
+  const toneMap = {
+    themes: dark ? "text-white/50" : "text-slate-600",
+    strengths: dark ? "text-emerald-100/68" : "text-emerald-700/80",
+    watchouts: dark ? "text-amber-100/68" : "text-amber-700/80",
+    next: dark ? "text-orange-100/68" : "text-orange-700/80",
+  } as const;
+
+  return [
+    "text-[11px] font-semibold uppercase tracking-[0.16em]",
+    toneMap[tone],
+  ].join(" ");
+}
+
+function summarySeparator(dark: boolean) {
+  return [
+    "relative h-px overflow-hidden",
+    dark ? "bg-transparent" : "bg-transparent",
+  ].join(" ");
+}
+
 /* --- Quick Feedback (inline expand; no overlay) ----------------------------- */
 
 type QuickRating = "mostly" | "somewhat" | "not_really";
@@ -1674,7 +1756,10 @@ export default function Page() {
                 </div>
 
                 <div
-                  className={["mt-5 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}
+                  className={[
+                    "mt-5 text-[14px] leading-relaxed",
+                    mutedText(dark),
+                  ].join(" ")}
                 >
                   The deeper read is in the tabs above. Open{" "}
                   <span
@@ -1710,131 +1795,212 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
+              <div className="mt-8" />
 
-              <div>
-                <div className={sectionKicker(dark)}>Themes</div>
+              <div className={summaryZoneShell(dark, "themes")}>
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  aria-hidden
+                  style={{ background: summaryZoneGlow("themes") }}
+                />
+                <div className="relative">
+                  <div className={summaryZoneKicker(dark, "themes")}>Themes</div>
+                  <div className={["mt-1", summaryZoneTitle(dark, "themes")].join(" ")}>
+                    Signal field
+                  </div>
 
-                <div className="mt-4">
-                  {wordCloudDisplay.length ? (
-                    <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                      {wordCloudDisplay.map((w) => {
-                        const isTop = topWordSet.has(w.term.toLowerCase());
-                        return (
-                          <span
-                            key={w.term}
-                            className={[
-                              "select-none el-word",
-                              wordColorClasses(dark, w.term),
-                              isTop
-                                ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ")
-                                : "",
-                            ].join(" ")}
-                            style={{
-                              fontSize: `${wordSizePx(w.weight)}px`,
-                              opacity: wordOpacity(w.weight),
-                              ...wordChaosVars(w.term, w.weight),
-                            }}
-                          >
-                            {w.term}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className={["text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                      Nothing to map yet — give me 1–2 real examples and this will fill in.
-                    </div>
-                  )}
+                  <div className="mt-4">
+                    {wordCloudDisplay.length ? (
+                      <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                        {wordCloudDisplay.map((w) => {
+                          const isTop = topWordSet.has(w.term.toLowerCase());
+                          return (
+                            <span
+                              key={w.term}
+                              className={[
+                                "select-none el-word",
+                                wordColorClasses(dark, w.term),
+                                isTop
+                                  ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ")
+                                  : "",
+                              ].join(" ")}
+                              style={{
+                                fontSize: `${wordSizePx(w.weight)}px`,
+                                opacity: wordOpacity(w.weight),
+                                ...wordChaosVars(w.term, w.weight),
+                              }}
+                            >
+                              {w.term}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className={["text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+                        Nothing to map yet — give me 1–2 real examples and this will fill in.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    {agenticNote.motivatorsLine}
+                  </div>
                 </div>
               </div>
 
-              <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
+              <div className="mt-6" />
 
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles
-                    className={[
-                      "h-4 w-4",
-                      dark ? "text-lime-200/80" : "text-lime-700/80",
-                    ].join(" ")}
-                  />
-                  <div className={sectionKicker(dark)}>Superpowers</div>
+              <div className={summaryZoneShell(dark, "strengths")}>
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  aria-hidden
+                  style={{ background: summaryZoneGlow("strengths") }}
+                />
+                <div className="relative">
+                  <div className="flex items-center gap-2">
+                    <Sparkles
+                      className={[
+                        "h-4 w-4",
+                        dark ? "text-lime-200/80" : "text-lime-700/80",
+                      ].join(" ")}
+                    />
+                    <div className={summaryZoneKicker(dark, "strengths")}>
+                      Superpowers
+                    </div>
+                  </div>
+
+                  <div className={["mt-1", summaryZoneTitle(dark, "strengths")].join(" ")}>
+                    What tends to work in your favor
+                  </div>
+
+                  <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+                    {safeSuper.body || "What you naturally do well when it matters."}
+                  </div>
+
+                  <div className={["mt-3 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    {agenticNote.strengthsLine}
+                  </div>
+
+                  {superBullets.length ? (
+                    <ul className="mt-4 space-y-2.5">
+                      {superBullets.map((b, i) => (
+                        <li key={`sp_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
+                          <span
+                            aria-hidden
+                            className={dark ? "text-white/35" : "text-slate-400"}
+                          >
+                            •
+                          </span>
+                          <span className={dark ? "text-white/78" : "text-slate-700"}>
+                            {b}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    {agenticNote.skillsLine}
+                  </div>
                 </div>
+              </div>
 
-                <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                  {safeSuper.body || "What you naturally do well when it matters."}
-                </div>
+              <div className="mt-6" />
 
-                {superBullets.length ? (
-                  <ul className="mt-4 space-y-2">
-                    {superBullets.map((b, i) => (
-                      <li key={`sp_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
-                        <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
+              <div className={summaryZoneShell(dark, "watchouts")}>
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  aria-hidden
+                  style={{ background: summaryZoneGlow("watchouts") }}
+                />
+                <div className="relative">
+                  <div className="flex items-center gap-2">
+                    <Shield
+                      className={[
+                        "h-4 w-4",
+                        dark ? "text-amber-200/80" : "text-amber-700/80",
+                      ].join(" ")}
+                    />
+                    <div className={summaryZoneKicker(dark, "watchouts")}>
+                      Watchouts
+                    </div>
+                  </div>
+
+                  <div className={["mt-1", summaryZoneTitle(dark, "watchouts")].join(" ")}>
+                    Where the same strengths can get expensive
+                  </div>
+
+                  <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+                    {watchouts.intro}
+                  </div>
+
+                  <ul className="mt-4 space-y-2.5">
+                    {watchouts.bullets.map((b, i) => (
+                      <li key={`wo_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
+                        <span
+                          aria-hidden
+                          className={dark ? "text-white/35" : "text-slate-400"}
+                        >
                           •
                         </span>
-                        <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
+                        <span className={dark ? "text-white/74" : "text-slate-700"}>
+                          {b}
+                        </span>
                       </li>
                     ))}
                   </ul>
-                ) : null}
+
+                  <div className="mt-6">
+                    <div className={summarySeparator(dark)}>
+                      <div
+                        className="absolute inset-x-0 top-0 h-px"
+                        style={{
+                          background: dark
+                            ? "linear-gradient(90deg, transparent 0%, rgba(255,190,120,0.28) 18%, rgba(255,255,255,0.06) 82%, transparent 100%)"
+                            : "linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.22) 18%, rgba(0,0,0,0.06) 82%, transparent 100%)",
+                        }}
+                      />
+                    </div>
+                    <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
+                  </div>
+                </div>
               </div>
 
-              <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
+              <div className="mt-6" />
 
-              <div>
-                <div className="flex items-center gap-2">
-                  <Shield
-                    className={[
-                      "h-4 w-4",
-                      dark ? "text-amber-200/80" : "text-amber-700/80",
-                    ].join(" ")}
-                  />
-                  <div className={sectionKicker(dark)}>Watchouts</div>
-                </div>
-
-                <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                  {watchouts.intro}
-                </div>
-
-                <ul className="mt-4 space-y-2">
-                  {watchouts.bullets.map((b, i) => (
-                    <li key={`wo_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
-                      <span aria-hidden className={dark ? "text-white/35" : "text-slate-400"}>
-                        •
-                      </span>
-                      <span className={dark ? "text-white/78" : "text-slate-700"}>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
-              </div>
-
-              <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
-
-              <div>
-                <div className={sectionKicker(dark)}>Next Steps</div>
-                <div className={["mt-2 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  One real move. Small is fine. Real is the point.
-                </div>
-
-                {nextStepsSummary ? (
-                  <div className="mt-4">
-                    <NextStepsStack
-                      dark={dark}
-                      useLocal={mounted}
-                      definition={nextStepsSummary}
-                      variant="embedded"
-                      collapsible={false}
-                      defaultOpen
-                    />
+              <div className={summaryZoneShell(dark, "next")}>
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  aria-hidden
+                  style={{ background: summaryZoneGlow("next") }}
+                />
+                <div className="relative">
+                  <div className={summaryZoneKicker(dark, "next")}>Next Steps</div>
+                  <div className={["mt-1", summaryZoneTitle(dark, "next")].join(" ")}>
+                    Turn the read into one real move
                   </div>
-                ) : (
-                  <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    Next steps are loading…
+
+                  <div className={["mt-3 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
+                    One real move. Small is fine. Real is the point.
                   </div>
-                )}
+
+                  {nextStepsSummary ? (
+                    <div className="mt-4">
+                      <NextStepsStack
+                        dark={dark}
+                        useLocal={mounted}
+                        definition={nextStepsSummary}
+                        variant="embedded"
+                        collapsible={false}
+                        defaultOpen
+                      />
+                    </div>
+                  ) : (
+                    <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
+                      Next steps are loading…
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </section>

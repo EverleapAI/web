@@ -105,7 +105,10 @@ function uid(prefix: string) {
    “Knowledge” maps: align chips + rails with Insights/Explore
    ============================================================ */
 
-const INSIGHT_META: Record<InsightId, { label: string; glowClass: string; dotClass: string }> = {
+const INSIGHT_META: Record<
+  InsightId,
+  { label: string; glowClass: string; dotClass: string }
+> = {
   career: {
     label: "Recommendations",
     glowClass: "from-sky-400 via-indigo-500 to-slate-400",
@@ -138,7 +141,10 @@ const INSIGHT_META: Record<InsightId, { label: string; glowClass: string; dotCla
   },
 };
 
-const EXPLORE_META: Record<ExploreId, { label: string; glowClass: string; dotClass: string }> = {
+const EXPLORE_META: Record<
+  ExploreId,
+  { label: string; glowClass: string; dotClass: string }
+> = {
   education: {
     label: "Education & Training",
     glowClass: "from-violet-500 via-fuchsia-500 to-sky-400",
@@ -318,12 +324,26 @@ function generateFromExplore(): ActionItem[] {
 }
 
 /* ============================================================
+   Intelligence helpers
+   ============================================================ */
+
+function followUpScore(a: ActionItem): number {
+  let score = 0;
+
+  if (a.status === "doing") score += 1;
+  if (a.status === "snoozed") score -= 1;
+
+  if (a.followUp?.rating === "energizing") score += 2;
+  if (a.followUp?.rating === "draining") score -= 2;
+
+  return score;
+}
+
+/* ============================================================
    Component
    ============================================================ */
 
 export default function ActionsPage() {
-  // IMPORTANT: AppChrome + BottomNav are handled by the /main layout.
-  // This page should only render the page content (prevents double header/nav).
   const themeId: SpotlightThemeId = "nightDusk";
   const dark = isDarkTheme(themeId);
 
@@ -343,13 +363,14 @@ export default function ActionsPage() {
   const [mounted, setMounted] = React.useState(false);
   const [state, setState] = React.useState<StoredState>(() => seedState());
 
-  // follow-up sheet state
   const [followOpen, setFollowOpen] = React.useState(false);
-  const [followActionId, setFollowActionId] = React.useState<string | null>(null);
-  const [followRating, setFollowRating] = React.useState<FollowUpRating>("energizing");
+  const [followActionId, setFollowActionId] = React.useState<string | null>(
+    null
+  );
+  const [followRating, setFollowRating] =
+    React.useState<FollowUpRating>("energizing");
   const [followNote, setFollowNote] = React.useState("");
 
-  // lightweight collapse for “why this is here”
   const [whyOpen, setWhyOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -388,13 +409,11 @@ export default function ActionsPage() {
   }
 
   function markDone(id: string) {
-    // Open follow-up sheet (this is the personalization loop)
     setFollowActionId(id);
     setFollowRating("energizing");
     setFollowNote("");
     setFollowOpen(true);
 
-    // Optimistically mark done; follow-up attaches after submit
     updateAction(id, { status: "done", doneAt: new Date().toISOString() });
   }
 
@@ -405,7 +424,10 @@ export default function ActionsPage() {
     }
 
     updateAction(followActionId, {
-      followUp: { rating: followRating, note: followNote.trim() ? followNote.trim() : undefined },
+      followUp: {
+        rating: followRating,
+        note: followNote.trim() ? followNote.trim() : undefined,
+      },
     });
 
     setFollowOpen(false);
@@ -419,41 +441,77 @@ export default function ActionsPage() {
   }
 
   function addGenerated(kind: "insights" | "explore") {
-    const additions = kind === "insights" ? generateFromInsights() : generateFromExplore();
+    const additions =
+      kind === "insights" ? generateFromInsights() : generateFromExplore();
 
     setState((prev) => {
-      // Attach generated actions to a sensible default goal if possible:
       const gClarity = prev.goals.find((g) => g.id === "g_clarity");
       const gEnergy = prev.goals.find((g) => g.id === "g_energy");
       const targetGoal = kind === "explore" ? gClarity : gEnergy;
 
-      const actionsWithGoal = targetGoal ? additions.map((a) => ({ ...a, goalId: targetGoal.id })) : additions;
+      const actionsWithGoal = targetGoal
+        ? additions.map((a) => ({ ...a, goalId: targetGoal.id }))
+        : additions;
 
       const nextGoals = prev.goals.map((g) => {
         if (!targetGoal) return g;
         if (g.id !== targetGoal.id) return g;
-        return { ...g, actionIds: [...g.actionIds, ...actionsWithGoal.map((a) => a.id)] };
+        return {
+          ...g,
+          actionIds: [...g.actionIds, ...actionsWithGoal.map((a) => a.id)],
+        };
       });
 
       return {
         goals: nextGoals,
-        actions: [...actionsWithGoal, ...prev.actions], // newest on top
+        actions: [...actionsWithGoal, ...prev.actions],
       };
     });
   }
 
-  // “This Week” = todo/doing first; snoozed last; done last-last
   const sortedActions = React.useMemo(() => {
-    const score = (s: ActionStatus) => {
+    const statusRank = (s: ActionStatus) => {
       if (s === "doing") return 0;
       if (s === "todo") return 1;
       if (s === "snoozed") return 2;
-      return 3; // done
+      return 3;
     };
-    return [...state.actions].sort((a, b) => score(a.status) - score(b.status));
+
+    return [...state.actions].sort((a, b) => {
+      const statusDiff = statusRank(a.status) - statusRank(b.status);
+      if (statusDiff !== 0) return statusDiff;
+
+      const scoreDiff = followUpScore(b) - followUpScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    });
   }, [state.actions]);
 
   const thisWeek = sortedActions.slice(0, 5);
+
+  const weeklyPatternLine = React.useMemo(() => {
+    const rated = state.actions.filter((a) => a.followUp?.rating);
+
+    if (rated.length < 2) return null;
+
+    const energizing = rated.filter(
+      (a) => a.followUp?.rating === "energizing"
+    );
+    const draining = rated.filter((a) => a.followUp?.rating === "draining");
+
+    if (energizing.length > draining.length + 1) {
+      return "You tend to follow through more on actions that feel energizing.";
+    }
+
+    if (draining.length > energizing.length + 1) {
+      return "Some actions are draining — try keeping things lighter and more real-world.";
+    }
+
+    return "You're still figuring out what gives you energy — keep testing small moves.";
+  }, [state.actions]);
 
   function goalProgress(g: GoalItem) {
     const items = g.actionIds
@@ -465,16 +523,24 @@ export default function ActionsPage() {
   }
 
   function railForAction(a: ActionItem) {
-    if (a.insightId) return `bg-gradient-to-b ${INSIGHT_META[a.insightId].glowClass}`;
-    if (a.exploreId) return `bg-gradient-to-b ${EXPLORE_META[a.exploreId].glowClass}`;
+    if (a.insightId)
+      return `bg-gradient-to-b ${INSIGHT_META[a.insightId].glowClass}`;
+    if (a.exploreId)
+      return `bg-gradient-to-b ${EXPLORE_META[a.exploreId].glowClass}`;
     return dark ? "bg-white/10" : "bg-slate-200";
   }
 
   function pillForInsight(id: InsightId) {
     const meta = INSIGHT_META[id];
     return (
-      <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${meta.dotClass} opacity-90`} />
+      <span
+        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(
+          dark
+        )}`}
+      >
+        <span
+          className={`h-2.5 w-2.5 rounded-full ${meta.dotClass} opacity-90`}
+        />
         {meta.label}
       </span>
     );
@@ -483,8 +549,14 @@ export default function ActionsPage() {
   function pillForExplore(id: ExploreId) {
     const meta = EXPLORE_META[id];
     return (
-      <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${meta.dotClass} opacity-90`} />
+      <span
+        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(
+          dark
+        )}`}
+      >
+        <span
+          className={`h-2.5 w-2.5 rounded-full ${meta.dotClass} opacity-90`}
+        />
         {meta.label}
       </span>
     );
@@ -493,7 +565,6 @@ export default function ActionsPage() {
   return (
     <>
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-28 pt-5 md:px-8 md:pt-7">
-        {/* Header / framing */}
         <section className="mb-5">
           <div className={`px-6 py-6 sm:px-7 sm:py-7 ${surface}`}>
             <div
@@ -506,7 +577,9 @@ export default function ActionsPage() {
               <div className="flex items-start gap-3">
                 <div
                   className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
-                    dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
+                    dark
+                      ? "border-white/10 bg-white/5 text-slate-50"
+                      : "border-slate-200 bg-white/80 text-slate-900"
                   }`}
                 >
                   <ListChecks className="h-5 w-5" />
@@ -514,11 +587,16 @@ export default function ActionsPage() {
 
                 <div className="min-w-0">
                   <div className={sectionLabelClass}>Actions</div>
-                  <h1 className={`mt-1 text-2xl font-semibold tracking-tight ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                  <h1
+                    className={`mt-1 text-2xl font-semibold tracking-tight ${
+                      dark ? "text-slate-50" : "text-slate-900"
+                    }`}
+                  >
                     Turn insights into real steps.
                   </h1>
                   <p className={`mt-2 max-w-2xl text-sm ${muted}`}>
-                    This is your “execution layer.” Small actions, tied to goals, tied to what you’re learning in Insights + Explore.
+                    This is your “execution layer.” Small actions, tied to
+                    goals, tied to what you’re learning in Insights + Explore.
                     Do → reflect → calibrate.
                   </p>
                 </div>
@@ -529,7 +607,9 @@ export default function ActionsPage() {
                   <Link
                     href="/main/carousel"
                     className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                      dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
+                      dark
+                        ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                        : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
                     }`}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -540,7 +620,9 @@ export default function ActionsPage() {
                   <Link
                     href="/main/explore"
                     className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
-                      dark ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
+                      dark
+                        ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10"
+                        : "border-slate-200 bg-white/80 text-slate-800 hover:bg-white"
                     }`}
                   >
                     <Target className="h-4 w-4" />
@@ -553,26 +635,35 @@ export default function ActionsPage() {
                   type="button"
                   onClick={() => setWhyOpen((o) => !o)}
                   className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    dark ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70" : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
+                    dark
+                      ? "border-white/10 bg-slate-950/40 text-slate-200 hover:bg-slate-950/70"
+                      : "border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
                   }`}
                   aria-expanded={whyOpen}
                 >
                   Why this works
-                  <ChevronDown className={`h-4 w-4 transition-transform ${whyOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      whyOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
               </div>
 
               {whyOpen ? (
                 <div
                   className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${
-                    dark ? "border-white/10 bg-slate-950/40 text-slate-200/90" : "border-slate-200 bg-white/70 text-slate-700"
+                    dark
+                      ? "border-white/10 bg-slate-950/40 text-slate-200/90"
+                      : "border-slate-200 bg-white/70 text-slate-700"
                   }`}
                 >
                   <div className="font-semibold">The loop</div>
                   <div className={`mt-2 ${muted}`}>
                     1) Insights give you a hypothesis about you. <br />
                     2) Explore shows doors that match. <br />
-                    3) Actions create proof: you do something small, then rate how it felt. That feedback sharpens everything.
+                    3) Actions create proof: you do something small, then rate
+                    how it felt. That feedback sharpens everything.
                   </div>
                 </div>
               ) : null}
@@ -580,16 +671,31 @@ export default function ActionsPage() {
           </div>
         </section>
 
-        {/* This Week */}
         <section className="mb-6">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <div className={sectionLabelClass}>This week</div>
-              <div className={`mt-1 text-sm ${muted}`}>3–5 small moves. Keep it light. Keep it real.</div>
+              <div className={`mt-1 text-sm ${muted}`}>
+                3–5 small moves. Keep it light. Keep it real.
+              </div>
+              {weeklyPatternLine ? (
+                <div
+                  className={`mt-2 text-xs ${
+                    dark ? "text-sky-300/80" : "text-sky-700"
+                  }`}
+                >
+                  {weeklyPatternLine}
+                </div>
+              ) : null}
             </div>
 
-            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
-              Tip: try one <span className="font-semibold">10–20m</span> action today.
+            <div
+              className={`text-xs ${
+                dark ? "text-slate-300/60" : "text-slate-600/70"
+              }`}
+            >
+              Tip: try one <span className="font-semibold">10–20m</span> action
+              today.
             </div>
           </div>
 
@@ -601,7 +707,9 @@ export default function ActionsPage() {
                 <div
                   key={a.id}
                   className={`relative overflow-hidden rounded-3xl border p-[1px] ${
-                    dark ? "border-white/10 bg-white/5" : "border-slate-200 bg-white/80"
+                    dark
+                      ? "border-white/10 bg-white/5"
+                      : "border-slate-200 bg-white/80"
                   }`}
                 >
                   <div
@@ -609,17 +717,27 @@ export default function ActionsPage() {
                     className={`pointer-events-none absolute left-0 top-4 h-[70%] w-[3px] rounded-full ${rail} opacity-90`}
                   />
 
-                  <div className={`relative rounded-3xl px-5 py-4 ${dark ? "bg-slate-950/35" : "bg-white/70"}`}>
+                  <div
+                    className={`relative rounded-3xl px-5 py-4 ${
+                      dark ? "bg-slate-950/35" : "bg-white/70"
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <div className={`text-base font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                          <div
+                            className={`text-base font-semibold ${
+                              dark ? "text-slate-50" : "text-slate-900"
+                            }`}
+                          >
                             {a.title}
                           </div>
 
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold ${
-                              dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white text-slate-800"
+                              dark
+                                ? "border-white/10 bg-white/5 text-slate-100"
+                                : "border-slate-200 bg-white text-slate-800"
                             }`}
                           >
                             <Clock className="h-3.5 w-3.5" />
@@ -633,33 +751,39 @@ export default function ActionsPage() {
                                   ? "border-sky-200/20 bg-sky-300/15 text-sky-100"
                                   : "border-sky-200 bg-sky-50 text-sky-900"
                                 : a.status === "done"
-                                ? dark
-                                  ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-900"
-                                : a.status === "snoozed"
-                                ? dark
-                                  ? "border-amber-200/20 bg-amber-300/15 text-amber-100"
-                                  : "border-amber-200 bg-amber-50 text-amber-900"
-                                : dark
-                                ? "border-white/10 bg-white/5 text-slate-100"
-                                : "border-slate-200 bg-white text-slate-800"
+                                  ? dark
+                                    ? "border-emerald-200/20 bg-emerald-300/15 text-emerald-100"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                  : a.status === "snoozed"
+                                    ? dark
+                                      ? "border-amber-200/20 bg-amber-300/15 text-amber-100"
+                                      : "border-amber-200 bg-amber-50 text-amber-900"
+                                    : dark
+                                      ? "border-white/10 bg-white/5 text-slate-100"
+                                      : "border-slate-200 bg-white text-slate-800"
                             }`}
                           >
                             {a.status === "doing"
                               ? "In progress"
                               : a.status === "done"
-                              ? "Done"
-                              : a.status === "snoozed"
-                              ? "Snoozed"
-                              : "To do"}
+                                ? "Done"
+                                : a.status === "snoozed"
+                                  ? "Snoozed"
+                                  : "To do"}
                           </span>
                         </div>
 
-                        <div className={`mt-2 text-sm ${muted}`}>{a.description}</div>
+                        <div className={`mt-2 text-sm ${muted}`}>
+                          {a.description}
+                        </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
                           {a.goalId ? (
-                            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${chipClass(
+                                dark
+                              )}`}
+                            >
                               <Target className="h-3.5 w-3.5 opacity-80" />
                               Goal
                             </span>
@@ -710,7 +834,11 @@ export default function ActionsPage() {
                             </button>
                           </>
                         ) : (
-                          <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
+                          <div
+                            className={`text-xs ${
+                              dark ? "text-slate-300/60" : "text-slate-600/70"
+                            }`}
+                          >
                             {a.followUp?.rating ? (
                               <>
                                 Felt:{" "}
@@ -718,8 +846,8 @@ export default function ActionsPage() {
                                   {a.followUp.rating === "energizing"
                                     ? "Energizing"
                                     : a.followUp.rating === "neutral"
-                                    ? "Neutral"
-                                    : "Draining"}
+                                      ? "Neutral"
+                                      : "Draining"}
                                 </span>
                               </>
                             ) : (
@@ -736,17 +864,19 @@ export default function ActionsPage() {
           </div>
         </section>
 
-        {/* Goals */}
         <section className="mb-6">
           <div className="mb-3">
             <div className={sectionLabelClass}>Goals</div>
-            <div className={`mt-1 text-sm ${muted}`}>Goals are just containers. Actions are the real game.</div>
+            <div className={`mt-1 text-sm ${muted}`}>
+              Goals are just containers. Actions are the real game.
+            </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             {state.goals.map((g) => {
               const prog = goalProgress(g);
-              const pct = prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
+              const pct =
+                prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
 
               return (
                 <div key={g.id} className={`rounded-3xl border px-5 py-4 ${surface}`}>
@@ -755,28 +885,51 @@ export default function ActionsPage() {
                       <div className="flex items-center gap-2">
                         <div
                           className={`flex h-9 w-9 items-center justify-center rounded-2xl border ${
-                            dark ? "border-white/10 bg-white/5 text-slate-50" : "border-slate-200 bg-white/80 text-slate-900"
+                            dark
+                              ? "border-white/10 bg-white/5 text-slate-50"
+                              : "border-slate-200 bg-white/80 text-slate-900"
                           }`}
                         >
                           <Target className="h-4 w-4" />
                         </div>
                         <div>
-                          <div className={`text-sm font-semibold ${dark ? "text-slate-50" : "text-slate-900"}`}>
+                          <div
+                            className={`text-sm font-semibold ${
+                              dark ? "text-slate-50" : "text-slate-900"
+                            }`}
+                          >
                             {g.title}
                           </div>
-                          <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>
+                          <div
+                            className={`text-xs ${
+                              dark ? "text-slate-300/60" : "text-slate-600/70"
+                            }`}
+                          >
                             {g.horizon} • {prog.done}/{prog.total} actions
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className={`text-xs font-semibold ${dark ? "text-slate-200/70" : "text-slate-700/70"}`}>{pct}%</div>
+                    <div
+                      className={`text-xs font-semibold ${
+                        dark ? "text-slate-200/70" : "text-slate-700/70"
+                      }`}
+                    >
+                      {pct}%
+                    </div>
                   </div>
 
                   <div className="mt-3">
-                    <div className={`h-2 w-full rounded-full ${dark ? "bg-white/10" : "bg-slate-200/70"}`}>
-                      <div className="h-2 rounded-full bg-sky-300 transition" style={{ width: `${pct}%` }} />
+                    <div
+                      className={`h-2 w-full rounded-full ${
+                        dark ? "bg-white/10" : "bg-slate-200/70"
+                      }`}
+                    >
+                      <div
+                        className="h-2 rounded-full bg-sky-300 transition"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
 
@@ -797,12 +950,18 @@ export default function ActionsPage() {
                           title={a.title}
                         >
                           {a.status === "done" ? "✓ " : ""}
-                          {a.title.length > 28 ? `${a.title.slice(0, 28)}…` : a.title}
+                          {a.title.length > 28
+                            ? `${a.title.slice(0, 28)}…`
+                            : a.title}
                         </span>
                       );
                     })}
                     {g.actionIds.length > 3 ? (
-                      <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${chipClass(dark)}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs ${chipClass(
+                          dark
+                        )}`}
+                      >
                         +{g.actionIds.length - 3} more
                       </span>
                     ) : null}
@@ -813,12 +972,12 @@ export default function ActionsPage() {
           </div>
         </section>
 
-        {/* Generator */}
         <section className="mb-2">
           <div className="mb-3">
             <div className={sectionLabelClass}>Generate actions</div>
             <div className={`mt-1 text-sm ${muted}`}>
-              Quick suggestions (placeholder logic). Later this comes from your real Insights + Explore data.
+              Quick suggestions (placeholder logic). Later this comes from your
+              real Insights + Explore data.
             </div>
           </div>
 
@@ -827,20 +986,29 @@ export default function ActionsPage() {
               type="button"
               onClick={() => addGenerated("insights")}
               className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
-                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
+                dark
+                  ? "border-white/10 bg-white/5 text-slate-100"
+                  : "border-slate-200 bg-white/80 text-slate-900"
               }`}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
-                    dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
+                    dark
+                      ? "border-white/10 bg-slate-950/40"
+                      : "border-slate-200 bg-white"
                   }`}
                 >
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold">Give me 3 actions from my Insights</div>
-                  <div className={`mt-1 text-sm ${muted}`}>Turns your patterns into tiny experiments (momentum-friendly).</div>
+                  <div className="text-sm font-semibold">
+                    Give me 3 actions from my Insights
+                  </div>
+                  <div className={`mt-1 text-sm ${muted}`}>
+                    Turns your patterns into tiny experiments
+                    (momentum-friendly).
+                  </div>
                 </div>
               </div>
             </button>
@@ -849,27 +1017,42 @@ export default function ActionsPage() {
               type="button"
               onClick={() => addGenerated("explore")}
               className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
-                dark ? "border-white/10 bg-white/5 text-slate-100" : "border-slate-200 bg-white/80 text-slate-900"
+                dark
+                  ? "border-white/10 bg-white/5 text-slate-100"
+                  : "border-slate-200 bg-white/80 text-slate-900"
               }`}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
-                    dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
+                    dark
+                      ? "border-white/10 bg-slate-950/40"
+                      : "border-slate-200 bg-white"
                   }`}
                 >
                   <Target className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold">Give me 3 actions from Explore</div>
-                  <div className={`mt-1 text-sm ${muted}`}>Turns doors into moves (programs, local opportunities, money support).</div>
+                  <div className="text-sm font-semibold">
+                    Give me 3 actions from Explore
+                  </div>
+                  <div className={`mt-1 text-sm ${muted}`}>
+                    Turns doors into moves (programs, local opportunities, money
+                    support).
+                  </div>
                 </div>
               </div>
             </button>
           </div>
 
           <div className="mt-3 flex items-center justify-between">
-            <div className={`text-xs ${dark ? "text-slate-300/60" : "text-slate-600/70"}`}>Want a clean slate?</div>
+            <div
+              className={`text-xs ${
+                dark ? "text-slate-300/60" : "text-slate-600/70"
+              }`}
+            >
+              Want a clean slate?
+            </div>
 
             <button
               type="button"
@@ -878,7 +1061,11 @@ export default function ActionsPage() {
                 setState(seeded);
                 saveState(seeded);
               }}
-              className={`text-xs font-semibold ${dark ? "text-slate-200/70 hover:text-slate-50" : "text-slate-700/70 hover:text-slate-900"}`}
+              className={`text-xs font-semibold ${
+                dark
+                  ? "text-slate-200/70 hover:text-slate-50"
+                  : "text-slate-700/70 hover:text-slate-900"
+              }`}
             >
               Reset Actions
             </button>
@@ -886,9 +1073,6 @@ export default function ActionsPage() {
         </section>
       </div>
 
-      {/* =========================================================
-         Follow-up sheet (post-action calibration)
-         ========================================================= */}
       {followOpen ? (
         <div className="fixed inset-0 z-[80]">
           <button
@@ -900,7 +1084,7 @@ export default function ActionsPage() {
 
           <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-3xl md:inset-0 md:flex md:items-center md:justify-center">
             <div
-              className="relative w-full rounded-t-[28px] border border-white/10 bg-slate-950/85 shadow-[0_45px_140px_rgba(0,0,0,0.72)] backdrop-blur-2xl md:rounded-[28px] md:max-h-[82vh]"
+              className="relative w-full rounded-t-[28px] border border-white/10 bg-slate-950/85 shadow-[0_45px_140px_rgba(0,0,0,0.72)] backdrop-blur-2xl md:max-h-[82vh] md:rounded-[28px]"
               role="dialog"
               aria-modal="true"
               aria-label="Action follow up"
@@ -911,9 +1095,12 @@ export default function ActionsPage() {
                     <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
                       Quick follow-up
                     </div>
-                    <div className="mt-1 text-lg font-semibold text-slate-50">How did that feel?</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-50">
+                      How did that feel?
+                    </div>
                     <div className="mt-1 text-sm text-slate-300/80">
-                      This is how Everleap gets smarter without turning your life into homework.
+                      This is how Everleap gets smarter without turning your life
+                      into homework.
                     </div>
                   </div>
 
@@ -931,7 +1118,9 @@ export default function ActionsPage() {
 
               <div className="px-5 pb-6 pt-4">
                 <div className="space-y-3">
-                  <div className="text-sm font-semibold text-slate-100">Pick one</div>
+                  <div className="text-sm font-semibold text-slate-100">
+                    Pick one
+                  </div>
 
                   <div className="flex flex-wrap gap-2">
                     {(
@@ -960,7 +1149,9 @@ export default function ActionsPage() {
                   </div>
 
                   <div className="pt-2">
-                    <div className="text-sm font-semibold text-slate-100">One sentence (optional)</div>
+                    <div className="text-sm font-semibold text-slate-100">
+                      One sentence (optional)
+                    </div>
                     <textarea
                       value={followNote}
                       onChange={(e) => setFollowNote(e.target.value)}
@@ -979,7 +1170,8 @@ export default function ActionsPage() {
                       Save
                     </button>
                     <div className="mt-2 text-xs text-slate-300/55">
-                      Later: we’ll use this to refine recommendations and action suggestions.
+                      Later: we’ll use this to refine recommendations and action
+                      suggestions.
                     </div>
                   </div>
                 </div>
