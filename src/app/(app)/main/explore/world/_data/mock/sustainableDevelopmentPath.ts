@@ -20,7 +20,7 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
     hook:
       "Understand how places grow, adapt, and actually work long term.",
     description:
-      "This is about improving life without breaking the systems life depends on — cities, water, energy, housing, and the way communities evolve over time.",
+      "This is about improving life without breaking the systems life depends on — cities, water, energy, housing, and how communities evolve.",
   },
 
   hero: {
@@ -48,21 +48,21 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
       label: "You think about whether things actually last",
       score: 91,
       explanation:
-        "You care about whether systems hold up over time, not just whether they work today.",
+        "You care about whether systems hold up over time, not just short-term fixes.",
     },
     {
       id: "systems-connection",
       label: "You connect environment, people, and infrastructure",
       score: 88,
       explanation:
-        "You naturally see that housing, water, energy, and access are all linked.",
+        "You see how housing, energy, water, and access are linked.",
     },
     {
       id: "real-world-impact",
       label: "You want ideas to improve real places",
       score: 85,
       explanation:
-        "You’re drawn to solutions that feel tangible, not abstract.",
+        "You prefer solutions that are tangible and visible.",
     },
   ],
 
@@ -70,39 +70,39 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
     label: "What you start exploring",
     title: "How places are designed — and redesigned",
     intro:
-      "This path starts when you stop seeing a place as fixed and start seeing it as something shaped by decisions.",
+      "This path starts when you stop seeing a place as fixed and start seeing it as a system shaped by decisions.",
     items: [
       {
-        title: "How cities and communities function",
+        title: "How cities function",
         description:
-          "How transportation, housing, water, and public space shape daily life.",
+          "How transport, housing, water, and public space shape daily life.",
       },
       {
-        title: "Where systems break or strain",
+        title: "Where systems break",
         description:
-          "How growth, climate, and inequality create pressure on infrastructure.",
+          "How growth, climate, and inequality stress infrastructure.",
       },
       {
-        title: "Tradeoffs in real decisions",
+        title: "Tradeoffs in design",
         description:
-          "Why improving one part of a system often affects something else.",
+          "Why improving one system often impacts another.",
       },
       {
-        title: "Designing better outcomes",
+        title: "Building better systems",
         description:
-          "How planning, policy, and design can improve how places work.",
+          "How design, planning, and policy improve outcomes.",
       },
     ],
   },
 
   featuredOpportunity: {
     label: "Best first move",
-    title: "Look at your own area like a system",
+    title: "Analyze your city using Strong Towns",
     description:
-      "Start where you are — notice how your town or city actually works.",
-    href: "https://www.google.com/maps",
-    ctaLabel: "Explore your area",
-    mode: "local",
+      "Start seeing how your city actually works — and where it breaks — using real urban analysis and examples.",
+    href: "https://www.strongtowns.org",
+    ctaLabel: "Start exploring cities",
+    mode: "virtual",
     type: "research",
   },
 
@@ -112,28 +112,47 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
       label: "Start here",
       title: "Try this this week",
       description:
-        "You can start seeing systems immediately — no special tools needed.",
+        "Start seeing systems clearly — not just noticing them.",
       opportunities: [
         {
-          title: "Map one local system",
+          title: "Map your neighborhood using Google Maps + notes",
           description:
-            "Pick transportation, housing, parks, or water and trace how it works.",
+            "Track movement, access, density, and how people actually use space.",
           href: "https://www.google.com/maps",
           ctaLabel: "Start mapping",
           mode: "local",
           type: "project",
         },
         {
-          title: "Compare two places solving the same problem",
+          title: "Use ArcGIS to explore real urban data",
           description:
-            "Look at how two cities handle transit, housing, or climate differently.",
+            "Look at real mapping tools used by planners and analysts.",
+          href: "https://www.arcgis.com",
+          ctaLabel: "Explore ArcGIS",
+          mode: "virtual",
+          type: "research",
+        },
+        {
+          title: "Watch Not Just Bikes (urban systems)",
+          description:
+            "Understand how city design impacts real life through clear examples.",
+          href: "https://www.youtube.com/c/NotJustBikes",
+          ctaLabel: "Watch breakdowns",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "Compare two cities solving the same problem",
+          description:
+            "Look at how different places approach housing, transit, or climate.",
           href: "https://ourworldindata.org",
-          ctaLabel: "Explore comparisons",
+          ctaLabel: "Compare data",
           mode: "virtual",
           type: "research",
         },
       ],
     },
+
     {
       id: "near-you",
       label: "Explore near you",
@@ -142,46 +161,64 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
         "Places become clearer when you observe how people actually use them.",
       opportunities: [
         {
-          title: "Walk a neighborhood with a systems lens",
+          title: "Walk your city with a systems lens",
           description:
-            "Notice movement, access, space use, and what feels efficient or broken.",
+            "Notice flow, bottlenecks, inefficiencies, and what works well.",
           href: "https://www.google.com/maps",
           ctaLabel: "Pick a route",
           mode: "local",
           type: "visit",
-          locationLabel: "Near you",
         },
         {
-          title: "Attend a local planning or community meeting",
+          title: "Attend a planning or zoning meeting",
           description:
-            "Hear how decisions about housing, transit, or land use are made.",
+            "See how decisions about housing, transit, and land use are made.",
           href: "https://www.eventbrite.com",
-          ctaLabel: "Find events",
+          ctaLabel: "Find meetings",
           mode: "local",
           type: "event",
         },
+        {
+          title: "Visit a transit hub or development area",
+          description:
+            "Observe how infrastructure shapes movement and behavior.",
+          href: "https://www.google.com/maps",
+          ctaLabel: "Explore locations",
+          mode: "local",
+          type: "visit",
+        },
       ],
     },
+
     {
       id: "go-broader",
       label: "Go broader",
       title: "Step into bigger systems",
       description:
-        "See how development works across regions and countries.",
+        "Move from observation into structured understanding.",
       opportunities: [
         {
-          title: "Urban planning or sustainability programs",
+          title: "edX sustainability and urban planning courses",
           description:
-            "Learn how cities and systems are designed at a larger scale.",
+            "Learn how systems are designed and improved at scale.",
           href: "https://www.edx.org",
-          ctaLabel: "Explore programs",
+          ctaLabel: "Explore courses",
           mode: "virtual",
           type: "program",
         },
         {
-          title: "Global development initiatives",
+          title: "UN Habitat",
           description:
-            "Explore projects focused on infrastructure, water, housing, and resilience.",
+            "Explore global work on cities, housing, and sustainable development.",
+          href: "https://unhabitat.org",
+          ctaLabel: "Explore UN Habitat",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "World Bank development projects",
+          description:
+            "See real infrastructure and development projects worldwide.",
           href: "https://www.worldbank.org",
           ctaLabel: "Explore projects",
           mode: "virtual",
@@ -189,6 +226,7 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
         },
       ],
     },
+
     {
       id: "always-on",
       label: "Always available",
@@ -199,7 +237,7 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
         {
           title: "Our World in Data",
           description:
-            "Explore global data on development, infrastructure, and quality of life.",
+            "Explore global development, infrastructure, and quality of life.",
           href: "https://ourworldindata.org",
           ctaLabel: "Explore data",
           mode: "virtual",
@@ -208,9 +246,18 @@ export const SUSTAINABLE_DEVELOPMENT_PATH: WorldPathContent = {
         {
           title: "UN Sustainable Development Goals",
           description:
-            "See how global priorities connect environment, people, and systems.",
+            "See how global priorities connect environment and systems.",
           href: "https://sdgs.un.org/goals",
           ctaLabel: "Explore goals",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "CityLab / Bloomberg",
+          description:
+            "Stories about how cities are evolving and solving problems.",
+          href: "https://www.bloomberg.com/citylab",
+          ctaLabel: "Read CityLab",
           mode: "virtual",
           type: "resource",
         },

@@ -224,10 +224,6 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
     stages: [],
   },
 
-  /* =========================
-     FORECAST PASS (FINAL)
-  ========================= */
-
   forecastV2: {
     outlookLabel: "Stable and growing - but highly committed",
     outlookSummary:
@@ -329,91 +325,137 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
   },
 
   nextStepsV2: {
-    heroTitle: "You can step into real recovery environments now",
+    heroTitle:
+      "The fastest way to understand physical therapy is to get close to movement and recovery",
     heroSummary:
-      "This path becomes real when you are around people improving, recovering, and moving. Get close to that world.",
-    heroBadge: "See it in action",
+      "This path becomes real when you watch people rebuild strength, balance, range, and confidence in real environments. Do not just read about the body. Get near clinics, rehab settings, adaptive sports, exercise science, and movement coaching so you can see what recovery actually asks of both patient and therapist.",
+    heroBadge: "See recovery up close",
 
     sections: [
       {
         id: "local",
         eyebrow: "Near 94901",
-        title: "Get close to real recovery work",
+        title: "Get around real recovery environments",
         description:
-          "These are real Bay Area environments where movement, rehab, and patient care are happening.",
+          "These are strong local entry points if you want to see how rehab, movement support, adaptive athletics, and healthcare teamwork actually work in the real world.",
         mode: "local",
         items: [
           {
-            id: "marinhealth",
-            title: "MarinHealth Volunteer Program",
+            id: "marinhealth-volunteer",
+            title: "MarinHealth Volunteer Services",
             href: "https://www.mymarinhealth.org/about-us/volunteer-services/volunteer-positions-programs/",
             note:
-              "Direct hospital exposure. See real patients, real recovery, real care.",
-            badge: "Hospital",
+              "A real local hospital entry point where you can get exposure to patient care environments and start seeing how recovery settings actually function.",
+            badge: "Hospital exposure",
             mode: "local",
           },
           {
-            id: "kaiser",
+            id: "kaiser-san-rafael-volunteer",
             title: "Kaiser San Rafael Volunteer Services",
             href: "https://healthy.kaiserpermanente.org/northern-california/facilities/San-Rafael-Medical-Center-100327/departments/volunteer-services-dlp-106380",
             note:
-              "Another strong local entry into real clinical environments.",
-            badge: "Local",
+              "A strong way to get close to a real clinical environment in your area and understand the pace, structure, and teamwork inside healthcare.",
+            badge: "Clinical setting",
             mode: "local",
           },
           {
-            id: "keen",
-            title: "KEEN Adaptive Sports Volunteer",
+            id: "keen-san-francisco",
+            title: "KEEN San Francisco",
             href: "https://www.keensanfrancisco.org/",
             note:
-              "Work directly with people improving movement and confidence.",
-            badge: "Hands-on",
+              "Volunteer with athletes with disabilities in movement-based activities. This is a strong way to experience encouragement, adaptation, and physical progress firsthand.",
+            badge: "Adaptive sports",
             mode: "local",
           },
           {
-            id: "borp",
-            title: "BORP Adaptive Sports",
-            href: "https://moveunitedsport.org/organization/bay-area-outreach-and-recreation-program/",
+            id: "borp-adaptive-sports",
+            title: "BORP Adaptive Sports and Recreation",
+            href: "https://www.borp.org/",
             note:
-              "See how movement, disability, and recovery intersect in real life.",
-            badge: "Bay Area",
+              "A Bay Area adaptive sports organization where you can see the intersection of movement, disability, confidence, and long-term physical support.",
+            badge: "Bay Area movement",
+            mode: "local",
+          },
+          {
+            id: "college-of-marin-kinesiology",
+            title: "College of Marin Kinesiology, Athletics, and Dance",
+            href: "https://www1.marin.edu/departments/kinesiology-athletics-and-dance",
+            note:
+              "A nearby academic entry point if you want to start building real movement-science vocabulary and get closer to exercise, anatomy, and body mechanics.",
+            badge: "Movement science",
+            mode: "local",
+          },
+          {
+            id: "special-olympics-northern-california",
+            title: "Special Olympics Northern California Volunteer",
+            href: "https://www.sonc.org/get-involved/volunteer/",
+            note:
+              "A meaningful way to support athletes, be around coached movement, and understand how physical progress connects to confidence and independence.",
+            badge: "Meaningful volunteer work",
             mode: "local",
           },
         ],
       },
-
       {
         id: "remote",
         eyebrow: "Online",
-        title: "Understand how the body actually works",
+        title: "Build body and movement knowledge now",
         description:
-          "These help you build the foundation behind what you will see in real environments.",
+          "These are practical online starting points for learning anatomy, movement, exercise basics, and the language of recovery before you ever step into a PT clinic.",
         mode: "remote",
         items: [
           {
-            id: "khan",
-            title: "Khan Academy: Health & Medicine",
+            id: "khan-health-medicine",
+            title: "Khan Academy - Health and Medicine",
             href: "https://www.khanacademy.org/science/health-and-medicine",
             note:
-              "Clear, structured understanding of anatomy and physiology.",
-            badge: "Free",
+              "A clear, structured foundation for anatomy, physiology, and core health concepts. Great if you want to understand the body without getting overwhelmed fast.",
+            badge: "Free foundation",
             mode: "remote",
           },
           {
-            id: "ace",
+            id: "coursera-anatomy",
+            title: "Coursera Anatomy Courses",
+            href: "https://www.coursera.org/courses?query=anatomy",
+            note:
+              "A useful way to start learning the structure of the human body in a more serious, college-style format that connects well to future PT study.",
+            badge: "Deepen anatomy",
+            mode: "remote",
+          },
+          {
+            id: "coursera-physical-therapy",
+            title: "Coursera Physical Therapy Courses",
+            href: "https://www.coursera.org/courses?query=physical%20therapy",
+            note:
+              "A direct way to explore rehab, mobility, and recovery-related topics and decide whether the actual content of the field pulls you in.",
+            badge: "Explore the field",
+            mode: "remote",
+          },
+          {
+            id: "ace-fitness",
             title: "ACE Fitness",
             href: "https://www.acefitness.org/",
             note:
-              "Understand movement, exercise, and safe physical training.",
-            badge: "Movement",
+              "A strong resource for understanding exercise science, movement quality, and safe training principles that connect well to rehab thinking.",
+            badge: "Exercise science",
             mode: "remote",
           },
           {
-            id: "coursera",
-            title: "Coursera Health Courses",
-            href: "https://www.coursera.org/browse/health",
-            note: "More structured, deeper learning if you want it.",
-            badge: "Courses",
+            id: "medlineplus-muscles-joints",
+            title: "MedlinePlus - Muscles, Bones, and Joints",
+            href: "https://medlineplus.gov/musclesbonesandjoints.html",
+            note:
+              "A trustworthy health source for learning the basics of injury, pain, joints, muscles, and movement-related conditions without the noise of random internet advice.",
+            badge: "Trusted health info",
+            mode: "remote",
+          },
+          {
+            id: "apta-be-a-pt",
+            title: "APTA - Be A PT",
+            href: "https://www.apta.org/your-career/careers-in-physical-therapy/be-a-pt",
+            note:
+              "A direct look at what the profession actually requires, including the education path, roles, and long-term reality of becoming a physical therapist.",
+            badge: "Career reality check",
             mode: "remote",
           },
         ],

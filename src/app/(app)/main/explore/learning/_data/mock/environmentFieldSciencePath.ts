@@ -114,114 +114,129 @@ export const ENVIRONMENT_FIELD_SCIENCE_PATH: LearningPathContent = {
 
   opportunityGroups: [
     {
-      id: "try-this-week",
-      title: "Try this this week",
+      id: "near-you",
+      title: "Near you (real environments)",
       description:
-        "Simple ways to test if this path feels real to you.",
+        "Places where environmental science becomes physical and immediate.",
       items: [
         {
-          id: "ecosystem-observation",
-          title: "Observe a local ecosystem",
-          provider: "Self-directed",
+          id: "state-parks",
+          title: "California State Parks",
+          provider: "State Parks",
           summary:
-            "Spend time in a park, trail, or coastline observing patterns.",
+            "Explore forests, coastlines, wetlands, and real ecosystems.",
           whyItFits:
-            "You will quickly feel whether this kind of learning clicks.",
+            "Direct exposure to ecosystems — not theory.",
           mode: "local",
-          locationLabel: "Near 94901",
-          formatLabel: "Field observation",
-          tags: ["beginner-friendly", "hands-on", "local"],
+          href: "https://www.parks.ca.gov/",
         },
         {
-          id: "weather-tracking",
-          title: "Track weather patterns for a week",
-          provider: "Self-directed",
+          id: "marin-headlands",
+          title: "Marin Headlands Field Exploration",
+          provider: "Golden Gate National Parks",
           summary:
-            "Record daily weather and look for patterns.",
+            "Coastal ecosystems, wildlife, and geology in one place.",
           whyItFits:
-            "Builds awareness of environmental systems quickly.",
+            "High-density learning environment outdoors.",
           mode: "local",
-          formatLabel: "Daily tracking",
-          tags: ["hands-on"],
+          href: "https://www.nps.gov/goga/marin-headlands.htm",
+        },
+        {
+          id: "point-reyes",
+          title: "Point Reyes National Seashore",
+          provider: "National Park Service",
+          summary:
+            "Wildlife, migration patterns, and coastal ecosystems.",
+          whyItFits:
+            "You see real environmental systems in motion.",
+          mode: "local",
+          href: "https://www.nps.gov/pore/index.htm",
+        },
+        {
+          id: "audubon",
+          title: "Audubon Canyon Ranch",
+          provider: "Audubon Society",
+          summary:
+            "Bird conservation, habitats, and field science programs.",
+          whyItFits:
+            "Guided real-world environmental observation.",
+          mode: "local",
+          href: "https://egret.org/",
+        },
+        {
+          id: "cleanup",
+          title: "Bay Area Coastal Cleanup",
+          provider: "California Coastal Commission",
+          summary:
+            "Participate in real environmental restoration efforts.",
+          whyItFits:
+            "You connect learning with real impact.",
+          mode: "local",
+          href: "https://www.coastal.ca.gov/publiced/ccd/ccd.html",
         },
       ],
     },
 
     {
-      id: "build-skill",
-      title: "Build real understanding",
+      id: "online",
+      title: "Online (build understanding fast)",
       description:
-        "Ways to deepen your knowledge of environmental systems.",
+        "Use these to understand what you're seeing in the real world.",
       items: [
         {
           id: "khan-ecology",
           title: "Khan Academy Ecology",
           provider: "Khan Academy",
           summary:
-            "Learn core concepts of ecosystems and environmental science.",
+            "Core ecosystem and environmental science concepts.",
           whyItFits:
-            "Gives structure to what you observe in real life.",
+            "Gives structure to what you observe outside.",
           mode: "virtual",
           href: "https://www.khanacademy.org/science/ap-biology/ecology-ap",
-          formatLabel: "Self-paced learning",
-          tags: ["free", "structured"],
         },
         {
           id: "natgeo",
-          title: "National Geographic Learning",
+          title: "National Geographic",
           provider: "National Geographic",
           summary:
-            "Explore real-world environmental science and ecosystems.",
+            "Real-world environmental science stories and visuals.",
           whyItFits:
-            "Connects science to real exploration and discovery.",
+            "Connects science to exploration and discovery.",
           mode: "virtual",
-          formatLabel: "Articles + video",
-          tags: ["self-paced"],
-        },
-      ],
-    },
-
-    {
-      id: "near-you",
-      title: "Near you (Marin / Bay Area)",
-      description:
-        "Real environments where environmental science comes alive.",
-      items: [
-        {
-          id: "state-parks",
-          title: "California State Parks exploration",
-          provider: "California State Parks",
-          summary:
-            "Explore ecosystems like forests, coastlines, and wetlands.",
-          whyItFits:
-            "You experience ecosystems directly instead of reading about them.",
-          mode: "local",
-          locationLabel: "Marin / North Bay",
-          tags: ["local", "hands-on"],
+          href: "https://www.nationalgeographic.com/environment",
         },
         {
-          id: "conservation",
-          title: "Local conservation or cleanup projects",
-          provider: "Community orgs",
+          id: "nasa-climate",
+          title: "NASA Climate Science",
+          provider: "NASA",
           summary:
-            "Participate in real environmental efforts.",
+            "Understand climate systems and global environmental data.",
           whyItFits:
-            "Connects knowledge to real-world impact.",
-          mode: "local",
-          locationLabel: "Near 94901",
-          tags: ["local"],
+            "Big-picture systems thinking.",
+          mode: "virtual",
+          href: "https://climate.nasa.gov/",
         },
         {
-          id: "nature-groups",
-          title: "Nature or environmental groups",
-          provider: "Local organizations",
+          id: "coursera-env",
+          title: "Intro to Environmental Science",
+          provider: "Coursera",
           summary:
-            "Join guided outdoor learning or citizen science.",
+            "Structured courses on ecosystems and sustainability.",
           whyItFits:
-            "Learn faster with others who share the same curiosity.",
-          mode: "local",
-          locationLabel: "Bay Area",
-          tags: ["local", "hands-on"],
+            "Deeper learning once you're hooked.",
+          mode: "virtual",
+          href: "https://www.coursera.org/courses?query=environmental%20science",
+        },
+        {
+          id: "citizen-science",
+          title: "iNaturalist",
+          provider: "Citizen Science",
+          summary:
+            "Log real observations of plants and animals worldwide.",
+          whyItFits:
+            "Turns observation into real scientific contribution.",
+          mode: "virtual",
+          href: "https://www.inaturalist.org/",
         },
       ],
     },

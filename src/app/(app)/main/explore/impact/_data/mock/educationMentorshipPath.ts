@@ -17,51 +17,61 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
 
   card: {
     title: "Education & Mentorship",
-    hook: "Help someone learn something that changes their future.",
+    hook:
+      "You see someone struggling — and instead of moving on, you slow down and help them figure it out.",
     description:
-      "Teaching and mentorship are powerful forms of impact. Sometimes a single conversation, explanation, or encouragement helps someone unlock confidence or curiosity they didn’t know they had.",
+      "Mentorship is not about being the smartest person in the room. It is about noticing where someone is stuck, meeting them there, and helping them move forward. That can be explaining a concept, encouraging someone who feels lost, or helping someone believe they can actually improve.",
   },
 
   hero: {
     eyebrow: "Impact Path",
     title: "Education & Mentorship",
-    hook: "Helping people grow through learning.",
+    hook:
+      "Helping someone go from ‘I don’t get it’ to ‘wait… I think I do.’",
     summary:
-      "Education isn’t limited to classrooms. Mentorship can happen anywhere — helping someone understand a subject, guiding a younger student, or sharing experience that makes someone else’s path clearer.",
+      "Some people move quickly through learning and leave others behind. Others slow down, explain things, and help people build confidence along the way. Mentorship happens in small moments — a conversation, a study session, a bit of encouragement — that quietly change how someone sees themselves and what they think they can do.",
     whyItPullsYouIn: [
-      "You enjoy explaining ideas and helping others understand them.",
+      "You like helping people understand things they find confusing.",
+      "You notice when someone is struggling and want to support them.",
       "You feel good when someone gains confidence because of your help.",
-      "You like seeing people grow over time.",
     ],
   },
 
   traitChips: [
-    { id: "teacher-energy", label: "Teacher energy" },
-    { id: "patient", label: "Patient explainer" },
-    { id: "encouraging", label: "Encouraging presence" },
+    { id: "teacher-energy", label: "Explains clearly" },
+    { id: "patient", label: "Patient presence" },
+    { id: "encouraging", label: "Builds confidence" },
+    { id: "observant", label: "Notices struggles" },
   ],
 
   fitSignals: [
     {
       id: "explains-well",
-      label: "You enjoy explaining ideas",
+      label: "You naturally explain things",
       score: 4,
       explanation:
-        "You often help classmates or friends understand topics they find confusing.",
+        "People often come to you when they do not understand something because you can break it down clearly.",
     },
     {
       id: "patient-listener",
-      label: "You are a patient listener",
+      label: "You meet people where they are",
       score: 4,
       explanation:
-        "You take time to understand where someone is stuck before offering help.",
+        "You take time to understand what someone is struggling with before jumping in.",
     },
     {
-      id: "growth-focused",
-      label: "You like seeing progress",
+      id: "confidence-builder",
+      label: "You build confidence in others",
       score: 5,
       explanation:
-        "Watching someone improve over time gives you a sense of purpose.",
+        "You notice that encouragement and small wins can change how someone feels about learning.",
+    },
+    {
+      id: "progress-awareness",
+      label: "You notice progress over time",
+      score: 4,
+      explanation:
+        "You enjoy seeing someone improve, even if it happens slowly.",
     },
   ],
 
@@ -70,19 +80,31 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
       id: "peer-tutoring",
       slug: "peer-tutoring",
       title: "Peer Tutoring",
-      oneLiner: "Helping classmates learn difficult topics.",
+      oneLiner:
+        "Helping someone finally understand something that has been frustrating them.",
       whyItCouldFit:
-        "Many schools need students who are willing to support others academically.",
+        "Learning often clicks faster when someone explains it in a relatable way.",
       energy: "people",
     },
     {
       id: "youth-mentorship",
       slug: "youth-mentorship",
       title: "Youth Mentorship",
-      oneLiner: "Guiding younger students and helping them grow.",
+      oneLiner:
+        "Being someone a younger student can look up to and learn from.",
       whyItCouldFit:
-        "Younger students often benefit greatly from encouragement and guidance.",
+        "Guidance and encouragement can change how someone sees their own future.",
       energy: "grounded",
+    },
+    {
+      id: "learning-support",
+      slug: "learning-support",
+      title: "Learning Support",
+      oneLiner:
+        "Helping people stay consistent, motivated, and on track.",
+      whyItCouldFit:
+        "Sometimes support matters more than explanation.",
+      energy: "support",
     },
   ],
 
@@ -92,69 +114,81 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
       slug: "peer-tutoring",
       title: "Peer Tutoring",
       summary:
-        "Peer tutoring helps students support each other academically and build confidence in learning.",
+        "Peer tutoring is about helping someone move past confusion in real time.",
       whatYouActuallyDo: [
-        "Explain concepts in simple language",
-        "Help classmates review material",
-        "Encourage consistent study habits",
+        "Break down concepts into simple steps",
+        "Answer questions and adjust explanations",
+        "Help someone practice until it clicks",
       ],
-      skillsThatGrowHere: [
-        "Communication",
-        "Patience",
-        "Teaching skills",
-      ],
+      skillsThatGrowHere: ["Communication", "Clarity", "Adaptability"],
       starterProjects: [
-        "Tutor a friend in a subject you enjoy",
-        "Help organize a study group",
-        "Create simple study guides for classmates",
+        "Help a friend with one topic",
+        "Run a small study session",
+        "Create a simple guide",
       ],
       atmosphere:
-        "Supportive, collaborative, and focused on helping others succeed.",
+        "Focused, interactive, and rewarding when something finally clicks.",
     },
     {
       id: "youth-mentorship",
       slug: "youth-mentorship",
       title: "Youth Mentorship",
       summary:
-        "Mentorship helps younger students build confidence and explore their interests.",
+        "Mentorship is often about presence — being someone who listens, supports, and guides.",
       whatYouActuallyDo: [
-        "Listen to younger students’ challenges",
-        "Offer encouragement and advice",
-        "Share learning strategies and experiences",
+        "Listen to challenges and questions",
+        "Encourage effort and consistency",
+        "Share experiences and perspective",
       ],
-      skillsThatGrowHere: [
-        "Empathy",
-        "Leadership",
-        "Communication",
-      ],
+      skillsThatGrowHere: ["Empathy", "Leadership", "Patience"],
       starterProjects: [
-        "Volunteer as a mentor for younger students",
-        "Help lead an after-school program",
-        "Support a youth club or activity group",
+        "Mentor a younger student",
+        "Help lead a group activity",
+        "Support an after-school program",
       ],
       atmosphere:
-        "Encouraging, patient, and centered around personal growth.",
+        "Supportive, personal, and built on trust.",
+    },
+    {
+      id: "learning-support",
+      slug: "learning-support",
+      title: "Learning Support",
+      summary:
+        "Sometimes the biggest impact is helping someone stay consistent and not give up.",
+      whatYouActuallyDo: [
+        "Check in regularly",
+        "Help organize study habits",
+        "Encourage follow-through",
+      ],
+      skillsThatGrowHere: ["Consistency", "Motivation", "Accountability"],
+      starterProjects: [
+        "Be a study partner",
+        "Help someone stay on track",
+        "Create a shared routine",
+      ],
+      atmosphere:
+        "Steady, encouraging, and relationship-driven.",
     },
   ],
 
   tryNow: {
     title: "Try This",
     summary:
-      "Mentorship often begins with small acts of support and encouragement.",
+      "Mentorship becomes real the moment you help one person move forward.",
     actions: [
       {
         id: "help-someone-learn",
-        title: "Help Someone Learn Something",
+        title: "Help One Person Understand Something",
         type: "conversation",
         effort: "light",
         timeEstimate: "30–60 minutes",
         whyThisMatters:
-          "Even small explanations can build confidence and curiosity.",
+          "Even one moment of clarity can change how someone feels about learning.",
         instructions: [
-          "Ask a friend or classmate what topic they find difficult.",
-          "Explain the concept step by step.",
-          "Encourage them as they practice.",
-          "Celebrate progress together.",
+          "Find someone stuck on something.",
+          "Ask what they do not understand.",
+          "Explain it simply.",
+          "Stay with them until it clicks.",
         ],
       },
     ],
@@ -163,19 +197,25 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
   howItFeels: {
     title: "How It Often Feels",
     summary:
-      "Mentorship combines patience, encouragement, and the satisfaction of seeing someone grow.",
+      "Mentorship is quiet, personal, and powerful in small moments.",
     moments: [
       {
         id: "aha-moment",
-        title: "The 'Aha' Moment",
+        title: "The Click",
         body:
-          "Someone suddenly understands something that previously confused them.",
+          "Someone suddenly understands something that felt impossible a few minutes earlier.",
       },
       {
         id: "confidence-growth",
-        title: "Growing Confidence",
+        title: "Confidence Builds",
         body:
-          "Over time, the person you help becomes more confident in their abilities.",
+          "Over time, they start believing they can figure things out.",
+      },
+      {
+        id: "they-dont-need-you",
+        title: "They Don’t Need You Anymore",
+        body:
+          "The best moment is when they can do it without you.",
       },
     ],
   },
@@ -183,17 +223,16 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
   growthPath: {
     title: "How This Path Grows",
     summary:
-      "Mentorship skills develop through experience and deeper relationships.",
+      "Mentorship grows from helping individuals to guiding larger groups.",
     stages: [
       {
         id: "helping-friends",
         label: "Helping Friends",
         timeframe: "Weeks–Months",
-        summary:
-          "You begin by helping classmates or friends understand difficult topics.",
+        summary: "You start by helping people close to you.",
         signalsOfProgress: [
-          "People ask you for help more often",
-          "Your explanations become clearer",
+          "People ask you for help",
+          "Your explanations improve",
         ],
       },
       {
@@ -201,36 +240,157 @@ export const EDUCATION_MENTORSHIP_PATH: ImpactPathContent = {
         label: "Structured Mentorship",
         timeframe: "Months–Years",
         summary:
-          "You mentor younger students or participate in organized education programs.",
+          "You begin mentoring more formally.",
         signalsOfProgress: [
-          "You guide others through longer learning journeys",
-          "You design activities or lessons",
+          "You guide longer learning journeys",
+          "You design learning experiences",
         ],
       },
     ],
   },
 
   nextSteps: {
-    title: "Next Steps",
+    title: "Try this for real",
     summary:
-      "Mentorship opportunities exist in schools, clubs, and community programs.",
-    actions: [
+      "The best way to understand mentorship is to actually help someone — or join a program where people are already doing it.",
+    actions: [],
+    opportunityGroups: [
       {
-        id: "start-study-group",
-        title: "Start a Study Group",
-        type: "project",
-        effort: "medium",
-        timeEstimate: "1–2 weeks",
-        whyThisMatters:
-          "Study groups help students support each other and build collaborative learning habits.",
-        instructions: [
-          "Choose a subject you enjoy.",
-          "Invite a few classmates who want help.",
-          "Meet regularly to review and practice.",
-          "Encourage everyone to contribute ideas.",
+        id: "local",
+        title: "Near you",
+        description:
+          "Ways to support learning and mentorship in your local community.",
+        items: [
+          {
+            id: "schoolhouse-local-tutoring",
+            title: "Schoolhouse.world – Free Peer Tutoring",
+            mode: "local",
+            provider: "Schoolhouse.world",
+            summary:
+              "Join live tutoring sessions and volunteer-led academic support that connects students who need help with students who can explain clearly.",
+            whyItHelps:
+              "You get real tutoring experience with actual learners instead of keeping mentorship hypothetical.",
+            href: "https://schoolhouse.world",
+            formatLabel: "Live Tutoring",
+          },
+          {
+            id: "boys-girls-club",
+            title: "Boys & Girls Club Mentorship",
+            mode: "local",
+            provider: "Boys & Girls Club",
+            summary:
+              "Support younger students in structured youth programs focused on growth, confidence, and belonging.",
+            whyItHelps:
+              "You build real mentorship relationships in a setting designed around young people.",
+            href: "https://www.bgca.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "ymca-mentorship",
+            title: "YMCA Youth Programs",
+            mode: "local",
+            provider: "YMCA",
+            summary:
+              "Participate in youth mentoring, learning support, and development programs through local YMCA branches.",
+            whyItHelps:
+              "You guide others in a structured environment where consistency matters.",
+            href: "https://www.ymca.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "library-programs",
+            title: "Library Learning Programs",
+            mode: "local",
+            provider: "Institute of Museum and Library Services",
+            summary:
+              "Explore reading programs, homework help, and community learning initiatives connected to local libraries.",
+            whyItHelps:
+              "You support learning in a calm, community-based setting where people already come looking for help.",
+            href: "https://www.imls.gov",
+            formatLabel: "Local",
+          },
+          {
+            id: "after-school",
+            title: "After-School Programs",
+            mode: "local",
+            provider: "Afterschool Alliance",
+            summary:
+              "Find programs centered on homework help, enrichment, and youth support outside the school day.",
+            whyItHelps:
+              "You gain hands-on mentorship experience with younger learners who benefit from steady encouragement.",
+            href: "https://www.afterschoolalliance.org",
+            formatLabel: "Local",
+          },
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description:
+          "Ways to mentor, teach, or support learning digitally.",
+        items: [
+          {
+            id: "khan-academy",
+            title: "Khan Academy",
+            mode: "virtual",
+            provider: "Khan Academy",
+            summary:
+              "Use clear instructional resources to strengthen your own explanations and support someone else’s learning.",
+            whyItHelps:
+              "You get better at breaking down concepts in ways that actually make sense.",
+            href: "https://www.khanacademy.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "schoolhouse",
+            title: "Schoolhouse.world",
+            mode: "virtual",
+            provider: "Schoolhouse.world",
+            summary:
+              "Volunteer tutoring platform where students help other students through live online sessions.",
+            whyItHelps:
+              "You teach real learners in real sessions, which makes mentorship feel concrete fast.",
+            href: "https://schoolhouse.world",
+            formatLabel: "Online",
+          },
+          {
+            id: "coursera",
+            title: "Coursera",
+            mode: "virtual",
+            provider: "Coursera",
+            summary:
+              "Explore courses on learning, teaching, communication, and educational psychology.",
+            whyItHelps:
+              "You understand education more deeply instead of relying only on instinct.",
+            href: "https://www.coursera.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "online-study-groups",
+            title: "Online Study Groups",
+            mode: "virtual",
+            provider: "Discord Communities",
+            summary:
+              "Join or lead collaborative study communities where explanation, encouragement, and consistency all matter.",
+            whyItHelps:
+              "You practice guiding others and holding a group together around learning goals.",
+            href: "https://discord.com",
+            formatLabel: "Online",
+          },
+          {
+            id: "un-volunteer",
+            title: "UN Online Volunteering",
+            mode: "virtual",
+            provider: "United Nations",
+            summary:
+              "Support global education and youth-development initiatives through remote volunteer opportunities.",
+            whyItHelps:
+              "You contribute to real-world learning efforts beyond your immediate environment.",
+            href: "https://www.onlinevolunteering.org",
+            formatLabel: "Online",
+          },
         ],
       },
     ],
-    opportunityGroups: [],
   },
 };

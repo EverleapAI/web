@@ -402,15 +402,16 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
   },
 
   nextSteps: {
-    title: "Try it out",
-    summary: "Start building simple projects.",
+    title: "Start building for real",
+    summary:
+      "You do not need permission to start. The fastest way to understand this path is to build something small, ship it, and keep going.",
     actions: [],
   },
 
   nextStepsV2: {
     heroTitle: "You can start building real software this week",
     heroSummary:
-      "Not theory. Not someday. These are real places where people your age are already coding, shipping, and joining teams. Pick one and start.",
+      "Do not wait until you feel ready. The signal comes from making things that actually run, break, improve, and go live. These are real entry points near you and online.",
     heroBadge: "Start now",
 
     sections: [
@@ -419,34 +420,52 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
         eyebrow: "Near 94901",
         title: "Get in the room with real builders",
         description:
-          "Being around other people building things changes everything. These are legit entry points in Marin and the Bay Area.",
+          "Being around people who are building changes the pace of your learning. These are real places where coding stops feeling abstract.",
         mode: "local",
         items: [
           {
-            id: "marin-library",
-            title: "Marin County Library - The Lab",
+            id: "marin-library-lab",
+            title: "Marin County Free Library - The Lab",
             href: "https://marinlibrary.org/the-lab/",
             note:
-              "Free makerspace. Coding, tech tools, and people actually building things.",
+              "Free makerspace and tech environment where you can get close to real tools, projects, and local build energy.",
             badge: "Free / Local",
             mode: "local",
           },
           {
-            id: "college-marin",
-            title: "College of Marin - Intro Coding Courses",
+            id: "college-of-marin",
+            title: "College of Marin coding and CS courses",
             href: "https://marin.edu/",
             note:
-              "Real college-level programming classes you can access locally.",
+              "A real local college path where you can start learning programming with structure instead of guessing your way through it.",
             badge: "Real Classes",
             mode: "local",
           },
           {
-            id: "codeday-ba",
-            title: "CodeDay Bay Area",
+            id: "codeday",
+            title: "CodeDay",
             href: "https://www.codeday.org/",
             note:
-              "Build a real project in a weekend with other beginners.",
+              "Project-driven events where beginners and builders make something real in a short burst of momentum.",
             badge: "Build Fast",
+            mode: "local",
+          },
+          {
+            id: "bay-area-hackathons",
+            title: "Bay Area hackathons",
+            href: "https://www.eventbrite.com/d/ca--san-francisco/hackathon/",
+            note:
+              "Short, intense build events where you learn by making and shipping under real constraints.",
+            badge: "Ship Something",
+            mode: "local",
+          },
+          {
+            id: "maker-space-search",
+            title: "Maker spaces near Marin",
+            href: "https://www.google.com/search?q=maker+space+Marin+County",
+            note:
+              "Good if your motivation goes up when you are around people actively building things, not just studying them.",
+            badge: "Hands-On",
             mode: "local",
           },
         ],
@@ -456,7 +475,7 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
         eyebrow: "Online",
         title: "Where real beginners actually start",
         description:
-          "These are not just courses - they lead to real projects, portfolios, and communities.",
+          "These are not just passive resources. They are places where you can code, ship, and start building a portfolio people can actually see.",
         mode: "remote",
         items: [
           {
@@ -464,7 +483,7 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
             title: "Replit",
             href: "https://replit.com/",
             note:
-              "Start coding instantly in your browser. Build and share real apps.",
+              "Code instantly in your browser and turn ideas into working projects without setup friction.",
             badge: "Build Now",
             mode: "remote",
           },
@@ -473,16 +492,16 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
             title: "GitHub",
             href: "https://github.com/",
             note:
-              "Where real developers publish code. Start a portfolio here.",
+              "The place where real developers publish code. Start a visible body of work here early.",
             badge: "Essential",
             mode: "remote",
           },
           {
-            id: "hackclub",
+            id: "hack-club",
             title: "Hack Club",
             href: "https://hackclub.com/",
             note:
-              "Global community of teen developers building real projects together.",
+              "A real community of teen builders making projects, joining challenges, and learning alongside each other.",
             badge: "Community",
             mode: "remote",
           },
@@ -491,7 +510,7 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
             title: "Vercel",
             href: "https://vercel.com/",
             note:
-              "Deploy a real website or app live on the internet in minutes.",
+              "Deploy a real site or app to the internet fast. This is where projects start feeling real.",
             badge: "Ship It",
             mode: "remote",
           },
@@ -500,7 +519,7 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
             title: "freeCodeCamp",
             href: "https://www.freecodecamp.org/",
             note:
-              "Structured path from zero to real developer skills with projects.",
+              "A structured path with real projects that helps you move from beginner to builder through repetition.",
             badge: "Free",
             mode: "remote",
           },

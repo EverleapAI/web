@@ -114,16 +114,17 @@ export const SYSTEMS_CODE_PATH: LearningPathContent = {
 
   opportunityGroups: [
     {
-      id: "try-this-week",
-      title: "Try this this week",
+      id: "build-skill",
+      title: "Build real skill",
       description:
-        "Fast, low-friction ways to see if this actually clicks for you.",
+        "Online places to learn fast, practice for real, and start making working projects.",
       items: [
         {
           id: "khan-cs",
           title: "Khan Academy Programming",
           provider: "Khan Academy",
-          summary: "Interactive beginner-friendly coding lessons.",
+          summary:
+            "Interactive beginner-friendly coding lessons that help you understand programming by doing it.",
           whyItFits:
             "Great for getting early wins and confidence quickly.",
           mode: "virtual",
@@ -135,29 +136,21 @@ export const SYSTEMS_CODE_PATH: LearningPathContent = {
           id: "freecodecamp",
           title: "freeCodeCamp",
           provider: "freeCodeCamp",
-          summary: "Hands-on coding curriculum with real projects.",
+          summary:
+            "A hands-on coding curriculum with projects that push you to build instead of only reading.",
           whyItFits:
-            "Keeps you moving by building instead of just reading.",
+            "Keeps you moving by building instead of just studying theory.",
           mode: "virtual",
           href: "https://www.freecodecamp.org",
           formatLabel: "Projects + lessons",
           tags: ["structured", "free", "portfolio-building"],
         },
-      ],
-    },
-
-    {
-      id: "build-skill",
-      title: "Build real skill",
-      description:
-        "More structured paths that help you go deeper and stay consistent.",
-      items: [
         {
           id: "replit",
           title: "Replit",
           provider: "Replit",
           summary:
-            "Build apps, tools, and experiments directly in your browser.",
+            "Build apps, tools, games, and experiments directly in your browser with very little setup.",
           whyItFits:
             "Best for turning ideas into working builds quickly.",
           mode: "virtual",
@@ -166,14 +159,28 @@ export const SYSTEMS_CODE_PATH: LearningPathContent = {
           tags: ["hands-on", "portfolio-building"],
         },
         {
-          id: "arduino",
-          title: "Arduino / micro:bit projects",
-          provider: "Open-source ecosystem",
+          id: "scratch",
+          title: "Scratch",
+          provider: "MIT",
           summary:
-            "Build code that interacts with real-world devices.",
+            "A visual coding platform where you can make interactive projects, games, and animations.",
           whyItFits:
-            "Perfect if you want code to do something physical.",
+            "Strong if you like logic and creation but want a more visual on-ramp first.",
+          mode: "virtual",
+          href: "https://scratch.mit.edu",
+          formatLabel: "Visual coding",
+          tags: ["beginner-friendly", "free", "self-paced"],
+        },
+        {
+          id: "arduino",
+          title: "Arduino projects",
+          provider: "Arduino",
+          summary:
+            "Learn how code interacts with sensors, lights, motors, and physical devices.",
+          whyItFits:
+            "Perfect if you want code to do something physical in the real world.",
           mode: "hybrid",
+          href: "https://projecthub.arduino.cc",
           formatLabel: "Hardware + code",
           tags: ["hands-on", "structured"],
         },
@@ -184,17 +191,18 @@ export const SYSTEMS_CODE_PATH: LearningPathContent = {
       id: "near-you",
       title: "Near you (Marin / Bay Area)",
       description:
-        "Ways to make this real in your actual environment.",
+        "Real environments where code, robotics, and systems thinking become something you can actually build and test.",
       items: [
         {
           id: "library",
           title: "Library maker programs",
           provider: "Marin libraries",
           summary:
-            "Community workshops, coding sessions, or maker kits.",
+            "Look for community workshops, maker kits, coding sessions, and beginner-friendly technical activities.",
           whyItFits:
-            "Low barrier, local, and easy to try without commitment.",
+            "Low barrier, local, and easy to try without a huge commitment.",
           mode: "local",
+          href: "https://marinlibrary.org",
           locationLabel: "Near 94901",
           formatLabel: "Workshops",
           tags: ["local", "beginner-friendly"],
@@ -203,24 +211,57 @@ export const SYSTEMS_CODE_PATH: LearningPathContent = {
           id: "clubs",
           title: "School coding or robotics clubs",
           provider: "Local schools",
-          summary: "Build projects with other students.",
+          summary:
+            "Find student groups where people build robots, apps, scripts, and small technical projects together.",
           whyItFits:
-            "Learning sticks better when you're building with others.",
+            "Learning sticks better when you are building with other people.",
           mode: "local",
+          href: "https://www.google.com/search?q=Marin+County+coding+club+robotics+club",
           locationLabel: "Marin / North Bay",
+          formatLabel: "Student build teams",
           tags: ["local", "hands-on"],
         },
         {
           id: "hackathons",
           title: "Bay Area hackathons",
-          provider: "Various orgs",
+          provider: "Eventbrite",
           summary:
-            "Short build events where you create something fast.",
+            "Short build events where you create something fast, solve problems, and work through real constraints.",
           whyItFits:
             "Great for momentum and real-world experience.",
           mode: "hybrid",
+          href: "https://www.eventbrite.com/d/ca--san-francisco/hackathon/",
           locationLabel: "Bay Area",
-          tags: ["hybrid", "portfolio-building"],
+          formatLabel: "Build events",
+          tags: ["hands-on", "portfolio-building"],
+        },
+        {
+          id: "microbit",
+          title: "micro:bit projects and clubs",
+          provider: "micro:bit",
+          summary:
+            "Use beginner-friendly hardware to build projects that connect code to the physical world.",
+          whyItFits:
+            "A strong bridge between coding, systems thinking, and real devices.",
+          mode: "hybrid",
+          href: "https://microbit.org/projects/make-it-code-it/",
+          locationLabel: "Local / home",
+          formatLabel: "Physical computing",
+          tags: ["hands-on", "beginner-friendly"],
+        },
+        {
+          id: "makerspace-search",
+          title: "Maker spaces near you",
+          provider: "Local search",
+          summary:
+            "Find local build spaces where people work on robotics, electronics, fabrication, and technical projects.",
+          whyItFits:
+            "Useful if your brain works best when you can tinker, test, and build for real.",
+          mode: "local",
+          href: "https://www.google.com/search?q=maker+space+Marin+County",
+          locationLabel: "Near 94901",
+          formatLabel: "Hands-on exploration",
+          tags: ["local", "hands-on"],
         },
       ],
     },

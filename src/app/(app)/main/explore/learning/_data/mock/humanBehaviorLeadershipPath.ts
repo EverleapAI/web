@@ -8,220 +8,260 @@ export const HUMAN_BEHAVIOR_LEADERSHIP_PATH: LearningPathContent = {
   lane: "learning",
 
   theme: {
-    tone: "warm-signal",
-    accent: { r: 110, g: 210, b: 185 },
-    accentStrong: { r: 255, g: 173, b: 120 },
-    glow: { r: 120, g: 220, b: 200 },
-    surfaceLabel: "Human insight",
+    tone: "people-dynamics",
+    accent: { r: 120, g: 190, b: 255 },
+    accentStrong: { r: 160, g: 120, b: 255 },
+    glow: { r: 140, g: 200, b: 255 },
+    surfaceLabel: "People + leadership",
   },
 
   card: {
     title: "Human Behavior + Leadership",
-    hook:
-      "Understand people, guide energy, and help groups actually move.",
+    hook: "Understand people — and learn how to lead, influence, and support them.",
     description:
-      "A path for people drawn to psychology, communication, mentoring, and real leadership.",
+      "A path for people interested in psychology, communication, leadership, and how people think, feel, and act.",
   },
 
   hero: {
     eyebrow: "Learning path",
     title: "Human Behavior + Leadership",
     hook:
-      "For minds that notice people, patterns, and what actually helps others move.",
+      "For people who notice how others think, feel, and interact — and want to get better at working with them.",
     summary:
-      "This path starts with observation — then becomes action. You learn how people think, what motivates them, and how to guide individuals and groups in real situations.",
+      "This path is about understanding people in real situations — how they think, what motivates them, how groups behave, and how leadership actually works.",
     whyItPullsYouIn: [
-      "You notice moods and dynamics quickly.",
-      "You care about what helps people grow.",
-      "You like helping groups feel clearer or calmer.",
-      "You want influence to feel real, not forced.",
+      "You notice how people act and react.",
+      "You care about helping or guiding others.",
+      "You are curious about motivation and behavior.",
+      "You want to lead or influence in real situations.",
     ],
   },
 
   traitChips: [
-    { id: "people-radar", label: "People radar" },
-    { id: "group-awareness", label: "Group awareness" },
+    { id: "people-awareness", label: "People awareness" },
     { id: "empathy", label: "Empathy" },
     { id: "communication", label: "Communication" },
+    { id: "leadership", label: "Leadership" },
   ],
 
   fitSignals: [
     {
-      id: "notice-dynamics",
-      label: "You notice group dynamics quickly",
-      score: 94,
+      id: "reads-people",
+      label: "You read people well",
+      score: 92,
       explanation:
-        "You can tell what is happening in a room before it is said out loud.",
+        "You notice emotions, reactions, and social dynamics quickly.",
     },
     {
-      id: "curious-about-people",
-      label: "You are curious about people",
-      score: 91,
+      id: "helping-drive",
+      label: "You want to help or guide others",
+      score: 90,
       explanation:
-        "You want to understand behavior, not just react to it.",
+        "You naturally step into roles where you support or organize people.",
     },
     {
-      id: "help-groups-move",
-      label: "You like helping groups function better",
+      id: "group-awareness",
+      label: "You notice how groups behave",
       score: 88,
       explanation:
-        "You naturally try to improve clarity, trust, or direction.",
+        "You see patterns in how people interact in teams or social settings.",
     },
   ],
 
   whatYouLearn: [
     {
-      id: "behavior",
-      title: "How people actually behave",
+      id: "psychology-basics",
+      title: "How people think and behave",
       description:
-        "Motivation, emotion, identity, and what drives decisions.",
+        "Core ideas in psychology, motivation, and decision-making.",
     },
     {
       id: "communication",
-      title: "How communication changes outcomes",
+      title: "How communication actually works",
       description:
-        "Tone, timing, clarity, and how messages land.",
+        "Listening, clarity, persuasion, and emotional awareness.",
     },
     {
       id: "group-dynamics",
       title: "How groups function",
       description:
-        "Trust, culture, belonging, and what makes teams work or fail.",
+        "Leadership, roles, influence, and team dynamics.",
     },
     {
-      id: "mentorship",
-      title: "How to support growth in others",
+      id: "leadership-skills",
+      title: "How leadership works in real life",
       description:
-        "Feedback, encouragement, and helping someone improve.",
+        "Guiding people, making decisions, and handling challenges.",
     },
     {
-      id: "leadership",
-      title: "What real leadership looks like",
+      id: "real-world-application",
+      title: "How to apply this in real situations",
       description:
-        "Guiding energy, not controlling people.",
+        "Using these skills in school, teams, and everyday life.",
     },
   ],
 
   featuredOpportunity: {
-    title: "Start observing real group dynamics",
-    provider: "Real environments",
+    title: "Observe people in real situations",
+    provider: "Real world",
     summary:
-      "Use a real class, team, or group as your learning environment.",
+      "Spend time noticing how people act in groups — who leads, who follows, and how decisions get made.",
     whyStartHere:
-      "This path becomes real when you observe actual people, not just read about them.",
-    mode: "local",
-    formatLabel: "Real-world observation",
+      "This path becomes real when you start observing behavior in real environments.",
+    mode: "hybrid",
+    formatLabel: "Observation + reflection",
   },
 
   opportunityGroups: [
     {
-      id: "try-this-week",
-      title: "Try this this week",
+      id: "near-you",
+      title: "Near you (real people, real dynamics)",
       description:
-        "Fast ways to test whether this path actually feels real to you.",
+        "Places where you can observe, participate, and lead in real situations.",
       items: [
         {
-          id: "observe-group",
-          title: "Observe a real group like a systems lab",
-          provider: "Real life",
+          id: "volunteer",
+          title: "Volunteer in your community",
+          provider: "VolunteerMatch",
           summary:
-            "Watch a class, team, or group and track energy and behavior.",
+            "Work with people in real environments and see how communication and leadership play out.",
           whyItFits:
-            "You will immediately see patterns if this path fits you.",
+            "You learn fast when you are working with real people.",
           mode: "local",
-          formatLabel: "Observation",
-          tags: ["beginner-friendly", "hands-on"],
+          href: "https://www.volunteermatch.org",
+          locationLabel: "Near you",
+          formatLabel: "Real-world interaction",
+          tags: ["local", "hands-on"],
         },
         {
-          id: "help-one-person",
-          title: "Help one person improve at something",
-          provider: "Self-directed",
+          id: "student-leadership",
+          title: "Student leadership roles",
+          provider: "School programs",
           summary:
-            "Support someone in a small, real way.",
+            "Take on roles in student government, clubs, or team leadership.",
           whyItFits:
-            "Mentorship makes this path real instantly.",
+            "You practice leadership directly instead of just learning about it.",
           mode: "local",
-          formatLabel: "Real interaction",
-          tags: ["hands-on"],
+          href: "https://www.google.com/search?q=student+leadership+programs+high+school",
+          locationLabel: "School / local",
+          formatLabel: "Leadership roles",
+          tags: ["local", "hands-on"],
+        },
+        {
+          id: "toastmasters",
+          title: "Toastmasters (youth + local clubs)",
+          provider: "Toastmasters",
+          summary:
+            "Practice communication, speaking, and leadership in structured environments.",
+          whyItFits:
+            "You build confidence and communication skill through repetition.",
+          mode: "hybrid",
+          href: "https://www.toastmasters.org/find-a-club",
+          locationLabel: "Local / hybrid",
+          formatLabel: "Speaking + leadership",
+          tags: ["structured", "hands-on"],
+        },
+        {
+          id: "mentoring",
+          title: "Peer mentoring or tutoring",
+          provider: "School / community",
+          summary:
+            "Help others learn and improve while developing leadership and empathy.",
+          whyItFits:
+            "Teaching is one of the fastest ways to understand people.",
+          mode: "local",
+          href: "https://www.google.com/search?q=peer+mentoring+program+near+me",
+          locationLabel: "Local",
+          formatLabel: "Mentorship",
+          tags: ["local", "hands-on"],
+        },
+        {
+          id: "community-groups",
+          title: "Community groups and team environments",
+          provider: "Meetup",
+          summary:
+            "Join groups where people collaborate, organize, and lead together.",
+          whyItFits:
+            "You see real group dynamics instead of theory.",
+          mode: "local",
+          href: "https://www.meetup.com",
+          locationLabel: "Near you",
+          formatLabel: "Group interaction",
+          tags: ["local", "hands-on"],
         },
       ],
     },
 
     {
       id: "build-skill",
-      title: "Build real skill",
+      title: "Build understanding",
       description:
-        "Ways to deepen your understanding and practice leadership.",
+        "Use these to understand what you are seeing in real-world interactions.",
       items: [
         {
           id: "khan-psych",
           title: "Khan Academy Psychology",
           provider: "Khan Academy",
           summary:
-            "Learn foundational psychology concepts.",
+            "Learn the basics of how people think, feel, and behave.",
           whyItFits:
-            "Gives language to what you are already noticing.",
+            "Gives structure to what you observe in real life.",
           mode: "virtual",
-          href: "https://www.khanacademy.org/test-prep/mcat/behavior",
-          formatLabel: "Self-paced",
-          tags: ["free", "self-paced"],
+          href: "https://www.khanacademy.org/science/ap-psychology",
+          formatLabel: "Structured learning",
+          tags: ["structured", "free", "self-paced"],
         },
         {
           id: "coursera-leadership",
-          title: "Intro leadership + communication courses",
+          title: "Leadership and communication courses",
           provider: "Coursera",
           summary:
-            "Structured lessons on leadership and group dynamics.",
+            "Courses on leadership, communication, and team dynamics.",
           whyItFits:
-            "Helps you connect practice with frameworks.",
+            "Helps you understand the patterns behind behavior.",
           mode: "virtual",
-          formatLabel: "Structured learning",
-          tags: ["structured"],
-        },
-      ],
-    },
-
-    {
-      id: "near-you",
-      title: "Near you (Marin / Bay Area)",
-      description:
-        "Real environments where leadership and people skills matter.",
-      items: [
-        {
-          id: "student-leadership",
-          title: "Student leadership or club roles",
-          provider: "Schools / clubs",
-          summary:
-            "Lead meetings, organize groups, or support peers.",
-          whyItFits:
-            "Real groups are the best place to learn leadership.",
-          mode: "local",
-          locationLabel: "Marin / North Bay",
-          tags: ["local", "hands-on"],
+          href: "https://www.coursera.org/courses?query=leadership%20communication",
+          formatLabel: "Courses",
+          tags: ["structured", "self-paced"],
         },
         {
-          id: "coaching",
-          title: "Youth coaching or mentorship roles",
-          provider: "Sports / camps",
+          id: "stanford-ecorner",
+          title: "Stanford eCorner (leadership stories)",
+          provider: "Stanford",
           summary:
-            "Help younger students grow and improve.",
+            "Real stories about leadership, decision-making, and working with people.",
           whyItFits:
-            "You learn fast when you are responsible for someone else.",
-          mode: "local",
-          locationLabel: "Marin County",
-          tags: ["local", "hands-on"],
+            "Shows how leadership actually plays out in real situations.",
+          mode: "virtual",
+          href: "https://ecorner.stanford.edu",
+          formatLabel: "Talks",
+          tags: ["self-paced"],
         },
         {
-          id: "volunteering",
-          title: "Community volunteering",
-          provider: "Nonprofits",
+          id: "bigfuture",
+          title: "BigFuture career exploration",
+          provider: "College Board",
           summary:
-            "Work in real human environments that need support.",
+            "Explore careers related to psychology, leadership, and social impact.",
           whyItFits:
-            "This path becomes clear when your actions affect real people.",
-          mode: "local",
-          locationLabel: "Near 94901",
-          tags: ["local"],
+            "Helps connect your interests to real paths.",
+          mode: "virtual",
+          href: "https://bigfuture.collegeboard.org",
+          formatLabel: "Exploration",
+          tags: ["self-paced"],
+        },
+        {
+          id: "ted-talks",
+          title: "TED Talks on human behavior",
+          provider: "TED",
+          summary:
+            "Watch talks on psychology, leadership, and social dynamics.",
+          whyItFits:
+            "Quick exposure to real ideas and perspectives.",
+          mode: "virtual",
+          href: "https://www.ted.com/topics/psychology",
+          formatLabel: "Short content",
+          tags: ["self-paced"],
         },
       ],
     },

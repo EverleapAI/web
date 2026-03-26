@@ -96,11 +96,11 @@ export const GLOBAL_CULTURES_PATH: WorldPathContent = {
 
   featuredOpportunity: {
     label: "Best first move",
-    title: "Experience a culture directly this week",
+    title: "Go to a real cultural event near you this week",
     description:
-      "Start small but real. Step into another culture through food, language, or community — not just content.",
-    href: "https://www.eventbrite.com/d/ca--marin-county/cultural-events/",
-    ctaLabel: "Find a local cultural event",
+      "Step into another culture through food, music, language, celebration, or community gathering so this path becomes something you experience, not just read about.",
+    href: "https://www.eventbrite.com/d/ca--san-francisco/cultural-events/",
+    ctaLabel: "Find a cultural event",
     mode: "local",
     type: "event",
   },
@@ -111,23 +111,41 @@ export const GLOBAL_CULTURES_PATH: WorldPathContent = {
       label: "Start here",
       title: "Try this this week",
       description:
-        "You don’t need to travel far to start experiencing culture differently.",
+        "You do not need a passport to begin. Start with one real interaction, one real tradition, or one real conversation that opens your frame.",
       opportunities: [
         {
           title: "Cook a traditional dish from another culture",
           description:
-            "Choose a country, cook one authentic meal, and learn the story behind it.",
-          href: "https://www.youtube.com/results?search_query=traditional+recipes+by+country",
-          ctaLabel: "Find a recipe",
+            "Choose one country, make one authentic dish, and learn the story behind it so food becomes a way into family, place, and tradition.",
+          href: "https://www.seriouseats.com/world-cuisines-5117984",
+          ctaLabel: "Explore world cuisines",
           mode: "virtual",
           type: "project",
         },
         {
-          title: "Watch media from another country",
+          title: "Start a language exchange on HelloTalk",
           description:
-            "Watch a documentary or creator from another culture and notice how life feels similar or different.",
-          href: "https://www.youtube.com",
-          ctaLabel: "Explore global content",
+            "Talk with real people from other countries instead of only consuming content about them. Even one short exchange can change how culture feels.",
+          href: "https://www.hellotalk.com/",
+          ctaLabel: "Try HelloTalk",
+          mode: "virtual",
+          type: "conversation",
+        },
+        {
+          title: "Interview someone about their family or cultural traditions",
+          description:
+            "Ask a friend, neighbor, classmate, or relative about holidays, food, migration, language, or what home means to them.",
+          href: "https://storycorps.org/participate/great-questions/",
+          ctaLabel: "Use conversation prompts",
+          mode: "local",
+          type: "conversation",
+        },
+        {
+          title: "Watch one film from another country and take notes on daily life",
+          description:
+            "Do not just watch for plot. Notice family dynamics, humor, formality, public space, celebration, and what feels different or familiar.",
+          href: "https://www.criterionchannel.com/world-cinema-project",
+          ctaLabel: "Explore world cinema",
           mode: "virtual",
           type: "resource",
         },
@@ -138,26 +156,46 @@ export const GLOBAL_CULTURES_PATH: WorldPathContent = {
       label: "Explore near you",
       title: "Step into culture locally",
       description:
-        "You can experience global culture without leaving your area.",
+        "Global culture is not far away. It is in neighborhoods, festivals, places of worship, language communities, museums, and food spaces all around you.",
       opportunities: [
         {
-          title: "Local cultural festivals (Marin / Bay Area)",
+          title: "Browse Bay Area cultural festivals and community events",
           description:
-            "Attend festivals, markets, or events representing different cultures and communities.",
+            "Find festivals, performances, markets, and celebrations that let you experience traditions in person instead of only hearing about them.",
           href: "https://www.eventbrite.com/d/ca--san-francisco/cultural-events/",
           ctaLabel: "Browse events",
           mode: "local",
           type: "event",
+          locationLabel: "Bay Area",
+        },
+        {
+          title: "Look for language exchange and international Meetup groups",
+          description:
+            "Meet people from different backgrounds through conversation groups, intercultural gatherings, and language-focused community events.",
+          href: "https://www.meetup.com/find/?keywords=language%20exchange",
+          ctaLabel: "Find local groups",
+          mode: "local",
+          type: "conversation",
           locationLabel: "Near you",
         },
         {
           title: "Visit a cultural museum or exhibit",
           description:
-            "Explore how different cultures are represented through artifacts, stories, and history.",
-          href: "https://www.si.edu",
-          ctaLabel: "Explore museums",
+            "Use museums to understand how history, migration, art, identity, and storytelling shape cultures across time and place.",
+          href: "https://www.si.edu/exhibitions",
+          ctaLabel: "Explore exhibits",
           mode: "local",
           type: "experience",
+        },
+        {
+          title: "Explore Japantown, Chinatown, or other cultural neighborhoods",
+          description:
+            "Walk through a neighborhood with the goal of noticing language, businesses, food, ritual, and how community identity is expressed in public space.",
+          href: "https://www.sftravel.com/article/guide-san-franciscos-neighborhoods",
+          ctaLabel: "Explore neighborhoods",
+          mode: "local",
+          type: "visit",
+          locationLabel: "Bay Area",
         },
       ],
     },
@@ -166,26 +204,46 @@ export const GLOBAL_CULTURES_PATH: WorldPathContent = {
       label: "Go broader",
       title: "Go beyond your environment",
       description:
-        "When you're ready, step into deeper or global experiences.",
+        "When this starts feeling real, move from curiosity into deeper international or intercultural experiences that change how you understand daily life.",
       opportunities: [
         {
-          title: "Student exchange programs",
+          title: "AFS-USA exchange programs",
           description:
-            "Live in another country and experience daily life from the inside.",
-          href: "https://www.afsusa.org",
+            "Live in another country and experience school, family life, and culture from the inside instead of as a visitor looking in.",
+          href: "https://www.afsusa.org/",
           ctaLabel: "Explore exchange programs",
           mode: "travel",
           type: "exchange",
           ageNote: "Typically ages 14–18",
         },
         {
-          title: "Global volunteer experiences",
+          title: "CIEE high school study abroad programs",
           description:
-            "Work alongside communities in different parts of the world.",
-          href: "https://www.projects-abroad.org",
+            "See what structured international learning looks like when language, host communities, and daily life all become part of the experience.",
+          href: "https://www.ciee.org/go-abroad/high-school-study-abroad",
+          ctaLabel: "View study abroad options",
+          mode: "travel",
+          type: "exchange",
+          ageNote: "Teen-focused",
+        },
+        {
+          title: "Projects Abroad cultural and service experiences",
+          description:
+            "Explore programs where you work with communities in other parts of the world while learning how culture and local context shape everything.",
+          href: "https://www.projects-abroad.org/",
           ctaLabel: "View opportunities",
           mode: "travel",
           type: "volunteer",
+        },
+        {
+          title: "Experiment with Workaway-style cultural immersion later on",
+          description:
+            "See how longer-term exchange and staying with hosts can turn travel into a more honest, day-to-day experience of another culture.",
+          href: "https://www.workaway.info/",
+          ctaLabel: "See how it works",
+          mode: "travel",
+          type: "experience",
+          ageNote: "Better for later / older teens",
         },
       ],
     },
@@ -194,22 +252,40 @@ export const GLOBAL_CULTURES_PATH: WorldPathContent = {
       label: "Always available",
       title: "Open a window to the world anytime",
       description:
-        "These are always-on ways to stay connected to global cultures.",
+        "Keep this path active through real voices, global stories, cultural archives, and tools that connect you to people instead of only facts.",
       opportunities: [
+        {
+          title: "HelloTalk",
+          description:
+            "Build real cross-cultural conversations with people around the world and notice how language, humor, tone, and daily life come through naturally.",
+          href: "https://www.hellotalk.com/",
+          ctaLabel: "Start talking",
+          mode: "virtual",
+          type: "conversation",
+        },
+        {
+          title: "Tandem",
+          description:
+            "Practice language exchange while learning how people from different cultures actually speak, explain, and describe their lives.",
+          href: "https://www.tandem.net/",
+          ctaLabel: "Try Tandem",
+          mode: "virtual",
+          type: "conversation",
+        },
         {
           title: "National Geographic",
           description:
-            "Stories and documentaries exploring cultures and environments worldwide.",
-          href: "https://www.nationalgeographic.com",
+            "Use photography, reporting, and documentaries to explore cultures and environments worldwide through strong storytelling.",
+          href: "https://www.nationalgeographic.com/",
           ctaLabel: "Start exploring",
           mode: "virtual",
           type: "resource",
         },
         {
-          title: "Smithsonian global culture resources",
+          title: "Smithsonian cultural collections and exhibits",
           description:
-            "Deep dives into culture, history, and human stories through digital exhibits.",
-          href: "https://www.si.edu",
+            "Dive into global history, migration, art, ritual, and human stories through digital exhibits that give culture more depth than surface-level content.",
+          href: "https://www.si.edu/exhibitions",
           ctaLabel: "Explore exhibits",
           mode: "virtual",
           type: "resource",

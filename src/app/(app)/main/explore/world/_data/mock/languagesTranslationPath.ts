@@ -74,35 +74,35 @@ export const LANGUAGES_TRANSLATION_PATH: WorldPathContent = {
       {
         title: "How meaning shifts across languages",
         description:
-          "Why direct translation often fails — and how tone, context, and culture reshape what something really means.",
+          "Why direct translation often fails — and how tone, context, and culture reshape meaning.",
       },
       {
         title: "Language as identity",
         description:
-          "How the way people speak reflects who they are, where they come from, and how they see the world.",
+          "How speech reflects background, culture, and worldview.",
       },
       {
         title: "Listening beyond words",
         description:
-          "Hearing emotion, intention, and subtext — not just the literal sentence.",
+          "Hearing intention, tone, and emotion — not just literal sentences.",
       },
       {
         title: "Communication across cultures",
         description:
-          "How misunderstandings happen — and how clarity, empathy, and phrasing can bridge them.",
+          "How misunderstanding happens — and how language can bridge it.",
       },
     ],
   },
 
   featuredOpportunity: {
     label: "Best first move",
-    title: "Start using a new language immediately",
+    title: "Start speaking with a real person on HelloTalk",
     description:
-      "Skip theory. Learn a few real phrases and use them out loud — that’s when language becomes real.",
-    href: "https://www.duolingo.com",
-    ctaLabel: "Start a language now",
+      "Skip passive learning. Start messaging or speaking with real people in another language — even a short exchange changes everything.",
+    href: "https://www.hellotalk.com",
+    ctaLabel: "Start talking",
     mode: "virtual",
-    type: "project",
+    type: "conversation",
   },
 
   opportunityGroups: [
@@ -111,28 +111,47 @@ export const LANGUAGES_TRANSLATION_PATH: WorldPathContent = {
       label: "Start here",
       title: "Try this this week",
       description:
-        "The fastest way into this world is to work with real language right away.",
+        "Language becomes real when you use it — not when you study it.",
       opportunities: [
         {
-          title: "Learn 15 real phrases in a new language",
+          title: "Learn 15 real phrases and say them out loud",
           description:
-            "Focus on greetings, questions, and everyday expressions — and say them out loud.",
+            "Focus on useful, everyday language and practice speaking immediately.",
           href: "https://www.duolingo.com",
           ctaLabel: "Pick a language",
           mode: "virtual",
           type: "project",
         },
         {
-          title: "Compare two translations of the same line",
+          title: "Have a 5-minute conversation on HelloTalk or Tandem",
           description:
-            "See how tone and meaning shift depending on how something is translated.",
-          href: "https://www.youtube.com",
-          ctaLabel: "Find examples",
+            "Even short exchanges build real communication faster than passive study.",
+          href: "https://www.tandem.net",
+          ctaLabel: "Start a conversation",
+          mode: "virtual",
+          type: "conversation",
+        },
+        {
+          title: "Compare two translations of the same sentence",
+          description:
+            "Notice how tone and meaning shift depending on phrasing.",
+          href: "https://www.reverso.net/text-translation",
+          ctaLabel: "Try translation tools",
           mode: "virtual",
           type: "research",
         },
+        {
+          title: "Shadow native speakers",
+          description:
+            "Listen to short clips and repeat them out loud to match rhythm and tone.",
+          href: "https://www.youtube.com",
+          ctaLabel: "Find clips",
+          mode: "virtual",
+          type: "project",
+        },
       ],
     },
+
     {
       id: "near-you",
       label: "Explore near you",
@@ -141,54 +160,72 @@ export const LANGUAGES_TRANSLATION_PATH: WorldPathContent = {
         "Language becomes real when you use it with actual people.",
       opportunities: [
         {
-          title: "Join a local language meetup or conversation group",
+          title: "Join a local language meetup",
           description:
-            "Practice speaking and listening in a low-pressure, real-world setting.",
+            "Practice speaking in a low-pressure, real-world setting.",
           href: "https://www.meetup.com",
-          ctaLabel: "Find groups near you",
+          ctaLabel: "Find groups",
           mode: "local",
           type: "event",
-          locationLabel: "Near you",
         },
         {
-          title: "Talk with a native speaker or learner",
+          title: "Take a conversation lesson on iTalki",
           description:
-            "Even a short conversation makes language feel alive instantly.",
+            "Speak with a native speaker and get real-time feedback.",
           href: "https://www.italki.com",
-          ctaLabel: "Find a conversation partner",
+          ctaLabel: "Find a tutor",
           mode: "virtual",
           type: "conversation",
         },
+        {
+          title: "Attend a cultural or language event",
+          description:
+            "Use language in context through real experiences.",
+          href: "https://www.eventbrite.com",
+          ctaLabel: "Browse events",
+          mode: "local",
+          type: "event",
+        },
       ],
     },
+
     {
       id: "go-broader",
       label: "Go broader",
       title: "Take it further",
       description:
-        "Step into deeper or more immersive language experiences.",
+        "Step into immersive or real-world language environments.",
       opportunities: [
         {
           title: "Language immersion programs",
           description:
-            "Travel and learn a language by living inside it daily.",
+            "Learn by living inside the language daily.",
           href: "https://www.gooverseas.com/language-schools-abroad",
-          ctaLabel: "Explore immersion programs",
+          ctaLabel: "Explore programs",
           mode: "travel",
           type: "program",
-          ageNote: "Teen + adult options",
         },
         {
-          title: "Volunteer as a language bridge",
+          title: "Volunteer as a translator",
           description:
-            "Help translate or support communication in community or global settings.",
+            "Help bridge communication in real-world settings.",
           href: "https://www.translatorswithoutborders.org",
-          ctaLabel: "Learn how to get involved",
+          ctaLabel: "Learn more",
           mode: "hybrid",
           type: "volunteer",
         },
+        {
+          title: "Duolingo Events",
+          description:
+            "Join live sessions and practice speaking with others.",
+          href: "https://events.duolingo.com",
+          ctaLabel: "Join events",
+          mode: "virtual",
+          type: "event",
+        },
       ],
     },
+
     {
       id: "always-on",
       label: "Always available",
@@ -199,7 +236,7 @@ export const LANGUAGES_TRANSLATION_PATH: WorldPathContent = {
         {
           title: "Language Transfer",
           description:
-            "Audio-based learning that helps you understand how language works, not just memorize it.",
+            "Understand how language works, not just memorize it.",
           href: "https://www.languagetransfer.org",
           ctaLabel: "Start listening",
           mode: "virtual",
@@ -208,9 +245,18 @@ export const LANGUAGES_TRANSLATION_PATH: WorldPathContent = {
         {
           title: "Watch shows in another language",
           description:
-            "Use subtitles and repetition to train your ear naturally.",
+            "Train your ear through repetition and immersion.",
           href: "https://www.netflix.com",
-          ctaLabel: "Try it on Netflix",
+          ctaLabel: "Try it",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "LingQ",
+          description:
+            "Learn languages through real-world content.",
+          href: "https://www.lingq.com",
+          ctaLabel: "Explore LingQ",
           mode: "virtual",
           type: "resource",
         },

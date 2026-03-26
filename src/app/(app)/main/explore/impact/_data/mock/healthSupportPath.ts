@@ -79,7 +79,8 @@ export const HEALTH_SUPPORT_PATH: ImpactPathContent = {
       id: "community-health",
       slug: "community-health",
       title: "Community Health",
-      oneLiner: "Helping people access information, care, and healthier routines.",
+      oneLiner:
+        "Helping people access information, care, and healthier routines.",
       whyItCouldFit:
         "Health impact also includes education, outreach, and helping communities navigate resources.",
       energy: "grounded",
@@ -211,9 +212,10 @@ export const HEALTH_SUPPORT_PATH: ImpactPathContent = {
   },
 
   nextSteps: {
-    title: "Next Steps",
+    title: "Try this for real",
     summary:
-      "This path gets stronger when you combine care with action, trusted adults, and real community settings.",
+      "Support becomes real when you step into environments where people actually need care, attention, and help.",
+
     actions: [
       {
         id: "volunteer-support-setting",
@@ -222,15 +224,153 @@ export const HEALTH_SUPPORT_PATH: ImpactPathContent = {
         effort: "medium",
         timeEstimate: "2–4 weeks to begin",
         whyThisMatters:
-          "Real service settings help you learn how support actually works in teams, programs, and communities.",
+          "Real service settings show you how support actually works with real people.",
         instructions: [
-          "Look for youth-friendly volunteer roles connected to food access, family support, wellness, or community care.",
-          "Choose one setting that feels grounded and practical.",
-          "Ask what entry-level help is actually useful.",
-          "Notice what kind of support work gives you energy.",
+          "Find a youth-friendly volunteer role.",
+          "Show up once and observe.",
+          "Take on a small task.",
+          "Notice what kind of support feels meaningful.",
         ],
       },
     ],
-    opportunityGroups: [],
+
+    opportunityGroups: [
+      {
+        id: "local",
+        title: "Near you",
+        description:
+          "Ways to support people in real-world settings.",
+        items: [
+          {
+            id: "volunteermatch",
+            title: "VolunteerMatch – Support Roles",
+            mode: "local",
+            provider: "VolunteerMatch",
+            summary:
+              "Find local opportunities supporting food, families, or wellness.",
+            whyItHelps:
+              "You step into real support environments.",
+            href: "https://www.volunteermatch.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "bgca",
+            title: "Boys & Girls Club",
+            mode: "local",
+            provider: "BGCA",
+            summary:
+              "Support youth in safe, structured environments.",
+            whyItHelps:
+              "You build real relationships.",
+            href: "https://www.bgca.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "ymca",
+            title: "YMCA Programs",
+            mode: "local",
+            provider: "YMCA",
+            summary:
+              "Help with youth and community programs.",
+            whyItHelps:
+              "You gain hands-on support experience.",
+            href: "https://www.ymca.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "food-bank",
+            title: "Feeding America",
+            mode: "local",
+            provider: "Feeding America",
+            summary:
+              "Support food distribution programs.",
+            whyItHelps:
+              "Direct, meaningful impact.",
+            href: "https://www.feedingamerica.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "red-cross",
+            title: "American Red Cross",
+            mode: "local",
+            provider: "Red Cross",
+            summary:
+              "Support emergency and community services.",
+            whyItHelps:
+              "Learn structured care systems.",
+            href: "https://www.redcross.org",
+            formatLabel: "Local",
+          },
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description:
+          "Ways to support people and learn remotely.",
+        items: [
+          {
+            id: "un",
+            title: "UN Online Volunteering",
+            mode: "virtual",
+            provider: "UN",
+            summary:
+              "Support global programs remotely.",
+            whyItHelps:
+              "Real-world experience.",
+            href: "https://www.onlinevolunteering.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "dosomething",
+            title: "DoSomething",
+            mode: "virtual",
+            provider: "DoSomething",
+            summary:
+              "Youth action campaigns.",
+            whyItHelps:
+              "Structured entry into impact.",
+            href: "https://www.dosomething.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "coursera",
+            title: "Health Courses",
+            mode: "virtual",
+            provider: "Coursera",
+            summary:
+              "Learn about health systems.",
+            whyItHelps:
+              "Build understanding.",
+            href: "https://www.coursera.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "mental-health",
+            title: "Mental Health Resources",
+            mode: "virtual",
+            provider: "NAMI",
+            summary:
+              "Explore mental health education.",
+            whyItHelps:
+              "Understand support systems.",
+            href: "https://www.nami.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "crisis",
+            title: "988 Lifeline Info",
+            mode: "virtual",
+            provider: "988",
+            summary:
+              "Learn about crisis support systems.",
+            whyItHelps:
+              "Understand real support structures.",
+            href: "https://988lifeline.org",
+            formatLabel: "Online",
+          },
+        ],
+      },
+    ],
   },
 };

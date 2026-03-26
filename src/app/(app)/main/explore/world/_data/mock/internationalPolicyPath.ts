@@ -97,11 +97,11 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
 
   featuredOpportunity: {
     label: "Best first move",
-    title: "Follow one global issue like a system",
+    title: "Follow one global issue using real policy trackers",
     description:
-      "Pick one issue and track it over time instead of jumping between headlines.",
-    href: "https://www.cfr.org",
-    ctaLabel: "Explore global issues",
+      "Pick one issue (climate, conflict, trade, migration) and follow it using real analysis instead of jumping between headlines.",
+    href: "https://www.cfr.org/global-conflict-tracker",
+    ctaLabel: "Start tracking",
     mode: "virtual",
     type: "research",
   },
@@ -112,25 +112,43 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
       label: "Start here",
       title: "Try this this week",
       description:
-        "Policy starts making sense when you follow one issue deeply.",
+        "Policy starts making sense when you slow down and follow one system instead of many headlines.",
       opportunities: [
         {
-          title: "Track one global issue for a week",
+          title: "Track one global issue with CFR Conflict Tracker",
           description:
-            "Follow coverage from multiple sources and notice patterns.",
-          href: "https://www.cfr.org",
-          ctaLabel: "Pick an issue",
+            "Follow one issue and watch how it evolves instead of jumping across news topics.",
+          href: "https://www.cfr.org/global-conflict-tracker",
+          ctaLabel: "Start tracking",
           mode: "virtual",
           type: "research",
         },
         {
-          title: "Map the players in one situation",
+          title: "Map stakeholders in one global situation",
           description:
-            "List countries, organizations, and what each one wants.",
-          href: "https://www.un.org",
-          ctaLabel: "Explore UN topics",
+            "List countries, organizations, and what each one wants from a conflict or agreement.",
+          href: "https://www.un.org/en/global-issues",
+          ctaLabel: "Explore UN issues",
           mode: "virtual",
           type: "project",
+        },
+        {
+          title: "Compare coverage from 3 different countries",
+          description:
+            "Read the same event from multiple international sources and compare perspectives.",
+          href: "https://www.bbc.com/news/world",
+          ctaLabel: "Start with BBC",
+          mode: "virtual",
+          type: "research",
+        },
+        {
+          title: "Break down one policy decision",
+          description:
+            "Take one major decision and identify the tradeoffs and consequences.",
+          href: "https://www.foreignpolicy.com",
+          ctaLabel: "Explore analysis",
+          mode: "virtual",
+          type: "research",
         },
       ],
     },
@@ -139,12 +157,12 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
       label: "Explore near you",
       title: "See policy in real life",
       description:
-        "Global systems show up locally more than you think.",
+        "Global systems show up locally more than you think — through communities, education, and events.",
       opportunities: [
         {
-          title: "Attend a local public talk or panel",
+          title: "Attend a global affairs talk or panel",
           description:
-            "Universities and orgs often host discussions on global issues.",
+            "Universities and organizations often host discussions on global issues and policy.",
           href: "https://www.eventbrite.com",
           ctaLabel: "Find events",
           mode: "local",
@@ -152,13 +170,22 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
           locationLabel: "Near you",
         },
         {
-          title: "Talk to someone with an international perspective",
+          title: "Join an international discussion group",
           description:
-            "Learn how global issues feel from someone directly connected to them.",
+            "Meet people who follow global issues and discuss how events impact different regions.",
           href: "https://www.meetup.com",
           ctaLabel: "Find groups",
           mode: "local",
           type: "conversation",
+        },
+        {
+          title: "Visit a university global studies event",
+          description:
+            "Colleges often host lectures and panels on international relations and policy.",
+          href: "https://www.stanford.edu/events/",
+          ctaLabel: "Browse events",
+          mode: "local",
+          type: "event",
         },
       ],
     },
@@ -167,25 +194,34 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
       label: "Go broader",
       title: "Step into global systems",
       description:
-        "Take your understanding into more structured environments.",
+        "Move from understanding to participating in structured policy environments.",
       opportunities: [
         {
-          title: "Model UN or debate programs",
+          title: "Model United Nations",
           description:
-            "Simulate global negotiation and decision-making.",
+            "Simulate diplomacy, negotiation, and global decision-making in a structured setting.",
           href: "https://bestdelegate.com",
           ctaLabel: "Explore Model UN",
           mode: "hybrid",
           type: "program",
         },
         {
-          title: "Global affairs or policy summer programs",
+          title: "Policy and global affairs summer programs",
           description:
-            "Structured exposure to diplomacy, global systems, and analysis.",
+            "Structured exposure to diplomacy, international relations, and global systems.",
           href: "https://www.cfr.org",
           ctaLabel: "Explore programs",
           mode: "hybrid",
           type: "program",
+        },
+        {
+          title: "Follow think tanks like Brookings or CSIS",
+          description:
+            "See how policy experts analyze and propose solutions to global challenges.",
+          href: "https://www.brookings.edu",
+          ctaLabel: "Explore Brookings",
+          mode: "virtual",
+          type: "research",
         },
       ],
     },
@@ -194,7 +230,7 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
       label: "Always available",
       title: "Stay connected to global systems",
       description:
-        "Keep a continuous window into how the world is changing.",
+        "Keep a constant window into how the world is changing and why.",
       opportunities: [
         {
           title: "Council on Foreign Relations",
@@ -206,11 +242,20 @@ export const INTERNATIONAL_POLICY_PATH: WorldPathContent = {
           type: "resource",
         },
         {
-          title: "United Nations",
+          title: "BBC World News",
           description:
-            "See how global institutions frame and address world problems.",
-          href: "https://www.un.org",
-          ctaLabel: "Explore issues",
+            "Global coverage with a broad international perspective.",
+          href: "https://www.bbc.com/news/world",
+          ctaLabel: "Read global news",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "Foreign Policy",
+          description:
+            "Deeper analysis of international decisions and global strategy.",
+          href: "https://foreignpolicy.com",
+          ctaLabel: "Explore analysis",
           mode: "virtual",
           type: "resource",
         },

@@ -17,51 +17,61 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
 
   card: {
     title: "Advocacy & Civic Action",
-    hook: "Speak up, organize people, and help shape decisions that affect your community.",
+    hook:
+      "You see something that does not feel right — and instead of ignoring it, you start speaking up and pulling others in.",
     description:
-      "Advocacy is about helping ideas travel from conversations into real change. It often begins with noticing something unfair, confusing, or broken — and deciding to help people understand the issue and work together toward better solutions.",
+      "Advocacy is about helping ideas move. It starts when something feels off — unfair, confusing, or broken — and you decide to understand it, talk about it, and get others involved. That can turn into conversations, campaigns, organizing, or real pressure that leads to change.",
   },
 
   hero: {
     eyebrow: "Impact Path",
     title: "Advocacy & Civic Action",
-    hook: "Helping voices become movements.",
+    hook:
+      "Turning frustration, curiosity, or belief into something people can rally around.",
     summary:
-      "Communities change when people learn how to raise awareness, organize support, and communicate ideas clearly. Advocacy can involve research, storytelling, community organizing, and conversations with decision-makers.",
+      "Most people notice issues and move on. Others stay with it — asking questions, explaining things, and helping more people pay attention. Advocacy is not just about having an opinion. It is about helping ideas travel, building momentum, and creating enough clarity and pressure that something actually shifts.",
     whyItPullsYouIn: [
-      "You pay attention to issues that affect people around you.",
-      "You enjoy discussing ideas and helping others understand them.",
-      "You feel motivated when people work together to improve systems.",
+      "You notice when something feels unfair, confusing, or broken.",
+      "You like understanding issues and explaining them to others.",
+      "You feel energized when people start paying attention and engaging.",
     ],
   },
 
   traitChips: [
-    { id: "voice", label: "Strong voice" },
-    { id: "curious", label: "Curious about systems" },
-    { id: "people-energy", label: "People energy" },
+    { id: "voice", label: "Uses their voice" },
+    { id: "systems", label: "Thinks about systems" },
+    { id: "people", label: "Engages people" },
+    { id: "curious", label: "Curious + questioning" },
   ],
 
   fitSignals: [
     {
       id: "question-systems",
-      label: "You question how systems work",
+      label: "You question how things work",
       score: 4,
       explanation:
-        "You often ask why things are structured the way they are and imagine better ways.",
+        "You naturally ask why something exists the way it does and whether it could be better.",
     },
     {
       id: "speak-up",
-      label: "You are comfortable speaking up",
+      label: "You are willing to speak up",
       score: 4,
       explanation:
-        "You are willing to express ideas or concerns when something feels important.",
+        "When something feels important, you are willing to share your perspective instead of staying quiet.",
     },
     {
-      id: "organize-ideas",
-      label: "You organize ideas clearly",
+      id: "idea-clarity",
+      label: "You help people understand ideas",
       score: 5,
       explanation:
-        "You enjoy helping people understand complex topics or issues.",
+        "You can take something complex or confusing and make it clearer for others.",
+    },
+    {
+      id: "momentum-awareness",
+      label: "You notice when ideas gain traction",
+      score: 4,
+      explanation:
+        "You can feel when something starts spreading and people begin paying attention.",
     },
   ],
 
@@ -70,19 +80,31 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
       id: "community-advocacy",
       slug: "community-advocacy",
       title: "Community Advocacy",
-      oneLiner: "Helping communities organize around local issues.",
+      oneLiner:
+        "Helping people rally around a local issue and actually respond to it.",
       whyItCouldFit:
-        "Local advocacy often begins with people who help others understand problems and coordinate responses.",
+        "Local advocacy starts when someone helps others understand a problem and coordinate around it.",
       energy: "people",
     },
     {
       id: "policy-awareness",
       slug: "policy-awareness",
       title: "Policy Awareness",
-      oneLiner: "Understanding and explaining how decisions are made.",
+      oneLiner:
+        "Breaking down how decisions are made so more people can understand and participate.",
       whyItCouldFit:
-        "Policies shape communities, and people who can explain them clearly help others stay informed.",
+        "People who can explain systems clearly help others feel less lost and more involved.",
       energy: "reflective",
+    },
+    {
+      id: "campaign-building",
+      slug: "campaign-building",
+      title: "Campaign Building",
+      oneLiner:
+        "Turning an issue into something people can see, share, and act on.",
+      whyItCouldFit:
+        "Campaigns require messaging, coordination, and momentum — not just ideas.",
+      energy: "organizer",
     },
   ],
 
@@ -92,55 +114,80 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
       slug: "community-advocacy",
       title: "Community Advocacy",
       summary:
-        "Advocacy often begins locally — helping neighbors understand an issue and organize around possible solutions.",
+        "Advocacy often starts locally when people come together around something affecting their daily lives.",
       whatYouActuallyDo: [
-        "Research community issues",
-        "Organize discussions or meetings",
-        "Communicate ideas through writing or speaking",
+        "Talk with people about issues that affect them",
+        "Organize discussions or small gatherings",
+        "Help groups decide on next steps",
       ],
       skillsThatGrowHere: [
+        "Listening",
+        "Facilitation",
         "Communication",
-        "Research",
-        "Community organizing",
+        "Coordination",
       ],
       starterProjects: [
-        "Create a small awareness campaign",
-        "Host a conversation about a local issue",
-        "Write a short article or post explaining a topic",
+        "Host a small conversation about a local issue",
+        "Create a simple awareness effort",
+        "Help a group organize around a shared concern",
       ],
       atmosphere:
-        "Collaborative, thoughtful, and focused on helping people understand and act.",
+        "Social, active, and sometimes tense — you are working with real people and real opinions.",
     },
     {
       id: "policy-awareness",
       slug: "policy-awareness",
       title: "Policy Awareness",
       summary:
-        "Many people want to understand how civic decisions are made and how communities can participate.",
+        "Many people want to understand how decisions are made but feel overwhelmed. This path helps make systems visible.",
       whatYouActuallyDo: [
-        "Study how policies affect communities",
-        "Explain civic processes in clear language",
-        "Encourage participation in community discussions",
+        "Research how policies affect people",
+        "Explain systems in simple terms",
+        "Encourage participation in discussions",
       ],
       skillsThatGrowHere: [
         "Critical thinking",
-        "Public communication",
         "Research",
+        "Communication",
       ],
       starterProjects: [
-        "Explain a policy issue in simple terms",
-        "Attend a local public meeting",
-        "Interview someone involved in community decision-making",
+        "Explain one issue in plain language",
+        "Attend and break down a public meeting",
+        "Share a short guide to a topic",
       ],
       atmosphere:
-        "Reflective, analytical, and focused on understanding how systems shape everyday life.",
+        "Curious, analytical, and focused on clarity.",
+    },
+    {
+      id: "campaign-building",
+      slug: "campaign-building",
+      title: "Campaign Building",
+      summary:
+        "Campaigns take an issue and give it visibility, direction, and momentum.",
+      whatYouActuallyDo: [
+        "Create messaging around an issue",
+        "Share content or ideas widely",
+        "Coordinate people and actions",
+      ],
+      skillsThatGrowHere: [
+        "Messaging",
+        "Strategy",
+        "Momentum building",
+      ],
+      starterProjects: [
+        "Start a simple awareness campaign",
+        "Launch a small digital movement",
+        "Organize a coordinated action",
+      ],
+      atmosphere:
+        "Fast-moving, visible, and momentum-driven.",
     },
   ],
 
   tryNow: {
     title: "Try This",
     summary:
-      "Advocacy begins by helping people understand issues and start conversations.",
+      "Advocacy becomes real when you take one issue and help other people see it clearly.",
     actions: [
       {
         id: "issue-explainer",
@@ -149,12 +196,12 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
         effort: "light",
         timeEstimate: "1–2 hours",
         whyThisMatters:
-          "Clear explanations help more people understand and participate in discussions.",
+          "Clear explanations are often what turns confusion into engagement.",
         instructions: [
-          "Choose a local issue you care about.",
-          "Research basic facts from reliable sources.",
-          "Write or record a short explanation.",
-          "Share it with friends or classmates.",
+          "Pick one issue you actually care about.",
+          "Learn just enough to explain it clearly.",
+          "Share it in a simple format.",
+          "Notice how people respond.",
         ],
       },
     ],
@@ -163,19 +210,25 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
   howItFeels: {
     title: "How It Often Feels",
     summary:
-      "Advocacy combines curiosity, conversation, and the energy of people learning together.",
+      "Advocacy mixes curiosity, tension, conversation, and the energy of people starting to care.",
     moments: [
       {
         id: "discovering-issue",
-        title: "Discovering an Issue",
+        title: "Realizing Something Matters",
         body:
-          "You start learning about a topic and realize many people around you are curious too.",
+          "You learn about something and cannot fully ignore it anymore.",
       },
       {
-        id: "conversation-spreads",
-        title: "Conversations Grow",
+        id: "conversation-starts",
+        title: "Starting Conversations",
         body:
-          "Your explanation sparks discussions and people begin sharing ideas and perspectives.",
+          "You bring it up and realize other people have opinions, questions, or energy around it.",
+      },
+      {
+        id: "momentum-builds",
+        title: "Momentum Builds",
+        body:
+          "More people start paying attention and the issue begins to feel real, not just theoretical.",
       },
     ],
   },
@@ -183,53 +236,175 @@ export const ADVOCACY_CIVIC_ACTION_PATH: ImpactPathContent = {
   growthPath: {
     title: "How This Path Grows",
     summary:
-      "Advocacy skills develop through research, communication, and real conversations.",
+      "Advocacy grows through clarity, confidence, and the ability to move people from awareness into action.",
     stages: [
       {
-        id: "early-learning",
-        label: "Early Learning",
+        id: "early-awareness",
+        label: "Early Awareness",
         timeframe: "Weeks–Months",
         summary:
-          "You explore issues, read about them, and discuss ideas with others.",
+          "You explore issues and begin sharing ideas with others.",
         signalsOfProgress: [
-          "You understand multiple perspectives on an issue",
-          "You explain ideas clearly to others",
+          "You understand an issue well enough to explain it",
+          "People engage with what you share",
         ],
       },
       {
-        id: "community-engagement",
-        label: "Community Engagement",
+        id: "active-engagement",
+        label: "Active Engagement",
         timeframe: "Months–Years",
         summary:
-          "You participate in larger discussions and help organize conversations around issues.",
+          "You help organize conversations, content, or small efforts.",
         signalsOfProgress: [
-          "People seek your explanations or insights",
-          "You help coordinate discussions or events",
+          "You coordinate people around ideas",
+          "You help move discussions toward action",
         ],
       },
     ],
   },
 
   nextSteps: {
-    title: "Next Steps",
+    title: "Try this for real",
     summary:
-      "Advocacy often grows through collaboration with organizations and community groups.",
-    actions: [
+      "Advocacy becomes real when you step into actual conversations, movements, or campaigns.",
+    actions: [],
+    opportunityGroups: [
       {
-        id: "attend-community-meeting",
-        title: "Attend a Community Meeting",
-        type: "visit",
-        effort: "light",
-        timeEstimate: "1–2 hours",
-        whyThisMatters:
-          "Public meetings help people understand how communities discuss and decide issues.",
-        instructions: [
-          "Search for a local town or school meeting.",
-          "Attend and observe how discussions happen.",
-          "Write down questions or ideas afterward.",
+        id: "local",
+        title: "Near you",
+        description:
+          "Ways to get involved in local discussions, decisions, and advocacy efforts.",
+        items: [
+          {
+            id: "city-meetings",
+            title: "Attend Local Government Meetings",
+            mode: "local",
+            provider: "Local Government",
+            summary:
+              "Observe or participate in real discussions where decisions are made.",
+            whyItHelps:
+              "You see how real conversations and decisions actually happen.",
+            href: "https://www.usa.gov/local-governments",
+            formatLabel: "Local",
+          },
+          {
+            id: "youth-councils",
+            title: "Youth Advisory Councils",
+            mode: "local",
+            provider: "City / School Programs",
+            summary:
+              "Join groups that represent youth voices in local decision-making.",
+            whyItHelps:
+              "You get a direct role in shaping conversations.",
+            href: "https://www.usa.gov/local-governments",
+            formatLabel: "Local",
+          },
+          {
+            id: "school-forums",
+            title: "School Forums or Committees",
+            mode: "local",
+            provider: "Your School",
+            summary:
+              "Participate in discussions about school policies or initiatives.",
+            whyItHelps:
+              "You learn how decisions affect real environments.",
+            href: "#",
+            formatLabel: "Local",
+          },
+          {
+            id: "community-orgs",
+            title: "Local Advocacy Groups",
+            mode: "local",
+            provider: "Local Organizations",
+            summary:
+              "Join groups focused on specific community issues.",
+            whyItHelps:
+              "You contribute to active local efforts.",
+            href: "https://www.volunteermatch.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "nonprofit-events",
+            title: "Community Events & Panels",
+            mode: "local",
+            provider: "Local Nonprofits",
+            summary:
+              "Attend or help organize events focused on issues.",
+            whyItHelps:
+              "You engage with real conversations and perspectives.",
+            href: "https://www.eventbrite.com",
+            formatLabel: "Local",
+          },
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description:
+          "Ways to learn, participate, and build momentum around issues digitally.",
+        items: [
+          {
+            id: "change-org",
+            title: "Change.org Campaigns",
+            mode: "virtual",
+            provider: "Change.org",
+            summary:
+              "Support or create petitions around real issues.",
+            whyItHelps:
+              "You learn how issues gain visibility.",
+            href: "https://www.change.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "dosomething",
+            title: "DoSomething Campaigns",
+            mode: "virtual",
+            provider: "DoSomething.org",
+            summary:
+              "Join youth-led campaigns on social issues.",
+            whyItHelps:
+              "You take action with structured support.",
+            href: "https://www.dosomething.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "count-me-in",
+            title: "Count Me In",
+            mode: "virtual",
+            provider: "Count Me In",
+            summary:
+              "Participate in social impact campaigns.",
+            whyItHelps:
+              "You engage with real movements.",
+            href: "https://www.wearecountmein.com",
+            formatLabel: "Online",
+          },
+          {
+            id: "online-discussion",
+            title: "Online Discussion Communities",
+            mode: "virtual",
+            provider: "Various",
+            summary:
+              "Join spaces where people discuss and organize around issues.",
+            whyItHelps:
+              "You learn how conversations shape momentum.",
+            href: "https://reddit.com",
+            formatLabel: "Online",
+          },
+          {
+            id: "un-volunteer",
+            title: "UN Online Volunteering",
+            mode: "virtual",
+            provider: "United Nations",
+            summary:
+              "Support global initiatives remotely.",
+            whyItHelps:
+              "You contribute to real-world impact work.",
+            href: "https://www.onlinevolunteering.org",
+            formatLabel: "Online",
+          },
         ],
       },
     ],
-    opportunityGroups: [],
   },
 };

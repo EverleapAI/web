@@ -267,10 +267,6 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
     stages: [],
   },
 
-  /* =========================
-     FORECAST V2 (ADDED)
-  ========================= */
-
   forecastV2: {
     outlookLabel: "High potential - but extremely competitive",
     outlookSummary:
@@ -369,26 +365,63 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
   },
 
   nextStepsV2: {
-    heroTitle: "You can make something playable this week",
+    heroTitle: "The fastest way to understand game design is to make a game",
     heroSummary:
-      "Game design becomes real the moment something can be played. Start small and make it real.",
-    heroBadge: "Build a prototype",
+      "Do not wait until you feel ready. Build one tiny playable thing, test it on a real person, and notice what confuses them, delights them, or keeps them going. That is where game design stops being abstract and starts becoming a skill.",
+    heroBadge: "Make something playable",
 
     sections: [
       {
         id: "local",
         eyebrow: "Near 94901",
-        title: "Real-world entry points",
+        title: "Get into rooms where people build",
         description:
-          "Places where building and experimentation become real.",
+          "These are real local entry points where you can make, test, tinker, and get closer to how games are actually built.",
         mode: "local",
         items: [
           {
-            id: "marin-library",
+            id: "marin-library-the-lab",
             title: "Marin County Library - The Lab",
             href: "https://marinlibrary.org/the-lab/",
-            note: "Free maker space to experiment with creative tech.",
-            badge: "Local",
+            note:
+              "A free makerspace and studio where you can experiment with creative tech, prototype ideas, and work around other people who make things.",
+            badge: "Maker space",
+            mode: "local",
+          },
+          {
+            id: "marin-library-3d-printing",
+            title: "Marin County Library - 3D Printing at The Lab",
+            href: "https://marinlibrary.org/3d-printing/",
+            note:
+              "Good for testing physical game pieces, controllers, tokens, or world-building props if your ideas cross into tabletop or tactile design.",
+            badge: "Prototype tools",
+            mode: "local",
+          },
+          {
+            id: "marin-library-the-shop",
+            title: "Marin County Library - The Shop",
+            href: "https://marinlibrary.org/the-shop/",
+            note:
+              "A free community creative space that is strong for hands-on prototyping and building weird early versions of ideas instead of just talking about them.",
+            badge: "Build space",
+            mode: "local",
+          },
+          {
+            id: "sfpl-the-mix",
+            title: "San Francisco Public Library - The Mix",
+            href: "https://sfpl.org/teens/the-mix",
+            note:
+              "A teen-focused creative space with digital media, gaming, and makerspace access. Strong if you want a more youth-centered place to experiment.",
+            badge: "Teen creative hub",
+            mode: "local",
+          },
+          {
+            id: "sf-game-jams-eventbrite",
+            title: "San Francisco Game Jam Events",
+            href: "https://www.eventbrite.com/d/ca--san-francisco/game-jam/",
+            note:
+              "A live feed of Bay Area game jam events and related gatherings. This is one of the fastest ways to find a real deadline and make something with other people.",
+            badge: "Live events",
             mode: "local",
           },
         ],
@@ -396,17 +429,63 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
       {
         id: "remote",
         eyebrow: "Online",
-        title: "Start building now",
+        title: "Start making games now",
         description:
-          "Tools and communities where real game design begins.",
+          "These links are strong first moves if you want the path to become real fast: build, publish, learn a tool, join a jam, and get your work in front of people.",
         mode: "remote",
         items: [
           {
-            id: "itch",
+            id: "itch-jams",
             title: "itch.io Game Jams",
             href: "https://itch.io/jams",
-            note: "Build small playable games with real deadlines.",
-            badge: "Jams",
+            note:
+              "Join short creative deadlines where you actually finish something playable. This is one of the best ways to stop overthinking and start shipping.",
+            badge: "Build under pressure",
+            mode: "remote",
+          },
+          {
+            id: "ggj-next",
+            title: "Global Game Jam Next",
+            href: "https://globalgamejam.org/ggjnext",
+            note:
+              "A student-focused game jam program for ages 10-18. Strong if you want a more youth-friendly on-ramp into real game creation.",
+            badge: "Student jam",
+            mode: "remote",
+          },
+          {
+            id: "twine",
+            title: "Twine",
+            href: "https://twinery.org/",
+            note:
+              "A free tool for making interactive stories and branching narrative games. Perfect if your first instinct is story, choice, dialogue, or emotional pacing.",
+            badge: "Narrative design",
+            mode: "remote",
+          },
+          {
+            id: "unity-learn",
+            title: "Unity Learn",
+            href: "https://learn.unity.com/",
+            note:
+              "Free guided courses and pathways for making actual games in one of the industry's biggest engines. Strong if you want to move from ideas into real prototypes.",
+            badge: "Engine skills",
+            mode: "remote",
+          },
+          {
+            id: "roblox-tutorials",
+            title: "Roblox Creator Tutorials",
+            href: "https://create.roblox.com/docs/tutorials",
+            note:
+              "A practical place to learn by building live experiences people can actually play. Great for fast iteration, multiplayer thinking, and publishing early.",
+            badge: "Publish fast",
+            mode: "remote",
+          },
+          {
+            id: "godot-first-game",
+            title: "Godot - Your First 2D Game",
+            href: "https://docs.godotengine.org/en/stable/getting_started/first_2d_game/index.html",
+            note:
+              "A step-by-step way to build a complete small game in a free engine. Good if you want something more beginner-friendly and less locked into one platform.",
+            badge: "First full game",
             mode: "remote",
           },
         ],

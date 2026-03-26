@@ -6,14 +6,9 @@ import Link from "next/link";
 import * as React from "react";
 import {
   ArrowRight,
-  CalendarDays,
-  ChevronDown,
   CircleHelp,
-  ExternalLink,
   HeartHandshake,
-  MapPin,
   Megaphone,
-  MonitorPlay,
   Trees,
   Users,
 } from "lucide-react";
@@ -21,7 +16,6 @@ import {
 import {
   CardSectionHeader,
   ExploreLaneTabs,
-  OpportunityMetaPill,
   SectionKicker,
   SignalConstellation,
   SignalMeter,
@@ -32,10 +26,7 @@ import {
 import { IMPACT_PATHS } from "./_data/impactPaths";
 import type { ImpactPathContent } from "./_data/impactPathSchema";
 
-type ImpactExperience = Pick<
-  ImpactPathContent,
-  "id" | "slug" | "theme" | "card" | "fitSignals" | "branchPreviews"
->;
+type ImpactExperience = ImpactPathContent;
 
 type ImpactProfileSignals = {
   firstName: string | null;
@@ -45,31 +36,43 @@ type ImpactProfileSignals = {
   fullText: string;
 };
 
-type ImpactTryItem = {
-  title: string;
-  format: "Local" | "Online" | "Local + Online";
-  locationLabel: string;
-  timing: string;
-  whyItFits: string;
-  howToTry: string;
-  actionLabel: string;
-  href: string;
+type ImpactReaction = "liked" | "maybe" | "dismissed";
+
+type ImpactReactionFeedback = {
+  reaction: ImpactReaction;
+  reasons: string[];
+  note: string;
+  savedAt: number;
 };
 
-type ExperienceAtmosphere = {
+type ImpactReactionState = {
+  dismissed: string[];
+  maybe: string[];
+  liked: string[];
+  feedbackBySlug?: Record<string, ImpactReactionFeedback>;
+};
+
+type ImpactOpportunityPreview = {
+  id: string;
+  title: string;
+  href: string;
+  note: string;
+};
+
+type ImpactAtmosphere = {
   border: Rgb;
   topGlow: Rgb;
   sideGlow: Rgb;
   washA: Rgb;
   washB: Rgb;
-  tryGlow: Rgb;
-  tryNode: Rgb;
+  opportunityGlow: Rgb;
+  opportunityNode: Rgb;
   futureGlow: Rgb;
   futureNode: Rgb;
 };
 
-const LOCAL_PLACE_LABEL = "near you";
 const MAX_VISIBLE_IMPACT_EXPERIENCES = 4;
+const IMPACT_REACTIONS_STORAGE_KEY = "everleap.explore.impact.reactions.v1";
 
 const EXPLORE_LANES: readonly ExploreLaneTab[] = [
   {
@@ -131,6 +134,7 @@ const STOP_WORDS = new Set([
   "from",
   "good",
   "have",
+  "impact",
   "into",
   "just",
   "kind",
@@ -219,6 +223,10 @@ function collectStringsDeep(
       collectStringsDeep(child, bucket, depth + 1, maxDepth);
     }
   }
+}
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
 }
 
 function readStoredImpactSignals(): ImpactProfileSignals {
@@ -313,7 +321,9 @@ function readStoredImpactSignals(): ImpactProfileSignals {
       }
 
       collectStringsDeep(parsed, allStrings);
-    } catch {}
+    } catch {
+      // ignore malformed local data
+    }
   }
 
   return {
@@ -354,18 +364,15 @@ function extractCardField(
 }
 
 function pathAccent(experience: ImpactExperience): Rgb {
-  const theme = asRecord(experience.theme);
-  const accent = asRecord(theme?.accent);
+  return experience.theme?.accent ?? { r: 110, g: 231, b: 183 };
+}
 
-  if (
-    typeof accent?.r === "number" &&
-    typeof accent?.g === "number" &&
-    typeof accent?.b === "number"
-  ) {
-    return { r: accent.r, g: accent.g, b: accent.b };
-  }
+function pathAccentStrong(experience: ImpactExperience): Rgb {
+  return experience.theme?.accentStrong ?? experience.theme?.accent ?? { r: 52, g: 211, b: 153 };
+}
 
-  return { r: 110, g: 231, b: 183 };
+function pathGlow(experience: ImpactExperience): Rgb {
+  return experience.theme?.glow ?? experience.theme?.accentStrong ?? experience.theme?.accent ?? { r: 16, g: 185, b: 129 };
 }
 
 function buildExperienceKeywordSet(experience: ImpactExperience): string[] {
@@ -448,157 +455,193 @@ function getSignalLabel(score: number) {
   return "Possible fit";
 }
 
-function getExperienceAtmosphere(
+function getImpactAtmosphere(
   experience: ImpactExperience,
   accent: Rgb
-): ExperienceAtmosphere {
+): ImpactAtmosphere {
+  const strong = pathAccentStrong(experience);
+  const glow = pathGlow(experience);
   const title = extractCardField(experience, "title").toLowerCase();
+  const description = extractCardField(experience, "description").toLowerCase();
+  const combined = `${title} ${description}`;
 
   if (
-    title.includes("leadership") ||
-    title.includes("mentorship") ||
-    title.includes("community")
+    combined.includes("leadership") ||
+    combined.includes("mentorship") ||
+    combined.includes("community")
   ) {
     return {
-      border: { r: 110, g: 231, b: 183 },
-      topGlow: { r: 52, g: 211, b: 153 },
-      sideGlow: { r: 45, g: 181, b: 133 },
-      washA: { r: 78, g: 208, b: 150 },
-      washB: { r: 63, g: 179, b: 134 },
-      tryGlow: { r: 120, g: 235, b: 184 },
-      tryNode: { r: 209, g: 250, b: 229 },
-      futureGlow: { r: 109, g: 226, b: 178 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
+      opportunityNode: { r: 209, g: 250, b: 229 },
+      futureGlow: strong,
       futureNode: { r: 210, g: 250, b: 230 },
     };
   }
 
   if (
-    title.includes("advocacy") ||
-    title.includes("civic") ||
-    title.includes("justice")
+    combined.includes("advocacy") ||
+    combined.includes("civic") ||
+    combined.includes("justice")
   ) {
     return {
-      border: { r: 94, g: 234, b: 212 },
-      topGlow: { r: 45, g: 212, b: 191 },
-      sideGlow: { r: 36, g: 172, b: 156 },
-      washA: { r: 72, g: 213, b: 188 },
-      washB: { r: 58, g: 176, b: 160 },
-      tryGlow: { r: 110, g: 239, b: 214 },
-      tryNode: { r: 204, g: 251, b: 241 },
-      futureGlow: { r: 100, g: 234, b: 209 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
+      opportunityNode: { r: 204, g: 251, b: 241 },
+      futureGlow: strong,
       futureNode: { r: 204, g: 251, b: 242 },
     };
   }
 
   if (
-    title.includes("environment") ||
-    title.includes("stewardship") ||
-    title.includes("climate")
+    combined.includes("environment") ||
+    combined.includes("stewardship") ||
+    combined.includes("climate")
   ) {
     return {
-      border: { r: 134, g: 239, b: 172 },
-      topGlow: { r: 74, g: 222, b: 128 },
-      sideGlow: { r: 66, g: 183, b: 116 },
-      washA: { r: 104, g: 221, b: 143 },
-      washB: { r: 80, g: 182, b: 118 },
-      tryGlow: { r: 145, g: 240, b: 181 },
-      tryNode: { r: 220, g: 252, b: 231 },
-      futureGlow: { r: 138, g: 236, b: 175 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
+      opportunityNode: { r: 221, g: 252, b: 232 },
+      futureGlow: strong,
       futureNode: { r: 221, g: 252, b: 232 },
     };
   }
 
   return {
     border: accent,
-    topGlow: accent,
-    sideGlow: { r: Math.max(0, accent.r - 12), g: accent.g, b: accent.b },
+    topGlow: strong,
+    sideGlow: glow,
     washA: accent,
-    washB: { r: accent.r, g: Math.max(0, accent.g - 26), b: accent.b },
-    tryGlow: accent,
-    tryNode: { r: 209, g: 250, b: 229 },
-    futureGlow: accent,
-    futureNode: { r: 209, g: 250, b: 229 },
+    washB: strong,
+    opportunityGlow: accent,
+    opportunityNode: { r: 209, g: 250, b: 229 },
+    futureGlow: strong,
+    futureNode: { r: 210, g: 250, b: 230 },
   };
 }
 
-function getTryImpactItem(experience: ImpactExperience): ImpactTryItem {
-  const title = extractCardField(experience, "title");
-  const hook = extractCardField(experience, "hook");
-  const lowerTitle = title.toLowerCase();
+function extractImpactOpportunities(
+  experience: ImpactExperience
+): ImpactOpportunityPreview[] {
+  const previews: ImpactOpportunityPreview[] = [];
+  const seen = new Set<string>();
 
-  if (
-    lowerTitle.includes("leadership") ||
-    lowerTitle.includes("mentorship") ||
-    lowerTitle.includes("community")
-  ) {
-    return {
-      title: "Try one real volunteer or mentor role",
-      format: "Local",
-      locationLabel: LOCAL_PLACE_LABEL,
-      timing: "This month",
-      whyItFits:
-        hook ||
-        "This helps you test whether guiding, helping, or organizing for other people feels energizing once it becomes real and relational.",
-      howToTry:
-        "Pick one concrete role where you help younger students, peers, or a local group, then notice whether responsibility gives you energy.",
-      actionLabel: "Find local options",
-      href: "https://www.volunteermatch.org/",
-    };
+  for (const group of experience.nextSteps.opportunityGroups) {
+    for (const item of group.items) {
+      if (!item.href || seen.has(item.href)) continue;
+      seen.add(item.href);
+
+      previews.push({
+        id: `${group.id}-${item.id}`,
+        title: item.title,
+        href: item.href,
+        note: item.summary || item.whyItHelps || item.provider || "",
+      });
+
+      if (previews.length >= 2) return previews;
+    }
   }
 
-  if (
-    lowerTitle.includes("advocacy") ||
-    lowerTitle.includes("civic") ||
-    lowerTitle.includes("justice")
-  ) {
-    return {
-      title: "Follow one issue and take one action",
-      format: "Local + Online",
-      locationLabel: "State / local",
-      timing: "30–60 minutes",
-      whyItFits:
-        hook ||
-        "This is a real way to test whether speaking up, organizing, or learning how change happens in public life actually feels meaningful to you.",
-      howToTry:
-        "Choose one issue, learn the basics, and take one small action: attend, write, support, or share something specific.",
-      actionLabel: "Explore civic actions",
-      href: "https://www.dosomething.org/",
-    };
-  }
+  return previews.slice(0, 2);
+}
 
-  if (
-    lowerTitle.includes("environment") ||
-    lowerTitle.includes("stewardship") ||
-    lowerTitle.includes("climate")
-  ) {
-    return {
-      title: "Join one cleanup or stewardship day",
-      format: "Local",
-      locationLabel: LOCAL_PLACE_LABEL,
-      timing: "Weekend-friendly",
-      whyItFits:
-        hook ||
-        "This makes impact visible fast. You get to see whether caring for land, place, or environment feels more real when your body is actually in it.",
-      howToTry:
-        "Pick one local cleanup, restoration, or park day and notice whether being part of the effort makes you want more.",
-      actionLabel: "Search opportunities",
-      href: "https://www.volunteermatch.org/",
-    };
-  }
-
+function emptyImpactReactionState(): ImpactReactionState {
   return {
-    title: "Start with one small act that helps someone real",
-    format: "Local + Online",
-    locationLabel: LOCAL_PLACE_LABEL,
-    timing: "This week",
-    whyItFits:
-      hook ||
-      "Impact becomes easier to understand when it stops being abstract and starts touching actual people, places, or causes.",
-    howToTry:
-      "Choose one real opportunity to help, support, organize, or contribute, and pay attention to whether it creates momentum.",
-    actionLabel: "Find an opportunity",
-    href: "https://www.volunteermatch.org/",
+    dismissed: [],
+    maybe: [],
+    liked: [],
+    feedbackBySlug: {},
   };
+}
+
+function normalizeSlugList(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return Array.from(
+    new Set(
+      input
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeFeedbackBySlug(
+  input: unknown
+): Record<string, ImpactReactionFeedback> {
+  if (!input || typeof input !== "object") return {};
+
+  const result: Record<string, ImpactReactionFeedback> = {};
+
+  for (const [slug, value] of Object.entries(
+    input as Record<string, unknown>
+  )) {
+    if (!slug.trim() || !value || typeof value !== "object") continue;
+
+    const raw = value as Record<string, unknown>;
+    const reaction =
+      raw.reaction === "liked" ||
+      raw.reaction === "maybe" ||
+      raw.reaction === "dismissed"
+        ? raw.reaction
+        : null;
+
+    if (!reaction) continue;
+
+    const reasons = Array.isArray(raw.reasons)
+      ? raw.reasons
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    const note = typeof raw.note === "string" ? raw.note : "";
+    const savedAt =
+      typeof raw.savedAt === "number" && Number.isFinite(raw.savedAt)
+        ? raw.savedAt
+        : Date.now();
+
+    result[slug] = {
+      reaction,
+      reasons,
+      note,
+      savedAt,
+    };
+  }
+
+  return result;
+}
+
+function readImpactReactionState(): ImpactReactionState {
+  if (typeof window === "undefined") return emptyImpactReactionState();
+
+  try {
+    const raw = window.localStorage.getItem(IMPACT_REACTIONS_STORAGE_KEY);
+    if (!raw) return emptyImpactReactionState();
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    return {
+      dismissed: normalizeSlugList(parsed.dismissed),
+      maybe: normalizeSlugList(parsed.maybe),
+      liked: normalizeSlugList(parsed.liked),
+      feedbackBySlug: normalizeFeedbackBySlug(parsed.feedbackBySlug),
+    };
+  } catch {
+    return emptyImpactReactionState();
+  }
 }
 
 function IntroOrbitArt() {
@@ -608,7 +651,7 @@ function IntroOrbitArt() {
       <div className="absolute inset-[15px] rounded-full border border-emerald-300/11" />
       <div className="absolute left-[16px] top-[20px] h-2.5 w-2.5 rounded-full bg-emerald-200/60 shadow-[0_0_16px_rgba(167,243,208,0.5)]" />
       <div className="absolute left-[72px] top-[26px] h-2 w-2 rounded-full bg-white/24" />
-      <div className="absolute left-[40px] top-[72px] h-2.5 w-2.5 rounded-full bg-emerald-100/70 shadow-[0_0_14px_rgba(209,250,229,0.42)]" />
+      <div className="absolute left-[40px] top-[72px] h-2.5 w-2.5 rounded-full bg-emerald-100/70 shadow-[0_0_14px_rgba(254,243,199,0.42)]" />
       <div className="absolute left-[28px] top-[32px] h-px w-[40px] bg-gradient-to-r from-emerald-300/26 to-transparent" />
       <div className="absolute left-[48px] top-[43px] h-px w-[24px] rotate-[12deg] bg-gradient-to-r from-emerald-300/20 to-transparent" />
       <div className="absolute left-[48px] top-[64px] h-px w-[26px] -rotate-[9deg] bg-gradient-to-r from-emerald-300/16 to-transparent" />
@@ -717,137 +760,15 @@ function ImpactGlyph({
   );
 }
 
-function InlineTryImpactDetails({
-  atmosphere,
-  item,
-}: {
-  atmosphere: ExperienceAtmosphere;
-  item: ImpactTryItem;
-}) {
-  return (
-    <div className="relative mt-4 overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
-            atmosphere.tryGlow,
-            0.36
-          )} 18%, ${rgb(atmosphere.tryGlow, 0.15)} 84%, transparent 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute left-[-34px] top-4 h-28 w-28 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.12) }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-10px] top-2 h-32 w-40 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.tryGlow, 0.08) }}
-      />
-
-      <div className="relative px-0 pt-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap gap-2.5">
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <MapPin className="h-3.5 w-3.5" />
-                {item.locationLabel}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <CalendarDays className="h-3.5 w-3.5" />
-                {item.timing}
-              </OpportunityMetaPill>
-              <OpportunityMetaPill glow={atmosphere.tryGlow}>
-                <MonitorPlay className="h-3.5 w-3.5" />
-                {item.format}
-              </OpportunityMetaPill>
-            </div>
-
-            <p className="mt-4 max-w-2xl text-[14px] leading-[1.72] text-white/82 sm:text-[15px]">
-              {item.whyItFits}
-            </p>
-
-            <p className="mt-3 max-w-2xl text-[14px] leading-[1.72] text-white/64 sm:text-[15px]">
-              {item.howToTry}
-            </p>
-
-            <div className="mt-4">
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-medium text-white transition hover:translate-y-[-1px]"
-                style={{
-                  borderColor: rgb(atmosphere.tryGlow, 0.24),
-                  background: `linear-gradient(180deg, ${rgb(
-                    atmosphere.tryGlow,
-                    0.18
-                  )} 0%, ${rgb(atmosphere.tryGlow, 0.08)} 100%)`,
-                  boxShadow: `0 10px 24px ${rgb(atmosphere.tryGlow, 0.16)}`,
-                }}
-              >
-                {item.actionLabel}
-                <ExternalLink className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
-
-          <div
-            className="pointer-events-none relative hidden h-20 w-24 shrink-0 sm:block"
-            aria-hidden="true"
-          >
-            <div
-              className="absolute left-0 top-9 h-px w-16"
-              style={{
-                background: `linear-gradient(90deg, ${rgb(
-                  atmosphere.tryGlow,
-                  0.34
-                )} 0%, transparent 100%)`,
-              }}
-            />
-            <div
-              className="absolute right-4 top-2 h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryNode, 0.98),
-                boxShadow: `0 0 16px ${rgb(atmosphere.tryGlow, 0.5)}`,
-              }}
-            />
-            <div
-              className="absolute left-10 top-8 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryGlow, 0.72),
-                boxShadow: `0 0 12px ${rgb(atmosphere.tryGlow, 0.36)}`,
-              }}
-            />
-            <div
-              className="absolute left-2 top-12 h-3 w-3 rounded-full border"
-              style={{
-                borderColor: rgb(atmosphere.tryGlow, 0.34),
-                backgroundColor: rgb(atmosphere.tryGlow, 0.08),
-              }}
-            />
-            <div
-              className="absolute right-12 top-14 h-1.5 w-1.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.tryNode, 0.82),
-                boxShadow: `0 0 10px ${rgb(atmosphere.tryGlow, 0.34)}`,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ImpactPathForwardSection({
   experience,
   atmosphere,
 }: {
   experience: ImpactExperience;
-  atmosphere: ExperienceAtmosphere;
+  atmosphere: ImpactAtmosphere;
 }) {
   return (
-    <div className="relative mt-8">
+    <div className="relative mt-6">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
@@ -880,11 +801,11 @@ function ImpactPathForwardSection({
               What this path could really look like
             </CardSectionHeader>
 
-            <h3 className="mt-3 text-[22px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px]">
+            <h3 className="mt-3 text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[22px]">
               See the full path ahead
             </h3>
 
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 sm:text-[14px]">
+            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72">
               Go deeper into branches, next steps, and ways to explore this path
               in a more real way.
             </p>
@@ -941,31 +862,104 @@ function ImpactPathForwardSection({
   );
 }
 
+function OpportunityRow({
+  item,
+  atmosphere,
+  isFirst,
+}: {
+  item: ImpactOpportunityPreview;
+  atmosphere: ImpactAtmosphere;
+  isFirst: boolean;
+}) {
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group/opportunity relative block px-1 py-4"
+    >
+      {!isFirst ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.2
+            )} 18%, ${rgb(
+              atmosphere.opportunityGlow,
+              0.08
+            )} 82%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 92% 20%, ${rgb(
+            atmosphere.opportunityGlow,
+            0.09
+          )} 0%, transparent 24%)`,
+        }}
+      />
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[20px]">
+            {item.title}
+          </h4>
+
+          {item.note ? (
+            <p className="mt-2 max-w-[40rem] text-[13px] leading-[1.65] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
+              {item.note}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="relative mt-1 hidden h-10 w-10 shrink-0 sm:block">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+            style={{
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.14),
+            }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover/opportunity:translate-x-0.5"
+            style={{
+              borderColor: rgb(atmosphere.opportunityGlow, 0.22),
+              backgroundColor: rgb(atmosphere.opportunityGlow, 0.07),
+            }}
+          >
+            <ArrowRight className="h-4.5 w-4.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 function ImpactExperienceCard({
   experience,
   profile,
-  onDismiss,
 }: {
   experience: ImpactExperience;
   profile: ImpactProfileSignals;
-  onDismiss: (experienceId: string) => void;
 }) {
   const accent = pathAccent(experience);
-  const atmosphere = getExperienceAtmosphere(experience, accent);
+  const atmosphere = getImpactAtmosphere(experience, accent);
 
   const title = extractCardField(experience, "title");
   const hook = extractCardField(experience, "hook");
   const description = extractCardField(experience, "description");
   const signalStrength = getSignalStrength(experience, profile);
   const signalLabel = getSignalLabel(signalStrength);
-  const tryItem = getTryImpactItem(experience);
+  const opportunities = extractImpactOpportunities(experience);
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
-  const [showTryDrawer, setShowTryDrawer] = React.useState(false);
 
   return (
     <article
-      className="group relative overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
+      className="group relative mx-auto w-full max-w-5xl overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
       style={{
         borderColor: rgb(atmosphere.border, 0.22),
         background: `
@@ -1015,57 +1009,37 @@ function ImpactExperienceCard({
 
       <div className="relative">
         <div className="min-w-0 pr-14 sm:pr-28">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <CardSectionHeader color={atmosphere.border}>
-                Impact path
-              </CardSectionHeader>
+          <ImpactGlyph title={title} accent={atmosphere.border} />
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <div className="min-w-0">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+              {title}
+            </h2>
 
-                  <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-                    {title}
-                  </h2>
+            <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
+              <SignalMeter score={signalStrength} accent={atmosphere.border} />
+
+              <button
+                type="button"
+                aria-label="What signal means"
+                onClick={() => setShowSignalHelp((current) => !current)}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
+              >
+                <CircleHelp className="h-3.5 w-3.5" />
+              </button>
+
+              {showSignalHelp ? (
+                <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
+                  This is Everleap&apos;s best guess, right now, of how well
+                  this path fits your profile.
                 </div>
-
-                <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
-                  <SignalMeter
-                    score={signalStrength}
-                    accent={atmosphere.border}
-                  />
-
-                  <button
-                    type="button"
-                    aria-label="What signal means"
-                    onClick={() => setShowSignalHelp((current) => !current)}
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
-                  >
-                    <CircleHelp className="h-3.5 w-3.5" />
-                  </button>
-
-                  {showSignalHelp ? (
-                    <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
-                      This is Everleap&apos;s best guess, right now, of how well
-                      this path fits your profile.
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-
-              <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
-                {signalLabel}
-              </p>
+              ) : null}
             </div>
-
-            <button
-              type="button"
-              onClick={() => onDismiss(experience.id)}
-              className="mt-7 hidden shrink-0 rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12] sm:inline-flex"
-            >
-              Not for me
-            </button>
           </div>
+
+          <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
+            {signalLabel}
+          </p>
 
           {hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
@@ -1074,87 +1048,33 @@ function ImpactExperienceCard({
           ) : null}
 
           {description ? (
-            <p className="mt-3 max-w-[44rem] text-[14px] leading-[1.7] text-white/68 sm:text-[14px]">
+            <p className="mt-3 max-w-[44rem] text-[13px] leading-[1.6] text-white/68">
               {description}
             </p>
           ) : null}
         </div>
 
-        <div className="mt-4 sm:hidden">
-          <button
-            type="button"
-            onClick={() => onDismiss(experience.id)}
-            className="inline-flex rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12]"
-          >
-            Not for me
-          </button>
-        </div>
+        <div className="mt-6">
+          <CardSectionHeader color={atmosphere.opportunityGlow}>
+            Try this for real
+          </CardSectionHeader>
 
-        <div className="relative mt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{
-              background: `linear-gradient(90deg, transparent 0%, ${rgb(
-                atmosphere.tryGlow,
-                0.2
-              )} 18%, ${rgb(atmosphere.tryGlow, 0.06)} 82%, transparent 100%)`,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowTryDrawer((current) => !current)}
-            aria-expanded={showTryDrawer}
-            className="relative w-full px-1 pt-3 text-left"
-          >
-            <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-full"
-              style={{
-                background: `radial-gradient(circle at 12% 26%, ${rgb(
-                  atmosphere.tryGlow,
-                  showTryDrawer ? 0.1 : 0.06
-                )} 0%, transparent 34%), radial-gradient(circle at 92% 82%, ${rgb(
-                  atmosphere.tryGlow,
-                  showTryDrawer ? 0.08 : 0.04
-                )} 0%, transparent 26%)`,
-              }}
-            />
-            <div className="relative flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <CardSectionHeader color={atmosphere.tryGlow}>
-                  Try this for real
-                </CardSectionHeader>
+          <div className="mt-3">
+            {opportunities.map((item, index) => (
+              <OpportunityRow
+                key={item.id}
+                item={item}
+                atmosphere={atmosphere}
+                isFirst={index === 0}
+              />
+            ))}
 
-                <p className="mt-3 text-[16px] font-medium leading-[1.45] text-white">
-                  {tryItem.title}
-                </p>
-
-                <p className="mt-1 text-[13px] leading-[1.55] text-white/68">
-                  Start small. See whether the energy gets stronger when this
-                  path becomes real.
-                </p>
+            {opportunities.length === 0 ? (
+              <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
+                No live opportunities are wired into this path yet.
               </div>
-
-              <span
-                className="inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[13px] font-medium text-white/90"
-                style={{
-                  borderColor: rgb(atmosphere.tryGlow, 0.16),
-                  backgroundColor: rgb(atmosphere.tryGlow, 0.08),
-                }}
-              >
-                {showTryDrawer ? "Hide details" : "See details"}
-                <ChevronDown
-                  className={[
-                    "h-4 w-4 transition-transform duration-200",
-                    showTryDrawer ? "rotate-180" : "",
-                  ].join(" ")}
-                />
-              </span>
-            </div>
-          </button>
-
-          {showTryDrawer ? (
-            <InlineTryImpactDetails atmosphere={atmosphere} item={tryItem} />
-          ) : null}
+            ) : null}
+          </div>
         </div>
 
         <ImpactPathForwardSection
@@ -1174,82 +1094,70 @@ export default function ImpactExplorePage() {
     skills: [],
     fullText: "",
   });
-  const [dismissedExperienceIds, setDismissedExperienceIds] = React.useState<
-    string[]
-  >([]);
+  const [reactions, setReactions] = React.useState<ImpactReactionState>(
+    emptyImpactReactionState()
+  );
 
   React.useEffect(() => {
     setProfile(readStoredImpactSignals());
+    setReactions(readImpactReactionState());
   }, []);
 
   const visibleExperiences = React.useMemo(() => {
+    const dismissed = new Set(reactions.dismissed);
+
     return IMPACT_PATHS.map((experience, index) => ({
       experience,
       score: getSignalStrength(experience, profile),
       index,
     }))
-      .filter(
-        (item) => !dismissedExperienceIds.includes(item.experience.id)
-      )
+      .filter((item) => !dismissed.has(item.experience.slug))
       .sort((a, b) =>
         b.score !== a.score ? b.score - a.score : a.index - b.index
       )
       .slice(0, MAX_VISIBLE_IMPACT_EXPERIENCES)
       .map((item) => item.experience);
-  }, [profile, dismissedExperienceIds]);
-
-  function handleDismissExperience(experienceId: string) {
-    setDismissedExperienceIds((current) =>
-      current.includes(experienceId)
-        ? current
-        : [...current, experienceId]
-    );
-  }
+  }, [profile, reactions.dismissed]);
 
   return (
     <div className={pagePadding()}>
-      <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(16,185,129,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(110,231,183,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(16,185,129,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(110,231,183,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
-        <div className="relative">
-          <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
-            Explore
-          </h1>
-          <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
-            How I could make real impact
-          </p>
+          <div className="relative">
+            <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+              Explore
+            </h1>
+            <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
+              How I could make real impact
+            </p>
 
-          <ExploreLaneTabs
-            lanes={EXPLORE_LANES}
-            activeClassName="border-emerald-300/30 bg-emerald-300/[0.12] text-emerald-50 shadow-[0_0_0_1px_rgba(110,231,183,0.06)]"
-          />
-        </div>
-      </section>
-
-      <ImpactIntroPanel firstName={profile.firstName} />
-
-      <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
-        {visibleExperiences.map((experience) => (
-          <ImpactExperienceCard
-            key={experience.id}
-            experience={experience}
-            profile={profile}
-            onDismiss={handleDismissExperience}
-          />
-        ))}
-
-        {IMPACT_PATHS.length === 0 ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-            No impact paths are registered yet.
+            <ExploreLaneTabs
+              lanes={EXPLORE_LANES}
+              activeClassName="border-emerald-300/30 bg-emerald-300/[0.12] text-emerald-50 shadow-[0_0_0_1px_rgba(110,231,183,0.06)]"
+            />
           </div>
-        ) : null}
+        </section>
 
-        {IMPACT_PATHS.length > 0 && visibleExperiences.length === 0 ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-            You&apos;ve cleared the current set of impact paths.
-          </div>
-        ) : null}
-      </section>
+        <ImpactIntroPanel firstName={profile.firstName} />
+
+        <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
+          {visibleExperiences.map((experience) => (
+            <ImpactExperienceCard
+              key={experience.id}
+              experience={experience}
+              profile={profile}
+            />
+          ))}
+
+          {IMPACT_PATHS.length === 0 ? (
+            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+              No impact paths are registered yet.
+            </div>
+          ) : null}
+        </section>
+      </div>
     </div>
   );
 }

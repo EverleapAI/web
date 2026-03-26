@@ -267,10 +267,6 @@ export const GRAPHIC_DESIGNER_PATH: WorkPathContent = {
     stages: [],
   },
 
-  /* =========================
-     FORECAST PASS (REFINED)
-  ========================= */
-
   forecastV2: {
     outlookLabel: "Strong - but portfolio-driven",
     outlookSummary:
@@ -377,10 +373,10 @@ export const GRAPHIC_DESIGNER_PATH: WorkPathContent = {
   },
 
   nextStepsV2: {
-    heroTitle: "You do not need permission to start designing",
+    heroTitle: "The fastest way to understand design is to make work people can see",
     heroSummary:
-      "Real designers are not waiting for a job. They are making things, posting them, and getting better fast. You can start building a portfolio this week.",
-    heroBadge: "Make real work",
+      "Do not wait for the perfect class or the perfect logo idea. Pick a real prompt, make something visual, post it, revise it, and build your eye through repetition. That is how graphic design becomes real.",
+    heroBadge: "Build visible work",
 
     sections: [
       {
@@ -388,90 +384,125 @@ export const GRAPHIC_DESIGNER_PATH: WorkPathContent = {
         eyebrow: "Near 94901",
         title: "Get around real creative energy",
         description:
-          "Being around real creative spaces helps you move faster and take your work more seriously.",
+          "These local opportunities get you closer to studios, workshops, portfolio-building spaces, and real creative communities instead of keeping design trapped in your head.",
         mode: "local",
         items: [
           {
-            id: "marin-library-lab-design",
+            id: "marin-library-the-lab",
             title: "Marin County Library - The Lab",
             href: "https://marinlibrary.org/the-lab/",
             note:
-              "Free creative space with tools, people, and projects you can actually make.",
-            badge: "Free / Local",
+              "A free makerspace and creative tech environment where you can work on visual projects, print ideas, experiment, and get used to making things outside your bedroom.",
+            badge: "Free creative space",
             mode: "local",
           },
           {
-            id: "sfpl-mix-design",
-            title: "The Mix (SF Public Library)",
-            href: "https://www.sfpl.org/locations/main-library/the-mix",
+            id: "marin-library-events",
+            title: "Marin County Library Events",
+            href: "https://marinlibrary.bibliocommons.com/v2/events",
             note:
-              "Teen-focused creative studio for design, media, and digital work.",
-            badge: "Teen space",
+              "A live stream of community workshops, art events, and hands-on programs. Useful if you want nearby creative activity you can actually show up to.",
+            badge: "Find local workshops",
             mode: "local",
           },
           {
-            id: "cca-precollege",
-            title: "CCA Pre-College Design Programs",
-            href: "https://www.cca.edu/academics/pre-college/",
+            id: "sfpl-the-mix",
+            title: "San Francisco Public Library - The Mix",
+            href: "https://sfpl.org/teens/the-mix",
             note:
-              "Serious design programs focused on portfolio building and real creative skills.",
-            badge: "Portfolio",
+              "A teen-focused creative space with design, media, and digital making resources. Strong if you want a youth-centered place to create and explore.",
+            badge: "Teen creative hub",
+            mode: "local",
+          },
+          {
+            id: "cca-youth-programs",
+            title: "CCA Youth Programs",
+            href: "https://cca.edu/academics/#section-youth-programs",
+            note:
+              "California College of the Arts offers youth pathways that can push your work past hobby level and closer to real portfolio-building.",
+            badge: "Design pathway",
+            mode: "local",
+          },
+          {
+            id: "cca-scholastic-art-awards",
+            title: "CCA Scholastic Art Awards",
+            href: "https://www.cca.edu/academics/scholastic-art-awards/",
+            note:
+              "A serious Bay Area entry point for student artists and designers in grades 7-12. Good if you want a deadline, recognition, and a reason to produce strong work.",
+            badge: "Submit real work",
+            mode: "local",
+          },
+          {
+            id: "aiga-sf-events",
+            title: "AIGA San Francisco Events",
+            href: "https://aigasf.org/events/",
+            note:
+              "Northern California design events, talks, and workshops. A strong way to see what the real design world sounds like and where people in the field gather.",
+            badge: "Design community",
             mode: "local",
           },
         ],
       },
-
       {
         id: "remote",
         eyebrow: "Online",
-        title: "Where real designers actually start",
+        title: "Where designers actually start building",
         description:
-          "These are not just tools - they are how designers build portfolios, get noticed, and level up.",
+          "These are not filler links. They are real tools, prompts, and portfolio platforms that can help you make work this week and start developing a visible design voice.",
         mode: "remote",
         items: [
           {
             id: "figma",
             title: "Figma",
-            href: "https://www.figma.com",
+            href: "https://www.figma.com/",
             note:
-              "Design real apps, interfaces, and layouts - this is what modern designers use.",
-            badge: "Essential",
+              "The fastest serious way to design posters, interfaces, layouts, social graphics, and full visual systems. This is one of the most important modern design tools to learn.",
+            badge: "Essential tool",
             mode: "remote",
           },
           {
             id: "canva",
             title: "Canva",
-            href: "https://www.canva.com",
+            href: "https://www.canva.com/",
             note:
-              "Fast way to start making posters, social graphics, and brand visuals right away.",
+              "A fast way to start making real visual work immediately. Useful for posters, campaigns, social graphics, and getting reps before your skills get more advanced.",
             badge: "Start fast",
             mode: "remote",
           },
           {
             id: "behance",
             title: "Behance",
-            href: "https://www.behance.net",
+            href: "https://www.behance.net/",
             note:
-              "Publish your work and see how real designers present portfolios.",
-            badge: "Portfolio",
+              "A place to publish your work and study how strong designers present projects. Great for learning what a portfolio case study actually looks like.",
+            badge: "Portfolio platform",
             mode: "remote",
           },
           {
             id: "dribbble",
             title: "Dribbble",
-            href: "https://dribbble.com",
+            href: "https://dribbble.com/",
             note:
-              "See current design trends and how high-level work is presented.",
-            badge: "Level up",
+              "Useful for seeing current visual trends, styles, and presentation quality. Good for sharpening your eye and noticing what feels polished versus average.",
+            badge: "Visual standards",
             mode: "remote",
           },
           {
             id: "briefbox",
             title: "Briefbox Design Challenges",
-            href: "https://briefbox.me",
+            href: "https://www.briefbox.me/",
             note:
-              "Real-world style design briefs to build portfolio projects quickly.",
-            badge: "Practice",
+              "Real-world style creative briefs that help you stop waiting for inspiration and start building portfolio pieces with clear constraints.",
+            badge: "Practice with prompts",
+            mode: "remote",
+          },
+          {
+            id: "adobe-express",
+            title: "Adobe Express",
+            href: "https://www.adobe.com/express/",
+            note:
+              "A practical way to build flyers, social assets, posters, and quick campaigns while getting comfortable with visual hierarchy and brand consistency.",
+            badge: "Create fast",
             mode: "remote",
           },
         ],

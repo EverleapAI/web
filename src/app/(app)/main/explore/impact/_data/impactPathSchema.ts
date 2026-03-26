@@ -13,7 +13,8 @@ export type ImpactPathEnergy =
   | "builder"
   | "people"
   | "creative"
-  | "organizer";
+  | "organizer"
+  | "support";
 
 export type ImpactPathActionType =
   | "project"

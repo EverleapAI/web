@@ -4,11 +4,7 @@
 
 import Link from "next/link";
 import * as React from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  CircleHelp,
-} from "lucide-react";
+import { ArrowRight, BookOpen, CircleHelp } from "lucide-react";
 
 import {
   CardSectionHeader,
@@ -33,6 +29,22 @@ type LearningProfileSignals = {
   fullText: string;
 };
 
+type LearningReaction = "liked" | "maybe" | "dismissed";
+
+type LearningReactionFeedback = {
+  reaction: LearningReaction;
+  reasons: string[];
+  note: string;
+  savedAt: number;
+};
+
+type LearningReactionState = {
+  dismissed: string[];
+  maybe: string[];
+  liked: string[];
+  feedbackBySlug?: Record<string, LearningReactionFeedback>;
+};
+
 type LearningOpportunityPreview = {
   id: string;
   title: string;
@@ -53,6 +65,8 @@ type DirectionAtmosphere = {
 };
 
 const MAX_VISIBLE_LEARNING_DIRECTIONS = 4;
+const LEARNING_REACTIONS_STORAGE_KEY =
+  "everleap.explore.learning.reactions.v1";
 
 const EXPLORE_LANES: readonly ExploreLaneTab[] = [
   {
@@ -306,6 +320,94 @@ function readStoredLearningSignals(): LearningProfileSignals {
     skills: Array.from(new Set(skills)).slice(0, 24),
     fullText: allStrings.join(" ").toLowerCase(),
   };
+}
+
+function emptyLearningReactionState(): LearningReactionState {
+  return {
+    dismissed: [],
+    maybe: [],
+    liked: [],
+    feedbackBySlug: {},
+  };
+}
+
+function normalizeSlugList(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+
+  return Array.from(
+    new Set(
+      input
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeLearningFeedbackBySlug(
+  input: unknown
+): Record<string, LearningReactionFeedback> {
+  if (!input || typeof input !== "object") return {};
+
+  const result: Record<string, LearningReactionFeedback> = {};
+
+  for (const [slug, value] of Object.entries(
+    input as Record<string, unknown>
+  )) {
+    if (!slug.trim() || !value || typeof value !== "object") continue;
+
+    const raw = value as Record<string, unknown>;
+    const reaction =
+      raw.reaction === "liked" ||
+      raw.reaction === "maybe" ||
+      raw.reaction === "dismissed"
+        ? raw.reaction
+        : null;
+
+    if (!reaction) continue;
+
+    const reasons = Array.isArray(raw.reasons)
+      ? raw.reasons
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    const note = typeof raw.note === "string" ? raw.note : "";
+    const savedAt =
+      typeof raw.savedAt === "number" && Number.isFinite(raw.savedAt)
+        ? raw.savedAt
+        : Date.now();
+
+    result[slug] = {
+      reaction,
+      reasons,
+      note,
+      savedAt,
+    };
+  }
+
+  return result;
+}
+
+function readLearningReactionState(): LearningReactionState {
+  if (typeof window === "undefined") return emptyLearningReactionState();
+
+  try {
+    const raw = window.localStorage.getItem(LEARNING_REACTIONS_STORAGE_KEY);
+    if (!raw) return emptyLearningReactionState();
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    return {
+      dismissed: normalizeSlugList(parsed.dismissed),
+      maybe: normalizeSlugList(parsed.maybe),
+      liked: normalizeSlugList(parsed.liked),
+      feedbackBySlug: normalizeLearningFeedbackBySlug(parsed.feedbackBySlug),
+    };
+  } catch {
+    return emptyLearningReactionState();
+  }
 }
 
 function getLearningAgenticOpening(firstName: string | null) {
@@ -630,47 +732,6 @@ function extractLearningOpportunities(
   return bucket.slice(0, 2);
 }
 
-function getLearningPayoffIntro(direction: LearningDirection) {
-  const title = extractCardField(direction, "title");
-  const hook = extractCardField(direction, "hook");
-  const lowerTitle = title.toLowerCase();
-
-  if (
-    lowerTitle.includes("code") ||
-    lowerTitle.includes("software") ||
-    lowerTitle.includes("systems")
-  ) {
-    return hook
-      ? hook
-      : "Two real ways to test this path: one nearby and one you can start online.";
-  }
-
-  if (
-    lowerTitle.includes("design") ||
-    lowerTitle.includes("media") ||
-    lowerTitle.includes("story")
-  ) {
-    return hook
-      ? hook
-      : "Two real ways to test this path: one nearby and one you can start online.";
-  }
-
-  if (
-    lowerTitle.includes("bio") ||
-    lowerTitle.includes("health") ||
-    lowerTitle.includes("environment") ||
-    lowerTitle.includes("science")
-  ) {
-    return hook
-      ? hook
-      : "Two real ways to test this path: one nearby and one you can start online.";
-  }
-
-  return hook
-    ? hook
-    : "Two real ways to test this path: one nearby and one you can start online.";
-}
-
 function IntroOrbitArt() {
   return (
     <div className="pointer-events-none absolute right-3 top-3 hidden h-[112px] w-[112px] sm:block">
@@ -911,7 +972,6 @@ function LearningDirectionCard({
   const signalStrength = getSignalStrength(direction, profile);
   const signalLabel = getSignalLabel(signalStrength);
   const opportunities = extractLearningOpportunities(direction);
-  const payoffIntro = getLearningPayoffIntro(direction);
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
 
@@ -1019,10 +1079,6 @@ function LearningDirectionCard({
             Try this for real
           </CardSectionHeader>
 
-          <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-white/72">
-            {payoffIntro}
-          </p>
-
           <div className="mt-3">
             {opportunities.map((item, index) => (
               <OpportunityRow
@@ -1058,23 +1114,30 @@ export default function LearningExplorePage() {
     skills: [],
     fullText: "",
   });
+  const [reactions, setReactions] = React.useState<LearningReactionState>(
+    emptyLearningReactionState()
+  );
 
   React.useEffect(() => {
     setProfile(readStoredLearningSignals());
+    setReactions(readLearningReactionState());
   }, []);
 
   const visibleDirections = React.useMemo(() => {
+    const dismissed = new Set(reactions.dismissed);
+
     return LEARNING_PATHS.map((direction, index) => ({
       direction,
       score: getSignalStrength(direction, profile),
       index,
     }))
+      .filter((item) => !dismissed.has(item.direction.slug))
       .sort((a, b) =>
         b.score !== a.score ? b.score - a.score : a.index - b.index
       )
       .slice(0, MAX_VISIBLE_LEARNING_DIRECTIONS)
       .map((item) => item.direction);
-  }, [profile]);
+  }, [profile, reactions.dismissed]);
 
   return (
     <div className={pagePadding()}>

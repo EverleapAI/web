@@ -8,153 +8,199 @@ export const ENVIRONMENT_STEWARDSHIP_PATH: ImpactPathContent = {
   lane: "impact",
 
   theme: {
-    tone: "earth-motion",
-    accent: { r: 114, g: 184, b: 108 },
-    accentStrong: { r: 76, g: 148, b: 84 },
-    glow: { r: 76, g: 148, b: 84 },
-    surfaceLabel: "Grounded action",
+    tone: "earth-care",
+    accent: { r: 102, g: 187, b: 106 },
+    accentStrong: { r: 67, g: 160, b: 71 },
+    glow: { r: 67, g: 160, b: 71 },
+    surfaceLabel: "Caring for places",
   },
 
   card: {
     title: "Environment & Stewardship",
-    hook: "Protect places, improve systems, and help care for the world people actually live in.",
+    hook:
+      "You notice the condition of the spaces around you — and feel a pull to take care of them.",
     description:
-      "Environmental impact is not only about loving nature in the abstract. It is about stewardship — noticing what is damaged, wasteful, fragile, or neglected, and helping restore, protect, or improve it through real action.",
+      "Environmental stewardship is about noticing, respecting, and actively caring for the places we share. It can be physical, like restoring a space, or systemic, like thinking about sustainability and long-term impact. It starts with awareness and becomes action.",
   },
 
   hero: {
     eyebrow: "Impact Path",
     title: "Environment & Stewardship",
-    hook: "Turning care for the planet into practical action.",
+    hook:
+      "Taking care of the spaces, systems, and environments we all depend on.",
     summary:
-      "This path fits people who feel connected to places, systems, and long-term responsibility. Stewardship can look like habitat restoration, community cleanups, garden work, climate education, sustainability projects, or helping people make better choices that add up over time.",
+      "Some people move through environments without thinking much about them. Others notice — the condition of a park, the way systems work, or how human activity affects what surrounds us. Stewardship is about turning that awareness into action, whether that means restoring, maintaining, protecting, or rethinking how things are done.",
     whyItPullsYouIn: [
-      "You care about places being healthy, clean, and respected.",
-      "You get frustrated by waste, neglect, or systems that feel shortsighted.",
-      "You like impact that is tangible, visible, and rooted in the real world.",
+      "You notice details about environments others ignore.",
+      "You feel connected to physical spaces and nature.",
+      "You care about long-term impact, not just short-term results.",
     ],
   },
 
   traitChips: [
-    { id: "earth-minded", label: "Earth minded" },
-    { id: "builder", label: "Hands-on builder" },
-    { id: "long-view", label: "Long-view thinker" },
+    { id: "observant", label: "Observant" },
+    { id: "grounded", label: "Grounded" },
+    { id: "care-driven", label: "Care driven" },
+    { id: "systems", label: "Thinks long-term" },
   ],
 
   fitSignals: [
     {
-      id: "protective-instinct",
-      label: "You feel protective of places",
-      score: 5,
-      explanation:
-        "You notice when environments feel neglected or harmed and want to help care for them.",
-    },
-    {
-      id: "systems-awareness",
-      label: "You think about systems and consequences",
+      id: "environment-awareness",
+      label: "You notice environmental details",
       score: 4,
       explanation:
-        "You naturally connect everyday choices to larger environmental outcomes.",
+        "You pick up on how spaces feel, function, and change over time.",
+    },
+    {
+      id: "care-instinct",
+      label: "You feel responsible for shared spaces",
+      score: 5,
+      explanation:
+        "You don’t just notice issues — you feel a pull to improve or protect what’s there.",
+    },
+    {
+      id: "long-term-thinking",
+      label: "You think beyond the immediate moment",
+      score: 4,
+      explanation:
+        "You consider how decisions affect the future, not just now.",
     },
     {
       id: "hands-on-impact",
-      label: "You like impact you can actually see",
+      label: "You like visible, real-world impact",
       score: 4,
       explanation:
-        "Physical projects, restoration, and visible improvements feel motivating to you.",
+        "You enjoy seeing a physical or measurable result from your effort.",
     },
   ],
 
   branchPreviews: [
     {
-      id: "restoration-projects",
-      slug: "restoration-projects",
-      title: "Restoration Projects",
-      oneLiner: "Helping repair and care for real spaces.",
+      id: "local-restoration",
+      slug: "local-restoration",
+      title: "Local Restoration",
+      oneLiner:
+        "Improving parks, spaces, and environments you can physically see and touch.",
       whyItCouldFit:
-        "Some of the strongest environmental learning happens through direct, physical stewardship.",
+        "You like hands-on work and seeing visible change in real places.",
       energy: "builder",
     },
     {
-      id: "sustainability-action",
-      slug: "sustainability-action",
-      title: "Sustainability Action",
-      oneLiner: "Improving habits and systems that shape daily life.",
+      id: "sustainability-systems",
+      slug: "sustainability-systems",
+      title: "Sustainability Systems",
+      oneLiner:
+        "Rethinking how systems work to reduce impact over time.",
       whyItCouldFit:
-        "Environmental change also happens through smarter systems, education, and design.",
-      energy: "grounded",
+        "You think in systems and long-term effects.",
+      energy: "reflective",
+    },
+    {
+      id: "community-stewardship",
+      slug: "community-stewardship",
+      title: "Community Stewardship",
+      oneLiner:
+        "Helping people care for shared spaces together.",
+      whyItCouldFit:
+        "You care about both people and the environments they share.",
+      energy: "people",
     },
   ],
 
   branches: [
     {
-      id: "restoration-projects",
-      slug: "restoration-projects",
-      title: "Restoration Projects",
+      id: "local-restoration",
+      slug: "local-restoration",
+      title: "Local Restoration",
       summary:
-        "Restoration work is direct and practical: helping clean, protect, rebuild, or maintain spaces that people and ecosystems depend on.",
+        "Hands-on environmental work focused on improving physical spaces.",
       whatYouActuallyDo: [
-        "Join cleanup, habitat, or garden efforts",
-        "Help maintain trails, open spaces, or school grounds",
-        "Learn how environments recover through steady care",
+        "Participate in cleanups and restoration",
+        "Work with tools, materials, and teams",
+        "Improve visible environments",
       ],
       skillsThatGrowHere: [
-        "Hands-on teamwork",
-        "Environmental observation",
-        "Project follow-through",
+        "Physical coordination",
+        "Teamwork",
+        "Consistency",
       ],
       starterProjects: [
-        "Join a local cleanup or habitat work day",
-        "Help improve a school garden or outdoor area",
-        "Track one small environmental improvement project over time",
+        "Join a cleanup effort",
+        "Help restore a shared space",
+        "Organize a small improvement project",
       ],
       atmosphere:
-        "Grounded, physical, and satisfying in a very real-world way.",
+        "Active, physical, and grounded in real environments.",
     },
     {
-      id: "sustainability-action",
-      slug: "sustainability-action",
-      title: "Sustainability Action",
+      id: "sustainability-systems",
+      slug: "sustainability-systems",
+      title: "Sustainability Systems",
       summary:
-        "Stewardship also includes helping schools, teams, and communities reduce waste and make more sustainable choices.",
+        "Understanding and improving how systems impact the environment.",
       whatYouActuallyDo: [
-        "Notice wasteful patterns and propose better systems",
-        "Help with awareness campaigns or sustainability projects",
-        "Encourage small changes that become normal habits",
+        "Study environmental systems",
+        "Identify inefficiencies",
+        "Propose improvements",
       ],
       skillsThatGrowHere: [
         "Systems thinking",
-        "Practical communication",
-        "Change-making through consistency",
+        "Analysis",
+        "Planning",
       ],
       starterProjects: [
-        "Audit a small space for waste or energy habits",
-        "Create a simple sustainability challenge for a club or class",
-        "Help improve recycling, composting, or reuse habits in one setting",
+        "Audit a system (waste, energy)",
+        "Suggest improvements",
+        "Create a simple sustainability plan",
       ],
       atmosphere:
-        "Practical, future-minded, and focused on real improvements rather than vague ideals.",
+        "Analytical, thoughtful, and future-oriented.",
+    },
+    {
+      id: "community-stewardship",
+      slug: "community-stewardship",
+      title: "Community Stewardship",
+      summary:
+        "Helping groups take responsibility for shared environments.",
+      whatYouActuallyDo: [
+        "Organize people around environmental goals",
+        "Coordinate efforts",
+        "Build shared responsibility",
+      ],
+      skillsThatGrowHere: [
+        "Leadership",
+        "Coordination",
+        "Communication",
+      ],
+      starterProjects: [
+        "Start a group effort",
+        "Coordinate volunteers",
+        "Lead a local initiative",
+      ],
+      atmosphere:
+        "Social, purposeful, and community-driven.",
     },
   ],
 
   tryNow: {
     title: "Try This",
     summary:
-      "Stewardship starts by paying attention, choosing one real place or system, and improving it in a way people can actually feel.",
+      "Stewardship becomes real when you improve something you can actually see.",
     actions: [
       {
-        id: "mini-stewardship-audit",
-        title: "Do a Mini Stewardship Audit",
+        id: "improve-space",
+        title: "Improve One Space",
         type: "project",
-        effort: "light",
-        timeEstimate: "45–90 minutes",
+        effort: "medium",
+        timeEstimate: "1–2 days",
         whyThisMatters:
-          "Environmental impact gets clearer when you focus on one real setting instead of trying to solve everything at once.",
+          "Small physical improvements build awareness and momentum.",
         instructions: [
-          "Choose one space you know well, like a classroom, club room, park area, or shared home space.",
-          "Notice where waste, neglect, or unnecessary use shows up.",
-          "Write down 3 realistic improvements.",
-          "Pick 1 small change you could actually test this week.",
+          "Find a space that needs attention.",
+          "Define one clear improvement.",
+          "Take action.",
+          "Notice the before and after.",
         ],
       },
     ],
@@ -163,19 +209,25 @@ export const ENVIRONMENT_STEWARDSHIP_PATH: ImpactPathContent = {
   howItFeels: {
     title: "How It Often Feels",
     summary:
-      "This path can feel grounding and real — less like abstract concern, more like caring for something with your hands, habits, and attention.",
+      "Stewardship feels grounded, physical, and quietly meaningful.",
     moments: [
       {
-        id: "place-looks-different",
-        title: "A Place Starts Looking Different",
+        id: "notice",
+        title: "You Notice",
         body:
-          "You come back to a space after a cleanup, restoration, or improvement effort and can actually see that care changed it.",
+          "You see something others ignore — a space, a system, a problem.",
       },
       {
-        id: "small-system-better",
-        title: "A Small System Starts Working Better",
+        id: "act",
+        title: "You Act",
         body:
-          "You help a group adopt a smarter routine, and the difference starts showing up in everyday behavior.",
+          "You take action, even if it’s small, and change something.",
+      },
+      {
+        id: "impact",
+        title: "You See the Result",
+        body:
+          "The change is visible, real, and lasting.",
       },
     ],
   },
@@ -183,37 +235,38 @@ export const ENVIRONMENT_STEWARDSHIP_PATH: ImpactPathContent = {
   growthPath: {
     title: "How This Path Grows",
     summary:
-      "Stewardship deepens as you move from caring about environmental issues to understanding how places, systems, and long-term responsibility connect.",
+      "Stewardship grows from small actions to larger systems.",
     stages: [
       {
-        id: "noticing-and-helping",
-        label: "Noticing and Helping",
-        timeframe: "Weeks–Months",
+        id: "small-actions",
+        label: "Small Actions",
+        timeframe: "Weeks",
         summary:
-          "You begin by joining projects, learning through observation, and taking small actions in places you already care about.",
+          "You start with visible improvements.",
         signalsOfProgress: [
-          "You notice environmental problems faster and more clearly",
-          "You start taking initiative instead of waiting for someone else to act",
+          "You take initiative",
+          "You complete projects",
         ],
       },
       {
-        id: "leading-better-systems",
-        label: "Leading Better Systems",
+        id: "larger-systems",
+        label: "Larger Systems",
         timeframe: "Months–Years",
         summary:
-          "You begin shaping projects, habits, and group norms that create more lasting environmental impact.",
+          "You begin influencing broader systems.",
         signalsOfProgress: [
-          "You help others adopt better practices",
-          "You can design or lead a small stewardship initiative from start to finish",
+          "You design improvements",
+          "You influence others",
         ],
       },
     ],
   },
 
   nextSteps: {
-    title: "Next Steps",
+    title: "Try this for real",
     summary:
-      "This path gets stronger when you connect your care for the environment to real projects, local organizations, and settings where better habits can actually stick.",
+      "Environmental impact becomes real when you step into projects where care turns into visible change. These are ways to work with actual places, people, and systems right now.",
+
     actions: [
       {
         id: "join-local-stewardship",
@@ -222,15 +275,153 @@ export const ENVIRONMENT_STEWARDSHIP_PATH: ImpactPathContent = {
         effort: "medium",
         timeEstimate: "1–3 weeks to begin",
         whyThisMatters:
-          "Environmental values become much more real when you work alongside people already caring for land, spaces, and systems.",
+          "Environmental values become real when you work alongside people actively caring for land and systems.",
         instructions: [
-          "Look for local cleanup days, restoration groups, park programs, school garden projects, or sustainability clubs.",
-          "Choose one that feels practical and welcoming.",
-          "Show up once and pay attention to what kind of work gives you energy.",
-          "Use that experience to decide what kind of stewardship fits you best.",
+          "Find a local cleanup or restoration effort.",
+          "Show up once.",
+          "Take on a small role.",
+          "Notice what impact feels meaningful.",
         ],
       },
     ],
-    opportunityGroups: [],
+
+    opportunityGroups: [
+      {
+        id: "local",
+        title: "Near you",
+        description:
+          "Hands-on ways to improve real spaces and environments nearby.",
+        items: [
+          {
+            id: "volunteermatch",
+            title: "VolunteerMatch – Environmental Projects",
+            mode: "local",
+            provider: "VolunteerMatch",
+            summary:
+              "Find cleanup and restoration opportunities nearby.",
+            whyItHelps:
+              "You step into real environmental work.",
+            href: "https://www.volunteermatch.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "nps",
+            title: "National Park Service Volunteer",
+            mode: "local",
+            provider: "NPS",
+            summary:
+              "Volunteer in parks and conservation areas.",
+            whyItHelps:
+              "You work directly in real ecosystems.",
+            href: "https://www.nps.gov/getinvolved/volunteer.htm",
+            formatLabel: "Local",
+          },
+          {
+            id: "corps",
+            title: "Conservation Corps",
+            mode: "local",
+            provider: "Corps Network",
+            summary:
+              "Youth programs focused on environmental work.",
+            whyItHelps:
+              "Hands-on experience with visible results.",
+            href: "https://corpsnetwork.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "garden",
+            title: "Community Gardens",
+            mode: "local",
+            provider: "Community Garden",
+            summary:
+              "Work on local sustainability and food systems.",
+            whyItHelps:
+              "Connects environment to everyday life.",
+            href: "https://www.communitygarden.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "surfrider",
+            title: "Surfrider Foundation",
+            mode: "local",
+            provider: "Surfrider",
+            summary:
+              "Join beach cleanup and protection efforts.",
+            whyItHelps:
+              "Visible, real-world environmental impact.",
+            href: "https://www.surfrider.org",
+            formatLabel: "Local",
+          },
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description:
+          "Ways to engage with environmental work digitally.",
+        items: [
+          {
+            id: "un",
+            title: "UN Online Volunteering",
+            mode: "virtual",
+            provider: "UN",
+            summary:
+              "Support environmental projects globally.",
+            whyItHelps:
+              "Global impact from anywhere.",
+            href: "https://www.onlinevolunteering.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "earthwatch",
+            title: "Earthwatch",
+            mode: "virtual",
+            provider: "Earthwatch",
+            summary:
+              "Citizen science and research opportunities.",
+            whyItHelps:
+              "Engage with real data and science.",
+            href: "https://earthwatch.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "coursera",
+            title: "Environmental Courses",
+            mode: "virtual",
+            provider: "Coursera",
+            summary:
+              "Learn environmental systems.",
+            whyItHelps:
+              "Understand deeper impact.",
+            href: "https://www.coursera.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "ecosystem",
+            title: "UN Ecosystem Restoration",
+            mode: "virtual",
+            provider: "UN",
+            summary:
+              "Explore global restoration efforts.",
+            whyItHelps:
+              "See global + local connection.",
+            href: "https://www.decadeonrestoration.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "climate",
+            title: "UN Climate Action",
+            mode: "virtual",
+            provider: "UN",
+            summary:
+              "Engage with climate initiatives.",
+            whyItHelps:
+              "Join real global conversations.",
+            href: "https://www.un.org/en/climatechange",
+            formatLabel: "Online",
+          },
+        ],
+      },
+    ],
   },
 };

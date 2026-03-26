@@ -211,26 +211,165 @@ export const LOCAL_SERVICE_PATH: ImpactPathContent = {
   },
 
   nextSteps: {
-    title: "Next Steps",
+    title: "Try this for real",
     summary:
-      "Service becomes more meaningful as you build relationships with organizations and communities.",
+      "Service becomes real when you step into environments where people actually need help and consistency.",
+
     actions: [
       {
         id: "find-local-volunteer-role",
         title: "Find a Volunteer Role",
-        type: "research",
+        type: "join",
         effort: "medium",
         timeEstimate: "1–2 weeks",
         whyThisMatters:
-          "Consistent service builds trust and allows you to contribute more meaningfully.",
+          "Consistent service builds trust and allows you to contribute meaningfully.",
         instructions: [
-          "Research volunteer programs in your area.",
-          "Choose an organization whose mission resonates with you.",
-          "Ask about beginner-friendly ways to help.",
-          "Commit to showing up consistently.",
+          "Search for local volunteer roles.",
+          "Pick something practical.",
+          "Show up once.",
+          "Notice what fits.",
         ],
       },
     ],
-    opportunityGroups: [],
+
+    opportunityGroups: [
+      {
+        id: "local",
+        title: "Near you",
+        description:
+          "Ways to help people and communities directly.",
+        items: [
+          {
+            id: "volunteermatch",
+            title: "VolunteerMatch",
+            mode: "local",
+            provider: "VolunteerMatch",
+            summary:
+              "Find local volunteer opportunities.",
+            whyItHelps:
+              "Direct entry into service work.",
+            href: "https://www.volunteermatch.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "feeding-america",
+            title: "Feeding America",
+            mode: "local",
+            provider: "Feeding America",
+            summary:
+              "Support food programs.",
+            whyItHelps:
+              "Immediate, visible impact.",
+            href: "https://www.feedingamerica.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "habitat",
+            title: "Habitat for Humanity",
+            mode: "local",
+            provider: "Habitat",
+            summary:
+              "Help build homes.",
+            whyItHelps:
+              "Physical, meaningful results.",
+            href: "https://www.habitat.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "bgca",
+            title: "Boys & Girls Club",
+            mode: "local",
+            provider: "BGCA",
+            summary:
+              "Support youth programs.",
+            whyItHelps:
+              "Build relationships.",
+            href: "https://www.bgca.org",
+            formatLabel: "Local",
+          },
+          {
+            id: "red-cross",
+            title: "American Red Cross",
+            mode: "local",
+            provider: "Red Cross",
+            summary:
+              "Support community services.",
+            whyItHelps:
+              "Learn structured service.",
+            href: "https://www.redcross.org",
+            formatLabel: "Local",
+          },
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description:
+          "Ways to contribute remotely.",
+        items: [
+          {
+            id: "un",
+            title: "UN Volunteering",
+            mode: "virtual",
+            provider: "UN",
+            summary:
+              "Remote service opportunities.",
+            whyItHelps:
+              "Global impact.",
+            href: "https://www.onlinevolunteering.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "dosomething",
+            title: "DoSomething",
+            mode: "virtual",
+            provider: "DoSomething",
+            summary:
+              "Youth campaigns.",
+            whyItHelps:
+              "Easy entry.",
+            href: "https://www.dosomething.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "catchafire",
+            title: "Catchafire",
+            mode: "virtual",
+            provider: "Catchafire",
+            summary:
+              "Skill-based volunteering.",
+            whyItHelps:
+              "Build experience.",
+            href: "https://www.catchafire.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "idealist",
+            title: "Idealist",
+            mode: "virtual",
+            provider: "Idealist",
+            summary:
+              "Service opportunities.",
+            whyItHelps:
+              "Wide range.",
+            href: "https://www.idealist.org",
+            formatLabel: "Online",
+          },
+          {
+            id: "points-of-light",
+            title: "Points of Light",
+            mode: "virtual",
+            provider: "Points of Light",
+            summary:
+              "Volunteer network.",
+            whyItHelps:
+              "Find roles easily.",
+            href: "https://www.pointsoflight.org",
+            formatLabel: "Online",
+          },
+        ],
+      },
+    ],
   },
 };

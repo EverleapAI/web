@@ -7,17 +7,18 @@ import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  ArrowRight,
+  Compass,
+  ExternalLink,
   HeartHandshake,
-  Radar,
+  Laptop,
 } from "lucide-react";
 
 import { requireImpactPath } from "../_data/impactPaths";
-import type { Rgb as SchemaRgb } from "../_data/impactPathSchema";
-
-/* =============================================================================
-   Types + Storage
-============================================================================= */
+import type {
+  ImpactOpportunity,
+  ImpactOpportunityGroup as ImpactOpportunityGroupType,
+  Rgb as SchemaRgb,
+} from "../_data/impactPathSchema";
 
 type Rgb = SchemaRgb;
 
@@ -39,10 +40,6 @@ type ImpactReactionState = {
 
 const IMPACT_REACTIONS_STORAGE_KEY = "everleap.explore.impact.reactions.v1";
 
-/* =============================================================================
-   Helpers
-============================================================================= */
-
 function rgb(value: Rgb, alpha = 1) {
   return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
 }
@@ -54,20 +51,6 @@ function cx(...classes: Array<string | false | null | undefined>) {
 function clampScore(score: number) {
   const normalized = score <= 5 ? score * 20 : score;
   return Math.max(0, Math.min(100, normalized));
-}
-
-function scoreWidth(score: number) {
-  return `${clampScore(score)}%`;
-}
-
-function sectionKicker() {
-  return "text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40";
-}
-
-function firstSentence(text: string) {
-  const trimmed = text.trim();
-  const match = trimmed.match(/^.*?[.!?](?:\s|$)/);
-  return match ? match[0].trim() : trimmed;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -121,52 +104,6 @@ function readStoredFirstName(): string {
   }
 
   return "";
-}
-
-function getOverallSignalScore(
-  fitSignals: Array<{ score: number }> | undefined
-): number {
-  if (!fitSignals?.length) return 72;
-
-  const total = fitSignals.reduce(
-    (sum, signal) => sum + clampScore(signal.score),
-    0
-  );
-
-  return Math.round(total / fitSignals.length);
-}
-
-function getSignalLabel(score: number) {
-  if (score >= 84) return "Very strong";
-  if (score >= 74) return "Strong";
-  if (score >= 64) return "Worth exploring";
-  return "Possible fit";
-}
-
-function getSignalStoryLead(score: number) {
-  if (score >= 84) {
-    return "This impact path is showing up with unusual consistency.";
-  }
-
-  if (score >= 74) {
-    return "There is a real pattern here, not just a passing mood.";
-  }
-
-  if (score >= 64) {
-    return "There is enough here to test in real life, not just agree with in theory.";
-  }
-
-  return "This may begin quietly, but there is still something here worth checking.";
-}
-
-function getImpactAgenticOpening(firstName: string, title: string) {
-  const lowerTitle = title.toLowerCase();
-
-  if (firstName) {
-    return `${firstName}, this path is not about becoming some perfect helper overnight. It is about noticing whether ${lowerTitle} feels like the kind of contribution that gives you energy instead of draining it.`;
-  }
-
-  return `This path is not about becoming some perfect helper overnight. It is about noticing whether ${lowerTitle} feels like the kind of contribution that gives you energy instead of draining it.`;
 }
 
 function emptyImpactReactionState(): ImpactReactionState {
@@ -295,358 +232,165 @@ function saveImpactReactionFeedback(args: {
   return next;
 }
 
-/* =============================================================================
-   Surface Card
-============================================================================= */
-
-function SurfaceCard({
-  children,
-  accent,
-  glow,
-  className = "",
-}: {
-  children: React.ReactNode;
-  accent: Rgb;
-  glow: Rgb;
-  className?: string;
-}) {
-  return (
-    <section
-      className={cx(
-        "relative overflow-hidden rounded-[26px] border border-white/10 bg-[#08111d]/88 backdrop-blur-2xl",
-        className
-      )}
-      style={{
-        boxShadow: `0 20px 56px rgba(0,0,0,0.28), 0 0 28px ${rgb(glow, 0.08)}`,
-      }}
-    >
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-px"
-        style={{
-          background: `linear-gradient(180deg, transparent 0%, ${rgb(
-            accent,
-            0.42
-          )} 18%, ${rgb(glow, 0.16)} 75%, transparent 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-28px] top-[-26px] h-28 w-28 rounded-full blur-3xl"
-        style={{ background: rgb(glow, 0.08) }}
-      />
-      <div className="relative">{children}</div>
-    </section>
-  );
+function polarToCartesian(
+  cx: number,
+  cy: number,
+  radius: number,
+  angleInDegrees: number
+) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
+  return {
+    x: cx + radius * Math.cos(angleInRadians),
+    y: cy + radius * Math.sin(angleInRadians),
+  };
 }
 
-/* =============================================================================
-   Section Header
-============================================================================= */
-
-function SectionHeader({
-  icon: Icon,
-  kicker,
-  title,
-  accent,
-  description,
-}: {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  kicker: string;
-  title?: string;
-  accent: Rgb;
-  description?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div
-        className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10"
-        style={{
-          borderColor: rgb(accent, 0.24),
-          background: `linear-gradient(180deg, ${rgb(
-            accent,
-            0.16
-          )} 0%, ${rgb(accent, 0.05)} 100%)`,
-          boxShadow: `0 0 20px ${rgb(accent, 0.14)}`,
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 rounded-2xl"
-          style={{
-            background: `radial-gradient(circle at 30% 25%, ${rgb(
-              accent,
-              0.2
-            )} 0%, transparent 68%)`,
-          }}
-        />
-        <Icon
-          className="relative h-4 w-4 sm:h-[17px] sm:w-[17px]"
-          style={{ color: rgb(accent, 0.96) }}
-        />
-      </div>
-
-      <div className="min-w-0">
-        <div className={sectionKicker()}>{kicker}</div>
-        {title ? (
-          <h2 className="mt-0.5 text-[1.04rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.14rem]">
-            {title}
-          </h2>
-        ) : null}
-        {description ? (
-          <p className="mt-0.5 text-[12px] leading-4.5 text-white/56 sm:text-[13px] sm:leading-5">
-            {description}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
+function makeRingPoints(
+  total: number,
+  cx: number,
+  cy: number,
+  radius: number
+): string {
+  return Array.from({ length: total }, (_, index) => {
+    const angle = (360 / total) * index;
+    const point = polarToCartesian(cx, cy, radius, angle);
+    return `${point.x},${point.y}`;
+  }).join(" ");
 }
 
-/* =============================================================================
-   Hero Emblem
-============================================================================= */
+function makePolygonPoints(
+  values: number[],
+  cx: number,
+  cy: number,
+  maxRadius: number
+): string {
+  return values
+    .map((value, index) => {
+      const angle = (360 / values.length) * index;
+      const point = polarToCartesian(cx, cy, (value / 100) * maxRadius, angle);
+      return `${point.x},${point.y}`;
+    })
+    .join(" ");
+}
 
-function ImpactPathHeroEmblem({
+function HeroRadar({
+  labels,
+  values,
   accent,
   accentStrong,
   glow,
 }: {
+  labels: string[];
+  values: number[];
   accent: Rgb;
   accentStrong: Rgb;
   glow: Rgb;
 }) {
+  const cx = 120;
+  const cy = 120;
+  const rings = [28, 52, 76, 100];
+  const polygonPoints = makePolygonPoints(values, cx, cy, 88);
+
   return (
-    <div className="pointer-events-none absolute right-4 top-4 h-20 w-20 sm:h-24 sm:w-24">
+    <div className="relative mx-auto w-full max-w-[250px]">
       <div
-        className="absolute inset-0 rounded-full"
+        className="pointer-events-none absolute inset-0 rounded-full blur-3xl"
         style={{
           background: `radial-gradient(circle, ${rgb(
             glow,
             0.22
-          )} 0%, transparent 70%)`,
-          filter: "blur(8px)",
+          )} 0%, transparent 68%)`,
         }}
       />
 
-      <div
-        className="absolute inset-[18%] rounded-full border"
-        style={{ borderColor: rgb(accent, 0.22) }}
-      />
+      <svg viewBox="0 0 240 240" className="relative z-10 h-auto w-full">
+        <defs>
+          <linearGradient id="impactRadarStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={rgb(accent, 1)} />
+            <stop offset="100%" stopColor={rgb(accentStrong, 1)} />
+          </linearGradient>
 
-      <div
-        className="absolute inset-[36%] rounded-full border"
-        style={{ borderColor: rgb(accentStrong, 0.16) }}
-      />
+          <linearGradient id="impactRadarFill" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={rgb(accent, 0.28)} />
+            <stop offset="100%" stopColor={rgb(accentStrong, 0.12)} />
+          </linearGradient>
+        </defs>
 
-      <div
-        className="absolute left-[24%] top-[30%] h-[8px] w-[8px] rounded-full"
-        style={{
-          background: rgb(accent, 0.96),
-          boxShadow: `0 0 12px ${rgb(accent, 0.45)}`,
-        }}
-      />
+        {rings.map((radius) => (
+          <polygon
+            key={radius}
+            points={makeRingPoints(labels.length, cx, cy, radius)}
+            fill="none"
+            stroke={rgb(accent, radius === 100 ? 0.16 : 0.1)}
+            strokeWidth="1"
+          />
+        ))}
 
-      <div
-        className="absolute right-[22%] top-[32%] h-[7px] w-[7px] rounded-full"
-        style={{
-          background: "white",
-          boxShadow: "0 0 8px rgba(255,255,255,0.55)",
-        }}
-      />
-
-      <div
-        className="absolute left-[38%] bottom-[22%] h-[8px] w-[8px] rounded-full"
-        style={{
-          background: rgb(accentStrong, 0.95),
-          boxShadow: `0 0 12px ${rgb(accentStrong, 0.42)}`,
-        }}
-      />
-
-      <div
-        className="absolute left-[30%] top-[40%] h-px w-[24px] rotate-[16deg]"
-        style={{
-          background: `linear-gradient(90deg, ${rgb(
-            accent,
-            0.34
-          )} 0%, transparent 100%)`,
-        }}
-      />
-
-      <div
-        className="absolute left-[42%] top-[58%] h-px w-[18px] -rotate-[14deg]"
-        style={{
-          background: `linear-gradient(90deg, ${rgb(
-            accentStrong,
-            0.28
-          )} 0%, transparent 100%)`,
-        }}
-      />
-
-      <div
-        className="absolute bottom-[8%] right-[8%] flex h-7 w-7 items-center justify-center rounded-full border"
-        style={{
-          borderColor: rgb(accent, 0.18),
-          background: rgb(accent, 0.08),
-        }}
-      >
-        <HeartHandshake
-          className="h-3.5 w-3.5"
-          style={{ color: rgb(accent, 0.92) }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* =============================================================================
-   Hero Inline Signal
-============================================================================= */
-
-function HeroInlineSignal({
-  score,
-  accent,
-  glow,
-}: {
-  score: number;
-  accent: Rgb;
-  glow: Rgb;
-}) {
-  const activeBars = Math.max(1, Math.min(5, Math.round(score / 20)));
-
-  return (
-    <div
-      className="relative inline-flex h-10 shrink-0 items-center gap-2.5 rounded-full border px-3 py-1"
-      style={{
-        borderColor: rgb(accent, 0.18),
-        background:
-          "linear-gradient(180deg, rgba(6,16,28,0.88) 0%, rgba(7,14,24,0.68) 100%)",
-        boxShadow: `0 8px 20px rgba(0,0,0,0.18), 0 0 18px ${rgb(glow, 0.1)}`,
-      }}
-    >
-      <div className="flex items-end gap-[4px]">
-        {[0, 1, 2, 3, 4].map((i) => {
-          const isActive = i < activeBars;
+        {labels.map((_, index) => {
+          const angle = (360 / labels.length) * index;
+          const end = polarToCartesian(cx, cy, 100, angle);
           return (
-            <span
-              key={i}
-              className="block w-[5px] rounded-full"
-              style={{
-                height: `${9 + i * 3}px`,
-                background: isActive
-                  ? `linear-gradient(180deg, ${rgb(accent, 1)} 0%, ${rgb(
-                      glow,
-                      0.82
-                    )} 100%)`
-                  : "rgba(255,255,255,0.12)",
-                boxShadow: isActive ? `0 0 10px ${rgb(glow, 0.18)}` : "none",
-              }}
+            <line
+              key={index}
+              x1={cx}
+              y1={cy}
+              x2={end.x}
+              y2={end.y}
+              stroke={rgb(accentStrong, 0.1)}
+              strokeWidth="1"
             />
           );
         })}
-      </div>
 
-      <div className="text-[13px] font-semibold text-white/96">{score}</div>
-
-      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/44">
-        Signal
-      </div>
-    </div>
-  );
-}
-
-/* =============================================================================
-   Signal Detail Row
-============================================================================= */
-
-function SignalDetailRow({
-  id,
-  label,
-  score,
-  explanation,
-  accent,
-  accentStrong,
-  glow,
-}: {
-  id: string;
-  label: string;
-  score: number;
-  explanation: string;
-  accent: Rgb;
-  accentStrong: Rgb;
-  glow: Rgb;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const displayScore = score <= 5 ? score : Math.max(1, Math.round(score / 20));
-
-  return (
-    <div className="border-t border-white/8 pt-2 first:border-t-0 first:pt-0">
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="truncate text-[13px] font-semibold text-white/92">
-              {label}
-            </div>
-
-            <button
-              type="button"
-              aria-expanded={open}
-              aria-controls={`signal-detail-${id}`}
-              onClick={() => setOpen((current) => !current)}
-              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold text-white/76 transition hover:text-white"
-              style={{
-                borderColor: open
-                  ? rgb(accent, 0.22)
-                  : "rgba(255,255,255,0.12)",
-                background: open ? rgb(accent, 0.1) : "rgba(255,255,255,0.03)",
-                boxShadow: open ? `0 0 12px ${rgb(glow, 0.12)}` : "none",
-              }}
-            >
-              ?
-            </button>
-          </div>
-        </div>
-
-        <div
-          className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold text-white/86"
-          style={{
-            borderColor: rgb(accentStrong, 0.16),
-            background: rgb(accentStrong, 0.07),
-          }}
-        >
-          {displayScore}/5
-        </div>
-      </div>
-
-      <div className="mt-1.5 h-[3px] overflow-hidden rounded-full bg-white/7">
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: scoreWidth(score),
-            background: `linear-gradient(90deg, ${rgb(
-              accent,
-              0.92
-            )}, ${rgb(accentStrong, 1)})`,
-            boxShadow: `0 0 10px ${rgb(glow, 0.18)}`,
-          }}
+        <polygon
+          points={polygonPoints}
+          fill="url(#impactRadarFill)"
+          stroke="url(#impactRadarStroke)"
+          strokeWidth="2.5"
         />
-      </div>
 
-      <div
-        id={`signal-detail-${id}`}
-        className={[
-          "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
-          open ? "mt-1.5 max-h-24 opacity-100" : "mt-0 max-h-0 opacity-0",
-        ].join(" ")}
-      >
-        <p className="text-[12px] leading-4.5 text-white/58">
-          {firstSentence(explanation)}
-        </p>
-      </div>
+        {values.map((value, index) => {
+          const angle = (360 / values.length) * index;
+          const point = polarToCartesian(cx, cy, (value / 100) * 88, angle);
+          return (
+            <circle
+              key={index}
+              cx={point.x}
+              cy={point.y}
+              r="4.5"
+              fill={rgb(accentStrong, 1)}
+              stroke={rgb(glow, 0.95)}
+              strokeWidth="2"
+            />
+          );
+        })}
+
+        {labels.map((label, index) => {
+          const angle = (360 / labels.length) * index;
+          const point = polarToCartesian(cx, cy, 118, angle);
+
+          let textAnchor: "middle" | "start" | "end" = "middle";
+          if (point.x < cx - 10) textAnchor = "end";
+          if (point.x > cx + 10) textAnchor = "start";
+
+          return (
+            <text
+              key={`${label}-${index}`}
+              x={point.x}
+              y={point.y}
+              fill="rgba(255,255,255,0.72)"
+              fontSize="10"
+              textAnchor={textAnchor}
+              dominantBaseline="middle"
+            >
+              {label}
+            </text>
+          );
+        })}
+      </svg>
     </div>
   );
 }
-
-/* =============================================================================
-   Quick Check
-============================================================================= */
 
 function quickChipClass(isActive: boolean) {
   return [
@@ -659,6 +403,7 @@ function quickChipClass(isActive: boolean) {
 
 function QuickCheckCard({
   accent,
+  accentStrong,
   glow,
   selectedReaction,
   initialReasons,
@@ -667,6 +412,7 @@ function QuickCheckCard({
   onSubmit,
 }: {
   accent: Rgb;
+  accentStrong: Rgb;
   glow: Rgb;
   selectedReaction: ImpactReaction | null;
   initialReasons: string[];
@@ -714,7 +460,8 @@ function QuickCheckCard({
       },
       maybe: {
         title: "What feels close, but not fully there yet?",
-        helper: "This helps Everleap understand what still needs pressure-testing.",
+        helper:
+          "This helps Everleap understand what still needs pressure-testing.",
         submitLabel: "Save",
         reasonOptions: [
           "Interesting but unsure",
@@ -769,39 +516,17 @@ function QuickCheckCard({
     setOpen(false);
   }
 
-  function closeDrawer() {
-    setOpen(false);
-  }
-
   return (
-    <section
-      className="relative overflow-hidden rounded-[24px] border border-emerald-300/12 bg-[#08130f]/90 px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-5"
-      style={{
-        boxShadow: `0 18px 48px rgba(0,0,0,0.22), 0 0 24px ${rgb(glow, 0.08)}`,
-      }}
-    >
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-px"
-        style={{
-          background: `linear-gradient(180deg, transparent 0%, ${rgb(
-            accent,
-            0.36
-          )} 24%, ${rgb(glow, 0.14)} 78%, transparent 100%)`,
-        }}
-      />
+    <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:px-5 sm:py-5">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
-            radial-gradient(circle at 12% 0%, ${rgb(accent, 0.14)} 0%, transparent 28%),
-            radial-gradient(circle at 88% 8%, ${rgb(glow, 0.14)} 0%, transparent 26%),
-            linear-gradient(90deg, rgba(16,52,41,0.16) 0%, rgba(6,18,18,0) 36%)
+            radial-gradient(circle at 12% 0%, ${rgb(accent, 0.12)} 0%, transparent 28%),
+            radial-gradient(circle at 82% 20%, ${rgb(accentStrong, 0.1)} 0%, transparent 24%),
+            radial-gradient(circle at 18% 100%, ${rgb(glow, 0.08)} 0%, transparent 30%)
           `,
         }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-28px] top-[-14px] h-28 w-28 rounded-full blur-3xl"
-        style={{ background: rgb(glow, 0.12) }}
       />
 
       <div className="relative">
@@ -832,13 +557,9 @@ function QuickCheckCard({
                 draftReaction === "liked"
                   ? `linear-gradient(180deg, ${rgb(
                       accent,
-                      0.16
+                      0.14
                     )} 0%, rgba(255,255,255,0.03) 100%)`
                   : "rgba(255,255,255,0.02)",
-              boxShadow:
-                draftReaction === "liked"
-                  ? `0 0 22px ${rgb(glow, 0.14)}`
-                  : "none",
             }}
           >
             <span aria-hidden>👍</span>
@@ -853,12 +574,12 @@ function QuickCheckCard({
             style={{
               borderColor:
                 draftReaction === "maybe"
-                  ? rgb(accent, 0.26)
+                  ? rgb(accentStrong, 0.24)
                   : "rgba(255,255,255,0.10)",
               background:
                 draftReaction === "maybe"
                   ? `linear-gradient(180deg, ${rgb(
-                      accent,
+                      accentStrong,
                       0.12
                     )} 0%, rgba(255,255,255,0.03) 100%)`
                   : "rgba(255,255,255,0.02)",
@@ -890,118 +611,99 @@ function QuickCheckCard({
         </div>
 
         <div
-          className={[
+          className={cx(
             "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
             open && reactionConfig
               ? "mt-4 max-h-[420px] opacity-100"
-              : "mt-0 max-h-0 opacity-0",
-          ].join(" ")}
+              : "mt-0 max-h-0 opacity-0"
+          )}
           aria-hidden={!open}
         >
           {reactionConfig ? (
-            <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)]">
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(circle at 12% 0%, ${rgb(
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[12px] font-semibold text-white/92">
+                    {reactionConfig.title}
+                  </div>
+                  <p className="mt-1 text-[12px] leading-5 text-white/56">
+                    {reactionConfig.helper}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="h-9 shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 text-[12px] font-semibold text-white/76 transition hover:bg-white/[0.07]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {reactionConfig.reasonOptions.map((reason) => {
+                  const active = reasons.includes(reason);
+                  return (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() => toggleReason(reason)}
+                      className="rounded-full border px-3 py-1.5 text-[12px] font-medium transition"
+                      style={{
+                        borderColor: active
+                          ? rgb(accent, 0.24)
+                          : "rgba(255,255,255,0.10)",
+                        background: active
+                          ? rgb(accent, 0.1)
+                          : "rgba(255,255,255,0.03)",
+                        color: active
+                          ? "rgba(255,255,255,0.96)"
+                          : "rgba(255,255,255,0.74)",
+                      }}
+                    >
+                      {reason}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3">
+                <textarea
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  rows={3}
+                  placeholder="Anything else that feels important?"
+                  className="w-full resize-none rounded-[18px] border border-white/10 bg-black/12 px-4 py-3 text-[13px] leading-5.5 text-white outline-none placeholder:text-white/28 focus:border-white/16"
+                />
+                <div className="mt-2 text-[11px] text-white/38">
+                  One sentence is enough.
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[13px] font-semibold text-white/72 transition hover:bg-white/[0.06]"
+                >
+                  Skip note
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSaving || !draftReaction}
+                  onClick={handleSubmit}
+                  className="h-10 rounded-2xl px-4 text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
+                  style={{
+                    background: `linear-gradient(180deg, ${rgb(
                       accent,
-                      0.1
-                    )} 0%, transparent 34%),
-                    radial-gradient(circle at 88% 0%, ${rgb(
-                      glow,
-                      0.08
-                    )} 0%, transparent 30%)
-                  `,
-                }}
-              />
-
-              <div className="relative">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-semibold text-white/92">
-                      {reactionConfig.title}
-                    </div>
-                    <p className="mt-1 text-[12px] leading-5 text-white/56">
-                      {reactionConfig.helper}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeDrawer}
-                    className="h-9 shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 text-[12px] font-semibold text-white/76 transition hover:bg-white/[0.07]"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {reactionConfig.reasonOptions.map((reason) => {
-                    const active = reasons.includes(reason);
-                    return (
-                      <button
-                        key={reason}
-                        type="button"
-                        onClick={() => toggleReason(reason)}
-                        className="rounded-full border px-3 py-1.5 text-[12px] font-medium transition"
-                        style={{
-                          borderColor: active
-                            ? rgb(accent, 0.24)
-                            : "rgba(255,255,255,0.10)",
-                          background: active
-                            ? rgb(accent, 0.12)
-                            : "rgba(255,255,255,0.03)",
-                          color: active
-                            ? "rgba(255,255,255,0.96)"
-                            : "rgba(255,255,255,0.74)",
-                        }}
-                      >
-                        {reason}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-3">
-                  <textarea
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    rows={3}
-                    placeholder="Anything else that feels important?"
-                    className="w-full resize-none rounded-[18px] border border-white/10 bg-black/12 px-4 py-3 text-[13px] leading-5.5 text-white outline-none placeholder:text-white/28 focus:border-white/16"
-                  />
-                  <div className="mt-2 text-[11px] text-white/38">
-                    One sentence is enough.
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={closeDrawer}
-                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[13px] font-semibold text-white/72 transition hover:bg-white/[0.06]"
-                  >
-                    Skip note
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isSaving || !draftReaction}
-                    onClick={handleSubmit}
-                    className="h-10 rounded-2xl px-4 text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
-                    style={{
-                      background: `linear-gradient(180deg, ${rgb(
-                        accent,
-                        0.24
-                      )} 0%, ${rgb(accent, 0.12)} 100%)`,
-                      border: `1px solid ${rgb(accent, 0.18)}`,
-                      boxShadow: `0 12px 28px ${rgb(glow, 0.14)}`,
-                    }}
-                  >
-                    {reactionConfig.submitLabel}
-                  </button>
-                </div>
+                      0.2
+                    )} 0%, ${rgb(accentStrong, 0.1)} 100%)`,
+                    border: `1px solid ${rgb(accent, 0.16)}`,
+                  }}
+                >
+                  {reactionConfig.submitLabel}
+                </button>
               </div>
             </div>
           ) : null}
@@ -1011,9 +713,157 @@ function QuickCheckCard({
   );
 }
 
-/* =============================================================================
-   Page
-============================================================================= */
+function OpportunityRow({
+  item,
+  accent,
+  accentStrong,
+  isFirst,
+}: {
+  item: ImpactOpportunity;
+  accent: Rgb;
+  accentStrong: Rgb;
+  isFirst: boolean;
+}) {
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group relative block py-4 sm:py-4.5"
+    >
+      {!isFirst ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              accent,
+              0.18
+            )} 14%, ${rgb(accentStrong, 0.08)} 84%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="max-w-[40rem] text-[16px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover:text-white/96 sm:text-[17px]">
+            {item.title}
+          </h4>
+
+          <div className="mt-1 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.14em] text-white/36">
+            <span>{item.provider}</span>
+            <span>{item.formatLabel}</span>
+          </div>
+
+          <p className="mt-2 max-w-[42rem] text-[13px] leading-[1.62] text-white/66 transition group-hover:text-white/74 sm:text-[14px]">
+            {item.summary}
+          </p>
+
+          <p
+            className="mt-2 max-w-[42rem] text-[12px] leading-[1.58]"
+            style={{ color: rgb(accentStrong, 0.84) }}
+          >
+            {item.whyItHelps}
+          </p>
+        </div>
+
+        <div className="relative mt-1 hidden h-9 w-9 shrink-0 sm:block">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+            style={{
+              backgroundColor: rgb(accent, 0.14),
+            }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover:translate-x-[1px]"
+            style={{
+              borderColor: rgb(accent, 0.22),
+              backgroundColor: rgb(accentStrong, 0.08),
+            }}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function OpportunityGroup({
+  title,
+  description,
+  items,
+  accent,
+  accentStrong,
+  tone,
+}: {
+  title: string;
+  description: string;
+  items: ImpactOpportunity[];
+  accent: Rgb;
+  accentStrong: Rgb;
+  tone: "local" | "online";
+}) {
+  const Icon = tone === "local" ? Compass : Laptop;
+  const border = tone === "local" ? accent : accentStrong;
+
+  const background =
+    tone === "local"
+      ? `
+        radial-gradient(circle at 12% 0%, ${rgb(accent, 0.1)} 0%, transparent 32%),
+        radial-gradient(circle at 88% 100%, ${rgb(accentStrong, 0.05)} 0%, transparent 26%),
+        linear-gradient(180deg, rgba(8,20,18,0.92) 0%, rgba(8,18,18,0.88) 100%)
+      `
+      : `
+        radial-gradient(circle at 88% 0%, ${rgb(accentStrong, 0.1)} 0%, transparent 30%),
+        radial-gradient(circle at 10% 100%, ${rgb(accent, 0.05)} 0%, transparent 24%),
+        linear-gradient(180deg, rgba(8,16,24,0.92) 0%, rgba(8,14,22,0.88) 100%)
+      `;
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-[28px] border px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.18)] sm:px-6 sm:py-6"
+      style={{
+        borderColor: rgb(border, 0.18),
+        background,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
+            border,
+            0.28
+          )} 18%, ${rgb(border, 0.08)} 82%, transparent 100%)`,
+        }}
+      />
+
+      <div className="relative">
+        <div className="flex items-center gap-2 text-white/92">
+          <Icon className="h-4 w-4 text-white/60" />
+          <div className="text-[1rem] font-semibold">{title}</div>
+        </div>
+
+        {description ? (
+          <p className="mt-2 max-w-[44rem] text-[13px] leading-6 text-white/58 sm:text-[14px]">
+            {description}
+          </p>
+        ) : null}
+
+        <div className="mt-4">
+          {items.map((item, index) => (
+            <OpportunityRow
+              key={item.id}
+              item={item}
+              accent={border}
+              accentStrong={accentStrong}
+              isFirst={index === 0}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function ImpactPathDetailPage() {
   const router = useRouter();
@@ -1031,7 +881,7 @@ export default function ImpactPathDetailPage() {
     }
   }, [pathId]);
 
-  const [firstName, setFirstName] = React.useState<string | null>(null);
+  const [firstName, setFirstName] = React.useState("");
   const [selectedReaction, setSelectedReaction] =
     React.useState<ImpactReaction | null>(null);
   const [savedReasons, setSavedReasons] = React.useState<string[]>([]);
@@ -1062,53 +912,49 @@ export default function ImpactPathDetailPage() {
   const accentStrong = path.theme.accentStrong ?? path.theme.accent;
   const glow = path.theme.glow ?? path.theme.accent;
 
-  const overallSignalScore = React.useMemo(
-    () => getOverallSignalScore(path.fitSignals),
-    [path.fitSignals]
-  );
+  const radarLabels = React.useMemo(() => {
+    const labels = path.fitSignals
+      .slice(0, 5)
+      .map((signal) => signal.label)
+      .filter(Boolean);
 
-  const signalLabel = React.useMemo(
-    () => getSignalLabel(overallSignalScore),
-    [overallSignalScore]
-  );
-
-  const heroStoryLead = React.useMemo(
-    () => getSignalStoryLead(overallSignalScore),
-    [overallSignalScore]
-  );
-
-  const agenticOpening = React.useMemo(
-    () => getImpactAgenticOpening(firstName ?? "", path.hero.title),
-    [firstName, path.hero.title]
-  );
-
-  const fitSignalIntro = React.useMemo(() => {
-    const topSignal = [...path.fitSignals].sort((a, b) => b.score - a.score)[0];
-    if (!topSignal) {
-      return "A few smaller signals are clustering around this path.";
+    while (labels.length < 5) {
+      labels.push(["people", "care", "energy", "purpose", "momentum"][labels.length]);
     }
-    return `${topSignal.label} is one of the clearest reasons this impact path is surfacing right now.`;
+
+    return labels;
   }, [path.fitSignals]);
 
-  const impactPayoffDescription = React.useMemo(() => {
-    const nextLead = path.nextSteps?.actions?.[0]?.title;
-    const opportunityLead =
-      path.nextSteps?.opportunityGroups?.[0]?.title ?? null;
+  const radarValues = React.useMemo(() => {
+    const values = path.fitSignals
+      .slice(0, 5)
+      .map((signal) => clampScore(signal.score));
+    while (values.length < 5) values.push(68);
+    return values;
+  }, [path.fitSignals]);
 
-    if (nextLead && opportunityLead) {
-      return `From small moves like ${nextLead.toLowerCase()} to real openings inside ${opportunityLead.toLowerCase()}, this is where caring starts turning into momentum.`;
-    }
+  const heroPills = React.useMemo(() => {
+    const fromPull = path.hero.whyItPullsYouIn.slice(0, 3);
+    const fromTraits = path.traitChips
+      .slice(0, 3)
+      .map((chip) => chip.label)
+      .filter(Boolean);
 
-    if (nextLead) {
-      return `You do not need a giant plan to begin. This opens concrete next steps so your values can move into action.`;
-    }
+    return Array.from(new Set([...fromPull, ...fromTraits])).slice(0, 4);
+  }, [path.hero.whyItPullsYouIn, path.traitChips]);
 
-    if (opportunityLead) {
-      return `Real opportunities, grouped into practical paths, so this does not stay abstract for long.`;
-    }
+  const authoredOpportunityGroups = React.useMemo(
+    () =>
+      path.nextSteps.opportunityGroups.filter(
+        (group) => group.items && group.items.length > 0
+      ),
+    [path.nextSteps.opportunityGroups]
+  );
 
-    return "Real next steps and concrete openings so this path can move from meaning into motion.";
-  }, [path]);
+  function inferTone(group: ImpactOpportunityGroupType): "local" | "online" {
+    if (group.items.every((item) => item.mode === "virtual")) return "online";
+    return "local";
+  }
 
   function handleQuickCheckSubmit(payload: {
     reaction: ImpactReaction;
@@ -1144,139 +990,87 @@ export default function ImpactPathDetailPage() {
 
   return (
     <main className="relative text-white">
-      <div className="flex w-full flex-col gap-5 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
         <Link
           href="/main/explore/impact"
-          className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Impact
         </Link>
 
-        <SurfaceCard
-          accent={accent}
-          glow={glow}
-          className="px-4 py-4 sm:px-5 sm:py-5"
-        >
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-7 sm:py-7">
           <div
-            className="pointer-events-none absolute -left-10 -top-10 h-36 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(accent, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[18%] top-[-24px] h-28 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.08) }}
-          />
-          <div
-            className="pointer-events-none absolute right-10 top-0 h-24 w-32 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(circle at 80% 18%, ${rgb(glow, 0.16)} 0%, transparent 18%),
+                radial-gradient(circle at 18% 14%, ${rgb(
+                  accentStrong,
+                  0.12
+                )} 0%, transparent 22%),
+                linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.00) 48%)
+              `,
+            }}
           />
 
-          <ImpactPathHeroEmblem
-            accent={accent}
-            accentStrong={accentStrong}
-            glow={glow}
-          />
+          <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_280px] lg:items-end">
+            <div className="min-w-0">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/58">
+                <HeartHandshake className="h-3.5 w-3.5 text-white/60" />
+                {path.hero.eyebrow}
+              </div>
 
-          <div className="pr-14 sm:pr-20">
-            <div className={sectionKicker()}>{path.hero.eyebrow}</div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="max-w-[11ch] text-[2rem] font-semibold leading-[0.98] tracking-[-0.05em] text-white/97 sm:max-w-none sm:text-[2.35rem]">
+              <h1 className="mt-4 text-[32px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[40px]">
                 {path.hero.title}
               </h1>
 
-              <HeroInlineSignal
-                score={overallSignalScore}
-                accent={accent}
-                glow={glow}
-              />
-            </div>
-
-            <div className="mt-1.5 text-[12px] uppercase tracking-[0.16em] text-white/42">
-              {signalLabel}
-            </div>
-
-            <p className="mt-3 text-[1rem] leading-6.5 sm:text-[1.06rem]" style={{ color: rgb(accent, 0.96) }}>
-              {path.hero.hook}
-            </p>
-
-            <div className="mt-3 space-y-3 text-[14px] leading-6 text-white/62 sm:text-[15px]">
-              <p>{path.hero.summary}</p>
-              <p>
-                {heroStoryLead} {agenticOpening}
-              </p>
-            </div>
-
-            {path.hero.whyItPullsYouIn?.length ? (
-              <ul className="mt-4 space-y-2.5">
-                {path.hero.whyItPullsYouIn.slice(0, 3).map((item, index) => (
-                  <li
-                    key={`${path.id}-pull-${index}`}
-                    className="flex gap-3 text-[13px] leading-5.5 text-white/66 sm:text-[14px]"
-                  >
-                    <span
-                      className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: rgb(accentStrong, 0.92) }}
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        </SurfaceCard>
-
-        <SurfaceCard
-          accent={accentStrong}
-          glow={glow}
-          className="px-4 py-3 sm:px-5 sm:py-3.5"
-        >
-          <div
-            className="pointer-events-none absolute -left-8 top-0 h-28 w-28 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.11) }}
-          />
-          <div
-            className="pointer-events-none absolute right-0 top-0 h-28 w-36 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
-          />
-
-          <SectionHeader
-            icon={Radar}
-            kicker="Why this could fit"
-            title="A quick read on the match"
-            description={fitSignalIntro}
-            accent={accentStrong}
-          />
-
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {path.traitChips.map((chip) => (
-              <span
-                key={chip.id}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/74"
+              <p
+                className="mt-4 max-w-3xl text-[16px] leading-[1.7] sm:text-[17px]"
+                style={{ color: rgb(accent, 0.96) }}
               >
-                {chip.label}
-              </span>
-            ))}
-          </div>
+                {path.hero.hook}
+              </p>
 
-          <div className="mt-2.5 space-y-2.5">
-            {path.fitSignals.map((signal) => (
-              <SignalDetailRow
-                key={signal.id}
-                id={signal.id}
-                label={signal.label}
-                score={signal.score}
-                explanation={signal.explanation}
+              <p className="mt-4 max-w-3xl text-[14px] leading-[1.75] text-white/74 sm:text-[15px]">
+                {firstName
+                  ? `${firstName}, this path is not about becoming some perfect helper overnight. It is about noticing whether this kind of contribution gives you energy instead of draining it.`
+                  : "This path is not about becoming some perfect helper overnight. It is about noticing whether this kind of contribution gives you energy instead of draining it."}
+              </p>
+
+              <p className="mt-4 max-w-3xl text-[14px] leading-[1.75] text-white/66 sm:text-[15px]">
+                {path.hero.summary}
+              </p>
+
+              {heroPills.length ? (
+                <div className="mt-5 flex flex-wrap gap-2.5">
+                  {heroPills.map((item, index) => (
+                    <span
+                      key={`${path.id}-hero-pill-${index}`}
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] text-white/70"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="relative hidden lg:flex lg:justify-end lg:self-end lg:pb-1">
+              <HeroRadar
+                labels={radarLabels}
+                values={radarValues}
                 accent={accent}
                 accentStrong={accentStrong}
                 glow={glow}
               />
-            ))}
+            </div>
           </div>
-        </SurfaceCard>
+        </section>
 
         <QuickCheckCard
           accent={accent}
+          accentStrong={accentStrong}
           glow={glow}
           selectedReaction={selectedReaction}
           initialReasons={savedReasons}
@@ -1285,42 +1079,38 @@ export default function ImpactPathDetailPage() {
           onSubmit={handleQuickCheckSubmit}
         />
 
-        <SurfaceCard
-          accent={glow}
-          glow={accentStrong}
-          className="px-5 py-5 sm:px-6 sm:py-6"
-        >
-          <div
-            className="pointer-events-none absolute -left-8 top-[-10px] h-28 w-32 rounded-full blur-3xl"
-            style={{ background: rgb(accent, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[-18px] top-[-18px] h-32 w-36 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[14%] bottom-[-22px] h-24 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
-          />
+        <section className="relative">
+          <div className="flex items-center gap-2 text-white/92">
+            <ExternalLink className="h-4 w-4 text-white/60" />
+            <div className="text-[1rem] font-semibold">Try this for real</div>
+          </div>
 
-          <div className={sectionKicker()}>Impact payoff</div>
-
-          <h2 className="mt-1.5 text-[1.12rem] font-semibold tracking-[-0.03em] text-white/96 sm:text-[1.24rem]">
-            This is where caring turns into real motion
-          </h2>
-
-          <p className="mt-2 max-w-[58ch] text-[13px] leading-5.5 text-white/62 sm:text-[14px] sm:leading-6">
-            {impactPayoffDescription}
+          <p className="mt-2 max-w-3xl text-[13px] leading-6 text-white/60 sm:text-[14px]">
+            {path.nextSteps.summary}
           </p>
 
-          <Link
-            href={`/main/explore/impact/${path.slug}/next-steps`}
-            className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-white/90 transition hover:text-white"
-          >
-            <span>Open impact next steps</span>
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
-        </SurfaceCard>
+          <div className="mt-6 space-y-5">
+            {authoredOpportunityGroups.map((group) => (
+              <OpportunityGroup
+                key={group.id}
+                title={group.title}
+                description={group.description}
+                items={group.items}
+                accent={accent}
+                accentStrong={accentStrong}
+                tone={inferTone(group)}
+              />
+            ))}
+
+            {authoredOpportunityGroups.length === 0 ? (
+              <section className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+                <p className="text-[14px] leading-6 text-white/60">
+                  No live opportunities are wired into this path yet.
+                </p>
+              </section>
+            ) : null}
+          </div>
+        </section>
       </div>
     </main>
   );

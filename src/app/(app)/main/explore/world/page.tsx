@@ -33,6 +33,22 @@ type WorldProfileSignals = {
   fullText: string;
 };
 
+type WorldReaction = "liked" | "maybe" | "dismissed";
+
+type WorldReactionFeedback = {
+  reaction: WorldReaction;
+  reasons: string[];
+  note: string;
+  savedAt: number;
+};
+
+type WorldReactionState = {
+  dismissed: string[];
+  maybe: string[];
+  liked: string[];
+  feedbackBySlug?: Record<string, WorldReactionFeedback>;
+};
+
 type WorldOpportunityPreview = {
   id: string;
   title: string;
@@ -53,6 +69,7 @@ type WorldAtmosphere = {
 };
 
 const MAX_VISIBLE_WORLD_EXPERIENCES = 4;
+const WORLD_REACTIONS_STORAGE_KEY = "everleap.explore.world.reactions.v1";
 
 const EXPLORE_LANES: readonly ExploreLaneTab[] = [
   {
@@ -343,19 +360,62 @@ function extractCardField(
   return asString(card?.[field]) ?? "";
 }
 
-function pathAccent(experience: WorldExperience): Rgb {
-  const theme = asRecord(experience.theme);
-  const accent = asRecord(theme?.accent);
+function parseColorToRgb(value: string | null | undefined): Rgb | null {
+  if (!value) return null;
+  const input = value.trim();
 
-  if (
-    typeof accent?.r === "number" &&
-    typeof accent?.g === "number" &&
-    typeof accent?.b === "number"
-  ) {
-    return { r: accent.r, g: accent.g, b: accent.b };
+  const rgbMatch = input.match(
+    /^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*[0-9.]+\s*)?\)$/i
+  );
+  if (rgbMatch) {
+    return {
+      r: Number(rgbMatch[1]),
+      g: Number(rgbMatch[2]),
+      b: Number(rgbMatch[3]),
+    };
   }
 
-  return { r: 251, g: 191, b: 36 };
+  const hexMatch = input.match(/^#([0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const hex = hexMatch[1];
+    return {
+      r: parseInt(hex.slice(0, 2), 16),
+      g: parseInt(hex.slice(2, 4), 16),
+      b: parseInt(hex.slice(4, 6), 16),
+    };
+  }
+
+  const shortHexMatch = input.match(/^#([0-9a-f]{3})$/i);
+  if (shortHexMatch) {
+    const hex = shortHexMatch[1];
+    return {
+      r: parseInt(hex[0] + hex[0], 16),
+      g: parseInt(hex[1] + hex[1], 16),
+      b: parseInt(hex[2] + hex[2], 16),
+    };
+  }
+
+  return null;
+}
+
+function pathAccent(experience: WorldExperience): Rgb {
+  const parsed = parseColorToRgb(experience.theme?.accent);
+  return parsed ?? { r: 251, g: 191, b: 36 };
+}
+
+function pathAccentStrong(experience: WorldExperience): Rgb {
+  const parsed =
+    parseColorToRgb(experience.theme?.accentStrong) ??
+    parseColorToRgb(experience.theme?.accent);
+  return parsed ?? { r: 245, g: 158, b: 11 };
+}
+
+function pathGlow(experience: WorldExperience): Rgb {
+  const parsed =
+    parseColorToRgb(experience.theme?.glow) ??
+    parseColorToRgb(experience.theme?.accentStrong) ??
+    parseColorToRgb(experience.theme?.accent);
+  return parsed ?? { r: 252, g: 211, b: 77 };
 }
 
 function buildExperienceKeywordSet(experience: WorldExperience): string[] {
@@ -437,6 +497,8 @@ function getWorldAtmosphere(
   experience: WorldExperience,
   accent: Rgb
 ): WorldAtmosphere {
+  const strong = pathAccentStrong(experience);
+  const glow = pathGlow(experience);
   const title = extractCardField(experience, "title").toLowerCase();
   const description = extractCardField(experience, "description").toLowerCase();
   const combined = `${title} ${description}`;
@@ -448,14 +510,14 @@ function getWorldAtmosphere(
     combined.includes("exchange")
   ) {
     return {
-      border: { r: 255, g: 190, b: 84 },
-      topGlow: { r: 255, g: 178, b: 66 },
-      sideGlow: { r: 255, g: 142, b: 47 },
-      washA: { r: 255, g: 186, b: 78 },
-      washB: { r: 255, g: 132, b: 58 },
-      opportunityGlow: { r: 255, g: 190, b: 84 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
       opportunityNode: { r: 255, g: 226, b: 170 },
-      futureGlow: { r: 255, g: 174, b: 76 },
+      futureGlow: strong,
       futureNode: { r: 255, g: 228, b: 176 },
     };
   }
@@ -467,14 +529,14 @@ function getWorldAtmosphere(
     combined.includes("field")
   ) {
     return {
-      border: { r: 112, g: 212, b: 156 },
-      topGlow: { r: 98, g: 198, b: 148 },
-      sideGlow: { r: 68, g: 168, b: 130 },
-      washA: { r: 100, g: 196, b: 146 },
-      washB: { r: 72, g: 154, b: 128 },
-      opportunityGlow: { r: 126, g: 224, b: 168 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
       opportunityNode: { r: 205, g: 247, b: 222 },
-      futureGlow: { r: 118, g: 214, b: 160 },
+      futureGlow: strong,
       futureNode: { r: 210, g: 248, b: 224 },
     };
   }
@@ -483,165 +545,203 @@ function getWorldAtmosphere(
     combined.includes("city") ||
     combined.includes("systems") ||
     combined.includes("health") ||
-    combined.includes("communities")
+    combined.includes("communities") ||
+    combined.includes("policy")
   ) {
     return {
-      border: { r: 120, g: 196, b: 255 },
-      topGlow: { r: 104, g: 180, b: 255 },
-      sideGlow: { r: 78, g: 142, b: 255 },
-      washA: { r: 110, g: 184, b: 255 },
-      washB: { r: 132, g: 126, b: 255 },
-      opportunityGlow: { r: 120, g: 196, b: 255 },
+      border: accent,
+      topGlow: strong,
+      sideGlow: glow,
+      washA: accent,
+      washB: strong,
+      opportunityGlow: accent,
       opportunityNode: { r: 190, g: 228, b: 255 },
-      futureGlow: { r: 118, g: 188, b: 255 },
+      futureGlow: strong,
       futureNode: { r: 194, g: 232, b: 255 },
     };
   }
 
   return {
     border: accent,
-    topGlow: accent,
-    sideGlow: { r: Math.max(0, accent.r - 20), g: accent.g, b: accent.b },
+    topGlow: strong,
+    sideGlow: glow,
     washA: accent,
-    washB: { r: accent.r, g: Math.max(0, accent.g - 34), b: accent.b },
+    washB: strong,
     opportunityGlow: accent,
     opportunityNode: { r: 255, g: 228, b: 176 },
-    futureGlow: accent,
+    futureGlow: strong,
     futureNode: { r: 255, g: 228, b: 176 },
   };
-}
-
-function extractHref(value: unknown): string | null {
-  const direct = asString(value);
-  if (direct && /^https?:\/\//i.test(direct)) return direct;
-
-  const record = asRecord(value);
-  if (!record) return null;
-
-  const candidates = [
-    record.href,
-    record.url,
-    record.link,
-    record.website,
-    record.path,
-  ];
-
-  for (const candidate of candidates) {
-    const found = asString(candidate);
-    if (found && /^https?:\/\//i.test(found)) {
-      return found;
-    }
-  }
-
-  return null;
-}
-
-function normalizeOpportunityItem(
-  value: unknown,
-  fallbackId: string
-): WorldOpportunityPreview | null {
-  const record = asRecord(value);
-  if (!record) return null;
-
-  const href = extractHref(record);
-  if (!href) return null;
-
-  const title =
-    asString(record.title) ??
-    asString(record.name) ??
-    asString(record.label) ??
-    asString(record.headline);
-
-  if (!title) return null;
-
-  const note =
-    asString(record.note) ??
-    asString(record.description) ??
-    asString(record.summary) ??
-    asString(record.body) ??
-    asString(record.oneLiner) ??
-    asString(record.whyItFits) ??
-    "";
-
-  return {
-    id: asString(record.id) ?? fallbackId,
-    title,
-    href,
-    note,
-  };
-}
-
-function collectOpportunityCandidates(
-  value: unknown,
-  bucket: WorldOpportunityPreview[],
-  seen: Set<string>,
-  depth = 0,
-  maxDepth = 4
-) {
-  if (depth > maxDepth || value == null) return;
-
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => {
-      const normalized = normalizeOpportunityItem(item, `item-${depth}-${index}`);
-      if (normalized && !seen.has(normalized.href)) {
-        seen.add(normalized.href);
-        bucket.push(normalized);
-      }
-
-      collectOpportunityCandidates(item, bucket, seen, depth + 1, maxDepth);
-    });
-    return;
-  }
-
-  const record = asRecord(value);
-  if (!record) return;
-
-  const preferredKeys = [
-    "featuredOpportunity",
-    "opportunityGroups",
-    "opportunities",
-    "items",
-    "links",
-    "resources",
-    "actions",
-    "waysToTry",
-  ];
-
-  for (const key of preferredKeys) {
-    if (key in record) {
-      collectOpportunityCandidates(record[key], bucket, seen, depth + 1, maxDepth);
-    }
-  }
-
-  const direct = normalizeOpportunityItem(record, `record-${depth}-${bucket.length}`);
-  if (direct && !seen.has(direct.href)) {
-    seen.add(direct.href);
-    bucket.push(direct);
-  }
-
-  for (const child of Object.values(record)) {
-    if (typeof child === "object" && child !== null) {
-      collectOpportunityCandidates(child, bucket, seen, depth + 1, maxDepth);
-    }
-  }
 }
 
 function extractWorldOpportunities(
   experience: WorldExperience
 ): WorldOpportunityPreview[] {
-  const bucket: WorldOpportunityPreview[] = [];
+  const previews: WorldOpportunityPreview[] = [];
   const seen = new Set<string>();
 
-  collectOpportunityCandidates(experience, bucket, seen);
+  const addOpportunity = (
+    title: string | null,
+    href: string | null,
+    note: string | null,
+    id: string
+  ) => {
+    if (!title || !href || seen.has(href)) return;
+    seen.add(href);
+    previews.push({
+      id,
+      title,
+      href,
+      note: note ?? "",
+    });
+  };
 
-  return bucket.slice(0, 2);
+  addOpportunity(
+    experience.featuredOpportunity.title,
+    experience.featuredOpportunity.href,
+    experience.featuredOpportunity.description,
+    "featured-opportunity"
+  );
+
+  for (const group of experience.opportunityGroups) {
+    for (const opportunity of group.opportunities) {
+      addOpportunity(
+        opportunity.title,
+        opportunity.href,
+        opportunity.description,
+        `${group.id}-${opportunity.title}`
+      );
+      if (previews.length >= 2) return previews;
+    }
+  }
+
+  return previews.slice(0, 2);
 }
 
-function getWorldPayoffIntro(experience: WorldExperience) {
-  const hook = extractCardField(experience, "hook");
-  return hook
-    ? hook
-    : "Two real ways to test this world path: one nearby when possible, and one you can start from where you are.";
+function emptyWorldReactionState(): WorldReactionState {
+  return {
+    dismissed: [],
+    maybe: [],
+    liked: [],
+    feedbackBySlug: {},
+  };
+}
+
+function normalizeSlugList(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return Array.from(
+    new Set(
+      input
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeFeedbackBySlug(
+  input: unknown
+): Record<string, WorldReactionFeedback> {
+  if (!input || typeof input !== "object") return {};
+
+  const result: Record<string, WorldReactionFeedback> = {};
+
+  for (const [slug, value] of Object.entries(
+    input as Record<string, unknown>
+  )) {
+    if (!slug.trim() || !value || typeof value !== "object") continue;
+
+    const raw = value as Record<string, unknown>;
+    const reaction =
+      raw.reaction === "liked" ||
+      raw.reaction === "maybe" ||
+      raw.reaction === "dismissed"
+        ? raw.reaction
+        : null;
+
+    if (!reaction) continue;
+
+    const reasons = Array.isArray(raw.reasons)
+      ? raw.reasons
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    const note = typeof raw.note === "string" ? raw.note : "";
+    const savedAt =
+      typeof raw.savedAt === "number" && Number.isFinite(raw.savedAt)
+        ? raw.savedAt
+        : Date.now();
+
+    result[slug] = {
+      reaction,
+      reasons,
+      note,
+      savedAt,
+    };
+  }
+
+  return result;
+}
+
+function readWorldReactionState(): WorldReactionState {
+  if (typeof window === "undefined") return emptyWorldReactionState();
+
+  try {
+    const raw = window.localStorage.getItem(WORLD_REACTIONS_STORAGE_KEY);
+    if (!raw) return emptyWorldReactionState();
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    return {
+      dismissed: normalizeSlugList(parsed.dismissed),
+      maybe: normalizeSlugList(parsed.maybe),
+      liked: normalizeSlugList(parsed.liked),
+      feedbackBySlug: normalizeFeedbackBySlug(parsed.feedbackBySlug),
+    };
+  } catch {
+    return emptyWorldReactionState();
+  }
+}
+
+function writeWorldReactionState(state: WorldReactionState) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    WORLD_REACTIONS_STORAGE_KEY,
+    JSON.stringify(state)
+  );
+}
+
+function saveWorldReactionFeedback(args: {
+  slug: string;
+  reaction: WorldReaction;
+  reasons: string[];
+  note: string;
+}) {
+  const current = readWorldReactionState();
+
+  const next: WorldReactionState = {
+    dismissed: current.dismissed.filter((item) => item !== args.slug),
+    maybe: current.maybe.filter((item) => item !== args.slug),
+    liked: current.liked.filter((item) => item !== args.slug),
+    feedbackBySlug: {
+      ...(current.feedbackBySlug ?? {}),
+    },
+  };
+
+  next[args.reaction] = Array.from(new Set([...next[args.reaction], args.slug]));
+  next.feedbackBySlug![args.slug] = {
+    reaction: args.reaction,
+    reasons: Array.from(
+      new Set(args.reasons.map((item) => item.trim()).filter(Boolean))
+    ),
+    note: args.note.trim(),
+    savedAt: Date.now(),
+  };
+
+  writeWorldReactionState(next);
+  return next;
 }
 
 function IntroOrbitArt() {
@@ -868,14 +968,377 @@ function OpportunityRow({
   );
 }
 
+function quickChipClass(isActive: boolean) {
+  return [
+    "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
+    isActive
+      ? "text-white"
+      : "text-white/78 hover:text-white hover:bg-white/[0.06]",
+  ].join(" ");
+}
+
+function WorldQuickCheckCard({
+  accent,
+  strong,
+  glow,
+  selectedReaction,
+  initialReasons,
+  initialNote,
+  isSaving,
+  onSubmit,
+}: {
+  accent: Rgb;
+  strong: Rgb;
+  glow: Rgb;
+  selectedReaction: WorldReaction | null;
+  initialReasons: string[];
+  initialNote: string;
+  isSaving: boolean;
+  onSubmit: (payload: {
+    reaction: WorldReaction;
+    reasons: string[];
+    note: string;
+  }) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [draftReaction, setDraftReaction] =
+    React.useState<WorldReaction | null>(selectedReaction);
+  const [reasons, setReasons] = React.useState<string[]>(initialReasons);
+  const [note, setNote] = React.useState(initialNote);
+
+  React.useEffect(() => {
+    setDraftReaction(selectedReaction);
+    setReasons(initialReasons);
+    setNote(initialNote);
+  }, [selectedReaction, initialReasons, initialNote]);
+
+  const reactionConfig = React.useMemo(() => {
+    const map: Record<
+      WorldReaction,
+      {
+        title: string;
+        helper: string;
+        submitLabel: string;
+        reasonOptions: string[];
+      }
+    > = {
+      liked: {
+        title: "What part of this world pulls you in most?",
+        helper:
+          "This helps Everleap notice what kinds of people, places, and systems feel real for you.",
+        submitLabel: "Save",
+        reasonOptions: [
+          "I want to experience this directly",
+          "The people side pulls me in",
+          "The systems side feels alive",
+          "I could see myself exploring this more",
+          "This feels like a strong signal",
+        ],
+      },
+      maybe: {
+        title: "What feels interesting, but not fully clear yet?",
+        helper:
+          "You are not locking anything in. This just sharpens what to show next.",
+        submitLabel: "Save",
+        reasonOptions: [
+          "Some parts feel strong",
+          "I need more real examples",
+          "I am curious but unsure",
+          "I want to compare it to other world paths",
+          "I am not sure how it would feel in real life",
+        ],
+      },
+      dismissed: {
+        title: "What feels off about this world path?",
+        helper:
+          "Tell Everleap why this one misses, and it can step aside for a better fit.",
+        submitLabel: "Remove this path",
+        reasonOptions: [
+          "The topic does not pull me in",
+          "I do not connect with the people or places here",
+          "It feels too abstract",
+          "Another path feels more natural",
+          "I would rather explore something else",
+        ],
+      },
+    };
+
+    return draftReaction ? map[draftReaction] : null;
+  }, [draftReaction]);
+
+  function pickReaction(reaction: WorldReaction) {
+    setDraftReaction(reaction);
+    setOpen(true);
+
+    if (reaction !== selectedReaction) {
+      setReasons([]);
+      setNote("");
+    }
+  }
+
+  function toggleReason(reason: string) {
+    setReasons((current) =>
+      current.includes(reason)
+        ? current.filter((item) => item !== reason)
+        : [...current, reason]
+    );
+  }
+
+  function handleSubmit() {
+    if (!draftReaction) return;
+    onSubmit({
+      reaction: draftReaction,
+      reasons,
+      note,
+    });
+    setOpen(false);
+  }
+
+  return (
+    <section
+      className="relative mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-[#0a121d]/72 px-4 py-4 backdrop-blur-xl"
+      style={{
+        boxShadow: `0 18px 48px rgba(0,0,0,0.20), 0 0 24px ${rgb(glow, 0.06)}`,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(circle at 12% 0%, ${rgb(accent, 0.12)} 0%, transparent 28%),
+            radial-gradient(circle at 82% 20%, ${rgb(strong, 0.1)} 0%, transparent 24%),
+            radial-gradient(circle at 18% 100%, ${rgb(glow, 0.08)} 0%, transparent 30%)
+          `,
+        }}
+      />
+
+      <div className="relative">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          Quick check
+        </div>
+
+        <div className="mt-2 text-[15px] font-semibold tracking-[-0.02em] text-white/94 sm:text-[16px]">
+          Does this world feel like one you want to step into?
+        </div>
+
+        <p className="mt-1 text-[12px] leading-5.5 text-white/56 sm:text-[13px]">
+          This is just signal, not a final answer.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2.5">
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("liked")}
+            className={quickChipClass(draftReaction === "liked")}
+            style={{
+              borderColor:
+                draftReaction === "liked"
+                  ? rgb(accent, 0.3)
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "liked"
+                  ? `linear-gradient(180deg, ${rgb(
+                      accent,
+                      0.14
+                    )} 0%, rgba(255,255,255,0.03) 100%)`
+                  : "rgba(255,255,255,0.02)",
+              boxShadow:
+                draftReaction === "liked"
+                  ? `0 0 20px ${rgb(glow, 0.12)}`
+                  : "none",
+            }}
+          >
+            <span aria-hidden>👍</span>
+            <span>Yes, I want more of this</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("maybe")}
+            className={quickChipClass(draftReaction === "maybe")}
+            style={{
+              borderColor:
+                draftReaction === "maybe"
+                  ? rgb(strong, 0.24)
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "maybe"
+                  ? `linear-gradient(180deg, ${rgb(
+                      strong,
+                      0.12
+                    )} 0%, rgba(255,255,255,0.03) 100%)`
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <span aria-hidden>🙂</span>
+            <span>Maybe</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("dismissed")}
+            className={quickChipClass(draftReaction === "dismissed")}
+            style={{
+              borderColor:
+                draftReaction === "dismissed"
+                  ? "rgba(255,255,255,0.18)"
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "dismissed"
+                  ? "rgba(255,255,255,0.07)"
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <span aria-hidden>👎</span>
+            <span>Not for me</span>
+          </button>
+        </div>
+
+        <div
+          className={[
+            "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
+            open && reactionConfig
+              ? "mt-4 max-h-[420px] opacity-100"
+              : "mt-0 max-h-0 opacity-0",
+          ].join(" ")}
+          aria-hidden={!open}
+        >
+          {reactionConfig ? (
+            <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)]">
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: `
+                    radial-gradient(circle at 12% 0%, ${rgb(
+                      accent,
+                      0.09
+                    )} 0%, transparent 34%),
+                    radial-gradient(circle at 88% 0%, ${rgb(
+                      strong,
+                      0.08
+                    )} 0%, transparent 30%)
+                  `,
+                }}
+              />
+
+              <div className="relative">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[12px] font-semibold text-white/92">
+                      {reactionConfig.title}
+                    </div>
+                    <p className="mt-1 text-[12px] leading-5 text-white/56">
+                      {reactionConfig.helper}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="h-9 shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 text-[12px] font-semibold text-white/76 transition hover:bg-white/[0.07]"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {reactionConfig.reasonOptions.map((reason) => {
+                    const active = reasons.includes(reason);
+                    return (
+                      <button
+                        key={reason}
+                        type="button"
+                        onClick={() => toggleReason(reason)}
+                        className="rounded-full border px-3 py-1.5 text-[12px] font-medium transition"
+                        style={{
+                          borderColor: active
+                            ? rgb(accent, 0.24)
+                            : "rgba(255,255,255,0.10)",
+                          background: active
+                            ? rgb(accent, 0.1)
+                            : "rgba(255,255,255,0.03)",
+                          color: active
+                            ? "rgba(255,255,255,0.96)"
+                            : "rgba(255,255,255,0.74)",
+                        }}
+                      >
+                        {reason}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3">
+                  <textarea
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={3}
+                    placeholder="Anything else that feels important?"
+                    className="w-full resize-none rounded-[18px] border border-white/10 bg-black/12 px-4 py-3 text-[13px] leading-5.5 text-white outline-none placeholder:text-white/28 focus:border-white/16"
+                  />
+                  <div className="mt-2 text-[11px] text-white/38">
+                    One sentence is enough.
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[13px] font-semibold text-white/72 transition hover:bg-white/[0.06]"
+                  >
+                    Skip note
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSaving || !draftReaction}
+                    onClick={handleSubmit}
+                    className="h-10 rounded-2xl px-4 text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
+                    style={{
+                      background: `linear-gradient(180deg, ${rgb(
+                        accent,
+                        0.2
+                      )} 0%, ${rgb(strong, 0.1)} 100%)`,
+                      border: `1px solid ${rgb(accent, 0.16)}`,
+                      boxShadow: `0 12px 28px ${rgb(glow, 0.12)}`,
+                    }}
+                  >
+                    {reactionConfig.submitLabel}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function WorldExperienceCard({
   experience,
   profile,
-  onDismiss,
+  selectedReaction,
+  savedReasons,
+  savedNote,
+  isSaving,
+  onSubmitReaction,
 }: {
   experience: WorldExperience;
   profile: WorldProfileSignals;
-  onDismiss: (experienceId: string) => void;
+  selectedReaction: WorldReaction | null;
+  savedReasons: string[];
+  savedNote: string;
+  isSaving: boolean;
+  onSubmitReaction: (payload: {
+    reaction: WorldReaction;
+    reasons: string[];
+    note: string;
+  }) => void;
 }) {
   const accent = pathAccent(experience);
   const atmosphere = getWorldAtmosphere(experience, accent);
@@ -886,7 +1349,6 @@ function WorldExperienceCard({
   const signalStrength = getSignalStrength(experience, profile);
   const signalLabel = getSignalLabel(signalStrength);
   const opportunities = extractWorldOpportunities(experience);
-  const payoffIntro = getWorldPayoffIntro(experience);
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
 
@@ -989,34 +1451,21 @@ function WorldExperienceCard({
           ) : null}
         </div>
 
-        <div className="mt-4 sm:hidden">
-          <button
-            type="button"
-            onClick={() => onDismiss(experience.id)}
-            className="inline-flex rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12]"
-          >
-            Not for me
-          </button>
-        </div>
-
-        <div className="absolute right-0 top-0 hidden sm:block">
-          <button
-            type="button"
-            onClick={() => onDismiss(experience.id)}
-            className="mt-7 inline-flex shrink-0 rounded-full border border-white/12 bg-white/[0.08] px-3.5 py-2 text-[13px] font-medium text-white/90 transition hover:bg-white/[0.12]"
-          >
-            Not for me
-          </button>
-        </div>
+        <WorldQuickCheckCard
+          accent={atmosphere.border}
+          strong={atmosphere.topGlow}
+          glow={atmosphere.futureGlow}
+          selectedReaction={selectedReaction}
+          initialReasons={savedReasons}
+          initialNote={savedNote}
+          isSaving={isSaving}
+          onSubmit={onSubmitReaction}
+        />
 
         <div className="mt-6">
           <CardSectionHeader color={atmosphere.opportunityGlow}>
             Try this for real
           </CardSectionHeader>
-
-          <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-white/72">
-            {payoffIntro}
-          </p>
 
           <div className="mt-3">
             {opportunities.map((item, index) => (
@@ -1053,32 +1502,51 @@ export default function WorldExplorePage() {
     skills: [],
     fullText: "",
   });
-  const [dismissedExperienceIds, setDismissedExperienceIds] = React.useState<
-    string[]
-  >([]);
+  const [reactions, setReactions] = React.useState<WorldReactionState>(
+    emptyWorldReactionState()
+  );
+  const [savingSlug, setSavingSlug] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setProfile(readStoredWorldSignals());
+    setReactions(readWorldReactionState());
   }, []);
 
   const visibleExperiences = React.useMemo(() => {
+    const dismissed = new Set(reactions.dismissed);
+
     return WORLD_PATHS.map((experience, index) => ({
       experience,
       score: getSignalStrength(experience, profile),
       index,
     }))
-      .filter((item) => !dismissedExperienceIds.includes(item.experience.id))
+      .filter((item) => !dismissed.has(item.experience.slug))
       .sort((a, b) =>
         b.score !== a.score ? b.score - a.score : a.index - b.index
       )
       .slice(0, MAX_VISIBLE_WORLD_EXPERIENCES)
       .map((item) => item.experience);
-  }, [profile, dismissedExperienceIds]);
+  }, [profile, reactions.dismissed]);
 
-  function handleDismissExperience(experienceId: string) {
-    setDismissedExperienceIds((current) =>
-      current.includes(experienceId) ? current : [...current, experienceId]
-    );
+  function handleSubmitReaction(
+    experience: WorldExperience,
+    payload: {
+      reaction: WorldReaction;
+      reasons: string[];
+      note: string;
+    }
+  ) {
+    setSavingSlug(experience.slug);
+
+    const next = saveWorldReactionFeedback({
+      slug: experience.slug,
+      reaction: payload.reaction,
+      reasons: payload.reasons,
+      note: payload.note,
+    });
+
+    setReactions(next);
+    setSavingSlug(null);
   }
 
   return (
@@ -1105,24 +1573,35 @@ export default function WorldExplorePage() {
         <WorldIntroPanel firstName={profile.firstName} />
 
         <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
-          {visibleExperiences.map((experience) => (
-            <WorldExperienceCard
-              key={experience.id}
-              experience={experience}
-              profile={profile}
-              onDismiss={handleDismissExperience}
-            />
-          ))}
+          {visibleExperiences.map((experience) => {
+            const savedFeedback = reactions.feedbackBySlug?.[experience.slug];
+            const selectedReaction = reactions.dismissed.includes(experience.slug)
+              ? "dismissed"
+              : reactions.liked.includes(experience.slug)
+              ? "liked"
+              : reactions.maybe.includes(experience.slug)
+              ? "maybe"
+              : null;
+
+            return (
+              <WorldExperienceCard
+                key={experience.id}
+                experience={experience}
+                profile={profile}
+                selectedReaction={selectedReaction}
+                savedReasons={savedFeedback?.reasons ?? []}
+                savedNote={savedFeedback?.note ?? ""}
+                isSaving={savingSlug === experience.slug}
+                onSubmitReaction={(payload) =>
+                  handleSubmitReaction(experience, payload)
+                }
+              />
+            );
+          })}
 
           {WORLD_PATHS.length === 0 ? (
             <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
               No world paths are registered yet.
-            </div>
-          ) : null}
-
-          {WORLD_PATHS.length > 0 && visibleExperiences.length === 0 ? (
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-              You&apos;ve cleared the current set of world paths.
             </div>
           ) : null}
         </section>

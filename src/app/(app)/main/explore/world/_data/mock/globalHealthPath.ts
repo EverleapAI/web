@@ -1,44 +1,44 @@
+// apps/web/src/app/(app)/main/explore/world/_data/mock/globalHealthPath.ts
+
 import type { WorldPathContent } from "../worldPathSchema";
 
 export const GLOBAL_HEALTH_PATH: WorldPathContent = {
   id: "global-health",
   slug: "global-health",
-  lane: "world",
+
+  energy: "people",
 
   theme: {
-    tone: "human-wellbeing",
-    accent: { r: 92, g: 205, b: 158 },
-    accentStrong: { r: 134, g: 228, b: 186 },
-    glow: { r: 64, g: 182, b: 134 },
+    accent: "rgba(92,205,158,1)",
+    accentStrong: "rgba(134,228,186,1)",
+    glow: "rgba(64,182,134,0.35)",
     surfaceLabel: "Human wellbeing",
   },
 
   card: {
     title: "Global Health",
-    hook: "Understand how health, medicine, and environment shape human life.",
+    hook:
+      "Understand how health, medicine, and environment shape human life.",
     description:
-      "Some people are drawn to understanding why health outcomes differ around the world and how medicine, public health, science, and community action can improve lives.",
+      "This path is about understanding why health outcomes differ around the world — and how science, systems, and communities improve lives.",
   },
 
   hero: {
     eyebrow: "World direction",
     title: "Global Health",
-    hook: "For people who care about improving human health across borders.",
-    summary:
-      "Health is shaped by science, environment, policy, infrastructure, culture, and economics. Global health explores how communities around the world prevent disease, improve care, and build healthier systems.",
-    whyItPullsYouIn: [
-      "You care about helping people live healthier lives.",
-      "You are curious how healthcare works in different countries.",
-      "You want to understand disease, prevention, and health systems.",
-      "You are interested in science that directly helps communities.",
-    ],
+    subtitle: "See how health shapes lives across the world",
+    body:
+      "Health is not just biology. It is shaped by environment, access, policy, culture, and resources. This path explores how different communities prevent disease, care for people, and build healthier systems.",
+    ambientLabel: "Health · Systems · Humanity",
+    pullQuote:
+      "Health is where science, systems, and real human lives meet.",
   },
 
   traitChips: [
-    { id: "human-focus", label: "Human-centered" },
-    { id: "science-curious", label: "Science curious" },
-    { id: "problem-solver", label: "Problem solver" },
-    { id: "community-minded", label: "Community minded" },
+    { label: "Human-centered" },
+    { label: "Science curious" },
+    { label: "Problem solver" },
+    { label: "Community minded" },
   ],
 
   fitSignals: [
@@ -47,240 +47,181 @@ export const GLOBAL_HEALTH_PATH: WorldPathContent = {
       label: "You care about improving people's wellbeing",
       score: 92,
       explanation:
-        "You feel motivated by the idea of helping people live healthier lives.",
+        "You are motivated by helping people live healthier, safer lives.",
     },
     {
       id: "science-health",
       label: "You are curious about science and medicine",
       score: 86,
       explanation:
-        "You enjoy learning how the body works and how diseases are prevented or treated.",
+        "You enjoy understanding how the body works and how diseases are treated or prevented.",
     },
     {
       id: "global-problems",
-      label: "You care about large human challenges",
+      label: "You think about large human challenges",
       score: 84,
       explanation:
-        "You are interested in solving problems that affect communities around the world.",
+        "You are interested in solving problems that affect entire communities and populations.",
     },
   ],
 
-  branchPreviews: [
-    {
-      id: "public-health",
-      slug: "public-health",
-      title: "Public Health",
-      oneLiner: "Prevent disease and improve community health.",
-      whyItCouldFit:
-        "Great if you care about prevention, education, and health systems.",
-      energy: "people",
-    },
-    {
-      id: "medical-science",
-      slug: "medical-science",
-      title: "Medical Science",
-      oneLiner: "Study the biology and science behind health and disease.",
-      whyItCouldFit:
-        "Perfect for people interested in medicine, biology, and research.",
-      energy: "grounded",
-    },
-    {
-      id: "health-systems",
-      slug: "health-systems",
-      title: "Health Systems",
-      oneLiner: "Understand how healthcare systems operate and improve.",
-      whyItCouldFit:
-        "Good for people who like solving complex social systems problems.",
-      energy: "builder",
-    },
-  ],
-
-  branches: [
-    {
-      id: "public-health",
-      slug: "public-health",
-      title: "Public Health",
-      summary:
-        "Public health focuses on preventing disease and improving health across entire communities.",
-      whatYouActuallyExplore: [
-        "How diseases spread and are prevented",
-        "Health education and community outreach",
-        "Environmental and social health factors",
-      ],
-      skillsThatGrowHere: [
-        "Data interpretation",
-        "Community communication",
-        "Health awareness",
-        "Preventive thinking",
-      ],
-      starterProjects: [
-        "Research how vaccines reduce disease spread",
-        "Create a simple health awareness poster",
-        "Compare health statistics across countries",
-      ],
-      atmosphere: "Community-focused and impact-driven.",
-    },
-    {
-      id: "medical-science",
-      slug: "medical-science",
-      title: "Medical Science",
-      summary:
-        "Medical science explores the biological foundations of disease, treatment, and medical innovation.",
-      whatYouActuallyExplore: [
-        "Human biology and physiology",
-        "Disease mechanisms",
-        "Medical treatments and research",
-      ],
-      skillsThatGrowHere: [
-        "Scientific thinking",
-        "Research literacy",
-        "Biology knowledge",
-        "Evidence-based reasoning",
-      ],
-      starterProjects: [
-        "Research how one disease affects the body",
-        "Create a diagram explaining a body system",
-        "Explore how a vaccine works",
-      ],
-      atmosphere: "Scientific, investigative, and intellectually curious.",
-    },
-    {
-      id: "health-systems",
-      slug: "health-systems",
-      title: "Health Systems",
-      summary:
-        "Health systems study how hospitals, policies, funding, and organizations deliver care to populations.",
-      whatYouActuallyExplore: [
-        "How healthcare systems operate",
-        "Global health policy and economics",
-        "How access to care differs worldwide",
-      ],
-      skillsThatGrowHere: [
-        "Systems thinking",
-        "Policy understanding",
-        "Research analysis",
-        "Strategic thinking",
-      ],
-      starterProjects: [
-        "Compare healthcare systems in two countries",
-        "Map how hospitals coordinate care",
-        "Research how insurance or funding models work",
-      ],
-      atmosphere: "Analytical, systemic, and problem-solving focused.",
-    },
-  ],
-
-  tryNow: {
-    title: "Try exploring global health",
-    summary:
-      "You can begin understanding global health challenges through small investigations.",
-    actions: [
+  whatYouExplore: {
+    label: "What you start exploring",
+    title: "How health systems and science impact real people",
+    intro:
+      "This path begins when you stop seeing health as just hospitals and start seeing it as a system shaped by environment, access, and human decisions.",
+    items: [
       {
-        id: "disease-research",
-        title: "Research one global disease",
-        type: "project",
-        effort: "light",
-        timeEstimate: "45–60 min",
-        whyThisMatters:
-          "Understanding one disease helps you see how science and society interact.",
-        instructions: [
-          "Pick a disease that affects many people globally.",
-          "Research how it spreads and how it is treated.",
-          "Summarize what surprised you.",
-        ],
-      },
-      {
-        id: "health-comparison",
-        title: "Compare health systems",
-        type: "experiment",
-        effort: "medium",
-        timeEstimate: "60–90 min",
-        whyThisMatters:
-          "Health outcomes vary widely depending on policy and infrastructure.",
-        instructions: [
-          "Choose two countries.",
-          "Compare life expectancy and healthcare access.",
-          "Write a short explanation of differences.",
-        ],
-      },
-    ],
-  },
-
-  howItFeels: {
-    title: "What this direction feels like",
-    summary:
-      "You begin seeing health as a complex system influenced by science, environment, and society.",
-    moments: [
-      {
-        id: "systems-view",
-        title: "Health becomes a system",
-        body:
-          "You start seeing how medicine, environment, and policy connect.",
-      },
-      {
-        id: "human-impact",
-        title: "The stakes feel real",
-        body:
-          "Understanding health problems often leads to thinking about real people and communities.",
-      },
-    ],
-  },
-
-  growthPath: {
-    title: "How people grow in this direction",
-    summary:
-      "Global health often grows through science learning combined with real-world awareness.",
-    stages: [
-      {
-        id: "awareness",
-        label: "Understand global challenges",
-        timeframe: "Early stage",
-        summary:
-          "You learn how health challenges vary across regions and populations.",
-        signalsOfProgress: [
-          "You follow health news and research",
-          "You understand key global health terms",
-        ],
-      },
-      {
-        id: "study",
-        label: "Study health science",
-        timeframe: "Later stage",
-        summary:
-          "You begin learning deeper science and systems knowledge.",
-        signalsOfProgress: [
-          "You study biology or medicine topics",
-          "You analyze health data or research",
-        ],
-      },
-    ],
-  },
-
-  nextSteps: {
-    title: "Continue exploring global health",
-    summary:
-      "Real-world health understanding grows through science education and global awareness.",
-    actions: [],
-    opportunityGroups: [
-      {
-        id: "health-learning",
-        title: "Global health learning resources",
+        title: "Disease and prevention",
         description:
-          "Organizations and platforms that share global health knowledge.",
-        items: [
-          {
-            id: "who-learning",
-            title: "World Health Organization learning resources",
-            mode: "virtual",
-            provider: "WHO",
-            summary: "Educational resources about global health challenges.",
-            whyItHelps:
-              "Provides authoritative information on global health topics.",
-            href: "https://www.who.int",
-            formatLabel: "Educational resources",
-          },
-        ],
+          "How illnesses spread, how they are treated, and how communities prevent them.",
+      },
+      {
+        title: "Healthcare systems",
+        description:
+          "How hospitals, funding, policy, and infrastructure shape access to care.",
+      },
+      {
+        title: "Global inequality in health",
+        description:
+          "Why health outcomes differ across countries and communities.",
+      },
+      {
+        title: "Science that impacts lives",
+        description:
+          "How biology, medicine, and research translate into real-world impact.",
       },
     ],
   },
+
+  featuredOpportunity: {
+    label: "Best first move",
+    title: "Explore real global health data from the WHO",
+    description:
+      "Start seeing how health varies across countries by exploring real-world data and global health challenges.",
+    href: "https://www.who.int/data",
+    ctaLabel: "Explore global health data",
+    mode: "virtual",
+    type: "research",
+  },
+
+  opportunityGroups: [
+    {
+      id: "start-here",
+      label: "Start here",
+      title: "Try this this week",
+      description:
+        "You can start understanding global health by looking at real data, real systems, and real human impact.",
+      opportunities: [
+        {
+          title: "Research one global disease",
+          description:
+            "Choose a disease and learn how it spreads, who it affects, and how it is treated.",
+          href: "https://www.cdc.gov/diseasesconditions/",
+          ctaLabel: "Explore diseases",
+          mode: "virtual",
+          type: "research",
+        },
+        {
+          title: "Compare life expectancy between countries",
+          description:
+            "Use real data to understand how health outcomes differ across the world.",
+          href: "https://data.worldbank.org/indicator/SP.DYN.LE00.IN",
+          ctaLabel: "View life expectancy data",
+          mode: "virtual",
+          type: "research",
+        },
+        {
+          title: "Explore how vaccines work",
+          description:
+            "Understand how vaccines prevent disease and impact global health.",
+          href: "https://www.cdc.gov/vaccines/vpd/index.html",
+          ctaLabel: "Learn about vaccines",
+          mode: "virtual",
+          type: "resource",
+        },
+      ],
+    },
+    {
+      id: "near-you",
+      label: "Explore near you",
+      title: "See health in real communities",
+      description:
+        "Health is happening all around you — in clinics, schools, communities, and public spaces.",
+      opportunities: [
+        {
+          title: "Volunteer with a local health organization",
+          description:
+            "See how healthcare and community support systems work firsthand.",
+          href: "https://www.volunteermatch.org",
+          ctaLabel: "Find opportunities",
+          mode: "local",
+          type: "volunteer",
+        },
+        {
+          title: "Visit a hospital or community health center",
+          description:
+            "Observe how care is delivered and how systems operate in real life.",
+          href: "https://www.aha.org",
+          ctaLabel: "Explore hospitals",
+          mode: "local",
+          type: "visit",
+        },
+      ],
+    },
+    {
+      id: "go-broader",
+      label: "Go broader",
+      title: "Go deeper into global health",
+      description:
+        "Explore programs, organizations, and pathways that work on global health challenges.",
+      opportunities: [
+        {
+          title: "World Health Organization",
+          description:
+            "Learn how global health challenges are studied and addressed worldwide.",
+          href: "https://www.who.int",
+          ctaLabel: "Explore WHO",
+          mode: "virtual",
+          type: "resource",
+        },
+        {
+          title: "Doctors Without Borders (MSF)",
+          description:
+            "See how medical teams deliver care in crisis and underserved areas.",
+          href: "https://www.doctorswithoutborders.org",
+          ctaLabel: "Explore MSF",
+          mode: "virtual",
+          type: "resource",
+        },
+      ],
+    },
+    {
+      id: "always-on",
+      label: "Always available",
+      title: "Keep learning about global health",
+      description:
+        "Stay connected to real health stories, research, and global developments.",
+      opportunities: [
+        {
+          title: "Our World in Data (Health)",
+          description:
+            "Interactive charts and research on global health trends and outcomes.",
+          href: "https://ourworldindata.org/health",
+          ctaLabel: "Explore data",
+          mode: "virtual",
+          type: "research",
+        },
+        {
+          title: "Global Health Media Project",
+          description:
+            "Videos and stories showing real healthcare situations around the world.",
+          href: "https://globalhealthmedia.org",
+          ctaLabel: "Watch stories",
+          mode: "virtual",
+          type: "resource",
+        },
+      ],
+    },
+  ],
 };

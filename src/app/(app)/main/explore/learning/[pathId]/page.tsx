@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ExternalLink,
@@ -15,6 +15,29 @@ import {
 
 import { requireLearningPath } from "../_data/learningPaths";
 import type { LearningPathContent } from "../_data/learningPathSchema";
+
+/* =============================================================================
+   Types + Storage
+============================================================================= */
+
+type LearningReaction = "liked" | "maybe" | "dismissed";
+
+type LearningReactionFeedback = {
+  reaction: LearningReaction;
+  reasons: string[];
+  note: string;
+  savedAt: number;
+};
+
+type LearningReactionState = {
+  dismissed: string[];
+  maybe: string[];
+  liked: string[];
+  feedbackBySlug?: Record<string, LearningReactionFeedback>;
+};
+
+const LEARNING_REACTIONS_STORAGE_KEY =
+  "everleap.explore.learning.reactions.v1";
 
 /* =============================================================================
    Helpers
@@ -150,6 +173,136 @@ function makeRingPoints(
     .join(" ");
 }
 
+function emptyLearningReactionState(): LearningReactionState {
+  return {
+    dismissed: [],
+    maybe: [],
+    liked: [],
+    feedbackBySlug: {},
+  };
+}
+
+function normalizeSlugList(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return Array.from(
+    new Set(
+      input
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeFeedbackBySlug(
+  input: unknown
+): Record<string, LearningReactionFeedback> {
+  if (!input || typeof input !== "object") return {};
+
+  const result: Record<string, LearningReactionFeedback> = {};
+
+  for (const [slug, value] of Object.entries(
+    input as Record<string, unknown>
+  )) {
+    if (!slug.trim() || !value || typeof value !== "object") continue;
+
+    const raw = value as Record<string, unknown>;
+    const reaction =
+      raw.reaction === "liked" ||
+      raw.reaction === "maybe" ||
+      raw.reaction === "dismissed"
+        ? raw.reaction
+        : null;
+
+    if (!reaction) continue;
+
+    const reasons = Array.isArray(raw.reasons)
+      ? raw.reasons
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    const note = typeof raw.note === "string" ? raw.note : "";
+    const savedAt =
+      typeof raw.savedAt === "number" && Number.isFinite(raw.savedAt)
+        ? raw.savedAt
+        : Date.now();
+
+    result[slug] = {
+      reaction,
+      reasons,
+      note,
+      savedAt,
+    };
+  }
+
+  return result;
+}
+
+function readLearningReactionState(): LearningReactionState {
+  if (typeof window === "undefined") return emptyLearningReactionState();
+
+  try {
+    const raw = window.localStorage.getItem(LEARNING_REACTIONS_STORAGE_KEY);
+    if (!raw) return emptyLearningReactionState();
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    return {
+      dismissed: normalizeSlugList(parsed.dismissed),
+      maybe: normalizeSlugList(parsed.maybe),
+      liked: normalizeSlugList(parsed.liked),
+      feedbackBySlug: normalizeFeedbackBySlug(parsed.feedbackBySlug),
+    };
+  } catch {
+    return emptyLearningReactionState();
+  }
+}
+
+function writeLearningReactionState(state: LearningReactionState) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    LEARNING_REACTIONS_STORAGE_KEY,
+    JSON.stringify(state)
+  );
+}
+
+function saveLearningReactionFeedback(args: {
+  slug: string;
+  reaction: LearningReaction;
+  reasons: string[];
+  note: string;
+}) {
+  const current = readLearningReactionState();
+
+  const next: LearningReactionState = {
+    dismissed: current.dismissed.filter((item) => item !== args.slug),
+    maybe: current.maybe.filter((item) => item !== args.slug),
+    liked: current.liked.filter((item) => item !== args.slug),
+    feedbackBySlug: {
+      ...(current.feedbackBySlug ?? {}),
+    },
+  };
+
+  next[args.reaction] = Array.from(new Set([...next[args.reaction], args.slug]));
+  next.feedbackBySlug![args.slug] = {
+    reaction: args.reaction,
+    reasons: Array.from(
+      new Set(args.reasons.map((item) => item.trim()).filter(Boolean))
+    ),
+    note: args.note.trim(),
+    savedAt: Date.now(),
+  };
+
+  writeLearningReactionState(next);
+  return next;
+}
+
+/* =============================================================================
+   Hero Radar
+============================================================================= */
+
 function HeroRadar({
   labels,
   values,
@@ -254,9 +407,12 @@ function HeroRadar({
   );
 }
 
+/* =============================================================================
+   Opportunity Group
+============================================================================= */
+
 function OpportunityGroup({
   title,
-  intro,
   items,
   accent,
   accentStrong,
@@ -264,7 +420,6 @@ function OpportunityGroup({
   tone,
 }: {
   title: string;
-  intro: string;
   items: Array<{
     id: string;
     title: string;
@@ -352,10 +507,6 @@ function OpportunityGroup({
           </div>
         </div>
 
-        <p className="mt-2 max-w-[44rem] text-[13px] leading-5.5 text-white/62 sm:text-[14px]">
-          {intro}
-        </p>
-
         <div className="mt-4 divide-y divide-white/10">
           {items.map((item) => (
             <a
@@ -366,7 +517,7 @@ function OpportunityGroup({
               className="group relative block overflow-hidden py-4 transition hover:translate-x-[2px]"
             >
               <div
-                className="pointer-events-none absolute left-0 top-3 bottom-3 w-[3px] rounded-full opacity-70 transition duration-200 group-hover:opacity-100"
+                className="pointer-events-none absolute bottom-3 left-0 top-3 w-[3px] rounded-full opacity-70 transition duration-200 group-hover:opacity-100"
                 style={{
                   background:
                     tone === "local"
@@ -382,7 +533,7 @@ function OpportunityGroup({
                 }}
               />
               <div
-                className="pointer-events-none absolute left-2 right-10 top-1 bottom-1 rounded-[18px] opacity-0 blur-2xl transition duration-200 group-hover:opacity-100"
+                className="pointer-events-none absolute bottom-1 left-2 right-10 top-1 rounded-[18px] opacity-0 blur-2xl transition duration-200 group-hover:opacity-100"
                 style={{
                   background:
                     tone === "local"
@@ -479,10 +630,370 @@ function OpportunityGroup({
 }
 
 /* =============================================================================
+   Quick Check
+============================================================================= */
+
+function quickChipClass(isActive: boolean) {
+  return [
+    "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition active:scale-95",
+    isActive
+      ? "text-white"
+      : "text-white/78 hover:text-white hover:bg-white/[0.06]",
+  ].join(" ");
+}
+
+function LearningQuickCheckCard({
+  accent,
+  accentStrong,
+  glow,
+  selectedReaction,
+  initialReasons,
+  initialNote,
+  isSaving,
+  onSubmit,
+}: {
+  accent: { r: number; g: number; b: number };
+  accentStrong: { r: number; g: number; b: number };
+  glow: { r: number; g: number; b: number };
+  selectedReaction: LearningReaction | null;
+  initialReasons: string[];
+  initialNote: string;
+  isSaving: boolean;
+  onSubmit: (payload: {
+    reaction: LearningReaction;
+    reasons: string[];
+    note: string;
+  }) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [draftReaction, setDraftReaction] =
+    React.useState<LearningReaction | null>(selectedReaction);
+  const [reasons, setReasons] = React.useState<string[]>(initialReasons);
+  const [note, setNote] = React.useState(initialNote);
+
+  React.useEffect(() => {
+    setDraftReaction(selectedReaction);
+    setReasons(initialReasons);
+    setNote(initialNote);
+  }, [selectedReaction, initialReasons, initialNote]);
+
+  const reactionConfig = React.useMemo(() => {
+    const map: Record<
+      LearningReaction,
+      {
+        title: string;
+        helper: string;
+        submitLabel: string;
+        reasonOptions: string[];
+      }
+    > = {
+      liked: {
+        title: "What is pulling you in here?",
+        helper:
+          "This helps Everleap notice what kinds of questions and subjects feel alive for you.",
+        submitLabel: "Save",
+        reasonOptions: [
+          "I want to understand this more",
+          "The topics feel real to me",
+          "I like how this connects to real life",
+          "I could see myself going deeper here",
+          "This feels like a strong signal",
+        ],
+      },
+      maybe: {
+        title: "What feels interesting, but not fully clear yet?",
+        helper:
+          "You are not locking anything in. This just helps sharpen what to show next.",
+        submitLabel: "Save",
+        reasonOptions: [
+          "Some parts feel strong",
+          "I need more examples",
+          "I am curious but unsure",
+          "I want to compare it to other paths",
+          "I am not sure how it would feel in real life",
+        ],
+      },
+      dismissed: {
+        title: "What feels off about this learning path?",
+        helper:
+          "Tell Everleap why this one misses, and it can step aside for something that fits better.",
+        submitLabel: "Remove this path",
+        reasonOptions: [
+          "The topics do not pull me in",
+          "I do not see myself wanting to study this",
+          "The real-life version does not feel exciting",
+          "Another path feels more natural",
+          "I would rather explore something else",
+        ],
+      },
+    };
+
+    return draftReaction ? map[draftReaction] : null;
+  }, [draftReaction]);
+
+  function pickReaction(reaction: LearningReaction) {
+    setDraftReaction(reaction);
+    setOpen(true);
+
+    if (reaction !== selectedReaction) {
+      setReasons([]);
+      setNote("");
+    }
+  }
+
+  function toggleReason(reason: string) {
+    setReasons((current) =>
+      current.includes(reason)
+        ? current.filter((item) => item !== reason)
+        : [...current, reason]
+    );
+  }
+
+  function handleSubmit() {
+    if (!draftReaction) return;
+    onSubmit({
+      reaction: draftReaction,
+      reasons,
+      note,
+    });
+    setOpen(false);
+  }
+
+  function closeDrawer() {
+    setOpen(false);
+  }
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-[26px] border border-white/10 bg-[#07111b]/82 px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.24)]"
+      style={{
+        boxShadow: `0 18px 48px rgba(0,0,0,0.24), 0 0 24px ${rgb(glow, 0.06)}`,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(circle at 12% 0%, ${rgb(accent, 0.12)} 0%, transparent 28%),
+            radial-gradient(circle at 82% 20%, ${rgb(accentStrong, 0.1)} 0%, transparent 24%),
+            radial-gradient(circle at 18% 100%, ${rgb(glow, 0.08)} 0%, transparent 30%)
+          `,
+        }}
+      />
+
+      <div className="relative">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          Quick check
+        </div>
+
+        <div className="mt-2 text-[15px] font-semibold tracking-[-0.02em] text-white/94 sm:text-[16px]">
+          Does this learning direction feel real for you?
+        </div>
+
+        <p className="mt-1 text-[12px] leading-5.5 text-white/56 sm:text-[13px]">
+          This is just signal, not a final answer.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2.5">
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("liked")}
+            className={quickChipClass(draftReaction === "liked")}
+            style={{
+              borderColor:
+                draftReaction === "liked"
+                  ? rgb(accent, 0.3)
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "liked"
+                  ? `linear-gradient(180deg, ${rgb(
+                      accent,
+                      0.14
+                    )} 0%, rgba(255,255,255,0.03) 100%)`
+                  : "rgba(255,255,255,0.02)",
+              boxShadow:
+                draftReaction === "liked"
+                  ? `0 0 20px ${rgb(glow, 0.12)}`
+                  : "none",
+            }}
+          >
+            <span aria-hidden>👍</span>
+            <span>Yes, I want more of this</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("maybe")}
+            className={quickChipClass(draftReaction === "maybe")}
+            style={{
+              borderColor:
+                draftReaction === "maybe"
+                  ? rgb(accentStrong, 0.24)
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "maybe"
+                  ? `linear-gradient(180deg, ${rgb(
+                      accentStrong,
+                      0.12
+                    )} 0%, rgba(255,255,255,0.03) 100%)`
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <span aria-hidden>🙂</span>
+            <span>Maybe</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => pickReaction("dismissed")}
+            className={quickChipClass(draftReaction === "dismissed")}
+            style={{
+              borderColor:
+                draftReaction === "dismissed"
+                  ? "rgba(255,255,255,0.18)"
+                  : "rgba(255,255,255,0.10)",
+              background:
+                draftReaction === "dismissed"
+                  ? "rgba(255,255,255,0.07)"
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <span aria-hidden>👎</span>
+            <span>Not really</span>
+          </button>
+        </div>
+
+        <div
+          className={[
+            "overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out",
+            open && reactionConfig
+              ? "mt-4 max-h-[420px] opacity-100"
+              : "mt-0 max-h-0 opacity-0",
+          ].join(" ")}
+          aria-hidden={!open}
+        >
+          {reactionConfig ? (
+            <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)]">
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: `
+                    radial-gradient(circle at 12% 0%, ${rgb(
+                      accent,
+                      0.09
+                    )} 0%, transparent 34%),
+                    radial-gradient(circle at 88% 0%, ${rgb(
+                      accentStrong,
+                      0.08
+                    )} 0%, transparent 30%)
+                  `,
+                }}
+              />
+
+              <div className="relative">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[12px] font-semibold text-white/92">
+                      {reactionConfig.title}
+                    </div>
+                    <p className="mt-1 text-[12px] leading-5 text-white/56">
+                      {reactionConfig.helper}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeDrawer}
+                    className="h-9 shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 text-[12px] font-semibold text-white/76 transition hover:bg-white/[0.07]"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {reactionConfig.reasonOptions.map((reason) => {
+                    const active = reasons.includes(reason);
+                    return (
+                      <button
+                        key={reason}
+                        type="button"
+                        onClick={() => toggleReason(reason)}
+                        className="rounded-full border px-3 py-1.5 text-[12px] font-medium transition"
+                        style={{
+                          borderColor: active
+                            ? rgb(accent, 0.24)
+                            : "rgba(255,255,255,0.10)",
+                          background: active
+                            ? rgb(accent, 0.1)
+                            : "rgba(255,255,255,0.03)",
+                          color: active
+                            ? "rgba(255,255,255,0.96)"
+                            : "rgba(255,255,255,0.74)",
+                        }}
+                      >
+                        {reason}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3">
+                  <textarea
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={3}
+                    placeholder="Anything else that feels important?"
+                    className="w-full resize-none rounded-[18px] border border-white/10 bg-black/12 px-4 py-3 text-[13px] leading-5.5 text-white outline-none placeholder:text-white/28 focus:border-white/16"
+                  />
+                  <div className="mt-2 text-[11px] text-white/38">
+                    One sentence is enough.
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={closeDrawer}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] px-4 text-[13px] font-semibold text-white/72 transition hover:bg-white/[0.06]"
+                  >
+                    Skip note
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isSaving || !draftReaction}
+                    onClick={handleSubmit}
+                    className="h-10 rounded-2xl px-4 text-[13px] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
+                    style={{
+                      background: `linear-gradient(180deg, ${rgb(
+                        accent,
+                        0.2
+                      )} 0%, ${rgb(accentStrong, 0.1)} 100%)`,
+                      border: `1px solid ${rgb(accent, 0.16)}`,
+                      boxShadow: `0 12px 28px ${rgb(glow, 0.12)}`,
+                    }}
+                  >
+                    {reactionConfig.submitLabel}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =============================================================================
    Page
 ============================================================================= */
 
 export default function LearningPathPage() {
+  const router = useRouter();
   const params = useParams<{ pathId: string }>();
   const pathId = params?.pathId;
 
@@ -496,10 +1007,31 @@ export default function LearningPathPage() {
   }
 
   const [firstName, setFirstName] = React.useState("");
+  const [selectedReaction, setSelectedReaction] =
+    React.useState<LearningReaction | null>(null);
+  const [savedReasons, setSavedReasons] = React.useState<string[]>([]);
+  const [savedNote, setSavedNote] = React.useState("");
+  const [isSavingReaction, setIsSavingReaction] = React.useState(false);
 
   React.useEffect(() => {
     setFirstName(readStoredFirstName());
-  }, []);
+
+    const reactions = readLearningReactionState();
+    const savedFeedback = reactions.feedbackBySlug?.[path.slug];
+
+    if (reactions.dismissed.includes(path.slug)) {
+      setSelectedReaction("dismissed");
+    } else if (reactions.liked.includes(path.slug)) {
+      setSelectedReaction("liked");
+    } else if (reactions.maybe.includes(path.slug)) {
+      setSelectedReaction("maybe");
+    } else {
+      setSelectedReaction(null);
+    }
+
+    setSavedReasons(savedFeedback?.reasons ?? []);
+    setSavedNote(savedFeedback?.note ?? "");
+  }, [path.slug]);
 
   const allItems = path.opportunityGroups.flatMap((group) => group.items);
 
@@ -543,6 +1075,38 @@ export default function LearningPathPage() {
     [firstName, path.hero.hook, path.hero.summary]
   );
 
+  function handleQuickCheckSubmit(payload: {
+    reaction: LearningReaction;
+    reasons: string[];
+    note: string;
+  }) {
+    setIsSavingReaction(true);
+
+    saveLearningReactionFeedback({
+      slug: path.slug,
+      reaction: payload.reaction,
+      reasons: payload.reasons,
+      note: payload.note,
+    });
+
+    setSelectedReaction(payload.reaction);
+    setSavedReasons(payload.reasons);
+    setSavedNote(payload.note);
+
+    if (payload.reaction === "dismissed") {
+      router.push("/main/explore/learning");
+      return;
+    }
+
+    setIsSavingReaction(false);
+  }
+
+  React.useEffect(() => {
+    if (selectedReaction !== "dismissed") {
+      setIsSavingReaction(false);
+    }
+  }, [selectedReaction]);
+
   return (
     <main className="relative text-white">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-16 pt-5 sm:px-6">
@@ -554,7 +1118,6 @@ export default function LearningPathPage() {
           Back to Learning
         </Link>
 
-        {/* HERO */}
         <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#07131f]/92 px-6 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:px-7 sm:py-7 lg:py-6">
           <div
             className="pointer-events-none absolute -left-16 top-[-88px] h-56 w-56 rounded-full blur-3xl"
@@ -641,7 +1204,6 @@ export default function LearningPathPage() {
               </div>
             </div>
 
-            {/* DESKTOP RADAR ONLY */}
             <div className="relative hidden lg:flex lg:justify-end lg:self-end lg:pb-1">
               <HeroRadar
                 labels={signalLabels.slice(0, 5)}
@@ -654,38 +1216,17 @@ export default function LearningPathPage() {
           </div>
         </section>
 
-        {/* QUICK CHECK */}
-        <section className="relative overflow-hidden rounded-[26px] border border-white/10 bg-[#07111b]/82 px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.24)]">
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: `radial-gradient(circle at 82% 20%, ${rgb(
-                path.theme.accentStrong ?? path.theme.accent,
-                0.08
-              )} 0%, transparent 24%)`,
-            }}
-          />
+        <LearningQuickCheckCard
+          accent={path.theme.accent}
+          accentStrong={path.theme.accentStrong ?? path.theme.accent}
+          glow={path.theme.glow ?? path.theme.accent}
+          selectedReaction={selectedReaction}
+          initialReasons={savedReasons}
+          initialNote={savedNote}
+          isSaving={isSavingReaction}
+          onSubmit={handleQuickCheckSubmit}
+        />
 
-          <div className="relative">
-            <div className="text-[1rem] font-semibold text-white/94">
-              Does this feel like it could fit you?
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              {["Yes", "Maybe", "Not really"].map((label) => (
-                <button
-                  key={label}
-                  type="button"
-                  className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[13px] text-white/76 transition hover:border-white/20 hover:bg-white/[0.06]"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* OPPORTUNITIES */}
         <section className="relative pt-1">
           <div
             className="pointer-events-none absolute left-0 top-10 h-36 w-36 rounded-full blur-3xl"
@@ -703,16 +1244,10 @@ export default function LearningPathPage() {
               <div className="text-[1rem] font-semibold">Try this for real</div>
             </div>
 
-            <p className="mt-1 max-w-[44rem] text-[14px] leading-6 text-white/60">
-              These are real ways to move from interest into experience. Start
-              with one that feels easy to enter, then notice what pulls you back.
-            </p>
-
             <div className="mt-6 space-y-5">
               {local.length > 0 ? (
                 <OpportunityGroup
                   title="Near you"
-                  intro="Places where this learning becomes physical and immediate — real bodies, real environments, real systems in motion."
                   items={local}
                   accent={path.theme.accent}
                   accentStrong={path.theme.accentStrong ?? path.theme.accent}
@@ -724,7 +1259,6 @@ export default function LearningPathPage() {
               {online.length > 0 ? (
                 <OpportunityGroup
                   title="Online"
-                  intro="Good for building understanding fast, testing your interest, and getting close to the ideas before you commit more time."
                   items={online}
                   accent={path.theme.accent}
                   accentStrong={path.theme.accentStrong ?? path.theme.accent}

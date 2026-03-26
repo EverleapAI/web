@@ -7,10 +7,11 @@ import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  ArrowRight,
+  Compass,
+  ExternalLink,
   Gamepad2,
+  Laptop,
   Radar,
-  Sparkles,
 } from "lucide-react";
 
 /* =============================================================================
@@ -39,7 +40,28 @@ type PlayReactionState = {
   feedbackBySlug?: Record<string, PlayReactionFeedback>;
 };
 
+type PlayOpportunityMode = "local" | "virtual" | "hybrid";
+
+type PlayOpportunity = {
+  id: string;
+  title: string;
+  provider: string;
+  formatLabel: string;
+  summary: string;
+  whyItHelps: string;
+  href: string;
+  mode: PlayOpportunityMode;
+};
+
+type PlayOpportunityGroup = {
+  id: string;
+  title: string;
+  description: string;
+  items: PlayOpportunity[];
+};
+
 const PLAY_REACTIONS_STORAGE_KEY = "everleap.explore.play.reactions.v1";
+const LOCAL_PLACE_LABEL = "94901";
 
 /* =============================================================================
    Helpers
@@ -387,6 +409,707 @@ function savePlayReactionFeedback(args: {
 
   writePlayReactionState(next);
   return next;
+}
+
+/* =============================================================================
+   Play Opportunities
+============================================================================= */
+
+function makeOpportunity(
+  id: string,
+  title: string,
+  provider: string,
+  formatLabel: string,
+  summary: string,
+  whyItHelps: string,
+  href: string,
+  mode: PlayOpportunityMode
+): PlayOpportunity {
+  return {
+    id,
+    title,
+    provider,
+    formatLabel,
+    summary,
+    whyItHelps,
+    href,
+    mode,
+  };
+}
+
+function defaultPlayOpportunityGroups(slug: string): PlayOpportunityGroup[] {
+  const baseLocalDescription = `Ways to start this path near ${LOCAL_PLACE_LABEL} with real people, real repetition, and a reason to come back.`;
+  const baseOnlineDescription =
+    "Ways to begin online, build rhythm, and see whether this activity keeps pulling you back in.";
+
+  const map: Record<string, PlayOpportunityGroup[]> = {
+    "sports-competition": [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "parks-rec-sports",
+            "City Parks & Recreation Sports Leagues",
+            "Parks & Recreation",
+            "Local / League",
+            "Look for rec leagues, open gyms, or beginner sports programs where you can start playing without needing elite experience first.",
+            "You get real reps, structure, and the social energy that makes sports easier to keep showing up for.",
+            "https://www.cityofsanrafael.org/parks-and-recreation/",
+            "local"
+          ),
+          makeOpportunity(
+            "ymca-sports",
+            "YMCA Youth Sports & Fitness Programs",
+            "YMCA",
+            "Local / Program",
+            "Many YMCAs offer basketball, volleyball, fitness, conditioning, and beginner-friendly activity programs.",
+            "This is one of the easiest ways to build momentum without needing your whole identity figured out first.",
+            "https://www.ymcasf.org/",
+            "local"
+          ),
+          makeOpportunity(
+            "marin-open-gym",
+            "Community Open Gym or Drop-In Sports",
+            "Community Centers",
+            "Local / Drop-in",
+            "Search for open gym sessions, drop-in basketball, futsal, pickleball, or other recurring sport spaces nearby.",
+            "Drop-in formats are lower pressure and make it easier to test what kind of play actually sticks.",
+            "https://www.cityofsanrafael.org/recreation/",
+            "local"
+          ),
+          makeOpportunity(
+            "martial-arts-club",
+            "Local Martial Arts or Fencing Club",
+            "Independent Clubs",
+            "Local / Club",
+            "Try a structured sport where progress, repetition, and coaching are built in from day one.",
+            "For some people, skill-based sports become the clearest version of fun plus discipline.",
+            "https://member.usafencing.org/clubs",
+            "local"
+          ),
+          makeOpportunity(
+            "running-cycling-group",
+            "Local Running or Cycling Group",
+            "Community Groups",
+            "Local / Group",
+            "Find beginner-friendly running clubs or cycling meetups that make physical challenge feel social instead of lonely.",
+            "A group rhythm often makes consistency way easier than trying to do everything solo.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "nike-training-club",
+            "Nike Training Club",
+            "Nike",
+            "Online / App",
+            "Free guided workouts and training plans that can help you start building an athletic routine immediately.",
+            "This lets you test whether you like training energy before committing to one sport community.",
+            "https://www.nike.com/ntc-app",
+            "virtual"
+          ),
+          makeOpportunity(
+            "jr-nba",
+            "Jr. NBA Skills & Drills",
+            "NBA",
+            "Online / Training",
+            "Skill-building videos and beginner drills that make sports feel more approachable outside formal team environments.",
+            "You can start learning movement patterns now, then walk into real play spaces feeling less behind.",
+            "https://jr.nba.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "gcn-training",
+            "GCN Training & Cycling Skills",
+            "Global Cycling Network",
+            "Online / Video",
+            "Watch structured cycling and fitness content that makes endurance training feel more understandable and more fun.",
+            "This is useful if you like challenge and repetition but want a lower-friction starting point.",
+            "https://www.globalcyclingnetwork.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "bodyweight-athlete",
+            "Beginner Bodyweight Athlete Plans",
+            "Hybrid Calisthenics",
+            "Online / Program",
+            "Start with beginner-friendly progressions that help you build confidence through measurable physical progress.",
+            "Sometimes the fun starts when you can feel yourself getting sharper week by week.",
+            "https://www.hybridcalisthenics.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "strava-challenges",
+            "Strava Challenges",
+            "Strava",
+            "Online / Community",
+            "Use activity challenges and logging to turn solo movement into something with momentum and visible progress.",
+            "External rhythm and small wins make many people more likely to keep going.",
+            "https://www.strava.com/challenges",
+            "virtual"
+          ),
+        ],
+      },
+    ],
+    "creative-expression": [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "community-arts-center",
+            "Community Arts Center Classes",
+            "Community Arts Programs",
+            "Local / Class",
+            "Look for drawing, ceramics, photography, printmaking, or mixed-media classes nearby.",
+            "Creative play gets more real when you have tools, space, and a recurring reason to make things.",
+            "https://marincommunityed.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "library-creative-programs",
+            "Library Creative Workshops",
+            "Public Library",
+            "Local / Workshop",
+            "Libraries often run writing groups, maker workshops, teen art sessions, and low-cost creative events.",
+            "This is a low-pressure entry point for trying creative identity in public instead of only in private.",
+            "https://marinlibrary.org/",
+            "local"
+          ),
+          makeOpportunity(
+            "local-theater-arts",
+            "Local Theater or Performance Workshops",
+            "Community Theater",
+            "Local / Workshop",
+            "Try improv, acting, stagecraft, or performance-based creative spaces that reward experimentation.",
+            "Performance play can unlock confidence, presence, and a new version of self-expression.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "photo-walks",
+            "Photo Walks or Sketch Meetups",
+            "Creative Meetups",
+            "Local / Group",
+            "Search for casual groups built around photography, sketching, urban drawing, or creative exploration.",
+            "Sometimes creativity becomes real the second it has community around it.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "makerspace-local",
+            "Local Makerspace or Open Studio",
+            "Makerspaces",
+            "Local / Studio",
+            "Explore shared spaces for crafting, design, fabrication, or hands-on creative experimentation.",
+            "A real creative environment can turn vague interest into a repeatable practice.",
+            "https://www.nationofmakers.us/find-a-makerspace/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "skillshare-creative",
+            "Skillshare Creative Classes",
+            "Skillshare",
+            "Online / Class",
+            "Browse illustration, photography, writing, design, animation, and creative workflow classes.",
+            "This is good for quickly testing which medium actually holds your attention once you start doing it.",
+            "https://www.skillshare.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "canva-design-school",
+            "Canva Design School",
+            "Canva",
+            "Online / Learning",
+            "Explore accessible design and visual communication lessons with fast feedback and low setup cost.",
+            "It makes creative experimentation easier when the tools are not fighting you.",
+            "https://www.canva.com/designschool/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "proko-drawing",
+            "Proko Drawing Basics",
+            "Proko",
+            "Online / Course",
+            "Start with foundational drawing lessons that make improvement feel visible instead of mysterious.",
+            "Visible progress helps creative play feel more rewarding and less abstract.",
+            "https://www.proko.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "national-novel-month",
+            "Young Writers & Prompt Communities",
+            "Creative Communities",
+            "Online / Community",
+            "Join writing prompt challenges, beginner communities, or story-building spaces that reward consistency.",
+            "Creative identity often grows faster when you are making alongside other people.",
+            "https://ywp.nanowrimo.org/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "adobe-express",
+            "Adobe Express Templates & Projects",
+            "Adobe",
+            "Online / Tool",
+            "Use quick project prompts for posters, short videos, social graphics, and other creative experiments.",
+            "Fast-start creative tools reduce friction and make it easier to stay playful.",
+            "https://www.adobe.com/express/",
+            "virtual"
+          ),
+        ],
+      },
+    ],
+    "games-strategy": [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "board-game-cafe",
+            "Board Game Cafe or Strategy Night",
+            "Local Game Spaces",
+            "Local / Meetup",
+            "Find tabletop nights, chess clubs, or strategy meetups where thinking is part of the fun.",
+            "This lets you test whether the social side of strategy play makes the whole thing more magnetic.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "library-chess",
+            "Library Chess or Game Club",
+            "Public Library",
+            "Local / Club",
+            "Many libraries host casual chess sessions, game nights, or youth strategy gatherings.",
+            "Low-stakes environments are perfect for seeing if you want to keep coming back.",
+            "https://marinlibrary.org/",
+            "local"
+          ),
+          makeOpportunity(
+            "card-shop-events",
+            "Local Card Shop Events",
+            "Game Stores",
+            "Local / Events",
+            "Try structured play nights for card games, strategy games, and tournament-style beginner events.",
+            "Game stores create repetition, community, and real reasons to improve.",
+            "https://locator.wizards.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "esports-local",
+            "School or Community Esports Clubs",
+            "Community Programs",
+            "Local / Club",
+            "Look for supervised esports or gaming clubs where teamwork, analysis, and repetition are part of the experience.",
+            "For the right person, this turns play into focus, strategy, and belonging.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "go-club",
+            "Chess, Go, or Puzzle Communities",
+            "Independent Clubs",
+            "Local / Group",
+            "Explore logic-heavy communities that reward observation, patience, and decision-making.",
+            "These spaces are great for people who like depth, not just distraction.",
+            "https://www.uschess.org/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "chesscom",
+            "Chess.com Lessons & Puzzles",
+            "Chess.com",
+            "Online / Practice",
+            "Use puzzles, guided lessons, and live matches to turn strategic interest into real pattern recognition.",
+            "You can get immediate repetition and feedback without waiting for the perfect local setup.",
+            "https://www.chess.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "lichess",
+            "Lichess Study & Practice",
+            "Lichess",
+            "Online / Community",
+            "Free study tools, analysis boards, and matches for building deeper strategic thinking over time.",
+            "This works well if you like smart systems and low-friction skill growth.",
+            "https://lichess.org/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "mtg-arena",
+            "MTG Arena or Digital Card Strategy",
+            "Wizards of the Coast",
+            "Online / Game",
+            "Try digital strategy card play that rewards planning, adaptation, and learning through repetition.",
+            "It gives you a fast way to see if complex systems actually energize you.",
+            "https://magic.wizards.com/en/mtgarena",
+            "virtual"
+          ),
+          makeOpportunity(
+            "brilliant-logic",
+            "Brilliant Logic & Problem Solving",
+            "Brilliant",
+            "Online / Training",
+            "Explore logic and systems challenges that feel playful while still sharpening the way you think.",
+            "This is useful if the fun for you is partly about solving and outthinking.",
+            "https://www.brilliant.org/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "discord-strategy",
+            "Online Strategy Discords & Community Leagues",
+            "Gaming Communities",
+            "Online / Community",
+            "Join communities built around specific games, tactics, and improving through shared insight.",
+            "Skill often grows faster when you can see how other people approach the same problem.",
+            "https://discord.com/",
+            "virtual"
+          ),
+        ],
+      },
+    ],
+    "calm-reset": [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "yoga-studio",
+            "Beginner Yoga or Breathwork Studio",
+            "Local Studios",
+            "Local / Class",
+            "Try low-pressure classes built around movement, breath, and nervous-system reset.",
+            "This helps you test whether calm, not adrenaline, is the kind of play your body actually wants.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "nature-walk-group",
+            "Nature Walk or Hiking Group",
+            "Community Groups",
+            "Local / Group",
+            "Join gentle outdoor groups that make restoration feel social and repeatable.",
+            "For many people, calm becomes easier to sustain when it has rhythm and real places attached to it.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "library-journaling",
+            "Journaling or Mindfulness Workshops",
+            "Library / Community Ed",
+            "Local / Workshop",
+            "Look for guided quiet-practice sessions, journaling spaces, or mindfulness classes.",
+            "This turns a vague wish to slow down into an actual appointment with yourself.",
+            "https://marinlibrary.org/",
+            "local"
+          ),
+          makeOpportunity(
+            "garden-volunteer",
+            "Community Garden or Quiet Outdoor Stewardship",
+            "Community Spaces",
+            "Local / Volunteer",
+            "Try restorative, hands-on environments that feel peaceful without being passive.",
+            "Some people reset best when calm includes movement and care.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "sound-bath",
+            "Sound Bath or Restorative Wellness Events",
+            "Wellness Studios",
+            "Local / Event",
+            "Explore guided relaxation and recovery spaces that help you experience quiet as something intentional.",
+            "It is easier to take restorative play seriously once you have felt its effect in real life.",
+            "https://www.eventbrite.com/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "headspace",
+            "Headspace or Calm Foundations",
+            "Headspace / Calm",
+            "Online / App",
+            "Start with short guided sessions that build a gentle, low-pressure recovery practice.",
+            "This is one of the easiest ways to test whether quiet structure helps you feel more like yourself again.",
+            "https://www.headspace.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "insight-timer",
+            "Insight Timer Courses & Sessions",
+            "Insight Timer",
+            "Online / Practice",
+            "Explore meditation, sleep, focus, and guided reset practices without needing a perfect routine first.",
+            "Flexible entry points make it easier to keep trying until something clicks.",
+            "https://insighttimer.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "yoga-with-adriene",
+            "Yoga With Adriene",
+            "YouTube",
+            "Online / Video",
+            "Follow beginner-friendly yoga and reset sessions that feel human, approachable, and consistent.",
+            "Low-friction repetition helps calm become part of rhythm instead of just a nice idea.",
+            "https://www.youtube.com/user/yogawithadriene",
+            "virtual"
+          ),
+          makeOpportunity(
+            "five-minute-journal",
+            "Guided Journaling Prompts",
+            "Reflection Tools",
+            "Online / Practice",
+            "Use simple prompts and journaling frameworks to turn reflection into an actual habit.",
+            "Writing can be a form of play when it helps you notice yourself more clearly.",
+            "https://dayoneapp.com/blog/journaling-prompts/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "alltrails-planning",
+            "AllTrails Route Planning",
+            "AllTrails",
+            "Online / Tool",
+            "Plan quiet walks, solo hikes, and outdoor reset sessions before stepping outside.",
+            "This helps turn vague restorative intention into a real next move.",
+            "https://www.alltrails.com/",
+            "virtual"
+          ),
+        ],
+      },
+    ],
+    "outdoor-adventure": [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "regional-parks",
+            "Regional Park Hikes & Trails",
+            "Regional Parks",
+            "Local / Outdoor",
+            "Start with nearby trails, hills, or coastal routes that make outdoor play feel immediate and real.",
+            "Adventure becomes more believable when it starts close to home instead of in fantasy mode.",
+            "https://www.openspace.org/where-to-go",
+            "local"
+          ),
+          makeOpportunity(
+            "rei-events",
+            "REI Outdoor Classes & Events",
+            "REI",
+            "Local / Event",
+            "Look for beginner-friendly events around hiking, biking, climbing, navigation, and outdoor skills.",
+            "This gives outdoor curiosity a clear doorway instead of leaving it abstract.",
+            "https://www.rei.com/events",
+            "local"
+          ),
+          makeOpportunity(
+            "youth-outdoor-clubs",
+            "Local Outdoor or Adventure Clubs",
+            "Community Groups",
+            "Local / Group",
+            "Find hiking groups, paddling clubs, trail groups, or beginner outdoor communities nearby.",
+            "Community often makes outdoor adventure feel safer, more social, and easier to sustain.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "national-park-visits",
+            "National Park or Seashore Programs",
+            "National Park Service",
+            "Local / Visit",
+            "Explore ranger programs, guided walks, and outdoor education experiences in real landscapes.",
+            "Nature becomes more magnetic when you interact with it instead of only admiring it.",
+            "https://www.nps.gov/",
+            "local"
+          ),
+          makeOpportunity(
+            "bike-trails",
+            "Bike Paths, Trail Loops, and Outdoor Routes",
+            "Community Outdoors",
+            "Local / Route",
+            "Use mapped rides and outdoor loops to turn movement into an adventure rhythm.",
+            "Repeatable outdoor routes are often what make adventure become a real habit.",
+            "https://www.alltrails.com/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "alltrails",
+            "AllTrails",
+            "AllTrails",
+            "Online / Planning",
+            "Browse routes, difficulty levels, trail photos, and community notes before heading outside.",
+            "Planning lowers friction and makes outdoor play easier to actually do.",
+            "https://www.alltrails.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "rei-skills",
+            "REI Expert Advice",
+            "REI",
+            "Online / Learning",
+            "Learn basic hiking, camping, cycling, and outdoor preparation skills from a reliable beginner-friendly source.",
+            "A little preparation can turn uncertainty into excitement.",
+            "https://www.rei.com/learn",
+            "virtual"
+          ),
+          makeOpportunity(
+            "outdoor-youtube",
+            "Beginner Outdoor Skills Channels",
+            "Outdoor Creators",
+            "Online / Video",
+            "Watch guides on packing, trail basics, camping setups, and outdoor confidence-building.",
+            "This helps you feel less intimidated before your first real outing.",
+            "https://www.youtube.com/results?search_query=beginner+hiking+skills",
+            "virtual"
+          ),
+          makeOpportunity(
+            "strava-outdoor",
+            "Strava Route Discovery",
+            "Strava",
+            "Online / Community",
+            "Find routes, record progress, and build outdoor momentum through visible movement patterns.",
+            "Seeing your own activity history can make adventure feel more real and more yours.",
+            "https://www.strava.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "national-geographic-adventure",
+            "National Geographic Adventure Stories",
+            "National Geographic",
+            "Online / Inspiration",
+            "Explore real-world adventure stories, images, and beginner-friendly outdoor inspiration.",
+            "Sometimes a path starts with finding examples that make you want in.",
+            "https://www.nationalgeographic.com/",
+            "virtual"
+          ),
+        ],
+      },
+    ],
+  };
+
+  return (
+    map[slug] ?? [
+      {
+        id: "near-you",
+        title: "Near you",
+        description: baseLocalDescription,
+        items: [
+          makeOpportunity(
+            "community-ed",
+            "Community Classes and Open Programs",
+            "Community Education",
+            "Local / Class",
+            "Look for classes, clubs, or beginner programs tied to this kind of play near you.",
+            "Real-world repetition is the fastest way to learn whether this path actually gives you energy.",
+            "https://marincommunityed.com/",
+            "local"
+          ),
+          makeOpportunity(
+            "parks-rec",
+            "Parks, Recreation, and Youth Programs",
+            "Parks & Recreation",
+            "Local / Program",
+            "Search local recreation offerings for low-pressure entry points into this activity.",
+            "This makes it easier to start without waiting for perfect confidence first.",
+            "https://www.cityofsanrafael.org/parks-and-recreation/",
+            "local"
+          ),
+          makeOpportunity(
+            "meetup-local",
+            "Meetup Groups Built Around the Same Interest",
+            "Meetup",
+            "Local / Group",
+            "Find nearby people already doing some version of this activity in real life.",
+            "Community often turns a passing interest into something repeatable.",
+            "https://www.meetup.com/",
+            "local"
+          ),
+        ],
+      },
+      {
+        id: "online",
+        title: "Online",
+        description: baseOnlineDescription,
+        items: [
+          makeOpportunity(
+            "youtube-guides",
+            "Beginner Video Guides",
+            "Online Creators",
+            "Online / Video",
+            "Start with friendly walkthroughs and examples that lower the barrier to actually trying it.",
+            "This helps you go from curiosity to first reps fast.",
+            "https://www.youtube.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "discord-communities",
+            "Online Communities and Discord Spaces",
+            "Community Platforms",
+            "Online / Community",
+            "Join spaces where people share progress, tools, and next steps around the same activity.",
+            "Belonging is often what keeps play from fading out.",
+            "https://discord.com/",
+            "virtual"
+          ),
+          makeOpportunity(
+            "structured-course",
+            "Structured Beginner Course",
+            "Learning Platforms",
+            "Online / Class",
+            "Use a beginner course or guided path to build momentum without overthinking the start.",
+            "A little structure can make fun easier to return to.",
+            "https://www.skillshare.com/",
+            "virtual"
+          ),
+        ],
+      },
+    ]
+  );
+}
+
+function inferOpportunityTone(
+  group: PlayOpportunityGroup
+): "local" | "online" {
+  if (group.items.every((item) => item.mode === "virtual")) return "online";
+  return "local";
 }
 
 /* =============================================================================
@@ -807,7 +1530,8 @@ function QuickCheckCard({
       },
       maybe: {
         title: "What feels close, but not fully there yet?",
-        helper: "This helps Everleap understand what still needs real-world testing.",
+        helper:
+          "This helps Everleap understand what still needs real-world testing.",
         submitLabel: "Save",
         reasonOptions: [
           "Interesting but unsure",
@@ -1105,6 +1829,162 @@ function QuickCheckCard({
 }
 
 /* =============================================================================
+   Opportunities UI
+============================================================================= */
+
+function OpportunityRow({
+  item,
+  accent,
+  accentStrong,
+  isFirst,
+}: {
+  item: PlayOpportunity;
+  accent: Rgb;
+  accentStrong: Rgb;
+  isFirst: boolean;
+}) {
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group relative block py-4 sm:py-4.5"
+    >
+      {!isFirst ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              accent,
+              0.18
+            )} 14%, ${rgb(accentStrong, 0.08)} 84%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="max-w-[40rem] text-[16px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover:text-white/96 sm:text-[17px]">
+            {item.title}
+          </h4>
+
+          <div className="mt-1 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.14em] text-white/36">
+            <span>{item.provider}</span>
+            <span>{item.formatLabel}</span>
+          </div>
+
+          <p className="mt-2 max-w-[42rem] text-[13px] leading-[1.62] text-white/66 transition group-hover:text-white/74 sm:text-[14px]">
+            {item.summary}
+          </p>
+
+          <p
+            className="mt-2 max-w-[42rem] text-[12px] leading-[1.58]"
+            style={{ color: rgb(accentStrong, 0.84) }}
+          >
+            {item.whyItHelps}
+          </p>
+        </div>
+
+        <div className="relative mt-1 hidden h-9 w-9 shrink-0 sm:block">
+          <div
+            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+            style={{
+              backgroundColor: rgb(accent, 0.14),
+            }}
+          />
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover:translate-x-[1px]"
+            style={{
+              borderColor: rgb(accent, 0.22),
+              backgroundColor: rgb(accentStrong, 0.08),
+            }}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function OpportunityGroup({
+  title,
+  description,
+  items,
+  accent,
+  accentStrong,
+  tone,
+}: {
+  title: string;
+  description: string;
+  items: PlayOpportunity[];
+  accent: Rgb;
+  accentStrong: Rgb;
+  tone: "local" | "online";
+}) {
+  const Icon = tone === "local" ? Compass : Laptop;
+  const border = tone === "local" ? accent : accentStrong;
+
+  const background =
+    tone === "local"
+      ? `
+        radial-gradient(circle at 12% 0%, ${rgb(accent, 0.1)} 0%, transparent 32%),
+        radial-gradient(circle at 88% 100%, ${rgb(accentStrong, 0.05)} 0%, transparent 26%),
+        linear-gradient(180deg, rgba(10,22,18,0.92) 0%, rgba(8,18,18,0.88) 100%)
+      `
+      : `
+        radial-gradient(circle at 88% 0%, ${rgb(accentStrong, 0.1)} 0%, transparent 30%),
+        radial-gradient(circle at 10% 100%, ${rgb(accent, 0.05)} 0%, transparent 24%),
+        linear-gradient(180deg, rgba(8,16,24,0.92) 0%, rgba(8,14,22,0.88) 100%)
+      `;
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-[28px] border px-5 py-5 shadow-[0_18px_48px_rgba(0,0,0,0.18)] sm:px-6 sm:py-6"
+      style={{
+        borderColor: rgb(border, 0.18),
+        background,
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
+            border,
+            0.28
+          )} 18%, ${rgb(border, 0.08)} 82%, transparent 100%)`,
+        }}
+      />
+
+      <div className="relative">
+        <div className="flex items-center gap-2 text-white/92">
+          <Icon className="h-4 w-4 text-white/60" />
+          <div className="text-[1rem] font-semibold">{title}</div>
+        </div>
+
+        {description ? (
+          <p className="mt-2 max-w-[44rem] text-[13px] leading-6 text-white/58 sm:text-[14px]">
+            {description}
+          </p>
+        ) : null}
+
+        <div className="mt-4">
+          {items.map((item, index) => (
+            <OpportunityRow
+              key={item.id}
+              item={item}
+              accent={border}
+              accentStrong={accentStrong}
+              isFirst={index === 0}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =============================================================================
    Page
 ============================================================================= */
 
@@ -1176,6 +2056,11 @@ export default function PlayPathPage() {
     return `${topSignal.label} is one of the clearest reasons this play path is surfacing right now.`;
   }, [path.fitSignals]);
 
+  const opportunityGroups = React.useMemo(
+    () => defaultPlayOpportunityGroups(path.slug),
+    [path.slug]
+  );
+
   function handleQuickCheckSubmit(payload: {
     reaction: PlayReaction;
     reasons: string[];
@@ -1210,10 +2095,10 @@ export default function PlayPathPage() {
 
   return (
     <main className="relative text-white">
-      <div className="flex w-full flex-col gap-5 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-16 pt-6 sm:px-6">
         <Link
           href="/main/explore/play"
-          className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
+          className="inline-flex items-center gap-2 text-sm text-white/70 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Play
@@ -1334,46 +2219,32 @@ export default function PlayPathPage() {
           onSubmit={handleQuickCheckSubmit}
         />
 
-        <SurfaceCard
-          accent={glow}
-          glow={accentStrong}
-          className="px-5 py-5 sm:px-6 sm:py-6"
-        >
-          <div
-            className="pointer-events-none absolute -left-8 top-[-10px] h-28 w-32 rounded-full blur-3xl"
-            style={{ background: rgb(accent, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[-18px] top-[-18px] h-32 w-36 rounded-full blur-3xl"
-            style={{ background: rgb(accentStrong, 0.12) }}
-          />
-          <div
-            className="pointer-events-none absolute right-[14%] bottom-[-22px] h-24 w-40 rounded-full blur-3xl"
-            style={{ background: rgb(glow, 0.08) }}
-          />
-
-          <div className={sectionKicker()}>Play payoff</div>
-
-          <h2 className="mt-1.5 text-[1.12rem] font-semibold tracking-[-0.03em] text-white/96 sm:text-[1.24rem]">
-            This is where play turns into a real path
-          </h2>
-
-          <p className="mt-2 max-w-[58ch] text-[13px] leading-5.5 text-white/62 sm:text-[14px] sm:leading-6">
-            Soon this lane will open the real version of this path — how people
-            begin, what early progress feels like, where community shows up, and
-            how fun grows into skill over time.
-          </p>
-
-          <div className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-white/46">
-            <span>Play opportunities coming soon</span>
-            <ArrowRight className="h-4 w-4" />
+        <section className="relative">
+          <div className="flex items-center gap-2 text-white/92">
+            <ExternalLink className="h-4 w-4 text-white/60" />
+            <div className="text-[1rem] font-semibold">Try this for real</div>
           </div>
 
-          <p className="mt-3 text-[12px] leading-5 text-white/42 sm:text-[13px]">
-            For now, this page is aligned to the new detail-page system so the
-            lane is ready for real content next.
+          <p className="mt-2 max-w-3xl text-[13px] leading-6 text-white/60 sm:text-[14px]">
+            The fastest way to understand play is to step into something real.
+            These are ways to try this direction now, build rhythm, and see what
+            keeps pulling you back in.
           </p>
-        </SurfaceCard>
+
+          <div className="mt-6 space-y-5">
+            {opportunityGroups.map((group) => (
+              <OpportunityGroup
+                key={group.id}
+                title={group.title}
+                description={group.description}
+                items={group.items}
+                accent={accent}
+                accentStrong={accentStrong}
+                tone={inferOpportunityTone(group)}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );

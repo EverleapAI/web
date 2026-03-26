@@ -25,7 +25,8 @@ export const DESIGN_MEDIA_PATH: LearningPathContent = {
   hero: {
     eyebrow: "Learning path",
     title: "Design + Media",
-    hook: "For minds that think visually and want to create things people experience.",
+    hook:
+      "For minds that think visually and want to create things people experience.",
     summary:
       "This path is about turning creative instinct into real output — graphics, video, brand identity, and digital experiences.",
     whyItPullsYouIn: [
@@ -71,8 +72,7 @@ export const DESIGN_MEDIA_PATH: LearningPathContent = {
     {
       id: "visual-basics",
       title: "How visual design works",
-      description:
-        "Color, typography, layout, and composition.",
+      description: "Color, typography, layout, and composition.",
     },
     {
       id: "tools",
@@ -114,69 +114,75 @@ export const DESIGN_MEDIA_PATH: LearningPathContent = {
 
   opportunityGroups: [
     {
-      id: "try-this-week",
-      title: "Try this this week",
+      id: "build-skill",
+      title: "Build real creative skill",
       description:
-        "Fast ways to see if this creative path actually feels right.",
+        "Online places to learn tools, practice fast, and start building real portfolio pieces.",
       items: [
         {
           id: "canva-design-school",
           title: "Canva Design School",
           provider: "Canva",
           summary:
-            "Simple lessons to start learning layout, typography, and visuals.",
+            "Simple lessons to start learning layout, typography, color, and visual communication.",
           whyItFits:
-            "Great first step to build confidence quickly.",
+            "Great first step if you want to build confidence fast and make things immediately.",
           mode: "virtual",
           href: "https://www.canva.com/learn/",
           formatLabel: "Short tutorials",
           tags: ["beginner-friendly", "free", "self-paced"],
         },
         {
-          id: "youtube-editing",
-          title: "Beginner video editing tutorials",
-          provider: "YouTube",
-          summary:
-            "Learn how to cut, edit, and create short visual stories.",
-          whyItFits:
-            "Fast way to test storytelling through video.",
-          mode: "virtual",
-          formatLabel: "Video tutorials",
-          tags: ["self-paced", "hands-on"],
-        },
-      ],
-    },
-
-    {
-      id: "build-skill",
-      title: "Build real creative skill",
-      description:
-        "Structured ways to improve your craft and build stronger projects.",
-      items: [
-        {
           id: "adobe-tutorials",
           title: "Adobe Creative Tutorials",
           provider: "Adobe",
           summary:
-            "Guided lessons using industry-standard creative tools.",
+            "Guided lessons using industry-standard creative tools across design, photo, and video.",
           whyItFits:
-            "Helps you move beyond beginner tools into professional workflows.",
+            "Helps you move beyond beginner tools into stronger creative workflows.",
           mode: "virtual",
           href: "https://helpx.adobe.com/creative-cloud/tutorials.html",
           formatLabel: "Project-based learning",
           tags: ["structured", "portfolio-building"],
         },
         {
-          id: "portfolio-projects",
-          title: "Create 3 design projects",
-          provider: "Self-directed",
+          id: "figma-learn",
+          title: "Figma Learn Design",
+          provider: "Figma",
           summary:
-            "Build a poster, short video, and brand concept.",
+            "Hands-on lessons for interface design, layout, prototyping, and collaborative creative work.",
           whyItFits:
-            "Projects are the fastest way to grow and see progress.",
+            "Excellent if your creativity leans toward digital products, screens, and visual systems.",
           mode: "virtual",
-          formatLabel: "Self-directed",
-          tags: ["portfolio-building", "hands-on"],
+          href: "https://help.figma.com/hc/en-us/categories/360002051613-Learn-design",
+          formatLabel: "Interactive learning",
+          tags: ["structured", "hands-on", "self-paced"],
+        },
+        {
+          id: "davinci-training",
+          title: "DaVinci Resolve Training",
+          provider: "Blackmagic Design",
+          summary:
+            "Free official training for editing, color, and post-production workflows.",
+          whyItFits:
+            "A strong path if storytelling through video and motion feels more exciting than static graphics.",
+          mode: "virtual",
+          href: "https://www.blackmagicdesign.com/products/davinciresolve/training",
+          formatLabel: "Video editing training",
+          tags: ["free", "structured", "portfolio-building"],
+        },
+        {
+          id: "behance",
+          title: "Behance Creative Inspiration",
+          provider: "Behance",
+          summary:
+            "Browse real portfolios, campaigns, motion pieces, brand systems, and visual storytelling work.",
+          whyItFits:
+            "Sharpens your taste by showing what strong creative work actually looks like in the real world.",
+          mode: "virtual",
+          href: "https://www.behance.net/",
+          formatLabel: "Portfolio inspiration",
+          tags: ["self-paced", "portfolio-building"],
         },
       ],
     },
@@ -185,43 +191,77 @@ export const DESIGN_MEDIA_PATH: LearningPathContent = {
       id: "near-you",
       title: "Near you (Marin / Bay Area)",
       description:
-        "Ways to make creative work real in your environment.",
+        "Real places where design and media stop being abstract and start becoming projects, collaboration, and finished work.",
       items: [
         {
           id: "school-media",
-          title: "School media / design clubs",
+          title: "School media or design clubs",
           provider: "Local schools",
           summary:
-            "Work on real creative projects with other students.",
+            "Work on posters, yearbook, social content, video, or visual projects with other students.",
           whyItFits:
-            "Collaboration helps creativity grow faster.",
+            "Collaboration and deadlines help creative work become real instead of staying in your head.",
           mode: "local",
+          href: "https://www.google.com/search?q=Marin+County+school+media+club+design+club",
           locationLabel: "Marin / North Bay",
+          formatLabel: "Student creative work",
           tags: ["local", "hands-on"],
         },
         {
           id: "community-arts",
           title: "Community art and media programs",
-          provider: "Local arts orgs",
+          provider: "Bay Area arts organizations",
           summary:
-            "Workshops and programs focused on creative skills.",
+            "Explore local workshops, youth programs, and creative classes focused on visual storytelling and making.",
           whyItFits:
-            "Real-world creative environments accelerate growth.",
+            "Being around other creative people makes it easier to build momentum and finish projects.",
           mode: "local",
+          href: "https://www.google.com/search?q=Bay+Area+youth+media+arts+programs",
           locationLabel: "Bay Area",
+          formatLabel: "Workshops + programs",
           tags: ["local", "structured"],
         },
         {
           id: "creative-competitions",
           title: "Student creative competitions",
-          provider: "Various orgs",
+          provider: "Regional / national organizations",
           summary:
-            "Submit design, video, or media projects.",
+            "Enter work in poster, film, digital media, or design competitions and build toward a real finished piece.",
           whyItFits:
-            "Deadlines and goals help you actually finish work.",
+            "Deadlines and submission goals are one of the fastest ways to actually complete creative work.",
           mode: "hybrid",
+          href: "https://www.google.com/search?q=student+design+competition+bay+area",
           locationLabel: "Regional / online",
-          tags: ["portfolio-building"],
+          formatLabel: "Submission-based projects",
+          tags: ["portfolio-building", "hands-on"],
+        },
+        {
+          id: "sfmoma-youth",
+          title: "SFMOMA public programs",
+          provider: "SFMOMA",
+          summary:
+            "Explore exhibits, artist talks, and public-facing design and visual culture in a serious creative environment.",
+          whyItFits:
+            "Good creative work gets stronger when you spend time around ambitious visual ideas and real audiences.",
+          mode: "local",
+          href: "https://www.sfmoma.org/events/",
+          locationLabel: "San Francisco",
+          formatLabel: "Exhibits + events",
+          tags: ["local", "self-paced"],
+        },
+        {
+          id: "maker-media-space",
+          title: "Maker and media spaces near you",
+          provider: "Local search",
+          summary:
+            "Find creative labs, maker spaces, and community build environments where you can prototype and produce real work.",
+          whyItFits:
+            "Useful if your creativity comes alive when you are physically making, editing, printing, or testing ideas.",
+          mode: "local",
+          href: "https://www.google.com/search?q=maker+space+media+lab+Marin+County",
+          locationLabel: "Near 94901",
+          formatLabel: "Hands-on exploration",
+          tags: ["local", "hands-on"],
         },
       ],
     },

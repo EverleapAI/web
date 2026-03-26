@@ -267,10 +267,6 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
     stages: [],
   },
 
-  /* =========================
-     FORECAST PASS (NEW)
-  ========================= */
-
   forecastV2: {
     outlookLabel: "Exploding - but crowded",
     outlookSummary:
@@ -379,7 +375,7 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
   nextStepsV2: {
     heroTitle: "You can produce a real video this week",
     heroSummary:
-      "The difference is not gear - it is finishing something. Plan it, shoot it, and make it watchable.",
+      "The difference is not gear - it is finishing something. Plan it, shoot it, edit it, and make it watchable.",
     heroBadge: "Make something real",
 
     sections: [
@@ -388,7 +384,7 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
         eyebrow: "Near 94901",
         title: "Where production becomes real",
         description:
-          "Real-world environments where video stops being an idea and becomes something you actually produce.",
+          "Real-world environments where video stops being an idea and becomes something you actually produce with people, time pressure, and real constraints.",
         mode: "local",
         items: [
           {
@@ -396,8 +392,8 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
             title: "Marin County Library - The Lab",
             href: "https://marinlibrary.org/the-lab/",
             note:
-              "Free space to experiment with media, editing, and creative production.",
-            badge: "Free",
+              "Free creative space to experiment with video, editing, and production tools.",
+            badge: "Free / Local",
             mode: "local",
           },
           {
@@ -405,17 +401,35 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
             title: "The Mix (SF Public Library)",
             href: "https://www.sfpl.org/locations/main-library/the-mix",
             note:
-              "Teen creative studio with tools and people making real media.",
+              "Teen creative studio with real media tools, projects, and people making content.",
             badge: "Teen space",
             mode: "local",
           },
           {
-            id: "event-video",
-            title: "Film a real event (school / club / local)",
-            href: "#",
+            id: "bay-area-film-events",
+            title: "Bay Area film + video events",
+            href: "https://www.eventbrite.com/d/ca--san-francisco/film/",
             note:
-              "The fastest way to learn producing is working with real time, people, and pressure.",
-            badge: "Real world",
+              "Find screenings, workshops, and creative meetups where people are actively producing work.",
+            badge: "Real scene",
+            mode: "local",
+          },
+          {
+            id: "film-festivals",
+            title: "Local film festivals (Mill Valley, SF Indie)",
+            href: "https://www.mvff.com/",
+            note:
+              "Watch real films, observe audience reaction, and understand what actually lands.",
+            badge: "Inspiration",
+            mode: "local",
+          },
+          {
+            id: "shoot-your-own",
+            title: "Produce a real video (school / club / local event)",
+            href: "https://www.google.com/search?q=local+events+near+94901",
+            note:
+              "Film something real with time pressure and people involved. This is where producing actually becomes real.",
+            badge: "Do it now",
             mode: "local",
           },
         ],
@@ -426,7 +440,7 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
         eyebrow: "Online",
         title: "Start producing now",
         description:
-          "Tools and platforms that turn you from watcher to creator immediately.",
+          "Tools and platforms that turn you from watcher to creator immediately. No waiting, no setup excuses.",
         mode: "remote",
         items: [
           {
@@ -434,35 +448,44 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
             title: "CapCut",
             href: "https://www.capcut.com/",
             note:
-              "Fastest way to edit clean, watchable videos right away.",
+              "Fastest way to edit clean, watchable videos immediately.",
             badge: "Start fast",
             mode: "remote",
           },
           {
             id: "premiere",
-            title: "Adobe Premiere Pro",
+            title: "Adobe Premiere Pro tutorials",
             href: "https://helpx.adobe.com/premiere-pro/tutorials.html",
             note:
-              "Industry-standard editing when you want more control.",
+              "Learn professional editing workflows once you want more control.",
             badge: "Pro tool",
             mode: "remote",
           },
           {
-            id: "youtube",
-            title: "Film breakdowns on YouTube",
-            href: "https://www.youtube.com",
+            id: "davinci",
+            title: "DaVinci Resolve training",
+            href: "https://www.blackmagicdesign.com/products/davinciresolve/training",
             note:
-              "Learn pacing, storytelling, and production by studying real work.",
-            badge: "Free",
+              "Free high-end editing and color grading training used in real productions.",
+            badge: "Free + Pro",
+            mode: "remote",
+          },
+          {
+            id: "youtube-breakdowns",
+            title: "Film breakdowns on YouTube",
+            href: "https://www.youtube.com/results?search_query=film+editing+breakdown",
+            note:
+              "Study pacing, cuts, and storytelling decisions from real content.",
+            badge: "Learn by watching",
             mode: "remote",
           },
           {
             id: "vimeo",
             title: "Vimeo Staff Picks",
-            href: "https://vimeo.com",
+            href: "https://vimeo.com/channels/staffpicks",
             note:
-              "Watch high-quality short films to sharpen your taste.",
-            badge: "Inspiration",
+              "Watch high-quality short films to sharpen your creative judgment.",
+            badge: "Taste builder",
             mode: "remote",
           },
         ],
