@@ -214,7 +214,7 @@ const SLUG_KEYWORDS: Record<string, string[]> = {
 };
 
 function pagePadding() {
-  return "pb-24 pt-3";
+  return "pb-24 pt-2 sm:pt-3";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -899,27 +899,27 @@ function WorkIntroPanel({ profile }: { profile: UserProfileSignals }) {
   const opening = getAgenticOpening(profile);
 
   return (
-    <section className="relative mt-6 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-7 sm:py-7">
+    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-6 sm:py-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
       <IntroOrbitArt />
 
       <div className="relative max-w-4xl pr-0 sm:pr-24">
         <SectionKicker>Work</SectionKicker>
 
-        <h2 className="mt-3 max-w-3xl text-[28px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[34px] lg:text-[36px]">
+        <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[34px] lg:text-[36px]">
           {opening.title}
         </h2>
 
-        <p className="mt-5 max-w-3xl text-[15px] leading-[1.75] text-white/74 sm:text-[16px]">
+        <p className="mt-4 max-w-3xl text-[14px] leading-[1.7] text-white/74 sm:mt-5 sm:text-[16px]">
           {opening.bodyA}
         </p>
 
-        <p className="mt-4 max-w-3xl text-[15px] leading-[1.75] text-white/78 sm:text-[16px]">
+        <p className="mt-3 max-w-3xl text-[14px] leading-[1.7] text-white/78 sm:mt-4 sm:text-[16px]">
           {opening.bodyB}
         </p>
 
         {opening.bodyC ? (
-          <p className="mt-4 max-w-3xl text-[15px] leading-[1.75] text-white/72 sm:text-[16px]">
+          <p className="mt-3 max-w-3xl text-[14px] leading-[1.7] text-white/72 sm:mt-4 sm:text-[16px]">
             {opening.bodyC}
           </p>
         ) : null}
@@ -1298,15 +1298,15 @@ export default function WorkExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
+      <div className="mx-auto w-full max-w-5xl px-3 sm:px-5 lg:px-6">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-6 sm:py-5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(129,93,255,0.10),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(56,189,248,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
           <div className="relative">
-            <h1 className="text-[36px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+            <h1 className="text-[34px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
               Explore
             </h1>
-            <p className="mt-1 text-[15px] leading-[1.5] text-white/62 sm:text-[16px]">
+            <p className="mt-1 text-[14px] leading-[1.45] text-white/62 sm:text-[16px]">
               Where I can go
             </p>
 
@@ -1319,7 +1319,7 @@ export default function WorkExplorePage() {
 
         <WorkIntroPanel profile={profile} />
 
-        <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
+        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5">
           {visiblePaths.map((path) => (
             <WorkPathCard key={path.id} path={path} profile={profile} />
           ))}
