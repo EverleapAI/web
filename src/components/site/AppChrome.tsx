@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { type SpotlightThemeId, type GradientLevel } from "@/theme/everleapVisuals";
+import {
+  type SpotlightThemeId,
+  type GradientLevel,
+} from "@/theme/everleapVisuals";
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -14,18 +17,54 @@ function cx(...classes: Array<string | false | null | undefined>) {
 type InsightQuote = { text: string; author: string };
 
 const INSIGHT_QUOTES: InsightQuote[] = [
-  { text: "The only true wisdom is in knowing you know nothing.", author: "Socrates" },
-  { text: "Knowing yourself is the beginning of all wisdom.", author: "Aristotle" },
-  { text: "The unexamined life is not worth living.", author: "Socrates" },
-  { text: "We do not see things as they are, we see them as we are.", author: "Anaïs Nin" },
-  { text: "In the middle of difficulty lies opportunity.", author: "Albert Einstein" },
-  { text: "I have no special talent. I am only passionately curious.", author: "Albert Einstein" },
-  { text: "It is not that I’m so smart; it’s just that I stay with problems longer.", author: "Albert Einstein" },
-  { text: "The beginning of wisdom is the definition of terms.", author: "Socrates" },
-  { text: "A man who has committed a mistake and doesn’t correct it is committing another mistake.", author: "Confucius" },
-  { text: "He who knows all the answers has not been asked all the questions.", author: "Confucius (attributed)" },
-  { text: "If you want to improve, be content to be thought foolish and stupid.", author: "Epictetus" },
-  { text: "No man ever steps in the same river twice.", author: "Heraclitus" },
+  {
+    text: "The only true wisdom is in knowing you know nothing.",
+    author: "Socrates",
+  },
+  {
+    text: "Knowing yourself is the beginning of all wisdom.",
+    author: "Aristotle",
+  },
+  {
+    text: "The unexamined life is not worth living.",
+    author: "Socrates",
+  },
+  {
+    text: "We do not see things as they are, we see them as we are.",
+    author: "Anaïs Nin",
+  },
+  {
+    text: "In the middle of difficulty lies opportunity.",
+    author: "Albert Einstein",
+  },
+  {
+    text: "I have no special talent. I am only passionately curious.",
+    author: "Albert Einstein",
+  },
+  {
+    text: "It is not that I’m so smart; it’s just that I stay with problems longer.",
+    author: "Albert Einstein",
+  },
+  {
+    text: "The beginning of wisdom is the definition of terms.",
+    author: "Socrates",
+  },
+  {
+    text: "A man who has committed a mistake and doesn’t correct it is committing another mistake.",
+    author: "Confucius",
+  },
+  {
+    text: "He who knows all the answers has not been asked all the questions.",
+    author: "Confucius (attributed)",
+  },
+  {
+    text: "If you want to improve, be content to be thought foolish and stupid.",
+    author: "Epictetus",
+  },
+  {
+    text: "No man ever steps in the same river twice.",
+    author: "Heraclitus",
+  },
 ];
 
 function pickSessionQuote(): InsightQuote {
@@ -36,7 +75,13 @@ function pickSessionQuote(): InsightQuote {
     const raw = window.sessionStorage.getItem(KEY);
     if (raw) {
       const idx = Number(raw);
-      if (Number.isFinite(idx) && idx >= 0 && idx < INSIGHT_QUOTES.length) return INSIGHT_QUOTES[idx];
+      if (
+        Number.isFinite(idx) &&
+        idx >= 0 &&
+        idx < INSIGHT_QUOTES.length
+      ) {
+        return INSIGHT_QUOTES[idx];
+      }
     }
 
     const idx = Math.floor(Math.random() * INSIGHT_QUOTES.length);
@@ -61,14 +106,21 @@ function markWordColor(): string {
   return "rgba(255,214,178,0.92)";
 }
 
-export function EverleapMark({ subtitle, variant = "app", className }: EverleapMarkProps) {
+export function EverleapMark({
+  subtitle,
+  variant = "app",
+  className,
+}: EverleapMarkProps) {
   const orbBox = variant === "hero" ? "h-8 w-8 rounded-[14px]" : "h-7 w-7 rounded-xl";
   const titleSize = variant === "hero" ? "text-[11.5px]" : "text-[11px]";
   const subSize = variant === "hero" ? "text-[12.5px]" : "text-[12px]";
 
   return (
     <div className={cx("flex items-center gap-2.5", className)}>
-      <span className={cx("relative", variant === "hero" ? "h-8 w-8" : "h-7 w-7")} aria-hidden="true">
+      <span
+        className={cx("relative", variant === "hero" ? "h-8 w-8" : "h-7 w-7")}
+        aria-hidden="true"
+      >
         <span
           aria-hidden="true"
           className="absolute inset-[-12px] rounded-[18px]"
@@ -96,7 +148,9 @@ export function EverleapMark({ subtitle, variant = "app", className }: EverleapM
             aria-hidden="true"
             className={cx(
               "absolute rounded-full",
-              variant === "hero" ? "left-[7px] top-[7px] h-[7px] w-[7px]" : "left-[6px] top-[6px] h-[7px] w-[7px]"
+              variant === "hero"
+                ? "left-[7px] top-[7px] h-[7px] w-[7px]"
+                : "left-[6px] top-[6px] h-[7px] w-[7px]"
             )}
             style={{ background: "rgba(255,255,255,0.55)" }}
           />
@@ -105,13 +159,20 @@ export function EverleapMark({ subtitle, variant = "app", className }: EverleapM
 
       <div className="min-w-0">
         <div
-          className={cx("font-semibold uppercase tracking-[0.26em] antialiased", titleSize)}
+          className={cx(
+            "font-semibold uppercase tracking-[0.26em] antialiased",
+            titleSize
+          )}
           style={{ color: markWordColor() }}
         >
           EVERLEAP
         </div>
 
-        {subtitle ? <div className={cx("leading-snug text-white/60", subSize)}>{subtitle}</div> : null}
+        {subtitle ? (
+          <div className={cx("leading-snug text-white/60", subSize)}>
+            {subtitle}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -143,10 +204,10 @@ export type AppChromeProps = {
 function intensityForLevel(level: GradientLevel | undefined) {
   const n = typeof level === "number" ? level : 2;
   const v = Math.max(1, Math.min(4, n));
-  if (v <= 1) return { bloom: 0.22, wash: 0.28, vignette: 0.60 };
+  if (v <= 1) return { bloom: 0.22, wash: 0.28, vignette: 0.6 };
   if (v === 2) return { bloom: 0.28, wash: 0.34, vignette: 0.64 };
-  if (v === 3) return { bloom: 0.34, wash: 0.40, vignette: 0.68 };
-  return { bloom: 0.40, wash: 0.46, vignette: 0.72 };
+  if (v === 3) return { bloom: 0.34, wash: 0.4, vignette: 0.68 };
+  return { bloom: 0.4, wash: 0.46, vignette: 0.72 };
 }
 
 type CSSVars = React.CSSProperties & { [key: `--${string}`]: string | number };
@@ -163,12 +224,11 @@ export function AppChrome({
   const intensity = intensityForLevel(gradientLevel);
 
   const [quote, setQuote] = React.useState<InsightQuote | null>(null);
+
   React.useEffect(() => {
     setQuote(pickSessionQuote());
   }, []);
 
-  // Shared “chrome material” (header + footer).
-  // Important: this is what keeps them feeling like one system.
   const chromeVars: CSSVars = {
     "--el-chrome-bg": "rgba(255,255,255,0.032)",
     "--el-chrome-border": "rgba(255,255,255,0.10)",
@@ -183,8 +243,10 @@ export function AppChrome({
   const chromeBlur = "var(--el-chrome-blur)";
 
   return (
-    <div className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)} style={chromeVars}>
-      {/* Background */}
+    <div
+      className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)}
+      style={chromeVars}
+    >
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         <div
           className="absolute inset-0"
@@ -201,21 +263,24 @@ export function AppChrome({
         <div
           className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
           style={{
-            background: "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
+            background:
+              "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
             opacity: intensity.bloom,
           }}
         />
         <div
           className="absolute top-24 -left-48 h-[520px] w-[520px] rounded-full blur-3xl"
           style={{
-            background: "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
+            background:
+              "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
             opacity: intensity.bloom,
           }}
         />
         <div
           className="absolute bottom-0 -right-56 h-[620px] w-[720px] rounded-full blur-3xl"
           style={{
-            background: "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
+            background:
+              "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
             opacity: intensity.bloom,
           }}
         />
@@ -223,13 +288,13 @@ export function AppChrome({
         <div
           className="absolute inset-0"
           style={{
-            background: "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
+            background:
+              "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
             opacity: intensity.vignette,
           }}
         />
       </div>
 
-      {/* Header */}
       <header
         className={cx("relative z-10 sticky top-0")}
         style={{
@@ -239,7 +304,6 @@ export function AppChrome({
           WebkitBackdropFilter: `blur(${chromeBlur})`,
         }}
       >
-        {/* Blend strip so header does NOT look like a separate component */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
@@ -248,7 +312,6 @@ export function AppChrome({
           }}
         />
 
-        {/* Single subtle highlight (avoid “hard rule” borders) */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
@@ -258,11 +321,10 @@ export function AppChrome({
           }}
         />
 
-        {/* Slightly tighter header padding so page titles don’t feel “pushed down” */}
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5 sm:px-5 lg:px-6">
           <EverleapMark subtitle={brandSubtitle} />
 
-          <div className="hidden md:flex max-w-[52ch] items-center justify-end text-right">
+          <div className="hidden max-w-[52ch] items-center justify-end text-right md:flex">
             {quote ? (
               <div className="text-[12px] leading-relaxed text-white/62">
                 <span className="italic">“{quote.text}”</span>
@@ -274,8 +336,7 @@ export function AppChrome({
           </div>
         </div>
 
-        {/* Slightly tighter on mobile as well */}
-        <div className="md:hidden px-4 pb-2">
+        <div className="px-4 pb-2 sm:px-5 md:hidden">
           {quote ? (
             <div className="text-[12px] leading-relaxed text-white/62">
               <span className="italic">“{quote.text}”</span>
@@ -285,10 +346,9 @@ export function AppChrome({
         </div>
       </header>
 
-      {/* IMPORTANT: tighter top padding so content starts sooner; keep bottom comfy */}
-      <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pt-2 pb-4">
-  {children}
-</main>
+      <main className="relative z-10 mx-auto w-full max-w-5xl px-2 pt-2 pb-4 sm:px-4 sm:pt-2.5 md:px-6 lg:px-8 xl:px-10">
+        {children}
+      </main>
     </div>
   );
 }

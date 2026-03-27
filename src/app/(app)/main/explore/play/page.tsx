@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 
 import {
-  CardSectionHeader,
   ExploreLaneTabs,
   SectionKicker,
   SignalConstellation,
@@ -327,7 +326,7 @@ const PLAY_ACTIVITIES: PlayActivity[] = [
 ];
 
 function pagePadding() {
-  return "pb-24 pt-3";
+  return "pb-24 pt-2 sm:pt-3";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -816,6 +815,39 @@ function getPlayOpportunityPreviews(
   ];
 }
 
+function buildAgenticSummary(activity: PlayActivity) {
+  const title = extractCardField(activity, "title").toLowerCase();
+  const hook = extractCardField(activity, "hook");
+  const description = extractCardField(activity, "description");
+
+  if (title.includes("sports") || title.includes("competition")) {
+    return "This could fit if you like fun that gives you something real to train toward — the kind where your body gets sharper, progress becomes visible, and challenge makes you want to come back for another round.";
+  }
+
+  if (title.includes("creative")) {
+    return "This could fit if you like making things just because it feels good to make them — using taste, mood, imagination, or curiosity to turn a loose idea into something you can actually see, hear, share, or keep.";
+  }
+
+  if (title.includes("games") || title.includes("strategy")) {
+    return "This could fit if you find yourself pulled toward games with depth — the kind where timing, systems, adaptation, and smart decisions are part of what makes the experience satisfying instead of disposable.";
+  }
+
+  if (title.includes("calm") || title.includes("reset")) {
+    return "This could fit if the kind of fun you need right now is less noise and more steadiness — something that helps you reset, breathe, focus, and come back to yourself without feeling like one more thing to perform.";
+  }
+
+  if (title.includes("outdoor") || title.includes("adventure")) {
+    return "This could fit if being outside changes your energy in a noticeable way — where movement, fresh air, challenge, and real places make fun feel bigger, freer, and harder to fake.";
+  }
+
+  if (title.includes("making") || title.includes("tinkering")) {
+    return "This could fit if you enjoy learning by doing — building, fixing, testing, cooking, or experimenting until the fun becomes something tangible and your hands are part of how your brain figures things out.";
+  }
+
+  const merged = normalizeWhitespace(`${hook} ${description}`);
+  return merged || "This could fit if this kind of play sounds like the kind you would actually want to keep coming back to.";
+}
+
 function IntroOrbitArt() {
   return (
     <div className="pointer-events-none absolute right-3 top-3 hidden h-[112px] w-[112px] sm:block">
@@ -839,7 +871,7 @@ function PlayIntroPanel({ firstName }: { firstName: string | null }) {
   const opening = getPlayAgenticOpening(firstName);
 
   return (
-    <section className="relative mt-6 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-7 sm:py-7">
+    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-7 sm:py-7">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(236,72,153,0.14),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(249,168,212,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
       <IntroOrbitArt />
 
@@ -850,11 +882,11 @@ function PlayIntroPanel({ firstName }: { firstName: string | null }) {
           {opening.title}
         </h2>
 
-        <p className="mt-5 max-w-3xl text-[15px] leading-[1.75] text-white/74 sm:text-[16px]">
+        <p className="mt-4 max-w-3xl text-[15px] leading-[1.72] text-white/74 sm:text-[16px]">
           {opening.bodyA}
         </p>
 
-        <p className="mt-4 max-w-3xl text-[15px] leading-[1.75] text-white/78 sm:text-[16px]">
+        <p className="mt-3 max-w-3xl text-[15px] leading-[1.72] text-white/78 sm:text-[16px]">
           {opening.bodyB}
         </p>
       </div>
@@ -947,6 +979,50 @@ function PlayGlyph({
   );
 }
 
+function SectionAnchor({
+  label,
+  color,
+  className = "",
+}: {
+  label: string;
+  color: Rgb;
+  className?: string;
+}) {
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      <span
+        className="relative inline-flex h-2.5 w-2.5 shrink-0 rounded-full"
+        style={{
+          backgroundColor: rgb(color, 0.92),
+          boxShadow: `0 0 14px ${rgb(color, 0.35)}`,
+        }}
+      >
+        <span
+          className="absolute inset-[-4px] rounded-full"
+          style={{ backgroundColor: rgb(color, 0.12) }}
+        />
+      </span>
+
+      <span
+        className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.22em]"
+        style={{ color: rgb(color, 0.86) }}
+      >
+        {label}
+      </span>
+
+      <div
+        className="h-px min-w-0 flex-1"
+        style={{
+          background: `linear-gradient(90deg, ${rgb(
+            color,
+            0.24
+          )} 0%, ${rgb(color, 0.08)} 55%, transparent 100%)`,
+        }}
+      />
+    </div>
+  );
+}
+
 function PlayPathForwardSection({
   activity,
   atmosphere,
@@ -955,19 +1031,12 @@ function PlayPathForwardSection({
   atmosphere: ActivityAtmosphere;
 }) {
   return (
-    <div className="relative mt-6">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
-        style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
-            atmosphere.futureGlow,
-            0.22
-          )} 18%, ${rgb(atmosphere.futureGlow, 0.06)} 82%, transparent 100%)`,
-        }}
-      />
+    <div className="relative mt-6 pt-1">
+      <SectionAnchor label="See the full path" color={atmosphere.futureGlow} />
+
       <Link
         href={`/main/explore/play/${activity.slug}`}
-        className="group relative block px-1 pt-4"
+        className="group relative mt-3 block px-1 py-1"
       >
         <div
           className="pointer-events-none absolute inset-0"
@@ -977,70 +1046,36 @@ function PlayPathForwardSection({
               0.12
             )} 0%, transparent 28%), radial-gradient(circle at 88% 82%, ${rgb(
               atmosphere.futureGlow,
-              0.09
+              0.08
             )} 0%, transparent 20%)`,
           }}
         />
 
         <div className="relative flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <CardSectionHeader color={atmosphere.futureGlow}>
-              What this path could really look like
-            </CardSectionHeader>
-
-            <h3 className="mt-3 text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[22px]">
-              See the full path ahead
+            <h3 className="text-[19px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[21px]">
+              Go deeper into this path
             </h3>
 
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72">
-              Go deeper into what this kind of play feels like, how people get
-              started, and what makes it stick over time.
+            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/70 sm:text-[14px]">
+              Explore what this kind of play can feel like over time, how people
+              get started, and what makes it stick when it is a real fit.
             </p>
           </div>
 
-          <div className="relative hidden h-20 w-28 shrink-0 sm:block">
+          <div className="relative hidden h-10 w-10 shrink-0 sm:block">
             <div
-              className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full blur-2xl"
-              style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.16) }}
+              className="pointer-events-none absolute inset-0 rounded-full blur-xl"
+              style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.14) }}
             />
             <div
-              className="pointer-events-none absolute left-0 top-10 h-px w-[72px]"
-              style={{
-                background: `linear-gradient(90deg, ${rgb(
-                  atmosphere.futureGlow,
-                  0.28
-                )} 0%, transparent 100%)`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute left-2 top-8 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureNode, 0.95),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.42)}`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute left-16 top-2 h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureGlow, 0.74),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.28)}`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute right-2 top-16 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureNode, 0.9),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.35)}`,
-              }}
-            />
-            <div
-              className="absolute right-0 top-4 flex h-9 w-9 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
+              className="absolute inset-0 flex items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
               style={{
                 borderColor: rgb(atmosphere.futureGlow, 0.2),
                 backgroundColor: rgb(atmosphere.futureGlow, 0.08),
               }}
             >
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4.5 w-4.5" />
             </div>
           </div>
         </div>
@@ -1071,10 +1106,10 @@ function OpportunityRow({
           style={{
             background: `linear-gradient(90deg, transparent 0%, ${rgb(
               atmosphere.opportunityGlow,
-              0.2
+              0.18
             )} 18%, ${rgb(
               atmosphere.opportunityGlow,
-              0.08
+              0.07
             )} 82%, transparent 100%)`,
           }}
         />
@@ -1085,14 +1120,14 @@ function OpportunityRow({
         style={{
           background: `radial-gradient(circle at 92% 20%, ${rgb(
             atmosphere.opportunityGlow,
-            0.09
+            0.08
           )} 0%, transparent 24%)`,
         }}
       />
 
       <div className="relative flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[20px]">
+          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[19px]">
             {item.title}
           </h4>
 
@@ -1138,11 +1173,10 @@ function PlayActivityCard({
   const atmosphere = getActivityAtmosphere(activity, accent);
 
   const title = extractCardField(activity, "title");
-  const hook = extractCardField(activity, "hook");
-  const description = extractCardField(activity, "description");
   const signalStrength = getSignalStrength(activity, profile);
   const signalLabel = getSignalLabel(signalStrength);
   const opportunities = getPlayOpportunityPreviews(activity);
+  const summary = buildAgenticSummary(activity);
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
 
@@ -1201,13 +1235,17 @@ function PlayActivityCard({
           <div className="min-w-0 pr-2 sm:pr-8">
             <PlayGlyph title={title} accent={atmosphere.border} />
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-                {title}
-              </h2>
+            <h2 className="mt-3 text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
+              {title}
+            </h2>
 
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
                 <SignalMeter score={signalStrength} accent={atmosphere.border} />
+
+                <span className="text-[11px] font-medium text-white/74">
+                  {signalLabel}
+                </span>
 
                 <button
                   type="button"
@@ -1227,21 +1265,9 @@ function PlayActivityCard({
               </div>
             </div>
 
-            <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
-              {signalLabel}
+            <p className="mt-4 max-w-[44rem] text-[14px] leading-[1.68] text-white/76 sm:text-[15px]">
+              {summary}
             </p>
-
-            {hook ? (
-              <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
-                {hook}
-              </p>
-            ) : null}
-
-            {description ? (
-              <p className="mt-3 max-w-[44rem] text-[13px] leading-[1.6] text-white/68">
-                {description}
-              </p>
-            ) : null}
           </div>
 
           <div className="hidden sm:block">
@@ -1266,9 +1292,10 @@ function PlayActivityCard({
         </div>
 
         <div className="mt-6">
-          <CardSectionHeader color={atmosphere.opportunityGlow}>
-            Try this for real
-          </CardSectionHeader>
+          <SectionAnchor
+            label="Try this for real"
+            color={atmosphere.opportunityGlow}
+          />
 
           <div className="mt-3">
             {opportunities.map((item, index) => (
@@ -1332,7 +1359,7 @@ export default function PlayExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-7 sm:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(236,72,153,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(249,168,212,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
@@ -1353,7 +1380,7 @@ export default function PlayExplorePage() {
 
         <PlayIntroPanel firstName={profile.firstName} />
 
-        <section className="mt-6 grid grid-cols-1 gap-5 sm:gap-6">
+        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-6">
           {visibleActivities.map((activity) => (
             <PlayActivityCard
               key={activity.id}

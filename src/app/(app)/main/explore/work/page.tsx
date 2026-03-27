@@ -7,7 +7,6 @@ import * as React from "react";
 import { ArrowRight, CircleHelp } from "lucide-react";
 
 import {
-  CardSectionHeader,
   ExploreLaneTabs,
   SectionKicker,
   SignalConstellation,
@@ -214,7 +213,7 @@ const SLUG_KEYWORDS: Record<string, string[]> = {
 };
 
 function pagePadding() {
-  return "pb-24 pt-2 sm:pt-3";
+  return "pb-24 pt-2 sm:pt-3 lg:pt-5";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -809,13 +808,6 @@ function getSignalStrength(path: WorkPathContent, profile: UserProfileSignals) {
   return Math.max(48, Math.min(94, score));
 }
 
-function getSignalLabel(score: number) {
-  if (score >= 84) return "Very strong";
-  if (score >= 74) return "Strong";
-  if (score >= 64) return "Worth exploring";
-  return "Possible fit";
-}
-
 function isUsableHref(href: string | null) {
   if (!href) return false;
   return href.trim() !== "#" && href.trim() !== "";
@@ -835,7 +827,9 @@ function extractOpportunityPair(path: WorkPathContent): LiveOpportunityPair {
     .map((section) => asRecord(section))
     .filter((section): section is Record<string, unknown> => Boolean(section));
 
-  function pickFromSection(mode: "local" | "remote"): LiveOpportunityPreview | null {
+  function pickFromSection(
+    mode: "local" | "remote"
+  ): LiveOpportunityPreview | null {
     const section =
       sections.find((item) => asString(item.mode) === mode) ??
       sections.find((item) => asString(item.id) === mode);
@@ -877,6 +871,66 @@ function extractOpportunityPair(path: WorkPathContent): LiveOpportunityPair {
   };
 }
 
+function cleanSentence(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function ensureSentence(value: string) {
+  const trimmed = cleanSentence(value);
+  if (!trimmed) return "";
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function buildAgenticSummary(path: WorkPathContent) {
+  const hook = cleanSentence(extractCardField(path, "hook"));
+  const description = cleanSentence(extractCardField(path, "description"));
+
+  if (hook && description) {
+    if (/^a path for people who/i.test(description)) {
+      const transformed = description.replace(
+        /^a path for people who\s*/i,
+        "This path could fit if you "
+      );
+      return `${ensureSentence(hook)} ${ensureSentence(transformed)}`;
+    }
+
+    if (/^for people who/i.test(description)) {
+      const transformed = description.replace(
+        /^for people who\s*/i,
+        "This path could fit if you "
+      );
+      return `${ensureSentence(hook)} ${ensureSentence(transformed)}`;
+    }
+
+    return `${ensureSentence(hook)} ${ensureSentence(description)}`;
+  }
+
+  if (description) {
+    if (/^a path for people who/i.test(description)) {
+      return ensureSentence(
+        description.replace(
+          /^a path for people who\s*/i,
+          "This path could fit if you "
+        )
+      );
+    }
+
+    if (/^for people who/i.test(description)) {
+      return ensureSentence(
+        description.replace(/^for people who\s*/i, "This path could fit if you ")
+      );
+    }
+
+    return ensureSentence(description);
+  }
+
+  if (hook) {
+    return ensureSentence(hook);
+  }
+
+  return "This path could be worth a closer look if the way this work feels already sounds like you.";
+}
+
 function IntroOrbitArt() {
   return (
     <div className="pointer-events-none absolute right-3 top-3 hidden h-[112px] w-[112px] sm:block">
@@ -899,32 +953,66 @@ function WorkIntroPanel({ profile }: { profile: UserProfileSignals }) {
   const opening = getAgenticOpening(profile);
 
   return (
-    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-6 sm:py-6">
+    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-7">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
       <IntroOrbitArt />
 
-      <div className="relative max-w-4xl pr-0 sm:pr-24">
+      <div className="relative max-w-4xl pr-0 sm:pr-20 lg:pr-24">
         <SectionKicker>Work</SectionKicker>
 
-        <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[34px] lg:text-[36px]">
+        <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[30px] lg:text-[34px] xl:text-[36px]">
           {opening.title}
         </h2>
 
-        <p className="mt-4 max-w-3xl text-[14px] leading-[1.7] text-white/74 sm:mt-5 sm:text-[16px]">
+        <p className="mt-4 max-w-3xl text-[14px] leading-[1.68] text-white/74 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.75]">
           {opening.bodyA}
         </p>
 
-        <p className="mt-3 max-w-3xl text-[14px] leading-[1.7] text-white/78 sm:mt-4 sm:text-[16px]">
+        <p className="mt-3 max-w-3xl text-[14px] leading-[1.68] text-white/78 sm:text-[15px] lg:mt-4 lg:text-[16px] lg:leading-[1.75]">
           {opening.bodyB}
         </p>
 
         {opening.bodyC ? (
-          <p className="mt-3 max-w-3xl text-[14px] leading-[1.7] text-white/72 sm:mt-4 sm:text-[16px]">
+          <p className="mt-3 max-w-3xl text-[14px] leading-[1.68] text-white/72 sm:text-[15px] lg:mt-4 lg:text-[16px] lg:leading-[1.75]">
             {opening.bodyC}
           </p>
         ) : null}
       </div>
     </section>
+  );
+}
+
+function SectionAnchor({
+  label,
+  color,
+  lineAlpha = 0.22,
+}: {
+  label: string;
+  color: Rgb;
+  lineAlpha?: number;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        className="h-2.5 w-2.5 rounded-full"
+        style={{
+          backgroundColor: rgb(color, 0.96),
+          boxShadow: `0 0 12px ${rgb(color, 0.34)}`,
+        }}
+      />
+      <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-white/74">
+        {label}
+      </p>
+      <div
+        className="h-px flex-1"
+        style={{
+          background: `linear-gradient(90deg, ${rgb(
+            color,
+            lineAlpha
+          )} 0%, transparent 100%)`,
+        }}
+      />
+    </div>
   );
 }
 
@@ -936,96 +1024,105 @@ function PathForwardSection({
   atmosphere: PathAtmosphere;
 }) {
   return (
-    <div className="relative mt-6">
+    <div className="relative mt-6 lg:mt-7">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        className="pointer-events-none absolute inset-x-0 top-3 h-20"
         style={{
-          background: `linear-gradient(90deg, transparent 0%, ${rgb(
+          background: `radial-gradient(circle at 82% 34%, ${rgb(
             atmosphere.futureGlow,
-            0.22
-          )} 18%, ${rgb(atmosphere.futureGlow, 0.06)} 82%, transparent 100%)`,
+            0.12
+          )} 0%, transparent 24%)`,
         }}
       />
-      <Link
-        href={`/main/explore/work/${path.slug}`}
-        className="group relative block px-1 pt-4"
-      >
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at 18% 18%, ${rgb(
-              atmosphere.futureGlow,
-              0.12
-            )} 0%, transparent 28%), radial-gradient(circle at 88% 82%, ${rgb(
-              atmosphere.futureGlow,
-              0.09
-            )} 0%, transparent 20%)`,
-          }}
+
+      <div className="relative px-1 pt-4 lg:pt-5">
+        <SectionAnchor
+          label="See the full path"
+          color={atmosphere.futureNode}
+          lineAlpha={0.24}
         />
 
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <CardSectionHeader color={atmosphere.futureGlow}>
-              What this path could really look like
-            </CardSectionHeader>
+        <Link
+          href={`/main/explore/work/${path.slug}`}
+          className="group relative mt-3 block overflow-hidden rounded-[22px] border px-4 py-4 transition hover:bg-white/[0.02] sm:px-4 sm:py-[18px]"
+          style={{
+            borderColor: rgb(atmosphere.futureGlow, 0.14),
+            background: `linear-gradient(90deg, ${rgb(
+              atmosphere.futureGlow,
+              0.05
+            )} 0%, ${rgb(atmosphere.futureGlow, 0.015)} 42%, transparent 100%)`,
+          }}
+        >
+          <div
+            className="pointer-events-none absolute right-0 top-0 h-full w-[38%]"
+            style={{
+              background: `radial-gradient(circle at 72% 50%, ${rgb(
+                atmosphere.futureGlow,
+                0.12
+              )} 0%, transparent 48%)`,
+            }}
+          />
 
-            <h3 className="mt-3 text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[22px]">
-              See the full path ahead
-            </h3>
+          <div className="relative flex items-start justify-between gap-4 lg:gap-5">
+            <div className="min-w-0">
+              <h3 className="text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[21px] lg:text-[22px]">
+                Go deeper into this path
+              </h3>
 
-            <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72">
-              Go deeper into specialties, training, day-to-day life, and where
-              this path can lead.
-            </p>
-          </div>
+              <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 lg:text-[14px]">
+                See the specialties, day-to-day rhythm, training, and where this
+                path can lead next.
+              </p>
+            </div>
 
-          <div className="relative hidden h-20 w-28 shrink-0 sm:block">
-            <div
-              className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full blur-2xl"
-              style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.16) }}
-            />
-            <div
-              className="pointer-events-none absolute left-0 top-10 h-px w-[72px]"
-              style={{
-                background: `linear-gradient(90deg, ${rgb(
-                  atmosphere.futureGlow,
-                  0.28
-                )} 0%, transparent 100%)`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute left-2 top-8 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureNode, 0.95),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.42)}`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute left-16 top-2 h-2.5 w-2.5 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureGlow, 0.74),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.28)}`,
-              }}
-            />
-            <div
-              className="pointer-events-none absolute right-2 top-16 h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: rgb(atmosphere.futureNode, 0.9),
-                boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.35)}`,
-              }}
-            />
-            <div
-              className="absolute right-0 top-4 flex h-9 w-9 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
-              style={{
-                borderColor: rgb(atmosphere.futureGlow, 0.2),
-                backgroundColor: rgb(atmosphere.futureGlow, 0.08),
-              }}
-            >
-              <ArrowRight className="h-5 w-5" />
+            <div className="relative hidden h-20 w-28 shrink-0 sm:block">
+              <div
+                className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full blur-2xl"
+                style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.16) }}
+              />
+              <div
+                className="pointer-events-none absolute left-0 top-10 h-px w-[72px]"
+                style={{
+                  background: `linear-gradient(90deg, ${rgb(
+                    atmosphere.futureGlow,
+                    0.28
+                  )} 0%, transparent 100%)`,
+                }}
+              />
+              <div
+                className="pointer-events-none absolute left-2 top-8 h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: rgb(atmosphere.futureNode, 0.95),
+                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.42)}`,
+                }}
+              />
+              <div
+                className="pointer-events-none absolute left-16 top-2 h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor: rgb(atmosphere.futureGlow, 0.74),
+                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.28)}`,
+                }}
+              />
+              <div
+                className="pointer-events-none absolute right-2 top-16 h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: rgb(atmosphere.futureNode, 0.9),
+                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.35)}`,
+                }}
+              />
+              <div
+                className="absolute right-0 top-4 flex h-10 w-10 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
+                style={{
+                  borderColor: rgb(atmosphere.futureGlow, 0.22),
+                  backgroundColor: rgb(atmosphere.futureGlow, 0.08),
+                }}
+              >
+                <ArrowRight className="h-5 w-5" />
+              </div>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
     </div>
   );
 }
@@ -1044,7 +1141,7 @@ function OpportunityRow({
       href={item.href}
       target="_blank"
       rel="noreferrer noopener"
-      className="group/opportunity relative block px-1 py-4"
+      className="group/opportunity relative block px-1 py-3.5 lg:py-4"
     >
       {!isFirst ? (
         <div
@@ -1071,13 +1168,13 @@ function OpportunityRow({
         }}
       />
 
-      <div className="relative flex items-start justify-between gap-4">
+      <div className="relative flex items-start justify-between gap-4 lg:gap-5">
         <div className="min-w-0">
-          <h4 className="max-w-[38rem] text-[18px] font-semibold leading-[1.14] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[20px]">
+          <h4 className="max-w-[38rem] text-[17px] font-semibold leading-[1.18] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[18px] lg:text-[20px]">
             {item.title}
           </h4>
 
-          <p className="mt-2 max-w-[40rem] text-[13px] leading-[1.65] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
+          <p className="mt-1.5 max-w-[40rem] text-[13px] leading-[1.6] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
             {item.note}
           </p>
         </div>
@@ -1115,11 +1212,9 @@ function WorkPathCard({
   const atmosphere = getPathAtmosphere(path, accent);
 
   const title = extractCardField(path, "title");
-  const hook = extractCardField(path, "hook");
-  const description = extractCardField(path, "description");
   const signalStrength = getSignalStrength(path, profile);
-  const signalLabel = getSignalLabel(signalStrength);
   const opportunities = extractOpportunityPair(path);
+  const summary = buildAgenticSummary(path);
 
   const renderedOpportunities = [
     opportunities.local,
@@ -1130,7 +1225,7 @@ function WorkPathCard({
 
   return (
     <article
-      className="group relative overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5"
+      className="group relative overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5 lg:p-6"
       style={{
         borderColor: rgb(atmosphere.border, 0.22),
         background: `
@@ -1179,78 +1274,70 @@ function WorkPathCard({
       <SignalConstellation accent={atmosphere.border} />
 
       <div className="relative">
-        <div className="min-w-0 pr-14 sm:pr-28">
-          <CardSectionHeader color={atmosphere.border}>
-            Work path
-          </CardSectionHeader>
+        <div className="min-w-0 pr-14 sm:pr-24 lg:pr-28">
+          <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px] lg:text-[25px]">
+            {title}
+          </h2>
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[25px]">
-              {title}
-            </h2>
+          <div className="relative mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
+            <SignalMeter score={signalStrength} accent={atmosphere.border} />
 
-            <div className="relative inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
-              <SignalMeter score={signalStrength} accent={atmosphere.border} />
+            <button
+              type="button"
+              aria-label="What signal means"
+              onClick={() => setShowSignalHelp((current) => !current)}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
+            >
+              <CircleHelp className="h-3.5 w-3.5" />
+            </button>
 
-              <button
-                type="button"
-                aria-label="What signal means"
-                onClick={() => setShowSignalHelp((current) => !current)}
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
-              >
-                <CircleHelp className="h-3.5 w-3.5" />
-              </button>
+            {showSignalHelp ? (
+              <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
+                This is Everleap&apos;s best guess, right now, of how well this
+                path fits your profile.
+              </div>
+            ) : null}
+          </div>
 
-              {showSignalHelp ? (
-                <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
-                  This is Everleap&apos;s best guess, right now, of how well
-                  this path fits your profile.
+          <p className="mt-4 max-w-[44rem] text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:text-[15px]">
+            {summary}
+          </p>
+        </div>
+
+        <div className="relative mt-6">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-3 h-20"
+            style={{
+              background: `radial-gradient(circle at 16% 20%, ${rgb(
+                atmosphere.opportunityGlow,
+                0.1
+              )} 0%, transparent 24%)`,
+            }}
+          />
+
+          <div className="relative px-1">
+            <SectionAnchor
+              label="Try this for real"
+              color={atmosphere.opportunityNode}
+              lineAlpha={0.22}
+            />
+
+            <div className="mt-2.5">
+              {renderedOpportunities.map((item, index) => (
+                <OpportunityRow
+                  key={item.id}
+                  item={item}
+                  atmosphere={atmosphere}
+                  isFirst={index === 0}
+                />
+              ))}
+
+              {renderedOpportunities.length === 0 ? (
+                <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
+                  No live opportunities are wired into this path yet.
                 </div>
               ) : null}
             </div>
-          </div>
-
-          <p className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
-            {signalLabel}
-          </p>
-
-          {hook ? (
-            <p className="mt-4 text-[15px] font-medium leading-[1.65] text-white/86 sm:text-[16px]">
-              {hook}
-            </p>
-          ) : null}
-
-          {description ? (
-            <p className="mt-3 max-w-[44rem] text-[13px] leading-[1.6] text-white/68">
-              {description}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="mt-6">
-          <CardSectionHeader color={atmosphere.opportunityGlow}>
-            Try this for real
-          </CardSectionHeader>
-
-          <p className="mt-2 max-w-2xl text-[14px] leading-[1.65] text-white/72">
-            Two real ways to test this path: one nearby and one you can start online.
-          </p>
-
-          <div className="mt-3">
-            {renderedOpportunities.map((item, index) => (
-              <OpportunityRow
-                key={item.id}
-                item={item}
-                atmosphere={atmosphere}
-                isFirst={index === 0}
-              />
-            ))}
-
-            {renderedOpportunities.length === 0 ? (
-              <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
-                No live opportunities are wired into this path yet.
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -1298,15 +1385,15 @@ export default function WorkExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <div className="mx-auto w-full max-w-5xl px-3 sm:px-5 lg:px-6">
-        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-6 sm:py-5">
+      <div className="mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-5 sm:py-5 lg:px-7 lg:py-6">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(129,93,255,0.10),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(56,189,248,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
 
           <div className="relative">
-            <h1 className="text-[34px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[50px]">
+            <h1 className="text-[34px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[42px] lg:text-[50px]">
               Explore
             </h1>
-            <p className="mt-1 text-[14px] leading-[1.45] text-white/62 sm:text-[16px]">
+            <p className="mt-1 text-[14px] leading-[1.45] text-white/62 sm:text-[15px] lg:text-[16px]">
               Where I can go
             </p>
 
@@ -1319,7 +1406,7 @@ export default function WorkExplorePage() {
 
         <WorkIntroPanel profile={profile} />
 
-        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5">
+        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
           {visiblePaths.map((path) => (
             <WorkPathCard key={path.id} path={path} profile={profile} />
           ))}
