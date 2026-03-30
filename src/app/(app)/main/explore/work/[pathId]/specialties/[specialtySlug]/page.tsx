@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/specialties/[specialtySlug]/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -35,6 +33,10 @@ import { readStoredFirstName } from "../../../_data/getWorkAgenticOpening";
 
 function rgb(value: { r: number; g: number; b: number }, alpha = 1) {
   return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
+}
+
+function pageShell() {
+  return "relative mx-auto w-full max-w-5xl px-2 pb-24 pt-2 sm:px-4 sm:pt-3 md:px-6 lg:px-8 lg:pt-5 xl:px-10";
 }
 
 function sectionKicker() {
@@ -389,7 +391,7 @@ function FlowLink({
   return (
     <Link
       href={href}
-      className="group relative block overflow-hidden border-t border-white/10 pt-5"
+      className="group relative block overflow-hidden border-t border-white/10 pt-4 sm:pt-5"
     >
       <div
         className="pointer-events-none absolute left-0 top-4 h-10 w-10 rounded-full blur-2xl opacity-0 transition duration-200 group-hover:opacity-100"
@@ -504,7 +506,7 @@ export default function WorkPathSpecialtyDetailPage() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-20 pt-6">
+      <div className={pageShell()}>
         <Link
           href={`/main/explore/work/${path.slug}/specialties`}
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-2 text-sm text-white/70 transition hover:bg-white/[0.08]"
@@ -514,7 +516,7 @@ export default function WorkPathSpecialtyDetailPage() {
         </Link>
 
         <section
-          className="relative mt-8 overflow-hidden rounded-[32px] border border-white/10 px-5 py-6 sm:px-7 sm:py-8"
+          className="relative mt-4 overflow-hidden rounded-[32px] border border-white/10 px-4 py-5 sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-8"
           style={{
             background:
               "linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.035) 100%)",
@@ -551,7 +553,7 @@ export default function WorkPathSpecialtyDetailPage() {
           <div className="relative">
             <div className={sectionKicker()}>Specialty</div>
 
-            <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="mt-3 flex flex-col gap-4 sm:gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <div className="mb-4 flex items-center gap-3">
                   <div
@@ -591,11 +593,11 @@ export default function WorkPathSpecialtyDetailPage() {
                   />
                 </div>
 
-                <h1 className="text-[2.3rem] font-semibold leading-[0.98] tracking-[-0.05em] sm:text-5xl">
+                <h1 className="text-[2.15rem] font-semibold leading-[0.98] tracking-[-0.05em] sm:text-5xl">
                   {specialty.title}
                 </h1>
 
-                <p className="mt-4 max-w-2xl text-[17px] leading-8 text-white/82">
+                <p className="mt-4 max-w-2xl text-[16px] leading-7 text-white/82 sm:text-[17px] sm:leading-8">
                   {specialty.summary}
                 </p>
               </div>
@@ -610,7 +612,7 @@ export default function WorkPathSpecialtyDetailPage() {
               </div>
             </div>
 
-            <div className="mt-7 max-w-2xl">
+            <div className="mt-6 max-w-2xl sm:mt-7">
               <p className="text-[15px] leading-7 text-white/92">
                 {firstName ? `${firstName}, ` : ""}
                 this version is mostly about <strong>{hook.trait}</strong>.
@@ -633,7 +635,7 @@ export default function WorkPathSpecialtyDetailPage() {
           </div>
         </section>
 
-        <section className="mt-10 space-y-4">
+        <section className="mt-8 space-y-3 sm:mt-10 sm:space-y-4">
           <FlowLink
             href={`/main/explore/work/${path.slug}/day`}
             kicker="Day in the life"

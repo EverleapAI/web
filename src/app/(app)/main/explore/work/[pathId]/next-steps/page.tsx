@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/next-steps/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -45,6 +43,10 @@ function normalizeParam(value: string | string[] | undefined) {
   return value;
 }
 
+function pageShell() {
+  return "relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-6 px-2 pb-24 pt-2 sm:gap-7 sm:px-4 sm:pt-3 md:px-6 lg:gap-8 lg:px-8 lg:pt-5 xl:px-10";
+}
+
 function sectionIcon(mode: "local" | "remote") {
   return mode === "local" ? (
     <MapPin className="h-4 w-4" />
@@ -59,7 +61,7 @@ function sectionIcon(mode: "local" | "remote") {
 
 function OpportunitySectionBlock({ section }: { section: OpportunitySection }) {
   return (
-    <section className="space-y-5">
+    <section className="space-y-4 sm:space-y-5">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 rounded-2xl border border-white/10 bg-white/8 p-2 text-white/86">
           {sectionIcon(section.mode)}
@@ -69,7 +71,7 @@ function OpportunitySectionBlock({ section }: { section: OpportunitySection }) {
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-100/72">
             {section.eyebrow}
           </div>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-white">
+          <h2 className="mt-2 text-[1.75rem] font-semibold tracking-[-0.02em] text-white sm:text-2xl">
             {section.title}
           </h2>
           <p className="mt-3 max-w-3xl text-[15px] leading-7 text-white/72">
@@ -135,7 +137,7 @@ export default function WorkNextStepsPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#07111f] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(87,83,255,0.18),_transparent_30%),radial-gradient(circle_at_20%_32%,_rgba(56,189,248,0.12),_transparent_28%),radial-gradient(circle_at_80%_22%,_rgba(244,114,182,0.1),_transparent_24%),linear-gradient(180deg,_#0a1222_0%,_#07111f_42%,_#050b16_100%)]" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-4 sm:px-6 lg:px-8">
+      <div className={pageShell()}>
         <div>
           <button
             onClick={() => router.back()}
@@ -146,20 +148,20 @@ export default function WorkNextStepsPage() {
           </button>
         </div>
 
-        <section className="rounded-[32px] border border-white/12 bg-white/[0.05] px-6 py-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:justify-between">
+        <section className="rounded-[32px] border border-white/12 bg-white/[0.05] px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
+          <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:justify-between">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 text-xs text-cyan-100/70">
                 <Compass className="h-4 w-4" />
                 Next steps
               </div>
 
-              <h1 className="mt-4 text-3xl font-semibold text-white">
+              <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.02em] text-white sm:text-3xl">
                 {nextStepsV2?.heroTitle ||
                   `There are real ways into ${workPath.card.title} right now`}
               </h1>
 
-              <p className="mt-4 text-white/80">
+              <p className="mt-4 text-[15px] leading-7 text-white/80">
                 {nextStepsV2?.heroSummary ||
                   "You don’t need to wait. You can start now."}
               </p>
@@ -175,7 +177,7 @@ export default function WorkNextStepsPage() {
         </section>
 
         {nextStepsV2 ? (
-          <div className="space-y-10">
+          <div className="space-y-8 sm:space-y-10">
             {nextStepsV2.sections.map((section: OpportunitySection) => (
               <OpportunitySectionBlock key={section.id} section={section} />
             ))}

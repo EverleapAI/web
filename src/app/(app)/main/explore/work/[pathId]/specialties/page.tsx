@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/specialties/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -40,6 +38,10 @@ function rgb(value: { r: number; g: number; b: number }, alpha = 1) {
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
+}
+
+function pageShell() {
+  return "mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10";
 }
 
 function shellSurface(dark: boolean) {
@@ -405,7 +407,7 @@ function IntroCard({
   return (
     <section
       className={cx(
-        "relative overflow-hidden rounded-[30px] px-5 py-6 sm:px-6 sm:py-7",
+        "relative overflow-hidden rounded-[30px] px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7",
         shellSurface(dark)
       )}
       style={{
@@ -661,8 +663,8 @@ export default function WorkPathSpecialtiesPage() {
         />
       </div>
 
-      <div className="relative pb-32 pt-6">
-        <div className="mx-auto max-w-6xl">
+      <div className="relative pb-24 pt-2 sm:pt-3 lg:pt-5">
+        <div className={pageShell()}>
           <div className="flex items-center">
             <Link
               href={`/main/explore/work/${path.slug}`}
@@ -679,7 +681,7 @@ export default function WorkPathSpecialtiesPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-8 max-w-5xl">
+        <div className={cx(pageShell(), "mt-4 sm:mt-5 lg:mt-6")}>
           <IntroCard
             dark={dark}
             pathTitle={path.card.title}
@@ -691,7 +693,7 @@ export default function WorkPathSpecialtiesPage() {
           />
         </div>
 
-        <section className="mx-auto mt-10 max-w-6xl">
+        <section className={cx(pageShell(), "mt-8 sm:mt-10")}>
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <div className={sectionKicker(dark)}>Specialty chooser</div>

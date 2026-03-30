@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/forecast/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -32,6 +30,10 @@ function normalizeParam(value: string | string[] | undefined) {
 
 function rgb(value: RGB, alpha = 1) {
   return `rgba(${value.r}, ${value.g}, ${value.b}, ${alpha})`;
+}
+
+function pageShell() {
+  return "relative z-10 mx-auto w-full max-w-5xl px-2 pb-24 pt-2 sm:px-4 sm:pt-3 md:px-6 lg:px-8 lg:pt-5 xl:px-10";
 }
 
 function metricToneText(
@@ -115,14 +117,14 @@ function SalaryBand({
 
   return (
     <section className="overflow-hidden rounded-[28px] border border-white/8 bg-white/[0.035] px-4 py-5 sm:px-5">
-      <div
-        className="pointer-events-none absolute"
-        aria-hidden="true"
-      />
+      <div className="pointer-events-none absolute" aria-hidden="true" />
       <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/56">
         <div
           className="rounded-full p-1.5"
-          style={{ backgroundColor: rgb(accent, 0.14), color: rgb(accent, 0.95) }}
+          style={{
+            backgroundColor: rgb(accent, 0.14),
+            color: rgb(accent, 0.95),
+          }}
         >
           <DollarSign className="h-3.5 w-3.5" />
         </div>
@@ -176,14 +178,14 @@ function SimpleList({
     tone === "grow"
       ? "text-emerald-200"
       : tone === "pressure"
-      ? "text-amber-200"
-      : "text-white";
+        ? "text-amber-200"
+        : "text-white";
   const dotClass =
     tone === "grow"
       ? "bg-emerald-300"
       : tone === "pressure"
-      ? "bg-amber-300"
-      : "";
+        ? "bg-amber-300"
+        : "";
 
   return (
     <div>
@@ -267,11 +269,11 @@ export default function WorkForecastPage() {
         style={{ backgroundColor: rgb(glow, 0.1) }}
       />
 
-      <div className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6">
+      <div className={pageShell()}>
         <button
           type="button"
           onClick={() => router.back()}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white/72 transition hover:border-white/18 hover:bg-white/[0.08] hover:text-white"
+          className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white/72 transition hover:border-white/18 hover:bg-white/[0.08] hover:text-white sm:mb-5 lg:mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -280,7 +282,7 @@ export default function WorkForecastPage() {
         {forecastV2 ? (
           <>
             <section
-              className="relative overflow-hidden rounded-[34px] border border-white/10 px-5 py-6 shadow-[0_24px_90px_rgba(0,0,0,0.32)] sm:px-7 sm:py-7"
+              className="relative overflow-hidden rounded-[34px] border border-white/10 px-4 py-5 shadow-[0_24px_90px_rgba(0,0,0,0.32)] sm:px-5 sm:py-6 lg:px-7 lg:py-7"
               style={{
                 background: `
                   linear-gradient(155deg, rgba(10,18,32,0.94) 0%, rgba(13,21,38,0.92) 40%, rgba(17,17,29,0.9) 100%)
@@ -299,7 +301,7 @@ export default function WorkForecastPage() {
               />
 
               <div className="relative z-10">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex flex-col gap-4 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
                   <div className="max-w-3xl">
                     <div
                       className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]"
@@ -313,7 +315,7 @@ export default function WorkForecastPage() {
                       Industry outlook
                     </div>
 
-                    <h1 className="mt-4 text-3xl font-semibold tracking-[-0.035em] text-white sm:text-[3.1rem] sm:leading-[1.02]">
+                    <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.035em] text-white sm:text-[3.1rem] sm:leading-[1.02]">
                       {title}
                     </h1>
 
@@ -341,7 +343,7 @@ export default function WorkForecastPage() {
                 </div>
 
                 {metrics.length > 0 ? (
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 xl:grid-cols-4">
                     {metrics.map((metric) => (
                       <MetricInline key={metric.id} metric={metric} accent={accent} />
                     ))}
@@ -350,8 +352,8 @@ export default function WorkForecastPage() {
               </div>
             </section>
 
-            <section className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.06fr)_minmax(280px,0.94fr)]">
-              <div className="min-w-0 space-y-10">
+            <section className="mt-8 grid gap-8 sm:mt-10 sm:gap-10 lg:mt-10 lg:grid-cols-[minmax(0,1.06fr)_minmax(280px,0.94fr)]">
+              <div className="min-w-0 space-y-8 sm:space-y-10">
                 <section className="grid gap-8 md:grid-cols-2">
                   <SimpleList
                     title="What is growing"
@@ -368,7 +370,7 @@ export default function WorkForecastPage() {
                 </section>
 
                 {aiImpact ? (
-                  <section className="rounded-[30px] border border-white/8 bg-white/[0.035] px-5 py-5 sm:px-6">
+                  <section className="rounded-[30px] border border-white/8 bg-white/[0.035] px-4 py-5 sm:px-5 sm:py-5 lg:px-6">
                     <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/56">
                       <div
                         className="rounded-full p-1.5"
@@ -483,7 +485,10 @@ export default function WorkForecastPage() {
                   <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-white/52">
                     <div
                       className="rounded-full p-1.5"
-                      style={{ backgroundColor: rgb(glow, 0.12), color: rgb(glow, 0.95) }}
+                      style={{
+                        backgroundColor: rgb(glow, 0.12),
+                        color: rgb(glow, 0.95),
+                      }}
                     >
                       <CircleAlert className="h-3.5 w-3.5" />
                     </div>
@@ -513,7 +518,7 @@ export default function WorkForecastPage() {
             </section>
           </>
         ) : (
-          <section className="rounded-[30px] border border-white/8 bg-white/[0.04] px-5 py-6">
+          <section className="rounded-[30px] border border-white/8 bg-white/[0.04] px-4 py-5 sm:px-5 sm:py-6">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/52">
               Forecast
             </div>

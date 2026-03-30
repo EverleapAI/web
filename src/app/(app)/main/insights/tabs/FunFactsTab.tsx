@@ -1,4 +1,3 @@
-// src/app/main/insights/tabs/FunFactsTab.tsx
 "use client";
 
 import * as React from "react";
@@ -50,7 +49,7 @@ function asStringArray(v: unknown): string[] {
 function readingSurface(dark: boolean) {
   return [
     "relative overflow-hidden rounded-[26px] border",
-    "px-4 py-4 md:px-5 md:py-5",
+    "px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6",
     "backdrop-blur-xl",
     dark ? "border-white/10 bg-slate-950/22" : "border-black/10 bg-white/80",
     "shadow-[0_18px_55px_rgba(0,0,0,0.22)]",
@@ -116,7 +115,10 @@ function buildTimeTwinHref(rawHref: string, twinId: string) {
   }
 
   if (trimmed.includes("/main/insights/fun/time-twin")) {
-    const corrected = trimmed.replace("/main/insights/fun/time-twin", "/main/insights/fun-facts/time-twin");
+    const corrected = trimmed.replace(
+      "/main/insights/fun/time-twin",
+      "/main/insights/fun-facts/time-twin"
+    );
     return corrected.includes("?")
       ? `${corrected}&twin=${encodeURIComponent(twinId)}`
       : `${corrected}?twin=${encodeURIComponent(twinId)}`;
@@ -144,7 +146,9 @@ export function FunFactsTab(props: {
   const headline = asString(fun.headline, "").trim() || "Fun facts";
   const story = asStringArray(fun.storySoFar);
 
-  const timeTwin = isRecord(fun.timeTwin) ? (fun.timeTwin as FunFactsLike["timeTwin"]) : undefined;
+  const timeTwin = isRecord(fun.timeTwin)
+    ? (fun.timeTwin as FunFactsLike["timeTwin"])
+    : undefined;
 
   const ttTitle = asString(timeTwin?.title, "Time Twin");
   const ttSubtitle = asString(timeTwin?.subtitle, "A playful historical mirror.");
@@ -156,14 +160,13 @@ export function FunFactsTab(props: {
   const vmTwinId = asString(timeTwin?.twinId, "").trim();
   const defaultTwinId = vmTwinId || TIME_TWINS[0]?.id || "leonardo";
 
-  const ttHref = buildTimeTwinHref(
-    asString(timeTwin?.href, ""),
-    defaultTwinId
-  );
+  const ttHref = buildTimeTwinHref(asString(timeTwin?.href, ""), defaultTwinId);
 
   const ttBadges =
     Array.isArray(timeTwin?.badges) && timeTwin?.badges?.length
-      ? (timeTwin?.badges ?? []).filter((x): x is string => typeof x === "string").slice(0, 6)
+      ? (timeTwin?.badges ?? [])
+          .filter((x): x is string => typeof x === "string")
+          .slice(0, 6)
       : ["creative", "technical", "real-world impact"];
 
   return (
@@ -198,15 +201,17 @@ export function FunFactsTab(props: {
                   {headline}
                 </div>
                 <div className={`mt-2 text-[15px] leading-7 md:text-[16px] ${bodyText(dark)}`}>
-                  Lighter, weirder, more playful — still grounded. This lane is for the stuff that makes you smile
-                  *and* notice something true.
+                  Lighter, weirder, more playful — still grounded. This lane is
+                  for the stuff that makes you smile *and* notice something true.
                 </div>
               </div>
 
               <div
                 className={[
                   "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-                  dark ? "border-white/10 bg-white/6 text-white/60" : "border-black/10 bg-white text-slate-600",
+                  dark
+                    ? "border-white/10 bg-white/6 text-white/60"
+                    : "border-black/10 bg-white text-slate-600",
                 ].join(" ")}
                 aria-hidden
               >
@@ -223,9 +228,8 @@ export function FunFactsTab(props: {
               </div>
             ) : null}
 
-            <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
+            <div className={["my-5 h-px sm:my-6", softDivider(dark)].join(" ")} />
 
-            {/* Time Twin teaser card */}
             <div>
               <div className={tinyLabel(dark)}>Featured</div>
 
@@ -237,12 +241,16 @@ export function FunFactsTab(props: {
                   ].join(" ")}
                   aria-hidden
                 >
-                  <Clock3 className={["h-5 w-5", dark ? "text-violet-200" : "text-violet-700"].join(" ")} />
+                  <Clock3
+                    className={["h-5 w-5", dark ? "text-violet-200" : "text-violet-700"].join(" ")}
+                  />
                 </div>
 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className={`text-base font-semibold ${sectionTitle(dark)}`}>{ttTitle}</div>
+                    <div className={`text-base font-semibold ${sectionTitle(dark)}`}>
+                      {ttTitle}
+                    </div>
                     <span
                       className={[
                         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
@@ -256,9 +264,13 @@ export function FunFactsTab(props: {
                     </span>
                   </div>
 
-                  <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>{ttSubtitle}</div>
+                  <div className={`mt-1 text-sm ${sectionMuted(dark)}`}>
+                    {ttSubtitle}
+                  </div>
 
-                  <div className={`mt-3 text-[15px] leading-7 ${bodyText(dark)}`}>{ttTeaser}</div>
+                  <div className={`mt-3 text-[15px] leading-7 ${bodyText(dark)}`}>
+                    {ttTeaser}
+                  </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {ttBadges.map((b) => (
@@ -269,26 +281,32 @@ export function FunFactsTab(props: {
                   </div>
 
                   <div className="mt-4">
-                    <button type="button" className={pillButton(dark)} onClick={() => router.push(ttHref)}>
+                    <button
+                      type="button"
+                      className={pillButton(dark)}
+                      onClick={() => router.push(ttHref)}
+                    >
                       <ArrowUpRight className="h-4 w-4 opacity-80" />
                       <span>Open Time Twin</span>
                     </button>
                   </div>
 
                   <div className={`mt-3 text-xs ${dark ? "text-white/45" : "text-slate-500"}`}>
-                    This is meant to be *fun*. If it’s off, tell us later — Everleap uses that feedback.
+                    This is meant to be *fun*. If it’s off, tell us later —
+                    Everleap uses that feedback.
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className={["my-6 h-px", softDivider(dark)].join(" ")} />
+            <div className={["my-5 h-px sm:my-6", softDivider(dark)].join(" ")} />
 
             <div>
               <div className={tinyLabel(dark)}>Coming next</div>
               <div className={`mt-2 text-sm leading-7 ${sectionMuted(dark)}`}>
-                More playful reads will live here over time — little mirrors, small “you would probably…”, and curious
-                patterns that don’t belong in the serious tabs.
+                More playful reads will live here over time — little mirrors,
+                small “you would probably…”, and curious patterns that don’t
+                belong in the serious tabs.
               </div>
             </div>
           </div>

@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/day/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -7,7 +5,6 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import {
   ArrowLeft,
-  ArrowRight,
   Coffee,
   MoonStar,
   Sparkles,
@@ -28,6 +25,10 @@ import {
 
 function rgb(v: { r: number; g: number; b: number }, a = 1) {
   return `rgba(${v.r},${v.g},${v.b},${a})`;
+}
+
+function pageShell() {
+  return "relative mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10 pb-24 pt-2 sm:pt-3 lg:pt-5";
 }
 
 type StoryTone = "morning" | "midday" | "afternoon" | "evening";
@@ -258,7 +259,7 @@ export default function WorkPathDayPage() {
         }
       `}</style>
 
-      <div className="relative mx-auto w-full max-w-5xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
+      <div className={pageShell()}>
         <Link
           href={`/main/explore/work/${path.slug}`}
           className="inline-flex items-center gap-2 text-sm text-white/62 transition hover:text-white"
@@ -267,8 +268,8 @@ export default function WorkPathDayPage() {
           Back
         </Link>
 
-        <section className="relative mt-6">
-          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.055] px-5 py-6 shadow-[0_30px_120px_rgba(0,0,0,0.34)] backdrop-blur-2xl sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+        <section className="relative mt-4 sm:mt-5 lg:mt-6">
+          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.055] px-4 py-5 shadow-[0_30px_120px_rgba(0,0,0,0.34)] backdrop-blur-2xl sm:px-5 sm:py-6 lg:px-8 lg:py-8">
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -306,13 +307,13 @@ export default function WorkPathDayPage() {
               }}
             />
 
-            <div className="relative grid gap-6 sm:grid-cols-[minmax(0,1fr)_118px] sm:items-start">
+            <div className="relative grid gap-5 sm:grid-cols-[minmax(0,1fr)_118px] sm:items-start sm:gap-6">
               <div className="max-w-3xl">
                 <div className="text-[11px] uppercase tracking-[0.25em] text-white/42">
                   Day in the life
                 </div>
 
-                <h1 className="mt-3 text-[2.3rem] font-semibold leading-[0.98] tracking-tight sm:text-[3.2rem]">
+                <h1 className="mt-3 text-[2.15rem] font-semibold leading-[0.98] tracking-tight sm:text-[3.2rem]">
                   {path.dayInLife.title}
                 </h1>
 
@@ -320,11 +321,11 @@ export default function WorkPathDayPage() {
                   {path.dayInLife.summary}
                 </p>
 
-                <p className="mt-5 max-w-2xl text-[15px] leading-7 text-white/90 sm:text-[16px]">
+                <p className="mt-4 max-w-2xl text-[15px] leading-7 text-white/90 sm:mt-5 sm:text-[16px]">
                   {introLine}
                 </p>
 
-                <div className="mt-6 max-w-2xl border-l border-white/12 pl-4">
+                <div className="mt-5 max-w-2xl border-l border-white/12 pl-4 sm:mt-6">
                   <div className="text-[11px] uppercase tracking-[0.24em] text-white/42">
                     The pulse
                   </div>
@@ -358,10 +359,10 @@ export default function WorkPathDayPage() {
           </div>
         </section>
 
-        <section className="relative mt-12">
+        <section className="relative mt-8 sm:mt-10 lg:mt-12">
           <div className="absolute bottom-0 left-[18px] top-0 w-px bg-gradient-to-b from-white/0 via-white/10 to-white/0 sm:left-[20px]" />
 
-          <div className="space-y-9 sm:space-y-10">
+          <div className="space-y-7 sm:space-y-9 lg:space-y-10">
             {storyBeats.map((beat, index) => {
               const Icon = beat.icon;
               const tone = toneStyles(beat.tone, path.theme);
@@ -394,7 +395,7 @@ export default function WorkPathDayPage() {
                     </div>
                   </div>
 
-                  <h3 className="mt-2 text-[1.28rem] font-semibold leading-tight text-white sm:text-[1.58rem]">
+                  <h3 className="mt-2 text-[1.22rem] font-semibold leading-tight text-white sm:text-[1.58rem]">
                     {beat.title}
                   </h3>
 

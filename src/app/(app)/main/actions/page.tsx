@@ -564,9 +564,9 @@ export default function ActionsPage() {
 
   return (
     <>
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-28 pt-5 md:px-8 md:pt-7">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-2 pb-24 pt-2 sm:px-4 sm:pt-3 md:px-6 lg:px-8 lg:pt-5 xl:px-10">
         <section className="mb-5">
-          <div className={`px-6 py-6 sm:px-7 sm:py-7 ${surface}`}>
+          <div className={`px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-6 ${surface}`}>
             <div
               className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
               style={{ opacity: dark ? 0.16 : 0.12 }}
@@ -718,7 +718,7 @@ export default function ActionsPage() {
                   />
 
                   <div
-                    className={`relative rounded-3xl px-5 py-4 ${
+                    className={`relative rounded-3xl px-4 py-4 sm:px-5 sm:py-4 ${
                       dark ? "bg-slate-950/35" : "bg-white/70"
                     }`}
                   >
@@ -879,7 +879,10 @@ export default function ActionsPage() {
                 prog.total > 0 ? Math.round((prog.done / prog.total) * 100) : 0;
 
               return (
-                <div key={g.id} className={`rounded-3xl border px-5 py-4 ${surface}`}>
+                <div
+                  key={g.id}
+                  className={`rounded-3xl border px-4 py-4 sm:px-5 sm:py-4 ${surface}`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -985,7 +988,7 @@ export default function ActionsPage() {
             <button
               type="button"
               onClick={() => addGenerated("insights")}
-              className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
+              className={`rounded-3xl border px-4 py-4 text-left transition hover:translate-y-[-1px] active:scale-[0.99] sm:px-5 sm:py-5 ${
                 dark
                   ? "border-white/10 bg-white/5 text-slate-100"
                   : "border-slate-200 bg-white/80 text-slate-900"
@@ -1016,7 +1019,7 @@ export default function ActionsPage() {
             <button
               type="button"
               onClick={() => addGenerated("explore")}
-              className={`rounded-3xl border px-5 py-5 text-left transition hover:translate-y-[-1px] active:scale-[0.99] ${
+              className={`rounded-3xl border px-4 py-4 text-left transition hover:translate-y-[-1px] active:scale-[0.99] sm:px-5 sm:py-5 ${
                 dark
                   ? "border-white/10 bg-white/5 text-slate-100"
                   : "border-slate-200 bg-white/80 text-slate-900"

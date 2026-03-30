@@ -1,5 +1,3 @@
-// apps/web/src/app/(app)/main/explore/work/[pathId]/page.tsx
-
 "use client";
 
 import * as React from "react";
@@ -50,6 +48,10 @@ const WORK_REACTIONS_STORAGE_KEY = "everleap.explore.work.reactions.v1";
 
 function rgb(value: { r: number; g: number; b: number }, alpha = 1) {
   return `rgba(${value.r},${value.g},${value.b},${alpha})`;
+}
+
+function pageShell() {
+  return "flex w-full flex-col gap-4 px-2 pb-24 pt-2 sm:gap-5 sm:px-4 sm:pt-3 md:px-6 lg:gap-6 lg:px-8 lg:pt-5 xl:px-10";
 }
 
 function clampScore(score: number) {
@@ -1134,7 +1136,7 @@ export default function WorkPathDetailPage() {
 
   return (
     <main className="relative text-white">
-      <div className="flex w-full flex-col gap-5 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      <div className={pageShell()}>
         <Link
           href="/main/explore/work"
           className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
@@ -1265,7 +1267,7 @@ export default function WorkPathDetailPage() {
         <SurfaceCard
           accent={path.theme.glow}
           glow={path.theme.accentStrong}
-          className="px-5 py-5 sm:px-6 sm:py-6"
+          className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
         >
           <div
             className="pointer-events-none absolute inset-0"

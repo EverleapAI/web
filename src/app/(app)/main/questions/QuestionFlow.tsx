@@ -513,7 +513,7 @@ export default function QuestionFlow() {
   const screenKey = screenMode === "final" ? `final_${category}` : qId || "q";
 
   return (
-    <div className="relative mx-auto w-full max-w-[980px] px-5 pt-8 pb-24 sm:px-6 sm:pt-10">
+    <div className="relative mx-auto w-full max-w-[920px] px-4 pb-24 pt-8 sm:px-5 sm:pt-10 lg:px-6">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div
           className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ${tone.orbA}`}
@@ -557,7 +557,7 @@ export default function QuestionFlow() {
                   <div
                     className={`rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-7 backdrop-blur-sm sm:px-8 sm:py-9 ${tone.glow}`}
                   >
-                    <p className="text-sm font-medium tracking-[0.12em] text-white/46 uppercase">
+                    <p className="text-sm font-medium uppercase tracking-[0.12em] text-white/46">
                       Reflection complete
                     </p>
 
@@ -611,7 +611,9 @@ export default function QuestionFlow() {
                   <div className="mt-9 max-w-2xl">
                     <div
                       className={[
-                        "relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-sm sm:p-5",
+                        "relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.045]",
+                        "px-4 py-4 sm:px-5 sm:py-5",
+                        "backdrop-blur-sm",
                         tone.glow,
                       ].join(" ")}
                     >

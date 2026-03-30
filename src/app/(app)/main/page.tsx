@@ -1,4 +1,3 @@
-// src/app/(app)/main/page.tsx
 "use client";
 
 import * as React from "react";
@@ -101,6 +100,14 @@ function isMeaningfulText(value: string): boolean {
   const squashed = trimmed.replace(/\s+/g, "");
   if (/^(.)\1{6,}$/i.test(squashed)) return false;
   return true;
+}
+
+function pagePadding() {
+  return "pb-24 pt-2 sm:pt-3 lg:pt-5";
+}
+
+function pageShell() {
+  return "mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10";
 }
 
 /* =============================================================================
@@ -588,117 +595,119 @@ export default function MainHomePage() {
       </AnimatePresence>
 
       <div className="relative flex min-h-[100svh] flex-col">
-        <main className="relative z-10 mx-auto w-full max-w-4xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pt-8">
-          <section className="relative">
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute right-6 top-6 h-20 w-20 rounded-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: presenceSoft ? 0.1 : 0.22 }}
-              transition={{ duration: 0.6 }}
-            >
+        <main className={`relative z-10 flex-1 ${pagePadding()}`}>
+          <div className={pageShell()}>
+            <section className="relative">
               <motion.div
-                className={`h-full w-full rounded-full ${orbGlowClass} blur-[10px]`}
-                animate={{ scale: [1, 1.06, 1] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              />
-            </motion.div>
-
-            <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-5 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-7 sm:py-7">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(56,189,248,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_48%)]" />
-
-              <div className="relative">
-                <TodayIntro
-                  dark={dark}
-                  motionEnabled={motionEnabled}
-                  isTransitioning={transitioning}
-                  quote={mounted ? vm.quote : undefined}
-                  paragraphs={paragraphs}
-                  primaryCtaLabel={ctaLabel}
-                  onPrimary={() => {
-                    if (allSignalsComplete) {
-                      void fadeThen(async () => router.push("/main/insights"));
-                      return;
-                    }
-                    void fadeThen(async () =>
-                      router.push(buildQuestionsHref(recommendedNext))
-                    );
-                  }}
+                aria-hidden
+                className="pointer-events-none absolute right-3 top-3 h-20 w-20 rounded-full sm:right-6 sm:top-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: presenceSoft ? 0.1 : 0.22 }}
+                transition={{ duration: 0.6 }}
+              >
+                <motion.div
+                  className={`h-full w-full rounded-full ${orbGlowClass} blur-[10px]`}
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                 />
-              </div>
-            </div>
-          </section>
+              </motion.div>
 
-          {!allSignalsComplete ? (
-            <section className="mt-8">
-              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_20px_64px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:px-6 sm:py-6">
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_0%,rgba(96,165,250,0.10),transparent_22%),radial-gradient(circle_at_14%_100%,rgba(167,139,250,0.08),transparent_26%)]" />
+              <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-5 sm:py-6 lg:px-7 lg:py-7">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(56,189,248,0.12),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(251,191,36,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_48%)]" />
+
                 <div className="relative">
-                  <div className={sectionKicker(dark)}>Build Your Map</div>
+                  <TodayIntro
+                    dark={dark}
+                    motionEnabled={motionEnabled}
+                    isTransitioning={transitioning}
+                    quote={mounted ? vm.quote : undefined}
+                    paragraphs={paragraphs}
+                    primaryCtaLabel={ctaLabel}
+                    onPrimary={() => {
+                      if (allSignalsComplete) {
+                        void fadeThen(async () => router.push("/main/insights"));
+                        return;
+                      }
+                      void fadeThen(async () =>
+                        router.push(buildQuestionsHref(recommendedNext))
+                      );
+                    }}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {!allSignalsComplete ? (
+              <section className="mt-4 sm:mt-5 lg:mt-6">
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_20px_64px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_0%,rgba(96,165,250,0.10),transparent_22%),radial-gradient(circle_at_14%_100%,rgba(167,139,250,0.08),transparent_26%)]" />
+                  <div className="relative">
+                    <div className={sectionKicker(dark)}>Build Your Map</div>
+                    <div
+                      className={[
+                        "mt-2 text-[14px] leading-relaxed",
+                        mutedText(dark),
+                      ].join(" ")}
+                    >
+                      Finish the foundation first. The more complete this gets, the more
+                      specific Everleap can be.
+                    </div>
+
+                    <div className="mt-4">
+                      <SignalsCard
+                        dark={dark}
+                        progress={vm.progress}
+                        nextKey={vm.nextKey}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            <section className="mt-4 sm:mt-5 lg:mt-6">
+              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_20px_64px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.10),transparent_22%),radial-gradient(circle_at_88%_100%,rgba(236,72,153,0.06),transparent_24%)]" />
+                <div className="relative">
+                  <div className={sectionKicker(dark)}>Next Steps</div>
                   <div
                     className={[
                       "mt-2 text-[14px] leading-relaxed",
                       mutedText(dark),
                     ].join(" ")}
                   >
-                    Finish the foundation first. The more complete this gets, the more
-                    specific Everleap can be.
+                    {allSignalsComplete
+                      ? "One real move. Small is fine. Real is the point."
+                      : "Finish the map, then make one real move with it."}
                   </div>
 
-                  <div className="mt-5">
-                    <SignalsCard
-                      dark={dark}
-                      progress={vm.progress}
-                      nextKey={vm.nextKey}
-                    />
-                  </div>
+                  {nextStepsDefinition ? (
+                    <div className="mt-4">
+                      <NextStepsStack
+                        dark={dark}
+                        useLocal={mounted}
+                        definition={nextStepsDefinition}
+                        variant="embedded"
+                        collapsible={false}
+                        defaultOpen
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={[
+                        "mt-4 text-[15px] leading-relaxed",
+                        mutedText(dark),
+                      ].join(" ")}
+                    >
+                      Next steps are loading…
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
-          ) : null}
 
-          <section className="mt-8">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] px-5 py-5 shadow-[0_20px_64px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:px-6 sm:py-6">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.10),transparent_22%),radial-gradient(circle_at_88%_100%,rgba(236,72,153,0.06),transparent_24%)]" />
-              <div className="relative">
-                <div className={sectionKicker(dark)}>Next Steps</div>
-                <div
-                  className={[
-                    "mt-2 text-[14px] leading-relaxed",
-                    mutedText(dark),
-                  ].join(" ")}
-                >
-                  {allSignalsComplete
-                    ? "One real move. Small is fine. Real is the point."
-                    : "Finish the map, then make one real move with it."}
-                </div>
-
-                {nextStepsDefinition ? (
-                  <div className="mt-5">
-                    <NextStepsStack
-                      dark={dark}
-                      useLocal={mounted}
-                      definition={nextStepsDefinition}
-                      variant="embedded"
-                      collapsible={false}
-                      defaultOpen
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className={[
-                      "mt-5 text-[15px] leading-relaxed",
-                      mutedText(dark),
-                    ].join(" ")}
-                  >
-                    Next steps are loading…
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <div className="h-3" />
+            <div className="h-2 sm:h-3" />
+          </div>
         </main>
       </div>
     </>

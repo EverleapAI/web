@@ -43,17 +43,7 @@ type Props = {
   label?: string;
   subtitle?: string;
 
-  /**
-   * Embedded mode:
-   * - reduces internal chrome
-   * - removes nested sub-cards in expanded content
-   */
   embedded?: boolean;
-
-  /**
-   * When true, render the full card open with no Details/Hide control.
-   * Use this on the main home page.
-   */
   alwaysExpanded?: boolean;
 };
 
@@ -346,13 +336,6 @@ export function ActionCard({
       aria-labelledby={titleId}
     >
       <div className="pointer-events-none absolute inset-0">
-        <div
-          className={[
-            "absolute left-0 top-0 h-full w-1",
-            dark ? "bg-violet-300/55" : "bg-violet-500/45",
-          ].join(" ")}
-        />
-
         <div
           className={[
             "absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl",

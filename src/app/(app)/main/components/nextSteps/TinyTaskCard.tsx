@@ -1,4 +1,3 @@
-// src/app/main/components/nextSteps/TinyTaskCard.tsx
 "use client";
 
 import * as React from "react";
@@ -406,13 +405,6 @@ export function TinyTaskCard({
       aria-labelledby={titleId}
     >
       <div className="pointer-events-none absolute inset-0">
-        <div
-          className={[
-            "absolute left-0 top-0 h-full w-1",
-            dark ? "bg-emerald-300/55" : "bg-emerald-500/45",
-          ].join(" ")}
-        />
-
         <div
           className={[
             "absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl",
