@@ -102,10 +102,10 @@ const STEP_META: Record<
 > = {
   welcome: {
     kicker: "Everleap",
-    title: "Welcome to Everleap!",
+    title: "Let’s get a real sense of you.",
     micro:
-      "I’ll ask a few questions to understand you and where you’re headed.\nThis isn’t a test — just a conversation to shape what comes next.",
-    lead: "A few quick questions. Then we make this useful.",
+      "A few quick questions now will sharpen everything that comes next — from the way Everleap talks to you to the paths and opportunities it brings forward.",
+    lead: "Not a form. Not a test. A better starting point.",
   },
   name: {
     kicker: "Everleap · Getting to know you",
@@ -1414,26 +1414,62 @@ export default function OnboardingPage() {
 
   function renderWelcome() {
     return (
-      <div className="flex min-h-[62svh] items-center">
-        <div className="w-full max-w-3xl">
-          <div className={`rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-8 backdrop-blur-sm sm:px-8 sm:py-10 ${tone.glow}`}>
-            <Kicker />
-            <TitleBlock
-              title={STEP_META.welcome.title}
-              micro={STEP_META.welcome.micro}
-              lead={STEP_META.welcome.lead}
-            />
-            <div className="mt-9">
+      <div className="flex min-h-[62svh] items-start pt-8 sm:min-h-[66svh] sm:items-center sm:pt-0">
+        <div className="relative w-full max-w-4xl">
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute -left-10 top-[-2.25rem] h-28 w-28 rounded-full blur-3xl sm:-left-16 sm:top-[-3rem] sm:h-40 sm:w-40 ${tone.orbA}`}
+          />
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute right-[8%] top-[5.5rem] h-24 w-24 rounded-full blur-3xl sm:top-[6.5rem] sm:h-36 sm:w-36 ${tone.orbB}`}
+          />
+
+          <div className="relative max-w-3xl">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-12 bg-gradient-to-r from-white/55 via-white/18 to-transparent sm:w-16" />
+              <Kicker />
+            </div>
+
+            <div className="mt-7 max-w-[46rem] sm:mt-9">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/46 sm:text-xs">
+                {STEP_META.welcome.lead}
+              </p>
+
+              <h1 className="mt-4 max-w-[13ch] text-[2.45rem] font-semibold leading-[0.98] tracking-[-0.04em] text-white sm:mt-5 sm:text-[4.4rem]">
+                {STEP_META.welcome.title}
+              </h1>
+
+              <p className="mt-6 max-w-2xl text-[16px] leading-8 text-white/72 sm:mt-7 sm:text-[1.08rem]">
+                {STEP_META.welcome.micro}
+              </p>
+
+              <p className="mt-5 max-w-xl text-[15px] leading-7 text-white/52 sm:mt-6">
+                This is quick, personal, and meant to make the next screen feel like it already knows where to begin.
+              </p>
+            </div>
+
+            <div className="mt-10 flex flex-col items-start gap-4 sm:mt-12">
               <button
                 type="button"
                 onClick={onWelcomeNext}
-                className="inline-flex items-center gap-2 text-sm font-medium text-white/84 transition hover:text-white"
-                aria-label="Start"
-                title="Start"
+                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-3 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
+                aria-label="Let’s begin"
+                title="Let’s begin"
               >
-                <span>Start</span>
-                <span aria-hidden="true">→</span>
+                <span>Let’s begin</span>
+                <span
+                  aria-hidden="true"
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                >
+                  →
+                </span>
               </button>
+
+              <div className="flex items-center gap-3 text-[13px] text-white/38 sm:text-sm">
+                <div className="h-px w-10 bg-gradient-to-r from-white/28 to-transparent" />
+                <span>About a minute. Tap to move fast.</span>
+              </div>
             </div>
           </div>
         </div>
