@@ -928,6 +928,21 @@ function SectionAnchor({
   );
 }
 
+function MobilePathCornerArt({ atmosphere }: { atmosphere: PathAtmosphere }) {
+  return (
+    <div
+      className="pointer-events-none absolute right-0 top-0 h-24 w-24 sm:hidden"
+      aria-hidden="true"
+      style={{
+        background: `radial-gradient(circle at 70% 28%, ${rgb(
+          atmosphere.futureGlow,
+          0.12
+        )} 0%, transparent 34%)`,
+      }}
+    />
+  );
+}
+
 function PathForwardSection({
   path,
   atmosphere,
@@ -942,7 +957,7 @@ function PathForwardSection({
         style={{
           background: `radial-gradient(circle at 82% 34%, ${rgb(
             atmosphere.futureGlow,
-            0.12
+            0.1
           )} 0%, transparent 24%)`,
         }}
       />
@@ -956,81 +971,51 @@ function PathForwardSection({
 
         <Link
           href={`/main/explore/work/${path.slug}`}
-          className="group relative mt-3 block overflow-hidden rounded-[22px] border px-4 py-4 transition hover:bg-white/[0.02] sm:px-4 sm:py-[18px]"
-          style={{
-            borderColor: rgb(atmosphere.futureGlow, 0.14),
-            background: `linear-gradient(90deg, ${rgb(
-              atmosphere.futureGlow,
-              0.05
-            )} 0%, ${rgb(atmosphere.futureGlow, 0.015)} 42%, transparent 100%)`,
-          }}
+          className="group relative mt-4 block overflow-hidden rounded-[2px] px-0 py-0 transition"
         >
           <div
-            className="pointer-events-none absolute right-0 top-0 h-full w-[38%]"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
             style={{
-              background: `radial-gradient(circle at 72% 50%, ${rgb(
+              background: `linear-gradient(90deg, transparent 0%, ${rgb(
                 atmosphere.futureGlow,
                 0.12
-              )} 0%, transparent 48%)`,
+              )} 18%, ${rgb(atmosphere.futureGlow, 0.04)} 62%, transparent 100%)`,
             }}
           />
 
-          <div className="relative flex items-start justify-between gap-4 lg:gap-5">
-            <div className="min-w-0">
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-[22%]"
+            style={{
+              background: `radial-gradient(circle at 78% 50%, ${rgb(
+                atmosphere.futureGlow,
+                0.1
+              )} 0%, transparent 54%)`,
+            }}
+          />
+
+
+          <div className="relative flex items-center gap-3 py-4 sm:gap-4 sm:py-5">
+            <div className="min-w-0 flex-1">
               <h3 className="text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[21px] lg:text-[22px]">
                 Go deeper into this path
               </h3>
 
-              <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 lg:text-[14px]">
+              <p className="mt-2 max-w-[42rem] text-[13px] leading-[1.65] text-white/72 lg:text-[14px]">
                 See how this path actually works — and how to try it in the real
                 world.
               </p>
             </div>
 
-            <div className="relative hidden h-20 w-28 shrink-0 sm:block">
+            <div className="relative ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:ml-2 sm:h-[52px] sm:w-[52px]">
               <div
-                className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full blur-2xl"
-                style={{ backgroundColor: rgb(atmosphere.futureGlow, 0.16) }}
-              />
-              <div
-                className="pointer-events-none absolute left-0 top-10 h-px w-[72px]"
-                style={{
-                  background: `linear-gradient(90deg, ${rgb(
-                    atmosphere.futureGlow,
-                    0.28
-                  )} 0%, transparent 100%)`,
-                }}
-              />
-              <div
-                className="pointer-events-none absolute left-2 top-8 h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor: rgb(atmosphere.futureNode, 0.95),
-                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.42)}`,
-                }}
-              />
-              <div
-                className="pointer-events-none absolute left-16 top-2 h-2.5 w-2.5 rounded-full"
-                style={{
-                  backgroundColor: rgb(atmosphere.futureGlow, 0.74),
-                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.28)}`,
-                }}
-              />
-              <div
-                className="pointer-events-none absolute right-2 top-16 h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor: rgb(atmosphere.futureNode, 0.9),
-                  boxShadow: `0 0 12px ${rgb(atmosphere.futureGlow, 0.35)}`,
-                }}
-              />
-              <div
-                className="absolute right-0 top-4 flex h-10 w-10 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5"
+                className="pointer-events-none absolute inset-0 rounded-full"
                 style={{
                   borderColor: rgb(atmosphere.futureGlow, 0.22),
                   backgroundColor: rgb(atmosphere.futureGlow, 0.08),
+                  boxShadow: `0 0 24px ${rgb(atmosphere.futureGlow, 0.12)}`,
                 }}
-              >
-                <ArrowRight className="h-5 w-5" />
-              </div>
+              />
+              <ArrowRight className="relative z-10 h-5 w-5" />
             </div>
           </div>
         </Link>
@@ -1102,11 +1087,16 @@ function WorkPathCard({
         style={{ backgroundColor: rgb(atmosphere.topGlow, 0.1) }}
       />
 
-      <SignalConstellation accent={atmosphere.border} mobile />
-      <SignalConstellation accent={atmosphere.border} />
+      <MobilePathCornerArt atmosphere={atmosphere} />
+      <div
+        className="pointer-events-none absolute right-1 top-1 hidden origin-top-right opacity-32 md:block lg:right-2 lg:top-2"
+        style={{ transform: "scale(0.58)" }}
+      >
+        <SignalConstellation accent={atmosphere.border} />
+      </div>
 
       <div className="relative">
-        <div className="min-w-0 pr-14 sm:pr-24 lg:pr-28">
+        <div className="min-w-0 pr-0">
           <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px] lg:text-[25px]">
             {title}
           </h2>
@@ -1131,7 +1121,7 @@ function WorkPathCard({
             ) : null}
           </div>
 
-          <p className="mt-4 max-w-[44rem] text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:text-[15px]">
+          <p className="mt-4 max-w-[52rem] text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:text-[15px]">
             {summary}
           </p>
         </div>

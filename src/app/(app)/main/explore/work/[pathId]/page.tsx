@@ -430,63 +430,63 @@ function WorkPathHeroEmblem({
   glow: { r: number; g: number; b: number };
 }) {
   return (
-    <div className="pointer-events-none absolute right-4 top-4 h-20 w-20 sm:h-24 sm:w-24">
+    <div className="pointer-events-none absolute right-3 top-3 h-12 w-12 opacity-70 sm:right-4 sm:top-4 sm:h-14 sm:w-14 sm:opacity-78 lg:right-5 lg:top-5">
       <div
         className="absolute inset-0 rounded-full"
         style={{
           background: `radial-gradient(circle, ${rgb(
             glow,
-            0.22
-          )} 0%, transparent 70%)`,
+            0.14
+          )} 0%, transparent 72%)`,
           filter: "blur(8px)",
         }}
       />
 
       <div
-        className="absolute inset-[18%] rounded-full border"
-        style={{ borderColor: rgb(accent, 0.22) }}
+        className="absolute inset-[16%] rounded-full border"
+        style={{ borderColor: rgb(accent, 0.18) }}
       />
 
       <div
-        className="absolute left-[28%] top-[30%] h-[8px] w-[8px] rounded-full"
+        className="absolute left-[26%] top-[28%] h-[7px] w-[7px] rounded-full"
         style={{
-          background: rgb(accent, 0.96),
-          boxShadow: `0 0 12px ${rgb(accent, 0.45)}`,
+          background: rgb(accent, 0.88),
+          boxShadow: `0 0 10px ${rgb(accent, 0.24)}`,
         }}
       />
 
       <div
-        className="absolute right-[22%] top-[34%] h-[7px] w-[7px] rounded-full"
+        className="absolute right-[20%] top-[34%] h-[6px] w-[6px] rounded-full"
         style={{
-          background: "white",
-          boxShadow: "0 0 8px rgba(255,255,255,0.55)",
+          background: "rgba(255,255,255,0.92)",
+          boxShadow: "0 0 8px rgba(255,255,255,0.18)",
         }}
       />
 
       <div
-        className="absolute left-[36%] bottom-[24%] h-[8px] w-[8px] rounded-full"
+        className="absolute left-[36%] bottom-[22%] h-[7px] w-[7px] rounded-full"
         style={{
-          background: rgb(accentStrong, 0.95),
-          boxShadow: `0 0 12px ${rgb(accentStrong, 0.42)}`,
+          background: rgb(accentStrong, 0.86),
+          boxShadow: `0 0 10px ${rgb(accentStrong, 0.22)}`,
         }}
       />
 
       <div
-        className="absolute left-[36%] top-[36%] h-px w-[18px] rotate-[22deg]"
+        className="absolute left-[36%] top-[38%] h-px w-[12px] rotate-[22deg]"
         style={{
           background: `linear-gradient(90deg, ${rgb(
             accent,
-            0.34
+            0.22
           )} 0%, transparent 100%)`,
         }}
       />
 
       <div
-        className="absolute left-[40%] top-[56%] h-px w-[20px] -rotate-[18deg]"
+        className="absolute left-[40%] top-[58%] h-px w-[14px] -rotate-[18deg]"
         style={{
           background: `linear-gradient(90deg, ${rgb(
             accentStrong,
-            0.28
+            0.18
           )} 0%, transparent 100%)`,
         }}
       />
@@ -746,12 +746,10 @@ function TryThisForRealCard({
 
       <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
         <SectionHeader
-          icon={Compass}
-          kicker="Try this for real"
-          title="A first real-world way in"
-          description="You do not have to guess your way into this. Here are a couple concrete ways to get closer and test the fit."
-          accent={path.theme.accent}
-        />
+  icon={Compass}
+  kicker="Try this for real"
+  accent={path.theme.accent}
+/>
 
         <div className="mt-4">
           {items.length > 0 ? (
@@ -778,7 +776,7 @@ function TryThisForRealCard({
             href={`/main/explore/work/${path.slug}/next-steps`}
             className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/92 transition hover:gap-2.5 hover:text-white"
           >
-            <span>See the full real-world starter map</span>
+            <span>See MANY ways to try this out in the real world...</span>
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -1411,14 +1409,14 @@ export default function WorkPathDetailPage() {
             glow={path.theme.glow}
           />
 
-          <div className="pr-14 sm:pr-20">
+          <div className="pr-2 sm:pr-3 lg:pr-4">
             <div className={sectionKicker()}>{path.hero.eyebrow}</div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="max-w-[11ch] text-[2rem] font-semibold leading-[0.98] tracking-[-0.05em] text-white/97 sm:max-w-none sm:text-[2.35rem]">
-                {path.hero.title}
-              </h1>
+            <h1 className="mt-2 text-[2rem] font-semibold leading-[0.98] tracking-[-0.05em] text-white/97 sm:text-[2.35rem] lg:max-w-[16ch]">
+              {path.hero.title}
+            </h1>
 
+            <div className="mt-3">
               <HeroInlineSignal
                 score={overallSignalScore}
                 accent={path.theme.accent}
@@ -1426,15 +1424,15 @@ export default function WorkPathDetailPage() {
               />
             </div>
 
-            <div className="mt-1.5 text-[12px] uppercase tracking-[0.16em] text-white/42">
+            <div className="mt-2 text-[12px] uppercase tracking-[0.16em] text-white/42">
               {signalLabel}
             </div>
 
-            <p className="mt-3 text-[1rem] leading-6.5 text-white/80 sm:text-[1.06rem]">
+            <p className="mt-4 max-w-[46rem] text-[1rem] leading-6.5 text-white/80 sm:text-[1.06rem]">
               {path.hero.hook}
             </p>
 
-            <div className="mt-3 space-y-3 text-[14px] leading-6 text-white/62 sm:text-[15px]">
+            <div className="mt-3 max-w-[48rem] space-y-3 text-[14px] leading-6 text-white/62 sm:text-[15px]">
               <p>{path.hero.summary}</p>
               <p>
                 {heroStoryLead} {agenticOpening.intro} {agenticOpening.body}
@@ -1528,12 +1526,10 @@ export default function WorkPathDetailPage() {
 
           <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
             <SectionHeader
-              icon={Sparkles}
-              kicker="What you can explore next"
-              title="The next layers of this path"
-              description="Each one opens a different part of the story — the branches, the rhythm, and the future."
-              accent={path.theme.glow}
-            />
+  icon={Sparkles}
+  kicker="What you can explore next"
+  accent={path.theme.glow}
+/>
 
             <div className="mt-4">
               {exploreLinks.map((item, index) => (
