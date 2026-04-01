@@ -44,28 +44,35 @@ export const GAME_DESIGNER_PATH: WorkPathContent = {
   ],
 
   fitSignals: [
-    {
-      id: "systems-and-imagination",
-      label: "Systems + imagination",
-      score: 90,
-      explanation:
-        "You want room for invention but also care about rules, balance, and how one change reshapes the whole experience.",
-    },
-    {
-      id: "experience-judgment",
-      label: "Experience judgment",
-      score: 86,
-      explanation:
-        "You notice why something feels immersive, frustrating, or flat - not just whether it is fun.",
-    },
-    {
-      id: "iteration-tolerance",
-      label: "Iteration tolerance",
-      score: 88,
-      explanation:
-        "You are willing to test, adjust, and refine instead of needing the first version to be perfect.",
-    },
-  ],
+  {
+    id: "systems-and-imagination",
+    label: "Systems + imagination",
+    score: 90,
+    explanation:
+      "You want room for invention but also care about rules, balance, and how one change reshapes the whole experience.",
+  },
+  {
+    id: "experience-judgment",
+    label: "Experience judgment",
+    score: 86,
+    explanation:
+      "You notice why something feels immersive, frustrating, or flat - not just whether it is fun.",
+  },
+  {
+    id: "iteration-tolerance",
+    label: "Iteration tolerance",
+    score: 88,
+    explanation:
+      "You are willing to test, adjust, and refine instead of needing the first version to be perfect.",
+  },
+  {
+    id: "player-empathy",
+    label: "Player empathy",
+    score: 84,
+    explanation:
+      "You think about what the player is actually feeling moment to moment, not just what the system is doing.",
+  },
+],
 
   snapshotStats: [
     {

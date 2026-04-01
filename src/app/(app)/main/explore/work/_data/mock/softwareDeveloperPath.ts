@@ -41,20 +41,35 @@ export const SOFTWARE_DEVELOPER_PATH: WorkPathContent = {
   ],
 
   fitSignals: [
-    {
-      id: "problem-solving",
-      label: "Problem solving",
-      score: 88,
-      explanation:
-        "You enjoy breaking problems down and figuring them out step by step.",
-    },
-    {
-      id: "focus",
-      label: "Deep focus",
-      score: 82,
-      explanation: "You can stay with a problem until it works.",
-    },
-  ],
+  {
+    id: "problem-solving",
+    label: "Problem solving",
+    score: 88,
+    explanation:
+      "You enjoy breaking problems down and figuring them out step by step.",
+  },
+  {
+    id: "focus",
+    label: "Deep focus",
+    score: 82,
+    explanation:
+      "You can stay with a problem long enough to actually get to the solution.",
+  },
+  {
+    id: "systems-thinking",
+    label: "Systems thinking",
+    score: 85,
+    explanation:
+      "You naturally think about how pieces connect and how things work as a whole.",
+  },
+  {
+    id: "builder-energy",
+    label: "Builder instinct",
+    score: 83,
+    explanation:
+      "You like making things that actually work, not just thinking about them.",
+  },
+],
 
   snapshotStats: [
     {

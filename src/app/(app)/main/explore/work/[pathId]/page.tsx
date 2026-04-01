@@ -684,7 +684,7 @@ function OpportunityPreviewRow({
               {item.title}
             </div>
 
-            <p className="mt-1.5 max-w-[42rem] text-[13px] leading-5.5 text-white/62">
+            <p className="mt-1.5 text-[13px] leading-5.5 text-white/62">
               {item.note}
             </p>
 
@@ -746,10 +746,10 @@ function TryThisForRealCard({
 
       <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
         <SectionHeader
-  icon={Compass}
-  kicker="Try this for real"
-  accent={path.theme.accent}
-/>
+          icon={Compass}
+          kicker="Try this for real"
+          accent={path.theme.accent}
+        />
 
         <div className="mt-4">
           {items.length > 0 ? (
@@ -847,7 +847,7 @@ function ExplorePathRow({
                 {title}
               </div>
 
-              <p className="mt-1.5 max-w-[42rem] text-[13px] leading-5.5 text-white/62">
+              <p className="mt-1.5 text-[13px] leading-5.5 text-white/62">
                 {preview}
               </p>
 
@@ -1034,10 +1034,6 @@ function QuickCheckCard({
         <div className="mt-2 text-[15px] font-semibold tracking-[-0.02em] text-white/94 sm:text-[16px]">
           Does this feel like it could fit you?
         </div>
-
-        <p className="mt-1 text-[12px] leading-5.5 text-white/56 sm:text-[13px]">
-          This is not a test. It just helps Everleap sharpen what it shows next.
-        </p>
 
         <div className="mt-4 flex flex-wrap gap-2.5">
           <button
@@ -1304,13 +1300,13 @@ export default function WorkPathDetailPage() {
     [overallSignalScore]
   );
 
-  const fitSignalIntro = React.useMemo(() => {
-    const topSignal = [...path.fitSignals].sort((a, b) => b.score - a.score)[0];
-    if (!topSignal) {
-      return "A few smaller signals are clustering around this path.";
-    }
-    return `${topSignal.label} is one of the clearest reasons this path is showing up right now.`;
-  }, [path.fitSignals]);
+  const topFitSignals = React.useMemo(
+    () =>
+      [...path.fitSignals]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4),
+    [path.fitSignals]
+  );
 
   const exploreLinks = [
     {
@@ -1455,27 +1451,33 @@ export default function WorkPathDetailPage() {
             style={{ background: rgb(path.theme.glow, 0.08) }}
           />
 
-          <SectionHeader
-            icon={AudioLines}
-            kicker="Why this could fit"
-            title="A quick read on the match"
-            description={fitSignalIntro}
-            accent={path.theme.accentStrong}
-          />
+          <div className="flex items-start gap-3">
+            <div className="relative mt-[2px] h-4 w-4 shrink-0">
+              <div
+                className="pointer-events-none absolute inset-[-7px] rounded-full"
+                style={{
+                  background: `radial-gradient(circle, ${rgb(
+                    path.theme.accentStrong,
+                    0.2
+                  )} 0%, transparent 72%)`,
+                  filter: "blur(7px)",
+                }}
+              />
+              <AudioLines
+                className="relative h-4 w-4"
+                style={{ color: rgb(path.theme.accentStrong, 0.94) }}
+              />
+            </div>
 
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            {path.traitChips.map((chip: { id: string; label: string }) => (
-              <span
-                key={chip.id}
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-white/74"
-              >
-                {chip.label}
-              </span>
-            ))}
+            <div className="min-w-0">
+              <h2 className="text-[1.04rem] font-semibold tracking-[-0.03em] text-white/95 sm:text-[1.14rem]">
+                Why this fits you
+              </h2>
+            </div>
           </div>
 
-          <div className="mt-2.5 space-y-2.5">
-            {path.fitSignals.map(
+          <div className="mt-3 space-y-2.5">
+            {topFitSignals.map(
               (signal: {
                 id: string;
                 label: string;
@@ -1526,10 +1528,10 @@ export default function WorkPathDetailPage() {
 
           <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
             <SectionHeader
-  icon={Sparkles}
-  kicker="What you can explore next"
-  accent={path.theme.glow}
-/>
+              icon={Sparkles}
+              kicker="What you can explore next"
+              accent={path.theme.glow}
+            />
 
             <div className="mt-4">
               {exploreLinks.map((item, index) => (

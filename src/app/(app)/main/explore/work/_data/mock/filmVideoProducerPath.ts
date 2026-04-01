@@ -44,28 +44,35 @@ export const FILM_VIDEO_PRODUCER_PATH: WorkPathContent = {
   ],
 
   fitSignals: [
-    {
-      id: "creative-and-logistical",
-      label: "Creative + logistical",
-      score: 90,
-      explanation:
-        "You want to shape the vision and also make the real-world process move.",
-    },
-    {
-      id: "pressure-and-adaptability",
-      label: "Pressure adaptability",
-      score: 87,
-      explanation:
-        "You stay useful when plans shift, timing gets tight, or things get messy.",
-    },
-    {
-      id: "story-judgment",
-      label: "Story judgment",
-      score: 88,
-      explanation:
-        "You can feel when something is dragging, landing, or needs a stronger moment.",
-    },
-  ],
+  {
+    id: "creative-and-logistical",
+    label: "Creative + logistical",
+    score: 90,
+    explanation:
+      "You want to shape the vision and also make the real-world process move.",
+  },
+  {
+    id: "pressure-and-adaptability",
+    label: "Pressure adaptability",
+    score: 87,
+    explanation:
+      "You stay useful when plans shift, timing gets tight, or things get messy.",
+  },
+  {
+    id: "story-judgment",
+    label: "Story judgment",
+    score: 88,
+    explanation:
+      "You can feel when something is dragging, landing, or needs a stronger moment.",
+  },
+  {
+    id: "production-momentum",
+    label: "Production momentum",
+    score: 85,
+    explanation:
+      "You like getting things finished and keeping creative work moving instead of stalling in ideas.",
+  },
+],
 
   snapshotStats: [
     {

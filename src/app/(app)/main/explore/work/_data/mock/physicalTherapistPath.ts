@@ -42,27 +42,36 @@ export const PHYSICAL_THERAPIST_PATH: WorkPathContent = {
     { id: "people-support", label: "People support" },
     { id: "patience", label: "Patience" },
   ],
-
-  fitSignals: [
-    {
-      id: "helping-instinct",
-      label: "Helping instinct",
-      score: 90,
-      explanation: "You get energy from helping people improve physically.",
-    },
-    {
-      id: "human-biology",
-      label: "Human biology interest",
-      score: 88,
-      explanation: "Understanding muscles, joints, and movement matters here.",
-    },
-    {
-      id: "patience-and-guidance",
-      label: "Patience + guidance",
-      score: 87,
-      explanation: "Recovery takes time - you help people stay consistent.",
-    },
-  ],
+fitSignals: [
+  {
+    id: "body-awareness",
+    label: "Body awareness",
+    score: 90,
+    explanation:
+      "You notice how people move, where they compensate, and what looks off or restricted.",
+  },
+  {
+    id: "people-support",
+    label: "People support",
+    score: 88,
+    explanation:
+      "You get energy from helping people improve, especially when progress takes time.",
+  },
+  {
+    id: "patience-progression",
+    label: "Patience with progress",
+    score: 86,
+    explanation:
+      "You can stay committed through slow, step-by-step improvement without needing instant results.",
+  },
+  {
+    id: "hands-on-guidance",
+    label: "Hands-on guidance",
+    score: 85,
+    explanation:
+      "You are comfortable working directly with people to guide movement, strength, and recovery.",
+  },
+],
 
   snapshotStats: [
     {

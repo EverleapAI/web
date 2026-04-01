@@ -44,28 +44,35 @@ export const GRAPHIC_DESIGNER_PATH: WorkPathContent = {
   ],
 
   fitSignals: [
-    {
-      id: "visual-instinct",
-      label: "Visual instinct",
-      score: 90,
-      explanation:
-        "Design often fits people who quickly notice visual imbalance, awkward layouts, or opportunities to make something more striking.",
-    },
-    {
-      id: "creative-problem-solving",
-      label: "Creative problem solving",
-      score: 88,
-      explanation:
-        "Graphic design blends creativity with practical goals like clarity, communication, and brand identity.",
-    },
-    {
-      id: "attention-to-detail",
-      label: "Attention to detail",
-      score: 87,
-      explanation:
-        "Small design decisions - spacing, contrast, color - often change the entire visual impact.",
-    },
-  ],
+  {
+    id: "visual-instinct",
+    label: "Visual instinct",
+    score: 90,
+    explanation:
+      "Design often fits people who quickly notice visual imbalance, awkward layouts, or opportunities to make something more striking.",
+  },
+  {
+    id: "creative-problem-solving",
+    label: "Creative problem solving",
+    score: 88,
+    explanation:
+      "Graphic design blends creativity with practical goals like clarity, communication, and brand identity.",
+  },
+  {
+    id: "attention-to-detail",
+    label: "Attention to detail",
+    score: 87,
+    explanation:
+      "Small design decisions - spacing, contrast, color - often change the entire visual impact.",
+  },
+  {
+    id: "taste-and-judgment",
+    label: "Taste + judgment",
+    score: 85,
+    explanation:
+      "You can tell when something feels clean, modern, balanced, or off - and you want to push it toward something stronger.",
+  },
+],
 
   snapshotStats: [
     {
