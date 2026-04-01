@@ -26,23 +26,18 @@ import {
 export type ActionDefinition = {
   id: string;
   pageId: string;
-
   title: string;
   goal: string;
   steps?: string[];
-
   instanceStrategy?: "reuse_latest" | "new_each_time";
 };
 
 type Props = {
   dark: boolean;
   useLocal: boolean;
-
   definition: ActionDefinition;
-
   label?: string;
   subtitle?: string;
-
   embedded?: boolean;
   alwaysExpanded?: boolean;
 };
@@ -56,7 +51,7 @@ function ring(dark: boolean) {
 }
 
 function calmSurface(dark: boolean) {
-  return dark ? "bg-slate-950/22" : "bg-white/85";
+  return dark ? "bg-white/[0.03]" : "bg-white/90";
 }
 
 function muted(dark: boolean) {
@@ -64,11 +59,11 @@ function muted(dark: boolean) {
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
+  return dark ? "text-white/92" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/78" : "text-slate-700";
+  return dark ? "text-white/76" : "text-slate-700";
 }
 
 function pill(dark: boolean, selected = false) {
@@ -81,8 +76,8 @@ function pill(dark: boolean, selected = false) {
       : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
     selected
       ? dark
-        ? "ring-1 ring-emerald-300/24"
-        : "ring-1 ring-emerald-500/18"
+        ? "ring-1 ring-sky-300/22"
+        : "ring-1 ring-sky-500/18"
       : "",
     dark
       ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
@@ -93,10 +88,9 @@ function pill(dark: boolean, selected = false) {
 function headerChip(dark: boolean) {
   return [
     "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
-    "text-xs font-semibold",
-    "backdrop-blur-md",
+    "text-xs font-semibold backdrop-blur-md",
     dark
-      ? "border-violet-300/16 bg-violet-300/10 text-violet-100/90"
+      ? "border-violet-300/16 bg-violet-300/10 text-violet-100/92"
       : "border-violet-500/18 bg-violet-500/10 text-violet-900",
   ].join(" ");
 }
@@ -106,8 +100,6 @@ function statusBadge(dark: boolean, status: ActionStatus) {
     "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold";
 
   if (dark) {
-    if (status === "done") return `${base} border-white/12 bg-white/6 text-white/72`;
-    if (status === "started") return `${base} border-white/12 bg-white/6 text-white/72`;
     return `${base} border-white/12 bg-white/6 text-white/72`;
   }
 
@@ -123,8 +115,7 @@ function statusLabel(status: ActionStatus) {
 function headerToggle(dark: boolean) {
   return [
     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5",
-    "text-xs font-semibold",
-    "transition active:scale-[0.99]",
+    "text-xs font-semibold transition active:scale-[0.99]",
     dark
       ? "border-white/12 bg-white/6 text-white/75 hover:bg-white/10"
       : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
@@ -216,7 +207,6 @@ export function ActionCard({
 }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
   const [open, setOpen] = React.useState(alwaysExpanded);
-
   const [proofOpen, setProofOpen] = React.useState(false);
   const [proofText, setProofText] = React.useState("");
 
@@ -257,8 +247,7 @@ export function ActionCard({
     const next = upsertAction(items, current, { touchUpdatedAt: true });
     persist(next);
 
-    const persisted = next.find((x) => x.id === current.id) ?? current;
-    return persisted;
+    return next.find((x) => x.id === current.id) ?? current;
   }
 
   function onStart() {
@@ -318,13 +307,107 @@ export function ActionCard({
 
   const titleId = React.useId();
 
+  const panel = (
+    <div className="mt-4">
+      {definition.steps?.length ? (
+        <ul className="mt-1 space-y-2">
+          {definition.steps.map((s, idx) => (
+            <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
+              <span
+                aria-hidden
+                className={[
+                  "mt-2 inline-block h-1.5 w-1.5 rounded-full",
+                  dark ? "bg-white/30" : "bg-black/20",
+                ].join(" ")}
+              />
+              <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {proofEntries.length ? (
+        <div className="mt-5">
+          <div
+            className={[
+              "flex items-center justify-between gap-3",
+              "text-xs font-semibold uppercase tracking-[0.18em]",
+              dark ? "text-white/50" : "text-slate-500",
+            ].join(" ")}
+          >
+            <span>Your logs</span>
+            <span className="font-semibold normal-case tracking-normal">
+              {proofEntries.length}
+            </span>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            {proofEntries.slice(0, 3).map((e, idx) => {
+              const tsOk = Number.isFinite(e.ts);
+              return (
+                <div
+                  key={`${tsOk ? e.ts : "legacy"}_${idx}`}
+                  className={[
+                    "rounded-2xl border px-3.5 py-3 backdrop-blur-xl",
+                    dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
+                  ].join(" ")}
+                >
+                  <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
+                  <div className={`mt-1 text-xs ${muted(dark)}`}>
+                    {tsOk ? relativeTime(e.ts) : "Earlier"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {proofEntries.length > 3 ? (
+            <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
+          ) : null}
+
+          {typeof updatedAt === "number" ? (
+            <div className={`mt-2 text-xs ${muted(dark)}`}>
+              Updated {relativeTime(updatedAt)}.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {status !== "started" ? (
+          <button type="button" className={pill(dark)} onClick={onStart}>
+            <span aria-hidden className="opacity-80">
+              ▶
+            </span>
+            Start
+          </button>
+        ) : null}
+
+        {status !== "done" ? (
+          <button type="button" className={pill(dark)} onClick={onDone}>
+            <span aria-hidden className="opacity-80">
+              ✓
+            </span>
+            Mark done
+          </button>
+        ) : null}
+
+        <button type="button" className={pill(dark)} onClick={onLogProof}>
+          <span aria-hidden className="opacity-80">
+            ✎
+          </span>
+          Log result
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div
       className={[
-        "relative overflow-hidden rounded-3xl px-5 py-4",
+        "relative overflow-hidden rounded-3xl px-5 py-4 backdrop-blur-2xl",
         ring(dark),
         calmSurface(dark),
-        "backdrop-blur-2xl",
         embedded
           ? dark
             ? "shadow-[0_18px_60px_rgba(0,0,0,0.16)]"
@@ -336,29 +419,16 @@ export function ActionCard({
       aria-labelledby={titleId}
     >
       <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_8%,rgba(167,139,250,0.10),transparent_24%),radial-gradient(circle_at_16%_92%,rgba(56,189,248,0.08),transparent_28%)]" />
         <div
           className={[
-            "absolute -top-20 -left-24 h-[260px] w-[260px] rounded-full blur-3xl",
-            dark ? "bg-violet-300/10" : "bg-violet-400/8",
-          ].join(" ")}
-        />
-        <div
-          className={[
-            "absolute -bottom-24 -right-24 h-[320px] w-[320px] rounded-full blur-3xl",
-            dark ? "bg-amber-300/8" : "bg-amber-400/6",
-          ].join(" ")}
-        />
-
-        <div
-          className={[
-            "absolute right-5 top-5 opacity-[0.07]",
+            "absolute right-5 top-5 opacity-[0.08]",
             dark ? "text-white" : "text-slate-900",
           ].join(" ")}
           aria-hidden
         >
           <Rocket className="h-14 w-14" />
         </div>
-
         <div
           className={[
             "absolute inset-x-0 top-0 h-px",
@@ -410,7 +480,7 @@ export function ActionCard({
         </div>
 
         <div className="mt-3 min-w-0">
-          <div id={titleId} className={`text-[16px] font-semibold leading-snug ${text(dark)}`}>
+          <div id={titleId} className={`text-[17px] font-semibold leading-snug ${text(dark)}`}>
             {definition.title}
           </div>
 
@@ -418,106 +488,11 @@ export function ActionCard({
             {definition.goal}
           </div>
 
-          {open && subtitle ? (
-            <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div>
-          ) : null}
+          {subtitle ? <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div> : null}
         </div>
 
         {alwaysExpanded ? (
-          <div id={`${titleId}-panel`} className="mt-4">
-            {definition.steps?.length ? (
-              <div className="mt-1">
-                <ul className="mt-3 space-y-2">
-                  {definition.steps.map((s, idx) => (
-                    <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
-                      <span
-                        aria-hidden
-                        className={[
-                          "mt-2 inline-block h-1.5 w-1.5 rounded-full",
-                          dark ? "bg-white/30" : "bg-black/20",
-                        ].join(" ")}
-                      />
-                      <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {proofEntries.length ? (
-              <div className="mt-5">
-                <div
-                  className={[
-                    "flex items-center justify-between gap-3",
-                    "text-xs font-semibold uppercase tracking-[0.18em]",
-                    dark ? "text-white/50" : "text-slate-500",
-                  ].join(" ")}
-                >
-                  <span>Your logs</span>
-                  <span className="normal-case tracking-normal font-semibold">
-                    {proofEntries.length}
-                  </span>
-                </div>
-
-                <div className="mt-3 space-y-3">
-                  {proofEntries.slice(0, 3).map((e, idx) => {
-                    const tsOk = Number.isFinite(e.ts);
-                    return (
-                      <div
-                        key={`${tsOk ? e.ts : "legacy"}_${idx}`}
-                        className={[
-                          "rounded-2xl border px-3.5 py-3",
-                          "backdrop-blur-xl",
-                          dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
-                        ].join(" ")}
-                      >
-                        <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
-                        <div className={`mt-1 text-xs ${muted(dark)}`}>
-                          {tsOk ? relativeTime(e.ts) : "Earlier"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {proofEntries.length > 3 ? (
-                  <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
-                ) : null}
-                {typeof updatedAt === "number" ? (
-                  <div className={`mt-2 text-xs ${muted(dark)}`}>
-                    Updated {relativeTime(updatedAt)}.
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {status !== "started" ? (
-                <button type="button" className={pill(dark)} onClick={onStart}>
-                  <span aria-hidden className="opacity-80">
-                    ▶
-                  </span>
-                  Start
-                </button>
-              ) : null}
-
-              {status !== "done" ? (
-                <button type="button" className={pill(dark)} onClick={onDone}>
-                  <span aria-hidden className="opacity-80">
-                    ✓
-                  </span>
-                  Mark done
-                </button>
-              ) : null}
-
-              <button type="button" className={pill(dark)} onClick={onLogProof}>
-                <span aria-hidden className="opacity-80">
-                  ✎
-                </span>
-                Log result
-              </button>
-            </div>
-          </div>
+          panel
         ) : (
           <AnimatePresence initial={false}>
             {open ? (
@@ -527,100 +502,8 @@ export function ActionCard({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 6 }}
                 transition={{ duration: 0.18 }}
-                className="mt-4"
               >
-                {definition.steps?.length ? (
-                  <div className="mt-1">
-                    <ul className="mt-3 space-y-2">
-                      {definition.steps.map((s, idx) => (
-                        <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
-                          <span
-                            aria-hidden
-                            className={[
-                              "mt-2 inline-block h-1.5 w-1.5 rounded-full",
-                              dark ? "bg-white/30" : "bg-black/20",
-                            ].join(" ")}
-                          />
-                          <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                {proofEntries.length ? (
-                  <div className="mt-5">
-                    <div
-                      className={[
-                        "flex items-center justify-between gap-3",
-                        "text-xs font-semibold uppercase tracking-[0.18em]",
-                        dark ? "text-white/50" : "text-slate-500",
-                      ].join(" ")}
-                    >
-                      <span>Your logs</span>
-                      <span className="normal-case tracking-normal font-semibold">
-                        {proofEntries.length}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 space-y-3">
-                      {proofEntries.slice(0, 3).map((e, idx) => {
-                        const tsOk = Number.isFinite(e.ts);
-                        return (
-                          <div
-                            key={`${tsOk ? e.ts : "legacy"}_${idx}`}
-                            className={[
-                              "rounded-2xl border px-3.5 py-3",
-                              "backdrop-blur-xl",
-                              dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
-                            ].join(" ")}
-                          >
-                            <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
-                            <div className={`mt-1 text-xs ${muted(dark)}`}>
-                              {tsOk ? relativeTime(e.ts) : "Earlier"}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {proofEntries.length > 3 ? (
-                      <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
-                    ) : null}
-                    {typeof updatedAt === "number" ? (
-                      <div className={`mt-2 text-xs ${muted(dark)}`}>
-                        Updated {relativeTime(updatedAt)}.
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {status !== "started" ? (
-                    <button type="button" className={pill(dark)} onClick={onStart}>
-                      <span aria-hidden className="opacity-80">
-                        ▶
-                      </span>
-                      Start
-                    </button>
-                  ) : null}
-
-                  {status !== "done" ? (
-                    <button type="button" className={pill(dark)} onClick={onDone}>
-                      <span aria-hidden className="opacity-80">
-                        ✓
-                      </span>
-                      Mark done
-                    </button>
-                  ) : null}
-
-                  <button type="button" className={pill(dark)} onClick={onLogProof}>
-                    <span aria-hidden className="opacity-80">
-                      ✎
-                    </span>
-                    Log result
-                  </button>
-                </div>
+                {panel}
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -651,17 +534,13 @@ export function ActionCard({
 
                     <div className={`mt-1 text-sm ${muted(dark)}`}>
                       You just tried:{" "}
-                      <span
-                        className={
-                          dark ? "text-white/85 font-semibold" : "text-slate-900 font-semibold"
-                        }
-                      >
+                      <span className={dark ? "font-semibold text-white/85" : "font-semibold text-slate-900"}>
                         {definition.title}
                       </span>
                     </div>
 
                     <div className={`mt-2 text-sm ${muted(dark)}`}>
-                      One or two sentences is enough — we’ll keep a running log (newest first).
+                      One or two sentences is enough — we’ll keep a running log.
                     </div>
                   </div>
 
@@ -679,13 +558,13 @@ export function ActionCard({
                     className={[
                       "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition",
                       dark
-                        ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-emerald-300/26 focus-visible:border-white/18"
-                        : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-emerald-500/18 focus-visible:border-black/15",
+                        ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:border-white/18 focus-visible:ring-2 focus-visible:ring-emerald-300/26"
+                        : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-black/15 focus-visible:ring-2 focus-visible:ring-emerald-500/18",
                     ].join(" ")}
                   />
 
                   <div className={`mt-2 text-xs ${muted(dark)}`}>
-                    Tip: one concrete detail helps (a link, who you asked, what feedback you got).
+                    Tip: one concrete detail helps.
                   </div>
                 </div>
 

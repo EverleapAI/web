@@ -40,6 +40,19 @@ type WorkReactionState = {
   feedbackBySlug?: Record<string, WorkReactionFeedback>;
 };
 
+type LiveOpportunityPreview = {
+  id: string;
+  title: string;
+  href: string;
+  note: string;
+  mode: "local" | "remote";
+};
+
+type LiveOpportunityPair = {
+  local: LiveOpportunityPreview | null;
+  remote: LiveOpportunityPreview | null;
+};
+
 const WORK_REACTIONS_STORAGE_KEY = "everleap.explore.work.reactions.v1";
 
 /* =============================================================================
@@ -234,6 +247,79 @@ function saveWorkReactionFeedback(args: {
   return next;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function isUsableHref(href: string | null) {
+  if (!href) return false;
+  return href.trim() !== "#" && href.trim() !== "";
+}
+
+function extractOpportunityPair(path: unknown): LiveOpportunityPair {
+  const nextStepsV2 = asRecord(
+    asRecord(path as Record<string, unknown>)?.nextStepsV2
+  );
+  const rawSections = nextStepsV2?.sections;
+
+  if (!Array.isArray(rawSections)) {
+    return { local: null, remote: null };
+  }
+
+  const sections = rawSections
+    .map((section) => asRecord(section))
+    .filter((section): section is Record<string, unknown> => Boolean(section));
+
+  function pickFromSection(
+    mode: "local" | "remote"
+  ): LiveOpportunityPreview | null {
+    const section =
+      sections.find((item) => asString(item.mode) === mode) ??
+      sections.find((item) => asString(item.id) === mode);
+
+    if (!section) return null;
+
+    const rawItems = section.items;
+    if (!Array.isArray(rawItems)) return null;
+
+    for (const item of rawItems) {
+      const record = asRecord(item);
+      if (!record) continue;
+
+      const title = asString(record.title);
+      const href = asString(record.href);
+      const note = asString(record.note);
+      const itemMode = asString(record.mode);
+
+      if (!title || !note || !isUsableHref(href)) continue;
+      if (itemMode && itemMode !== mode) continue;
+
+      return {
+        id: asString(record.id) ?? `${mode}-${title}`,
+        title,
+        href: href!,
+        note,
+        mode,
+      };
+    }
+
+    return null;
+  }
+
+  return {
+    local: pickFromSection("local"),
+    remote: pickFromSection("remote"),
+  };
+}
+
 /* =============================================================================
    Surface Card
 ============================================================================= */
@@ -278,7 +364,7 @@ function SurfaceCard({
 }
 
 /* =============================================================================
-   Section Header Icon
+   Section Header
 ============================================================================= */
 
 function SectionHeader({
@@ -296,29 +382,20 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div
-        className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10"
-        style={{
-          borderColor: rgb(accent, 0.24),
-          background: `linear-gradient(180deg, ${rgb(
-            accent,
-            0.16
-          )} 0%, ${rgb(accent, 0.05)} 100%)`,
-          boxShadow: `0 0 20px ${rgb(accent, 0.14)}`,
-        }}
-      >
+      <div className="relative mt-[2px] h-4 w-4 shrink-0">
         <div
-          className="pointer-events-none absolute inset-0 rounded-2xl"
+          className="pointer-events-none absolute inset-[-7px] rounded-full"
           style={{
-            background: `radial-gradient(circle at 30% 25%, ${rgb(
+            background: `radial-gradient(circle, ${rgb(
               accent,
               0.2
-            )} 0%, transparent 68%)`,
+            )} 0%, transparent 72%)`,
+            filter: "blur(7px)",
           }}
         />
         <Icon
-          className="relative h-4 w-4 sm:h-[17px] sm:w-[17px]"
-          style={{ color: rgb(accent, 0.96) }}
+          className="relative h-4 w-4"
+          style={{ color: rgb(accent, 0.94) }}
         />
       </div>
 
@@ -565,60 +642,228 @@ function SignalDetailRow({
 }
 
 /* =============================================================================
-   Explore Link Card
+   Try This For Real
 ============================================================================= */
 
-function ExploreLinkCard({
-  href,
-  title,
-  description,
-  icon: Icon,
+function OpportunityPreviewRow({
+  item,
+  accent,
   glow,
+  isFirst,
 }: {
-  href: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  item: LiveOpportunityPreview;
+  accent: { r: number; g: number; b: number };
   glow: { r: number; g: number; b: number };
+  isFirst: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className="group relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
-      style={{
-        boxShadow: `0 12px 30px rgba(0,0,0,0.18), 0 0 18px ${rgb(glow, 0.06)}`,
-      }}
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="group relative block py-4 transition first:pt-0 last:pb-0"
+    >
+      {!isFirst ? (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8" />
+      ) : null}
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 92% 24%, ${rgb(
+            glow,
+            0.08
+          )} 0%, transparent 26%)`,
+        }}
+      />
+
+      <div className="relative">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[16px] font-semibold leading-5.5 text-white/93">
+              {item.title}
+            </div>
+
+            <p className="mt-1.5 max-w-[42rem] text-[13px] leading-5.5 text-white/62">
+              {item.note}
+            </p>
+
+            <div
+              className="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-semibold transition group-hover:gap-2"
+              style={{ color: rgb(accent, 0.92) }}
+            >
+              <span>
+                {item.mode === "local"
+                  ? "See this local opening"
+                  : "See this online opening"}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+            </div>
+          </div>
+
+          <ArrowRight className="mt-1 hidden h-4 w-4 shrink-0 text-white/22 transition group-hover:translate-x-0.5 group-hover:text-white/58 sm:block" />
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function TryThisForRealCard({
+  path,
+}: {
+  path: ReturnType<typeof requireWorkPath>;
+}) {
+  const opportunityPair = React.useMemo(
+    () => extractOpportunityPair(path),
+    [path]
+  );
+  const items = React.useMemo(
+    () =>
+      [opportunityPair.local, opportunityPair.remote].filter(
+        (item): item is LiveOpportunityPreview => Boolean(item)
+      ),
+    [opportunityPair]
+  );
+
+  return (
+    <SurfaceCard
+      accent={path.theme.accent}
+      glow={path.theme.accentStrong}
+      className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
     >
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 88% 18%, ${rgb(
-            glow,
-            0.12
-          )} 0%, transparent 28%)`,
+          background: `
+            radial-gradient(circle at 10% 0%, ${rgb(
+              path.theme.accent,
+              0.16
+            )} 0%, transparent 24%),
+            radial-gradient(circle at 92% 12%, ${rgb(
+              path.theme.accentStrong,
+              0.14
+            )} 0%, transparent 22%),
+            linear-gradient(90deg, rgba(18,54,64,0.18) 0%, rgba(10,18,28,0.04) 42%, rgba(36,28,58,0.18) 100%)
+          `,
         }}
       />
-      <div
-        className="absolute -right-4 -top-4 h-20 w-20 rounded-full blur-2xl"
-        style={{ background: rgb(glow, 0.12) }}
+
+      <SectionHeader
+        icon={Compass}
+        kicker="Try this for real"
+        title="A first real-world way in"
+        description="You do not have to guess your way into this. Here are a couple concrete ways to get closer and test the fit."
+        accent={path.theme.accent}
       />
 
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="flex gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]">
-            <Icon className="h-4 w-4 text-white/80" />
-          </div>
-
+      <div className="mt-4">
+        {items.length > 0 ? (
           <div>
-            <div className="text-[14px] font-semibold text-white/90">
-              {title}
-            </div>
-
-            <div className="text-[13px] text-white/60">{description}</div>
+            {items.map((item, index) => (
+              <OpportunityPreviewRow
+                key={item.id}
+                item={item}
+                accent={path.theme.accent}
+                glow={path.theme.accentStrong}
+                isFirst={index === 0}
+              />
+            ))}
           </div>
+        ) : (
+          <div className="py-2 text-[13px] leading-5.5 text-white/58">
+            Real-world opportunities are still being mapped for this path.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 pt-1">
+        <Link
+          href={`/main/explore/work/${path.slug}/next-steps`}
+          className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/92 transition hover:gap-2.5 hover:text-white"
+        >
+          <span>See the full real-world starter map</span>
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+        </Link>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+/* =============================================================================
+   Deeper Path Rows
+============================================================================= */
+
+function ExplorePathRow({
+  href,
+  title,
+  preview,
+  cta,
+  icon: Icon,
+  glow,
+  isFirst,
+}: {
+  href: string;
+  title: string;
+  preview: string;
+  cta: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  glow: { r: number; g: number; b: number };
+  isFirst: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group relative block py-4 transition first:pt-0 last:pb-0"
+    >
+      {!isFirst ? (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8" />
+      ) : null}
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 90% 18%, ${rgb(
+            glow,
+            0.08
+          )} 0%, transparent 24%)`,
+        }}
+      />
+
+      <div className="relative flex items-start gap-3">
+        <div className="relative mt-[2px] h-4 w-4 shrink-0">
+          <div
+            className="pointer-events-none absolute inset-[-8px] rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${rgb(
+                glow,
+                0.14
+              )} 0%, transparent 72%)`,
+              filter: "blur(6px)",
+            }}
+          />
+          <Icon className="relative h-4 w-4 text-white/74 transition group-hover:text-white/92" />
         </div>
 
-        <ArrowRight className="h-4 w-4 text-white/50 group-hover:text-white" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold text-white/92">
+                {title}
+              </div>
+
+              <p className="mt-1.5 max-w-[42rem] text-[13px] leading-5.5 text-white/62">
+                {preview}
+              </p>
+
+              <div className="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-white/78 transition group-hover:gap-2 group-hover:text-white">
+                <span>{cta}</span>
+                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              </div>
+            </div>
+
+            <ArrowRight className="mt-1 hidden h-4 w-4 shrink-0 text-white/22 transition group-hover:translate-x-0.5 group-hover:text-white/58 sm:block" />
+          </div>
+        </div>
       </div>
     </Link>
   );
@@ -1075,30 +1320,29 @@ export default function WorkPathDetailPage() {
     {
       href: `/main/explore/work/${path.slug}/specialties`,
       title: "Roles within this world",
-      description: "See the different versions of this work.",
+      preview:
+        "This path is rarely just one role. See the versions of the work that branch off from the same core instinct, and which one feels most like you.",
+      cta: "See the different versions of this work",
       icon: Briefcase,
       glow: path.theme.accent,
     },
     {
       href: `/main/explore/work/${path.slug}/day`,
       title: "A day in the life",
-      description: "What the rhythm of the work feels like.",
+      preview:
+        "Step into the rhythm of the job itself — what repeats, where the pressure shows up, and what kind of energy this work asks from you.",
+      cta: "See how the day actually feels",
       icon: CalendarClock,
       glow: path.theme.glow,
     },
     {
       href: `/main/explore/work/${path.slug}/forecast`,
       title: "The future of this career",
-      description: "Demand, salary, and trends.",
+      preview:
+        "Look at where this field is heading: demand, tools, salary, pressure, and the changes that could make the path more stable or more competitive.",
+      cta: "See where this field is heading",
       icon: TrendingUp,
       glow: path.theme.accentStrong,
-    },
-    {
-      href: `/main/explore/work/${path.slug}/next-steps`,
-      title: "Next steps",
-      description: "Real ways to start exploring.",
-      icon: Compass,
-      glow: path.theme.accent,
     },
   ];
 
@@ -1264,6 +1508,8 @@ export default function WorkPathDetailPage() {
           onSubmit={handleQuickCheckSubmit}
         />
 
+        <TryThisForRealCard path={path} />
+
         <SurfaceCard
           accent={path.theme.glow}
           glow={path.theme.accentStrong}
@@ -1288,14 +1534,19 @@ export default function WorkPathDetailPage() {
 
           <SectionHeader
             icon={Sparkles}
-            kicker="Keep exploring"
-            title="If this still feels interesting, here’s where to go next"
+            kicker="What you can explore next"
+            title="The next layers of this path"
+            description="Each one opens a different part of the story — the branches, the rhythm, and the future."
             accent={path.theme.glow}
           />
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {exploreLinks.map((item) => (
-              <ExploreLinkCard key={item.href} {...item} />
+          <div className="mt-4">
+            {exploreLinks.map((item, index) => (
+              <ExplorePathRow
+                key={item.href}
+                {...item}
+                isFirst={index === 0}
+              />
             ))}
           </div>
         </SurfaceCard>

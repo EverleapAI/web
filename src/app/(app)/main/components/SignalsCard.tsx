@@ -1,10 +1,10 @@
-// src/app/main/components/SignalsCard.tsx
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 
 import type { RecommendedNext } from "./TodayIntro";
+import { SignalWord } from "./SignalWord";
 
 /* =============================================================================
    Types
@@ -14,8 +14,6 @@ export type SignalsProgress = {
   motivationsAnswered: number;
   strengthsAnswered: number;
   skillsAnswered: number;
-
-  // Optional totals (future-proof for 30–50 questions per lane)
   motivationsTotal?: number;
   strengthsTotal?: number;
   skillsTotal?: number;
@@ -24,13 +22,12 @@ export type SignalsProgress = {
 export type SignalsCardProps = {
   dark: boolean;
   progress: SignalsProgress;
-  /** Expected from VM; tolerate unknown strings gracefully */
   nextKey: string;
 };
 
 type Cat = RecommendedNext;
 
-const SIGNAL_COMPLETE_COUNT = 5; // fallback total for now
+const SIGNAL_COMPLETE_COUNT = 5;
 const DASH_COUNT = 12;
 
 /* =============================================================================
@@ -42,7 +39,11 @@ function clamp(n: number, lo: number, hi: number) {
 }
 
 function label(cat: Cat) {
-  return cat === "motivations" ? "Motivations" : cat === "strengths" ? "Strengths" : "Skills";
+  return cat === "motivations"
+    ? "Motivations"
+    : cat === "strengths"
+      ? "Strengths"
+      : "Skills";
 }
 
 function desc(cat: Cat) {
@@ -66,14 +67,12 @@ function toCat(nextKey: string): Cat {
 }
 
 function accentDotClass(dark: boolean, cat: Cat) {
-  // Subtle identity without “boxes in boxes”
   if (cat === "motivations") return dark ? "bg-amber-200/75" : "bg-amber-500/80";
   if (cat === "strengths") return dark ? "bg-sky-200/65" : "bg-sky-500/70";
   return dark ? "bg-violet-200/65" : "bg-violet-500/70";
 }
 
 function dashFillClass(dark: boolean, cat: Cat) {
-  // Match lane identity (more “signal” than a generic bar)
   if (cat === "motivations") return dark ? "bg-amber-200/80" : "bg-amber-500/85";
   if (cat === "strengths") return dark ? "bg-sky-200/70" : "bg-sky-500/80";
   return dark ? "bg-violet-200/70" : "bg-violet-500/80";
@@ -92,6 +91,28 @@ function pillClass(dark: boolean, tone: "done" | "next" | "neutral") {
   if (tone === "done") return "bg-emerald-600/10 text-emerald-800";
   if (tone === "next") return "bg-slate-900/10 text-slate-900";
   return "bg-slate-900/5 text-slate-600";
+}
+
+function nodeGlowClass(cat: Cat) {
+  if (cat === "motivations") return "bg-amber-300/60";
+  if (cat === "strengths") return "bg-sky-300/60";
+  return "bg-violet-300/60";
+}
+
+function nodeCoreClass(cat: Cat) {
+  if (cat === "motivations") return "bg-amber-200";
+  if (cat === "strengths") return "bg-sky-200";
+  return "bg-violet-200";
+}
+
+function traceClass(cat: Cat) {
+  if (cat === "motivations") {
+    return "bg-[linear-gradient(90deg,rgba(251,191,36,0.00)_0%,rgba(253,230,138,0.72)_48%,rgba(251,191,36,0.00)_100%)]";
+  }
+  if (cat === "strengths") {
+    return "bg-[linear-gradient(90deg,rgba(56,189,248,0.00)_0%,rgba(186,230,253,0.76)_48%,rgba(56,189,248,0.00)_100%)]";
+  }
+  return "bg-[linear-gradient(90deg,rgba(167,139,250,0.00)_0%,rgba(221,214,254,0.78)_48%,rgba(167,139,250,0.00)_100%)]";
 }
 
 /* =============================================================================
@@ -122,7 +143,8 @@ export function SignalsCard(props: SignalsCardProps) {
     { cat: "skills", answered: answeredFor("skills"), total: totalFor("skills") },
   ];
 
-  // Slightly less “boxed” / more cinematic: softer border + more transparent fill
+  const allComplete = items.every((it) => it.answered >= it.total);
+
   const shellClass = dark
     ? "border-white/8 bg-white/4 text-white"
     : "border-black/8 bg-white/60 text-slate-900";
@@ -131,124 +153,174 @@ export function SignalsCard(props: SignalsCardProps) {
   const fineMuted = dark ? "text-white/55" : "text-slate-600";
 
   return (
-    <div className="mt-2">
-      <div className="mb-2">
-        <div className="flex items-end justify-between">
-          <div className="text-sm font-semibold">Signals</div>
+    <div>
+      <div
+        className={`relative overflow-hidden rounded-[28px] border ${shellClass} shadow-[0_20px_64px_rgba(0,0,0,0.22)] backdrop-blur-xl`}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_0%,rgba(96,165,250,0.08),transparent_22%),radial-gradient(circle_at_14%_100%,rgba(167,139,250,0.07),transparent_28%)]" />
 
-          {/* Make “Next up” quieter so it doesn’t compete with the framing line */}
-          <div className={`text-[11px] ${headerMuted}`}>
-            Next up:{" "}
-            <span className={dark ? "text-white/80" : "text-slate-900/85"}>
-              {label(next)}
-            </span>
+        <div className="relative px-4 pb-2 pt-3 sm:px-5 sm:pt-4 lg:px-6">
+          <div className="flex items-end justify-between gap-3">
+            <div className="text-sm">
+              <SignalWord>Signals</SignalWord>
+            </div>
+
+            {!allComplete ? (
+              <div className={`text-[11px] ${headerMuted}`}>
+                Next up:{" "}
+                <span className={dark ? "text-white/82" : "text-slate-900/85"}>
+                  {label(next)}
+                </span>
+              </div>
+            ) : (
+              <div className={`text-[11px] ${headerMuted}`}>Pattern ready</div>
+            )}
           </div>
         </div>
 
-        {/* Option B (kept) */}
-        <div className={`mt-1 text-[11px] ${fineMuted}`}>
-          These aren’t labels — they’re clues. Enough for me to point you toward next steps that actually fit.
-        </div>
-      </div>
+        {allComplete ? (
+          <div className="relative px-4 pb-3 pt-2 sm:px-5 sm:pb-4 lg:px-6">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/8" />
 
-      <div className={`rounded-2xl border ${shellClass}`}>
-        {/* Single container, minimal inner structure */}
-        <div className="grid grid-cols-1 gap-0 md:grid-cols-3">
-          {items.map((it, idx) => {
-            const total = Math.max(1, Number.isFinite(it.total) ? it.total : SIGNAL_COMPLETE_COUNT);
-            const answered = clamp(Number.isFinite(it.answered) ? it.answered : 0, 0, total);
+            <div className="relative h-[48px] sm:h-[54px]">
+              <div className="pointer-events-none absolute left-[12%] right-[12%] top-1/2 h-px -translate-y-1/2 bg-white/10" />
 
-            const pct = clamp(total > 0 ? answered / total : 0, 0, 1);
-            const filled = clamp(Math.round(pct * DASH_COUNT), 0, DASH_COUNT);
+              <div className="pointer-events-none absolute left-[18%] top-1/2 h-[2px] w-[26%] -translate-y-1/2 opacity-80">
+                <div
+                  className={`h-full w-full rounded-full blur-[0.5px] ${traceClass("motivations")}`}
+                />
+              </div>
 
-            const complete = pct >= 0.999;
-            const isNext = !complete && it.cat === next;
+              <div className="pointer-events-none absolute left-[56%] top-1/2 h-[2px] w-[24%] -translate-y-1/2 opacity-80">
+                <div
+                  className={`h-full w-full rounded-full blur-[0.5px] ${traceClass("skills")}`}
+                />
+              </div>
 
-            const itemBorder =
-              idx === 0
-                ? ""
-                : dark
-                ? "border-white/8 md:border-l"
-                : "border-black/8 md:border-l";
+              <div className="absolute left-[4%] top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <span className="relative inline-flex h-2.5 w-2.5">
+                  <span
+                    className={`absolute inset-0 rounded-full blur-[5px] ${nodeGlowClass("motivations")}`}
+                  />
+                  <span
+                    className={`relative h-2 w-2 rounded-full ${nodeCoreClass("motivations")}`}
+                  />
+                </span>
+                <span className="text-[12px] font-semibold text-white/90">
+                  Motivations
+                </span>
+              </div>
 
-            const rowDivider =
-              idx === 0
-                ? ""
-                : dark
-                ? "border-t border-white/8 md:border-t-0"
-                : "border-t border-black/8 md:border-t-0";
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+                <span className="relative inline-flex h-2.5 w-2.5">
+                  <span
+                    className={`absolute inset-0 rounded-full blur-[5px] ${nodeGlowClass("strengths")}`}
+                  />
+                  <span
+                    className={`relative h-2 w-2 rounded-full ${nodeCoreClass("strengths")}`}
+                  />
+                </span>
+                <span className="text-[12px] font-semibold text-white/90">
+                  Strengths
+                </span>
+              </div>
 
-            const hoverBg = dark ? "hover:bg-white/5" : "hover:bg-black/[0.025]";
-            const focusRing = dark
-              ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/22"
-              : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/18";
+              <div className="absolute right-[4%] top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-white/90">Skills</span>
+                <span className="relative inline-flex h-2.5 w-2.5">
+                  <span
+                    className={`absolute inset-0 rounded-full blur-[5px] ${nodeGlowClass("skills")}`}
+                  />
+                  <span
+                    className={`relative h-2 w-2 rounded-full ${nodeCoreClass("skills")}`}
+                  />
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            {items.map((it, idx) => {
+              const total = Math.max(1, it.total ?? SIGNAL_COMPLETE_COUNT);
+              const answered = clamp(it.answered ?? 0, 0, total);
 
-            const pillTone: "done" | "next" | "neutral" = complete ? "done" : isNext ? "next" : "neutral";
-            const pctLabel = complete ? "Done" : `${Math.round(pct * 100)}%`;
+              const pct = clamp(answered / total, 0, 1);
+              const filled = Math.round(pct * DASH_COUNT);
 
-            return (
-              <Link
-                key={it.cat}
-                href={hrefFor(it.cat)}
-                className={[
-                  "group block",
-                  "px-4 py-3",
-                  "transition",
-                  hoverBg,
-                  focusRing,
-                  itemBorder,
-                  rowDivider,
-                ].join(" ")}
-                aria-label={`Open ${label(it.cat)} questions`}
-                title={`Open ${label(it.cat)}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span
-                      aria-hidden
-                      className={`h-2 w-2 shrink-0 rounded-full ${accentDotClass(dark, it.cat)}`}
-                    />
-                    <div className="min-w-0 truncate text-sm font-semibold">{label(it.cat)}</div>
+              const complete = pct >= 0.999;
+              const isNext = !complete && it.cat === next;
+
+              const pillTone: "done" | "next" | "neutral" = complete
+                ? "done"
+                : isNext
+                  ? "next"
+                  : "neutral";
+
+              const pctLabel = complete ? "Done" : `${Math.round(pct * 100)}%`;
+
+              const itemBorder =
+                idx === 0
+                  ? ""
+                  : dark
+                    ? "border-white/8 md:border-l"
+                    : "border-black/8 md:border-l";
+
+              const rowDivider =
+                idx === 0
+                  ? ""
+                  : dark
+                    ? "border-t border-white/8 md:border-t-0"
+                    : "border-t border-black/8 md:border-t-0";
+
+              return (
+                <Link
+                  key={it.cat}
+                  href={hrefFor(it.cat)}
+                  className={[
+                    "group px-4 py-3 transition sm:px-5 sm:py-4 lg:px-6",
+                    dark ? "hover:bg-white/5" : "hover:bg-black/[0.025]",
+                    itemBorder,
+                    rowDivider,
+                  ].join(" ")}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2 w-2 rounded-full ${accentDotClass(dark, it.cat)}`}
+                      />
+                      <div className="text-sm font-semibold">{label(it.cat)}</div>
+                    </div>
+
+                    <div
+                      className={[
+                        "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                        pillClass(dark, pillTone),
+                      ].join(" ")}
+                    >
+                      {pctLabel}
+                    </div>
                   </div>
 
-                  <div
-                    className={[
-                      "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-                      pillClass(dark, pillTone),
-                    ].join(" ")}
-                    aria-label={`${label(it.cat)} progress ${pctLabel}`}
-                  >
-                    {pctLabel}
+                  <div className={`mt-1 text-xs leading-5 ${fineMuted}`}>
+                    {desc(it.cat)}
                   </div>
-                </div>
 
-                <div className={`mt-1 text-xs leading-snug ${fineMuted}`}>{desc(it.cat)}</div>
-
-                {/* Segmented “signal” dashes (percent-based, with more breathing room on mobile) */}
-                <div className="mt-3" aria-hidden>
-                  <div className="flex items-center gap-1 sm:gap-1.5">
-                    {Array.from({ length: DASH_COUNT }).map((_, i) => {
-                      const isFilled = i < filled;
-                      return (
-                        <span
-                          key={`${it.cat}_dash_${i}`}
-                          className={[
-                            "inline-block",
-                            "h-1.5",
-                            // slightly smaller on the tightest screens, breathes better
-                            "w-4 sm:w-5 md:w-6",
-                            "rounded-full",
-                            isFilled ? dashFillClass(dark, it.cat) : dashEmptyClass(dark),
-                          ].join(" ")}
-                        />
-                      );
-                    })}
+                  <div className="mt-3 flex gap-1">
+                    {Array.from({ length: DASH_COUNT }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={[
+                          "h-1.5 w-4 rounded-full",
+                          i < filled ? dashFillClass(dark, it.cat) : dashEmptyClass(dark),
+                        ].join(" ")}
+                      />
+                    ))}
                   </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

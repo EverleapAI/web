@@ -29,29 +29,12 @@ type UserProfileSignals = {
   statedCareerReason: string | null;
 };
 
-type LiveOpportunityPreview = {
-  id: string;
-  title: string;
-  href: string;
-  note: string;
-  badge: string | null;
-  provider: string | null;
-  mode: "local" | "remote";
-};
-
-type LiveOpportunityPair = {
-  local: LiveOpportunityPreview | null;
-  remote: LiveOpportunityPreview | null;
-};
-
 type PathAtmosphere = {
   border: Rgb;
   topGlow: Rgb;
   sideGlow: Rgb;
   washA: Rgb;
   washB: Rgb;
-  opportunityGlow: Rgb;
-  opportunityNode: Rgb;
   futureGlow: Rgb;
   futureNode: Rgb;
 };
@@ -694,8 +677,6 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         sideGlow: { r: 115, g: 79, b: 255 },
         washA: { r: 63, g: 145, b: 255 },
         washB: { r: 120, g: 88, b: 255 },
-        opportunityGlow: { r: 72, g: 174, b: 255 },
-        opportunityNode: { r: 120, g: 216, b: 255 },
         futureGlow: { r: 83, g: 132, b: 255 },
         futureNode: { r: 117, g: 207, b: 255 },
       };
@@ -706,8 +687,6 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         sideGlow: { r: 39, g: 126, b: 210 },
         washA: { r: 41, g: 179, b: 255 },
         washB: { r: 27, g: 116, b: 176 },
-        opportunityGlow: { r: 42, g: 203, b: 255 },
-        opportunityNode: { r: 144, g: 243, b: 255 },
         futureGlow: { r: 53, g: 198, b: 255 },
         futureNode: { r: 162, g: 245, b: 255 },
       };
@@ -718,8 +697,6 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         sideGlow: { r: 255, g: 109, b: 54 },
         washA: { r: 255, g: 155, b: 77 },
         washB: { r: 255, g: 104, b: 74 },
-        opportunityGlow: { r: 255, g: 182, b: 94 },
-        opportunityNode: { r: 255, g: 214, b: 150 },
         futureGlow: { r: 255, g: 152, b: 72 },
         futureNode: { r: 255, g: 211, b: 138 },
       };
@@ -730,8 +707,6 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         sideGlow: { r: Math.max(0, accent.r - 10), g: accent.g, b: accent.b },
         washA: accent,
         washB: { r: accent.r, g: Math.max(0, accent.g - 24), b: accent.b },
-        opportunityGlow: accent,
-        opportunityNode: { r: 220, g: 240, b: 255 },
         futureGlow: accent,
         futureNode: { r: 220, g: 240, b: 255 },
       };
@@ -806,69 +781,6 @@ function getSignalStrength(path: WorkPathContent, profile: UserProfileSignals) {
   if (profile.knowsDirection) score -= 2;
 
   return Math.max(48, Math.min(94, score));
-}
-
-function isUsableHref(href: string | null) {
-  if (!href) return false;
-  return href.trim() !== "#" && href.trim() !== "";
-}
-
-function extractOpportunityPair(path: WorkPathContent): LiveOpportunityPair {
-  const nextStepsV2 = asRecord(
-    (path as unknown as Record<string, unknown>).nextStepsV2
-  );
-  const rawSections = nextStepsV2?.sections;
-
-  if (!Array.isArray(rawSections)) {
-    return { local: null, remote: null };
-  }
-
-  const sections = rawSections
-    .map((section) => asRecord(section))
-    .filter((section): section is Record<string, unknown> => Boolean(section));
-
-  function pickFromSection(
-    mode: "local" | "remote"
-  ): LiveOpportunityPreview | null {
-    const section =
-      sections.find((item) => asString(item.mode) === mode) ??
-      sections.find((item) => asString(item.id) === mode);
-
-    if (!section) return null;
-
-    const rawItems = section.items;
-    if (!Array.isArray(rawItems)) return null;
-
-    for (const item of rawItems) {
-      const record = asRecord(item);
-      if (!record) continue;
-
-      const title = asString(record.title);
-      const href = asString(record.href);
-      const note = asString(record.note);
-      const itemMode = asString(record.mode);
-
-      if (!title || !note || !isUsableHref(href)) continue;
-      if (itemMode && itemMode !== mode) continue;
-
-      return {
-        id: asString(record.id) ?? `${mode}-${title}`,
-        title,
-        href: href!,
-        note,
-        badge: asString(record.badge),
-        provider: asString(record.provider),
-        mode,
-      };
-    }
-
-    return null;
-  }
-
-  return {
-    local: pickFromSection("local"),
-    remote: pickFromSection("remote"),
-  };
 }
 
 function cleanSentence(value: string) {
@@ -1070,8 +982,8 @@ function PathForwardSection({
               </h3>
 
               <p className="mt-2 max-w-2xl text-[13px] leading-[1.65] text-white/72 lg:text-[14px]">
-                See the specialties, day-to-day rhythm, training, and where this
-                path can lead next.
+                See how this path actually works — and how to try it in the real
+                world.
               </p>
             </div>
 
@@ -1127,80 +1039,6 @@ function PathForwardSection({
   );
 }
 
-function OpportunityRow({
-  item,
-  atmosphere,
-  isFirst,
-}: {
-  item: LiveOpportunityPreview;
-  atmosphere: PathAtmosphere;
-  isFirst: boolean;
-}) {
-  return (
-    <a
-      href={item.href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className="group/opportunity relative block px-1 py-3.5 lg:py-4"
-    >
-      {!isFirst ? (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, ${rgb(
-              atmosphere.opportunityGlow,
-              0.2
-            )} 18%, ${rgb(
-              atmosphere.opportunityGlow,
-              0.08
-            )} 82%, transparent 100%)`,
-          }}
-        />
-      ) : null}
-
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(circle at 92% 20%, ${rgb(
-            atmosphere.opportunityGlow,
-            0.09
-          )} 0%, transparent 24%)`,
-        }}
-      />
-
-      <div className="relative flex items-start justify-between gap-4 lg:gap-5">
-        <div className="min-w-0">
-          <h4 className="max-w-[38rem] text-[17px] font-semibold leading-[1.18] tracking-[-0.025em] text-white transition group-hover/opportunity:text-white/95 sm:text-[18px] lg:text-[20px]">
-            {item.title}
-          </h4>
-
-          <p className="mt-1.5 max-w-[40rem] text-[13px] leading-[1.6] text-white/66 transition group-hover/opportunity:text-white/74 sm:text-[14px]">
-            {item.note}
-          </p>
-        </div>
-
-        <div className="relative mt-1 hidden h-10 w-10 shrink-0 sm:block">
-          <div
-            className="pointer-events-none absolute inset-0 rounded-full blur-xl"
-            style={{
-              backgroundColor: rgb(atmosphere.opportunityGlow, 0.14),
-            }}
-          />
-          <div
-            className="absolute inset-0 flex items-center justify-center rounded-full border text-white/86 transition-transform duration-200 group-hover/opportunity:translate-x-0.5"
-            style={{
-              borderColor: rgb(atmosphere.opportunityGlow, 0.22),
-              backgroundColor: rgb(atmosphere.opportunityGlow, 0.07),
-            }}
-          >
-            <ArrowRight className="h-4.5 w-4.5" />
-          </div>
-        </div>
-      </div>
-    </a>
-  );
-}
-
 function WorkPathCard({
   path,
   profile,
@@ -1213,13 +1051,7 @@ function WorkPathCard({
 
   const title = extractCardField(path, "title");
   const signalStrength = getSignalStrength(path, profile);
-  const opportunities = extractOpportunityPair(path);
   const summary = buildAgenticSummary(path);
-
-  const renderedOpportunities = [
-    opportunities.local,
-    opportunities.remote,
-  ].filter((item): item is LiveOpportunityPreview => Boolean(item));
 
   const [showSignalHelp, setShowSignalHelp] = React.useState(false);
 
@@ -1302,43 +1134,6 @@ function WorkPathCard({
           <p className="mt-4 max-w-[44rem] text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:text-[15px]">
             {summary}
           </p>
-        </div>
-
-        <div className="relative mt-6">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-3 h-20"
-            style={{
-              background: `radial-gradient(circle at 16% 20%, ${rgb(
-                atmosphere.opportunityGlow,
-                0.1
-              )} 0%, transparent 24%)`,
-            }}
-          />
-
-          <div className="relative px-1">
-            <SectionAnchor
-              label="Try this for real"
-              color={atmosphere.opportunityNode}
-              lineAlpha={0.22}
-            />
-
-            <div className="mt-2.5">
-              {renderedOpportunities.map((item, index) => (
-                <OpportunityRow
-                  key={item.id}
-                  item={item}
-                  atmosphere={atmosphere}
-                  isFirst={index === 0}
-                />
-              ))}
-
-              {renderedOpportunities.length === 0 ? (
-                <div className="px-1 py-4 text-[14px] leading-[1.6] text-white/58">
-                  No live opportunities are wired into this path yet.
-                </div>
-              ) : null}
-            </div>
-          </div>
         </div>
 
         <PathForwardSection path={path} atmosphere={atmosphere} />

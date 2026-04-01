@@ -209,7 +209,6 @@ export const NEXT_STEPS_BY_PAGE: Record<string, NextStepsDefinition> = {
     pageId: "main.home.complete",
     tinyTask: HOME_COMPLETE_TINY,
     action: HOME_COMPLETE_ACTION,
-    bridgeLine: "Your foundation is in. Now make one real move with it.",
   },
 };
 

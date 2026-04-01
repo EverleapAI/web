@@ -166,7 +166,7 @@ export function TinyTaskCard({
   useLocal,
   definition,
   label = "Tiny Task",
-  subtitle = "5 minutes or less — a quick check-in that makes Everleap smarter.",
+  subtitle = "Choose the one that would make the biggest difference right now — this is how you start turning your signal into something real. It takes less than five minutes, but it helps Everleap sharpen what it suggests and point you toward moves that actually fit.",
   embedded = false,
   alwaysExpanded = false,
 }: Props) {
@@ -306,9 +306,7 @@ export function TinyTaskCard({
                 Saved {relativeTime(result.completedAt)}.
               </div>
             ) : (
-              <div className={`text-xs ${muted(dark)}`}>
-                Tap one option to save.
-              </div>
+              <div />
             )}
 
             {isDone ? (

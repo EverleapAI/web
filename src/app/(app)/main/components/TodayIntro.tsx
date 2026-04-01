@@ -1,4 +1,3 @@
-// src/app/main/components/TodayIntro.tsx
 "use client";
 
 import * as React from "react";
@@ -46,7 +45,7 @@ export type TodayIntroProps = {
   motionEnabled: boolean;
   quote?: Quote;
   isTransitioning?: boolean;
-  paragraphs: string[];
+  paragraphs: React.ReactNode[];
   primaryCtaLabel?: string;
   onPrimary?: () => void;
 };
@@ -65,18 +64,15 @@ export function TodayIntro(props: TodayIntroProps) {
     onPrimary,
   } = props;
 
-  const textMuted = dark ? "text-slate-300/85" : "text-slate-700";
-
-  const convoBodyClass = `text-lg leading-relaxed md:text-xl ${textMuted}`;
+  const bodyClass = [
+    "text-[15px] leading-7 md:text-[17px] md:leading-8",
+    dark ? "text-white/82" : "text-slate-800",
+  ].join(" ");
 
   const ctaClass = [
     "group inline-flex items-center gap-2",
-    "text-base md:text-lg",
-    "font-semibold",
-    "transition",
-    dark
-      ? "text-white/85 hover:text-white"
-      : "text-slate-900/85 hover:text-slate-900",
+    "text-base md:text-lg font-semibold transition",
+    dark ? "text-sky-300 hover:text-sky-200" : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-white/20"
@@ -85,7 +81,6 @@ export function TodayIntro(props: TodayIntroProps) {
 
   return (
     <div className="relative">
-      {/* TODAY marker */}
       <div className="mb-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] opacity-85">
         <span
           className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.7rem] ${
@@ -97,17 +92,14 @@ export function TodayIntro(props: TodayIntroProps) {
         <span>Today</span>
       </div>
 
-      {/* Counselor copy + CTA */}
-      <div
-        className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}
-      >
-        <div className="space-y-4">
-          {paragraphs.map((p, idx) => (
-            <p key={`today_${idx}`} className={convoBodyClass}>
-              {p}
-            </p>
-          ))}
-        </div>
+      <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
+        {paragraphs?.length ? (
+          <div className={bodyClass}>
+            {paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </div>
+        ) : null}
 
         {primaryCtaLabel ? (
           <div className="mt-6">
@@ -126,11 +118,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className={[
-                        "h-4 w-4 transition",
-                        "opacity-70 group-hover:opacity-95",
-                        "translate-x-0 group-hover:translate-x-[2px]",
-                      ].join(" ")}
+                      className="h-4 w-4 translate-x-0 opacity-70 transition group-hover:translate-x-[2px] group-hover:opacity-95"
                       aria-hidden
                     />
                   </motion.button>
@@ -143,11 +131,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className={[
-                        "h-4 w-4 transition",
-                        "opacity-70 group-hover:opacity-95",
-                        "translate-x-0 group-hover:translate-x-[2px]",
-                      ].join(" ")}
+                      className="h-4 w-4 translate-x-0 opacity-70 transition group-hover:translate-x-[2px] group-hover:opacity-95"
                       aria-hidden
                     />
                   </button>
