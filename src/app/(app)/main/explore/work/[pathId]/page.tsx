@@ -358,7 +358,7 @@ function SurfaceCard({
         className="pointer-events-none absolute right-[-28px] top-[-26px] h-28 w-28 rounded-full blur-3xl"
         style={{ background: rgb(glow, 0.08) }}
       />
-      <div className="relative">{children}</div>
+      <div className="relative z-10">{children}</div>
     </section>
   );
 }
@@ -668,12 +668,12 @@ function OpportunityPreviewRow({
       ) : null}
 
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(circle at 92% 24%, ${rgb(
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
             glow,
-            0.08
-          )} 0%, transparent 26%)`,
+            0.06
+          )} 58%, transparent 100%)`,
         }}
       />
 
@@ -726,11 +726,7 @@ function TryThisForRealCard({
   );
 
   return (
-    <SurfaceCard
-      accent={path.theme.accent}
-      glow={path.theme.accentStrong}
-      className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
-    >
+    <SurfaceCard accent={path.theme.accent} glow={path.theme.accentStrong}>
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -748,42 +744,44 @@ function TryThisForRealCard({
         }}
       />
 
-      <SectionHeader
-        icon={Compass}
-        kicker="Try this for real"
-        title="A first real-world way in"
-        description="You do not have to guess your way into this. Here are a couple concrete ways to get closer and test the fit."
-        accent={path.theme.accent}
-      />
+      <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+        <SectionHeader
+          icon={Compass}
+          kicker="Try this for real"
+          title="A first real-world way in"
+          description="You do not have to guess your way into this. Here are a couple concrete ways to get closer and test the fit."
+          accent={path.theme.accent}
+        />
 
-      <div className="mt-4">
-        {items.length > 0 ? (
-          <div>
-            {items.map((item, index) => (
-              <OpportunityPreviewRow
-                key={item.id}
-                item={item}
-                accent={path.theme.accent}
-                glow={path.theme.accentStrong}
-                isFirst={index === 0}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="py-2 text-[13px] leading-5.5 text-white/58">
-            Real-world opportunities are still being mapped for this path.
-          </div>
-        )}
-      </div>
+        <div className="mt-4">
+          {items.length > 0 ? (
+            <div>
+              {items.map((item, index) => (
+                <OpportunityPreviewRow
+                  key={item.id}
+                  item={item}
+                  accent={path.theme.accent}
+                  glow={path.theme.accentStrong}
+                  isFirst={index === 0}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="py-2 text-[13px] leading-5.5 text-white/58">
+              Real-world opportunities are still being mapped for this path.
+            </div>
+          )}
+        </div>
 
-      <div className="mt-4 pt-1">
-        <Link
-          href={`/main/explore/work/${path.slug}/next-steps`}
-          className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/92 transition hover:gap-2.5 hover:text-white"
-        >
-          <span>See the full real-world starter map</span>
-          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-        </Link>
+        <div className="mt-4 pt-1">
+          <Link
+            href={`/main/explore/work/${path.slug}/next-steps`}
+            className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white/92 transition hover:gap-2.5 hover:text-white"
+          >
+            <span>See the full real-world starter map</span>
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </Link>
+        </div>
       </div>
     </SurfaceCard>
   );
@@ -820,12 +818,12 @@ function ExplorePathRow({
       ) : null}
 
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(circle at 90% 18%, ${rgb(
+          background: `linear-gradient(90deg, transparent 0%, ${rgb(
             glow,
-            0.08
-          )} 0%, transparent 24%)`,
+            0.06
+          )} 58%, transparent 100%)`,
         }}
       />
 
@@ -1510,11 +1508,7 @@ export default function WorkPathDetailPage() {
 
         <TryThisForRealCard path={path} />
 
-        <SurfaceCard
-          accent={path.theme.glow}
-          glow={path.theme.accentStrong}
-          className="px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6"
-        >
+        <SurfaceCard accent={path.theme.glow} glow={path.theme.accentStrong}>
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -1532,22 +1526,24 @@ export default function WorkPathDetailPage() {
             }}
           />
 
-          <SectionHeader
-            icon={Sparkles}
-            kicker="What you can explore next"
-            title="The next layers of this path"
-            description="Each one opens a different part of the story — the branches, the rhythm, and the future."
-            accent={path.theme.glow}
-          />
+          <div className="relative z-10 px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+            <SectionHeader
+              icon={Sparkles}
+              kicker="What you can explore next"
+              title="The next layers of this path"
+              description="Each one opens a different part of the story — the branches, the rhythm, and the future."
+              accent={path.theme.glow}
+            />
 
-          <div className="mt-4">
-            {exploreLinks.map((item, index) => (
-              <ExplorePathRow
-                key={item.href}
-                {...item}
-                isFirst={index === 0}
-              />
-            ))}
+            <div className="mt-4">
+              {exploreLinks.map((item, index) => (
+                <ExplorePathRow
+                  key={item.href}
+                  {...item}
+                  isFirst={index === 0}
+                />
+              ))}
+            </div>
           </div>
         </SurfaceCard>
       </div>
