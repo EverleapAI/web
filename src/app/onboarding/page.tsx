@@ -88,9 +88,6 @@ type VoiceTarget = "name" | "zip" | "activitiesOther";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
-// Retort timing (3 seconds everywhere)
-const RETORT_MS_DEFAULT = 3000;
-const RETORT_MS_FUN = 3000;
 
 /* ============================================================
    Copy
@@ -187,9 +184,6 @@ function joinNatural(list: string[]) {
   return `${clean.slice(0, -1).join(", ")}, and ${clean[clean.length - 1]}`;
 }
 
-function getRetortMs(fromStep: StepId) {
-  return fromStep === "fun" ? RETORT_MS_FUN : RETORT_MS_DEFAULT;
-}
 
 /* ============================================================
    Visual helpers
@@ -234,36 +228,6 @@ function visualToneForStep(stepId: StepId) {
 /* ============================================================
    UI atoms
    ============================================================ */
-
-function ProgressDashes({ current, total }: { current: number; total: number }) {
-  const filled = clampInt(current + 1, 1, total);
-
-  return (
-    <div
-      className="flex items-center justify-center gap-2"
-      aria-label={`Step ${filled} of ${total}`}
-    >
-      {Array.from({ length: total }).map((_, i) => {
-        const active = i === current;
-        const done = i < filled;
-
-        return (
-          <span
-            key={i}
-            className={[
-              "rounded-full transition-all duration-300",
-              active
-                ? "h-[8px] w-9 bg-white/72 shadow-[0_0_22px_rgba(255,255,255,0.18)]"
-                : "h-[6px] w-7",
-              !active && done ? "bg-white/28" : "",
-              !active && !done ? "bg-white/10" : "",
-            ].join(" ")}
-          />
-        );
-      })}
-    </div>
-  );
-}
 
 function MinimalTopLeftBrand({ onClick }: { onClick: () => void }) {
   return (
@@ -310,7 +274,7 @@ function ChoiceRowText({
     <button
       type="button"
       onClick={onClick}
-      className="group relative block w-full overflow-hidden rounded-[20px] px-4 py-3.5 text-left transition sm:px-4.5"
+      className="group relative block w-full overflow-hidden rounded-[20px] px-4 py-3 text-left transition sm:px-4.5"
     >
       <div
         className={[
@@ -365,10 +329,10 @@ function ThinkingSurface({
   inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
 }) {
   return (
-    <div className="mt-5 w-full max-w-xl">
-      <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.045] px-4 py-3 backdrop-blur-sm sm:px-4 sm:py-3.5">
+    <div className="mt-5 w-full max-w-2xl">
+      <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] p-3.5 backdrop-blur-sm sm:p-4">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/14 via-white/8 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_48%)]" />
+        <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
 
         <div className="relative">
           <textarea
@@ -384,7 +348,7 @@ function ThinkingSurface({
             }}
             rows={1}
             placeholder={placeholder ?? ""}
-            className="min-h-[52px] w-full resize-none bg-transparent px-0 py-1 text-[15px] leading-6 text-white/90 outline-none placeholder:text-white/28"
+            className="min-h-[56px] w-full resize-none bg-transparent px-1 py-1 text-[15px] leading-6 text-white/90 outline-none placeholder:text-white/26"
           />
 
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
@@ -394,7 +358,7 @@ function ThinkingSurface({
                 onClick={onToggleMic}
                 disabled={!speechSupported}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full px-2 py-1.5 text-[13px] transition",
+                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-sm transition",
                   speechSupported
                     ? isListening
                       ? "bg-white/[0.06] text-white/90"
@@ -410,7 +374,7 @@ function ThinkingSurface({
                     : "Voice input"
                 }
               >
-                {isListening ? <MicOff size={15} /> : <Mic size={15} />}
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
                 <span>{isListening ? "Listening…" : "Speak"}</span>
               </button>
             ) : (
@@ -422,7 +386,7 @@ function ThinkingSurface({
               onClick={onSubmit}
               disabled={!canSubmit}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
+                "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition",
                 canSubmit
                   ? "border-white/16 bg-white/[0.08] text-white/86 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
                   : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
@@ -431,7 +395,7 @@ function ThinkingSurface({
               title="Continue"
             >
               <span>Continue</span>
-              <Send size={14} />
+              <Send size={15} />
             </button>
           </div>
         </div>
@@ -450,7 +414,7 @@ function MinimalContinue({
   label?: string;
 }) {
   return (
-    <div className="mt-4">
+    <div className="mt-5">
       <button
         type="button"
         onClick={onClick}
@@ -465,20 +429,6 @@ function MinimalContinue({
         <span aria-hidden="true">→</span>
       </button>
     </div>
-  );
-}
-
-function PauseLine({ show }: { show: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scaleX: 0.92 }}
-      animate={{ opacity: show ? 1 : 0, scaleX: show ? 1 : 0.92 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      aria-hidden="true"
-      className="mt-8 origin-left"
-    >
-      <div className="h-px w-44 rounded-full bg-gradient-to-r from-white/24 via-white/12 to-transparent" />
-    </motion.div>
   );
 }
 
@@ -637,67 +587,6 @@ function buildRetort(args: {
 }
 
 /* ============================================================
-   Completion transition
-   ============================================================ */
-
-function CompletionTransition({ onDone }: { onDone: () => void }) {
-  const [showLine, setShowLine] = React.useState(false);
-
-  React.useEffect(() => {
-    const t1 = window.setTimeout(() => setShowLine(true), 250);
-    const t2 = window.setTimeout(onDone, 1200);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [onDone]);
-
-  return (
-    <div className="flex min-h-[62svh] w-full items-center">
-      <div className="w-full max-w-2xl">
-        <motion.div
-          initial={{ opacity: 0, y: 10, scale: 0.985 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.26, ease: "easeOut" }}
-          className="rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-8 backdrop-blur-sm sm:px-8 sm:py-10"
-        >
-          <div className="text-sm font-medium tracking-[0.12em] uppercase text-white/44">
-            Nice
-          </div>
-
-          <h2 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-            That gives me enough to work with.
-          </h2>
-
-          <p className="mt-5 max-w-2xl text-[15px] leading-7 text-white/68">
-            Give me a second to turn that into a clearer starting point.
-          </p>
-
-          <div className="mt-8 flex items-center gap-2">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0.45, scale: 0.9, x: 0 }}
-                animate={{
-                  opacity: i === 3 ? 0.9 : 0.22,
-                  scale: i === 3 ? 1.08 : 0.92,
-                  x: (3 - i) * 7,
-                }}
-                transition={{ duration: 0.45, ease: "easeInOut" }}
-                className="h-[6px] w-[6px] rounded-full bg-white/70"
-                aria-hidden="true"
-              />
-            ))}
-          </div>
-
-          <PauseLine show={showLine} />
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
    Summary
    ============================================================ */
 
@@ -824,7 +713,6 @@ export default function OnboardingPage() {
   const [retortText, setRetortText] = React.useState<string | null>(null);
   const [retortFromStep, setRetortFromStep] = React.useState<StepId | null>(null);
 
-  const retortTimerRef = React.useRef<number | null>(null);
   const advanceLockRef = React.useRef(false);
   const retortTokenRef = React.useRef<string | null>(null);
 
@@ -884,9 +772,7 @@ export default function OnboardingPage() {
       funShownAtRef.current = null;
     }
 
-    window.setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 50);
+    textareaRef.current?.focus();
   }, [shouldReset]);
 
   React.useEffect(() => {
@@ -897,16 +783,9 @@ export default function OnboardingPage() {
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
 
-  function clearRetortTimer() {
-    if (retortTimerRef.current) {
-      window.clearTimeout(retortTimerRef.current);
-      retortTimerRef.current = null;
-    }
-  }
 
   React.useEffect(() => {
     return () => {
-      clearRetortTimer();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -960,10 +839,8 @@ export default function OnboardingPage() {
     return true;
   }
 
-  function unlockAdvanceSoon() {
-    window.setTimeout(() => {
-      advanceLockRef.current = false;
-    }, 0);
+  function unlockAdvance() {
+    advanceLockRef.current = false;
   }
 
   function getOrCreateRecognition(): SpeechRecognition | null {
@@ -1042,12 +919,10 @@ export default function OnboardingPage() {
   }
 
   function goLanding() {
-    clearRetortTimer();
     router.push("/");
   }
 
   function exitOnboarding() {
-    clearRetortTimer();
     if (from === "consent") {
       router.push("/consent");
       return;
@@ -1061,7 +936,6 @@ export default function OnboardingPage() {
 
   function goBack() {
     if (screenMode === "retort") {
-      clearRetortTimer();
       setRetortText(null);
       setRetortFromStep(null);
       setScreenMode("question");
@@ -1070,7 +944,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    clearRetortTimer();
     setScreenMode("question");
     setStepIndex((i) => Math.max(0, i - 1));
   }
@@ -1090,7 +963,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    clearRetortTimer();
 
     const effectiveName = overrides?.name ?? name;
     const effectiveSituation = overrides?.situation ?? situation;
@@ -1159,12 +1031,9 @@ export default function OnboardingPage() {
       } catch {}
     }
 
-    const waitMs = getRetortMs(fromStep);
-
   }
 
   function showFunRetort(choice: FunChoice) {
-    clearRetortTimer();
 
     const start = funShownAtRef.current;
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -1190,32 +1059,34 @@ export default function OnboardingPage() {
     setRetortFromStep("fun");
     setRetortText(t);
     setScreenMode("retort");
+
   }
 
   function skipRetort() {
     if (screenMode !== "retort") return;
     if (!lockAdvance()) return;
 
-    clearRetortTimer();
+    const fromStep = retortFromStep;
+
     setRetortText(null);
     setRetortFromStep(null);
     retortTokenRef.current = null;
     setScreenMode("question");
 
-    if (stepId === "fun") {
+    if (fromStep === "fun") {
       setStepIndex(STEPS.indexOf("summary"));
-      unlockAdvanceSoon();
+      unlockAdvance();
       return;
     }
 
     goNextStep();
-    unlockAdvanceSoon();
+    unlockAdvance();
   }
 
   function onWelcomeNext() {
     if (!lockAdvance()) return;
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("welcome");
+    unlockAdvance();
   }
 
   function submitName() {
@@ -1228,14 +1099,14 @@ export default function OnboardingPage() {
     setName(text);
     setDraft("");
     void showRetortThenAdvance("name", { name: text });
-    unlockAdvanceSoon();
+    unlockAdvance();
   }
 
   function chooseSituation(v: Situation) {
     if (!lockAdvance()) return;
     setSituation(v);
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("situation", { situation: v });
+    unlockAdvance();
   }
 
   function submitZip() {
@@ -1244,23 +1115,24 @@ export default function OnboardingPage() {
     const normalized = normalizeZip(draft);
     setZip(normalized);
     setDraft("");
-    goNextStep();
-    unlockAdvanceSoon();
+
+    void showRetortThenAdvance("zip", { zip5: normalized });
+    unlockAdvance();
   }
 
   function skipZip() {
     if (!lockAdvance()) return;
     setZip("");
     setDraft("");
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("zip", { zip5: "" });
+    unlockAdvance();
   }
 
   function chooseCertainty(v: Certainty) {
     if (!lockAdvance()) return;
     setCertainty(v);
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("certainty", { certainty: v });
+    unlockAdvance();
   }
 
   function togglePostPlan(key: PostPlanKey) {
@@ -1278,8 +1150,8 @@ export default function OnboardingPage() {
       advanceLockRef.current = false;
       return;
     }
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("postPlans", { postPlans: snapshot });
+    unlockAdvance();
   }
 
   function toggleActivity(key: ActivityKey) {
@@ -1303,20 +1175,24 @@ export default function OnboardingPage() {
       const text = (typeof optionalOther === "string" ? optionalOther : draft).trim();
       setActivitiesOther(text);
       setDraft("");
-      goNextStep();
-      unlockAdvanceSoon();
+
+      void showRetortThenAdvance("activities", {
+        activities: snapshot,
+        activitiesOther: text,
+      });
+      unlockAdvance();
       return;
     }
 
-    goNextStep();
-    unlockAdvanceSoon();
+    void showRetortThenAdvance("activities", { activities: snapshot });
+    unlockAdvance();
   }
 
   function chooseFun(choice: FunChoice) {
     if (!lockAdvance()) return;
     setFunChoice(choice);
     showFunRetort(choice);
-    unlockAdvanceSoon();
+    unlockAdvance();
   }
 
 
@@ -1334,15 +1210,15 @@ export default function OnboardingPage() {
 
   function TitleBlock({ title, micro, lead }: { title: string; micro?: string; lead?: string }) {
     return (
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
         {lead ? (
-          <p className="text-[11px] font-semibold tracking-[0.16em] text-white/42 uppercase">{lead}</p>
+          <p className="text-[12px] font-medium tracking-[0.08em] text-white/42">{lead}</p>
         ) : null}
         <h1 className="mt-3 text-[1.6rem] font-semibold leading-[1.22] tracking-tight text-white sm:text-[2rem]">
           {title}
         </h1>
         {micro ? (
-          <p className="mt-3 max-w-xl whitespace-pre-line text-[14px] leading-6 text-white/60">
+          <p className="mt-3 max-w-2xl whitespace-pre-line text-[14px] leading-6 text-white/60">
             {micro}
           </p>
         ) : null}
@@ -1363,16 +1239,16 @@ export default function OnboardingPage() {
         aria-label="Tap to continue"
         title="Tap to continue"
       >
-        <div className="flex min-h-[52svh] items-center">
-          <div className="w-full max-w-2xl">
-            <div className={`rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm sm:px-6 sm:py-7 ${tone.glow}`}>
-              <div className="text-[11px] font-semibold tracking-[0.16em] uppercase text-white/42">
+        <div className="flex min-h-[54svh] items-center">
+          <div className="w-full max-w-3xl">
+            <div className={`rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm sm:px-7 sm:py-8 ${tone.glow}`}>
+              <div className="text-sm font-medium tracking-[0.12em] uppercase text-white/42">
                 Got it
               </div>
-              <div className="mt-3 max-w-xl text-[1.05rem] leading-7 text-white/88 sm:text-[1.28rem] sm:leading-8">
+              <div className="mt-3 max-w-2xl text-[1rem] leading-7 text-white/88 sm:text-[1.2rem] sm:leading-8">
                 {retortText}
               </div>
-              <div className="mt-5 text-[13px] font-medium text-white/36">Tap anywhere to continue</div>
+              <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-white/36">Tap anywhere to continue</div>
             </div>
           </div>
         </div>
@@ -1382,30 +1258,38 @@ export default function OnboardingPage() {
 
   function renderWelcome() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
-        <div className="relative w-full max-w-3xl">
+      <div className="flex min-h-[54svh] items-start pt-4 sm:min-h-[58svh] sm:items-center sm:pt-0">
+        <div className="relative w-full max-w-4xl">
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl sm:-left-12 sm:top-[-2.5rem] sm:h-32 sm:w-32 ${tone.orbA}`}
+            className={`pointer-events-none absolute -left-10 top-[-2.25rem] h-28 w-28 rounded-full blur-3xl sm:-left-16 sm:top-[-3rem] sm:h-40 sm:w-40 ${tone.orbA}`}
           />
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute right-[10%] top-[4.5rem] h-20 w-20 rounded-full blur-3xl sm:top-[5.75rem] sm:h-28 sm:w-28 ${tone.orbB}`}
+            className={`pointer-events-none absolute right-[8%] top-[5.5rem] h-24 w-24 rounded-full blur-3xl sm:top-[6.5rem] sm:h-36 sm:w-36 ${tone.orbB}`}
           />
 
-          <div className="relative max-w-2xl">
+          <div className="relative max-w-3xl">
             <div className="flex items-center gap-3">
-              <div className="h-px w-10 bg-gradient-to-r from-white/50 via-white/18 to-transparent" />
+              <div className="h-px w-12 bg-gradient-to-r from-white/55 via-white/18 to-transparent sm:w-16" />
               <Kicker />
             </div>
 
-            <div className="mt-5 max-w-[40rem] sm:mt-6">
-              <h1 className="max-w-[18ch] text-[1.9rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.6rem]">
+            <div className="mt-5 max-w-[42rem] sm:mt-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/46 sm:text-xs">
+                {STEP_META.welcome.lead}
+              </p>
+
+              <h1 className="mt-3 max-w-[16ch] text-[1.9rem] font-semibold leading-[1.08] tracking-tight text-white sm:mt-4 sm:text-[2.6rem]">
                 {STEP_META.welcome.title}
               </h1>
 
-              <p className="mt-4 max-w-xl text-[15px] leading-7 text-white/70">
-                A few quick questions will sharpen what Everleap shows you next.
+              <p className="mt-4 max-w-2xl text-[15px] leading-7 text-white/70 sm:mt-5">
+                {STEP_META.welcome.micro}
+              </p>
+
+              <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/54 sm:mt-4">
+                This is quick, personal, and meant to make the next screen feel like it already knows where to begin.
               </p>
             </div>
 
@@ -1413,7 +1297,7 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={onWelcomeNext}
-                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-4 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_30px_rgba(255,255,255,0.04)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
+                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-3 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
                 aria-label="Let’s begin"
                 title="Let’s begin"
               >
@@ -1425,6 +1309,11 @@ export default function OnboardingPage() {
                   →
                 </span>
               </button>
+
+              <div className="flex items-center gap-3 text-[13px] text-white/38 sm:text-sm">
+                <div className="h-px w-10 bg-gradient-to-r from-white/28 to-transparent" />
+                <span>Tap to move at your pace.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1434,7 +1323,7 @@ export default function OnboardingPage() {
 
   function renderName() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock title={STEP_META.name.title} lead={STEP_META.name.lead} />
@@ -1457,11 +1346,11 @@ export default function OnboardingPage() {
 
   function renderSituation() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock title={STEP_META.situation.title} lead={STEP_META.situation.lead} />
-          <div className="mt-5 max-w-xl space-y-1.5">
+          <div className="mt-5 max-w-2xl space-y-2">
             <ChoiceRowText
               label="I’m in high school"
               selected={situation === "high_school"}
@@ -1481,7 +1370,7 @@ export default function OnboardingPage() {
 
   function renderZip() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock
@@ -1504,7 +1393,7 @@ export default function OnboardingPage() {
             inputMode="numeric"
           />
 
-          <div className="mt-4">
+          <div className="mt-5">
             <button
               type="button"
               onClick={skipZip}
@@ -1522,7 +1411,7 @@ export default function OnboardingPage() {
 
   function renderCertainty() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock
@@ -1530,7 +1419,7 @@ export default function OnboardingPage() {
             micro={STEP_META.certainty.micro}
             lead={STEP_META.certainty.lead}
           />
-          <div className="mt-5 max-w-xl space-y-1.5">
+          <div className="mt-5 max-w-2xl space-y-2">
             <ChoiceRowText
               label="I feel pretty sure"
               selected={certainty === "strong"}
@@ -1557,7 +1446,7 @@ export default function OnboardingPage() {
     const hasSelection = postPlans.length > 0;
 
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock
@@ -1566,7 +1455,7 @@ export default function OnboardingPage() {
             lead={STEP_META.postPlans.lead}
           />
 
-          <div className="mt-5 max-w-xl space-y-1.5">
+          <div className="mt-5 max-w-3xl space-y-2">
             <ChoiceRowText label="Get a job" selected={postPlans.includes("job")} onClick={() => togglePostPlan("job")} />
             <ChoiceRowText
               label="Four-year college"
@@ -1607,7 +1496,7 @@ export default function OnboardingPage() {
     const wantsOther = activities.includes("other");
 
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock
@@ -1616,7 +1505,7 @@ export default function OnboardingPage() {
             lead={STEP_META.activities.lead}
           />
 
-          <div className="mt-5 max-w-xl space-y-1.5">
+          <div className="mt-5 max-w-3xl space-y-2">
             <ChoiceRowText
               label="Sports / training"
               selected={activities.includes("sports")}
@@ -1684,22 +1573,22 @@ export default function OnboardingPage() {
 
   function renderFun() {
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
+      <div className="flex min-h-[52svh] items-center">
         <div className="w-full">
           <Kicker />
           <TitleBlock title={STEP_META.fun.title} lead={STEP_META.fun.lead} />
 
-          <div className="mt-5 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          <div className="mt-5 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {FUN_OPTIONS.map((o) => (
               <button
                 key={o.key}
                 type="button"
                 onClick={() => chooseFun(o.key)}
-                className="group relative overflow-hidden rounded-[20px] border border-white/12 bg-white/[0.04] transition hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_30px_rgba(255,255,255,0.05)] active:scale-[0.99]"
+                className="group relative overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.04] transition hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] active:scale-[0.99]"
                 aria-label={o.alt}
                 title={o.alt}
               >
-                <div className="relative h-[136px] w-full sm:h-[188px]">
+                <div className="relative h-[150px] w-full sm:h-[220px]">
                   <Image
                     src={o.src}
                     alt={o.alt}
@@ -1713,7 +1602,7 @@ export default function OnboardingPage() {
                     className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/42 via-black/8 to-transparent"
                   />
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/8 to-transparent" />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-3 text-left">
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4 text-left">
                     <div className="text-sm font-medium text-white/88">{o.alt}</div>
                   </div>
                 </div>
@@ -1740,9 +1629,9 @@ export default function OnboardingPage() {
     const n = firstName(name);
 
     return (
-      <div className="flex min-h-[52svh] items-start pt-5 sm:min-h-[56svh] sm:items-center sm:pt-0">
-        <div className="w-full max-w-2xl">
-          <div className={`rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm sm:px-6 sm:py-7 ${tone.glow}`}>
+      <div className="flex min-h-[52svh] items-center">
+        <div className="w-full max-w-3xl">
+          <div className={`rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-8 backdrop-blur-sm sm:px-8 sm:py-10 ${tone.glow}`}>
             <div className="text-xs font-semibold tracking-[0.18em] text-white/42 uppercase">
               Everleap
             </div>
@@ -1751,7 +1640,7 @@ export default function OnboardingPage() {
               {n ? `Here’s your starting point, ${n}.` : "Here’s a strong starting point."}
             </h1>
 
-            <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/75">{insight}</p>
+            <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/75">{insight}</p>
 
             <div className="mt-6">
               <button
@@ -1798,13 +1687,13 @@ export default function OnboardingPage() {
         )}
 
         <main className="relative z-10">
-          <div className="mx-auto w-full max-w-[920px] px-5 pb-20 pt-6 sm:px-6 sm:pt-8">
+          <div className="mx-auto w-full max-w-[920px] px-5 pb-24 pt-6 sm:px-6 sm:pt-8">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <MinimalTopLeftBrand onClick={goLanding} />
               </div>
 
-              <div className="flex min-w-0 flex-1" />
+              <div className="flex-1" />
 
               <div className="flex min-w-[84px] justify-end pt-1 sm:min-w-[120px]">
                 {canGoBack() ? (
