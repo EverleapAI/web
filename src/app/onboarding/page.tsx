@@ -470,7 +470,7 @@ function ThinkingSurface({
   inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
 }) {
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full max-w-3xl">
       <div className="relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.055] p-3.5 backdrop-blur-md">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
         <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_48%)]" />
@@ -565,7 +565,7 @@ function QuestionShell({
 }) {
   return (
     <div className="flex w-full items-start">
-      <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
+      <div className="relative mx-auto mt-1 w-full max-w-5xl sm:mt-2">
         <motion.div
           aria-hidden="true"
           animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
@@ -596,8 +596,8 @@ function QuestionShell({
               className={[
                 "font-semibold leading-[1.02] tracking-tight text-white",
                 compact
-                  ? "max-w-[22ch] text-[1.9rem] sm:max-w-[24ch] sm:text-[2.08rem]"
-                  : "max-w-[24ch] text-[1.95rem] sm:text-[2.2rem]",
+                  ? "text-[1.9rem] sm:text-[2.08rem]"
+                  : "text-[1.95rem] sm:text-[2.2rem]",
               ].join(" ")}
             >
               {title}
@@ -631,34 +631,34 @@ function QuestionShell({
 function postPlanLabel(k: PostPlanKey): string {
   switch (k) {
     case "job":
-      return "a job";
+      return "working";
     case "four_year":
-      return "four-year college";
+      return "a four-year college";
     case "associates":
-      return "community / two-year college";
+      return "community college";
     case "credential":
-      return "a trade / credential program";
+      return "a trade program";
     case "military":
       return "the military";
     case "no_idea":
-      return "not sure yet";
+      return "not being sure yet";
   }
 }
 
 function activityLabel(k: ActivityKey): string {
   switch (k) {
     case "sports":
-      return "sports / training";
+      return "sports";
     case "visual_arts":
-      return "art / design";
+      return "art or design";
     case "performing_arts":
-      return "music / dance / theater";
+      return "music, dance, or theater";
     case "volunteer":
       return "volunteering";
     case "job":
-      return "working a job";
+      return "working";
     case "other":
-      return "other";
+      return "something else";
   }
 }
 
@@ -693,101 +693,116 @@ function buildRetort(args: {
 
   const n = firstName(name);
   const idea = shortenIdea(certaintyIdea);
+  const hasIdea = Boolean(idea);
+  const hasActivities = activities.length > 0 || isMeaningfulText(activitiesOther);
+  const hasOtherDetail = activities.includes("other") && isMeaningfulText(activitiesOther);
 
   if (fromStep === "name") {
-    return n ? `Okay, ${n}.` : "Okay.";
+    return n ? `${n}. Nice to meet you — let’s see what fits.` : "Nice to meet you — let’s see what fits.";
   }
 
   if (fromStep === "situation") {
     if (situation === "high_school") {
-      return "Good. That gives us room to explore without drifting.";
+      return "Got it. We can keep this open and still make it useful.";
     }
     if (situation === "young_adult") {
-      return "Nice. We can move with a little more speed now.";
+      return "Got it. We can be a little more direct from here.";
     }
-    return "Good. That helps me set the right pace.";
+    return "Got it. That helps.";
   }
 
   if (fromStep === "zip") {
     if (!zip5) {
-      return "Totally fine. We can still build a strong starting point.";
+      return hasIdea ? "That’s okay. We’ve already got enough to start." : "That’s okay. We can still keep going.";
     }
     if (zipPlaceLabel) {
-      return `${zipPlaceLabel}. Nice. Local recommendations just got smarter.`;
+      return `${zipPlaceLabel}. Nice — I’ll keep nearby options in the mix.`;
     }
-    return `${zip5}. Nice. Local recommendations just got smarter.`;
+    return `${zip5}. Nice — I’ll keep nearby options in the mix.`;
   }
 
   if (fromStep === "certainty") {
     if (certainty === "strong") {
-      return "Good. Start with the thing you already see.";
+      return hasIdea ? "Good. That gives us something real to work with." : "Good. That gives us a place to start.";
     }
     if (certainty === "kinda") {
-      return "Perfect. One idea is enough to get traction.";
+      return "That’s enough. We can work with that.";
     }
     if (certainty === "no_clue") {
-      return "Honestly? That’s cleaner than fake certainty.";
+      return "Honestly, that’s fine too.";
     }
     return "Got it.";
   }
 
   if (fromStep === "certaintyIdea") {
-    if (!idea) return "Good. That gives me something real to work with.";
-
-    if (certainty === "strong") {
-      return `Okay. ${idea}. Now we’re getting somewhere.`;
+    if (!idea) {
+      return hasActivities ? "That still helps. I’ve got a better feel for you now." : "That still helps. One real clue is enough.";
     }
 
-    return `${idea}. Nice. That’s a real clue, not random noise.`;
+    if (certainty === "strong") {
+      return `${idea}. Nice — that feels like a real starting point.`;
+    }
+
+    return `${idea}. Good — that gives us something to build on.`;
   }
 
   if (fromStep === "postPlans") {
     if (postPlans.includes("no_idea")) {
-      return "Open field. That’s still a real starting point.";
+      return hasActivities ? "That’s okay. You’ve already given me enough to start narrowing this down." : "That’s okay. We can narrow it down from here.";
     }
-
-    const labels = postPlans.map(postPlanLabel);
-    const listText = joinNatural(labels);
 
     if (postPlans.length >= 3) {
-      return `${listText}. Good. Enough range to compare without getting lost.`;
+      return "Good. You’re keeping a few real paths open.";
     }
 
-    return `${listText}. Good. That’s enough direction to build from.`;
+    if (postPlans.length === 2) {
+      return "Good. That already gives us a couple of real directions.";
+    }
+
+    return "Good. That’s a real option.";
   }
 
   if (fromStep === "activities") {
-    const labels = activities.map(activityLabel);
+    const labels = activities.filter((key) => key !== "other").map(activityLabel);
     const listText = joinNatural(labels);
 
-    if (activities.includes("other") && isMeaningfulText(activitiesOther)) {
-      return `${listText}. Good. That extra detail helps a lot.`;
+    if (hasOtherDetail) {
+      return listText
+        ? `${listText}. Nice — that helps me get a better feel for you.`
+        : "Nice — that helps me get a better feel for you.";
     }
 
-    return `${listText}. Noted. That tells me more than people think.`;
+    if (listText) {
+      if (hasIdea) {
+        return `${listText}. Nice — that gives me more context.`;
+      }
+      return `${listText}. Nice — that tells me something real.`;
+    }
+
+    return "Nice — that tells me something real.";
   }
 
   if (fromStep === "fun") {
     const quick = typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
     const slow = typeof funLatencyMs === "number" && funLatencyMs >= 1800;
-    const tempoTag = quick ? "Fast pick. " : slow ? "Considered pick. " : "";
+    const tempoTag = quick ? "Fast answer. " : slow ? "You thought about that. " : "";
 
     if (funChoice === "dog") {
-      return `${tempoTag}Dog energy. Warm, loyal, easy to read — until you’re not.`;
+      return `${tempoTag}Dog. Solid choice.`;
     }
     if (funChoice === "cat") {
-      return `${tempoTag}Cat energy. Independent, selective, and not here for nonsense.`;
+      return `${tempoTag}Cat. Fair.`;
     }
     if (funChoice === "bearded_dragon") {
-      return `${tempoTag}Bearded dragon. Calm confidence. Weirdly excellent taste.`;
+      return `${tempoTag}Bearded dragon. Strong choice, honestly.`;
     }
     if (funChoice === "rock") {
-      return `${tempoTag}Rock. Unbothered. Respect.`;
+      return `${tempoTag}Rock. Respect.`;
     }
-    return "Interesting pick.";
+    return "Interesting choice.";
   }
 
-  return "Perfect. That gives me enough to keep going.";
+  return "Good. We’ve got enough to keep going.";
 }
 
 /* ============================================================
@@ -1624,7 +1639,7 @@ export default function OnboardingPage() {
         aria-label="Tap to continue"
         title="Tap to continue"
       >
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-5xl">
           <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-8 backdrop-blur-md">
             <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
             <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
@@ -1646,7 +1661,7 @@ export default function OnboardingPage() {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
                 Everleap
               </div>
-              <div className="mt-4 max-w-[34ch] text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:max-w-[36ch] sm:text-[1.95rem]">
+              <div className="mt-4 text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.95rem]">
                 {retortText}
               </div>
               <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
@@ -1662,7 +1677,7 @@ export default function OnboardingPage() {
   function renderWelcome() {
     return (
       <div className="flex w-full items-start">
-        <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
+        <div className="relative mx-auto mt-1 w-full max-w-5xl sm:mt-2">
           <motion.div
             aria-hidden="true"
             animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
@@ -1691,7 +1706,7 @@ export default function OnboardingPage() {
                 {STEP_META.welcome.kicker}
               </div>
 
-              <h1 className="mt-3 max-w-[18ch] text-[2.18rem] font-semibold leading-[0.98] tracking-tight text-white sm:max-w-[20ch] sm:text-[2.55rem]">
+              <h1 className="mt-3 text-[2.18rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.55rem]">
                 {STEP_META.welcome.title}
               </h1>
 
@@ -1761,7 +1776,7 @@ export default function OnboardingPage() {
         tone={tone}
         topAction={questionTopAction}
       >
-        <div className="max-w-2xl space-y-2.5">
+        <div className="w-full space-y-2.5">
           <ChoiceRowText
             label="I’m in high school"
             selected={situation === "high_school"}
@@ -1820,7 +1835,7 @@ export default function OnboardingPage() {
         tone={tone}
         topAction={questionTopAction}
       >
-        <div className="grid max-w-2xl gap-3">
+        <div className="grid w-full gap-3">
           <BigMoodCard
             title="I feel pretty sure"
             sub="There’s already something I can see."
@@ -1895,7 +1910,7 @@ export default function OnboardingPage() {
           />
         }
       >
-        <div className="max-w-2xl space-y-2">
+        <div className="w-full space-y-2">
           <ChoiceRowText
             label="A job"
             selected={postPlans.includes("job")}
@@ -1957,7 +1972,7 @@ export default function OnboardingPage() {
           />
         }
       >
-        <div className="max-w-2xl space-y-2">
+        <div className="w-full space-y-2">
           <ChoiceRowText
             label="Sports / training"
             selected={activities.includes("sports")}
@@ -2101,7 +2116,7 @@ export default function OnboardingPage() {
 
     return (
       <div className="flex w-full items-start pt-6 sm:pt-8">
-        <div className="relative mx-auto w-full max-w-3xl">
+        <div className="relative mx-auto w-full max-w-5xl">
           <motion.div
             aria-hidden="true"
             animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
@@ -2129,7 +2144,7 @@ export default function OnboardingPage() {
                 {label} this gives us a real start.
               </h1>
 
-              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">
+              <p className="mt-4 max-w-3xl text-[14px] leading-6 text-white/76">
                 {insight}
               </p>
 
