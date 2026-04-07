@@ -99,7 +99,7 @@ const STEP_META: Record<
 > = {
   welcome: {
     kicker: "Everleap",
-    title: "Let’s get a real sense of you.",
+    title: "Let’s get to know you.",
   },
   name: {
     kicker: "Everleap · Getting to know you",
@@ -201,7 +201,6 @@ function visualToneForStep(stepId: StepId) {
       ring: "border-fuchsia-200/16",
       stageA: "from-fuchsia-500/20 via-violet-500/10 to-transparent",
       stageB: "from-cyan-400/18 via-sky-500/8 to-transparent",
-      chip: "from-fuchsia-300/40 via-cyan-300/30 to-violet-300/30",
     };
   }
 
@@ -215,7 +214,6 @@ function visualToneForStep(stepId: StepId) {
       ring: "border-cyan-200/16",
       stageA: "from-cyan-400/16 via-sky-500/8 to-transparent",
       stageB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
-      chip: "from-cyan-300/35 via-sky-300/25 to-violet-300/25",
     };
   }
 
@@ -229,7 +227,6 @@ function visualToneForStep(stepId: StepId) {
       ring: "border-fuchsia-200/18",
       stageA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
       stageB: "from-amber-300/22 via-orange-400/10 to-transparent",
-      chip: "from-fuchsia-300/40 via-pink-300/30 to-amber-200/30",
     };
   }
 
@@ -243,7 +240,6 @@ function visualToneForStep(stepId: StepId) {
       ring: "border-amber-200/16",
       stageA: "from-amber-300/18 via-orange-400/8 to-transparent",
       stageB: "from-orange-500/14 via-rose-400/8 to-transparent",
-      chip: "from-amber-200/40 via-orange-300/30 to-rose-300/24",
     };
   }
 
@@ -257,7 +253,6 @@ function visualToneForStep(stepId: StepId) {
       ring: "border-violet-200/18",
       stageA: "from-violet-400/22 via-indigo-500/10 to-transparent",
       stageB: "from-cyan-300/18 via-sky-500/10 to-transparent",
-      chip: "from-violet-300/40 via-fuchsia-300/24 to-cyan-300/24",
     };
   }
 
@@ -270,14 +265,13 @@ function visualToneForStep(stepId: StepId) {
     ring: "border-cyan-200/14",
     stageA: "from-sky-400/18 via-cyan-400/8 to-transparent",
     stageB: "from-violet-400/14 via-indigo-500/8 to-transparent",
-    chip: "from-cyan-300/35 via-sky-300/25 to-violet-300/25",
   };
 }
 
 const screenVariants = {
-  questionEnter: { opacity: 0, y: 34, scale: 0.982, filter: "blur(10px)" },
+  questionEnter: { opacity: 0, y: 28, scale: 0.985, filter: "blur(10px)" },
   questionCenter: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
-  questionExit: { opacity: 0, y: -22, scale: 0.992, filter: "blur(8px)" },
+  questionExit: { opacity: 0, y: -18, scale: 0.992, filter: "blur(8px)" },
   retortEnter: { opacity: 0, scale: 0.94, y: 30, filter: "blur(14px)" },
   retortCenter: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)" },
   retortExit: { opacity: 0, scale: 0.985, y: -20, filter: "blur(10px)" },
@@ -300,23 +294,34 @@ const cardSpring = {
    UI atoms
    ============================================================ */
 
-function HeaderAction({
+function InlineMetaAction({
   label,
   onClick,
+  tone = "default",
+  disabled,
 }: {
   label: string;
   onClick: () => void;
+  tone?: "default" | "cool";
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 text-sm font-medium text-white/68 transition hover:text-white/92 active:scale-[0.985]"
+      disabled={Boolean(disabled)}
+      className={[
+        "inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] transition",
+        disabled
+          ? "cursor-not-allowed text-white/24"
+          : tone === "cool"
+            ? "text-cyan-200/72 hover:text-cyan-100"
+            : "text-white/34 hover:text-white/56",
+      ].join(" ")}
       aria-label={label}
       title={label}
     >
-      <span aria-hidden="true">←</span>
-      {label}
+      <span>{label}</span>
     </button>
   );
 }
@@ -402,8 +407,8 @@ function BigMoodCard({
     accent === "violet"
       ? "from-fuchsia-400/26 via-violet-400/14 to-transparent"
       : accent === "sky"
-      ? "from-cyan-300/24 via-sky-400/14 to-transparent"
-      : "from-white/16 via-white/8 to-transparent";
+        ? "from-cyan-300/24 via-sky-400/14 to-transparent"
+        : "from-white/16 via-white/8 to-transparent";
 
   return (
     <motion.button
@@ -418,7 +423,7 @@ function BigMoodCard({
         opacity: dimmed ? 0.4 : 1,
       }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[26px] border px-5 py-5 text-left",
+        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-4 text-left",
         selected
           ? "border-white/24 bg-white/[0.11] shadow-[0_0_60px_rgba(255,255,255,0.07)]"
           : "border-white/10 bg-white/[0.045] hover:border-white/16 hover:bg-white/[0.07]",
@@ -432,8 +437,8 @@ function BigMoodCard({
         animate={{ x: selected ? 2 : 0 }}
         transition={cardSpring}
       >
-        <div className="text-[1.06rem] font-semibold leading-6 text-white">{title}</div>
-        <div className="mt-2 text-[13px] leading-5 text-white/66">{sub}</div>
+        <div className="text-[1.03rem] font-semibold leading-6 text-white">{title}</div>
+        <div className="mt-1.5 text-[13px] leading-5 text-white/66">{sub}</div>
       </motion.div>
     </motion.button>
   );
@@ -507,8 +512,8 @@ function ThinkingSurface({
                   !speechSupported
                     ? "Voice not supported"
                     : isListening
-                    ? "Listening…"
-                    : "Voice input"
+                      ? "Listening…"
+                      : "Voice input"
                 }
               >
                 {isListening ? <MicOff size={15} /> : <Mic size={15} />}
@@ -541,68 +546,40 @@ function ThinkingSurface({
   );
 }
 
-function MinimalContinue({
-  onClick,
-  disabled,
-  label,
-}: {
-  onClick: () => void;
-  disabled?: boolean;
-  label?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={Boolean(disabled)}
-      className={`inline-flex items-center gap-2 text-sm font-medium transition ${
-        disabled ? "cursor-not-allowed text-white/32" : "text-white/86 hover:text-white"
-      }`}
-      aria-label={label ?? "Continue"}
-      title={label ?? "Continue"}
-    >
-      <span>{label ?? "Continue"}</span>
-      <span aria-hidden="true">→</span>
-    </button>
-  );
-}
-
 function QuestionShell({
-  kicker,
   title,
   whisper,
   children,
-  actions,
+  topAction,
+  bottomAction,
   compact,
   tone,
-  stageLabel,
 }: {
-  kicker: string;
   title: string;
   whisper?: string | null;
   children: React.ReactNode;
-  actions?: React.ReactNode;
+  topAction?: React.ReactNode;
+  bottomAction?: React.ReactNode;
   compact?: boolean;
   tone: ReturnType<typeof visualToneForStep>;
-  stageLabel?: string;
 }) {
   return (
-    <div className="flex h-full items-center">
-      <div className="relative mx-auto w-full max-w-3xl">
+    <div className="flex h-full items-start">
+      <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
         <motion.div
           aria-hidden="true"
           animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute -left-8 top-[-1.5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+          className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
         />
         <motion.div
           aria-hidden="true"
           animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute right-[7%] top-[3.75rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+          className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
         />
 
-        <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.055] px-5 py-5 backdrop-blur-md sm:px-6 sm:py-6`}>
+        <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.055] px-5 py-5 backdrop-blur-md sm:px-6 sm:py-5`}>
           <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
           <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
           <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_54%)]" />
@@ -610,25 +587,17 @@ function QuestionShell({
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
 
           <div className="relative">
-            {stageLabel ? (
-              <div className="mb-4">
-                <div className={`inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/58`}>
-                  <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r ${tone.chip}`} />
-                  {stageLabel}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
-              {kicker}
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div />
+              {topAction ? <div>{topAction}</div> : null}
             </div>
 
             <h1
               className={[
-                "mt-3 font-semibold leading-[1.02] tracking-tight text-white",
+                "font-semibold leading-[1.02] tracking-tight text-white",
                 compact
-                  ? "max-w-[15ch] text-[1.78rem] sm:max-w-[16ch] sm:text-[2.05rem]"
-                  : "max-w-[18ch] text-[1.95rem] sm:text-[2.2rem]",
+                  ? "max-w-[22ch] text-[1.9rem] sm:max-w-[24ch] sm:text-[2.08rem]"
+                  : "max-w-[24ch] text-[1.95rem] sm:text-[2.2rem]",
               ].join(" ")}
             >
               {title}
@@ -647,7 +616,7 @@ function QuestionShell({
 
             <div className="mt-3">{children}</div>
 
-            {actions ? <div className="mt-4">{actions}</div> : null}
+            {bottomAction ? <div className="mt-4">{bottomAction}</div> : null}
           </div>
         </div>
       </div>
@@ -1500,7 +1469,10 @@ export default function OnboardingPage() {
       showWhisper("Honestly? Valid.");
     }
 
-    void showRetortThenAdvance("certainty", { certainty: v, certaintyIdea: v === "no_clue" ? "" : certaintyIdea });
+    void showRetortThenAdvance("certainty", {
+      certainty: v,
+      certaintyIdea: v === "no_clue" ? "" : certaintyIdea,
+    });
     unlockAdvance();
   }
 
@@ -1597,6 +1569,11 @@ export default function OnboardingPage() {
   const tone = visualToneForStep(stepId);
   const screenKey = screenMode === "retort" ? `retort_${retortFromStep ?? stepId}` : stepId;
 
+  const questionTopAction =
+    stepId !== "welcome" && screenMode === "question" && canGoBack() ? (
+      <InlineMetaAction label="← Back" onClick={goBack} tone="cool" />
+    ) : null;
+
   function renderRetort() {
     return (
       <div
@@ -1606,7 +1583,7 @@ export default function OnboardingPage() {
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") skipRetort();
         }}
-        className="flex h-full cursor-pointer items-center justify-center select-none"
+        className="flex h-full cursor-pointer items-start pt-8 select-none sm:pt-10"
         aria-label="Tap to continue"
         title="Tap to continue"
       >
@@ -1632,7 +1609,7 @@ export default function OnboardingPage() {
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
                 Everleap
               </div>
-              <div className="mt-4 max-w-2xl text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.95rem]">
+              <div className="mt-4 max-w-[34ch] text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:max-w-[36ch] sm:text-[1.95rem]">
                 {retortText}
               </div>
               <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
@@ -1647,33 +1624,37 @@ export default function OnboardingPage() {
 
   function renderWelcome() {
     return (
-      <div className="flex h-full items-center">
-        <div className="relative mx-auto w-full max-w-3xl">
+      <div className="flex h-full items-start">
+        <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
           <motion.div
             aria-hidden="true"
             animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-28 w-28 rounded-full blur-3xl ${tone.orbA}`}
+            className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-28 w-28 rounded-full blur-3xl ${tone.orbA}`}
           />
           <motion.div
             aria-hidden="true"
             animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+            className={`pointer-events-none absolute right-[8%] top-[3.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
           />
 
-          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-7 backdrop-blur-md sm:px-6 sm:py-8">
+          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-6 backdrop-blur-md sm:px-6 sm:py-6">
             <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
             <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
             <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.11),transparent_55%)]" />
             <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
 
             <div className="relative">
+              <div className="mb-3 flex items-center justify-end">
+                <InlineMetaAction label="Exit" onClick={exitOnboarding} tone="cool" />
+              </div>
+
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
                 {STEP_META.welcome.kicker}
               </div>
 
-              <h1 className="mt-3 max-w-[13ch] text-[2.2rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.7rem]">
+              <h1 className="mt-3 max-w-[18ch] text-[2.18rem] font-semibold leading-[0.98] tracking-tight text-white sm:max-w-[20ch] sm:text-[2.55rem]">
                 {STEP_META.welcome.title}
               </h1>
 
@@ -1699,10 +1680,6 @@ export default function OnboardingPage() {
                     →
                   </span>
                 </motion.button>
-
-                <div className="text-[12px] uppercase tracking-[0.14em] text-white/34">
-                  fast · no fluff
-                </div>
               </div>
             </div>
           </div>
@@ -1714,12 +1691,11 @@ export default function OnboardingPage() {
   function renderName() {
     return (
       <QuestionShell
-        kicker={STEP_META.name.kicker}
         title={STEP_META.name.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="Quick intro"
+        topAction={questionTopAction}
       >
         <ThinkingSurface
           value={draft}
@@ -1742,12 +1718,11 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={STEP_META.situation.kicker}
         title={STEP_META.situation.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="Where you are"
+        topAction={questionTopAction}
       >
         <div className="max-w-2xl space-y-2.5">
           <ChoiceRowText
@@ -1773,13 +1748,12 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={STEP_META.zip.kicker}
         title={STEP_META.zip.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="Keep it local"
-        actions={<MinimalContinue onClick={skipZip} label="Skip for now" />}
+        topAction={questionTopAction}
+        bottomAction={<InlineMetaAction label="Skip for now" onClick={skipZip} />}
       >
         <ThinkingSurface
           value={draft}
@@ -1803,12 +1777,11 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={STEP_META.certainty.kicker}
         title={STEP_META.certainty.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="Future mode"
+        topAction={questionTopAction}
       >
         <div className="grid max-w-2xl gap-3">
           <BigMoodCard
@@ -1845,12 +1818,11 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={meta.kicker}
         title={meta.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel={certainty === "strong" ? "Lock it in" : "Give me one clue"}
+        topAction={questionTopAction}
       >
         <ThinkingSurface
           value={draft}
@@ -1873,17 +1845,16 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={STEP_META.postPlans.kicker}
         title={STEP_META.postPlans.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="What’s on your radar"
-        actions={
-          <MinimalContinue
+        topAction={questionTopAction}
+        bottomAction={
+          <InlineMetaAction
+            label="Continue"
             onClick={continuePostPlans}
             disabled={postPlans.length === 0}
-            label="Continue"
           />
         }
       >
@@ -1936,17 +1907,16 @@ export default function OnboardingPage() {
 
     return (
       <QuestionShell
-        kicker={STEP_META.activities.kicker}
         title={STEP_META.activities.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="Off the clock"
-        actions={
-          <MinimalContinue
+        topAction={questionTopAction}
+        bottomAction={
+          <InlineMetaAction
+            label="Continue"
             onClick={() => continueActivities()}
             disabled={!canContinue}
-            label="Continue"
           />
         }
       >
@@ -2020,14 +1990,13 @@ export default function OnboardingPage() {
   function renderFun() {
     return (
       <QuestionShell
-        kicker={STEP_META.fun.kicker}
         title={STEP_META.fun.title}
         whisper={whisper}
         compact
         tone={tone}
-        stageLabel="One weirdly useful question"
+        topAction={questionTopAction}
       >
-        <div className="grid grid-cols-2 gap-3 max-w-2xl">
+        <div className="grid max-w-[540px] grid-cols-2 gap-3">
           {FUN_OPTIONS.map((option) => {
             const selected = funChoice === option.key;
             const dimmed = Boolean(funChoice) && !selected;
@@ -2046,11 +2015,11 @@ export default function OnboardingPage() {
                   opacity: dimmed ? 0.44 : 1,
                 }}
                 className={[
-                  "group relative overflow-hidden rounded-[24px] border bg-white/[0.05] text-left",
+                  "group relative overflow-hidden rounded-[22px] border bg-white/[0.05] text-left",
                   selected ? "border-white/24 shadow-[0_0_40px_rgba(255,255,255,0.08)]" : "border-white/10 hover:border-white/16",
                 ].join(" ")}
               >
-                <div className="relative aspect-[1/1]">
+                <div className="relative aspect-[0.94] sm:aspect-[0.9]">
                   <Image
                     src={option.src}
                     alt={option.alt}
@@ -2059,7 +2028,7 @@ export default function OnboardingPage() {
                       "object-cover transition duration-300",
                       selected ? "scale-[1.04]" : "scale-100 group-hover:scale-[1.02]",
                     ].join(" ")}
-                    sizes="(max-width: 768px) 50vw, 240px"
+                    sizes="(max-width: 768px) 42vw, 220px"
                     priority={stepId === "fun"}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
@@ -2119,7 +2088,7 @@ export default function OnboardingPage() {
                 Everleap · First read
               </div>
 
-              <h1 className="mt-3 max-w-[15ch] text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.35rem]">
+              <h1 className="mt-3 max-w-[20ch] text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:max-w-[22ch] sm:text-[2.35rem]">
                 {label} this gives us a real start.
               </h1>
 
@@ -2217,16 +2186,10 @@ export default function OnboardingPage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/8 via-transparent to-black/22" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_42%)]" />
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-3 sm:px-6">
-          <header className="flex h-12 shrink-0 items-center justify-end">
-            {stepId === "welcome" && screenMode === "question" ? (
-              <HeaderAction label="Exit" onClick={exitOnboarding} />
-            ) : canGoBack() || screenMode === "retort" ? (
-              <HeaderAction label="Back" onClick={goBack} />
-            ) : null}
-          </header>
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-2 sm:px-6">
+          <header className="flex h-4 shrink-0 items-center justify-end" />
 
-          <main className="relative flex-1 overflow-hidden">
+          <main className="relative flex-1 overflow-hidden pt-1">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={screenKey}
