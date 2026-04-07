@@ -11,88 +11,6 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 /* =============================================================================
-   Insight quote (session-stable)
-   ============================================================================= */
-
-type InsightQuote = { text: string; author: string };
-
-const INSIGHT_QUOTES: InsightQuote[] = [
-  {
-    text: "The only true wisdom is in knowing you know nothing.",
-    author: "Socrates",
-  },
-  {
-    text: "Knowing yourself is the beginning of all wisdom.",
-    author: "Aristotle",
-  },
-  {
-    text: "The unexamined life is not worth living.",
-    author: "Socrates",
-  },
-  {
-    text: "We do not see things as they are, we see them as we are.",
-    author: "Anaïs Nin",
-  },
-  {
-    text: "In the middle of difficulty lies opportunity.",
-    author: "Albert Einstein",
-  },
-  {
-    text: "I have no special talent. I am only passionately curious.",
-    author: "Albert Einstein",
-  },
-  {
-    text: "It is not that I’m so smart; it’s just that I stay with problems longer.",
-    author: "Albert Einstein",
-  },
-  {
-    text: "The beginning of wisdom is the definition of terms.",
-    author: "Socrates",
-  },
-  {
-    text: "A man who has committed a mistake and doesn’t correct it is committing another mistake.",
-    author: "Confucius",
-  },
-  {
-    text: "He who knows all the answers has not been asked all the questions.",
-    author: "Confucius (attributed)",
-  },
-  {
-    text: "If you want to improve, be content to be thought foolish and stupid.",
-    author: "Epictetus",
-  },
-  {
-    text: "No man ever steps in the same river twice.",
-    author: "Heraclitus",
-  },
-];
-
-function pickSessionQuote(): InsightQuote {
-  const KEY = "everleap.insightQuote.v1";
-  if (typeof window === "undefined") return INSIGHT_QUOTES[0];
-
-  try {
-    const raw = window.sessionStorage.getItem(KEY);
-    if (raw) {
-      const idx = Number(raw);
-      if (
-        Number.isFinite(idx) &&
-        idx >= 0 &&
-        idx < INSIGHT_QUOTES.length
-      ) {
-        return INSIGHT_QUOTES[idx];
-      }
-    }
-
-    const idx = Math.floor(Math.random() * INSIGHT_QUOTES.length);
-    window.sessionStorage.setItem(KEY, String(idx));
-    return INSIGHT_QUOTES[idx] ?? INSIGHT_QUOTES[0];
-  } catch {
-    return INSIGHT_QUOTES[0];
-  }
-}
-
-/* =============================================================================
    Mark
    ============================================================================= */
 
@@ -223,12 +141,6 @@ export function AppChrome({
 
   const intensity = intensityForLevel(gradientLevel);
 
-  const [quote, setQuote] = React.useState<InsightQuote | null>(null);
-
-  React.useEffect(() => {
-    setQuote(pickSessionQuote());
-  }, []);
-
   const chromeVars: CSSVars = {
     "--el-chrome-bg": "rgba(255,255,255,0.032)",
     "--el-chrome-border": "rgba(255,255,255,0.10)",
@@ -323,26 +235,6 @@ export function AppChrome({
 
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5 sm:px-5 lg:px-6">
           <EverleapMark subtitle={brandSubtitle} />
-
-          <div className="hidden max-w-[52ch] items-center justify-end text-right md:flex">
-            {quote ? (
-              <div className="text-[12px] leading-relaxed text-white/62">
-                <span className="italic">“{quote.text}”</span>
-                <span className="text-white/45"> — {quote.author}</span>
-              </div>
-            ) : (
-              <div className="text-[12px] leading-relaxed text-white/40"> </div>
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 pb-2 sm:px-5 md:hidden">
-          {quote ? (
-            <div className="text-[12px] leading-relaxed text-white/62">
-              <span className="italic">“{quote.text}”</span>
-              <span className="text-white/45"> — {quote.author}</span>
-            </div>
-          ) : null}
         </div>
       </header>
 

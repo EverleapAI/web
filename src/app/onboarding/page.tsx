@@ -199,6 +199,9 @@ function visualToneForStep(stepId: StepId) {
       meshA: "from-fuchsia-500/24 via-violet-500/10 to-transparent",
       meshB: "from-cyan-400/22 via-sky-400/8 to-transparent",
       ring: "border-fuchsia-200/16",
+      stageA: "from-fuchsia-500/20 via-violet-500/10 to-transparent",
+      stageB: "from-cyan-400/18 via-sky-500/8 to-transparent",
+      chip: "from-fuchsia-300/40 via-cyan-300/30 to-violet-300/30",
     };
   }
 
@@ -210,6 +213,9 @@ function visualToneForStep(stepId: StepId) {
       meshA: "from-cyan-400/16 via-sky-400/8 to-transparent",
       meshB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
       ring: "border-cyan-200/16",
+      stageA: "from-cyan-400/16 via-sky-500/8 to-transparent",
+      stageB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
+      chip: "from-cyan-300/35 via-sky-300/25 to-violet-300/25",
     };
   }
 
@@ -221,6 +227,9 @@ function visualToneForStep(stepId: StepId) {
       meshA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
       meshB: "from-amber-300/24 via-orange-400/10 to-transparent",
       ring: "border-fuchsia-200/18",
+      stageA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
+      stageB: "from-amber-300/22 via-orange-400/10 to-transparent",
+      chip: "from-fuchsia-300/40 via-pink-300/30 to-amber-200/30",
     };
   }
 
@@ -232,6 +241,9 @@ function visualToneForStep(stepId: StepId) {
       meshA: "from-amber-300/16 via-orange-400/8 to-transparent",
       meshB: "from-orange-500/14 via-rose-500/8 to-transparent",
       ring: "border-amber-200/16",
+      stageA: "from-amber-300/18 via-orange-400/8 to-transparent",
+      stageB: "from-orange-500/14 via-rose-400/8 to-transparent",
+      chip: "from-amber-200/40 via-orange-300/30 to-rose-300/24",
     };
   }
 
@@ -243,6 +255,9 @@ function visualToneForStep(stepId: StepId) {
       meshA: "from-violet-400/22 via-indigo-500/10 to-transparent",
       meshB: "from-cyan-300/18 via-sky-500/10 to-transparent",
       ring: "border-violet-200/18",
+      stageA: "from-violet-400/22 via-indigo-500/10 to-transparent",
+      stageB: "from-cyan-300/18 via-sky-500/10 to-transparent",
+      chip: "from-violet-300/40 via-fuchsia-300/24 to-cyan-300/24",
     };
   }
 
@@ -253,6 +268,9 @@ function visualToneForStep(stepId: StepId) {
     meshA: "from-sky-400/18 via-cyan-400/8 to-transparent",
     meshB: "from-violet-400/16 via-indigo-500/8 to-transparent",
     ring: "border-cyan-200/14",
+    stageA: "from-sky-400/18 via-cyan-400/8 to-transparent",
+    stageB: "from-violet-400/14 via-indigo-500/8 to-transparent",
+    chip: "from-cyan-300/35 via-sky-300/25 to-violet-300/25",
   };
 }
 
@@ -398,7 +416,6 @@ function BigMoodCard({
         scale: selected ? 1.03 : 1,
         y: selected ? -6 : 0,
         opacity: dimmed ? 0.4 : 1,
-        rotateX: selected ? 0 : 0,
       }}
       className={[
         "group relative block w-full overflow-hidden rounded-[26px] border px-5 py-5 text-left",
@@ -557,6 +574,8 @@ function QuestionShell({
   children,
   actions,
   compact,
+  tone,
+  stageLabel,
 }: {
   kicker: string;
   title: string;
@@ -564,39 +583,73 @@ function QuestionShell({
   children: React.ReactNode;
   actions?: React.ReactNode;
   compact?: boolean;
+  tone: ReturnType<typeof visualToneForStep>;
+  stageLabel?: string;
 }) {
   return (
-    <div className="flex h-full flex-col justify-center">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
-          {kicker}
-        </div>
+    <div className="flex h-full items-center">
+      <div className="relative mx-auto w-full max-w-3xl">
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute -left-8 top-[-1.5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+        />
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute right-[7%] top-[3.75rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+        />
 
-        <h1
-          className={[
-            "mt-3 font-semibold leading-[1.04] tracking-tight text-white",
-            compact
-              ? "max-w-[16ch] text-[1.72rem] sm:text-[2rem]"
-              : "max-w-[18ch] text-[1.95rem] sm:text-[2.2rem]",
-          ].join(" ")}
-        >
-          {title}
-        </h1>
+        <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.055] px-5 py-5 backdrop-blur-md sm:px-6 sm:py-6`}>
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
+          <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_54%)]" />
+          <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/8 blur-2xl" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
 
-        <div className="mt-2 min-h-[20px]">
-          <div
-            className={[
-              "text-[13px] leading-5 text-white/58 transition-all duration-300",
-              whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-            ].join(" ")}
-          >
-            {whisper ?? " "}
+          <div className="relative">
+            {stageLabel ? (
+              <div className="mb-4">
+                <div className={`inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/58`}>
+                  <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-r ${tone.chip}`} />
+                  {stageLabel}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
+              {kicker}
+            </div>
+
+            <h1
+              className={[
+                "mt-3 font-semibold leading-[1.02] tracking-tight text-white",
+                compact
+                  ? "max-w-[15ch] text-[1.78rem] sm:max-w-[16ch] sm:text-[2.05rem]"
+                  : "max-w-[18ch] text-[1.95rem] sm:text-[2.2rem]",
+              ].join(" ")}
+            >
+              {title}
+            </h1>
+
+            <div className="mt-2 min-h-[20px]">
+              <div
+                className={[
+                  "text-[13px] leading-5 text-white/58 transition-all duration-300",
+                  whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+                ].join(" ")}
+              >
+                {whisper ?? " "}
+              </div>
+            </div>
+
+            <div className="mt-3">{children}</div>
+
+            {actions ? <div className="mt-4">{actions}</div> : null}
           </div>
         </div>
-
-        <div className="mt-3">{children}</div>
-
-        {actions ? <div className="mt-4">{actions}</div> : null}
       </div>
     </div>
   );
@@ -1660,7 +1713,14 @@ export default function OnboardingPage() {
 
   function renderName() {
     return (
-      <QuestionShell kicker={STEP_META.name.kicker} title={STEP_META.name.title} whisper={whisper} compact>
+      <QuestionShell
+        kicker={STEP_META.name.kicker}
+        title={STEP_META.name.title}
+        whisper={whisper}
+        compact
+        tone={tone}
+        stageLabel="Quick intro"
+      >
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1681,7 +1741,14 @@ export default function OnboardingPage() {
     const hasSelection = Boolean(situation);
 
     return (
-      <QuestionShell kicker={STEP_META.situation.kicker} title={STEP_META.situation.title} whisper={whisper} compact>
+      <QuestionShell
+        kicker={STEP_META.situation.kicker}
+        title={STEP_META.situation.title}
+        whisper={whisper}
+        compact
+        tone={tone}
+        stageLabel="Where you are"
+      >
         <div className="max-w-2xl space-y-2.5">
           <ChoiceRowText
             label="I’m in high school"
@@ -1710,6 +1777,8 @@ export default function OnboardingPage() {
         title={STEP_META.zip.title}
         whisper={whisper}
         compact
+        tone={tone}
+        stageLabel="Keep it local"
         actions={<MinimalContinue onClick={skipZip} label="Skip for now" />}
       >
         <ThinkingSurface
@@ -1738,6 +1807,8 @@ export default function OnboardingPage() {
         title={STEP_META.certainty.title}
         whisper={whisper}
         compact
+        tone={tone}
+        stageLabel="Future mode"
       >
         <div className="grid max-w-2xl gap-3">
           <BigMoodCard
@@ -1773,7 +1844,14 @@ export default function OnboardingPage() {
     const meta = certaintyIdeaPrompt(certainty);
 
     return (
-      <QuestionShell kicker={meta.kicker} title={meta.title} whisper={whisper} compact>
+      <QuestionShell
+        kicker={meta.kicker}
+        title={meta.title}
+        whisper={whisper}
+        compact
+        tone={tone}
+        stageLabel={certainty === "strong" ? "Lock it in" : "Give me one clue"}
+      >
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1799,6 +1877,8 @@ export default function OnboardingPage() {
         title={STEP_META.postPlans.title}
         whisper={whisper}
         compact
+        tone={tone}
+        stageLabel="What’s on your radar"
         actions={
           <MinimalContinue
             onClick={continuePostPlans}
@@ -1860,6 +1940,8 @@ export default function OnboardingPage() {
         title={STEP_META.activities.title}
         whisper={whisper}
         compact
+        tone={tone}
+        stageLabel="Off the clock"
         actions={
           <MinimalContinue
             onClick={() => continueActivities()}
@@ -1937,7 +2019,14 @@ export default function OnboardingPage() {
 
   function renderFun() {
     return (
-      <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title} whisper={whisper} compact>
+      <QuestionShell
+        kicker={STEP_META.fun.kicker}
+        title={STEP_META.fun.title}
+        whisper={whisper}
+        compact
+        tone={tone}
+        stageLabel="One weirdly useful question"
+      >
         <div className="grid grid-cols-2 gap-3 max-w-2xl">
           {FUN_OPTIONS.map((option) => {
             const selected = funChoice === option.key;
