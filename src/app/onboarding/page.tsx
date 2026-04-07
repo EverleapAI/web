@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mic, MicOff, Send } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { AppChrome } from "@/components/site/AppChrome";
 
@@ -85,8 +86,6 @@ type ActivityKey =
 type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 
 type VoiceTarget = "name" | "zip" | "activitiesOther" | "certaintyIdea";
-
-type PulseTone = "sky" | "violet" | "amber" | "fuchsia" | "soft";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
@@ -187,41 +186,6 @@ function certaintyIdeaPrompt(certainty: Certainty) {
   };
 }
 
-function certaintyCardMeta(certainty: Exclude<Certainty, null>) {
-  switch (certainty) {
-    case "strong":
-      return {
-        label: "I feel pretty sure",
-        sub: "Let’s move.",
-      };
-    case "kinda":
-      return {
-        label: "I have some ideas",
-        sub: "That’s enough to start.",
-      };
-    case "no_clue":
-      return {
-        label: "I honestly don’t know yet",
-        sub: "Still a real answer.",
-      };
-  }
-}
-
-function pulseGradientClass(tone: PulseTone) {
-  switch (tone) {
-    case "sky":
-      return "from-cyan-300/22 via-sky-400/12 to-transparent";
-    case "violet":
-      return "from-violet-300/22 via-indigo-400/12 to-transparent";
-    case "amber":
-      return "from-amber-300/22 via-orange-300/12 to-transparent";
-    case "fuchsia":
-      return "from-fuchsia-300/22 via-pink-300/12 to-transparent";
-    default:
-      return "from-white/16 via-white/8 to-transparent";
-  }
-}
-
 /* ============================================================
    Visual helpers
    ============================================================ */
@@ -232,7 +196,6 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-cyan-300/10",
       orbB: "bg-violet-400/10",
       glow: "shadow-[0_0_80px_rgba(103,232,249,0.08)]",
-      pulse: "sky" as PulseTone,
     };
   }
 
@@ -241,7 +204,6 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-fuchsia-300/10",
       orbB: "bg-amber-300/10",
       glow: "shadow-[0_0_80px_rgba(217,70,239,0.08)]",
-      pulse: "fuchsia" as PulseTone,
     };
   }
 
@@ -250,7 +212,6 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-amber-300/10",
       orbB: "bg-orange-400/10",
       glow: "shadow-[0_0_80px_rgba(251,191,36,0.08)]",
-      pulse: "amber" as PulseTone,
     };
   }
 
@@ -258,9 +219,30 @@ function visualToneForStep(stepId: StepId) {
     orbA: "bg-sky-300/10",
     orbB: "bg-violet-400/10",
     glow: "shadow-[0_0_80px_rgba(56,189,248,0.08)]",
-    pulse: "violet" as PulseTone,
   };
 }
+
+const screenVariants = {
+  questionEnter: { opacity: 0, y: 28, scale: 0.985, filter: "blur(8px)" },
+  questionCenter: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+  questionExit: { opacity: 0, y: -18, scale: 0.992, filter: "blur(6px)" },
+  retortEnter: { opacity: 0, scale: 0.96, y: 22, filter: "blur(10px)" },
+  retortCenter: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)" },
+  retortExit: { opacity: 0, scale: 0.985, y: -18, filter: "blur(8px)" },
+};
+
+const spring = {
+  type: "spring",
+  stiffness: 260,
+  damping: 24,
+  mass: 0.9,
+} as const;
+
+const cardSpring = {
+  type: "spring",
+  stiffness: 360,
+  damping: 28,
+} as const;
 
 /* ============================================================
    UI atoms
@@ -299,34 +281,41 @@ function ChoiceRowText({
   onClick?: () => void;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
+      layout
+      transition={cardSpring}
+      whileTap={{ scale: 0.988 }}
       onClick={onClick}
-      className={[
-        "group relative block w-full overflow-hidden rounded-[18px] px-4 py-3 text-left transition duration-200",
-        selected ? "translate-x-1 scale-[1.01]" : "",
-        dimmed ? "opacity-55" : "opacity-100",
-        "hover:scale-[1.005] active:scale-[0.988]",
-      ].join(" ")}
+      animate={{
+        x: selected ? 8 : 0,
+        scale: selected ? 1.014 : 1,
+        opacity: dimmed ? 0.5 : 1,
+      }}
+      className="group relative block w-full overflow-hidden rounded-[18px] px-4 py-3 text-left"
     >
-      <div
+      <motion.div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[18px] border transition duration-200",
+          "pointer-events-none absolute inset-0 rounded-[18px] border transition",
           selected
-            ? "border-white/18 bg-white/[0.09] shadow-[0_0_28px_rgba(255,255,255,0.05)]"
-            : "border-white/0 bg-white/[0.02] group-hover:border-white/10 group-hover:bg-white/[0.05]",
+            ? "border-white/18 bg-white/[0.1] shadow-[0_0_28px_rgba(255,255,255,0.06)]"
+            : "border-white/0 bg-white/[0.02] group-hover:border-white/10 group-hover:bg-white/[0.045]",
         ].join(" ")}
+        animate={{
+          scale: selected ? 1.012 : 1,
+        }}
+        transition={cardSpring}
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/8 to-transparent" />
       <div
         className={[
-          "relative text-[14px] leading-6 transition duration-200",
-          selected ? "font-semibold text-white" : "font-normal text-white/76 group-hover:text-white/92",
+          "relative text-[14px] leading-6 transition",
+          selected ? "font-semibold text-white" : "font-normal text-white/74 group-hover:text-white/90",
         ].join(" ")}
       >
         {label}
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -353,25 +342,35 @@ function BigMoodCard({
       : "from-white/14 via-white/6 to-transparent";
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
+      layout
+      transition={cardSpring}
+      whileTap={{ scale: 0.992 }}
+      animate={{
+        scale: selected ? 1.022 : 1,
+        y: selected ? -4 : 0,
+        opacity: dimmed ? 0.44 : 1,
+      }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-5 text-left transition duration-300",
+        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-5 text-left",
         selected
-          ? "scale-[1.018] border-white/18 bg-white/[0.08] shadow-[0_0_48px_rgba(255,255,255,0.06)]"
-          : "border-white/8 bg-white/[0.03] hover:scale-[1.006] hover:border-white/14 hover:bg-white/[0.05]",
-        dimmed ? "opacity-45" : "opacity-100",
-        "active:scale-[0.992]",
+          ? "border-white/18 bg-white/[0.09] shadow-[0_0_52px_rgba(255,255,255,0.06)]"
+          : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]",
       ].join(" ")}
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClass}`} />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
-      <div className="relative">
+      <motion.div
+        className="relative"
+        animate={{ x: selected ? 2 : 0 }}
+        transition={cardSpring}
+      >
         <div className="text-[1.05rem] font-semibold leading-6 text-white">{title}</div>
         <div className="mt-2 text-[13px] leading-5 text-white/62">{sub}</div>
-      </div>
-    </button>
+      </motion.div>
+    </motion.button>
   );
 }
 
@@ -402,9 +401,9 @@ function ThinkingSurface({
 }) {
   return (
     <div className="w-full max-w-2xl">
-      <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] p-3 backdrop-blur-sm transition duration-200">
+      <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.045] p-3 backdrop-blur-sm">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/14 via-white/8 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
 
         <div className="relative">
           <textarea
@@ -420,7 +419,7 @@ function ThinkingSurface({
             }}
             rows={1}
             placeholder={placeholder ?? ""}
-            className="min-h-[52px] w-full resize-none bg-transparent px-1 py-1 text-[15px] leading-6 text-white/94 outline-none placeholder:text-white/28"
+            className="min-h-[44px] w-full resize-none bg-transparent px-1 py-1 text-[14px] leading-6 text-white/92 outline-none placeholder:text-white/28"
           />
 
           <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/8 pt-2.5">
@@ -430,7 +429,7 @@ function ThinkingSurface({
                 onClick={onToggleMic}
                 disabled={!speechSupported}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition active:scale-[0.985]",
+                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition",
                   speechSupported
                     ? isListening
                       ? "bg-white/[0.06] text-white/90"
@@ -458,7 +457,7 @@ function ThinkingSurface({
               onClick={onSubmit}
               disabled={!canSubmit}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-[0.985]",
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
                 canSubmit
                   ? "border-white/16 bg-white/[0.08] text-white/88 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
                   : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
@@ -490,8 +489,8 @@ function MinimalContinue({
       type="button"
       onClick={onClick}
       disabled={Boolean(disabled)}
-      className={`inline-flex items-center gap-2 text-sm font-medium transition active:scale-[0.985] ${
-        disabled ? "cursor-not-allowed text-white/32" : "text-white/86 hover:text-white"
+      className={`inline-flex items-center gap-2 text-sm font-medium transition ${
+        disabled ? "cursor-not-allowed text-white/32" : "text-white/84 hover:text-white"
       }`}
       aria-label={label ?? "Continue"}
       title={label ?? "Continue"}
@@ -522,11 +521,11 @@ function QuestionShell({
           {kicker}
         </div>
 
-        <h1 className="mt-3 max-w-[18ch] text-[2rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-[2.3rem]">
+        <h1 className="mt-3 max-w-[18ch] text-[1.95rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.2rem]">
           {title}
         </h1>
 
-        <div className="mt-2 min-h-[22px]">
+        <div className="mt-2 min-h-[20px]">
           <div
             className={[
               "text-[13px] leading-5 text-white/56 transition-all duration-300",
@@ -897,9 +896,6 @@ export default function OnboardingPage() {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   const funShownAtRef = React.useRef<number | null>(null);
-
-  const [pulseTone, setPulseTone] = React.useState<PulseTone>("soft");
-  const [pulseKey, setPulseKey] = React.useState(0);
   const [whisper, setWhisper] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -965,20 +961,11 @@ export default function OnboardingPage() {
       if (!shouldReset) {
         if (typeof saved.stepIndex === "number") setStepIndex(saved.stepIndex);
         if (typeof saved.name === "string") setName(saved.name);
-        if (
-          saved.situation === "high_school" ||
-          saved.situation === "young_adult" ||
-          saved.situation === null
-        ) {
+        if (saved.situation === "high_school" || saved.situation === "young_adult" || saved.situation === null) {
           setSituation(saved.situation);
         }
         if (typeof saved.zip === "string") setZip(saved.zip);
-        if (
-          saved.certainty === "strong" ||
-          saved.certainty === "kinda" ||
-          saved.certainty === "no_clue" ||
-          saved.certainty === null
-        ) {
+        if (saved.certainty === "strong" || saved.certainty === "kinda" || saved.certainty === "no_clue" || saved.certainty === null) {
           setCertainty(saved.certainty);
         }
         if (typeof saved.certaintyIdea === "string") setCertaintyIdea(saved.certaintyIdea);
@@ -1068,17 +1055,12 @@ export default function OnboardingPage() {
     }
   }, [stepId, screenMode]);
 
-  function triggerPulse(tone: PulseTone) {
-    setPulseTone(tone);
-    setPulseKey((k) => k + 1);
-  }
-
   function showWhisper(message: string) {
     setWhisper(message);
     window.clearTimeout((showWhisper as unknown as { _t?: number })._t);
     (showWhisper as unknown as { _t?: number })._t = window.setTimeout(() => {
       setWhisper(null);
-    }, 1050);
+    }, 1000);
   }
 
   function lockAdvance(): boolean {
@@ -1346,7 +1328,6 @@ export default function OnboardingPage() {
 
   function onWelcomeNext() {
     if (!lockAdvance()) return;
-    triggerPulse("sky");
     void showRetortThenAdvance("welcome");
     unlockAdvance();
   }
@@ -1360,7 +1341,6 @@ export default function OnboardingPage() {
     }
     setName(text);
     setDraft("");
-    triggerPulse("violet");
     showWhisper("Good. Start simple.");
     void showRetortThenAdvance("name", { name: text });
     unlockAdvance();
@@ -1369,7 +1349,6 @@ export default function OnboardingPage() {
   function chooseSituation(v: Situation) {
     if (!lockAdvance()) return;
     setSituation(v);
-    triggerPulse(v === "high_school" ? "sky" : "violet");
     showWhisper(v === "high_school" ? "Good. We’ll keep it wide at first." : "Nice. We can move faster.");
     void showRetortThenAdvance("situation", { situation: v });
     unlockAdvance();
@@ -1381,7 +1360,6 @@ export default function OnboardingPage() {
     const normalized = normalizeZip(draft);
     setZip(normalized);
     setDraft("");
-    triggerPulse("amber");
     showWhisper("Nice. Local gets smarter.");
     void showRetortThenAdvance("zip", { zip5: normalized });
     unlockAdvance();
@@ -1391,7 +1369,6 @@ export default function OnboardingPage() {
     if (!lockAdvance()) return;
     setZip("");
     setDraft("");
-    triggerPulse("soft");
     showWhisper("No problem. Still enough to work with.");
     void showRetortThenAdvance("zip", { zip5: "" });
     unlockAdvance();
@@ -1405,20 +1382,14 @@ export default function OnboardingPage() {
     }
 
     if (v === "strong") {
-      triggerPulse("violet");
       showWhisper("Good. Let’s use that.");
     } else if (v === "kinda") {
-      triggerPulse("sky");
       showWhisper("That’s enough to build from.");
     } else {
-      triggerPulse("soft");
       showWhisper("Honestly? Valid.");
     }
 
-    void showRetortThenAdvance("certainty", {
-      certainty: v,
-      certaintyIdea: v === "no_clue" ? "" : certaintyIdea,
-    });
+    void showRetortThenAdvance("certainty", { certainty: v, certaintyIdea: v === "no_clue" ? "" : certaintyIdea });
     unlockAdvance();
   }
 
@@ -1432,7 +1403,6 @@ export default function OnboardingPage() {
 
     setCertaintyIdea(text);
     setDraft("");
-    triggerPulse(certainty === "strong" ? "violet" : "sky");
     showWhisper(certainty === "strong" ? "Okay. Now we’re getting somewhere." : "Nice. That’s real.");
     void showRetortThenAdvance("certaintyIdea", { certaintyIdea: text });
     unlockAdvance();
@@ -1444,8 +1414,6 @@ export default function OnboardingPage() {
       const cleaned = prev.filter((k) => k !== "no_idea");
       return toggleInList(cleaned as PostPlanKey[], key);
     });
-
-    triggerPulse(key === "no_idea" ? "soft" : "amber");
 
     if (key === "job") showWhisper("Direct. Useful.");
     if (key === "four_year") showWhisper("Classic path. Still flexible.");
@@ -1462,14 +1430,12 @@ export default function OnboardingPage() {
       advanceLockRef.current = false;
       return;
     }
-    triggerPulse("amber");
     void showRetortThenAdvance("postPlans", { postPlans: snapshot });
     unlockAdvance();
   }
 
   function toggleActivity(key: ActivityKey) {
     setActivities((prev) => toggleInList(prev, key));
-    triggerPulse(key === "visual_arts" ? "amber" : key === "sports" ? "sky" : "violet");
 
     if (key === "sports") showWhisper("Noted. You probably hate wasted motion.");
     if (key === "visual_arts") showWhisper("Taste is a signal.");
@@ -1497,7 +1463,6 @@ export default function OnboardingPage() {
       const text = (typeof optionalOther === "string" ? optionalOther : draft).trim();
       setActivitiesOther(text);
       setDraft("");
-      triggerPulse("violet");
 
       void showRetortThenAdvance("activities", {
         activities: snapshot,
@@ -1507,7 +1472,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    triggerPulse("violet");
     void showRetortThenAdvance("activities", { activities: snapshot });
     unlockAdvance();
   }
@@ -1515,13 +1479,12 @@ export default function OnboardingPage() {
   function chooseFun(choice: FunChoice) {
     if (!lockAdvance()) return;
     setFunChoice(choice);
-    triggerPulse("fuchsia");
     showFunRetort(choice);
     unlockAdvance();
   }
 
   const tone = visualToneForStep(stepId);
-  const prompt = stepId === "certaintyIdea" ? certaintyIdeaPrompt(certainty) : null;
+  const screenKey = screenMode === "retort" ? `retort_${retortFromStep ?? stepId}` : stepId;
 
   function renderRetort() {
     return (
@@ -1537,17 +1500,15 @@ export default function OnboardingPage() {
         title="Tap to continue"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] px-5 py-7 backdrop-blur-sm">
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${pulseGradientClass(tone.pulse)}`} />
+          <div className={`relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.04] px-5 py-7 backdrop-blur-sm ${tone.glow}`}>
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
             <div className="relative">
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
                 Everleap
               </div>
-
-              <div className="mt-4 max-w-2xl text-[1.55rem] font-semibold leading-[1.15] tracking-tight text-white sm:text-[1.8rem]">
+              <div className="mt-4 max-w-2xl text-[1.45rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[1.8rem]">
                 {retortText}
               </div>
-
               <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
                 Tap anywhere to continue
               </div>
@@ -1562,13 +1523,17 @@ export default function OnboardingPage() {
     return (
       <div className="flex h-full items-center">
         <div className="relative mx-auto w-full max-w-3xl">
-          <div
+          <motion.div
             aria-hidden="true"
-            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl ambientFloatSlow ${tone.orbA}`}
+            animate={{ x: [0, 10, 0], y: [0, -8, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
           />
-          <div
+          <motion.div
             aria-hidden="true"
-            className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ambientFloat ${tone.orbB}`}
+            animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
           />
 
           <div className="relative">
@@ -1576,19 +1541,21 @@ export default function OnboardingPage() {
               {STEP_META.welcome.kicker}
             </div>
 
-            <h1 className="mt-3 max-w-[12ch] text-[2.2rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.7rem]">
+            <h1 className="mt-3 max-w-[13ch] text-[2.15rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.5rem]">
               {STEP_META.welcome.title}
             </h1>
 
-            <p className="mt-4 max-w-xl text-[15px] leading-6 text-white/68">
+            <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/68">
               A few quick questions. Then the app stops guessing.
             </p>
 
             <div className="mt-6">
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.985 }}
+                whileHover={{ scale: 1.01 }}
                 onClick={onWelcomeNext}
-                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white active:scale-[0.985]"
+                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
                 aria-label="Let’s begin"
                 title="Let’s begin"
               >
@@ -1599,7 +1566,7 @@ export default function OnboardingPage() {
                 >
                   →
                 </span>
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -1630,11 +1597,7 @@ export default function OnboardingPage() {
     const hasSelection = Boolean(situation);
 
     return (
-      <QuestionShell
-        kicker={STEP_META.situation.kicker}
-        title={STEP_META.situation.title}
-        whisper={whisper}
-      >
+      <QuestionShell kicker={STEP_META.situation.kicker} title={STEP_META.situation.title} whisper={whisper}>
         <div className="max-w-2xl space-y-2">
           <ChoiceRowText
             label="I’m in high school"
@@ -1663,7 +1626,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={skipZip}
-            className="text-sm font-medium text-white/50 transition hover:text-white/78 active:scale-[0.985]"
+            className="text-sm font-medium text-white/50 transition hover:text-white/78"
             aria-label="Skip for now"
             title="Skip for now"
           >
@@ -1692,11 +1655,7 @@ export default function OnboardingPage() {
     const hasSelection = Boolean(certainty);
 
     return (
-      <QuestionShell
-        kicker={STEP_META.certainty.kicker}
-        title={STEP_META.certainty.title}
-        whisper={whisper}
-      >
+      <QuestionShell kicker={STEP_META.certainty.kicker} title={STEP_META.certainty.title} whisper={whisper}>
         <div className="max-w-3xl space-y-3">
           <BigMoodCard
             title="I feel pretty sure"
@@ -1728,12 +1687,10 @@ export default function OnboardingPage() {
   }
 
   function renderCertaintyIdea() {
+    const prompt = certaintyIdeaPrompt(certainty);
+
     return (
-      <QuestionShell
-        kicker={prompt?.kicker ?? "Everleap · Future mode"}
-        title={prompt?.title ?? "What’s one idea you already have?"}
-        whisper={whisper}
-      >
+      <QuestionShell kicker={prompt.kicker} title={prompt.title} whisper={whisper}>
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1744,7 +1701,7 @@ export default function OnboardingPage() {
           isListening={isListening}
           speechSupported={speechSupported}
           onToggleMic={() => toggleMic("certaintyIdea")}
-          placeholder={prompt?.placeholder ?? "Just one. We’ll build from there."}
+          placeholder={prompt.placeholder}
         />
       </QuestionShell>
     );
@@ -1853,7 +1810,13 @@ export default function OnboardingPage() {
         </div>
 
         {wantsOther ? (
-          <div className="mt-4 max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={spring}
+            className="mt-4 max-w-2xl"
+          >
             <ThinkingSurface
               value={draft}
               onChange={setDraft}
@@ -1866,49 +1829,60 @@ export default function OnboardingPage() {
               onToggleMic={() => toggleMic("activitiesOther")}
               placeholder="Add whatever fits here."
             />
-          </div>
+          </motion.div>
         ) : null}
       </QuestionShell>
     );
   }
 
   function renderFun() {
+    const hasSelection = Boolean(funChoice);
+
     return (
       <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title} whisper={whisper}>
         <div className="grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
-          {FUN_OPTIONS.map((o, index) => (
-            <button
+          {FUN_OPTIONS.map((o) => (
+            <motion.button
               key={o.key}
               type="button"
+              layout
+              transition={cardSpring}
+              whileTap={{ scale: 0.985 }}
               onClick={() => chooseFun(o.key)}
-              className={[
-                "group relative overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.04] transition duration-200 hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] active:scale-[0.99]",
-                funChoice === o.key ? "scale-[1.02] ring-1 ring-white/16" : "",
-                funChoice && funChoice !== o.key ? "opacity-60" : "opacity-100",
-              ].join(" ")}
+              animate={{
+                scale: funChoice === o.key ? 1.04 : 1,
+                y: funChoice === o.key ? -6 : 0,
+                opacity: hasSelection && funChoice !== o.key ? 0.54 : 1,
+              }}
+              className="group relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.04] transition hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]"
               aria-label={o.alt}
               title={o.alt}
-              style={{ animationDelay: `${index * 120}ms` }}
             >
-              <div className="relative h-[138px] w-full sm:h-[196px]">
+              <div className="relative h-[132px] w-full sm:h-[190px]">
                 <Image
                   src={o.src}
                   alt={o.alt}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 320px"
-                  className="object-cover transition duration-300 group-hover:scale-[1.05] funCardBreathe"
+                  className="object-cover transition duration-300 group-hover:scale-[1.025]"
                   priority={o.key === "dog"}
                 />
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/48 via-black/8 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/42 via-black/8 to-transparent"
                 />
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/8 to-transparent" />
                 <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-3 text-left">
-                  <div className="text-sm font-medium text-white/92">{o.alt}</div>
+                  <motion.div
+                    animate={{ x: funChoice === o.key ? 3 : 0 }}
+                    transition={cardSpring}
+                    className="text-sm font-medium text-white/90"
+                  >
+                    {o.alt}
+                  </motion.div>
                 </div>
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
       </QuestionShell>
@@ -1933,24 +1907,24 @@ export default function OnboardingPage() {
     return (
       <div className="flex h-full items-center">
         <div className="mx-auto w-full max-w-3xl">
-          <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] px-5 py-7 backdrop-blur-sm">
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${pulseGradientClass(tone.pulse)}`} />
+          <div className={`relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm ${tone.glow}`}>
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
             <div className="relative">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
                 Everleap
               </div>
 
-              <h1 className="mt-3 max-w-[16ch] text-[1.95rem] font-semibold leading-[1.04] tracking-tight text-white sm:text-[2.2rem]">
+              <h1 className="mt-3 max-w-[16ch] text-[1.9rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.1rem]">
                 {n ? `Here’s your starting point, ${n}.` : "Here’s your starting point."}
               </h1>
 
-              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/78">{insight}</p>
+              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">{insight}</p>
 
               <div className="mt-5">
                 <button
                   type="button"
                   onClick={() => router.push("/login")}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-white/88 transition hover:text-white active:scale-[0.985]"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white/88 transition hover:text-white"
                   aria-label="Join Everleap"
                   title="Join Everleap"
                 >
@@ -1964,8 +1938,6 @@ export default function OnboardingPage() {
       </div>
     );
   }
-
-  const screenKey = screenMode === "retort" ? `retort_${retortFromStep ?? stepId}` : stepId;
 
   function renderScreen() {
     if (screenMode === "retort") return renderRetort();
@@ -2014,33 +1986,21 @@ export default function OnboardingPage() {
             className="pointer-events-none absolute inset-0 overflow-hidden"
             style={{ opacity: gradient.ambientOpacity * 0.42 }}
           >
-            <div
-              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ambientFloatSlow ${theme.ambientTopLeftClass}`}
+            <motion.div
+              animate={{ x: [0, 18, 0], y: [0, -12, 0] }}
+              transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
             />
-            <div
-              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ambientFloat ${theme.ambientRightClass}`}
+            <motion.div
+              animate={{ x: [0, -14, 0], y: [0, 10, 0] }}
+              transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
               style={{ opacity: 0.32 }}
-            />
-            <div
-              className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ambientFloat ${tone.orbA}`}
-            />
-            <div
-              className={`absolute bottom-[-5rem] right-[10%] h-[15rem] w-[15rem] rounded-full blur-3xl ambientFloatSlow ${tone.orbB}`}
             />
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(12,35,84,0.18),transparent_52%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/12 via-transparent to-black/18" />
-
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div
-            key={pulseKey}
-            className={`absolute left-1/2 top-1/2 h-[19rem] w-[19rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br ${pulseGradientClass(
-              pulseTone
-            )} signalPulse blur-2xl`}
-          />
-        </div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/18" />
 
         <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-5 pb-6 pt-4 sm:px-6">
           <header className="flex h-14 shrink-0 items-center justify-end">
@@ -2052,79 +2012,20 @@ export default function OnboardingPage() {
           </header>
 
           <main className="relative flex-1 overflow-hidden">
-            <div className="absolute inset-0">
-              <div className="flex h-full flex-col">
-                <div className="flex-1 overflow-hidden py-2">
-                  <div key={screenKey} className="h-full">
-                    {renderScreen()}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={screenKey}
+                initial={screenMode === "retort" ? screenVariants.retortEnter : screenVariants.questionEnter}
+                animate={screenMode === "retort" ? screenVariants.retortCenter : screenVariants.questionCenter}
+                exit={screenMode === "retort" ? screenVariants.retortExit : screenVariants.questionExit}
+                transition={spring}
+                className="h-full"
+              >
+                {renderScreen()}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
-
-        <style jsx>{`
-          .signalPulse {
-            animation: signalPulse 820ms ease-out forwards;
-          }
-
-          .ambientFloat {
-            animation: ambientFloat 9s ease-in-out infinite;
-          }
-
-          .ambientFloatSlow {
-            animation: ambientFloatSlow 13s ease-in-out infinite;
-          }
-
-          .funCardBreathe {
-            animation: funCardBreathe 5.5s ease-in-out infinite;
-          }
-
-          @keyframes signalPulse {
-            0% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(0.55);
-            }
-            18% {
-              opacity: 1;
-            }
-            100% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(1.85);
-            }
-          }
-
-          @keyframes ambientFloat {
-            0%,
-            100% {
-              transform: translate3d(0, 0, 0) scale(1);
-            }
-            50% {
-              transform: translate3d(0, -10px, 0) scale(1.04);
-            }
-          }
-
-          @keyframes ambientFloatSlow {
-            0%,
-            100% {
-              transform: translate3d(0, 0, 0) scale(1);
-            }
-            50% {
-              transform: translate3d(0, 12px, 0) scale(1.06);
-            }
-          }
-
-          @keyframes funCardBreathe {
-            0%,
-            100% {
-              transform: scale(1);
-            }
-            50% {
-              transform: scale(1.028);
-            }
-          }
-        `}</style>
       </div>
     </AppChrome>
   );
