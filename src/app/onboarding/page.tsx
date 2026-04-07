@@ -191,44 +191,78 @@ function certaintyIdeaPrompt(certainty: Certainty) {
    ============================================================ */
 
 function visualToneForStep(stepId: StepId) {
-  if (stepId === "welcome" || stepId === "summary") {
+  if (stepId === "welcome") {
     return {
-      orbA: "bg-cyan-300/10",
-      orbB: "bg-violet-400/10",
-      glow: "shadow-[0_0_80px_rgba(103,232,249,0.08)]",
+      orbA: "bg-fuchsia-400/30",
+      orbB: "bg-cyan-300/22",
+      glow: "shadow-[0_0_90px_rgba(217,70,239,0.12)]",
+      meshA: "from-fuchsia-500/24 via-violet-500/10 to-transparent",
+      meshB: "from-cyan-400/22 via-sky-400/8 to-transparent",
+      ring: "border-fuchsia-200/16",
+    };
+  }
+
+  if (stepId === "summary") {
+    return {
+      orbA: "bg-cyan-300/18",
+      orbB: "bg-violet-400/18",
+      glow: "shadow-[0_0_90px_rgba(103,232,249,0.12)]",
+      meshA: "from-cyan-400/16 via-sky-400/8 to-transparent",
+      meshB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
+      ring: "border-cyan-200/16",
     };
   }
 
   if (stepId === "fun") {
     return {
-      orbA: "bg-fuchsia-300/10",
-      orbB: "bg-amber-300/10",
-      glow: "shadow-[0_0_80px_rgba(217,70,239,0.08)]",
+      orbA: "bg-fuchsia-400/28",
+      orbB: "bg-amber-300/24",
+      glow: "shadow-[0_0_90px_rgba(236,72,153,0.14)]",
+      meshA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
+      meshB: "from-amber-300/24 via-orange-400/10 to-transparent",
+      ring: "border-fuchsia-200/18",
     };
   }
 
   if (stepId === "zip" || stepId === "postPlans" || stepId === "certaintyIdea") {
     return {
-      orbA: "bg-amber-300/10",
-      orbB: "bg-orange-400/10",
-      glow: "shadow-[0_0_80px_rgba(251,191,36,0.08)]",
+      orbA: "bg-amber-300/18",
+      orbB: "bg-orange-400/16",
+      glow: "shadow-[0_0_90px_rgba(251,191,36,0.12)]",
+      meshA: "from-amber-300/16 via-orange-400/8 to-transparent",
+      meshB: "from-orange-500/14 via-rose-500/8 to-transparent",
+      ring: "border-amber-200/16",
+    };
+  }
+
+  if (stepId === "certainty") {
+    return {
+      orbA: "bg-violet-400/24",
+      orbB: "bg-cyan-300/20",
+      glow: "shadow-[0_0_90px_rgba(139,92,246,0.14)]",
+      meshA: "from-violet-400/22 via-indigo-500/10 to-transparent",
+      meshB: "from-cyan-300/18 via-sky-500/10 to-transparent",
+      ring: "border-violet-200/18",
     };
   }
 
   return {
-    orbA: "bg-sky-300/10",
-    orbB: "bg-violet-400/10",
-    glow: "shadow-[0_0_80px_rgba(56,189,248,0.08)]",
+    orbA: "bg-cyan-300/18",
+    orbB: "bg-violet-400/16",
+    glow: "shadow-[0_0_90px_rgba(56,189,248,0.12)]",
+    meshA: "from-sky-400/18 via-cyan-400/8 to-transparent",
+    meshB: "from-violet-400/16 via-indigo-500/8 to-transparent",
+    ring: "border-cyan-200/14",
   };
 }
 
 const screenVariants = {
-  questionEnter: { opacity: 0, y: 28, scale: 0.985, filter: "blur(8px)" },
+  questionEnter: { opacity: 0, y: 34, scale: 0.982, filter: "blur(10px)" },
   questionCenter: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
-  questionExit: { opacity: 0, y: -18, scale: 0.992, filter: "blur(6px)" },
-  retortEnter: { opacity: 0, scale: 0.96, y: 22, filter: "blur(10px)" },
+  questionExit: { opacity: 0, y: -22, scale: 0.992, filter: "blur(8px)" },
+  retortEnter: { opacity: 0, scale: 0.94, y: 30, filter: "blur(14px)" },
   retortCenter: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)" },
-  retortExit: { opacity: 0, scale: 0.985, y: -18, filter: "blur(8px)" },
+  retortExit: { opacity: 0, scale: 0.985, y: -20, filter: "blur(10px)" },
 };
 
 const spring = {
@@ -259,7 +293,7 @@ function HeaderAction({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 text-sm font-medium text-white/64 transition hover:text-white/90 active:scale-[0.985]"
+      className="inline-flex items-center gap-2 text-sm font-medium text-white/68 transition hover:text-white/92 active:scale-[0.985]"
       aria-label={label}
       title={label}
     >
@@ -285,36 +319,48 @@ function ChoiceRowText({
       type="button"
       layout
       transition={cardSpring}
-      whileTap={{ scale: 0.988 }}
+      whileTap={{ scale: 0.986 }}
       onClick={onClick}
       animate={{
-        x: selected ? 8 : 0,
-        scale: selected ? 1.014 : 1,
-        opacity: dimmed ? 0.5 : 1,
+        x: selected ? 10 : 0,
+        scale: selected ? 1.02 : 1,
+        opacity: dimmed ? 0.42 : 1,
+        y: selected ? -1 : 0,
       }}
-      className="group relative block w-full overflow-hidden rounded-[18px] px-4 py-3 text-left"
+      className="group relative block w-full overflow-hidden rounded-[20px] px-4 py-3.5 text-left"
     >
       <motion.div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[18px] border transition",
+          "pointer-events-none absolute inset-0 rounded-[20px] border transition",
           selected
-            ? "border-white/18 bg-white/[0.1] shadow-[0_0_28px_rgba(255,255,255,0.06)]"
-            : "border-white/0 bg-white/[0.02] group-hover:border-white/10 group-hover:bg-white/[0.045]",
+            ? "border-white/24 bg-white/[0.13] shadow-[0_0_36px_rgba(255,255,255,0.08)]"
+            : "border-white/8 bg-white/[0.035] group-hover:border-white/14 group-hover:bg-white/[0.06]",
         ].join(" ")}
         animate={{
-          scale: selected ? 1.012 : 1,
+          scale: selected ? 1.015 : 1,
         }}
         transition={cardSpring}
       />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/8 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-[5px] rounded-l-[20px] bg-gradient-to-b from-fuchsia-300/0 via-fuchsia-300/0 to-fuchsia-300/0 group-hover:from-fuchsia-300/40 group-hover:via-cyan-300/30 group-hover:to-violet-300/20" />
+      {selected ? (
+        <div className="pointer-events-none absolute inset-y-2 left-2 w-1 rounded-full bg-gradient-to-b from-fuchsia-300 via-cyan-300 to-violet-300" />
+      ) : null}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
       <div
         className={[
-          "relative text-[14px] leading-6 transition",
-          selected ? "font-semibold text-white" : "font-normal text-white/74 group-hover:text-white/90",
+          "relative pr-8 text-[14px] leading-6 transition",
+          selected ? "font-semibold text-white" : "font-medium text-white/78 group-hover:text-white/92",
         ].join(" ")}
       >
         {label}
       </div>
+      <motion.div
+        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/30"
+        animate={{ x: selected ? 2 : 0, opacity: selected ? 1 : 0.35 }}
+        transition={cardSpring}
+      >
+        →
+      </motion.div>
     </motion.button>
   );
 }
@@ -336,10 +382,10 @@ function BigMoodCard({
 }) {
   const accentClass =
     accent === "violet"
-      ? "from-violet-300/18 via-indigo-300/10 to-transparent"
+      ? "from-fuchsia-400/26 via-violet-400/14 to-transparent"
       : accent === "sky"
-      ? "from-cyan-300/18 via-sky-300/10 to-transparent"
-      : "from-white/14 via-white/6 to-transparent";
+      ? "from-cyan-300/24 via-sky-400/14 to-transparent"
+      : "from-white/16 via-white/8 to-transparent";
 
   return (
     <motion.button
@@ -347,28 +393,30 @@ function BigMoodCard({
       onClick={onClick}
       layout
       transition={cardSpring}
-      whileTap={{ scale: 0.992 }}
+      whileTap={{ scale: 0.99 }}
       animate={{
-        scale: selected ? 1.022 : 1,
-        y: selected ? -4 : 0,
-        opacity: dimmed ? 0.44 : 1,
+        scale: selected ? 1.03 : 1,
+        y: selected ? -6 : 0,
+        opacity: dimmed ? 0.4 : 1,
+        rotateX: selected ? 0 : 0,
       }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-5 text-left",
+        "group relative block w-full overflow-hidden rounded-[26px] border px-5 py-5 text-left",
         selected
-          ? "border-white/18 bg-white/[0.09] shadow-[0_0_52px_rgba(255,255,255,0.06)]"
-          : "border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.05]",
+          ? "border-white/24 bg-white/[0.11] shadow-[0_0_60px_rgba(255,255,255,0.07)]"
+          : "border-white/10 bg-white/[0.045] hover:border-white/16 hover:bg-white/[0.07]",
       ].join(" ")}
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClass}`} />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/8 blur-2xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
       <motion.div
         className="relative"
         animate={{ x: selected ? 2 : 0 }}
         transition={cardSpring}
       >
-        <div className="text-[1.05rem] font-semibold leading-6 text-white">{title}</div>
-        <div className="mt-2 text-[13px] leading-5 text-white/62">{sub}</div>
+        <div className="text-[1.06rem] font-semibold leading-6 text-white">{title}</div>
+        <div className="mt-2 text-[13px] leading-5 text-white/66">{sub}</div>
       </motion.div>
     </motion.button>
   );
@@ -401,9 +449,10 @@ function ThinkingSurface({
 }) {
   return (
     <div className="w-full max-w-2xl">
-      <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.045] p-3 backdrop-blur-sm">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/14 via-white/8 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+      <div className="relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.055] p-3.5 backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_48%)]" />
+        <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-fuchsia-400/10 blur-2xl" />
 
         <div className="relative">
           <textarea
@@ -419,7 +468,7 @@ function ThinkingSurface({
             }}
             rows={1}
             placeholder={placeholder ?? ""}
-            className="min-h-[44px] w-full resize-none bg-transparent px-1 py-1 text-[14px] leading-6 text-white/92 outline-none placeholder:text-white/28"
+            className="min-h-[46px] w-full resize-none bg-transparent px-1 py-1 text-[14px] leading-6 text-white/92 outline-none placeholder:text-white/30"
           />
 
           <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/8 pt-2.5">
@@ -432,8 +481,8 @@ function ThinkingSurface({
                   "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition",
                   speechSupported
                     ? isListening
-                      ? "bg-white/[0.06] text-white/90"
-                      : "text-white/58 hover:bg-white/[0.04] hover:text-white/84"
+                      ? "bg-white/[0.08] text-white"
+                      : "text-white/62 hover:bg-white/[0.05] hover:text-white/88"
                     : "cursor-not-allowed text-white/24",
                 ].join(" ")}
                 aria-label={isListening ? "Stop voice input" : "Start voice input"}
@@ -459,7 +508,7 @@ function ThinkingSurface({
               className={[
                 "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
                 canSubmit
-                  ? "border-white/16 bg-white/[0.08] text-white/88 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
+                  ? "border-white/18 bg-white/[0.1] text-white/90 hover:border-white/28 hover:bg-white/[0.14] hover:text-white"
                   : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
               ].join(" ")}
               aria-label="Continue"
@@ -490,7 +539,7 @@ function MinimalContinue({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={`inline-flex items-center gap-2 text-sm font-medium transition ${
-        disabled ? "cursor-not-allowed text-white/32" : "text-white/84 hover:text-white"
+        disabled ? "cursor-not-allowed text-white/32" : "text-white/86 hover:text-white"
       }`}
       aria-label={label ?? "Continue"}
       title={label ?? "Continue"}
@@ -507,12 +556,14 @@ function QuestionShell({
   whisper,
   children,
   actions,
+  compact,
 }: {
   kicker: string;
   title: string;
   whisper?: string | null;
   children: React.ReactNode;
   actions?: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
     <div className="flex h-full flex-col justify-center">
@@ -521,14 +572,21 @@ function QuestionShell({
           {kicker}
         </div>
 
-        <h1 className="mt-3 max-w-[18ch] text-[1.95rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.2rem]">
+        <h1
+          className={[
+            "mt-3 font-semibold leading-[1.04] tracking-tight text-white",
+            compact
+              ? "max-w-[16ch] text-[1.72rem] sm:text-[2rem]"
+              : "max-w-[18ch] text-[1.95rem] sm:text-[2.2rem]",
+          ].join(" ")}
+        >
           {title}
         </h1>
 
         <div className="mt-2 min-h-[20px]">
           <div
             className={[
-              "text-[13px] leading-5 text-white/56 transition-all duration-300",
+              "text-[13px] leading-5 text-white/58 transition-all duration-300",
               whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
             ].join(" ")}
           >
@@ -538,7 +596,7 @@ function QuestionShell({
 
         <div className="mt-3">{children}</div>
 
-        {actions ? <div className="mt-5">{actions}</div> : null}
+        {actions ? <div className="mt-4">{actions}</div> : null}
       </div>
     </div>
   );
@@ -1500,13 +1558,28 @@ export default function OnboardingPage() {
         title="Tap to continue"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <div className={`relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.04] px-5 py-7 backdrop-blur-sm ${tone.glow}`}>
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
+          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-8 backdrop-blur-md">
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
+            <div className={`pointer-events-none absolute inset-0 ${tone.glow}`} />
+            <motion.div
+              aria-hidden="true"
+              animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              className={`pointer-events-none absolute -left-8 top-[-1rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+            />
+            <motion.div
+              aria-hidden="true"
+              animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+            />
+            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.11),transparent_56%)]" />
             <div className="relative">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
                 Everleap
               </div>
-              <div className="mt-4 max-w-2xl text-[1.45rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[1.8rem]">
+              <div className="mt-4 max-w-2xl text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.95rem]">
                 {retortText}
               </div>
               <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
@@ -1525,48 +1598,59 @@ export default function OnboardingPage() {
         <div className="relative mx-auto w-full max-w-3xl">
           <motion.div
             aria-hidden="true"
-            animate={{ x: [0, 10, 0], y: [0, -8, 0] }}
+            animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-28 w-28 rounded-full blur-3xl ${tone.orbA}`}
           />
           <motion.div
             aria-hidden="true"
-            animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
+            animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
             className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
           />
 
-          <div className="relative">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
-              {STEP_META.welcome.kicker}
-            </div>
+          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-7 backdrop-blur-md sm:px-6 sm:py-8">
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
+            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.11),transparent_55%)]" />
+            <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
 
-            <h1 className="mt-3 max-w-[13ch] text-[2.15rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.5rem]">
-              {STEP_META.welcome.title}
-            </h1>
+            <div className="relative">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
+                {STEP_META.welcome.kicker}
+              </div>
 
-            <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/68">
-              A few quick questions. Then the app stops guessing.
-            </p>
+              <h1 className="mt-3 max-w-[13ch] text-[2.2rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.7rem]">
+                {STEP_META.welcome.title}
+              </h1>
 
-            <div className="mt-6">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.985 }}
-                whileHover={{ scale: 1.01 }}
-                onClick={onWelcomeNext}
-                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
-                aria-label="Let’s begin"
-                title="Let’s begin"
-              >
-                <span>Let’s begin</span>
-                <span
-                  aria-hidden="true"
-                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+              <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/72">
+                A few quick questions. Then the app stops guessing and starts actually seeing you.
+              </p>
+
+              <div className="mt-6 flex items-center gap-3">
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.985 }}
+                  whileHover={{ scale: 1.012 }}
+                  onClick={onWelcomeNext}
+                  className="group inline-flex items-center gap-3 rounded-full border border-white/16 bg-white/[0.09] px-5 py-2.5 text-sm font-medium text-white/94 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.13] hover:text-white"
+                  aria-label="Let’s begin"
+                  title="Let’s begin"
                 >
-                  →
-                </span>
-              </motion.button>
+                  <span>Let’s begin</span>
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                  >
+                    →
+                  </span>
+                </motion.button>
+
+                <div className="text-[12px] uppercase tracking-[0.14em] text-white/34">
+                  fast · no fluff
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1576,7 +1660,7 @@ export default function OnboardingPage() {
 
   function renderName() {
     return (
-      <QuestionShell kicker={STEP_META.name.kicker} title={STEP_META.name.title} whisper={whisper}>
+      <QuestionShell kicker={STEP_META.name.kicker} title={STEP_META.name.title} whisper={whisper} compact>
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1597,8 +1681,8 @@ export default function OnboardingPage() {
     const hasSelection = Boolean(situation);
 
     return (
-      <QuestionShell kicker={STEP_META.situation.kicker} title={STEP_META.situation.title} whisper={whisper}>
-        <div className="max-w-2xl space-y-2">
+      <QuestionShell kicker={STEP_META.situation.kicker} title={STEP_META.situation.title} whisper={whisper} compact>
+        <div className="max-w-2xl space-y-2.5">
           <ChoiceRowText
             label="I’m in high school"
             selected={situation === "high_school"}
@@ -1606,7 +1690,7 @@ export default function OnboardingPage() {
             onClick={() => chooseSituation("high_school")}
           />
           <ChoiceRowText
-            label="I’m a young adult (18–24)"
+            label="I’m a young adult figuring out what fits"
             selected={situation === "young_adult"}
             dimmed={hasSelection && situation !== "young_adult"}
             onClick={() => chooseSituation("young_adult")}
@@ -1617,34 +1701,28 @@ export default function OnboardingPage() {
   }
 
   function renderZip() {
+    const normalized = normalizeZip(draft);
+    const canSubmit = normalized.length === 5;
+
     return (
       <QuestionShell
         kicker={STEP_META.zip.kicker}
         title={STEP_META.zip.title}
         whisper={whisper}
-        actions={
-          <button
-            type="button"
-            onClick={skipZip}
-            className="text-sm font-medium text-white/50 transition hover:text-white/78"
-            aria-label="Skip for now"
-            title="Skip for now"
-          >
-            Skip for now
-          </button>
-        }
+        compact
+        actions={<MinimalContinue onClick={skipZip} label="Skip for now" />}
       >
         <ThinkingSurface
           value={draft}
-          onChange={setDraft}
+          onChange={(v) => setDraft(v.replace(/[^\d]/g, "").slice(0, 5))}
           onSubmit={submitZip}
-          canSubmit={true}
-          placeholder="Zip code"
+          canSubmit={canSubmit}
           textareaRef={textareaRef}
           showMic
           isListening={isListening}
           speechSupported={speechSupported}
           onToggleMic={() => toggleMic("zip")}
+          placeholder="5-digit zip code"
           inputMode="numeric"
         />
       </QuestionShell>
@@ -1655,30 +1733,35 @@ export default function OnboardingPage() {
     const hasSelection = Boolean(certainty);
 
     return (
-      <QuestionShell kicker={STEP_META.certainty.kicker} title={STEP_META.certainty.title} whisper={whisper}>
-        <div className="max-w-3xl space-y-3">
+      <QuestionShell
+        kicker={STEP_META.certainty.kicker}
+        title={STEP_META.certainty.title}
+        whisper={whisper}
+        compact
+      >
+        <div className="grid max-w-2xl gap-3">
           <BigMoodCard
             title="I feel pretty sure"
-            sub="Let’s move."
-            accent="violet"
+            sub="There’s already something I can see."
             selected={certainty === "strong"}
             dimmed={hasSelection && certainty !== "strong"}
+            accent="violet"
             onClick={() => chooseCertainty("strong")}
           />
           <BigMoodCard
             title="I have some ideas"
-            sub="That’s enough to start."
-            accent="sky"
+            sub="Not locked in. Not blank either."
             selected={certainty === "kinda"}
             dimmed={hasSelection && certainty !== "kinda"}
+            accent="sky"
             onClick={() => chooseCertainty("kinda")}
           />
           <BigMoodCard
             title="I honestly don’t know yet"
-            sub="Still a real answer."
-            accent="soft"
+            sub="No fake certainty. Just the truth."
             selected={certainty === "no_clue"}
             dimmed={hasSelection && certainty !== "no_clue"}
+            accent="soft"
             onClick={() => chooseCertainty("no_clue")}
           />
         </div>
@@ -1687,10 +1770,10 @@ export default function OnboardingPage() {
   }
 
   function renderCertaintyIdea() {
-    const prompt = certaintyIdeaPrompt(certainty);
+    const meta = certaintyIdeaPrompt(certainty);
 
     return (
-      <QuestionShell kicker={prompt.kicker} title={prompt.title} whisper={whisper}>
+      <QuestionShell kicker={meta.kicker} title={meta.title} whisper={whisper} compact>
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1701,7 +1784,7 @@ export default function OnboardingPage() {
           isListening={isListening}
           speechSupported={speechSupported}
           onToggleMic={() => toggleMic("certaintyIdea")}
-          placeholder={prompt.placeholder}
+          placeholder={meta.placeholder}
         />
       </QuestionShell>
     );
@@ -1715,20 +1798,21 @@ export default function OnboardingPage() {
         kicker={STEP_META.postPlans.kicker}
         title={STEP_META.postPlans.title}
         whisper={whisper}
-        actions={<MinimalContinue onClick={continuePostPlans} disabled={!hasSelection} />}
+        compact
+        actions={
+          <MinimalContinue
+            onClick={continuePostPlans}
+            disabled={postPlans.length === 0}
+            label="Continue"
+          />
+        }
       >
-        <div className="max-w-3xl space-y-2">
+        <div className="max-w-2xl space-y-2">
           <ChoiceRowText
-            label="Get a job"
+            label="A job"
             selected={postPlans.includes("job")}
             dimmed={hasSelection && !postPlans.includes("job")}
             onClick={() => togglePostPlan("job")}
-          />
-          <ChoiceRowText
-            label="Four-year college"
-            selected={postPlans.includes("four_year")}
-            dimmed={hasSelection && !postPlans.includes("four_year")}
-            onClick={() => togglePostPlan("four_year")}
           />
           <ChoiceRowText
             label="Community / two-year college"
@@ -1749,7 +1833,13 @@ export default function OnboardingPage() {
             onClick={() => togglePostPlan("military")}
           />
           <ChoiceRowText
-            label="Not sure yet"
+            label="Four-year college"
+            selected={postPlans.includes("four_year")}
+            dimmed={hasSelection && !postPlans.includes("four_year")}
+            onClick={() => togglePostPlan("four_year")}
+          />
+          <ChoiceRowText
+            label="I’m not sure yet"
             selected={postPlans.includes("no_idea")}
             dimmed={hasSelection && !postPlans.includes("no_idea")}
             onClick={() => togglePostPlan("no_idea")}
@@ -1761,16 +1851,24 @@ export default function OnboardingPage() {
 
   function renderActivities() {
     const hasSelection = activities.length > 0;
-    const wantsOther = activities.includes("other");
+    const showOtherInput = activities.includes("other");
+    const canContinue = hasSelection && (!showOtherInput || draft.trim().length > 0);
 
     return (
       <QuestionShell
         kicker={STEP_META.activities.kicker}
         title={STEP_META.activities.title}
         whisper={whisper}
-        actions={<MinimalContinue onClick={() => continueActivities()} disabled={!hasSelection} />}
+        compact
+        actions={
+          <MinimalContinue
+            onClick={() => continueActivities()}
+            disabled={!canContinue}
+            label="Continue"
+          />
+        }
       >
-        <div className="max-w-3xl space-y-2">
+        <div className="max-w-2xl space-y-2">
           <ChoiceRowText
             label="Sports / training"
             selected={activities.includes("sports")}
@@ -1790,7 +1888,7 @@ export default function OnboardingPage() {
             onClick={() => toggleActivity("performing_arts")}
           />
           <ChoiceRowText
-            label="Volunteering / helping out"
+            label="Volunteering"
             selected={activities.includes("volunteer")}
             dimmed={hasSelection && !activities.includes("volunteer")}
             onClick={() => toggleActivity("volunteer")}
@@ -1809,81 +1907,82 @@ export default function OnboardingPage() {
           />
         </div>
 
-        {wantsOther ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={spring}
-            className="mt-4 max-w-2xl"
-          >
-            <ThinkingSurface
-              value={draft}
-              onChange={setDraft}
-              onSubmit={() => continueActivities(draft)}
-              canSubmit={true}
-              textareaRef={textareaRef}
-              showMic
-              isListening={isListening}
-              speechSupported={speechSupported}
-              onToggleMic={() => toggleMic("activitiesOther")}
-              placeholder="Add whatever fits here."
-            />
-          </motion.div>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {showOtherInput ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
+              transition={spring}
+              className="mt-3"
+            >
+              <ThinkingSurface
+                value={draft}
+                onChange={setDraft}
+                onSubmit={() => continueActivities()}
+                canSubmit={Boolean(draft.trim())}
+                textareaRef={textareaRef}
+                showMic
+                isListening={isListening}
+                speechSupported={speechSupported}
+                onToggleMic={() => toggleMic("activitiesOther")}
+                placeholder="Add the thing that matters here."
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </QuestionShell>
     );
   }
 
   function renderFun() {
-    const hasSelection = Boolean(funChoice);
-
     return (
-      <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title} whisper={whisper}>
-        <div className="grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
-          {FUN_OPTIONS.map((o) => (
-            <motion.button
-              key={o.key}
-              type="button"
-              layout
-              transition={cardSpring}
-              whileTap={{ scale: 0.985 }}
-              onClick={() => chooseFun(o.key)}
-              animate={{
-                scale: funChoice === o.key ? 1.04 : 1,
-                y: funChoice === o.key ? -6 : 0,
-                opacity: hasSelection && funChoice !== o.key ? 0.54 : 1,
-              }}
-              className="group relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.04] transition hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)]"
-              aria-label={o.alt}
-              title={o.alt}
-            >
-              <div className="relative h-[132px] w-full sm:h-[190px]">
-                <Image
-                  src={o.src}
-                  alt={o.alt}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 320px"
-                  className="object-cover transition duration-300 group-hover:scale-[1.025]"
-                  priority={o.key === "dog"}
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/42 via-black/8 to-transparent"
-                />
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/8 to-transparent" />
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-3 text-left">
-                  <motion.div
-                    animate={{ x: funChoice === o.key ? 3 : 0 }}
-                    transition={cardSpring}
-                    className="text-sm font-medium text-white/90"
-                  >
-                    {o.alt}
-                  </motion.div>
+      <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title} whisper={whisper} compact>
+        <div className="grid grid-cols-2 gap-3 max-w-2xl">
+          {FUN_OPTIONS.map((option) => {
+            const selected = funChoice === option.key;
+            const dimmed = Boolean(funChoice) && !selected;
+
+            return (
+              <motion.button
+                key={option.key}
+                type="button"
+                onClick={() => chooseFun(option.key)}
+                layout
+                transition={cardSpring}
+                whileTap={{ scale: 0.985 }}
+                animate={{
+                  scale: selected ? 1.03 : 1,
+                  y: selected ? -5 : 0,
+                  opacity: dimmed ? 0.44 : 1,
+                }}
+                className={[
+                  "group relative overflow-hidden rounded-[24px] border bg-white/[0.05] text-left",
+                  selected ? "border-white/24 shadow-[0_0_40px_rgba(255,255,255,0.08)]" : "border-white/10 hover:border-white/16",
+                ].join(" ")}
+              >
+                <div className="relative aspect-[1/1]">
+                  <Image
+                    src={option.src}
+                    alt={option.alt}
+                    fill
+                    className={[
+                      "object-cover transition duration-300",
+                      selected ? "scale-[1.04]" : "scale-100 group-hover:scale-[1.02]",
+                    ].join(" ")}
+                    sizes="(max-width: 768px) 50vw, 240px"
+                    priority={stepId === "fun"}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
                 </div>
-              </div>
-            </motion.button>
-          ))}
+
+                <div className="absolute inset-x-0 bottom-0 p-3">
+                  <div className="text-[0.98rem] font-semibold text-white">{option.alt}</div>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
       </QuestionShell>
     );
@@ -1903,34 +2002,58 @@ export default function OnboardingPage() {
     });
 
     const n = firstName(name);
+    const label = n ? `${n},` : "You,";
 
     return (
       <div className="flex h-full items-center">
-        <div className="mx-auto w-full max-w-3xl">
-          <div className={`relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm ${tone.glow}`}>
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
+        <div className="relative mx-auto w-full max-w-3xl">
+          <motion.div
+            aria-hidden="true"
+            animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className={`pointer-events-none absolute -left-6 top-0 h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+          />
+          <motion.div
+            aria-hidden="true"
+            animate={{ x: [0, -12, 0], y: [0, 10, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            className={`pointer-events-none absolute right-[8%] top-[5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+          />
+
+          <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.05] px-5 py-7 backdrop-blur-md sm:px-6 sm:py-8`}>
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
+            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_55%)]" />
+
             <div className="relative">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
-                Everleap
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
+                Everleap · First read
               </div>
 
-              <h1 className="mt-3 max-w-[16ch] text-[1.9rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.1rem]">
-                {n ? `Here’s your starting point, ${n}.` : "Here’s your starting point."}
+              <h1 className="mt-3 max-w-[15ch] text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.35rem]">
+                {label} this gives us a real start.
               </h1>
 
-              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">{insight}</p>
+              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">
+                {insight}
+              </p>
 
-              <div className="mt-5">
-                <button
+              <div className="mt-6">
+                <motion.button
                   type="button"
-                  onClick={() => router.push("/login")}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-white/88 transition hover:text-white"
-                  aria-label="Join Everleap"
-                  title="Join Everleap"
+                  whileTap={{ scale: 0.985 }}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => router.push("/main")}
+                  className="group inline-flex items-center gap-3 rounded-full border border-white/16 bg-white/[0.09] px-5 py-2.5 text-sm font-medium text-white/92 transition hover:border-white/24 hover:bg-white/[0.13] hover:text-white"
                 >
-                  <span>Join Everleap</span>
-                  <span aria-hidden="true">→</span>
-                </button>
+                  <span>Enter Everleap</span>
+                  <span
+                    aria-hidden="true"
+                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                  >
+                    →
+                  </span>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -1940,7 +2063,9 @@ export default function OnboardingPage() {
   }
 
   function renderScreen() {
-    if (screenMode === "retort") return renderRetort();
+    if (screenMode === "retort") {
+      return renderRetort();
+    }
 
     switch (stepId) {
       case "welcome":
@@ -2000,10 +2125,11 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/18" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/8 via-transparent to-black/22" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_42%)]" />
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-5 pb-6 pt-4 sm:px-6">
-          <header className="flex h-14 shrink-0 items-center justify-end">
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-3 sm:px-6">
+          <header className="flex h-12 shrink-0 items-center justify-end">
             {stepId === "welcome" && screenMode === "question" ? (
               <HeaderAction label="Exit" onClick={exitOnboarding} />
             ) : canGoBack() || screenMode === "retort" ? (
