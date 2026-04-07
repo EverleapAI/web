@@ -595,9 +595,9 @@ function QuestionShell({
             <h1
               className={[
                 "font-semibold leading-[1.02] tracking-tight text-white",
-                compact
-                  ? "max-w-[22ch] text-[1.9rem] sm:max-w-[24ch] sm:text-[2.08rem]"
-                  : "max-w-[24ch] text-[1.95rem] sm:text-[2.2rem]",
+compact
+  ? "text-[1.9rem] sm:text-[2.08rem]"
+  : "text-[1.95rem] sm:text-[2.2rem]"
               ].join(" ")}
             >
               {title}
@@ -820,17 +820,17 @@ function buildInsight(options: {
 
   if (situation === "high_school") {
     if (certainty === "strong") {
-      parts.push("You’re in high school and you already have a real sense of direction.");
+      parts.push("You’re in high school and already have real direction.");
     } else if (certainty === "kinda") {
       parts.push("You’re in high school with early ideas — enough to start shaping something real.");
     } else if (certainty === "no_clue") {
       parts.push("You’re in high school and still figuring it out, which is more normal than people admit.");
     } else {
-      parts.push("You’re in high school and thinking seriously about what comes next.");
+      parts.push("You’re in high school and taking a real look at what comes next.");
     }
   } else if (situation === "young_adult") {
     if (certainty === "strong") {
-      parts.push("You’re a young adult with clear direction, which means we can move faster.");
+      parts.push("You’re a young adult with clear direction, so we can move faster.");
     } else if (certainty === "kinda") {
       parts.push("You’re a young adult with some real ideas already in motion.");
     } else if (certainty === "no_clue") {
@@ -844,27 +844,27 @@ function buildInsight(options: {
 
   if (idea) {
     if (certainty === "strong") {
-      parts.push(`You already have a concrete path in mind: ${idea}. That gives us something to sharpen instead of inventing from scratch.`);
+      parts.push(`One path already stands out: ${idea}. That gives us something to sharpen.`);
     } else if (certainty === "kinda") {
-      parts.push(`One early idea already stands out: ${idea}. That’s enough to start building around.`);
+      parts.push(`One early idea already stands out: ${idea}. That’s enough to build around.`);
     }
   }
 
   if (postPlans.length > 0) {
     if (postPlans.includes("no_idea")) {
-      parts.push("You’re keeping the field open for now, which means the job is to surface strong options fast.");
+      parts.push("You’re keeping the field open, so the job is to surface strong options fast.");
     } else {
       const mapped: string[] = [];
-      if (postPlans.includes("job")) mapped.push("building experience through work");
+      if (postPlans.includes("job")) mapped.push("work");
       if (postPlans.includes("four_year")) mapped.push("a four-year college path");
       if (postPlans.includes("associates")) mapped.push("community or two-year options");
       if (postPlans.includes("credential")) mapped.push("trade or credential programs");
-      if (postPlans.includes("military")) mapped.push("a path through the military");
+      if (postPlans.includes("military")) mapped.push("the military");
 
       if (mapped.length > 0) {
         const last = mapped.pop();
         const listText = mapped.length ? `${mapped.join(", ")}, and ${last}` : last!;
-        parts.push(`You’re considering ${listText}. That gives us enough range to compare paths without getting scattered.`);
+        parts.push(`You’re weighing ${listText}. That’s a strong range without getting scattered.`);
       }
     }
   }
@@ -880,11 +880,11 @@ function buildInsight(options: {
     if (act.length) {
       const last = act.pop();
       const listText = act.length ? `${act.join(", ")}, and ${last}` : last!;
-      parts.push(`Outside of school, you naturally spend time on ${listText}. That’s one of the strongest signals for what will actually feel right.`);
+      parts.push(`Outside of school, you naturally spend time on ${listText}. Those are strong signals for what may actually fit.`);
     }
 
     if (isMeaningfulText(activitiesOther)) {
-      parts.push("The extra detail you added makes the fit even clearer.");
+      parts.push("That extra detail helps too.");
     }
   }
 
@@ -895,7 +895,7 @@ function buildInsight(options: {
   if (funChoice === "dog") parts.push("Also: dog energy.");
   if (funChoice === "cat") parts.push("Also: cat energy.");
   if (funChoice === "bearded_dragon") parts.push("Also: bearded dragon energy.");
-  if (funChoice === "rock") parts.push("Also: rock. Iconic.");
+  if (funChoice === "rock") parts.push("Also: rock energy.");
 
   parts.push("This is a starting point, not a box — enough to generate strong first options, then sharpen fast.");
 
@@ -2088,9 +2088,9 @@ export default function OnboardingPage() {
                 Everleap · First read
               </div>
 
-              <h1 className="mt-3 max-w-[20ch] text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:max-w-[22ch] sm:text-[2.35rem]">
-                {label} this gives us a real start.
-              </h1>
+              <h1 className="mt-3 text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.35rem]">
+  {label} this gives us a real start.
+</h1>
 
               <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">
                 {insight}
