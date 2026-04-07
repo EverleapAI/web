@@ -86,43 +86,48 @@ type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 
 type VoiceTarget = "name" | "zip" | "activitiesOther" | "certaintyIdea";
 
+type PulseTone = "sky" | "violet" | "amber" | "fuchsia" | "soft";
+
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
 /* ============================================================
    Copy
    ============================================================ */
 
-const STEP_META: Record<Exclude<StepId, "summary" | "certaintyIdea">, { kicker: string; title: string }> = {
+const STEP_META: Record<
+  Exclude<StepId, "summary" | "certaintyIdea">,
+  { kicker: string; title: string }
+> = {
   welcome: {
     kicker: "Everleap",
     title: "Let’s get a real sense of you.",
   },
   name: {
     kicker: "Everleap · Getting to know you",
-    title: "What name do you like to be called?",
+    title: "What should I call you?",
   },
   situation: {
     kicker: "Everleap · Your world",
-    title: "Which best describes where you’re at right now?",
+    title: "Where are you right now — really?",
   },
   zip: {
     kicker: "Everleap · Local",
-    title: "What’s your zip code?",
+    title: "Want to add your zip code?",
   },
   certainty: {
-    kicker: "Everleap · What’s next",
-    title: "Do you have a sense of what comes next?",
+    kicker: "Everleap · Future mode",
+    title: "How clear does next feel right now?",
   },
   postPlans: {
-    kicker: "Everleap · Possibilities",
-    title: "What are you considering after high school?",
+    kicker: "Everleap · On your radar",
+    title: "What’s actually on your radar after high school?",
   },
   activities: {
-    kicker: "Everleap · Outside school",
-    title: "What do you do outside of school?",
+    kicker: "Everleap · Off the clock",
+    title: "What do you naturally spend time on?",
   },
   fun: {
-    kicker: "Everleap · One fun question",
+    kicker: "Everleap · One weirdly useful question",
     title: "Pick one.",
   },
 };
@@ -169,17 +174,52 @@ function shortenIdea(raw: string) {
 function certaintyIdeaPrompt(certainty: Certainty) {
   if (certainty === "strong") {
     return {
-      kicker: "Everleap · What’s next",
+      kicker: "Everleap · Future mode",
       title: "Nice. What do you think comes next?",
-      placeholder: "Give me the path you already have in mind.",
+      placeholder: "Say the path you already have in mind.",
     };
   }
 
   return {
-    kicker: "Everleap · What’s next",
+    kicker: "Everleap · Future mode",
     title: "What’s one idea you already have?",
-    placeholder: "Just one is enough.",
+    placeholder: "Just one. We’ll build from there.",
   };
+}
+
+function certaintyCardMeta(certainty: Exclude<Certainty, null>) {
+  switch (certainty) {
+    case "strong":
+      return {
+        label: "I feel pretty sure",
+        sub: "Let’s move.",
+      };
+    case "kinda":
+      return {
+        label: "I have some ideas",
+        sub: "That’s enough to start.",
+      };
+    case "no_clue":
+      return {
+        label: "I honestly don’t know yet",
+        sub: "Still a real answer.",
+      };
+  }
+}
+
+function pulseGradientClass(tone: PulseTone) {
+  switch (tone) {
+    case "sky":
+      return "from-cyan-300/22 via-sky-400/12 to-transparent";
+    case "violet":
+      return "from-violet-300/22 via-indigo-400/12 to-transparent";
+    case "amber":
+      return "from-amber-300/22 via-orange-300/12 to-transparent";
+    case "fuchsia":
+      return "from-fuchsia-300/22 via-pink-300/12 to-transparent";
+    default:
+      return "from-white/16 via-white/8 to-transparent";
+  }
 }
 
 /* ============================================================
@@ -192,6 +232,7 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-cyan-300/10",
       orbB: "bg-violet-400/10",
       glow: "shadow-[0_0_80px_rgba(103,232,249,0.08)]",
+      pulse: "sky" as PulseTone,
     };
   }
 
@@ -200,6 +241,7 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-fuchsia-300/10",
       orbB: "bg-amber-300/10",
       glow: "shadow-[0_0_80px_rgba(217,70,239,0.08)]",
+      pulse: "fuchsia" as PulseTone,
     };
   }
 
@@ -208,6 +250,7 @@ function visualToneForStep(stepId: StepId) {
       orbA: "bg-amber-300/10",
       orbB: "bg-orange-400/10",
       glow: "shadow-[0_0_80px_rgba(251,191,36,0.08)]",
+      pulse: "amber" as PulseTone,
     };
   }
 
@@ -215,6 +258,7 @@ function visualToneForStep(stepId: StepId) {
     orbA: "bg-sky-300/10",
     orbB: "bg-violet-400/10",
     glow: "shadow-[0_0_80px_rgba(56,189,248,0.08)]",
+    pulse: "violet" as PulseTone,
   };
 }
 
@@ -233,7 +277,7 @@ function HeaderAction({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 text-sm font-medium text-white/64 transition hover:text-white/90"
+      className="inline-flex items-center gap-2 text-sm font-medium text-white/64 transition hover:text-white/90 active:scale-[0.985]"
       aria-label={label}
       title={label}
     >
@@ -246,36 +290,86 @@ function HeaderAction({
 function ChoiceRowText({
   label,
   selected,
+  dimmed,
   onClick,
 }: {
   label: string;
   selected?: boolean;
+  dimmed?: boolean;
   onClick?: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group relative block w-full overflow-hidden rounded-[18px] px-4 py-2.5 text-left transition"
+      className={[
+        "group relative block w-full overflow-hidden rounded-[18px] px-4 py-3 text-left transition duration-200",
+        selected ? "translate-x-1 scale-[1.01]" : "",
+        dimmed ? "opacity-55" : "opacity-100",
+        "hover:scale-[1.005] active:scale-[0.988]",
+      ].join(" ")}
     >
       <div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[18px] border transition",
+          "pointer-events-none absolute inset-0 rounded-[18px] border transition duration-200",
           selected
-            ? "border-white/18 bg-white/[0.08] shadow-[0_0_28px_rgba(255,255,255,0.045)]"
-            : "border-white/0 bg-white/[0.02] group-hover:border-white/10 group-hover:bg-white/[0.045]",
+            ? "border-white/18 bg-white/[0.09] shadow-[0_0_28px_rgba(255,255,255,0.05)]"
+            : "border-white/0 bg-white/[0.02] group-hover:border-white/10 group-hover:bg-white/[0.05]",
         ].join(" ")}
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/8 to-transparent" />
       <div
         className={[
-          "relative text-[14px] leading-6 transition",
-          selected
-            ? "font-semibold text-white"
-            : "font-normal text-white/74 group-hover:text-white/90",
+          "relative text-[14px] leading-6 transition duration-200",
+          selected ? "font-semibold text-white" : "font-normal text-white/76 group-hover:text-white/92",
         ].join(" ")}
       >
         {label}
+      </div>
+    </button>
+  );
+}
+
+function BigMoodCard({
+  title,
+  sub,
+  selected,
+  dimmed,
+  accent,
+  onClick,
+}: {
+  title: string;
+  sub: string;
+  selected?: boolean;
+  dimmed?: boolean;
+  accent: "violet" | "sky" | "soft";
+  onClick: () => void;
+}) {
+  const accentClass =
+    accent === "violet"
+      ? "from-violet-300/18 via-indigo-300/10 to-transparent"
+      : accent === "sky"
+      ? "from-cyan-300/18 via-sky-300/10 to-transparent"
+      : "from-white/14 via-white/6 to-transparent";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-5 text-left transition duration-300",
+        selected
+          ? "scale-[1.018] border-white/18 bg-white/[0.08] shadow-[0_0_48px_rgba(255,255,255,0.06)]"
+          : "border-white/8 bg-white/[0.03] hover:scale-[1.006] hover:border-white/14 hover:bg-white/[0.05]",
+        dimmed ? "opacity-45" : "opacity-100",
+        "active:scale-[0.992]",
+      ].join(" ")}
+    >
+      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClass}`} />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+      <div className="relative">
+        <div className="text-[1.05rem] font-semibold leading-6 text-white">{title}</div>
+        <div className="mt-2 text-[13px] leading-5 text-white/62">{sub}</div>
       </div>
     </button>
   );
@@ -308,9 +402,9 @@ function ThinkingSurface({
 }) {
   return (
     <div className="w-full max-w-2xl">
-      <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.045] p-3 backdrop-blur-sm">
+      <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.045] p-3 backdrop-blur-sm transition duration-200">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/14 via-white/8 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 rounded-[20px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+        <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
 
         <div className="relative">
           <textarea
@@ -326,7 +420,7 @@ function ThinkingSurface({
             }}
             rows={1}
             placeholder={placeholder ?? ""}
-            className="min-h-[44px] w-full resize-none bg-transparent px-1 py-1 text-[14px] leading-6 text-white/92 outline-none placeholder:text-white/28"
+            className="min-h-[52px] w-full resize-none bg-transparent px-1 py-1 text-[15px] leading-6 text-white/94 outline-none placeholder:text-white/28"
           />
 
           <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/8 pt-2.5">
@@ -336,7 +430,7 @@ function ThinkingSurface({
                 onClick={onToggleMic}
                 disabled={!speechSupported}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition",
+                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition active:scale-[0.985]",
                   speechSupported
                     ? isListening
                       ? "bg-white/[0.06] text-white/90"
@@ -364,7 +458,7 @@ function ThinkingSurface({
               onClick={onSubmit}
               disabled={!canSubmit}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition active:scale-[0.985]",
                 canSubmit
                   ? "border-white/16 bg-white/[0.08] text-white/88 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
                   : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
@@ -396,8 +490,8 @@ function MinimalContinue({
       type="button"
       onClick={onClick}
       disabled={Boolean(disabled)}
-      className={`inline-flex items-center gap-2 text-sm font-medium transition ${
-        disabled ? "cursor-not-allowed text-white/32" : "text-white/84 hover:text-white"
+      className={`inline-flex items-center gap-2 text-sm font-medium transition active:scale-[0.985] ${
+        disabled ? "cursor-not-allowed text-white/32" : "text-white/86 hover:text-white"
       }`}
       aria-label={label ?? "Continue"}
       title={label ?? "Continue"}
@@ -411,11 +505,13 @@ function MinimalContinue({
 function QuestionShell({
   kicker,
   title,
+  whisper,
   children,
   actions,
 }: {
   kicker: string;
   title: string;
+  whisper?: string | null;
   children: React.ReactNode;
   actions?: React.ReactNode;
 }) {
@@ -425,11 +521,23 @@ function QuestionShell({
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
           {kicker}
         </div>
-        <h1 className="mt-3 max-w-[18ch] text-[1.95rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.2rem]">
+
+        <h1 className="mt-3 max-w-[18ch] text-[2rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-[2.3rem]">
           {title}
         </h1>
 
-        <div className="mt-5">{children}</div>
+        <div className="mt-2 min-h-[22px]">
+          <div
+            className={[
+              "text-[13px] leading-5 text-white/56 transition-all duration-300",
+              whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+            ].join(" ")}
+          >
+            {whisper ?? " "}
+          </div>
+        </div>
+
+        <div className="mt-3">{children}</div>
 
         {actions ? <div className="mt-5">{actions}</div> : null}
       </div>
@@ -508,67 +616,65 @@ function buildRetort(args: {
   const idea = shortenIdea(certaintyIdea);
 
   if (fromStep === "name") {
-    return n ? `Welcome, ${n}.` : "Welcome.";
+    return n ? `Okay, ${n}.` : "Okay.";
   }
 
   if (fromStep === "situation") {
     if (situation === "high_school") {
-      return "Got it — high school. That helps me keep options wide, practical, and low-pressure.";
+      return "Good. That gives us room to explore without drifting.";
     }
     if (situation === "young_adult") {
-      return "Got it — young adult. That helps me focus on steps that turn ideas into real momentum.";
+      return "Nice. We can move with a little more speed now.";
     }
-    return "Got it. That helps me choose the right pace — explore broadly, then narrow fast.";
+    return "Good. That helps me set the right pace.";
   }
 
   if (fromStep === "zip") {
     if (!zip5) {
-      return "No problem. I can still tailor strong next steps.";
+      return "Totally fine. We can still build a strong starting point.";
     }
     if (zipPlaceLabel) {
-      return `Love it — ${zipPlaceLabel}. That’ll help with future recommendations.`;
+      return `${zipPlaceLabel}. Nice. Local recommendations just got smarter.`;
     }
-    return `Love it — ${zip5}. That’ll help with future recommendations.`;
+    return `${zip5}. Nice. Local recommendations just got smarter.`;
   }
 
   if (fromStep === "certainty") {
     if (certainty === "strong") {
-      return "Nice — if you already see the shape of it, tell me what you think comes next.";
+      return "Good. Start with the thing you already see.";
     }
     if (certainty === "kinda") {
-      return "Perfect — some ideas is all I need. Give me one and I’ll start building around it.";
+      return "Perfect. One idea is enough to get traction.";
     }
     if (certainty === "no_clue") {
-      return "Completely normal. Not knowing yet is useful data — it means we should surface better options fast.";
+      return "Honestly? That’s cleaner than fake certainty.";
     }
     return "Got it.";
   }
 
   if (fromStep === "certaintyIdea") {
-    if (!idea) {
-      return "Good. That gives me something real to work with.";
-    }
+    if (!idea) return "Good. That gives me something real to work with.";
 
     if (certainty === "strong") {
-      return `Love that — ${idea}. That already has shape. Now I can pressure-test it, widen it, or find smarter versions of it.`;
+      return `Okay. ${idea}. Now we’re getting somewhere.`;
     }
 
-    return `Nice — ${idea}. That’s exactly the kind of early clue that helps me turn “some ideas” into an actual direction.`;
+    return `${idea}. Nice. That’s a real clue, not random noise.`;
   }
 
   if (fromStep === "postPlans") {
     if (postPlans.includes("no_idea")) {
-      return "Noted — not sure yet. That’s a smart starting point: explore without committing, and learn fast.";
+      return "Open field. That’s still a real starting point.";
     }
 
     const labels = postPlans.map(postPlanLabel);
     const listText = joinNatural(labels);
 
     if (postPlans.length >= 3) {
-      return `Nice — you’re considering ${listText}. Having a few real options helps us compare quickly and test what’s worth pursuing first.`;
+      return `${listText}. Good. Enough range to compare without getting lost.`;
     }
 
-    return `Good — you’re considering ${listText}. That’s enough direction to build a tight first set of recommendations.`;
+    return `${listText}. Good. That’s enough direction to build from.`;
   }
 
   if (fromStep === "activities") {
@@ -576,31 +682,30 @@ function buildRetort(args: {
     const listText = joinNatural(labels);
 
     if (activities.includes("other") && isMeaningfulText(activitiesOther)) {
-      return `Love it — ${listText}. The extra detail helps me keep recommendations realistic and matched to your life.`;
+      return `${listText}. Good. That extra detail helps a lot.`;
     }
 
-    return `Nice — ${listText}. How you spend time is one of the strongest signals for what will fit.`;
+    return `${listText}. Noted. That tells me more than people think.`;
   }
 
   if (fromStep === "fun") {
     const quick = typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
     const slow = typeof funLatencyMs === "number" && funLatencyMs >= 1800;
-
-    const tempoTag = quick ? "Fast pick." : slow ? "Considered pick." : "";
+    const tempoTag = quick ? "Fast pick. " : slow ? "Considered pick. " : "";
 
     if (funChoice === "dog") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Dog energy: warm-signal, loyal-core. You probably read people’s moods before they speak. It’s a vibe, not destiny.`;
+      return `${tempoTag}Dog energy. Warm, loyal, easy to read — until you’re not.`;
     }
     if (funChoice === "cat") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Cat energy: independent mind, high standards. You spot patterns and nonsense pretty quickly. It’s a vibe, not destiny.`;
+      return `${tempoTag}Cat energy. Independent, selective, and not here for nonsense.`;
     }
     if (funChoice === "bearded_dragon") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Bearded dragon energy: calm confidence + original taste. You’re not here for generic options. It’s a vibe, not destiny.`;
+      return `${tempoTag}Bearded dragon. Calm confidence. Weirdly excellent taste.`;
     }
     if (funChoice === "rock") {
-      return `${tempoTag ? `${tempoTag} ` : ""}Rock energy: minimalist focus, unshakeable calm. You’d rather be solid than loud. It’s a vibe, not destiny.`;
+      return `${tempoTag}Rock. Unbothered. Respect.`;
     }
-    return "Nice pick. It’s a vibe, not destiny.";
+    return "Interesting pick.";
   }
 
   return "Perfect. That gives me enough to keep going.";
@@ -636,39 +741,39 @@ function buildInsight(options: {
 
   if (situation === "high_school") {
     if (certainty === "strong") {
-      parts.push("You’re in high school and you’ve got a pretty clear direction.");
+      parts.push("You’re in high school and you already have a real sense of direction.");
     } else if (certainty === "kinda") {
-      parts.push("You’re in high school with a few ideas — enough to start testing what fits.");
+      parts.push("You’re in high school with early ideas — enough to start shaping something real.");
     } else if (certainty === "no_clue") {
-      parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
+      parts.push("You’re in high school and still figuring it out, which is more normal than people admit.");
     } else {
-      parts.push("You’re in high school and taking a moment to think about what comes next.");
+      parts.push("You’re in high school and thinking seriously about what comes next.");
     }
   } else if (situation === "young_adult") {
     if (certainty === "strong") {
-      parts.push("You’re a young adult with clear direction — a great place to turn plans into moves.");
+      parts.push("You’re a young adult with clear direction, which means we can move faster.");
     } else if (certainty === "kinda") {
-      parts.push("You’re a young adult with some ideas — enough to narrow things quickly.");
+      parts.push("You’re a young adult with some real ideas already in motion.");
     } else if (certainty === "no_clue") {
-      parts.push("You’re a young adult and you’re not sure yet what’s next — we can work with that.");
+      parts.push("You’re a young adult and not fully sure yet, which still gives us something honest to work with.");
     } else {
-      parts.push("You’re a young adult taking a pause to figure out what fits.");
+      parts.push("You’re a young adult taking a real look at what fits.");
     }
   } else {
-    parts.push("You’re taking a moment to step back and look at what comes next.");
+    parts.push("You’re taking a real look at what comes next.");
   }
 
   if (idea) {
     if (certainty === "strong") {
-      parts.push(`You already have a real path in mind: ${idea}. That gives us something concrete to sharpen instead of starting from zero.`);
+      parts.push(`You already have a concrete path in mind: ${idea}. That gives us something to sharpen instead of inventing from scratch.`);
     } else if (certainty === "kinda") {
-      parts.push(`One early idea already stands out: ${idea}. That’s enough to start building around something real.`);
+      parts.push(`One early idea already stands out: ${idea}. That’s enough to start building around.`);
     }
   }
 
   if (postPlans.length > 0) {
     if (postPlans.includes("no_idea")) {
-      parts.push("You’re keeping options open right now — so we’ll explore without forcing a single lane.");
+      parts.push("You’re keeping the field open for now, which means the job is to surface strong options fast.");
     } else {
       const mapped: string[] = [];
       if (postPlans.includes("job")) mapped.push("building experience through work");
@@ -680,7 +785,7 @@ function buildInsight(options: {
       if (mapped.length > 0) {
         const last = mapped.pop();
         const listText = mapped.length ? `${mapped.join(", ")}, and ${last}` : last!;
-        parts.push(`You’re considering ${listText}. That’s enough to build a few solid options and test them fast.`);
+        parts.push(`You’re considering ${listText}. That gives us enough range to compare paths without getting scattered.`);
       }
     }
   }
@@ -696,24 +801,24 @@ function buildInsight(options: {
     if (act.length) {
       const last = act.pop();
       const listText = act.length ? `${act.join(", ")}, and ${last}` : last!;
-      parts.push(`Outside of school, you’re spending time on ${listText}. That’s a strong signal about how you like to learn and work.`);
+      parts.push(`Outside of school, you naturally spend time on ${listText}. That’s one of the strongest signals for what will actually feel right.`);
     }
 
     if (isMeaningfulText(activitiesOther)) {
-      parts.push("The extra detail you shared helps tighten the fit even more.");
+      parts.push("The extra detail you added makes the fit even clearer.");
     }
   }
 
   if (zip5) {
-    parts.push("I’ll keep local opportunities in mind when I suggest next steps.");
+    parts.push("I’ll keep local opportunities in play too.");
   }
 
-  if (funChoice === "dog") parts.push("Also: dog energy. Noted.");
-  if (funChoice === "cat") parts.push("Also: cat energy. Noted.");
-  if (funChoice === "bearded_dragon") parts.push("Also: bearded dragon energy. Respect.");
+  if (funChoice === "dog") parts.push("Also: dog energy.");
+  if (funChoice === "cat") parts.push("Also: cat energy.");
+  if (funChoice === "bearded_dragon") parts.push("Also: bearded dragon energy.");
   if (funChoice === "rock") parts.push("Also: rock. Iconic.");
 
-  parts.push("This is just a starting point — enough to generate good first options, then improve with a few more questions later.");
+  parts.push("This is a starting point, not a box — enough to generate strong first options, then sharpen fast.");
 
   return parts.join(" ");
 }
@@ -793,6 +898,10 @@ export default function OnboardingPage() {
 
   const funShownAtRef = React.useRef<number | null>(null);
 
+  const [pulseTone, setPulseTone] = React.useState<PulseTone>("soft");
+  const [pulseKey, setPulseKey] = React.useState(0);
+  const [whisper, setWhisper] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -818,6 +927,7 @@ export default function OnboardingPage() {
       setActivitiesOther("");
       setFunChoice(null);
       setDraft("");
+      setWhisper(null);
 
       if (recognitionRef.current) {
         try {
@@ -855,11 +965,20 @@ export default function OnboardingPage() {
       if (!shouldReset) {
         if (typeof saved.stepIndex === "number") setStepIndex(saved.stepIndex);
         if (typeof saved.name === "string") setName(saved.name);
-        if (saved.situation === "high_school" || saved.situation === "young_adult" || saved.situation === null) {
+        if (
+          saved.situation === "high_school" ||
+          saved.situation === "young_adult" ||
+          saved.situation === null
+        ) {
           setSituation(saved.situation);
         }
         if (typeof saved.zip === "string") setZip(saved.zip);
-        if (saved.certainty === "strong" || saved.certainty === "kinda" || saved.certainty === "no_clue" || saved.certainty === null) {
+        if (
+          saved.certainty === "strong" ||
+          saved.certainty === "kinda" ||
+          saved.certainty === "no_clue" ||
+          saved.certainty === null
+        ) {
           setCertainty(saved.certainty);
         }
         if (typeof saved.certaintyIdea === "string") setCertaintyIdea(saved.certaintyIdea);
@@ -940,6 +1059,7 @@ export default function OnboardingPage() {
     activeTargetRef.current = null;
     setDraft("");
     advanceLockRef.current = false;
+    setWhisper(null);
 
     if (stepId === "fun" && screenMode === "question") {
       funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -947,6 +1067,19 @@ export default function OnboardingPage() {
       funShownAtRef.current = null;
     }
   }, [stepId, screenMode]);
+
+  function triggerPulse(tone: PulseTone) {
+    setPulseTone(tone);
+    setPulseKey((k) => k + 1);
+  }
+
+  function showWhisper(message: string) {
+    setWhisper(message);
+    window.clearTimeout((showWhisper as unknown as { _t?: number })._t);
+    (showWhisper as unknown as { _t?: number })._t = window.setTimeout(() => {
+      setWhisper(null);
+    }, 1050);
+  }
 
   function lockAdvance(): boolean {
     if (advanceLockRef.current) return false;
@@ -1213,6 +1346,7 @@ export default function OnboardingPage() {
 
   function onWelcomeNext() {
     if (!lockAdvance()) return;
+    triggerPulse("sky");
     void showRetortThenAdvance("welcome");
     unlockAdvance();
   }
@@ -1226,6 +1360,8 @@ export default function OnboardingPage() {
     }
     setName(text);
     setDraft("");
+    triggerPulse("violet");
+    showWhisper("Good. Start simple.");
     void showRetortThenAdvance("name", { name: text });
     unlockAdvance();
   }
@@ -1233,6 +1369,8 @@ export default function OnboardingPage() {
   function chooseSituation(v: Situation) {
     if (!lockAdvance()) return;
     setSituation(v);
+    triggerPulse(v === "high_school" ? "sky" : "violet");
+    showWhisper(v === "high_school" ? "Good. We’ll keep it wide at first." : "Nice. We can move faster.");
     void showRetortThenAdvance("situation", { situation: v });
     unlockAdvance();
   }
@@ -1243,7 +1381,8 @@ export default function OnboardingPage() {
     const normalized = normalizeZip(draft);
     setZip(normalized);
     setDraft("");
-
+    triggerPulse("amber");
+    showWhisper("Nice. Local gets smarter.");
     void showRetortThenAdvance("zip", { zip5: normalized });
     unlockAdvance();
   }
@@ -1252,6 +1391,8 @@ export default function OnboardingPage() {
     if (!lockAdvance()) return;
     setZip("");
     setDraft("");
+    triggerPulse("soft");
+    showWhisper("No problem. Still enough to work with.");
     void showRetortThenAdvance("zip", { zip5: "" });
     unlockAdvance();
   }
@@ -1262,7 +1403,22 @@ export default function OnboardingPage() {
     if (v === "no_clue") {
       setCertaintyIdea("");
     }
-    void showRetortThenAdvance("certainty", { certainty: v, certaintyIdea: v === "no_clue" ? "" : certaintyIdea });
+
+    if (v === "strong") {
+      triggerPulse("violet");
+      showWhisper("Good. Let’s use that.");
+    } else if (v === "kinda") {
+      triggerPulse("sky");
+      showWhisper("That’s enough to build from.");
+    } else {
+      triggerPulse("soft");
+      showWhisper("Honestly? Valid.");
+    }
+
+    void showRetortThenAdvance("certainty", {
+      certainty: v,
+      certaintyIdea: v === "no_clue" ? "" : certaintyIdea,
+    });
     unlockAdvance();
   }
 
@@ -1276,6 +1432,8 @@ export default function OnboardingPage() {
 
     setCertaintyIdea(text);
     setDraft("");
+    triggerPulse(certainty === "strong" ? "violet" : "sky");
+    showWhisper(certainty === "strong" ? "Okay. Now we’re getting somewhere." : "Nice. That’s real.");
     void showRetortThenAdvance("certaintyIdea", { certaintyIdea: text });
     unlockAdvance();
   }
@@ -1286,6 +1444,15 @@ export default function OnboardingPage() {
       const cleaned = prev.filter((k) => k !== "no_idea");
       return toggleInList(cleaned as PostPlanKey[], key);
     });
+
+    triggerPulse(key === "no_idea" ? "soft" : "amber");
+
+    if (key === "job") showWhisper("Direct. Useful.");
+    if (key === "four_year") showWhisper("Classic path. Still flexible.");
+    if (key === "associates") showWhisper("Practical and underrated.");
+    if (key === "credential") showWhisper("Hands-on counts.");
+    if (key === "military") showWhisper("Strong signal.");
+    if (key === "no_idea") showWhisper("Open field. Still real.");
   }
 
   function continuePostPlans() {
@@ -1295,12 +1462,22 @@ export default function OnboardingPage() {
       advanceLockRef.current = false;
       return;
     }
+    triggerPulse("amber");
     void showRetortThenAdvance("postPlans", { postPlans: snapshot });
     unlockAdvance();
   }
 
   function toggleActivity(key: ActivityKey) {
     setActivities((prev) => toggleInList(prev, key));
+    triggerPulse(key === "visual_arts" ? "amber" : key === "sports" ? "sky" : "violet");
+
+    if (key === "sports") showWhisper("Noted. You probably hate wasted motion.");
+    if (key === "visual_arts") showWhisper("Taste is a signal.");
+    if (key === "performing_arts") showWhisper("Performance says a lot.");
+    if (key === "volunteer") showWhisper("That matters.");
+    if (key === "job") showWhisper("Responsibility counts.");
+    if (key === "other") showWhisper("Good. Add the part that doesn’t fit the menu.");
+
     if (key === "other" && activities.includes("other")) {
       setActivitiesOther("");
       setDraft("");
@@ -1320,6 +1497,7 @@ export default function OnboardingPage() {
       const text = (typeof optionalOther === "string" ? optionalOther : draft).trim();
       setActivitiesOther(text);
       setDraft("");
+      triggerPulse("violet");
 
       void showRetortThenAdvance("activities", {
         activities: snapshot,
@@ -1329,6 +1507,7 @@ export default function OnboardingPage() {
       return;
     }
 
+    triggerPulse("violet");
     void showRetortThenAdvance("activities", { activities: snapshot });
     unlockAdvance();
   }
@@ -1336,12 +1515,13 @@ export default function OnboardingPage() {
   function chooseFun(choice: FunChoice) {
     if (!lockAdvance()) return;
     setFunChoice(choice);
+    triggerPulse("fuchsia");
     showFunRetort(choice);
     unlockAdvance();
   }
 
-  const meta = stepId !== "summary" && stepId !== "certaintyIdea" ? STEP_META[stepId] : null;
   const tone = visualToneForStep(stepId);
+  const prompt = stepId === "certaintyIdea" ? certaintyIdeaPrompt(certainty) : null;
 
   function renderRetort() {
     return (
@@ -1357,15 +1537,20 @@ export default function OnboardingPage() {
         title="Tap to continue"
       >
         <div className="mx-auto w-full max-w-3xl">
-          <div
-            className={`rounded-[22px] border border-white/10 bg-white/[0.04] px-5 py-5 backdrop-blur-sm ${tone.glow}`}
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
-              Got it
-            </div>
-            <div className="mt-3 max-w-2xl text-[16px] leading-7 text-white/88">{retortText}</div>
-            <div className="mt-4 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
-              Tap anywhere to continue
+          <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] px-5 py-7 backdrop-blur-sm">
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${pulseGradientClass(tone.pulse)}`} />
+            <div className="relative">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
+                Everleap
+              </div>
+
+              <div className="mt-4 max-w-2xl text-[1.55rem] font-semibold leading-[1.15] tracking-tight text-white sm:text-[1.8rem]">
+                {retortText}
+              </div>
+
+              <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
+                Tap anywhere to continue
+              </div>
             </div>
           </div>
         </div>
@@ -1379,11 +1564,11 @@ export default function OnboardingPage() {
         <div className="relative mx-auto w-full max-w-3xl">
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+            className={`pointer-events-none absolute -left-8 top-[-1.75rem] h-24 w-24 rounded-full blur-3xl ambientFloatSlow ${tone.orbA}`}
           />
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+            className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ambientFloat ${tone.orbB}`}
           />
 
           <div className="relative">
@@ -1391,19 +1576,19 @@ export default function OnboardingPage() {
               {STEP_META.welcome.kicker}
             </div>
 
-            <h1 className="mt-3 max-w-[13ch] text-[2.15rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.5rem]">
+            <h1 className="mt-3 max-w-[12ch] text-[2.2rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.7rem]">
               {STEP_META.welcome.title}
             </h1>
 
-            <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/68">
-              A few quick questions now will sharpen what comes next.
+            <p className="mt-4 max-w-xl text-[15px] leading-6 text-white/68">
+              A few quick questions. Then the app stops guessing.
             </p>
 
             <div className="mt-6">
               <button
                 type="button"
                 onClick={onWelcomeNext}
-                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white"
+                className="group inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/[0.07] px-5 py-2.5 text-sm font-medium text-white/92 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.11] hover:text-white active:scale-[0.985]"
                 aria-label="Let’s begin"
                 title="Let’s begin"
               >
@@ -1424,7 +1609,7 @@ export default function OnboardingPage() {
 
   function renderName() {
     return (
-      <QuestionShell kicker={STEP_META.name.kicker} title={STEP_META.name.title}>
+      <QuestionShell kicker={STEP_META.name.kicker} title={STEP_META.name.title} whisper={whisper}>
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1442,17 +1627,25 @@ export default function OnboardingPage() {
   }
 
   function renderSituation() {
+    const hasSelection = Boolean(situation);
+
     return (
-      <QuestionShell kicker={STEP_META.situation.kicker} title={STEP_META.situation.title}>
+      <QuestionShell
+        kicker={STEP_META.situation.kicker}
+        title={STEP_META.situation.title}
+        whisper={whisper}
+      >
         <div className="max-w-2xl space-y-2">
           <ChoiceRowText
             label="I’m in high school"
             selected={situation === "high_school"}
+            dimmed={hasSelection && situation !== "high_school"}
             onClick={() => chooseSituation("high_school")}
           />
           <ChoiceRowText
             label="I’m a young adult (18–24)"
             selected={situation === "young_adult"}
+            dimmed={hasSelection && situation !== "young_adult"}
             onClick={() => chooseSituation("young_adult")}
           />
         </div>
@@ -1465,11 +1658,12 @@ export default function OnboardingPage() {
       <QuestionShell
         kicker={STEP_META.zip.kicker}
         title={STEP_META.zip.title}
+        whisper={whisper}
         actions={
           <button
             type="button"
             onClick={skipZip}
-            className="text-sm font-medium text-white/50 transition hover:text-white/78"
+            className="text-sm font-medium text-white/50 transition hover:text-white/78 active:scale-[0.985]"
             aria-label="Skip for now"
             title="Skip for now"
           >
@@ -1495,22 +1689,37 @@ export default function OnboardingPage() {
   }
 
   function renderCertainty() {
+    const hasSelection = Boolean(certainty);
+
     return (
-      <QuestionShell kicker={STEP_META.certainty.kicker} title={STEP_META.certainty.title}>
-        <div className="max-w-2xl space-y-2">
-          <ChoiceRowText
-            label="I feel pretty sure"
+      <QuestionShell
+        kicker={STEP_META.certainty.kicker}
+        title={STEP_META.certainty.title}
+        whisper={whisper}
+      >
+        <div className="max-w-3xl space-y-3">
+          <BigMoodCard
+            title="I feel pretty sure"
+            sub="Let’s move."
+            accent="violet"
             selected={certainty === "strong"}
+            dimmed={hasSelection && certainty !== "strong"}
             onClick={() => chooseCertainty("strong")}
           />
-          <ChoiceRowText
-            label="I have some ideas"
+          <BigMoodCard
+            title="I have some ideas"
+            sub="That’s enough to start."
+            accent="sky"
             selected={certainty === "kinda"}
+            dimmed={hasSelection && certainty !== "kinda"}
             onClick={() => chooseCertainty("kinda")}
           />
-          <ChoiceRowText
-            label="I honestly don’t know yet"
+          <BigMoodCard
+            title="I honestly don’t know yet"
+            sub="Still a real answer."
+            accent="soft"
             selected={certainty === "no_clue"}
+            dimmed={hasSelection && certainty !== "no_clue"}
             onClick={() => chooseCertainty("no_clue")}
           />
         </div>
@@ -1519,10 +1728,12 @@ export default function OnboardingPage() {
   }
 
   function renderCertaintyIdea() {
-    const prompt = certaintyIdeaPrompt(certainty);
-
     return (
-      <QuestionShell kicker={prompt.kicker} title={prompt.title}>
+      <QuestionShell
+        kicker={prompt?.kicker ?? "Everleap · Future mode"}
+        title={prompt?.title ?? "What’s one idea you already have?"}
+        whisper={whisper}
+      >
         <ThinkingSurface
           value={draft}
           onChange={setDraft}
@@ -1533,7 +1744,7 @@ export default function OnboardingPage() {
           isListening={isListening}
           speechSupported={speechSupported}
           onToggleMic={() => toggleMic("certaintyIdea")}
-          placeholder={prompt.placeholder}
+          placeholder={prompt?.placeholder ?? "Just one. We’ll build from there."}
         />
       </QuestionShell>
     );
@@ -1546,37 +1757,44 @@ export default function OnboardingPage() {
       <QuestionShell
         kicker={STEP_META.postPlans.kicker}
         title={STEP_META.postPlans.title}
+        whisper={whisper}
         actions={<MinimalContinue onClick={continuePostPlans} disabled={!hasSelection} />}
       >
         <div className="max-w-3xl space-y-2">
           <ChoiceRowText
             label="Get a job"
             selected={postPlans.includes("job")}
+            dimmed={hasSelection && !postPlans.includes("job")}
             onClick={() => togglePostPlan("job")}
           />
           <ChoiceRowText
             label="Four-year college"
             selected={postPlans.includes("four_year")}
+            dimmed={hasSelection && !postPlans.includes("four_year")}
             onClick={() => togglePostPlan("four_year")}
           />
           <ChoiceRowText
             label="Community / two-year college"
             selected={postPlans.includes("associates")}
+            dimmed={hasSelection && !postPlans.includes("associates")}
             onClick={() => togglePostPlan("associates")}
           />
           <ChoiceRowText
             label="Trade / credential program"
             selected={postPlans.includes("credential")}
+            dimmed={hasSelection && !postPlans.includes("credential")}
             onClick={() => togglePostPlan("credential")}
           />
           <ChoiceRowText
             label="Military"
             selected={postPlans.includes("military")}
+            dimmed={hasSelection && !postPlans.includes("military")}
             onClick={() => togglePostPlan("military")}
           />
           <ChoiceRowText
             label="Not sure yet"
             selected={postPlans.includes("no_idea")}
+            dimmed={hasSelection && !postPlans.includes("no_idea")}
             onClick={() => togglePostPlan("no_idea")}
           />
         </div>
@@ -1592,37 +1810,44 @@ export default function OnboardingPage() {
       <QuestionShell
         kicker={STEP_META.activities.kicker}
         title={STEP_META.activities.title}
+        whisper={whisper}
         actions={<MinimalContinue onClick={() => continueActivities()} disabled={!hasSelection} />}
       >
         <div className="max-w-3xl space-y-2">
           <ChoiceRowText
             label="Sports / training"
             selected={activities.includes("sports")}
+            dimmed={hasSelection && !activities.includes("sports")}
             onClick={() => toggleActivity("sports")}
           />
           <ChoiceRowText
             label="Art / design"
             selected={activities.includes("visual_arts")}
+            dimmed={hasSelection && !activities.includes("visual_arts")}
             onClick={() => toggleActivity("visual_arts")}
           />
           <ChoiceRowText
             label="Music / dance / theater"
             selected={activities.includes("performing_arts")}
+            dimmed={hasSelection && !activities.includes("performing_arts")}
             onClick={() => toggleActivity("performing_arts")}
           />
           <ChoiceRowText
             label="Volunteering / helping out"
             selected={activities.includes("volunteer")}
+            dimmed={hasSelection && !activities.includes("volunteer")}
             onClick={() => toggleActivity("volunteer")}
           />
           <ChoiceRowText
             label="Working a job"
             selected={activities.includes("job")}
+            dimmed={hasSelection && !activities.includes("job")}
             onClick={() => toggleActivity("job")}
           />
           <ChoiceRowText
             label="Other"
             selected={activities.includes("other")}
+            dimmed={hasSelection && !activities.includes("other")}
             onClick={() => toggleActivity("other")}
           />
         </div>
@@ -1649,33 +1874,38 @@ export default function OnboardingPage() {
 
   function renderFun() {
     return (
-      <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title}>
+      <QuestionShell kicker={STEP_META.fun.kicker} title={STEP_META.fun.title} whisper={whisper}>
         <div className="grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4">
-          {FUN_OPTIONS.map((o) => (
+          {FUN_OPTIONS.map((o, index) => (
             <button
               key={o.key}
               type="button"
               onClick={() => chooseFun(o.key)}
-              className="group relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.04] transition hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] active:scale-[0.99]"
+              className={[
+                "group relative overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.04] transition duration-200 hover:border-white/24 hover:bg-white/[0.06] hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] active:scale-[0.99]",
+                funChoice === o.key ? "scale-[1.02] ring-1 ring-white/16" : "",
+                funChoice && funChoice !== o.key ? "opacity-60" : "opacity-100",
+              ].join(" ")}
               aria-label={o.alt}
               title={o.alt}
+              style={{ animationDelay: `${index * 120}ms` }}
             >
-              <div className="relative h-[132px] w-full sm:h-[190px]">
+              <div className="relative h-[138px] w-full sm:h-[196px]">
                 <Image
                   src={o.src}
                   alt={o.alt}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 320px"
-                  className="object-cover transition duration-300 group-hover:scale-[1.025]"
+                  className="object-cover transition duration-300 group-hover:scale-[1.05] funCardBreathe"
                   priority={o.key === "dog"}
                 />
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/42 via-black/8 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/48 via-black/8 to-transparent"
                 />
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/8 to-transparent" />
                 <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-3 text-left">
-                  <div className="text-sm font-medium text-white/90">{o.alt}</div>
+                  <div className="text-sm font-medium text-white/92">{o.alt}</div>
                 </div>
               </div>
             </button>
@@ -1703,30 +1933,31 @@ export default function OnboardingPage() {
     return (
       <div className="flex h-full items-center">
         <div className="mx-auto w-full max-w-3xl">
-          <div
-            className={`rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-6 backdrop-blur-sm ${tone.glow}`}
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
-              Everleap
-            </div>
+          <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.03] px-5 py-7 backdrop-blur-sm">
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${pulseGradientClass(tone.pulse)}`} />
+            <div className="relative">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/42">
+                Everleap
+              </div>
 
-            <h1 className="mt-3 max-w-[16ch] text-[1.9rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[2.1rem]">
-              {n ? `Here’s your starting point, ${n}.` : "Here’s your starting point."}
-            </h1>
+              <h1 className="mt-3 max-w-[16ch] text-[1.95rem] font-semibold leading-[1.04] tracking-tight text-white sm:text-[2.2rem]">
+                {n ? `Here’s your starting point, ${n}.` : "Here’s your starting point."}
+              </h1>
 
-            <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">{insight}</p>
+              <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/78">{insight}</p>
 
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() => router.push("/login")}
-                className="inline-flex items-center gap-2 text-sm font-medium text-white/88 transition hover:text-white"
-                aria-label="Join Everleap"
-                title="Join Everleap"
-              >
-                <span>Join Everleap</span>
-                <span aria-hidden="true">→</span>
-              </button>
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => router.push("/login")}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-white/88 transition hover:text-white active:scale-[0.985]"
+                  aria-label="Join Everleap"
+                  title="Join Everleap"
+                >
+                  <span>Join Everleap</span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1784,23 +2015,32 @@ export default function OnboardingPage() {
             style={{ opacity: gradient.ambientOpacity * 0.42 }}
           >
             <div
-              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
+              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ambientFloatSlow ${theme.ambientTopLeftClass}`}
             />
             <div
-              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
+              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ambientFloat ${theme.ambientRightClass}`}
               style={{ opacity: 0.32 }}
             />
             <div
-              className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ${tone.orbA}`}
+              className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ambientFloat ${tone.orbA}`}
             />
             <div
-              className={`absolute bottom-[-5rem] right-[10%] h-[15rem] w-[15rem] rounded-full blur-3xl ${tone.orbB}`}
+              className={`absolute bottom-[-5rem] right-[10%] h-[15rem] w-[15rem] rounded-full blur-3xl ambientFloatSlow ${tone.orbB}`}
             />
           </div>
         )}
 
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(12,35,84,0.18),transparent_52%)]" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/12 via-transparent to-black/18" />
+
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            key={pulseKey}
+            className={`absolute left-1/2 top-1/2 h-[19rem] w-[19rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br ${pulseGradientClass(
+              pulseTone
+            )} signalPulse blur-2xl`}
+          />
+        </div>
 
         <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-5 pb-6 pt-4 sm:px-6">
           <header className="flex h-14 shrink-0 items-center justify-end">
@@ -1823,6 +2063,68 @@ export default function OnboardingPage() {
             </div>
           </main>
         </div>
+
+        <style jsx>{`
+          .signalPulse {
+            animation: signalPulse 820ms ease-out forwards;
+          }
+
+          .ambientFloat {
+            animation: ambientFloat 9s ease-in-out infinite;
+          }
+
+          .ambientFloatSlow {
+            animation: ambientFloatSlow 13s ease-in-out infinite;
+          }
+
+          .funCardBreathe {
+            animation: funCardBreathe 5.5s ease-in-out infinite;
+          }
+
+          @keyframes signalPulse {
+            0% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.55);
+            }
+            18% {
+              opacity: 1;
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(1.85);
+            }
+          }
+
+          @keyframes ambientFloat {
+            0%,
+            100% {
+              transform: translate3d(0, 0, 0) scale(1);
+            }
+            50% {
+              transform: translate3d(0, -10px, 0) scale(1.04);
+            }
+          }
+
+          @keyframes ambientFloatSlow {
+            0%,
+            100% {
+              transform: translate3d(0, 0, 0) scale(1);
+            }
+            50% {
+              transform: translate3d(0, 12px, 0) scale(1.06);
+            }
+          }
+
+          @keyframes funCardBreathe {
+            0%,
+            100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.028);
+            }
+          }
+        `}</style>
       </div>
     </AppChrome>
   );
