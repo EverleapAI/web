@@ -42,6 +42,7 @@ type StepId =
   | "situation"
   | "zip"
   | "certainty"
+  | "certaintyIdea"
   | "postPlans"
   | "activities"
   | "fun"
@@ -53,6 +54,7 @@ const STEPS: StepId[] = [
   "situation",
   "zip",
   "certainty",
+  "certaintyIdea",
   "postPlans",
   "activities",
   "fun",
@@ -82,7 +84,7 @@ type ActivityKey =
 
 type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 
-type VoiceTarget = "name" | "zip" | "activitiesOther";
+type VoiceTarget = "name" | "zip" | "activitiesOther" | "certaintyIdea";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
@@ -90,7 +92,7 @@ const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
    Copy
    ============================================================ */
 
-const STEP_META: Record<Exclude<StepId, "summary">, { kicker: string; title: string }> = {
+const STEP_META: Record<Exclude<StepId, "summary" | "certaintyIdea">, { kicker: string; title: string }> = {
   welcome: {
     kicker: "Everleap",
     title: "Let’s get a real sense of you.",
@@ -160,6 +162,26 @@ function joinNatural(list: string[]) {
   return `${clean.slice(0, -1).join(", ")}, and ${clean[clean.length - 1]}`;
 }
 
+function shortenIdea(raw: string) {
+  return raw.trim().replace(/\s+/g, " ").replace(/[.?!]+$/g, "");
+}
+
+function certaintyIdeaPrompt(certainty: Certainty) {
+  if (certainty === "strong") {
+    return {
+      kicker: "Everleap · What’s next",
+      title: "Nice. What do you think comes next?",
+      placeholder: "Give me the path you already have in mind.",
+    };
+  }
+
+  return {
+    kicker: "Everleap · What’s next",
+    title: "What’s one idea you already have?",
+    placeholder: "Just one is enough.",
+  };
+}
+
 /* ============================================================
    Visual helpers
    ============================================================ */
@@ -181,7 +203,7 @@ function visualToneForStep(stepId: StepId) {
     };
   }
 
-  if (stepId === "zip" || stepId === "postPlans") {
+  if (stepId === "zip" || stepId === "postPlans" || stepId === "certaintyIdea") {
     return {
       orbA: "bg-amber-300/10",
       orbB: "bg-orange-400/10",
@@ -199,23 +221,6 @@ function visualToneForStep(stepId: StepId) {
 /* ============================================================
    UI atoms
    ============================================================ */
-
-function BrandButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-3 text-white/84 transition hover:text-white"
-      aria-label="Go to landing page"
-      title="Everleap"
-    >
-      <span className="grid h-10 w-10 place-items-center rounded-full border border-white/14 bg-white/[0.06] text-xs font-semibold backdrop-blur-sm">
-        EL
-      </span>
-      <span className="text-sm font-semibold uppercase tracking-[0.14em]">Everleap</span>
-    </button>
-  );
-}
 
 function HeaderAction({
   label,
@@ -475,6 +480,7 @@ function buildRetort(args: {
   name: string;
   situation: Situation;
   certainty: Certainty;
+  certaintyIdea: string;
   postPlans: PostPlanKey[];
   activities: ActivityKey[];
   activitiesOther: string;
@@ -488,6 +494,7 @@ function buildRetort(args: {
     name,
     situation,
     certainty,
+    certaintyIdea,
     postPlans,
     activities,
     activitiesOther,
@@ -498,6 +505,7 @@ function buildRetort(args: {
   } = args;
 
   const n = firstName(name);
+  const idea = shortenIdea(certaintyIdea);
 
   if (fromStep === "name") {
     return n ? `Welcome, ${n}.` : "Welcome.";
@@ -525,15 +533,27 @@ function buildRetort(args: {
 
   if (fromStep === "certainty") {
     if (certainty === "strong") {
-      return "Nice — feeling pretty sure means we can move faster, then sanity-check with a couple quick experiments.";
+      return "Nice — if you already see the shape of it, tell me what you think comes next.";
     }
     if (certainty === "kinda") {
-      return "Perfect — having some ideas is enough. We’ll narrow by testing what gives you energy and what actually fits.";
+      return "Perfect — some ideas is all I need. Give me one and I’ll start building around it.";
     }
     if (certainty === "no_clue") {
       return "Completely normal. Not knowing yet is useful data — it means we should surface better options fast.";
     }
     return "Got it.";
+  }
+
+  if (fromStep === "certaintyIdea") {
+    if (!idea) {
+      return "Good. That gives me something real to work with.";
+    }
+
+    if (certainty === "strong") {
+      return `Love that — ${idea}. That already has shape. Now I can pressure-test it, widen it, or find smarter versions of it.`;
+    }
+
+    return `Nice — ${idea}. That’s exactly the kind of early clue that helps me turn “some ideas” into an actual direction.`;
   }
 
   if (fromStep === "postPlans") {
@@ -593,28 +613,57 @@ function buildRetort(args: {
 function buildInsight(options: {
   situation: Situation;
   certainty: Certainty;
+  certaintyIdea: string;
   postPlans: PostPlanKey[];
   activities: ActivityKey[];
   activitiesOther: string;
   funChoice: FunChoice;
   zip5: string;
 }) {
-  const { situation, certainty, postPlans, activities, activitiesOther, funChoice, zip5 } = options;
+  const {
+    situation,
+    certainty,
+    certaintyIdea,
+    postPlans,
+    activities,
+    activitiesOther,
+    funChoice,
+    zip5,
+  } = options;
 
   const parts: string[] = [];
+  const idea = shortenIdea(certaintyIdea);
 
   if (situation === "high_school") {
-    if (certainty === "strong") parts.push("You’re in high school and you’ve got a pretty clear direction.");
-    else if (certainty === "kinda") parts.push("You’re in high school with a few ideas — enough to start testing what fits.");
-    else if (certainty === "no_clue") parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
-    else parts.push("You’re in high school and taking a moment to think about what comes next.");
+    if (certainty === "strong") {
+      parts.push("You’re in high school and you’ve got a pretty clear direction.");
+    } else if (certainty === "kinda") {
+      parts.push("You’re in high school with a few ideas — enough to start testing what fits.");
+    } else if (certainty === "no_clue") {
+      parts.push("You’re in high school and you’re not sure yet what’s next — which is completely normal.");
+    } else {
+      parts.push("You’re in high school and taking a moment to think about what comes next.");
+    }
   } else if (situation === "young_adult") {
-    if (certainty === "strong") parts.push("You’re a young adult with clear direction — a great place to turn plans into moves.");
-    else if (certainty === "kinda") parts.push("You’re a young adult with some ideas — enough to narrow things quickly.");
-    else if (certainty === "no_clue") parts.push("You’re a young adult and you’re not sure yet what’s next — we can work with that.");
-    else parts.push("You’re a young adult taking a pause to figure out what fits.");
+    if (certainty === "strong") {
+      parts.push("You’re a young adult with clear direction — a great place to turn plans into moves.");
+    } else if (certainty === "kinda") {
+      parts.push("You’re a young adult with some ideas — enough to narrow things quickly.");
+    } else if (certainty === "no_clue") {
+      parts.push("You’re a young adult and you’re not sure yet what’s next — we can work with that.");
+    } else {
+      parts.push("You’re a young adult taking a pause to figure out what fits.");
+    }
   } else {
     parts.push("You’re taking a moment to step back and look at what comes next.");
+  }
+
+  if (idea) {
+    if (certainty === "strong") {
+      parts.push(`You already have a real path in mind: ${idea}. That gives us something concrete to sharpen instead of starting from zero.`);
+    } else if (certainty === "kinda") {
+      parts.push(`One early idea already stands out: ${idea}. That’s enough to start building around something real.`);
+    }
   }
 
   if (postPlans.length > 0) {
@@ -677,6 +726,7 @@ type RetortOverrides = Partial<{
   name: string;
   situation: Situation;
   certainty: Certainty;
+  certaintyIdea: string;
   postPlans: PostPlanKey[];
   activities: ActivityKey[];
   activitiesOther: string;
@@ -726,6 +776,7 @@ export default function OnboardingPage() {
   const [situation, setSituation] = React.useState<Situation>(null);
   const [zip, setZip] = React.useState("");
   const [certainty, setCertainty] = React.useState<Certainty>(null);
+  const [certaintyIdea, setCertaintyIdea] = React.useState("");
   const [postPlans, setPostPlans] = React.useState<PostPlanKey[]>([]);
   const [activities, setActivities] = React.useState<ActivityKey[]>([]);
   const [activitiesOther, setActivitiesOther] = React.useState("");
@@ -761,6 +812,7 @@ export default function OnboardingPage() {
       setSituation(null);
       setZip("");
       setCertainty(null);
+      setCertaintyIdea("");
       setPostPlans([]);
       setActivities([]);
       setActivitiesOther("");
@@ -779,6 +831,52 @@ export default function OnboardingPage() {
     }
 
     textareaRef.current?.focus();
+  }, [shouldReset]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<{
+        stepIndex: number;
+        name: string;
+        situation: Situation;
+        zip: string;
+        certainty: Certainty;
+        certaintyIdea: string;
+        postPlans: PostPlanKey[];
+        activities: ActivityKey[];
+        activitiesOther: string;
+        funChoice: FunChoice;
+      }>;
+
+      if (!shouldReset) {
+        if (typeof saved.stepIndex === "number") setStepIndex(saved.stepIndex);
+        if (typeof saved.name === "string") setName(saved.name);
+        if (saved.situation === "high_school" || saved.situation === "young_adult" || saved.situation === null) {
+          setSituation(saved.situation);
+        }
+        if (typeof saved.zip === "string") setZip(saved.zip);
+        if (saved.certainty === "strong" || saved.certainty === "kinda" || saved.certainty === "no_clue" || saved.certainty === null) {
+          setCertainty(saved.certainty);
+        }
+        if (typeof saved.certaintyIdea === "string") setCertaintyIdea(saved.certaintyIdea);
+        if (Array.isArray(saved.postPlans)) setPostPlans(saved.postPlans);
+        if (Array.isArray(saved.activities)) setActivities(saved.activities);
+        if (typeof saved.activitiesOther === "string") setActivitiesOther(saved.activitiesOther);
+        if (
+          saved.funChoice === "dog" ||
+          saved.funChoice === "cat" ||
+          saved.funChoice === "bearded_dragon" ||
+          saved.funChoice === "rock" ||
+          saved.funChoice === null
+        ) {
+          setFunChoice(saved.funChoice);
+        }
+      }
+    } catch {}
   }, [shouldReset]);
 
   React.useEffect(() => {
@@ -810,6 +908,7 @@ export default function OnboardingPage() {
           situation,
           zip,
           certainty,
+          certaintyIdea,
           postPlans,
           activities,
           activitiesOther,
@@ -817,7 +916,18 @@ export default function OnboardingPage() {
         })
       );
     } catch {}
-  }, [stepIndex, name, situation, zip, certainty, postPlans, activities, activitiesOther, funChoice]);
+  }, [
+    stepIndex,
+    name,
+    situation,
+    zip,
+    certainty,
+    certaintyIdea,
+    postPlans,
+    activities,
+    activitiesOther,
+    funChoice,
+  ]);
 
   React.useEffect(() => {
     if (recognitionRef.current) {
@@ -924,10 +1034,6 @@ export default function OnboardingPage() {
     }
   }
 
-  function goLanding() {
-    router.push("/");
-  }
-
   function exitOnboarding() {
     if (from === "consent") {
       router.push("/consent");
@@ -958,6 +1064,10 @@ export default function OnboardingPage() {
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }
 
+  function jumpToStep(target: StepId) {
+    setStepIndex(STEPS.indexOf(target));
+  }
+
   function makeToken(fromStep: StepId) {
     return `${fromStep}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
   }
@@ -972,6 +1082,7 @@ export default function OnboardingPage() {
     const effectiveName = overrides?.name ?? name;
     const effectiveSituation = overrides?.situation ?? situation;
     const effectiveCertainty = overrides?.certainty ?? certainty;
+    const effectiveCertaintyIdea = overrides?.certaintyIdea ?? certaintyIdea;
     const effectivePostPlans = overrides?.postPlans ?? postPlans;
     const effectiveActivities = overrides?.activities ?? activities;
     const effectiveActivitiesOther = overrides?.activitiesOther ?? activitiesOther;
@@ -996,6 +1107,7 @@ export default function OnboardingPage() {
       name: effectiveName,
       situation: effectiveSituation,
       certainty: effectiveCertainty,
+      certaintyIdea: effectiveCertaintyIdea,
       postPlans: effectivePostPlans,
       activities: effectiveActivities,
       activitiesOther: effectiveActivitiesOther,
@@ -1020,6 +1132,7 @@ export default function OnboardingPage() {
             name: effectiveName,
             situation: effectiveSituation,
             certainty: effectiveCertainty,
+            certaintyIdea: effectiveCertaintyIdea,
             postPlans: effectivePostPlans,
             activities: effectiveActivities,
             activitiesOther: effectiveActivitiesOther,
@@ -1047,6 +1160,7 @@ export default function OnboardingPage() {
       name,
       situation,
       certainty,
+      certaintyIdea,
       postPlans,
       activities,
       activitiesOther,
@@ -1074,6 +1188,18 @@ export default function OnboardingPage() {
     setRetortFromStep(null);
     retortTokenRef.current = null;
     setScreenMode("question");
+
+    if (fromStep === "certainty") {
+      if (certainty === "strong" || certainty === "kinda") {
+        jumpToStep("certaintyIdea");
+        unlockAdvance();
+        return;
+      }
+
+      jumpToStep("postPlans");
+      unlockAdvance();
+      return;
+    }
 
     if (fromStep === "fun") {
       setStepIndex(STEPS.indexOf("summary"));
@@ -1133,7 +1259,24 @@ export default function OnboardingPage() {
   function chooseCertainty(v: Certainty) {
     if (!lockAdvance()) return;
     setCertainty(v);
-    void showRetortThenAdvance("certainty", { certainty: v });
+    if (v === "no_clue") {
+      setCertaintyIdea("");
+    }
+    void showRetortThenAdvance("certainty", { certainty: v, certaintyIdea: v === "no_clue" ? "" : certaintyIdea });
+    unlockAdvance();
+  }
+
+  function submitCertaintyIdea() {
+    if (!lockAdvance()) return;
+    const text = draft.trim();
+    if (!text) {
+      advanceLockRef.current = false;
+      return;
+    }
+
+    setCertaintyIdea(text);
+    setDraft("");
+    void showRetortThenAdvance("certaintyIdea", { certaintyIdea: text });
     unlockAdvance();
   }
 
@@ -1197,7 +1340,7 @@ export default function OnboardingPage() {
     unlockAdvance();
   }
 
-  const meta = stepId !== "summary" ? STEP_META[stepId] : null;
+  const meta = stepId !== "summary" && stepId !== "certaintyIdea" ? STEP_META[stepId] : null;
   const tone = visualToneForStep(stepId);
 
   function renderRetort() {
@@ -1375,6 +1518,27 @@ export default function OnboardingPage() {
     );
   }
 
+  function renderCertaintyIdea() {
+    const prompt = certaintyIdeaPrompt(certainty);
+
+    return (
+      <QuestionShell kicker={prompt.kicker} title={prompt.title}>
+        <ThinkingSurface
+          value={draft}
+          onChange={setDraft}
+          onSubmit={submitCertaintyIdea}
+          canSubmit={Boolean(draft.trim())}
+          textareaRef={textareaRef}
+          showMic
+          isListening={isListening}
+          speechSupported={speechSupported}
+          onToggleMic={() => toggleMic("certaintyIdea")}
+          placeholder={prompt.placeholder}
+        />
+      </QuestionShell>
+    );
+  }
+
   function renderPostPlans() {
     const hasSelection = postPlans.length > 0;
 
@@ -1526,6 +1690,7 @@ export default function OnboardingPage() {
     const insight = buildInsight({
       situation,
       certainty,
+      certaintyIdea,
       postPlans,
       activities,
       activitiesOther,
@@ -1585,6 +1750,8 @@ export default function OnboardingPage() {
         return renderZip();
       case "certainty":
         return renderCertainty();
+      case "certaintyIdea":
+        return renderCertaintyIdea();
       case "postPlans":
         return renderPostPlans();
       case "activities":
@@ -1636,15 +1803,12 @@ export default function OnboardingPage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/12 via-transparent to-black/18" />
 
         <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-5 pb-6 pt-4 sm:px-6">
-          <header className="flex h-14 shrink-0 items-center justify-between">
-            <BrandButton onClick={goLanding} />
+          <header className="flex h-14 shrink-0 items-center justify-end">
             {stepId === "welcome" && screenMode === "question" ? (
               <HeaderAction label="Exit" onClick={exitOnboarding} />
             ) : canGoBack() || screenMode === "retort" ? (
               <HeaderAction label="Back" onClick={goBack} />
-            ) : (
-              <div />
-            )}
+            ) : null}
           </header>
 
           <main className="relative flex-1 overflow-hidden">
