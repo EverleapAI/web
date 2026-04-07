@@ -564,7 +564,7 @@ function QuestionShell({
   tone: ReturnType<typeof visualToneForStep>;
 }) {
   return (
-    <div className="flex h-full items-start">
+    <div className="flex w-full items-start">
       <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
         <motion.div
           aria-hidden="true"
@@ -595,9 +595,9 @@ function QuestionShell({
             <h1
               className={[
                 "font-semibold leading-[1.02] tracking-tight text-white",
-compact
-  ? "text-[1.9rem] sm:text-[2.08rem]"
-  : "text-[1.95rem] sm:text-[2.2rem]"
+                compact
+                  ? "max-w-[22ch] text-[1.9rem] sm:max-w-[24ch] sm:text-[2.08rem]"
+                  : "max-w-[24ch] text-[1.95rem] sm:text-[2.2rem]",
               ].join(" ")}
             >
               {title}
@@ -820,17 +820,17 @@ function buildInsight(options: {
 
   if (situation === "high_school") {
     if (certainty === "strong") {
-      parts.push("You’re in high school and already have real direction.");
+      parts.push("You’re in high school and you already have a real sense of direction.");
     } else if (certainty === "kinda") {
       parts.push("You’re in high school with early ideas — enough to start shaping something real.");
     } else if (certainty === "no_clue") {
       parts.push("You’re in high school and still figuring it out, which is more normal than people admit.");
     } else {
-      parts.push("You’re in high school and taking a real look at what comes next.");
+      parts.push("You’re in high school and thinking seriously about what comes next.");
     }
   } else if (situation === "young_adult") {
     if (certainty === "strong") {
-      parts.push("You’re a young adult with clear direction, so we can move faster.");
+      parts.push("You’re a young adult with clear direction, which means we can move faster.");
     } else if (certainty === "kinda") {
       parts.push("You’re a young adult with some real ideas already in motion.");
     } else if (certainty === "no_clue") {
@@ -844,27 +844,27 @@ function buildInsight(options: {
 
   if (idea) {
     if (certainty === "strong") {
-      parts.push(`One path already stands out: ${idea}. That gives us something to sharpen.`);
+      parts.push(`You already have a concrete path in mind: ${idea}. That gives us something to sharpen instead of inventing from scratch.`);
     } else if (certainty === "kinda") {
-      parts.push(`One early idea already stands out: ${idea}. That’s enough to build around.`);
+      parts.push(`One early idea already stands out: ${idea}. That’s enough to start building around.`);
     }
   }
 
   if (postPlans.length > 0) {
     if (postPlans.includes("no_idea")) {
-      parts.push("You’re keeping the field open, so the job is to surface strong options fast.");
+      parts.push("You’re keeping the field open for now, which means the job is to surface strong options fast.");
     } else {
       const mapped: string[] = [];
-      if (postPlans.includes("job")) mapped.push("work");
+      if (postPlans.includes("job")) mapped.push("building experience through work");
       if (postPlans.includes("four_year")) mapped.push("a four-year college path");
       if (postPlans.includes("associates")) mapped.push("community or two-year options");
       if (postPlans.includes("credential")) mapped.push("trade or credential programs");
-      if (postPlans.includes("military")) mapped.push("the military");
+      if (postPlans.includes("military")) mapped.push("a path through the military");
 
       if (mapped.length > 0) {
         const last = mapped.pop();
         const listText = mapped.length ? `${mapped.join(", ")}, and ${last}` : last!;
-        parts.push(`You’re weighing ${listText}. That’s a strong range without getting scattered.`);
+        parts.push(`You’re considering ${listText}. That gives us enough range to compare paths without getting scattered.`);
       }
     }
   }
@@ -880,11 +880,11 @@ function buildInsight(options: {
     if (act.length) {
       const last = act.pop();
       const listText = act.length ? `${act.join(", ")}, and ${last}` : last!;
-      parts.push(`Outside of school, you naturally spend time on ${listText}. Those are strong signals for what may actually fit.`);
+      parts.push(`Outside of school, you naturally spend time on ${listText}. That’s one of the strongest signals for what will actually feel right.`);
     }
 
     if (isMeaningfulText(activitiesOther)) {
-      parts.push("That extra detail helps too.");
+      parts.push("The extra detail you added makes the fit even clearer.");
     }
   }
 
@@ -895,7 +895,7 @@ function buildInsight(options: {
   if (funChoice === "dog") parts.push("Also: dog energy.");
   if (funChoice === "cat") parts.push("Also: cat energy.");
   if (funChoice === "bearded_dragon") parts.push("Also: bearded dragon energy.");
-  if (funChoice === "rock") parts.push("Also: rock energy.");
+  if (funChoice === "rock") parts.push("Also: rock. Iconic.");
 
   parts.push("This is a starting point, not a box — enough to generate strong first options, then sharpen fast.");
 
@@ -977,6 +977,11 @@ export default function OnboardingPage() {
 
   const funShownAtRef = React.useRef<number | null>(null);
   const [whisper, setWhisper] = React.useState<string | null>(null);
+  const scrollViewportRef = React.useRef<HTMLDivElement | null>(null);
+  const [canScroll, setCanScroll] = React.useState(false);
+  const [showTopFade, setShowTopFade] = React.useState(false);
+  const [showBottomFade, setShowBottomFade] = React.useState(false);
+  const [showScrollCue, setShowScrollCue] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1135,12 +1140,44 @@ export default function OnboardingPage() {
     }
   }, [stepId, screenMode]);
 
+  React.useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const el = scrollViewportRef.current;
+      if (!el) return;
+      el.scrollTo({ top: 0, behavior: "auto" });
+      updateScrollState();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [stepId, screenMode, postPlans.length, activities.length, activitiesOther, draft]);
+
+  React.useEffect(() => {
+    const onResize = () => updateScrollState();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [screenMode]);
+
   function showWhisper(message: string) {
     setWhisper(message);
     window.clearTimeout((showWhisper as unknown as { _t?: number })._t);
     (showWhisper as unknown as { _t?: number })._t = window.setTimeout(() => {
       setWhisper(null);
     }, 1000);
+  }
+
+  function updateScrollState() {
+    const el = scrollViewportRef.current;
+    if (!el) return;
+
+    const maxScroll = Math.max(0, el.scrollHeight - el.clientHeight);
+    const top = el.scrollTop;
+    const hasScroll = maxScroll > 24;
+    const nearBottom = maxScroll - top < 28;
+
+    setCanScroll(hasScroll);
+    setShowTopFade(hasScroll && top > 8);
+    setShowBottomFade(hasScroll && !nearBottom);
+    setShowScrollCue(hasScroll && top < 18 && screenMode === "question");
   }
 
   function lockAdvance(): boolean {
@@ -1624,7 +1661,7 @@ export default function OnboardingPage() {
 
   function renderWelcome() {
     return (
-      <div className="flex h-full items-start">
+      <div className="flex w-full items-start">
         <div className="relative mx-auto mt-1 w-full max-w-3xl sm:mt-2">
           <motion.div
             aria-hidden="true"
@@ -2063,7 +2100,7 @@ export default function OnboardingPage() {
     const label = n ? `${n},` : "You,";
 
     return (
-      <div className="flex h-full items-center">
+      <div className="flex w-full items-start pt-6 sm:pt-8">
         <div className="relative mx-auto w-full max-w-3xl">
           <motion.div
             aria-hidden="true"
@@ -2089,8 +2126,8 @@ export default function OnboardingPage() {
               </div>
 
               <h1 className="mt-3 text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.35rem]">
-  {label} this gives us a real start.
-</h1>
+                {label} this gives us a real start.
+              </h1>
 
               <p className="mt-4 max-w-2xl text-[14px] leading-6 text-white/76">
                 {insight}
@@ -2161,7 +2198,9 @@ export default function OnboardingPage() {
       ambientCap={0.22}
     >
       <div
-        className={`relative h-[100svh] overflow-hidden ${theme.pageBgBaseClass}`}
+        ref={scrollViewportRef}
+        onScroll={updateScrollState}
+        className={`relative min-h-[100svh] overflow-x-hidden overflow-y-auto ${theme.pageBgBaseClass}`}
         style={pageBgStyle}
       >
         {gradientLevel > 0 && (
@@ -2186,10 +2225,31 @@ export default function OnboardingPage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/8 via-transparent to-black/22" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_42%)]" />
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col px-4 pb-4 pt-2 sm:px-6">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 transition-opacity duration-300" style={{ opacity: showTopFade ? 1 : 0 }}>
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#07101f]/78 via-[#07101f]/32 to-transparent" />
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-28 transition-opacity duration-300" style={{ opacity: showBottomFade ? 1 : 0 }}>
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#07101f]/88 via-[#07101f]/40 to-transparent" />
+          <div className="absolute inset-x-10 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center transition-all duration-300" style={{ opacity: showScrollCue ? 1 : 0, transform: showScrollCue ? "translateY(0px)" : "translateY(8px)" }}>
+          <motion.div
+            animate={{ y: [0, 6, 0], opacity: [0.82, 1, 0.82] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 backdrop-blur-md"
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/54">Scroll</span>
+            <span aria-hidden="true" className="text-[11px] text-white/44">↓</span>
+          </motion.div>
+        </div>
+
+        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-5xl flex-col px-4 pb-6 pt-2 sm:px-6">
           <header className="flex h-4 shrink-0 items-center justify-end" />
 
-          <main className="relative flex-1 overflow-hidden pt-1">
+          <main className="relative flex-1 overflow-visible pt-1">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={screenKey}
@@ -2197,7 +2257,7 @@ export default function OnboardingPage() {
                 animate={screenMode === "retort" ? screenVariants.retortCenter : screenVariants.questionCenter}
                 exit={screenMode === "retort" ? screenVariants.retortExit : screenVariants.questionExit}
                 transition={spring}
-                className="h-full"
+                className="min-h-full"
               >
                 {renderScreen()}
               </motion.div>
