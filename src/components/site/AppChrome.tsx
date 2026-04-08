@@ -117,6 +117,9 @@ export type AppChromeProps = {
 
   brandSubtitle?: string;
   className?: string;
+
+  hideHeader?: boolean;
+  minimalBackground?: boolean;
 };
 
 function intensityForLevel(level: GradientLevel | undefined) {
@@ -135,6 +138,8 @@ export function AppChrome({
   brandSubtitle,
   className,
   gradientLevel,
+  hideHeader = false,
+  minimalBackground = false,
   ..._unused
 }: AppChromeProps) {
   void _unused;
@@ -159,86 +164,97 @@ export function AppChrome({
       className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)}
       style={chromeVars}
     >
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(1200px 800px at 30% 12%, rgba(56,189,248,0.20) 0%, rgba(0,0,0,0) 60%)," +
-              "radial-gradient(900px 700px at 70% 18%, rgba(167,139,250,0.18) 0%, rgba(0,0,0,0) 62%)," +
-              "radial-gradient(1000px 900px at 55% 85%, rgba(34,197,94,0.10) 0%, rgba(0,0,0,0) 58%)," +
-              "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.88) 40%, rgba(0,0,0,0.94) 100%)",
-            opacity: intensity.wash,
-          }}
-        />
+      {!minimalBackground && (
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(1200px 800px at 30% 12%, rgba(56,189,248,0.20) 0%, rgba(0,0,0,0) 60%)," +
+                "radial-gradient(900px 700px at 70% 18%, rgba(167,139,250,0.18) 0%, rgba(0,0,0,0) 62%)," +
+                "radial-gradient(1000px 900px at 55% 85%, rgba(34,197,94,0.10) 0%, rgba(0,0,0,0) 58%)," +
+                "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.88) 40%, rgba(0,0,0,0.94) 100%)",
+              opacity: intensity.wash,
+            }}
+          />
 
-        <div
-          className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
-            opacity: intensity.bloom,
-          }}
-        />
-        <div
-          className="absolute top-24 -left-48 h-[520px] w-[520px] rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
-            opacity: intensity.bloom,
-          }}
-        />
-        <div
-          className="absolute bottom-0 -right-56 h-[620px] w-[720px] rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
-            opacity: intensity.bloom,
-          }}
-        />
+          <div
+            className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
+              opacity: intensity.bloom,
+            }}
+          />
+          <div
+            className="absolute top-24 -left-48 h-[520px] w-[520px] rounded-full blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
+              opacity: intensity.bloom,
+            }}
+          />
+          <div
+            className="absolute bottom-0 -right-56 h-[620px] w-[720px] rounded-full blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
+              opacity: intensity.bloom,
+            }}
+          />
 
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
-            opacity: intensity.vignette,
-          }}
-        />
-      </div>
-
-      <header
-        className={cx("relative z-10 sticky top-0")}
-        style={{
-          background: chromeBg,
-          boxShadow: chromeShadow,
-          backdropFilter: `blur(${chromeBlur})`,
-          WebkitBackdropFilter: `blur(${chromeBlur})`,
-        }}
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
-          style={{
-            background: `linear-gradient(to bottom, ${chromeBg}, rgba(0,0,0,0))`,
-          }}
-        />
-
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-          style={{
-            background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`,
-            opacity: 0.9,
-          }}
-        />
-
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5 sm:px-5 lg:px-6">
-          <EverleapMark subtitle={brandSubtitle} />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(1200px 900px at 50% 35%, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 72%)",
+              opacity: intensity.vignette,
+            }}
+          />
         </div>
-      </header>
+      )}
 
-      <main className="relative z-10 mx-auto w-full max-w-5xl px-2 pt-2 pb-4 sm:px-4 sm:pt-2.5 md:px-6 lg:px-8 xl:px-10">
+      {!hideHeader && (
+        <header
+          className={cx("relative z-10 sticky top-0")}
+          style={{
+            background: chromeBg,
+            boxShadow: chromeShadow,
+            backdropFilter: `blur(${chromeBlur})`,
+            WebkitBackdropFilter: `blur(${chromeBlur})`,
+          }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+            style={{
+              background: `linear-gradient(to bottom, ${chromeBg}, rgba(0,0,0,0))`,
+            }}
+          />
+
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+            style={{
+              background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`,
+              opacity: 0.9,
+            }}
+          />
+
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5 sm:px-5 lg:px-6">
+            <EverleapMark subtitle={brandSubtitle} />
+          </div>
+        </header>
+      )}
+
+      <main
+        className={cx(
+          "relative z-10 mx-auto w-full",
+          hideHeader
+            ? "max-w-none px-0 pt-0 pb-0"
+            : "max-w-5xl px-2 pt-2 pb-4 sm:px-4 sm:pt-2.5 md:px-6 lg:px-8 xl:px-10"
+        )}
+      >
         {children}
       </main>
     </div>

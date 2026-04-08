@@ -19,6 +19,8 @@ export default function QuestionsPage() {
       setGradientLevel={setGradientLevel}
       orbSource="questions_orb"
       ambientCap={0.22}
+      hideHeader
+      minimalBackground
     >
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 flex-1">

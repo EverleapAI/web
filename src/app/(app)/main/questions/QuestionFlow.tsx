@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mic, MicOff, Send } from "lucide-react";
+import {
+  ChevronDown,
+  Check,
+  Mic,
+  MicOff,
+  Send,
+  ArrowLeft,
+  X,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ============================================================
@@ -41,7 +49,7 @@ const ONBOARDING_KEY_PRIMARY = "everleapOnboarding_v4_convo_min";
 const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
 
 /* ============================================================
-   Questions (5 + 5 + 5)
+   Questions
    ============================================================ */
 
 const MOTIVATIONS_5 = [
@@ -129,8 +137,7 @@ function readNameFromOnboarding(): string {
   const primary = tryRead(ONBOARDING_KEY_PRIMARY);
   if (primary) return primary;
 
-  const fallback = tryRead(ONBOARDING_KEY_FALLBACK);
-  return fallback;
+  return tryRead(ONBOARDING_KEY_FALLBACK);
 }
 
 function isMeaningfulText(value: string): boolean {
@@ -207,50 +214,75 @@ function completionCopy(cat: Category) {
 }
 
 /* ============================================================
-   UI atoms
+   Visual system
    ============================================================ */
 
-function CategoryPill({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-medium tracking-[0.16em] text-white/68 backdrop-blur-sm">
-      {label}
-    </span>
-  );
+function visualThemeForCategory(category: Category) {
+  if (category === "motivations") {
+    return {
+      pageOrbA: "bg-amber-300/26",
+      pageOrbB: "bg-orange-400/20",
+      pageOrbC: "bg-pink-400/12",
+      pageWash:
+        "bg-[radial-gradient(circle_at_18%_24%,rgba(251,191,36,0.14),transparent_26%),radial-gradient(circle_at_72%_30%,rgba(249,115,22,0.12),transparent_24%),radial-gradient(circle_at_55%_82%,rgba(244,114,182,0.08),transparent_24%)]",
+      cardTintA: "from-white/[0.05] via-white/[0.02] to-transparent",
+      cardTintB: "from-amber-200/[0.05] via-orange-200/[0.025] to-transparent",
+      edge: "from-amber-200/24 via-white/10 to-transparent",
+      cardGlow: "shadow-[0_0_90px_rgba(251,191,36,0.10)]",
+      accentGlow:
+        "bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.22),rgba(251,191,36,0.06)_40%,transparent_70%)]",
+      inputGlow:
+        "focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_36px_rgba(251,191,36,0.10)]",
+      badge: "from-amber-300/16 to-orange-200/10",
+      inputBg: "bg-black/18",
+      cardBg: "bg-[rgba(14,16,26,0.72)]",
+    };
+  }
+
+  if (category === "strengths") {
+    return {
+      pageOrbA: "bg-cyan-300/24",
+      pageOrbB: "bg-sky-400/18",
+      pageOrbC: "bg-teal-300/12",
+      pageWash:
+        "bg-[radial-gradient(circle_at_18%_22%,rgba(34,211,238,0.12),transparent_25%),radial-gradient(circle_at_74%_32%,rgba(56,189,248,0.11),transparent_24%),radial-gradient(circle_at_60%_84%,rgba(45,212,191,0.08),transparent_22%)]",
+      cardTintA: "from-white/[0.05] via-white/[0.02] to-transparent",
+      cardTintB: "from-cyan-200/[0.05] via-sky-200/[0.025] to-transparent",
+      edge: "from-cyan-200/22 via-white/10 to-transparent",
+      cardGlow: "shadow-[0_0_90px_rgba(34,211,238,0.10)]",
+      accentGlow:
+        "bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.20),rgba(34,211,238,0.06)_40%,transparent_70%)]",
+      inputGlow:
+        "focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_36px_rgba(34,211,238,0.10)]",
+      badge: "from-cyan-300/16 to-sky-200/10",
+      inputBg: "bg-black/18",
+      cardBg: "bg-[rgba(12,16,26,0.72)]",
+    };
+  }
+
+  return {
+    pageOrbA: "bg-violet-300/22",
+    pageOrbB: "bg-fuchsia-400/16",
+    pageOrbC: "bg-indigo-300/12",
+    pageWash:
+      "bg-[radial-gradient(circle_at_16%_24%,rgba(167,139,250,0.12),transparent_26%),radial-gradient(circle_at_76%_28%,rgba(217,70,239,0.10),transparent_22%),radial-gradient(circle_at_58%_84%,rgba(129,140,248,0.08),transparent_24%)]",
+    cardTintA: "from-white/[0.05] via-white/[0.02] to-transparent",
+    cardTintB: "from-violet-200/[0.05] via-fuchsia-200/[0.025] to-transparent",
+    edge: "from-violet-200/22 via-white/10 to-transparent",
+    cardGlow: "shadow-[0_0_90px_rgba(167,139,250,0.10)]",
+    accentGlow:
+      "bg-[radial-gradient(circle_at_center,rgba(192,132,252,0.20),rgba(192,132,252,0.06)_40%,transparent_70%)]",
+    inputGlow:
+      "focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_0_36px_rgba(167,139,250,0.10)]",
+    badge: "from-violet-300/16 to-fuchsia-200/10",
+    inputBg: "bg-black/18",
+    cardBg: "bg-[rgba(12,14,26,0.72)]",
+  };
 }
 
-function ProgressDashes({
-  current,
-  total,
-  isDone,
-}: {
-  current: number;
-  total: number;
-  isDone: (i: number) => boolean;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2" aria-label="Progress">
-      {Array.from({ length: total }).map((_, i) => {
-        const active = i === current;
-        const done = isDone(i);
-
-        return (
-          <span
-            key={i}
-            aria-hidden="true"
-            className={[
-              "rounded-full transition-all duration-300",
-              active
-                ? "h-[8px] w-9 bg-white/72 shadow-[0_0_22px_rgba(255,255,255,0.18)]"
-                : "h-[6px] w-7",
-              !active && done ? "bg-white/28" : "",
-              !active && !done ? "bg-white/10" : "",
-            ].join(" ")}
-          />
-        );
-      })}
-    </div>
-  );
-}
+/* ============================================================
+   UI atoms
+   ============================================================ */
 
 function PauseLine({ show }: { show: boolean }) {
   return (
@@ -261,42 +293,9 @@ function PauseLine({ show }: { show: boolean }) {
       aria-hidden="true"
       className="mt-8 origin-left"
     >
-      <div className="h-px w-44 rounded-full bg-gradient-to-r from-white/24 via-white/12 to-transparent" />
+      <div className="h-px w-44 rounded-full bg-gradient-to-r from-white/26 via-white/12 to-transparent" />
     </motion.div>
   );
-}
-
-function leadInForCategory(category: Category) {
-  if (category === "motivations") return "Take a second with this.";
-  if (category === "strengths") return "Answer from what feels true.";
-  return "No rush. Start where your mind goes first.";
-}
-
-function ambientToneForCategory(category: Category) {
-  if (category === "motivations") {
-    return {
-      orbA: "bg-amber-300/10",
-      orbB: "bg-orange-400/10",
-      ring: "from-amber-200/14 via-white/8 to-transparent",
-      glow: "shadow-[0_0_80px_rgba(251,191,36,0.08)]",
-    };
-  }
-
-  if (category === "strengths") {
-    return {
-      orbA: "bg-sky-300/10",
-      orbB: "bg-cyan-400/10",
-      ring: "from-sky-200/14 via-white/8 to-transparent",
-      glow: "shadow-[0_0_80px_rgba(56,189,248,0.08)]",
-    };
-  }
-
-  return {
-    orbA: "bg-violet-300/10",
-    orbB: "bg-fuchsia-400/10",
-    ring: "from-violet-200/14 via-white/8 to-transparent",
-    glow: "shadow-[0_0_80px_rgba(167,139,250,0.08)]",
-  };
 }
 
 /* ============================================================
@@ -325,6 +324,8 @@ export default function QuestionFlow() {
   const [draft, setDraft] = React.useState("");
   const [screenMode, setScreenMode] = React.useState<ScreenMode>("question");
   const [savedMap, setSavedMap] = React.useState<Record<string, Saved>>({});
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
 
   const q = questions[index] ?? questions[0];
   const qId = q?.id ?? "";
@@ -392,6 +393,7 @@ export default function QuestionFlow() {
     setScreenMode("question");
     setShowPauseLine(false);
     setCtaReady(false);
+    setPickerOpen(false);
     window.setTimeout(() => focusAnswer(), 50);
   }, [category, focusAnswer]);
 
@@ -401,6 +403,7 @@ export default function QuestionFlow() {
     lastFinalRef.current = "";
     const s = loadSaved()[qId];
     setDraft((s?.answer ?? "").trim());
+    setPickerOpen(false);
     window.setTimeout(() => focusAnswer(), 0);
   }, [qId, screenMode, stopListening, focusAnswer]);
 
@@ -425,7 +428,7 @@ export default function QuestionFlow() {
   }, [screenMode, category]);
 
   const completionParagraphs = React.useMemo(() => completionCopy(category), [category]);
-  const tone = React.useMemo(() => ambientToneForCategory(category), [category]);
+  const theme = React.useMemo(() => visualThemeForCategory(category), [category]);
 
   function exitNow() {
     stopListening();
@@ -437,6 +440,22 @@ export default function QuestionFlow() {
     if (!id) return false;
     const s = savedMap[id];
     return Boolean(s && (s.skipped || (s.answer && s.answer.trim())));
+  }
+
+  function goBackOne() {
+    if (screenMode !== "question") return;
+    if (index <= 0) return;
+    stopListening();
+    setPickerOpen(false);
+    setIndex((i) => Math.max(0, i - 1));
+  }
+
+  function jumpToQuestion(targetIndex: number) {
+    if (screenMode !== "question") return;
+    if (targetIndex < 0 || targetIndex >= total) return;
+    stopListening();
+    setPickerOpen(false);
+    setIndex(targetIndex);
   }
 
   function completeAndAdvance(opts: { skipped: boolean }) {
@@ -458,6 +477,7 @@ export default function QuestionFlow() {
     setDraft("");
 
     if (index + 1 >= total) {
+      setPickerOpen(false);
       setScreenMode("final");
       return;
     }
@@ -513,60 +533,83 @@ export default function QuestionFlow() {
   const screenKey = screenMode === "final" ? `final_${category}` : qId || "q";
 
   return (
-    <div className="relative mx-auto w-full max-w-[920px] px-4 pb-24 pt-8 sm:px-5 sm:pt-10 lg:px-6">
+    <div className="relative mx-auto w-full max-w-[940px] px-4 pb-24 pt-1 sm:px-5 lg:px-6">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div
-          className={`absolute left-1/2 top-[-6rem] h-[18rem] w-[18rem] -translate-x-1/2 rounded-full blur-3xl ${tone.orbA}`}
+        <div className={`absolute inset-0 ${theme.pageWash}`} />
+        <motion.div
+          animate={{ x: [0, 18, 0], y: [0, -12, 0] }}
+          transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute left-[12%] top-[10%] h-[16rem] w-[16rem] rounded-full blur-3xl ${theme.pageOrbA}`}
         />
-        <div
-          className={`absolute bottom-[-5rem] right-[10%] h-[15rem] w-[15rem] rounded-full blur-3xl ${tone.orbB}`}
+        <motion.div
+          animate={{ x: [0, -16, 0], y: [0, 16, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute right-[10%] top-[22%] h-[15rem] w-[15rem] rounded-full blur-3xl ${theme.pageOrbB}`}
         />
-        <div className="absolute inset-x-0 top-[24%] h-40 bg-gradient-to-b from-white/[0.02] via-white/[0.015] to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
+        <motion.div
+          animate={{ x: [0, 12, 0], y: [0, 12, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute bottom-[14%] right-[18%] h-[12rem] w-[12rem] rounded-full blur-3xl ${theme.pageOrbC}`}
+        />
+        <div className="absolute inset-x-0 top-[18%] h-48 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/18 via-transparent to-transparent" />
       </div>
 
-      <div className="flex items-start justify-between gap-4">
-        <button
-          type="button"
-          onClick={exitNow}
-          className="pt-1 text-sm font-medium text-white/52 transition hover:text-white/80"
-        >
-          Exit
-        </button>
-
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
-          <ProgressDashes current={index} total={total} isDone={isDoneDash} />
-          <CategoryPill label={categoryLabel} />
-        </div>
-
-        <div className="w-[44px]" aria-hidden="true" />
-      </div>
-
-      <div className="mt-10 sm:mt-14">
+      <div className="relative z-10 flex min-h-[calc(100svh-8.25rem)] flex-col">
         <AnimatePresence mode="wait">
           <motion.div
             key={screenKey}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 16, scale: 0.992 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.995 }}
             transition={{ duration: 0.24, ease: "easeOut" }}
+            className="flex flex-1 items-center justify-center"
           >
             {screenMode === "final" ? (
-              <div className="flex min-h-[62svh] items-center">
-                <div className="w-full max-w-3xl">
-                  <div
-                    className={`rounded-[28px] border border-white/10 bg-white/[0.04] px-6 py-7 backdrop-blur-sm sm:px-8 sm:py-9 ${tone.glow}`}
-                  >
-                    <p className="text-sm font-medium uppercase tracking-[0.12em] text-white/46">
+              <div className="w-full max-w-3xl">
+                <div
+                  className={[
+                    "relative overflow-hidden rounded-[30px] border border-white/10",
+                    theme.cardBg,
+                    "px-5 py-6 sm:px-7 sm:py-8",
+                    "backdrop-blur-xl",
+                    theme.cardGlow,
+                  ].join(" ")}
+                >
+                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${theme.cardTintA}`} />
+                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${theme.cardTintB}`} />
+                  <div className={`pointer-events-none absolute -right-16 top-6 h-52 w-52 rounded-full blur-3xl ${theme.accentGlow}`} />
+                  <div className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${theme.edge}`} />
+                  <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%)]" />
+
+                  <div className="relative">
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={exitNow}
+                        className="inline-flex items-center gap-2 text-[13px] font-medium text-white/62 transition hover:text-white/86"
+                      >
+                        <X size={14} />
+                        <span>Exit</span>
+                      </button>
+
+                      <div
+                        className={`rounded-full border border-white/10 bg-gradient-to-r ${theme.badge} px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-white/54`}
+                      >
+                        {categoryLabel}
+                      </div>
+                    </div>
+
+                    <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.14em] text-white/44">
                       Reflection complete
                     </p>
 
-                    <h1 className="mt-3 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                    <h1 className="mt-3 max-w-2xl text-[2rem] font-semibold leading-[1.06] tracking-tight text-white sm:text-[2.5rem]">
                       That gives us something real
                       {firstName(name) ? `, ${firstName(name)}` : ""}.
                     </h1>
 
-                    <div className="mt-6 space-y-4">
+                    <div className="mt-5 space-y-4">
                       {completionParagraphs.map((p, i) => (
                         <p key={i} className="max-w-2xl text-[15px] leading-7 text-white/72">
                           {p}
@@ -584,7 +627,7 @@ export default function QuestionFlow() {
                         className={[
                           "inline-flex items-center gap-2 text-sm font-medium transition",
                           ctaReady
-                            ? "text-white/84 hover:text-white"
+                            ? "text-white/88 hover:text-white"
                             : "cursor-default text-white/30",
                         ].join(" ")}
                       >
@@ -596,37 +639,149 @@ export default function QuestionFlow() {
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[62svh] items-center">
-                <div className="w-full max-w-3xl">
-                  <div className="max-w-2xl">
-                    <p className="text-sm font-medium tracking-[0.08em] text-white/44">
-                      {leadInForCategory(category)}
-                    </p>
+              <div className="w-full max-w-3xl">
+                <div
+                  className={[
+                    "relative overflow-hidden rounded-[30px] border border-white/10",
+                    theme.cardBg,
+                    "px-5 py-5 sm:px-7 sm:py-6",
+                    "backdrop-blur-xl",
+                    theme.cardGlow,
+                  ].join(" ")}
+                >
+                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${theme.cardTintA}`} />
+                  <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${theme.cardTintB}`} />
+                  <motion.div
+                    aria-hidden="true"
+                    animate={{ x: [0, 10, 0], y: [0, -8, 0] }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                    className={`pointer-events-none absolute -right-20 top-2 h-52 w-52 rounded-full blur-3xl ${theme.accentGlow}`}
+                  />
+                  <div className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${theme.edge}`} />
+                  <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%)]" />
 
-                    <h1 className="mt-4 text-[2rem] font-semibold leading-[1.16] text-white sm:text-[2.5rem]">
-                      {q?.question}
-                    </h1>
-                  </div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={exitNow}
+                          className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-[13px] font-medium text-white/60 transition hover:bg-white/[0.05] hover:text-white/86"
+                        >
+                          <X size={14} />
+                          <span>Exit</span>
+                        </button>
 
-                  <div className="mt-9 max-w-2xl">
-                    <div
-                      className={[
-                        "relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.045]",
-                        "px-4 py-4 sm:px-5 sm:py-5",
-                        "backdrop-blur-sm",
-                        tone.glow,
-                      ].join(" ")}
-                    >
-                      <div
-                        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${tone.ring}`}
-                      />
-                      <div className="pointer-events-none absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_48%)]" />
+                        <button
+                          type="button"
+                          onClick={index > 0 ? goBackOne : undefined}
+                          disabled={index <= 0}
+                          className={[
+                            "inline-flex items-center gap-2 rounded-full px-2 py-1 text-[13px] font-medium transition",
+                            index > 0
+                              ? "text-white/60 hover:bg-white/[0.05] hover:text-white/86"
+                              : "cursor-not-allowed text-white/24",
+                          ].join(" ")}
+                        >
+                          <ArrowLeft size={14} />
+                          <span>Back</span>
+                        </button>
+                      </div>
 
                       <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setPickerOpen((v) => !v)}
+                          className={`inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-gradient-to-r ${theme.badge} px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-white/60 transition hover:text-white/82`}
+                          aria-expanded={pickerOpen}
+                          aria-haspopup="dialog"
+                        >
+                          <span>
+                            {categoryLabel} {index + 1}/{total}
+                          </span>
+                          <ChevronDown
+                            size={14}
+                            className={`transition ${pickerOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+
+                        <AnimatePresence>
+                          {pickerOpen ? (
+                            <motion.div
+                              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                              transition={{ duration: 0.18, ease: "easeOut" }}
+                              className="absolute right-0 top-[calc(100%+0.55rem)] z-20 w-[min(20rem,78vw)] overflow-hidden rounded-[22px] border border-white/10 bg-[#090d18]/95 shadow-[0_18px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+                            >
+                              <div className="px-4 pb-2 pt-3 text-[10px] font-medium uppercase tracking-[0.16em] text-white/34">
+                                Jump to a question
+                              </div>
+
+                              <div className="max-h-[min(26rem,60vh)] overflow-y-auto px-2 pb-2">
+                                <div className="space-y-1">
+                                  {questions.map((item, i) => {
+                                    const done = isDoneDash(i);
+                                    const current = i === index;
+
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => jumpToQuestion(i)}
+                                        className={[
+                                          "flex w-full items-start gap-3 rounded-[16px] px-3 py-2.5 text-left transition",
+                                          current
+                                            ? "bg-white/[0.09] text-white"
+                                            : "text-white/70 hover:bg-white/[0.05] hover:text-white/90",
+                                        ].join(" ")}
+                                      >
+                                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-[11px] font-semibold text-white/72">
+                                          {done ? <Check size={12} /> : i + 1}
+                                        </div>
+
+                                        <div className="min-w-0 flex-1">
+                                          <div className="text-[13px] leading-5">
+                                            {item.question}
+                                          </div>
+                                          <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/34">
+                                            {current ? "Current" : done ? "Answered" : "Open"}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </motion.div>
+                          ) : null}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 max-w-[44rem]">
+                      <h1 className="text-[2.05rem] font-semibold leading-[1.05] tracking-tight text-white sm:text-[2.7rem]">
+                        {q?.question}
+                      </h1>
+                    </div>
+
+                    <div className="mt-6">
+                      <div
+                        className={[
+                          "group relative overflow-hidden rounded-[24px] border border-white/8 transition",
+                          theme.inputBg,
+                          theme.inputGlow,
+                          isFocused ? "border-white/12" : "border-white/8",
+                        ].join(" ")}
+                      >
+                        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_48%)]" />
+                        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/8 to-transparent" />
                         <textarea
                           ref={textareaRef}
                           value={draft}
                           onChange={(e) => setDraft(e.target.value)}
+                          onFocus={() => setIsFocused(true)}
+                          onBlur={() => setIsFocused(false)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                               e.preventDefault();
@@ -634,42 +789,43 @@ export default function QuestionFlow() {
                             }
                           }}
                           rows={4}
-                          placeholder="Write whatever feels true first."
-                          className="min-h-[128px] w-full resize-none bg-transparent px-1 py-1 text-[16px] leading-7 text-white/90 outline-none placeholder:text-white/26"
+                          placeholder="Start anywhere."
+                          className="relative min-h-[172px] w-full resize-none bg-transparent px-4 py-4 text-[17px] leading-7 text-white/92 outline-none placeholder:text-white/24 sm:px-5 sm:py-5"
                         />
-
-                        <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
-                          <button
-                            type="button"
-                            onClick={toggleMic}
-                            disabled={!speechSupported}
-                            className={[
-                              "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-sm transition",
-                              speechSupported
-                                ? "text-white/58 hover:bg-white/[0.04] hover:text-white/82"
-                                : "cursor-not-allowed text-white/24",
-                            ].join(" ")}
-                          >
-                            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-                            <span>{isListening ? "Listening…" : "Speak"}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => completeAndAdvance({ skipped: false })}
-                            disabled={!draft.trim()}
-                            className={[
-                              "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition",
-                              draft.trim()
-                                ? "border-white/16 bg-white/[0.08] text-white/86 hover:border-white/24 hover:bg-white/[0.12] hover:text-white"
-                                : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
-                            ].join(" ")}
-                          >
-                            <span>Continue</span>
-                            <Send size={15} />
-                          </button>
-                        </div>
                       </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={toggleMic}
+                        disabled={!speechSupported}
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full px-2 py-1.5 text-sm transition",
+                          speechSupported
+                            ? "text-white/56 hover:bg-white/[0.05] hover:text-white/84"
+                            : "cursor-not-allowed text-white/24",
+                        ].join(" ")}
+                        aria-label={isListening ? "Stop voice input" : "Start voice input"}
+                      >
+                        {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                        <span>{isListening ? "Listening…" : "Speak"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => completeAndAdvance({ skipped: false })}
+                        disabled={!draft.trim()}
+                        className={[
+                          "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition",
+                          draft.trim()
+                            ? "bg-white text-black shadow-[0_10px_30px_rgba(255,255,255,0.15)] hover:bg-white/92"
+                            : "cursor-not-allowed bg-white/14 text-white/34",
+                        ].join(" ")}
+                      >
+                        <span>Continue</span>
+                        <Send size={15} />
+                      </button>
                     </div>
 
                     <div className="mt-5 text-center">
