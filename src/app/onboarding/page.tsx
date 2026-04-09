@@ -4,14 +4,12 @@ import * as React from "react";
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mic, MicOff, Send } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { AppChrome } from "@/components/site/AppChrome";
 
 import {
-  INSIGHTS_THEMES,
-  GRADIENT_CONFIGS,
   getPageBackgroundImage,
   type SpotlightThemeId,
   type GradientLevel,
@@ -88,6 +86,33 @@ type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
 type VoiceTarget = "name" | "zip" | "activitiesOther" | "certaintyIdea";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
+
+/* ============================================================
+   Typography system
+   ============================================================ */
+
+const TYPE = {
+  kicker:
+    "text-[10px] font-medium uppercase tracking-[0.18em] text-white/40",
+  navSecondary:
+    "text-[11px] font-medium uppercase tracking-[0.16em]",
+  navPrimary:
+    "text-[14px] font-semibold tracking-[0.01em]",
+  headline:
+    "text-[1.42rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.68rem]",
+  welcomeHeadline:
+    "text-[1.78rem] font-semibold leading-[1.03] tracking-tight text-white sm:text-[2.02rem]",
+  retortHeadline:
+    "text-[1.44rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.72rem]",
+  body:
+    "text-[14px] leading-[1.6] text-white/82",
+  choice:
+    "text-[13px] leading-[1.35rem]",
+  whisper:
+    "text-[12px] leading-[1.2rem] text-white/54",
+  input:
+    "text-[14px] font-medium leading-6 text-white",
+};
 
 /* ============================================================
    Copy
@@ -269,12 +294,12 @@ function visualToneForStep(stepId: StepId) {
 }
 
 const screenVariants = {
-  questionEnter: { opacity: 0, y: 28, scale: 0.985, filter: "blur(10px)" },
+  questionEnter: { opacity: 0, y: 20, scale: 0.992, filter: "blur(8px)" },
   questionCenter: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
-  questionExit: { opacity: 0, y: -18, scale: 0.992, filter: "blur(8px)" },
-  retortEnter: { opacity: 0, scale: 0.94, y: 30, filter: "blur(14px)" },
+  questionExit: { opacity: 0, y: -14, scale: 0.994, filter: "blur(8px)" },
+  retortEnter: { opacity: 0, scale: 0.97, y: 20, filter: "blur(10px)" },
   retortCenter: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)" },
-  retortExit: { opacity: 0, scale: 0.985, y: -20, filter: "blur(10px)" },
+  retortExit: { opacity: 0, scale: 0.992, y: -14, filter: "blur(8px)" },
 };
 
 const spring = {
@@ -294,15 +319,13 @@ const cardSpring = {
    UI atoms
    ============================================================ */
 
-function InlineMetaAction({
+function NavLink({
   label,
   onClick,
-  tone = "default",
   disabled,
 }: {
   label: string;
   onClick: () => void;
-  tone?: "default" | "cool";
   disabled?: boolean;
 }) {
   return (
@@ -311,18 +334,123 @@ function InlineMetaAction({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.14em] transition",
+        TYPE.navSecondary,
         disabled
-          ? "cursor-not-allowed text-white/24"
-          : tone === "cool"
-            ? "text-cyan-200/72 hover:text-cyan-100"
-            : "text-white/34 hover:text-white/56",
+          ? "cursor-not-allowed text-white/20"
+          : "text-white/48 hover:text-white/72",
       ].join(" ")}
-      aria-label={label}
-      title={label}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ActionLink({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={Boolean(disabled)}
+      className={[
+        TYPE.navPrimary,
+        "inline-flex items-center gap-2 transition",
+        disabled
+          ? "cursor-not-allowed text-white/26"
+          : "text-white/86 hover:text-white active:translate-x-[1px]",
+      ].join(" ")}
     >
       <span>{label}</span>
+      <span aria-hidden="true" className="text-[16px]">
+        →
+      </span>
     </button>
+  );
+}
+
+function TalkLink({
+  isListening,
+  speechSupported,
+  onClick,
+}: {
+  isListening: boolean;
+  speechSupported: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!speechSupported}
+      className={[
+        "inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.01em] transition",
+        speechSupported
+          ? "text-white/62 hover:text-white/86"
+          : "cursor-not-allowed text-white/24",
+      ].join(" ")}
+      aria-label={isListening ? "Stop voice input" : "Start voice input"}
+      title={
+        !speechSupported
+          ? "Voice not supported"
+          : isListening
+            ? "Listening…"
+            : "Voice input"
+      }
+    >
+      {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+      <span>Talk</span>
+    </button>
+  );
+}
+
+function ProgressDots({
+  currentStep,
+  certainty,
+}: {
+  currentStep: StepId;
+  certainty: Certainty;
+}) {
+  const steps: StepId[] = [
+    "name",
+    "situation",
+    "zip",
+    "certainty",
+    ...(certainty === "no_clue" ? [] : ["certaintyIdea" as StepId]),
+    "postPlans",
+    "activities",
+    "fun",
+  ];
+
+  const activeIndex = steps.indexOf(currentStep);
+
+  return (
+    <div className="flex items-center gap-2" aria-hidden="true">
+      {steps.map((step, index) => {
+        const isActive = index === activeIndex;
+        const isDone = activeIndex > -1 && index < activeIndex;
+
+        return (
+          <span
+            key={step}
+            className={[
+              "block rounded-full transition-all duration-300",
+              isActive
+                ? "h-2.5 w-2.5 bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]"
+                : isDone
+                  ? "h-2 w-2 bg-cyan-300/85"
+                  : "h-2 w-2 bg-white/20",
+            ].join(" ")}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -342,36 +470,31 @@ function ChoiceRowText({
       type="button"
       layout
       transition={cardSpring}
-      whileTap={{ scale: 0.986 }}
+      whileTap={{ scale: 0.988 }}
       onClick={onClick}
       animate={{
-        x: selected ? 10 : 0,
-        scale: selected ? 1.02 : 1,
+        x: selected ? 6 : 0,
+        scale: selected ? 1.012 : 1,
         opacity: dimmed ? 0.42 : 1,
         y: selected ? -1 : 0,
       }}
-      className="group relative block w-full overflow-hidden rounded-[20px] px-4 py-3.5 text-left"
+      className="group relative block w-full overflow-hidden rounded-[18px] px-4 py-2.5 text-left"
     >
       <motion.div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[20px] border transition",
+          "pointer-events-none absolute inset-0 rounded-[18px] border transition",
           selected
-            ? "border-white/24 bg-white/[0.13] shadow-[0_0_36px_rgba(255,255,255,0.08)]"
-            : "border-white/8 bg-white/[0.035] group-hover:border-white/14 group-hover:bg-white/[0.06]",
+            ? "border-white/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.13),rgba(255,255,255,0.08))] shadow-[0_14px_36px_rgba(6,9,20,0.28)]"
+            : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))] group-hover:border-white/16 group-hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))]",
         ].join(" ")}
-        animate={{
-          scale: selected ? 1.015 : 1,
-        }}
+        animate={{ scale: selected ? 1.008 : 1 }}
         transition={cardSpring}
       />
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-[5px] rounded-l-[20px] bg-gradient-to-b from-fuchsia-300/0 via-fuchsia-300/0 to-fuchsia-300/0 group-hover:from-fuchsia-300/40 group-hover:via-cyan-300/30 group-hover:to-violet-300/20" />
-      {selected ? (
-        <div className="pointer-events-none absolute inset-y-2 left-2 w-1 rounded-full bg-gradient-to-b from-fuchsia-300 via-cyan-300 to-violet-300" />
-      ) : null}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
       <div
         className={[
-          "relative pr-8 text-[14px] leading-6 transition",
+          TYPE.choice,
+          "relative pr-8 transition",
           selected ? "font-semibold text-white" : "font-medium text-white/78 group-hover:text-white/92",
         ].join(" ")}
       >
@@ -418,29 +541,71 @@ function BigMoodCard({
       transition={cardSpring}
       whileTap={{ scale: 0.99 }}
       animate={{
-        scale: selected ? 1.03 : 1,
-        y: selected ? -6 : 0,
+        scale: selected ? 1.018 : 1,
+        y: selected ? -4 : 0,
         opacity: dimmed ? 0.4 : 1,
       }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[24px] border px-5 py-4 text-left",
+        "group relative block w-full overflow-hidden rounded-[22px] border px-4 py-3 text-left",
         selected
-          ? "border-white/24 bg-white/[0.11] shadow-[0_0_60px_rgba(255,255,255,0.07)]"
-          : "border-white/10 bg-white/[0.045] hover:border-white/16 hover:bg-white/[0.07]",
+          ? "border-white/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.07))] shadow-[0_18px_44px_rgba(9,12,24,0.30)]"
+          : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))] hover:border-white/16 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))]",
       ].join(" ")}
     >
       <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClass}`} />
       <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/8 blur-2xl" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
-      <motion.div
-        className="relative"
-        animate={{ x: selected ? 2 : 0 }}
-        transition={cardSpring}
-      >
-        <div className="text-[1.03rem] font-semibold leading-6 text-white">{title}</div>
-        <div className="mt-1.5 text-[13px] leading-5 text-white/66">{sub}</div>
+      <motion.div className="relative" animate={{ x: selected ? 2 : 0 }} transition={cardSpring}>
+        <div className="text-[0.98rem] font-semibold leading-5 text-white">{title}</div>
+        <div className="mt-1.5 text-[12.75px] leading-5 text-white/66">{sub}</div>
       </motion.div>
     </motion.button>
+  );
+}
+
+function QuestionTextEntry({
+  value,
+  onChange,
+  onSubmit,
+  canSubmit,
+  placeholder,
+  textareaRef,
+  inputMode,
+  rows = 3,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  canSubmit: boolean;
+  placeholder?: string;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
+  rows?: number;
+}) {
+  return (
+    <div className="w-full">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        inputMode={inputMode}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+        rows={rows}
+        placeholder={placeholder ?? ""}
+        className={[
+          TYPE.input,
+          "w-full resize-none rounded-[18px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))] px-4 py-2.5 outline-none placeholder:text-white/34 shadow-[0_10px_30px_rgba(4,8,18,0.22)]",
+        ].join(" ")}
+      />
+      {!canSubmit && inputMode === "numeric" ? (
+        <div className="mt-2 text-[12px] text-white/34">Enter a 5-digit zip code.</div>
+      ) : null}
+    </div>
   );
 }
 
@@ -470,77 +635,30 @@ function ThinkingSurface({
   inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
 }) {
   return (
-    <div className="w-full max-w-3xl">
-      <div className="relative overflow-hidden rounded-[22px] border border-white/12 bg-white/[0.055] p-3.5 backdrop-blur-md">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_48%)]" />
-        <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-fuchsia-400/10 blur-2xl" />
+    <div className="w-full">
+      <QuestionTextEntry
+        value={value}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        canSubmit={canSubmit}
+        placeholder={placeholder}
+        textareaRef={textareaRef}
+        inputMode={inputMode}
+        rows={inputMode === "numeric" ? 1 : 3}
+      />
 
-        <div className="relative">
-          <textarea
-            ref={textareaRef}
-            value={value}
-            inputMode={inputMode}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSubmit();
-              }
-            }}
-            rows={1}
-            placeholder={placeholder ?? ""}
-            className="min-h-[46px] w-full resize-none bg-transparent px-1 py-1 text-[14px] leading-6 text-white/92 outline-none placeholder:text-white/30"
+      <div className="mt-3 flex items-center justify-between gap-3">
+        {showMic && onToggleMic ? (
+          <TalkLink
+            isListening={Boolean(isListening)}
+            speechSupported={Boolean(speechSupported)}
+            onClick={onToggleMic}
           />
+        ) : (
+          <div />
+        )}
 
-          <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/8 pt-2.5">
-            {showMic ? (
-              <button
-                type="button"
-                onClick={onToggleMic}
-                disabled={!speechSupported}
-                className={[
-                  "inline-flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[13px] transition",
-                  speechSupported
-                    ? isListening
-                      ? "bg-white/[0.08] text-white"
-                      : "text-white/62 hover:bg-white/[0.05] hover:text-white/88"
-                    : "cursor-not-allowed text-white/24",
-                ].join(" ")}
-                aria-label={isListening ? "Stop voice input" : "Start voice input"}
-                title={
-                  !speechSupported
-                    ? "Voice not supported"
-                    : isListening
-                      ? "Listening…"
-                      : "Voice input"
-                }
-              >
-                {isListening ? <MicOff size={15} /> : <Mic size={15} />}
-                <span>{isListening ? "Listening…" : "Speak"}</span>
-              </button>
-            ) : (
-              <div />
-            )}
-
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={!canSubmit}
-              className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] font-medium transition",
-                canSubmit
-                  ? "border-white/18 bg-white/[0.1] text-white/90 hover:border-white/28 hover:bg-white/[0.14] hover:text-white"
-                  : "cursor-not-allowed border-white/8 bg-white/[0.03] text-white/28",
-              ].join(" ")}
-              aria-label="Continue"
-              title="Continue"
-            >
-              <span>Continue</span>
-              <Send size={14} />
-            </button>
-          </div>
-        </div>
+        <ActionLink label="Continue" onClick={onSubmit} disabled={!canSubmit} />
       </div>
     </div>
   );
@@ -550,63 +668,68 @@ function QuestionShell({
   title,
   whisper,
   children,
-  topAction,
-  bottomAction,
-  compact,
   tone,
+  currentStep,
+  certainty,
+  showExit,
+  showBack,
+  onExit,
+  onBack,
+  bottomLeft,
+  bottomRight,
 }: {
   title: string;
   whisper?: string | null;
   children: React.ReactNode;
-  topAction?: React.ReactNode;
-  bottomAction?: React.ReactNode;
-  compact?: boolean;
   tone: ReturnType<typeof visualToneForStep>;
+  currentStep: StepId;
+  certainty: Certainty;
+  showExit?: boolean;
+  showBack?: boolean;
+  onExit?: () => void;
+  onBack?: () => void;
+  bottomLeft?: React.ReactNode;
+  bottomRight?: React.ReactNode;
 }) {
   return (
-    <div className="flex w-full items-start">
-      <div className="relative mx-auto mt-1 w-full max-w-5xl sm:mt-2">
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-        />
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-        />
+    <div className="relative mx-auto w-full max-w-[520px]">
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+      />
 
-        <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.055] px-5 py-5 backdrop-blur-md sm:px-6 sm:py-5`}>
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
-          <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_54%)]" />
-          <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/8 blur-2xl" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+      <div className="relative rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/16" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[62%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,191,130,0.14),transparent_70%)] blur-2xl" />
+        <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
+        <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
 
-          <div className="relative">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div />
-              {topAction ? <div>{topAction}</div> : null}
+        <div className="relative px-4 pt-2.5 sm:px-5 sm:pt-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {showExit && onExit ? <NavLink label="Exit" onClick={onExit} /> : null}
+              {showBack && onBack ? <NavLink label="Back" onClick={onBack} /> : null}
             </div>
 
-            <h1
-              className={[
-                "font-semibold leading-[1.02] tracking-tight text-white",
-                compact
-                  ? "text-[1.9rem] sm:text-[2.08rem]"
-                  : "text-[1.95rem] sm:text-[2.2rem]",
-              ].join(" ")}
-            >
-              {title}
-            </h1>
+            <ProgressDots currentStep={currentStep} certainty={certainty} />
+          </div>
 
-            <div className="mt-2 min-h-[20px]">
+          <div className="pt-2.5">
+            <h1 className={TYPE.headline}>{title}</h1>
+
+            <div className="mt-1 min-h-[14px]">
               <div
                 className={[
-                  "text-[13px] leading-5 text-white/58 transition-all duration-300",
+                  TYPE.whisper,
+                  "transition-all duration-300",
                   whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
                 ].join(" ")}
               >
@@ -614,9 +737,16 @@ function QuestionShell({
               </div>
             </div>
 
-            <div className="mt-3">{children}</div>
+            <div className="mt-2">{children}</div>
 
-            {bottomAction ? <div className="mt-4">{bottomAction}</div> : null}
+            {(bottomLeft || bottomRight) ? (
+              <div className="mt-3 flex items-center justify-between gap-4 pb-3.5">
+                <div>{bottomLeft ?? null}</div>
+                <div className="flex items-center gap-4">{bottomRight ?? null}</div>
+              </div>
+            ) : (
+              <div className="pb-3.5" />
+            )}
           </div>
         </div>
       </div>
@@ -627,23 +757,6 @@ function QuestionShell({
 /* ============================================================
    Retorts
    ============================================================ */
-
-function postPlanLabel(k: PostPlanKey): string {
-  switch (k) {
-    case "job":
-      return "working";
-    case "four_year":
-      return "a four-year college";
-    case "associates":
-      return "community college";
-    case "credential":
-      return "a trade program";
-    case "military":
-      return "the military";
-    case "no_idea":
-      return "not being sure yet";
-  }
-}
 
 function activityLabel(k: ActivityKey): string {
   switch (k) {
@@ -955,9 +1068,6 @@ export default function OnboardingPage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
 
-  const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient = GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ?? GRADIENT_CONFIGS[1];
-
   const pageBgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
   const pageBgStyle: CSSProperties = pageBgImage ? { backgroundImage: pageBgImage } : {};
 
@@ -992,11 +1102,6 @@ export default function OnboardingPage() {
 
   const funShownAtRef = React.useRef<number | null>(null);
   const [whisper, setWhisper] = React.useState<string | null>(null);
-  const scrollViewportRef = React.useRef<HTMLDivElement | null>(null);
-  const [canScroll, setCanScroll] = React.useState(false);
-  const [showTopFade, setShowTopFade] = React.useState(false);
-  const [showBottomFade, setShowBottomFade] = React.useState(false);
-  const [showScrollCue, setShowScrollCue] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1155,44 +1260,12 @@ export default function OnboardingPage() {
     }
   }, [stepId, screenMode]);
 
-  React.useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      const el = scrollViewportRef.current;
-      if (!el) return;
-      el.scrollTo({ top: 0, behavior: "auto" });
-      updateScrollState();
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [stepId, screenMode, postPlans.length, activities.length, activitiesOther, draft]);
-
-  React.useEffect(() => {
-    const onResize = () => updateScrollState();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [screenMode]);
-
   function showWhisper(message: string) {
     setWhisper(message);
     window.clearTimeout((showWhisper as unknown as { _t?: number })._t);
     (showWhisper as unknown as { _t?: number })._t = window.setTimeout(() => {
       setWhisper(null);
     }, 1000);
-  }
-
-  function updateScrollState() {
-    const el = scrollViewportRef.current;
-    if (!el) return;
-
-    const maxScroll = Math.max(0, el.scrollHeight - el.clientHeight);
-    const top = el.scrollTop;
-    const hasScroll = maxScroll > 24;
-    const nearBottom = maxScroll - top < 28;
-
-    setCanScroll(hasScroll);
-    setShowTopFade(hasScroll && top > 8);
-    setShowBottomFade(hasScroll && !nearBottom);
-    setShowScrollCue(hasScroll && top < 18 && screenMode === "question");
   }
 
   function lockAdvance(): boolean {
@@ -1464,6 +1537,10 @@ export default function OnboardingPage() {
     unlockAdvance();
   }
 
+  function onSummaryNext() {
+    router.push("/main");
+  }
+
   function submitName() {
     if (!lockAdvance()) return;
     const text = draft.trim();
@@ -1621,118 +1698,81 @@ export default function OnboardingPage() {
   const tone = visualToneForStep(stepId);
   const screenKey = screenMode === "retort" ? `retort_${retortFromStep ?? stepId}` : stepId;
 
-  const questionTopAction =
-    stepId !== "welcome" && screenMode === "question" && canGoBack() ? (
-      <InlineMetaAction label="← Back" onClick={goBack} tone="cool" />
-    ) : null;
-
   function renderRetort() {
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={skipRetort}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") skipRetort();
-        }}
-        className="flex h-full cursor-pointer items-start pt-8 select-none sm:pt-10"
-        aria-label="Tap to continue"
-        title="Tap to continue"
-      >
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-8 backdrop-blur-md">
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
-            <div className={`pointer-events-none absolute inset-0 ${tone.glow}`} />
-            <motion.div
-              aria-hidden="true"
-              animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              className={`pointer-events-none absolute -left-8 top-[-1rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-            />
-            <motion.div
-              aria-hidden="true"
-              animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-            />
-            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.11),transparent_56%)]" />
-            <div className="relative">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/44">
-                Everleap
-              </div>
-              <div className="mt-4 text-[1.55rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.95rem]">
-                {retortText}
-              </div>
-              <div className="mt-5 text-[11px] font-medium uppercase tracking-[0.14em] text-white/34">
-                Tap anywhere to continue
+      <div className="relative mx-auto w-full max-w-[520px]">
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute -left-8 top-[-1rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+        />
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+        />
+
+        <motion.button
+          type="button"
+          onClick={skipRetort}
+          whileTap={{ scale: 0.992 }}
+          className="relative block w-full cursor-pointer rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.80),rgba(8,11,21,0.88))] px-5 py-5 text-left shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[18px]"
+          aria-label="Tap or click anywhere to continue"
+        >
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/16" />
+          <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[60%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,191,130,0.16),transparent_70%)] blur-2xl" />
+          <div className="pointer-events-none absolute -left-10 top-8 h-24 w-24 rounded-full bg-cyan-300/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-violet-400/10 blur-3xl" />
+          <div className="relative">
+            <div className={TYPE.retortHeadline}>{retortText}</div>
+            <div className="mt-5 flex justify-end">
+              <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/48">
+                Tap or click anywhere to continue
               </div>
             </div>
           </div>
-        </div>
+        </motion.button>
       </div>
     );
   }
 
   function renderWelcome() {
     return (
-      <div className="flex w-full items-start">
-        <div className="relative mx-auto mt-1 w-full max-w-5xl sm:mt-2">
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-28 w-28 rounded-full blur-3xl ${tone.orbA}`}
-          />
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute right-[8%] top-[3.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-          />
+      <div className="relative mx-auto w-full max-w-[520px]">
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+        />
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+        />
 
-          <div className="relative overflow-hidden rounded-[30px] border border-white/12 bg-white/[0.05] px-5 py-6 backdrop-blur-md sm:px-6 sm:py-6">
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
-            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.11),transparent_55%)]" />
-            <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(26,30,48,0.84),rgba(10,14,26,0.92))] px-5 py-5 shadow-[0_26px_90px_rgba(0,0,0,0.44)] backdrop-blur-xl">
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.09),transparent_52%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
 
-            <div className="relative">
-              <div className="mb-3 flex items-center justify-end">
-                <InlineMetaAction label="Exit" onClick={exitOnboarding} tone="cool" />
-              </div>
+          <div className="relative flex items-center justify-between">
+            <NavLink label="Exit" onClick={exitOnboarding} />
+          </div>
 
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/44">
-                {STEP_META.welcome.kicker}
-              </div>
+          <div className="relative pt-5">
+            <div className={TYPE.kicker}>{STEP_META.welcome.kicker}</div>
+            <h1 className={`mt-4 ${TYPE.welcomeHeadline}`}>{STEP_META.welcome.title}</h1>
+            <p className={`mt-3.5 max-w-[27rem] ${TYPE.body}`}>
+              A few quick questions. Enough to get a real feel for you and start showing paths that actually fit.
+            </p>
 
-              <h1 className="mt-3 text-[2.18rem] font-semibold leading-[0.98] tracking-tight text-white sm:text-[2.55rem]">
-                {STEP_META.welcome.title}
-              </h1>
-
-              <p className="mt-4 max-w-xl text-[14px] leading-6 text-white/72">
-                A few quick questions. Then the app stops guessing and starts actually seeing you.
-              </p>
-
-              <div className="mt-6 flex items-center gap-3">
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.985 }}
-                  whileHover={{ scale: 1.012 }}
-                  onClick={onWelcomeNext}
-                  className="group inline-flex items-center gap-3 rounded-full border border-white/16 bg-white/[0.09] px-5 py-2.5 text-sm font-medium text-white/94 shadow-[0_0_40px_rgba(255,255,255,0.05)] backdrop-blur-sm transition hover:border-white/24 hover:bg-white/[0.13] hover:text-white"
-                  aria-label="Let’s begin"
-                  title="Let’s begin"
-                >
-                  <span>Let’s begin</span>
-                  <span
-                    aria-hidden="true"
-                    className="transition-transform duration-200 group-hover:translate-x-0.5"
-                  >
-                    →
-                  </span>
-                </motion.button>
-              </div>
+            <div className="mt-6 flex justify-end">
+              <ActionLink label="Let’s go" onClick={onWelcomeNext} />
             </div>
           </div>
         </div>
@@ -1745,20 +1785,26 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.name.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
+        currentStep="name"
+        certainty={certainty}
+        showExit
+        onExit={exitOnboarding}
+        bottomLeft={
+          <TalkLink
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onClick={() => toggleMic("name")}
+          />
+        }
+        bottomRight={<ActionLink label="Continue" onClick={submitName} disabled={!draft.trim()} />}
       >
-        <ThinkingSurface
+        <QuestionTextEntry
           value={draft}
           onChange={setDraft}
           onSubmit={submitName}
           canSubmit={Boolean(draft.trim())}
           textareaRef={textareaRef}
-          showMic
-          isListening={isListening}
-          speechSupported={speechSupported}
-          onToggleMic={() => toggleMic("name")}
           placeholder="Write the name you want me to use."
         />
       </QuestionShell>
@@ -1772,11 +1818,15 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.situation.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
+        currentStep="situation"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
       >
-        <div className="w-full space-y-2.5">
+        <div className="w-full space-y-2">
           <ChoiceRowText
             label="I’m in high school"
             selected={situation === "high_school"}
@@ -1802,23 +1852,36 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.zip.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
-        bottomAction={<InlineMetaAction label="Skip for now" onClick={skipZip} />}
+        currentStep="zip"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
+        bottomLeft={
+          <TalkLink
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onClick={() => toggleMic("zip")}
+          />
+        }
+        bottomRight={
+          <>
+            <NavLink label="Skip" onClick={skipZip} />
+            <ActionLink label="Continue" onClick={submitZip} disabled={!canSubmit} />
+          </>
+        }
       >
-        <ThinkingSurface
+        <QuestionTextEntry
           value={draft}
           onChange={(v) => setDraft(v.replace(/[^\d]/g, "").slice(0, 5))}
           onSubmit={submitZip}
           canSubmit={canSubmit}
           textareaRef={textareaRef}
-          showMic
-          isListening={isListening}
-          speechSupported={speechSupported}
-          onToggleMic={() => toggleMic("zip")}
           placeholder="5-digit zip code"
           inputMode="numeric"
+          rows={1}
         />
       </QuestionShell>
     );
@@ -1831,11 +1894,15 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.certainty.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
+        currentStep="certainty"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
       >
-        <div className="grid w-full gap-3">
+        <div className="grid w-full gap-2">
           <BigMoodCard
             title="I feel pretty sure"
             sub="There’s already something I can see."
@@ -1872,20 +1939,28 @@ export default function OnboardingPage() {
       <QuestionShell
         title={meta.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
+        currentStep="certaintyIdea"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
+        bottomLeft={
+          <TalkLink
+            isListening={isListening}
+            speechSupported={speechSupported}
+            onClick={() => toggleMic("certaintyIdea")}
+          />
+        }
+        bottomRight={<ActionLink label="Continue" onClick={submitCertaintyIdea} disabled={!draft.trim()} />}
       >
-        <ThinkingSurface
+        <QuestionTextEntry
           value={draft}
           onChange={setDraft}
           onSubmit={submitCertaintyIdea}
           canSubmit={Boolean(draft.trim())}
           textareaRef={textareaRef}
-          showMic
-          isListening={isListening}
-          speechSupported={speechSupported}
-          onToggleMic={() => toggleMic("certaintyIdea")}
           placeholder={meta.placeholder}
         />
       </QuestionShell>
@@ -1899,32 +1974,30 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.postPlans.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
-        bottomAction={
-          <InlineMetaAction
-            label="Continue"
-            onClick={continuePostPlans}
-            disabled={postPlans.length === 0}
-          />
-        }
+        currentStep="postPlans"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
+        bottomRight={<ActionLink label="Continue" onClick={continuePostPlans} disabled={postPlans.length === 0} />}
       >
-        <div className="w-full space-y-2">
+        <div className="grid w-full gap-2">
           <ChoiceRowText
-            label="A job"
+            label="Get a job"
             selected={postPlans.includes("job")}
             dimmed={hasSelection && !postPlans.includes("job")}
             onClick={() => togglePostPlan("job")}
           />
           <ChoiceRowText
-            label="Community / two-year college"
+            label="Community college"
             selected={postPlans.includes("associates")}
             dimmed={hasSelection && !postPlans.includes("associates")}
             onClick={() => togglePostPlan("associates")}
           />
           <ChoiceRowText
-            label="Trade / credential program"
+            label="Trade or credential program"
             selected={postPlans.includes("credential")}
             dimmed={hasSelection && !postPlans.includes("credential")}
             onClick={() => togglePostPlan("credential")}
@@ -1942,7 +2015,7 @@ export default function OnboardingPage() {
             onClick={() => togglePostPlan("four_year")}
           />
           <ChoiceRowText
-            label="I’m not sure yet"
+            label="I have no idea yet"
             selected={postPlans.includes("no_idea")}
             dimmed={hasSelection && !postPlans.includes("no_idea")}
             onClick={() => togglePostPlan("no_idea")}
@@ -1955,38 +2028,50 @@ export default function OnboardingPage() {
   function renderActivities() {
     const hasSelection = activities.length > 0;
     const showOtherInput = activities.includes("other");
-    const canContinue = hasSelection && (!showOtherInput || draft.trim().length > 0);
 
     return (
       <QuestionShell
         title={STEP_META.activities.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
-        bottomAction={
-          <InlineMetaAction
+        currentStep="activities"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
+        bottomLeft={
+          showOtherInput ? (
+            <TalkLink
+              isListening={isListening}
+              speechSupported={speechSupported}
+              onClick={() => toggleMic("activitiesOther")}
+            />
+          ) : null
+        }
+        bottomRight={
+          <ActionLink
             label="Continue"
             onClick={() => continueActivities()}
-            disabled={!canContinue}
+            disabled={activities.length === 0 || (showOtherInput && !draft.trim())}
           />
         }
       >
-        <div className="w-full space-y-2">
+        <div className="grid w-full gap-2">
           <ChoiceRowText
-            label="Sports / training"
+            label="Sports"
             selected={activities.includes("sports")}
             dimmed={hasSelection && !activities.includes("sports")}
             onClick={() => toggleActivity("sports")}
           />
           <ChoiceRowText
-            label="Art / design"
+            label="Visual art or design"
             selected={activities.includes("visual_arts")}
             dimmed={hasSelection && !activities.includes("visual_arts")}
             onClick={() => toggleActivity("visual_arts")}
           />
           <ChoiceRowText
-            label="Music / dance / theater"
+            label="Music, dance, or theater"
             selected={activities.includes("performing_arts")}
             dimmed={hasSelection && !activities.includes("performing_arts")}
             onClick={() => toggleActivity("performing_arts")}
@@ -2020,16 +2105,12 @@ export default function OnboardingPage() {
               transition={spring}
               className="mt-3"
             >
-              <ThinkingSurface
+              <QuestionTextEntry
                 value={draft}
                 onChange={setDraft}
                 onSubmit={() => continueActivities()}
                 canSubmit={Boolean(draft.trim())}
                 textareaRef={textareaRef}
-                showMic
-                isListening={isListening}
-                speechSupported={speechSupported}
-                onToggleMic={() => toggleMic("activitiesOther")}
                 placeholder="Add the thing that matters here."
               />
             </motion.div>
@@ -2044,11 +2125,15 @@ export default function OnboardingPage() {
       <QuestionShell
         title={STEP_META.fun.title}
         whisper={whisper}
-        compact
         tone={tone}
-        topAction={questionTopAction}
+        currentStep="fun"
+        certainty={certainty}
+        showExit
+        showBack
+        onExit={exitOnboarding}
+        onBack={goBack}
       >
-        <div className="grid max-w-[540px] grid-cols-2 gap-3">
+        <div className="grid max-w-[520px] grid-cols-2 gap-1 sm:gap-1.5">
           {FUN_OPTIONS.map((option) => {
             const selected = funChoice === option.key;
             const dimmed = Boolean(funChoice) && !selected;
@@ -2067,11 +2152,11 @@ export default function OnboardingPage() {
                   opacity: dimmed ? 0.44 : 1,
                 }}
                 className={[
-                  "group relative overflow-hidden rounded-[22px] border bg-white/[0.05] text-left",
+                  "group relative overflow-hidden rounded-[22px] border bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.05))] text-left",
                   selected ? "border-white/24 shadow-[0_0_40px_rgba(255,255,255,0.08)]" : "border-white/10 hover:border-white/16",
                 ].join(" ")}
               >
-                <div className="relative aspect-[0.94] sm:aspect-[0.9]">
+                <div className="relative h-[132px] sm:h-[150px]">
                   <Image
                     src={option.src}
                     alt={option.alt}
@@ -2080,15 +2165,15 @@ export default function OnboardingPage() {
                       "object-cover transition duration-300",
                       selected ? "scale-[1.04]" : "scale-100 group-hover:scale-[1.02]",
                     ].join(" ")}
-                    sizes="(max-width: 768px) 42vw, 220px"
+                    sizes="(max-width: 768px) 32vw, 150px"
                     priority={stepId === "fun"}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 p-3">
-                  <div className="text-[0.98rem] font-semibold text-white">{option.alt}</div>
+                <div className="absolute inset-x-0 bottom-0 p-2">
+                  <div className="text-[0.82rem] font-semibold text-white">{option.alt}</div>
                 </div>
               </motion.button>
             );
@@ -2115,56 +2200,32 @@ export default function OnboardingPage() {
     const label = n ? `${n},` : "You,";
 
     return (
-      <div className="flex w-full items-start pt-6 sm:pt-8">
-        <div className="relative mx-auto w-full max-w-5xl">
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute -left-6 top-0 h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-          />
-          <motion.div
-            aria-hidden="true"
-            animate={{ x: [0, -12, 0], y: [0, 10, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className={`pointer-events-none absolute right-[8%] top-[5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-          />
+      <div className="relative mx-auto w-full max-w-[520px]">
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute -left-6 top-0 h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+        />
+        <motion.div
+          aria-hidden="true"
+          animate={{ x: [0, -12, 0], y: [0, 10, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className={`pointer-events-none absolute right-[8%] top-[5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+        />
 
-          <div className={`relative overflow-hidden rounded-[30px] border ${tone.ring} bg-white/[0.05] px-5 py-7 backdrop-blur-md sm:px-6 sm:py-8`}>
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.meshA}`} />
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.meshB}`} />
-            <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1),transparent_55%)]" />
+        <div className="relative overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(26,30,48,0.84),rgba(10,14,26,0.92))] px-5 py-5 shadow-[0_26px_90px_rgba(0,0,0,0.44)] backdrop-blur-xl">
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
+          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.09),transparent_52%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
 
-            <div className="relative">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/42">
-                Everleap · First read
-              </div>
-
-              <h1 className="mt-3 text-[2rem] font-semibold leading-[1.02] tracking-tight text-white sm:text-[2.35rem]">
-                {label} this gives us a real start.
-              </h1>
-
-              <p className="mt-4 max-w-3xl text-[14px] leading-6 text-white/76">
-                {insight}
-              </p>
-
-              <div className="mt-6">
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.985 }}
-                  whileHover={{ scale: 1.01 }}
-                  onClick={() => router.push("/main")}
-                  className="group inline-flex items-center gap-3 rounded-full border border-white/16 bg-white/[0.09] px-5 py-2.5 text-sm font-medium text-white/92 transition hover:border-white/24 hover:bg-white/[0.13] hover:text-white"
-                >
-                  <span>Enter Everleap</span>
-                  <span
-                    aria-hidden="true"
-                    className="transition-transform duration-200 group-hover:translate-x-0.5"
-                  >
-                    →
-                  </span>
-                </motion.button>
-              </div>
+          <div className="relative">
+            <div className={TYPE.kicker}>Everleap</div>
+            <div className={`mt-3 ${TYPE.retortHeadline}`}>{label}</div>
+            <div className={`mt-4 ${TYPE.body}`}>{insight}</div>
+            <div className="mt-6 flex justify-end">
+              <ActionLink label="Let’s go" onClick={onSummaryNext} />
             </div>
           </div>
         </div>
@@ -2172,11 +2233,7 @@ export default function OnboardingPage() {
     );
   }
 
-  function renderScreen() {
-    if (screenMode === "retort") {
-      return renderRetort();
-    }
-
+  function renderCurrentQuestion() {
     switch (stepId) {
       case "welcome":
         return renderWelcome();
@@ -2199,7 +2256,7 @@ export default function OnboardingPage() {
       case "summary":
         return renderSummary();
       default:
-        return null;
+        return renderWelcome();
     }
   }
 
@@ -2209,75 +2266,57 @@ export default function OnboardingPage() {
       setThemeId={setThemeId}
       gradientLevel={gradientLevel}
       setGradientLevel={setGradientLevel}
-      orbSource="onboarding_orb"
+      orbSource="questions_orb"
       ambientCap={0.22}
+      flushContent
+      hideHeader
     >
-      <div
-        ref={scrollViewportRef}
-        onScroll={updateScrollState}
-        className={`relative min-h-[100svh] overflow-x-hidden overflow-y-auto ${theme.pageBgBaseClass}`}
-        style={pageBgStyle}
-      >
-        {gradientLevel > 0 && (
+      <div className="relative h-full overflow-y-auto overflow-x-hidden">
+        <div className="pointer-events-none absolute inset-0">
           <div
-            className="pointer-events-none absolute inset-0 overflow-hidden"
-            style={{ opacity: gradient.ambientOpacity * 0.42 }}
-          >
-            <motion.div
-              animate={{ x: [0, 18, 0], y: [0, -12, 0] }}
-              transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-              className={`absolute -top-24 -left-24 h-72 w-72 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-            />
-            <motion.div
-              animate={{ x: [0, -14, 0], y: [0, 10, 0] }}
-              transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-              className={`absolute top-72 right-[-220px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
-              style={{ opacity: 0.32 }}
-            />
+            className="absolute inset-0 bg-cover bg-center opacity-30"
+            style={pageBgStyle}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,166,92,0.16),transparent_30%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_24%,rgba(217,70,239,0.16),transparent_34%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_68%,rgba(34,211,238,0.12),transparent_36%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,20,0.14)_0%,rgba(8,10,18,0.70)_56%,rgba(6,8,15,0.94)_100%)]" />
+          <div className="absolute -left-12 top-[10%] h-40 w-40 rounded-full bg-amber-300/12 blur-3xl" />
+          <div className="absolute right-[-2.5rem] top-[24%] h-44 w-44 rounded-full bg-fuchsia-400/10 blur-3xl" />
+          <div className="absolute bottom-[-3rem] left-[18%] h-40 w-40 rounded-full bg-cyan-300/10 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 px-2 sm:px-3">
+          <div className="box-border flex min-h-[calc(100svh-5.75rem)] items-center justify-center supports-[height:100dvh]:min-h-[calc(100dvh-5.75rem)]">
+            <div className="w-full max-w-[560px]">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={screenKey}
+                  initial={
+                    screenMode === "retort"
+                      ? screenVariants.retortEnter
+                      : screenVariants.questionEnter
+                  }
+                  animate={
+                    screenMode === "retort"
+                      ? screenVariants.retortCenter
+                      : screenVariants.questionCenter
+                  }
+                  exit={
+                    screenMode === "retort"
+                      ? screenVariants.retortExit
+                      : screenVariants.questionExit
+                  }
+                  transition={spring}
+                  className="w-full"
+                >
+                  {screenMode === "retort"
+                    ? renderRetort()
+                    : renderCurrentQuestion()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
-        )}
-
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/8 via-transparent to-black/22" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_42%)]" />
-
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 transition-opacity duration-300" style={{ opacity: showTopFade ? 1 : 0 }}>
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#07101f]/78 via-[#07101f]/32 to-transparent" />
-          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-28 transition-opacity duration-300" style={{ opacity: showBottomFade ? 1 : 0 }}>
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#07101f]/88 via-[#07101f]/40 to-transparent" />
-          <div className="absolute inset-x-10 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-5 z-30 flex justify-center transition-all duration-300" style={{ opacity: showScrollCue ? 1 : 0, transform: showScrollCue ? "translateY(0px)" : "translateY(8px)" }}>
-          <motion.div
-            animate={{ y: [0, 6, 0], opacity: [0.82, 1, 0.82] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 backdrop-blur-md"
-          >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/54">Scroll</span>
-            <span aria-hidden="true" className="text-[11px] text-white/44">↓</span>
-          </motion.div>
-        </div>
-
-        <div className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-5xl flex-col px-4 pb-6 pt-2 sm:px-6">
-          <header className="flex h-4 shrink-0 items-center justify-end" />
-
-          <main className="relative flex-1 overflow-visible pt-1">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={screenKey}
-                initial={screenMode === "retort" ? screenVariants.retortEnter : screenVariants.questionEnter}
-                animate={screenMode === "retort" ? screenVariants.retortCenter : screenVariants.questionCenter}
-                exit={screenMode === "retort" ? screenVariants.retortExit : screenVariants.questionExit}
-                transition={spring}
-                className="min-h-full"
-              >
-                {renderScreen()}
-              </motion.div>
-            </AnimatePresence>
-          </main>
         </div>
       </div>
     </AppChrome>

@@ -56,10 +56,24 @@
   }
 
   /* ✅ FIX FOR LANE SHIFT / HORIZONTAL JITTER */
-  html { scrollbar-gutter: stable; }
-  html, body { overflow-x: hidden; }
+  html {
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
+    min-height: 100%;
+    background-color: var(--el-bg);
+  }
 
-  body { color: var(--text); background-color: var(--bg-base); }
+  body {
+    margin: 0;
+    min-height: 100%;
+    overflow-x: hidden;
+    color: var(--text);
+    background-color: var(--el-bg);
+  }
+
+  #__next {
+    min-height: 100%;
+  }
 }
 
 /* ========== 2) Utilities (theme-aware) ========== */

@@ -29,7 +29,8 @@ export function EverleapMark({
   variant = "app",
   className,
 }: EverleapMarkProps) {
-  const orbBox = variant === "hero" ? "h-8 w-8 rounded-[14px]" : "h-7 w-7 rounded-xl";
+  const orbBox =
+    variant === "hero" ? "h-8 w-8 rounded-[14px]" : "h-7 w-7 rounded-xl";
   const titleSize = variant === "hero" ? "text-[11.5px]" : "text-[11px]";
   const subSize = variant === "hero" ? "text-[12.5px]" : "text-[12px]";
 
@@ -51,7 +52,10 @@ export function EverleapMark({
         />
 
         <span
-          className={cx("relative block overflow-hidden ring-1 ring-white/15", orbBox)}
+          className={cx(
+            "relative block overflow-hidden ring-1 ring-white/15",
+            orbBox
+          )}
           style={{ boxShadow: "0 12px 22px rgba(255,120,80,0.18)" }}
         >
           <span
@@ -120,15 +124,16 @@ export type AppChromeProps = {
 
   hideHeader?: boolean;
   minimalBackground?: boolean;
+  flushContent?: boolean;
 };
 
 function intensityForLevel(level: GradientLevel | undefined) {
   const n = typeof level === "number" ? level : 2;
   const v = Math.max(1, Math.min(4, n));
-  if (v <= 1) return { bloom: 0.22, wash: 0.28, vignette: 0.6 };
-  if (v === 2) return { bloom: 0.28, wash: 0.34, vignette: 0.64 };
-  if (v === 3) return { bloom: 0.34, wash: 0.4, vignette: 0.68 };
-  return { bloom: 0.4, wash: 0.46, vignette: 0.72 };
+  if (v <= 1) return { bloom: 0.18, wash: 0.22, vignette: 0.58 };
+  if (v === 2) return { bloom: 0.24, wash: 0.28, vignette: 0.62 };
+  if (v === 3) return { bloom: 0.3, wash: 0.34, vignette: 0.66 };
+  return { bloom: 0.36, wash: 0.4, vignette: 0.7 };
 }
 
 type CSSVars = React.CSSProperties & { [key: `--${string}`]: string | number };
@@ -140,6 +145,7 @@ export function AppChrome({
   gradientLevel,
   hideHeader = false,
   minimalBackground = false,
+  flushContent = false,
   ..._unused
 }: AppChromeProps) {
   void _unused;
@@ -147,11 +153,11 @@ export function AppChrome({
   const intensity = intensityForLevel(gradientLevel);
 
   const chromeVars: CSSVars = {
-    "--el-chrome-bg": "rgba(255,255,255,0.032)",
-    "--el-chrome-border": "rgba(255,255,255,0.10)",
-    "--el-chrome-highlight": "rgba(255,255,255,0.12)",
-    "--el-chrome-shadow": "0 18px 60px rgba(0,0,0,0.18)",
-    "--el-chrome-blur": "26px",
+    "--el-chrome-bg": "rgba(255,255,255,0.028)",
+    "--el-chrome-border": "rgba(255,255,255,0.09)",
+    "--el-chrome-highlight": "rgba(255,255,255,0.10)",
+    "--el-chrome-shadow": "0 16px 48px rgba(0,0,0,0.18)",
+    "--el-chrome-blur": "22px",
   };
 
   const chromeBg = "var(--el-chrome-bg)";
@@ -159,46 +165,52 @@ export function AppChrome({
   const chromeShadow = "var(--el-chrome-shadow)";
   const chromeBlur = "var(--el-chrome-blur)";
 
+  const rootClasses =
+    "relative flex h-[100svh] supports-[height:100dvh]:h-[100dvh] w-full flex-col bg-slate-950 text-white";
+
+  const contentClasses =
+    hideHeader || flushContent
+      ? "flex-1 min-h-0 max-w-none px-0 pt-0 pb-0"
+      : "flex-1 min-h-0 max-w-5xl px-2 pt-2 pb-4 sm:px-4 sm:pt-2.5 md:px-6 lg:px-8 xl:px-10";
+
   return (
-    <div
-      className={cx("relative min-h-dvh w-full bg-slate-950 text-white", className)}
-      style={chromeVars}
-    >
+    <div className={cx(rootClasses, className)} style={chromeVars}>
       {!minimalBackground && (
         <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
           <div
             className="absolute inset-0"
             style={{
-              background:
-                "radial-gradient(1200px 800px at 30% 12%, rgba(56,189,248,0.20) 0%, rgba(0,0,0,0) 60%)," +
-                "radial-gradient(900px 700px at 70% 18%, rgba(167,139,250,0.18) 0%, rgba(0,0,0,0) 62%)," +
-                "radial-gradient(1000px 900px at 55% 85%, rgba(34,197,94,0.10) 0%, rgba(0,0,0,0) 58%)," +
-                "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.88) 40%, rgba(0,0,0,0.94) 100%)",
+              background: [
+                "radial-gradient(1100px 760px at 24% 10%, rgba(56,189,248,0.16) 0%, rgba(0,0,0,0) 60%)",
+                "radial-gradient(880px 660px at 76% 16%, rgba(167,139,250,0.14) 0%, rgba(0,0,0,0) 62%)",
+                "radial-gradient(900px 820px at 52% 86%, rgba(34,197,94,0.07) 0%, rgba(0,0,0,0) 58%)",
+                "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.90) 40%, rgba(0,0,0,0.95) 100%)",
+              ].join(","),
               opacity: intensity.wash,
             }}
           />
 
           <div
-            className="absolute -top-40 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
+            className="absolute -top-44 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.30) 0%, rgba(0,0,0,0) 65%)",
+                "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.22) 0%, rgba(0,0,0,0) 65%)",
               opacity: intensity.bloom,
             }}
           />
           <div
-            className="absolute top-24 -left-48 h-[520px] w-[520px] rounded-full blur-3xl"
+            className="absolute top-20 -left-52 h-[500px] w-[500px] rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.26) 0%, rgba(0,0,0,0) 70%)",
+                "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.20) 0%, rgba(0,0,0,0) 70%)",
               opacity: intensity.bloom,
             }}
           />
           <div
-            className="absolute bottom-0 -right-56 h-[620px] w-[720px] rounded-full blur-3xl"
+            className="absolute bottom-[-80px] -right-60 h-[600px] w-[700px] rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.22) 0%, rgba(0,0,0,0) 68%)",
+                "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.16) 0%, rgba(0,0,0,0) 68%)",
               opacity: intensity.bloom,
             }}
           />
@@ -216,7 +228,7 @@ export function AppChrome({
 
       {!hideHeader && (
         <header
-          className={cx("relative z-10 sticky top-0")}
+          className={cx("relative z-10")}
           style={{
             background: chromeBg,
             boxShadow: chromeShadow,
@@ -237,7 +249,7 @@ export function AppChrome({
             className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
             style={{
               background: `linear-gradient(to right, transparent, ${chromeHighlight}, transparent)`,
-              opacity: 0.9,
+              opacity: 0.85,
             }}
           />
 
@@ -249,10 +261,8 @@ export function AppChrome({
 
       <main
         className={cx(
-          "relative z-10 mx-auto w-full",
-          hideHeader
-            ? "max-w-none px-0 pt-0 pb-0"
-            : "max-w-5xl px-2 pt-2 pb-4 sm:px-4 sm:pt-2.5 md:px-6 lg:px-8 xl:px-10"
+          "relative z-10 mx-auto flex w-full min-h-0 flex-1 flex-col",
+          contentClasses
         )}
       >
         {children}

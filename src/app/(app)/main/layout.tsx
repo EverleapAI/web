@@ -1,7 +1,7 @@
-// src/app/(app)/main/layout.tsx
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import AppChrome from "@/components/site/AppChrome";
 import { BottomNav } from "@/components/navigation/BottomNav";
 
@@ -10,14 +10,17 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppChrome>
-      <div className="relative min-h-[100svh] flex flex-col">
-        {/* Main content (pad bottom so BottomNav doesn't cover it) */}
-        <div className="flex-1 pb-[92px]">{children}</div>
+  const pathname = usePathname();
+  const isQuestions = pathname?.startsWith("/main/questions");
 
-        {/* Logged-in "footer" */}
-        <BottomNav />
+  return (
+    <AppChrome flushContent={isQuestions}>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className={`min-h-0 flex-1 ${isQuestions ? "" : "pb-[92px]"}`}>
+          {children}
+        </div>
+
+        {!isQuestions ? <BottomNav /> : null}
       </div>
     </AppChrome>
   );

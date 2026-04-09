@@ -15,15 +15,15 @@ export const dynamic = "force-static";
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Pre-paint: ensure the page is WHITE and clear any legacy theme keys once.
   const prepaint = `
     (function () {
       try {
         var doc = document.documentElement;
-        // Force white before first paint
-        doc.setAttribute('data-theme', 'white');
 
-        // One-time cleanup of old theme state (prevents surprise "sand")
+        // Match the app shell instead of forcing a white root.
+        doc.setAttribute('data-theme', 'dark');
+
+        // One-time cleanup of old theme state (prevents surprise legacy themes)
         try { localStorage.removeItem('everleap.theme'); } catch {}
         try { localStorage.removeItem('EL_Theme'); } catch {}
         try { document.cookie = 'EL_Theme=; Path=/; Max-Age=0; SameSite=Lax'; } catch {}
@@ -32,7 +32,7 @@ export default function RootLayout({
   `;
 
   return (
-    <html lang="en" data-theme="white" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: prepaint }} />
