@@ -40,16 +40,15 @@ const ONBOARDING_KEY_PRIMARY = "everleapOnboarding_v4_convo_min";
 const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
 
 /* ============================================================
-   Typography system
+   Typography
    ============================================================ */
 
 const TYPE = {
   navSecondary: "text-[11px] font-medium uppercase tracking-[0.16em]",
-  navPrimary: "text-[14px] font-semibold tracking-[0.01em]",
   headline:
     "text-[1.42rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.68rem]",
-  whisper: "text-[12px] leading-[1.2rem] text-white/54",
   input: "text-[14px] font-medium leading-6 text-white",
+  whisper: "text-[12px] leading-[1.2rem] text-white/54",
 };
 
 /* ============================================================
@@ -61,7 +60,7 @@ const MOTIVATIONS_5 = [
   "When do you feel most focused?",
   "What drains you faster than it should?",
   "What do you naturally get curious about?",
-  "What does a “good day” look like for you?",
+  "What does a good day look like for you?",
 ];
 
 const STRENGTHS_5 = [
@@ -75,7 +74,7 @@ const STRENGTHS_5 = [
 const SKILLS_5 = [
   "What’s a skill you’d like to level up this year?",
   "What do you like doing so much you lose track of time?",
-  "What kind of tasks do you avoid—even when you know they matter?",
+  "What kind of tasks do you avoid even when you know they matter?",
   "What’s one habit that would make your life easier if you improved it?",
   "If you could get really good at one thing, what would you pick?",
 ];
@@ -190,43 +189,14 @@ function safeReturnTo(raw: string | null): string {
 }
 
 /* ============================================================
-   Completion copy
-   ============================================================ */
-
-function completionCopy(cat: Category) {
-  if (cat === "motivations") {
-    return [
-      "This gives us a clearer read on what supports your energy, focus, and day-to-day rhythm.",
-      "That helps Everleap avoid generic advice. We can look for paths that fit the way you actually move through life, not just what sounds impressive.",
-      "Next, we’ll turn this into a few practical possibilities and small experiments worth trying.",
-    ];
-  }
-
-  if (cat === "strengths") {
-    return [
-      "This gives us a better picture of how you tend to show up when you are at your best.",
-      "From here, Everleap can look for roles, projects, and communities where those strengths are more likely to be used and noticed.",
-      "Next, we’ll turn that into a few grounded directions you can test without pressure.",
-    ];
-  }
-
-  return [
-    "This gives us a more practical read on where you want to grow and what kind of growth might actually feel worth it.",
-    "From here, Everleap can suggest skill paths and next steps that feel doable, not overwhelming.",
-    "This is a starting point. We’ll keep refining it as we learn more about you.",
-  ];
-}
-
-/* ============================================================
    Visual helpers
    ============================================================ */
 
 function visualToneForCategory(category: Category) {
   if (category === "motivations") {
     return {
-      orbA: "bg-amber-300/22",
-      orbB: "bg-cyan-300/18",
-      ring: "border-amber-200/16",
+      orbA: "bg-amber-300/18",
+      orbB: "bg-cyan-300/14",
       dotDone: "bg-cyan-300/85",
       dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
     };
@@ -234,18 +204,16 @@ function visualToneForCategory(category: Category) {
 
   if (category === "strengths") {
     return {
-      orbA: "bg-cyan-300/20",
-      orbB: "bg-teal-300/16",
-      ring: "border-cyan-200/16",
+      orbA: "bg-cyan-300/16",
+      orbB: "bg-teal-300/14",
       dotDone: "bg-cyan-300/85",
       dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
     };
   }
 
   return {
-    orbA: "bg-violet-400/20",
-    orbB: "bg-fuchsia-400/16",
-    ring: "border-violet-200/16",
+    orbA: "bg-violet-400/16",
+    orbB: "bg-fuchsia-400/14",
     dotDone: "bg-cyan-300/85",
     dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
   };
@@ -271,6 +239,7 @@ function NavLink({
       disabled={Boolean(disabled)}
       className={[
         TYPE.navSecondary,
+        "transition",
         disabled
           ? "cursor-not-allowed text-white/20"
           : "text-white/48 hover:text-white/72",
@@ -281,14 +250,20 @@ function NavLink({
   );
 }
 
-function ActionLink({
+function BottomAction({
   label,
   onClick,
   disabled,
+  muted = false,
+  icon,
+  priority = "secondary",
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  muted?: boolean;
+  icon?: React.ReactNode;
+  priority?: "primary" | "secondary";
 }) {
   return (
     <button
@@ -296,52 +271,29 @@ function ActionLink({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        TYPE.navPrimary,
         "inline-flex items-center gap-2 transition",
+        priority === "primary"
+          ? "text-[15px] font-semibold text-white"
+          : "text-[14px] font-semibold tracking-[0.01em]",
         disabled
-          ? "cursor-not-allowed text-white/26"
-          : "text-white/86 hover:text-white active:translate-x-[1px]",
+          ? "cursor-not-allowed text-white/24"
+          : muted
+            ? "text-white/50 hover:text-white/74"
+            : priority === "primary"
+              ? "hover:text-white active:translate-x-[1px]"
+              : "text-white/90 hover:text-white active:translate-x-[1px]",
       ].join(" ")}
     >
+      {icon}
       <span>{label}</span>
-      <span aria-hidden="true" className="text-[16px]">
-        →
-      </span>
-    </button>
-  );
-}
-
-function TalkLink({
-  isListening,
-  speechSupported,
-  onClick,
-}: {
-  isListening: boolean;
-  speechSupported: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!speechSupported}
-      className={[
-        "inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.01em] transition",
-        speechSupported
-          ? "text-white/62 hover:text-white/86"
-          : "cursor-not-allowed text-white/24",
-      ].join(" ")}
-      aria-label={isListening ? "Stop voice input" : "Start voice input"}
-      title={
-        !speechSupported
-          ? "Voice not supported"
-          : isListening
-            ? "Listening…"
-            : "Voice input"
-      }
-    >
-      {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-      <span>Talk</span>
+      {label === "Continue" ? (
+        <span
+          aria-hidden="true"
+          className={priority === "primary" ? "text-[17px]" : "text-[16px]"}
+        >
+          →
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -416,25 +368,6 @@ function QuestionTextEntry({
   );
 }
 
-function TopProgress({
-  label,
-  currentIndex,
-  total,
-  tone,
-}: {
-  label: string;
-  currentIndex: number;
-  total: number;
-  tone: ReturnType<typeof visualToneForCategory>;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="text-[12px] leading-none text-white/54">{label}</div>
-      <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
-    </div>
-  );
-}
-
 function QuestionShell({
   title,
   children,
@@ -446,8 +379,6 @@ function QuestionShell({
   showBack,
   onExit,
   onBack,
-  bottomLeft,
-  bottomRight,
 }: {
   title: string;
   children: React.ReactNode;
@@ -459,11 +390,9 @@ function QuestionShell({
   showBack?: boolean;
   onExit?: () => void;
   onBack?: () => void;
-  bottomLeft?: React.ReactNode;
-  bottomRight?: React.ReactNode;
 }) {
   return (
-    <div className="relative mx-auto w-full max-w-[520px]">
+    <div className="relative w-full max-w-[720px]">
       <motion.div
         aria-hidden="true"
         animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
@@ -477,41 +406,26 @@ function QuestionShell({
         className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
       />
 
-      <div
-        className={[
-          "relative rounded-[28px] border bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]",
-          tone.ring,
-        ].join(" ")}
-      >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/16" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[62%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,191,130,0.14),transparent_70%)] blur-2xl" />
+      <div className="relative rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]">
         <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
         <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
 
-        <div className="relative px-4 pt-2.5 sm:px-5 sm:pt-3">
-          <div className="flex items-start justify-between gap-4">
+        <div className="relative px-4 pt-3 pb-4 sm:px-5 sm:pt-3.5 sm:pb-5">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               {showExit && onExit ? <NavLink label="Exit" onClick={onExit} /> : null}
               {showBack && onBack ? <NavLink label="Back" onClick={onBack} /> : null}
             </div>
 
-            <TopProgress
-              label={categoryLabel}
-              currentIndex={currentIndex}
-              total={total}
-              tone={tone}
-            />
+            <div className="flex items-center gap-3">
+              <div className="text-[12px] leading-none text-white/54">{categoryLabel}</div>
+              <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
+            </div>
           </div>
 
           <div className="pt-3">
             <h1 className={TYPE.headline}>{title}</h1>
-
-            <div className="mt-3">{children}</div>
-
-            <div className="mt-3 flex items-center justify-between gap-3 pb-3.5">
-              <div>{bottomLeft ?? <div />}</div>
-              <div className="flex items-center gap-6">{bottomRight ?? <div />}</div>
-            </div>
+            <div className="mt-4">{children}</div>
           </div>
         </div>
       </div>
@@ -519,25 +433,9 @@ function QuestionShell({
   );
 }
 
-function PauseLine({ show }: { show: boolean }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scaleX: 0.92 }}
-      animate={{ opacity: show ? 1 : 0, scaleX: show ? 1 : 0.92 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      aria-hidden="true"
-      className="mt-8 origin-left"
-    >
-      <div className="h-px w-44 rounded-full bg-gradient-to-r from-white/26 via-white/12 to-transparent" />
-    </motion.div>
-  );
-}
-
 /* ============================================================
    Component
    ============================================================ */
-
-type ScreenMode = "question" | "final";
 
 export default function QuestionFlow() {
   const router = useRouter();
@@ -557,7 +455,6 @@ export default function QuestionFlow() {
   const [name, setName] = React.useState("");
   const [index, setIndex] = React.useState(0);
   const [draft, setDraft] = React.useState("");
-  const [screenMode, setScreenMode] = React.useState<ScreenMode>("question");
 
   const q = questions[index] ?? questions[0];
   const qId = q?.id ?? "";
@@ -587,9 +484,6 @@ export default function QuestionFlow() {
     setIsListening(false);
   }, []);
 
-  const [showPauseLine, setShowPauseLine] = React.useState(false);
-  const [ctaReady, setCtaReady] = React.useState(false);
-
   React.useEffect(() => {
     setName(readNameFromOnboarding());
   }, []);
@@ -602,40 +496,17 @@ export default function QuestionFlow() {
   }, []);
 
   React.useEffect(() => {
-    if (!qId || screenMode !== "question") return;
+    if (!qId) return;
     stopListening();
     lastFinalRef.current = "";
     const s = loadSaved()[qId];
     setDraft((s?.answer ?? "").trim());
     window.setTimeout(() => focusAnswer(), 0);
-  }, [qId, screenMode, stopListening, focusAnswer]);
+  }, [qId, stopListening, focusAnswer]);
 
   React.useEffect(() => {
     if (total === 0) router.push(returnTo);
   }, [total, router, returnTo]);
-
-  React.useEffect(() => {
-    if (screenMode !== "final") {
-      setShowPauseLine(false);
-      setCtaReady(false);
-      return;
-    }
-
-    const t1 = window.setTimeout(() => setShowPauseLine(true), 450);
-    const t2 = window.setTimeout(() => setCtaReady(true), 3000);
-
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [screenMode]);
-
-  const completionParagraphs = React.useMemo(
-    () => completionCopy(category),
-    [category]
-  );
-
-  const tone = React.useMemo(() => visualToneForCategory(category), [category]);
 
   function exitNow() {
     stopListening();
@@ -643,14 +514,25 @@ export default function QuestionFlow() {
   }
 
   function goBackOne() {
-    if (screenMode !== "question") return;
     if (index <= 0) return;
     stopListening();
     setIndex((i) => Math.max(0, i - 1));
   }
 
+  function advanceToNext() {
+    if (index + 1 >= total) {
+      stopListening();
+      router.push(returnTo);
+      return;
+    }
+
+    setIndex((i) => i + 1);
+    window.setTimeout(() => focusAnswer(), 50);
+  }
+
   function completeAndAdvance(opts: { skipped: boolean }) {
     if (!q) return;
+
     const text = draft.trim();
 
     if (!opts.skipped) {
@@ -665,14 +547,7 @@ export default function QuestionFlow() {
     saveOne(q.id, opts.skipped ? { skipped: true } : { answer: text, skipped: false });
     stopListening();
     setDraft("");
-
-    if (index + 1 >= total) {
-      setScreenMode("final");
-      return;
-    }
-
-    setIndex((i) => i + 1);
-    window.setTimeout(() => focusAnswer(), 50);
+    advanceToNext();
   }
 
   function toggleMic() {
@@ -694,6 +569,7 @@ export default function QuestionFlow() {
 
     rec.onresult = (event: SpeechRecognitionEvent) => {
       let finalChunk = "";
+
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
         const res = event.results[i];
         if (res.isFinal) finalChunk += res[0]?.transcript ?? "";
@@ -719,91 +595,83 @@ export default function QuestionFlow() {
     }
   }
 
-  const screenKey = screenMode === "final" ? `final_${category}` : qId || "q";
+  const screenKey = qId || "q";
+  const tone = visualToneForCategory(category);
+  const greetingName = firstName(name);
 
   return (
-    <div className="relative flex min-h-[calc(100svh-5.75rem)] flex-1 items-center justify-center px-4 py-4 supports-[height:100dvh]:min-h-[calc(100dvh-5.75rem)] sm:px-5">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={screenKey}
-          initial={{ opacity: 0, y: 16, scale: 0.992, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-          exit={{ opacity: 0, y: -10, scale: 0.995, filter: "blur(8px)" }}
-          transition={{ duration: 0.24, ease: "easeOut" }}
-          className="flex w-full items-center justify-center"
-        >
-          {screenMode === "final" ? (
-            <div className="w-full max-w-[520px]">
-              <QuestionShell
-                title={`That gives us something real${firstName(name) ? `, ${firstName(name)}` : ""}.`}
-                tone={tone}
-                currentIndex={total - 1}
-                total={total}
-                categoryLabel={categoryLabel}
-                showExit
-                onExit={exitNow}
-                bottomRight={
-                  <ActionLink label="Continue" onClick={exitNow} disabled={!ctaReady} />
+    <div className="relative flex min-h-[calc(100svh-5.75rem)] flex-1 flex-col supports-[height:100dvh]:min-h-[calc(100dvh-5.75rem)]">
+      <div className="flex flex-1 items-start justify-center px-[20px] pt-[30px] pb-24">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={screenKey}
+            initial={{ opacity: 0, y: 20, scale: 0.992, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -14, scale: 0.994, filter: "blur(8px)" }}
+            transition={{ type: "spring", stiffness: 260, damping: 24, mass: 0.9 }}
+            className="flex w-full items-center justify-center"
+          >
+            <QuestionShell
+              title={q?.question ?? ""}
+              tone={tone}
+              currentIndex={index}
+              total={total}
+              categoryLabel={categoryLabel}
+              showExit
+
+              onExit={exitNow}
+              onBack={goBackOne}
+            >
+              <QuestionTextEntry
+                value={draft}
+                onChange={setDraft}
+                onSubmit={() => completeAndAdvance({ skipped: false })}
+                placeholder={
+                  greetingName && index === 0
+                    ? `Start anywhere, ${greetingName}.`
+                    : "Start anywhere."
                 }
-              >
-                <div className="space-y-4 pt-1">
-                  {completionParagraphs.map((p, i) => (
-                    <p
-                      key={i}
-                      className="text-[14px] leading-[1.65] text-white/78"
-                    >
-                      {p}
-                    </p>
-                  ))}
-                  <PauseLine show={showPauseLine} />
-                </div>
-              </QuestionShell>
-            </div>
-          ) : (
-            <div className="w-full max-w-[520px]">
-              <QuestionShell
-                title={q?.question ?? ""}
-                tone={tone}
-                currentIndex={index}
-                total={total}
-                categoryLabel={categoryLabel}
-                showExit
-                showBack
-                onExit={exitNow}
-                onBack={goBackOne}
-                bottomLeft={
-                  <TalkLink
-                    isListening={isListening}
-                    speechSupported={speechSupported}
-                    onClick={toggleMic}
-                  />
-                }
-                bottomRight={
-                  <>
-                    <NavLink
-                      label="Skip"
-                      onClick={() => completeAndAdvance({ skipped: true })}
-                    />
-                    <ActionLink
-                      label="Continue"
-                      onClick={() => completeAndAdvance({ skipped: false })}
-                      disabled={!draft.trim()}
-                    />
-                  </>
-                }
-              >
-                <QuestionTextEntry
-                  value={draft}
-                  onChange={setDraft}
-                  onSubmit={() => completeAndAdvance({ skipped: false })}
-                  placeholder="Start anywhere."
-                  textareaRef={textareaRef}
-                />
-              </QuestionShell>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+                textareaRef={textareaRef}
+              />
+            </QuestionShell>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          {index > 0 ? (
+            <BottomAction label="Back" onClick={goBackOne} muted />
+          ) : null}
+
+          <BottomAction
+            label="Talk"
+            onClick={toggleMic}
+            disabled={!speechSupported}
+            priority="primary"
+            icon={
+              isListening ? (
+                <MicOff className="h-[18px] w-[18px]" />
+              ) : (
+                <Mic className="h-[18px] w-[18px]" />
+              )
+            }
+          />
+
+          <BottomAction
+            label="Skip"
+            onClick={() => completeAndAdvance({ skipped: true })}
+            muted
+          />
+
+          <BottomAction
+            label="Continue"
+            onClick={() => completeAndAdvance({ skipped: false })}
+            disabled={!draft.trim()}
+            priority="primary"
+          />
+        </div>
+      </div>
     </div>
   );
 }
