@@ -17,9 +17,6 @@ import {
 
 import { normalizeZip, stateFullName, lookupZipPlace } from "./zipLookup";
 
-/**
- * Speech types
- */
 type SpeechRecognitionConstructor = {
   new (): SpeechRecognition;
 };
@@ -30,10 +27,6 @@ declare global {
     SpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
-
-/* ============================================================
-   Types
-   ============================================================ */
 
 type StepId =
   | "welcome"
@@ -82,78 +75,37 @@ type ActivityKey =
   | "other";
 
 type FunChoice = "dog" | "cat" | "bearded_dragon" | "rock" | null;
-
 type VoiceTarget = "name" | "zip" | "activitiesOther" | "certaintyIdea";
 
 const STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
-/* ============================================================
-   Typography system
-   ============================================================ */
-
 const TYPE = {
-  kicker:
-    "text-[10px] font-medium uppercase tracking-[0.18em] text-white/40",
-  navSecondary:
-    "text-[11px] font-medium uppercase tracking-[0.16em]",
-  navPrimary:
-    "text-[14px] font-semibold tracking-[0.01em]",
+  navSecondary: "text-[11px] font-medium uppercase tracking-[0.16em]",
   headline:
     "text-[1.42rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.68rem]",
   welcomeHeadline:
     "text-[1.78rem] font-semibold leading-[1.03] tracking-tight text-white sm:text-[2.02rem]",
-  retortHeadline:
-    "text-[1.44rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.72rem]",
-  body:
-    "text-[14px] leading-[1.6] text-white/82",
-  choice:
-    "text-[13px] leading-[1.35rem]",
-  whisper:
-    "text-[12px] leading-[1.2rem] text-white/54",
-  input:
-    "text-[14px] font-medium leading-6 text-white",
+  retort: "text-[15px] leading-[1.6] text-white/94",
+  summaryLead:
+    "text-[1.02rem] font-semibold leading-[1.22] text-white sm:text-[1.12rem]",
+  body: "text-[14px] leading-[1.6] text-white/82",
+  choice: "text-[14px] leading-[1.35rem]",
+  whisper: "text-[12px] leading-[1.2rem] text-white/54",
+  input: "text-[14px] font-medium leading-6 text-white",
 };
-
-/* ============================================================
-   Copy
-   ============================================================ */
 
 const STEP_META: Record<
   Exclude<StepId, "summary" | "certaintyIdea">,
-  { kicker: string; title: string }
+  { title: string }
 > = {
-  welcome: {
-    kicker: "Everleap",
-    title: "Let’s get to know you.",
-  },
-  name: {
-    kicker: "Everleap · Getting to know you",
-    title: "What should I call you?",
-  },
-  situation: {
-    kicker: "Everleap · Your world",
-    title: "Where are you right now — really?",
-  },
-  zip: {
-    kicker: "Everleap · Local",
-    title: "Want to add your zip code?",
-  },
-  certainty: {
-    kicker: "Everleap · Future mode",
-    title: "How clear does next feel right now?",
-  },
-  postPlans: {
-    kicker: "Everleap · On your radar",
-    title: "What’s actually on your radar after high school?",
-  },
-  activities: {
-    kicker: "Everleap · Off the clock",
-    title: "What do you naturally spend time on?",
-  },
-  fun: {
-    kicker: "Everleap · One weirdly useful question",
-    title: "Pick one.",
-  },
+  welcome: { title: "Let’s get to know you." },
+  name: { title: "What should I call you?" },
+  situation: { title: "Where are you right now?" },
+  zip: { title: "Want to add your zip code?" },
+  certainty: { title: "How clear does next feel right now?" },
+  postPlans: { title: "What’s actually on your radar after high school?" },
+  activities: { title: "What do you naturally spend time on?" },
+  fun: { title: "Pick one." },
 };
 
 function toggleInList<T>(list: T[], value: T): T[] {
@@ -198,108 +150,37 @@ function shortenIdea(raw: string) {
 function certaintyIdeaPrompt(certainty: Certainty) {
   if (certainty === "strong") {
     return {
-      kicker: "Everleap · Future mode",
       title: "Nice. What do you think comes next?",
       placeholder: "Say the path you already have in mind.",
     };
   }
 
   return {
-    kicker: "Everleap · Future mode",
     title: "What’s one idea you already have?",
     placeholder: "Just one. We’ll build from there.",
   };
 }
 
-/* ============================================================
-   Visual helpers
-   ============================================================ */
-
 function visualToneForStep(stepId: StepId) {
   if (stepId === "welcome") {
-    return {
-      orbA: "bg-fuchsia-400/30",
-      orbB: "bg-cyan-300/22",
-      glow: "shadow-[0_0_90px_rgba(217,70,239,0.12)]",
-      meshA: "from-fuchsia-500/24 via-violet-500/10 to-transparent",
-      meshB: "from-cyan-400/22 via-sky-400/8 to-transparent",
-      ring: "border-fuchsia-200/16",
-      stageA: "from-fuchsia-500/20 via-violet-500/10 to-transparent",
-      stageB: "from-cyan-400/18 via-sky-500/8 to-transparent",
-    };
+    return { orbA: "bg-fuchsia-400/18", orbB: "bg-cyan-300/14" };
   }
-
   if (stepId === "summary") {
-    return {
-      orbA: "bg-cyan-300/18",
-      orbB: "bg-violet-400/18",
-      glow: "shadow-[0_0_90px_rgba(103,232,249,0.12)]",
-      meshA: "from-cyan-400/16 via-sky-400/8 to-transparent",
-      meshB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
-      ring: "border-cyan-200/16",
-      stageA: "from-cyan-400/16 via-sky-500/8 to-transparent",
-      stageB: "from-violet-400/16 via-fuchsia-400/8 to-transparent",
-    };
+    return { orbA: "bg-cyan-300/16", orbB: "bg-violet-400/16" };
   }
-
   if (stepId === "fun") {
-    return {
-      orbA: "bg-fuchsia-400/28",
-      orbB: "bg-amber-300/24",
-      glow: "shadow-[0_0_90px_rgba(236,72,153,0.14)]",
-      meshA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
-      meshB: "from-amber-300/24 via-orange-400/10 to-transparent",
-      ring: "border-fuchsia-200/18",
-      stageA: "from-fuchsia-500/22 via-pink-400/10 to-transparent",
-      stageB: "from-amber-300/22 via-orange-400/10 to-transparent",
-    };
+    return { orbA: "bg-fuchsia-400/18", orbB: "bg-cyan-300/14" };
   }
-
-  if (stepId === "zip" || stepId === "postPlans" || stepId === "certaintyIdea") {
-    return {
-      orbA: "bg-amber-300/18",
-      orbB: "bg-orange-400/16",
-      glow: "shadow-[0_0_90px_rgba(251,191,36,0.12)]",
-      meshA: "from-amber-300/16 via-orange-400/8 to-transparent",
-      meshB: "from-orange-500/14 via-rose-500/8 to-transparent",
-      ring: "border-amber-200/16",
-      stageA: "from-amber-300/18 via-orange-400/8 to-transparent",
-      stageB: "from-orange-500/14 via-rose-400/8 to-transparent",
-    };
-  }
-
-  if (stepId === "certainty") {
-    return {
-      orbA: "bg-violet-400/24",
-      orbB: "bg-cyan-300/20",
-      glow: "shadow-[0_0_90px_rgba(139,92,246,0.14)]",
-      meshA: "from-violet-400/22 via-indigo-500/10 to-transparent",
-      meshB: "from-cyan-300/18 via-sky-500/10 to-transparent",
-      ring: "border-violet-200/18",
-      stageA: "from-violet-400/22 via-indigo-500/10 to-transparent",
-      stageB: "from-cyan-300/18 via-sky-500/10 to-transparent",
-    };
-  }
-
-  return {
-    orbA: "bg-cyan-300/18",
-    orbB: "bg-violet-400/16",
-    glow: "shadow-[0_0_90px_rgba(56,189,248,0.12)]",
-    meshA: "from-sky-400/18 via-cyan-400/8 to-transparent",
-    meshB: "from-violet-400/16 via-indigo-500/8 to-transparent",
-    ring: "border-cyan-200/14",
-    stageA: "from-sky-400/18 via-cyan-400/8 to-transparent",
-    stageB: "from-violet-400/14 via-indigo-500/8 to-transparent",
-  };
+  return { orbA: "bg-cyan-300/16", orbB: "bg-violet-400/14" };
 }
 
 const screenVariants = {
   questionEnter: { opacity: 0, y: 20, scale: 0.992, filter: "blur(8px)" },
   questionCenter: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
   questionExit: { opacity: 0, y: -14, scale: 0.994, filter: "blur(8px)" },
-  retortEnter: { opacity: 0, scale: 0.97, y: 20, filter: "blur(10px)" },
+  retortEnter: { opacity: 0, scale: 0.985, y: 16, filter: "blur(8px)" },
   retortCenter: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)" },
-  retortExit: { opacity: 0, scale: 0.992, y: -14, filter: "blur(8px)" },
+  retortExit: { opacity: 0, scale: 0.994, y: -12, filter: "blur(8px)" },
 };
 
 const spring = {
@@ -314,10 +195,6 @@ const cardSpring = {
   stiffness: 360,
   damping: 28,
 } as const;
-
-/* ============================================================
-   UI atoms
-   ============================================================ */
 
 function NavLink({
   label,
@@ -335,6 +212,7 @@ function NavLink({
       disabled={Boolean(disabled)}
       className={[
         TYPE.navSecondary,
+        "transition",
         disabled
           ? "cursor-not-allowed text-white/20"
           : "text-white/48 hover:text-white/72",
@@ -345,14 +223,20 @@ function NavLink({
   );
 }
 
-function ActionLink({
+function BottomAction({
   label,
   onClick,
   disabled,
+  muted = false,
+  icon,
+  priority = "secondary",
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  muted?: boolean;
+  icon?: React.ReactNode;
+  priority?: "primary" | "secondary";
 }) {
   return (
     <button
@@ -360,52 +244,29 @@ function ActionLink({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        TYPE.navPrimary,
         "inline-flex items-center gap-2 transition",
+        priority === "primary"
+          ? "text-[15px] font-semibold text-white"
+          : "text-[14px] font-semibold tracking-[0.01em]",
         disabled
-          ? "cursor-not-allowed text-white/26"
-          : "text-white/86 hover:text-white active:translate-x-[1px]",
+          ? "cursor-not-allowed text-white/24"
+          : muted
+            ? "text-white/50 hover:text-white/74"
+            : priority === "primary"
+              ? "hover:text-white active:translate-x-[1px]"
+              : "text-white/90 hover:text-white active:translate-x-[1px]",
       ].join(" ")}
     >
+      {icon}
       <span>{label}</span>
-      <span aria-hidden="true" className="text-[16px]">
-        →
-      </span>
-    </button>
-  );
-}
-
-function TalkLink({
-  isListening,
-  speechSupported,
-  onClick,
-}: {
-  isListening: boolean;
-  speechSupported: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!speechSupported}
-      className={[
-        "inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.01em] transition",
-        speechSupported
-          ? "text-white/62 hover:text-white/86"
-          : "cursor-not-allowed text-white/24",
-      ].join(" ")}
-      aria-label={isListening ? "Stop voice input" : "Start voice input"}
-      title={
-        !speechSupported
-          ? "Voice not supported"
-          : isListening
-            ? "Listening…"
-            : "Voice input"
-      }
-    >
-      {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-      <span>Talk</span>
+      {label === "Continue" ? (
+        <span
+          aria-hidden="true"
+          className={priority === "primary" ? "text-[17px]" : "text-[16px]"}
+        >
+          →
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -473,92 +334,34 @@ function ChoiceRowText({
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
       animate={{
-        x: selected ? 6 : 0,
-        scale: selected ? 1.012 : 1,
+        scale: selected ? 1.01 : 1,
         opacity: dimmed ? 0.42 : 1,
         y: selected ? -1 : 0,
       }}
-      className="group relative block w-full overflow-hidden rounded-[18px] px-4 py-2.5 text-left"
+      className="group relative block w-full overflow-hidden rounded-[20px] px-4 py-4 text-left"
     >
       <motion.div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[18px] border transition",
+          "pointer-events-none absolute inset-0 rounded-[20px] border transition",
           selected
-            ? "border-white/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.13),rgba(255,255,255,0.08))] shadow-[0_14px_36px_rgba(6,9,20,0.28)]"
-            : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))] group-hover:border-white/16 group-hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))]",
+            ? "border-cyan-200/36 bg-[linear-gradient(180deg,rgba(42,145,170,0.92),rgba(17,99,126,0.92))] shadow-[0_18px_44px_rgba(8,42,56,0.34)]"
+            : "border-cyan-200/14 bg-[linear-gradient(180deg,rgba(29,87,111,0.46),rgba(14,46,62,0.64))] group-hover:border-cyan-200/22 group-hover:bg-[linear-gradient(180deg,rgba(34,99,125,0.52),rgba(16,54,72,0.68))]",
         ].join(" ")}
-        animate={{ scale: selected ? 1.008 : 1 }}
+        animate={{ scale: selected ? 1.004 : 1 }}
         transition={cardSpring}
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
       <div
         className={[
           TYPE.choice,
-          "relative pr-8 transition",
-          selected ? "font-semibold text-white" : "font-medium text-white/78 group-hover:text-white/92",
+          "relative transition",
+          selected
+            ? "font-semibold text-white"
+            : "font-medium text-white/86 group-hover:text-white",
         ].join(" ")}
       >
         {label}
       </div>
-      <motion.div
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/30"
-        animate={{ x: selected ? 2 : 0, opacity: selected ? 1 : 0.35 }}
-        transition={cardSpring}
-      >
-        →
-      </motion.div>
-    </motion.button>
-  );
-}
-
-function BigMoodCard({
-  title,
-  sub,
-  selected,
-  dimmed,
-  accent,
-  onClick,
-}: {
-  title: string;
-  sub: string;
-  selected?: boolean;
-  dimmed?: boolean;
-  accent: "violet" | "sky" | "soft";
-  onClick: () => void;
-}) {
-  const accentClass =
-    accent === "violet"
-      ? "from-fuchsia-400/26 via-violet-400/14 to-transparent"
-      : accent === "sky"
-        ? "from-cyan-300/24 via-sky-400/14 to-transparent"
-        : "from-white/16 via-white/8 to-transparent";
-
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      layout
-      transition={cardSpring}
-      whileTap={{ scale: 0.99 }}
-      animate={{
-        scale: selected ? 1.018 : 1,
-        y: selected ? -4 : 0,
-        opacity: dimmed ? 0.4 : 1,
-      }}
-      className={[
-        "group relative block w-full overflow-hidden rounded-[22px] border px-4 py-3 text-left",
-        selected
-          ? "border-white/22 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.07))] shadow-[0_18px_44px_rgba(9,12,24,0.30)]"
-          : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.04))] hover:border-white/16 hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))]",
-      ].join(" ")}
-    >
-      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accentClass}`} />
-      <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/8 blur-2xl" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
-      <motion.div className="relative" animate={{ x: selected ? 2 : 0 }} transition={cardSpring}>
-        <div className="text-[0.98rem] font-semibold leading-5 text-white">{title}</div>
-        <div className="mt-1.5 text-[12.75px] leading-5 text-white/66">{sub}</div>
-      </motion.div>
     </motion.button>
   );
 }
@@ -609,61 +412,6 @@ function QuestionTextEntry({
   );
 }
 
-function ThinkingSurface({
-  value,
-  onChange,
-  onSubmit,
-  canSubmit,
-  placeholder,
-  textareaRef,
-  showMic,
-  isListening,
-  speechSupported,
-  onToggleMic,
-  inputMode,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  canSubmit: boolean;
-  placeholder?: string;
-  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
-  showMic?: boolean;
-  isListening?: boolean;
-  speechSupported?: boolean;
-  onToggleMic?: () => void;
-  inputMode?: React.HTMLAttributes<HTMLTextAreaElement>["inputMode"];
-}) {
-  return (
-    <div className="w-full">
-      <QuestionTextEntry
-        value={value}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        canSubmit={canSubmit}
-        placeholder={placeholder}
-        textareaRef={textareaRef}
-        inputMode={inputMode}
-        rows={inputMode === "numeric" ? 1 : 3}
-      />
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        {showMic && onToggleMic ? (
-          <TalkLink
-            isListening={Boolean(isListening)}
-            speechSupported={Boolean(speechSupported)}
-            onClick={onToggleMic}
-          />
-        ) : (
-          <div />
-        )}
-
-        <ActionLink label="Continue" onClick={onSubmit} disabled={!canSubmit} />
-      </div>
-    </div>
-  );
-}
-
 function QuestionShell({
   title,
   whisper,
@@ -672,11 +420,7 @@ function QuestionShell({
   currentStep,
   certainty,
   showExit,
-  showBack,
   onExit,
-  onBack,
-  bottomLeft,
-  bottomRight,
 }: {
   title: string;
   whisper?: string | null;
@@ -685,14 +429,10 @@ function QuestionShell({
   currentStep: StepId;
   certainty: Certainty;
   showExit?: boolean;
-  showBack?: boolean;
   onExit?: () => void;
-  onBack?: () => void;
-  bottomLeft?: React.ReactNode;
-  bottomRight?: React.ReactNode;
 }) {
   return (
-    <div className="relative mx-auto w-full max-w-[520px]">
+    <div className="relative w-full max-w-[720px]">
       <motion.div
         aria-hidden="true"
         animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
@@ -707,46 +447,29 @@ function QuestionShell({
       />
 
       <div className="relative rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/16" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[62%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,191,130,0.14),transparent_70%)] blur-2xl" />
         <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
         <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
 
-        <div className="relative px-4 pt-2.5 sm:px-5 sm:pt-3">
+        <div className="relative px-4 pt-3 pb-4 sm:px-5 sm:pt-3.5 sm:pb-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {showExit && onExit ? <NavLink label="Exit" onClick={onExit} /> : null}
-              {showBack && onBack ? <NavLink label="Back" onClick={onBack} /> : null}
-            </div>
-
-            <ProgressDots currentStep={currentStep} certainty={certainty} />
+            <div>{showExit && onExit ? <NavLink label="Exit" onClick={onExit} /> : null}</div>
+            {currentStep === "welcome" ? null : (
+              <ProgressDots currentStep={currentStep} certainty={certainty} />
+            )}
           </div>
 
-          <div className="pt-2.5">
-            <h1 className={TYPE.headline}>{title}</h1>
+          <div className="pt-3">
+            <h1 className={currentStep === "welcome" ? TYPE.welcomeHeadline : TYPE.headline}>
+              {title}
+            </h1>
 
-            <div className="mt-1 min-h-[14px]">
-              <div
-                className={[
-                  TYPE.whisper,
-                  "transition-all duration-300",
-                  whisper ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-                ].join(" ")}
-              >
-                {whisper ?? " "}
+            {whisper ? (
+              <div className="mt-1">
+                <div className={TYPE.whisper}>{whisper}</div>
               </div>
-            </div>
+            ) : null}
 
-            <div className="mt-2">{children}</div>
-
-            {(bottomLeft || bottomRight) ? (
-              <div className="mt-3 flex items-center justify-between gap-4 pb-3.5">
-                <div>{bottomLeft ?? null}</div>
-                <div className="flex items-center gap-4">{bottomRight ?? null}</div>
-              </div>
-            ) : (
-              <div className="pb-3.5" />
-            )}
+            <div className={whisper ? "mt-3" : "mt-4"}>{children}</div>
           </div>
         </div>
       </div>
@@ -754,9 +477,70 @@ function QuestionShell({
   );
 }
 
-/* ============================================================
-   Retorts
-   ============================================================ */
+function RetortBand({
+  text,
+  tone,
+}: {
+  text: string | null;
+  tone: ReturnType<typeof visualToneForStep>;
+}) {
+  return (
+    <div className="relative w-full max-w-[520px]">
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, 10, 0], y: [0, -8, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute -left-6 top-0 h-20 w-20 rounded-full blur-3xl ${tone.orbA}`}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, -10, 0], y: [0, 8, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute right-[10%] top-[2rem] h-20 w-20 rounded-full blur-3xl ${tone.orbB}`}
+      />
+
+      <div className="relative overflow-hidden rounded-[24px] border border-cyan-200/18 bg-[linear-gradient(180deg,rgba(31,97,121,0.54),rgba(16,55,72,0.66))] px-4 py-4 shadow-[0_18px_44px_rgba(8,42,56,0.26)] backdrop-blur-[18px] sm:px-5 sm:py-4.5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/12 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_55%)]" />
+        <div className="relative">
+          <div className={TYPE.retort}>{text}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatementCard({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone: ReturnType<typeof visualToneForStep>;
+}) {
+  return (
+    <div className="relative w-full max-w-[720px]">
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute -left-6 top-0 h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
+      />
+      <motion.div
+        aria-hidden="true"
+        animate={{ x: [0, -12, 0], y: [0, 10, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className={`pointer-events-none absolute right-[8%] top-[5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
+      />
+
+      <div className="relative overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] px-4 py-4 shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px] sm:px-5 sm:py-5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
+        <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
+        <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
+        <div className="relative">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 function activityLabel(k: ActivityKey): string {
   switch (k) {
@@ -811,68 +595,78 @@ function buildRetort(args: {
   const hasOtherDetail = activities.includes("other") && isMeaningfulText(activitiesOther);
 
   if (fromStep === "name") {
-    return n ? `${n}. Nice to meet you — let’s see what fits.` : "Nice to meet you — let’s see what fits.";
+    return n
+      ? `${n}. Nice to meet you. That already gives this a more human starting point, and now we can start narrowing toward what actually fits.`
+      : "Nice to meet you. That already gives this a more human starting point, and now we can start narrowing toward what actually fits.";
   }
 
   if (fromStep === "situation") {
     if (situation === "high_school") {
-      return "Got it. We can keep this open and still make it useful.";
+      return "Got it. That means we can stay open and exploratory for now, without pretending you need everything figured out yet.";
     }
     if (situation === "young_adult") {
-      return "Got it. We can be a little more direct from here.";
+      return "Got it. That gives us permission to be a little more direct and focus on paths that feel real right now.";
     }
     return "Got it. That helps.";
   }
 
   if (fromStep === "zip") {
     if (!zip5) {
-      return hasIdea ? "That’s okay. We’ve already got enough to start." : "That’s okay. We can still keep going.";
+      return hasIdea
+        ? "That’s okay. We already have enough to start, and we can still bring in local options later if they matter."
+        : "That’s okay. We can still keep going and build something useful without location yet.";
     }
     if (zipPlaceLabel) {
-      return `${zipPlaceLabel}. Nice — I’ll keep nearby options in the mix.`;
+      return `${zipPlaceLabel}. Nice. I’ll keep nearby options in the mix so this feels more grounded in the real world.`;
     }
-    return `${zip5}. Nice — I’ll keep nearby options in the mix.`;
+    return `${zip5}. Nice. I’ll keep nearby options in the mix so this feels more grounded in the real world.`;
   }
 
   if (fromStep === "certainty") {
     if (certainty === "strong") {
-      return hasIdea ? "Good. That gives us something real to work with." : "Good. That gives us a place to start.";
+      return hasIdea
+        ? "Good. That gives us something real to work with instead of starting from scratch."
+        : "Good. That gives us a direction, even if we still need to sharpen it.";
     }
     if (certainty === "kinda") {
-      return "That’s enough. We can work with that.";
+      return "That’s enough. You do not need perfect clarity yet — just something honest enough to build from.";
     }
     if (certainty === "no_clue") {
-      return "Honestly, that’s fine too.";
+      return "Honestly, that’s fine too. Not knowing clearly is still useful, because it tells us to explore instead of forcing a fake answer.";
     }
     return "Got it.";
   }
 
   if (fromStep === "certaintyIdea") {
     if (!idea) {
-      return hasActivities ? "That still helps. I’ve got a better feel for you now." : "That still helps. One real clue is enough.";
+      return hasActivities
+        ? "That still helps. Even one small clue starts to make the picture sharper."
+        : "That still helps. One real clue is enough to move forward.";
     }
 
     if (certainty === "strong") {
-      return `${idea}. Nice — that feels like a real starting point.`;
+      return `${idea}. Nice. That feels like a real starting point, and now the goal is to see whether it keeps getting stronger as we go.`;
     }
 
-    return `${idea}. Good — that gives us something to build on.`;
+    return `${idea}. Good. That gives us something concrete to build on without locking you into it too early.`;
   }
 
   if (fromStep === "postPlans") {
     if (postPlans.includes("no_idea")) {
-      return hasActivities ? "That’s okay. You’ve already given me enough to start narrowing this down." : "That’s okay. We can narrow it down from here.";
+      return hasActivities
+        ? "That’s okay. You’ve already given me enough elsewhere to start narrowing things down without forcing a decision too soon."
+        : "That’s okay. We can still narrow things down from here and find a few directions worth testing.";
     }
 
     if (postPlans.length >= 3) {
-      return "Good. You’re keeping a few real paths open.";
+      return "Good. You’re keeping a few real paths open, which gives us room to compare what sounds good with what actually fits.";
     }
 
     if (postPlans.length === 2) {
-      return "Good. That already gives us a couple of real directions.";
+      return "Good. That already gives us a couple of real directions, which is enough to start making useful comparisons.";
     }
 
-    return "Good. That’s a real option.";
+    return "Good. That’s a real option, and now we can see whether it holds up once we layer in the rest of you.";
   }
 
   if (fromStep === "activities") {
@@ -881,46 +675,44 @@ function buildRetort(args: {
 
     if (hasOtherDetail) {
       return listText
-        ? `${listText}. Nice — that helps me get a better feel for you.`
-        : "Nice — that helps me get a better feel for you.";
+        ? `${listText}. Nice. That helps me get a better feel for the kind of energy you naturally move toward.`
+        : "Nice. That helps me get a better feel for the kind of energy you naturally move toward.";
     }
 
     if (listText) {
       if (hasIdea) {
-        return `${listText}. Nice — that gives me more context.`;
+        return `${listText}. Nice. That gives me more context around the path you already mentioned.`;
       }
-      return `${listText}. Nice — that tells me something real.`;
+      return `${listText}. Nice. That tells me something real about what might actually feel good for you.`;
     }
 
-    return "Nice — that tells me something real.";
+    return "Nice. That tells me something real.";
   }
 
   if (fromStep === "fun") {
-    const quick = typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
-    const slow = typeof funLatencyMs === "number" && funLatencyMs >= 1800;
+    const quick =
+      typeof funLatencyMs === "number" && funLatencyMs >= 0 && funLatencyMs < 900;
+    const slow =
+      typeof funLatencyMs === "number" && funLatencyMs >= 1800;
     const tempoTag = quick ? "Fast answer. " : slow ? "You thought about that. " : "";
 
     if (funChoice === "dog") {
-      return `${tempoTag}Dog. Solid choice.`;
+      return `${tempoTag}Dog. Solid choice. That kind of instinct usually says something useful too.`;
     }
     if (funChoice === "cat") {
-      return `${tempoTag}Cat. Fair.`;
+      return `${tempoTag}Cat. Fair. There is a very specific kind of confidence in that answer.`;
     }
     if (funChoice === "bearded_dragon") {
-      return `${tempoTag}Bearded dragon. Strong choice, honestly.`;
+      return `${tempoTag}Bearded dragon. Strong choice, honestly. That definitely tells me something interesting.`;
     }
     if (funChoice === "rock") {
-      return `${tempoTag}Rock. Respect.`;
+      return `${tempoTag}Rock. Respect. That is either chaos or clarity, and both are useful.`;
     }
     return "Interesting choice.";
   }
 
   return "Good. We’ve got enough to keep going.";
 }
-
-/* ============================================================
-   Summary
-   ============================================================ */
 
 function buildInsight(options: {
   situation: Situation;
@@ -1030,10 +822,6 @@ function buildInsight(options: {
   return parts.join(" ");
 }
 
-/* ============================================================
-   Page
-   ============================================================ */
-
 type RetortOverrides = Partial<{
   name: string;
   situation: Situation;
@@ -1068,7 +856,8 @@ export default function OnboardingPage() {
   const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
   const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(1);
 
-  const pageBgImage = gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
+  const pageBgImage =
+    gradientLevel === 0 ? undefined : getPageBackgroundImage(themeId);
   const pageBgStyle: CSSProperties = pageBgImage ? { backgroundImage: pageBgImage } : {};
 
   const [stepIndex, setStepIndex] = React.useState(0);
@@ -1166,11 +955,20 @@ export default function OnboardingPage() {
       if (!shouldReset) {
         if (typeof saved.stepIndex === "number") setStepIndex(saved.stepIndex);
         if (typeof saved.name === "string") setName(saved.name);
-        if (saved.situation === "high_school" || saved.situation === "young_adult" || saved.situation === null) {
+        if (
+          saved.situation === "high_school" ||
+          saved.situation === "young_adult" ||
+          saved.situation === null
+        ) {
           setSituation(saved.situation);
         }
         if (typeof saved.zip === "string") setZip(saved.zip);
-        if (saved.certainty === "strong" || saved.certainty === "kinda" || saved.certainty === "no_clue" || saved.certainty === null) {
+        if (
+          saved.certainty === "strong" ||
+          saved.certainty === "kinda" ||
+          saved.certainty === "no_clue" ||
+          saved.certainty === null
+        ) {
           setCertainty(saved.certainty);
         }
         if (typeof saved.certaintyIdea === "string") setCertaintyIdea(saved.certaintyIdea);
@@ -1254,7 +1052,8 @@ export default function OnboardingPage() {
     setWhisper(null);
 
     if (stepId === "fun" && screenMode === "question") {
-      funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
+      funShownAtRef.current =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
     } else {
       funShownAtRef.current = null;
     }
@@ -1363,6 +1162,7 @@ export default function OnboardingPage() {
   }
 
   function canGoBack() {
+    if (screenMode === "retort") return true;
     return stepIndex > 0;
   }
 
@@ -1392,7 +1192,10 @@ export default function OnboardingPage() {
     return `${fromStep}:${Date.now()}:${Math.random().toString(16).slice(2)}`;
   }
 
-  async function showRetortThenAdvance(fromStep: StepId, overrides?: RetortOverrides) {
+  async function showRetortThenAdvance(
+    fromStep: StepId,
+    overrides?: RetortOverrides
+  ) {
     if (fromStep === "welcome") {
       setScreenMode("question");
       goNextStep();
@@ -1409,10 +1212,13 @@ export default function OnboardingPage() {
     const effectiveFunChoice = overrides?.funChoice ?? funChoice;
     const effectiveFunLatencyMs = overrides?.funLatencyMs ?? null;
 
-    const zip5 = typeof overrides?.zip5 === "string" ? overrides.zip5 : normalizeZip(zip);
+    const zip5 =
+      typeof overrides?.zip5 === "string" ? overrides.zip5 : normalizeZip(zip);
 
     let zipPlaceLabel: string | null =
-      "zipPlaceLabel" in (overrides ?? {}) ? (overrides?.zipPlaceLabel ?? null) : null;
+      "zipPlaceLabel" in (overrides ?? {})
+        ? overrides?.zipPlaceLabel ?? null
+        : null;
 
     if (fromStep === "zip" && zip5 && !zipPlaceLabel) {
       const o = ZIP_OVERRIDES[zip5];
@@ -1515,14 +1321,13 @@ export default function OnboardingPage() {
         unlockAdvance();
         return;
       }
-
       jumpToStep("postPlans");
       unlockAdvance();
       return;
     }
 
     if (fromStep === "fun") {
-      setStepIndex(STEPS.indexOf("summary"));
+      jumpToStep("summary");
       unlockAdvance();
       return;
     }
@@ -1531,355 +1336,217 @@ export default function OnboardingPage() {
     unlockAdvance();
   }
 
-  function onWelcomeNext() {
-    if (!lockAdvance()) return;
-    void showRetortThenAdvance("welcome");
-    unlockAdvance();
+  function currentZipValue() {
+    return normalizeZip(zip);
   }
 
-  function onSummaryNext() {
-    router.push("/main");
-  }
-
-  function submitName() {
-    if (!lockAdvance()) return;
-    const text = draft.trim();
-    if (!text) {
-      advanceLockRef.current = false;
-      return;
-    }
-    setName(text);
-    setDraft("");
-    showWhisper("Good. Start simple.");
-    void showRetortThenAdvance("name", { name: text });
-    unlockAdvance();
-  }
-
-  function chooseSituation(v: Situation) {
-    if (!lockAdvance()) return;
-    setSituation(v);
-    showWhisper(v === "high_school" ? "Good. We’ll keep it wide at first." : "Nice. We can move faster.");
-    void showRetortThenAdvance("situation", { situation: v });
-    unlockAdvance();
-  }
-
-  function submitZip() {
+  function continueFromCurrentStep() {
     if (!lockAdvance()) return;
 
-    const normalized = normalizeZip(draft);
-    setZip(normalized);
-    setDraft("");
-    showWhisper("Nice. Local gets smarter.");
-    void showRetortThenAdvance("zip", { zip5: normalized });
-    unlockAdvance();
-  }
-
-  function skipZip() {
-    if (!lockAdvance()) return;
-    setZip("");
-    setDraft("");
-    showWhisper("No problem. Still enough to work with.");
-    void showRetortThenAdvance("zip", { zip5: "" });
-    unlockAdvance();
-  }
-
-  function chooseCertainty(v: Certainty) {
-    if (!lockAdvance()) return;
-    setCertainty(v);
-    if (v === "no_clue") {
-      setCertaintyIdea("");
-    }
-
-    if (v === "strong") {
-      showWhisper("Good. Let’s use that.");
-    } else if (v === "kinda") {
-      showWhisper("That’s enough to build from.");
-    } else {
-      showWhisper("Honestly? Valid.");
-    }
-
-    void showRetortThenAdvance("certainty", {
-      certainty: v,
-      certaintyIdea: v === "no_clue" ? "" : certaintyIdea,
-    });
-    unlockAdvance();
-  }
-
-  function submitCertaintyIdea() {
-    if (!lockAdvance()) return;
-    const text = draft.trim();
-    if (!text) {
-      advanceLockRef.current = false;
-      return;
-    }
-
-    setCertaintyIdea(text);
-    setDraft("");
-    showWhisper(certainty === "strong" ? "Okay. Now we’re getting somewhere." : "Nice. That’s real.");
-    void showRetortThenAdvance("certaintyIdea", { certaintyIdea: text });
-    unlockAdvance();
-  }
-
-  function togglePostPlan(key: PostPlanKey) {
-    setPostPlans((prev) => {
-      if (key === "no_idea") return prev.includes("no_idea") ? [] : ["no_idea"];
-      const cleaned = prev.filter((k) => k !== "no_idea");
-      return toggleInList(cleaned as PostPlanKey[], key);
-    });
-
-    if (key === "job") showWhisper("Direct. Useful.");
-    if (key === "four_year") showWhisper("Classic path. Still flexible.");
-    if (key === "associates") showWhisper("Practical and underrated.");
-    if (key === "credential") showWhisper("Hands-on counts.");
-    if (key === "military") showWhisper("Strong signal.");
-    if (key === "no_idea") showWhisper("Open field. Still real.");
-  }
-
-  function continuePostPlans() {
-    if (!lockAdvance()) return;
-    const snapshot = [...postPlans];
-    if (snapshot.length <= 0) {
-      advanceLockRef.current = false;
-      return;
-    }
-    void showRetortThenAdvance("postPlans", { postPlans: snapshot });
-    unlockAdvance();
-  }
-
-  function toggleActivity(key: ActivityKey) {
-    setActivities((prev) => toggleInList(prev, key));
-
-    if (key === "sports") showWhisper("Noted. You probably hate wasted motion.");
-    if (key === "visual_arts") showWhisper("Taste is a signal.");
-    if (key === "performing_arts") showWhisper("Performance says a lot.");
-    if (key === "volunteer") showWhisper("That matters.");
-    if (key === "job") showWhisper("Responsibility counts.");
-    if (key === "other") showWhisper("Good. Add the part that doesn’t fit the menu.");
-
-    if (key === "other" && activities.includes("other")) {
-      setActivitiesOther("");
-      setDraft("");
-    }
-  }
-
-  function continueActivities(optionalOther?: string) {
-    if (!lockAdvance()) return;
-
-    const snapshot = [...activities];
-    if (snapshot.length <= 0) {
-      advanceLockRef.current = false;
-      return;
-    }
-
-    if (snapshot.includes("other")) {
-      const text = (typeof optionalOther === "string" ? optionalOther : draft).trim();
-      setActivitiesOther(text);
-      setDraft("");
-
-      void showRetortThenAdvance("activities", {
-        activities: snapshot,
-        activitiesOther: text,
-      });
+    if (stepId === "welcome") {
+      setScreenMode("question");
+      goNextStep();
       unlockAdvance();
       return;
     }
 
-    void showRetortThenAdvance("activities", { activities: snapshot });
+    if (stepId === "name") {
+      const trimmed = draft.trim();
+      if (!trimmed) {
+        unlockAdvance();
+        return;
+      }
+      setName(trimmed);
+      setDraft("");
+      void showRetortThenAdvance("name", { name: trimmed }).finally(unlockAdvance);
+      return;
+    }
+
+    if (stepId === "situation") {
+      if (!situation) {
+        unlockAdvance();
+        return;
+      }
+      void showRetortThenAdvance("situation").finally(unlockAdvance);
+      return;
+    }
+
+    if (stepId === "zip") {
+      const zip5 = normalizeZip(draft || zip);
+      setZip(zip5);
+      setDraft("");
+      void showRetortThenAdvance("zip", { zip5 }).finally(unlockAdvance);
+      return;
+    }
+
+    if (stepId === "certainty") {
+      if (!certainty) {
+        unlockAdvance();
+        return;
+      }
+      void showRetortThenAdvance("certainty").finally(unlockAdvance);
+      return;
+    }
+
+    if (stepId === "certaintyIdea") {
+      const trimmed = draft.trim();
+      setCertaintyIdea(trimmed);
+      setDraft("");
+      void showRetortThenAdvance("certaintyIdea", { certaintyIdea: trimmed }).finally(
+        unlockAdvance
+      );
+      return;
+    }
+
+    if (stepId === "postPlans") {
+      if (postPlans.length === 0) {
+        unlockAdvance();
+        return;
+      }
+      void showRetortThenAdvance("postPlans").finally(unlockAdvance);
+      return;
+    }
+
+    if (stepId === "activities") {
+      const other = draft.trim();
+      if (activities.length === 0 && !other) {
+        unlockAdvance();
+        return;
+      }
+      setActivitiesOther(other);
+      setDraft("");
+      void showRetortThenAdvance("activities", { activitiesOther: other }).finally(
+        unlockAdvance
+      );
+      return;
+    }
+
+    if (stepId === "fun") {
+      if (!funChoice) {
+        unlockAdvance();
+        return;
+      }
+      showFunRetort(funChoice);
+      unlockAdvance();
+      return;
+    }
+
+    if (stepId === "summary") {
+      router.push("/main");
+      unlockAdvance();
+      return;
+    }
+
     unlockAdvance();
   }
 
-  function chooseFun(choice: FunChoice) {
-    if (!lockAdvance()) return;
-    setFunChoice(choice);
-    showFunRetort(choice);
-    unlockAdvance();
-  }
+  function continueDisabled() {
+    if (screenMode === "retort") return false;
 
-  const tone = visualToneForStep(stepId);
-  const screenKey = screenMode === "retort" ? `retort_${retortFromStep ?? stepId}` : stepId;
+    if (stepId === "welcome") return false;
+    if (stepId === "name") return draft.trim().length === 0;
+    if (stepId === "situation") return !situation;
+    if (stepId === "zip") return false;
+    if (stepId === "certainty") return !certainty;
+    if (stepId === "certaintyIdea") {
+      return certainty !== "strong" && certainty !== "kinda" ? false : draft.trim().length === 0;
+    }
+    if (stepId === "postPlans") return postPlans.length === 0;
+    if (stepId === "activities") return activities.length === 0 && draft.trim().length === 0;
+    if (stepId === "fun") return !funChoice;
+    if (stepId === "summary") return false;
 
-  function renderRetort() {
-    return (
-      <div className="relative mx-auto w-full max-w-[520px]">
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, 10, 0], y: [0, -10, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute -left-8 top-[-1rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-        />
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, -10, 0], y: [0, 10, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute right-[8%] top-[4rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-        />
-
-        <motion.button
-          type="button"
-          onClick={skipRetort}
-          whileTap={{ scale: 0.992 }}
-          className="relative block w-full cursor-pointer rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.80),rgba(8,11,21,0.88))] px-5 py-5 text-left shadow-[0_24px_80px_rgba(0,0,0,0.38)] backdrop-blur-[18px]"
-          aria-label="Tap or click anywhere to continue"
-        >
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/16" />
-          <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-[60%] -translate-x-1/2 bg-[radial-gradient(circle,rgba(255,191,130,0.16),transparent_70%)] blur-2xl" />
-          <div className="pointer-events-none absolute -left-10 top-8 h-24 w-24 rounded-full bg-cyan-300/10 blur-3xl" />
-          <div className="pointer-events-none absolute -right-10 bottom-0 h-28 w-28 rounded-full bg-violet-400/10 blur-3xl" />
-          <div className="relative">
-            <div className={TYPE.retortHeadline}>{retortText}</div>
-            <div className="mt-5 flex justify-end">
-              <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/48">
-                Tap or click anywhere to continue
-              </div>
-            </div>
-          </div>
-        </motion.button>
-      </div>
-    );
+    return false;
   }
 
   function renderWelcome() {
     return (
-      <div className="relative mx-auto w-full max-w-[520px]">
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-        />
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-        />
-
-        <div className="relative overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(26,30,48,0.84),rgba(10,14,26,0.92))] px-5 py-5 shadow-[0_26px_90px_rgba(0,0,0,0.44)] backdrop-blur-xl">
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.09),transparent_52%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
-
-          <div className="relative flex items-center justify-between">
-            <NavLink label="Exit" onClick={exitOnboarding} />
-          </div>
-
-          <div className="relative pt-5">
-            <div className={TYPE.kicker}>{STEP_META.welcome.kicker}</div>
-            <h1 className={`mt-4 ${TYPE.welcomeHeadline}`}>{STEP_META.welcome.title}</h1>
-            <p className={`mt-3.5 max-w-[27rem] ${TYPE.body}`}>
-              A few quick questions. Enough to get a real feel for you and start showing paths that actually fit.
-            </p>
-
-            <div className="mt-6 flex justify-end">
-              <ActionLink label="Let’s go" onClick={onWelcomeNext} />
-            </div>
-          </div>
+      <StatementCard tone={visualToneForStep("welcome")}>
+        <div className="space-y-3">
+          <div className={TYPE.summaryLead}>Let’s get to know you.</div>
+          <p className={TYPE.body}>
+            A few quick questions, then I’ll start shaping directions that feel like you.
+          </p>
         </div>
-      </div>
+      </StatementCard>
     );
   }
 
-  function renderName() {
+  function renderNameQuestion() {
     return (
       <QuestionShell
         title={STEP_META.name.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("name")}
         currentStep="name"
         certainty={certainty}
         showExit
         onExit={exitOnboarding}
-        bottomLeft={
-          <TalkLink
-            isListening={isListening}
-            speechSupported={speechSupported}
-            onClick={() => toggleMic("name")}
-          />
-        }
-        bottomRight={<ActionLink label="Continue" onClick={submitName} disabled={!draft.trim()} />}
       >
         <QuestionTextEntry
           value={draft}
           onChange={setDraft}
-          onSubmit={submitName}
-          canSubmit={Boolean(draft.trim())}
+          onSubmit={continueFromCurrentStep}
+          canSubmit={draft.trim().length > 0}
+          placeholder="Your name"
           textareaRef={textareaRef}
-          placeholder="Write the name you want me to use."
+          rows={1}
         />
       </QuestionShell>
     );
   }
 
-  function renderSituation() {
-    const hasSelection = Boolean(situation);
-
+  function renderSituationQuestion() {
     return (
       <QuestionShell
         title={STEP_META.situation.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("situation")}
         currentStep="situation"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
       >
-        <div className="w-full space-y-2">
+        <div className="space-y-3">
           <ChoiceRowText
             label="I’m in high school"
             selected={situation === "high_school"}
-            dimmed={hasSelection && situation !== "high_school"}
-            onClick={() => chooseSituation("high_school")}
+            dimmed={Boolean(situation && situation !== "high_school")}
+            onClick={() => setSituation("high_school")}
           />
           <ChoiceRowText
-            label="I’m a young adult figuring out what fits"
+            label="I’m a young adult"
             selected={situation === "young_adult"}
-            dimmed={hasSelection && situation !== "young_adult"}
-            onClick={() => chooseSituation("young_adult")}
+            dimmed={Boolean(situation && situation !== "young_adult")}
+            onClick={() => setSituation("young_adult")}
           />
         </div>
       </QuestionShell>
     );
   }
 
-  function renderZip() {
-    const normalized = normalizeZip(draft);
-    const canSubmit = normalized.length === 5;
+  function renderZipQuestion() {
+    const zipValue = draft || zip;
 
     return (
       <QuestionShell
         title={STEP_META.zip.title}
         whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("zip")}
         currentStep="zip"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
-        bottomLeft={
-          <TalkLink
-            isListening={isListening}
-            speechSupported={speechSupported}
-            onClick={() => toggleMic("zip")}
-          />
-        }
-        bottomRight={
-          <>
-            <NavLink label="Skip" onClick={skipZip} />
-            <ActionLink label="Continue" onClick={submitZip} disabled={!canSubmit} />
-          </>
-        }
       >
         <QuestionTextEntry
-          value={draft}
-          onChange={(v) => setDraft(v.replace(/[^\d]/g, "").slice(0, 5))}
-          onSubmit={submitZip}
-          canSubmit={canSubmit}
-          textareaRef={textareaRef}
+          value={zipValue}
+          onChange={(v) => {
+            const next = normalizeZip(v);
+            setDraft(next);
+            setZip(next);
+          }}
+          onSubmit={continueFromCurrentStep}
+          canSubmit={normalizeZip(zipValue).length === 5}
           placeholder="5-digit zip code"
+          textareaRef={textareaRef}
           inputMode="numeric"
           rows={1}
         />
@@ -1887,293 +1554,212 @@ export default function OnboardingPage() {
     );
   }
 
-  function renderCertainty() {
-    const hasSelection = Boolean(certainty);
-
+  function renderCertaintyQuestion() {
     return (
       <QuestionShell
         title={STEP_META.certainty.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("certainty")}
         currentStep="certainty"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
       >
-        <div className="grid w-full gap-2">
-          <BigMoodCard
-            title="I feel pretty sure"
-            sub="There’s already something I can see."
+        <div className="space-y-3">
+          <ChoiceRowText
+            label="Pretty clear"
             selected={certainty === "strong"}
-            dimmed={hasSelection && certainty !== "strong"}
-            accent="violet"
-            onClick={() => chooseCertainty("strong")}
+            dimmed={Boolean(certainty && certainty !== "strong")}
+            onClick={() => setCertainty("strong")}
           />
-          <BigMoodCard
-            title="I have some ideas"
-            sub="Not locked in. Not blank either."
+          <ChoiceRowText
+            label="Kind of"
             selected={certainty === "kinda"}
-            dimmed={hasSelection && certainty !== "kinda"}
-            accent="sky"
-            onClick={() => chooseCertainty("kinda")}
+            dimmed={Boolean(certainty && certainty !== "kinda")}
+            onClick={() => setCertainty("kinda")}
           />
-          <BigMoodCard
-            title="I honestly don’t know yet"
-            sub="No fake certainty. Just the truth."
+          <ChoiceRowText
+            label="No clue"
             selected={certainty === "no_clue"}
-            dimmed={hasSelection && certainty !== "no_clue"}
-            accent="soft"
-            onClick={() => chooseCertainty("no_clue")}
+            dimmed={Boolean(certainty && certainty !== "no_clue")}
+            onClick={() => setCertainty("no_clue")}
           />
         </div>
       </QuestionShell>
     );
   }
 
-  function renderCertaintyIdea() {
-    const meta = certaintyIdeaPrompt(certainty);
+  function renderCertaintyIdeaQuestion() {
+    const prompt = certaintyIdeaPrompt(certainty);
 
     return (
       <QuestionShell
-        title={meta.title}
-        whisper={whisper}
-        tone={tone}
+        title={prompt.title}
+        tone={visualToneForStep("certaintyIdea")}
         currentStep="certaintyIdea"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
-        bottomLeft={
-          <TalkLink
-            isListening={isListening}
-            speechSupported={speechSupported}
-            onClick={() => toggleMic("certaintyIdea")}
-          />
-        }
-        bottomRight={<ActionLink label="Continue" onClick={submitCertaintyIdea} disabled={!draft.trim()} />}
       >
         <QuestionTextEntry
           value={draft}
           onChange={setDraft}
-          onSubmit={submitCertaintyIdea}
-          canSubmit={Boolean(draft.trim())}
+          onSubmit={continueFromCurrentStep}
+          canSubmit={draft.trim().length > 0}
+          placeholder={prompt.placeholder}
           textareaRef={textareaRef}
-          placeholder={meta.placeholder}
         />
       </QuestionShell>
     );
   }
 
-  function renderPostPlans() {
-    const hasSelection = postPlans.length > 0;
-
+  function renderPostPlansQuestion() {
     return (
       <QuestionShell
         title={STEP_META.postPlans.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("postPlans")}
         currentStep="postPlans"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
-        bottomRight={<ActionLink label="Continue" onClick={continuePostPlans} disabled={postPlans.length === 0} />}
       >
-        <div className="grid w-full gap-2">
+        <div className="space-y-3">
           <ChoiceRowText
             label="Get a job"
             selected={postPlans.includes("job")}
-            dimmed={hasSelection && !postPlans.includes("job")}
-            onClick={() => togglePostPlan("job")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "job"))}
           />
           <ChoiceRowText
-            label="Community college"
+            label="Community college / associate path"
             selected={postPlans.includes("associates")}
-            dimmed={hasSelection && !postPlans.includes("associates")}
-            onClick={() => togglePostPlan("associates")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "associates"))}
           />
           <ChoiceRowText
-            label="Trade or credential program"
+            label="Trade / certificate / credential"
             selected={postPlans.includes("credential")}
-            dimmed={hasSelection && !postPlans.includes("credential")}
-            onClick={() => togglePostPlan("credential")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "credential"))}
           />
           <ChoiceRowText
             label="Military"
             selected={postPlans.includes("military")}
-            dimmed={hasSelection && !postPlans.includes("military")}
-            onClick={() => togglePostPlan("military")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "military"))}
           />
           <ChoiceRowText
             label="Four-year college"
             selected={postPlans.includes("four_year")}
-            dimmed={hasSelection && !postPlans.includes("four_year")}
-            onClick={() => togglePostPlan("four_year")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "four_year"))}
           />
           <ChoiceRowText
-            label="I have no idea yet"
+            label="Honestly, no idea yet"
             selected={postPlans.includes("no_idea")}
-            dimmed={hasSelection && !postPlans.includes("no_idea")}
-            onClick={() => togglePostPlan("no_idea")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "no_idea"))}
           />
         </div>
       </QuestionShell>
     );
   }
 
-  function renderActivities() {
-    const hasSelection = activities.length > 0;
-    const showOtherInput = activities.includes("other");
-
+  function renderActivitiesQuestion() {
     return (
       <QuestionShell
         title={STEP_META.activities.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("activities")}
         currentStep="activities"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
-        bottomLeft={
-          showOtherInput ? (
-            <TalkLink
-              isListening={isListening}
-              speechSupported={speechSupported}
-              onClick={() => toggleMic("activitiesOther")}
-            />
-          ) : null
-        }
-        bottomRight={
-          <ActionLink
-            label="Continue"
-            onClick={() => continueActivities()}
-            disabled={activities.length === 0 || (showOtherInput && !draft.trim())}
-          />
-        }
       >
-        <div className="grid w-full gap-2">
+        <div className="space-y-3">
           <ChoiceRowText
             label="Sports"
             selected={activities.includes("sports")}
-            dimmed={hasSelection && !activities.includes("sports")}
-            onClick={() => toggleActivity("sports")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "sports"))}
           />
           <ChoiceRowText
-            label="Visual art or design"
+            label="Visual arts / design"
             selected={activities.includes("visual_arts")}
-            dimmed={hasSelection && !activities.includes("visual_arts")}
-            onClick={() => toggleActivity("visual_arts")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "visual_arts"))}
           />
           <ChoiceRowText
-            label="Music, dance, or theater"
+            label="Music / dance / theater"
             selected={activities.includes("performing_arts")}
-            dimmed={hasSelection && !activities.includes("performing_arts")}
-            onClick={() => toggleActivity("performing_arts")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "performing_arts"))}
           />
           <ChoiceRowText
             label="Volunteering"
             selected={activities.includes("volunteer")}
-            dimmed={hasSelection && !activities.includes("volunteer")}
-            onClick={() => toggleActivity("volunteer")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "volunteer"))}
           />
           <ChoiceRowText
             label="Working a job"
             selected={activities.includes("job")}
-            dimmed={hasSelection && !activities.includes("job")}
-            onClick={() => toggleActivity("job")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "job"))}
           />
           <ChoiceRowText
-            label="Other"
+            label="Something else"
             selected={activities.includes("other")}
-            dimmed={hasSelection && !activities.includes("other")}
-            onClick={() => toggleActivity("other")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "other"))}
           />
-        </div>
 
-        <AnimatePresence initial={false}>
-          {showOtherInput ? (
-            <motion.div
-              initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
-              transition={spring}
-              className="mt-3"
-            >
-              <QuestionTextEntry
-                value={draft}
-                onChange={setDraft}
-                onSubmit={() => continueActivities()}
-                canSubmit={Boolean(draft.trim())}
-                textareaRef={textareaRef}
-                placeholder="Add the thing that matters here."
-              />
-            </motion.div>
+          {activities.includes("other") ? (
+            <QuestionTextEntry
+              value={draft}
+              onChange={setDraft}
+              onSubmit={continueFromCurrentStep}
+              canSubmit={activities.length > 0 || draft.trim().length > 0}
+              placeholder="Tell me the other thing"
+              textareaRef={textareaRef}
+              rows={2}
+            />
           ) : null}
-        </AnimatePresence>
+        </div>
       </QuestionShell>
     );
   }
 
-  function renderFun() {
+  function renderFunQuestion() {
     return (
       <QuestionShell
         title={STEP_META.fun.title}
-        whisper={whisper}
-        tone={tone}
+        tone={visualToneForStep("fun")}
         currentStep="fun"
         certainty={certainty}
         showExit
-        showBack
         onExit={exitOnboarding}
-        onBack={goBack}
       >
-        <div className="grid max-w-[520px] grid-cols-2 gap-1 sm:gap-1.5">
-          {FUN_OPTIONS.map((option) => {
-            const selected = funChoice === option.key;
-            const dimmed = Boolean(funChoice) && !selected;
+        <div className="grid grid-cols-2 gap-3">
+          {FUN_OPTIONS.map((item) => {
+            const selected = funChoice === item.key;
 
             return (
               <motion.button
-                key={option.key}
+                key={item.key}
                 type="button"
-                onClick={() => chooseFun(option.key)}
-                layout
-                transition={cardSpring}
                 whileTap={{ scale: 0.985 }}
-                animate={{
-                  scale: selected ? 1.03 : 1,
-                  y: selected ? -5 : 0,
-                  opacity: dimmed ? 0.44 : 1,
-                }}
-                className={[
-                  "group relative overflow-hidden rounded-[22px] border bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.05))] text-left",
-                  selected ? "border-white/24 shadow-[0_0_40px_rgba(255,255,255,0.08)]" : "border-white/10 hover:border-white/16",
-                ].join(" ")}
+                onClick={() => setFunChoice(item.key)}
+                className="group relative overflow-hidden rounded-[22px] border border-white/12 bg-white/5 text-left"
               >
-                <div className="relative h-[132px] sm:h-[150px]">
+                <div className="relative aspect-[1/1] w-full">
                   <Image
-                    src={option.src}
-                    alt={option.alt}
+                    src={item.src}
+                    alt={item.alt}
                     fill
-                    className={[
-                      "object-cover transition duration-300",
-                      selected ? "scale-[1.04]" : "scale-100 group-hover:scale-[1.02]",
-                    ].join(" ")}
-                    sizes="(max-width: 768px) 32vw, 150px"
-                    priority={stepId === "fun"}
+                    className="object-cover transition duration-300 group-hover:scale-[1.02]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_45%)]" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
                 </div>
-
-                <div className="absolute inset-x-0 bottom-0 p-2">
-                  <div className="text-[0.82rem] font-semibold text-white">{option.alt}</div>
+                <div
+                  className={[
+                    "absolute inset-x-0 bottom-0 flex items-center justify-between px-3 py-2.5",
+                    selected ? "text-white" : "text-white/88",
+                  ].join(" ")}
+                >
+                  <span className="text-[14px] font-medium">{item.alt}</span>
+                  <span
+                    className={[
+                      "h-2.5 w-2.5 rounded-full transition",
+                      selected ? "bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.55)]" : "bg-white/30",
+                    ].join(" ")}
+                  />
                 </div>
               </motion.button>
             );
@@ -2184,7 +1770,6 @@ export default function OnboardingPage() {
   }
 
   function renderSummary() {
-    const zip5 = normalizeZip(zip);
     const insight = buildInsight({
       situation,
       certainty,
@@ -2193,72 +1778,138 @@ export default function OnboardingPage() {
       activities,
       activitiesOther,
       funChoice,
-      zip5,
+      zip5: currentZipValue(),
     });
 
-    const n = firstName(name);
-    const label = n ? `${n},` : "You,";
-
     return (
-      <div className="relative mx-auto w-full max-w-[520px]">
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, 12, 0], y: [0, -8, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute -left-6 top-0 h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-        />
-        <motion.div
-          aria-hidden="true"
-          animate={{ x: [0, -12, 0], y: [0, 10, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className={`pointer-events-none absolute right-[8%] top-[5rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-        />
-
-        <div className="relative overflow-hidden rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(26,30,48,0.84),rgba(10,14,26,0.92))] px-5 py-5 shadow-[0_26px_90px_rgba(0,0,0,0.44)] backdrop-blur-xl">
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${tone.stageA}`} />
-          <div className={`pointer-events-none absolute inset-0 bg-gradient-to-tl ${tone.stageB}`} />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.09),transparent_52%)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/18 via-white/12 to-transparent" />
-
-          <div className="relative">
-            <div className={TYPE.kicker}>Everleap</div>
-            <div className={`mt-3 ${TYPE.retortHeadline}`}>{label}</div>
-            <div className={`mt-4 ${TYPE.body}`}>{insight}</div>
-            <div className="mt-6 flex justify-end">
-              <ActionLink label="Let’s go" onClick={onSummaryNext} />
-            </div>
-          </div>
+      <StatementCard tone={visualToneForStep("summary")}>
+        <div className="space-y-3">
+          <div className={TYPE.summaryLead}>Here’s the shape I’m getting.</div>
+          <p className={TYPE.body}>{insight}</p>
         </div>
+      </StatementCard>
+    );
+  }
+
+  function renderRetort() {
+    return (
+      <div className="flex min-h-[52svh] w-full items-center justify-center px-2 sm:min-h-[56svh]">
+        <RetortBand text={retortText} tone={visualToneForStep(retortFromStep ?? "name")} />
       </div>
     );
   }
 
   function renderCurrentQuestion() {
-    switch (stepId) {
-      case "welcome":
-        return renderWelcome();
-      case "name":
-        return renderName();
-      case "situation":
-        return renderSituation();
-      case "zip":
-        return renderZip();
-      case "certainty":
-        return renderCertainty();
-      case "certaintyIdea":
-        return renderCertaintyIdea();
-      case "postPlans":
-        return renderPostPlans();
-      case "activities":
-        return renderActivities();
-      case "fun":
-        return renderFun();
-      case "summary":
-        return renderSummary();
-      default:
-        return renderWelcome();
-    }
+    if (stepId === "welcome") return renderWelcome();
+    if (stepId === "name") return renderNameQuestion();
+    if (stepId === "situation") return renderSituationQuestion();
+    if (stepId === "zip") return renderZipQuestion();
+    if (stepId === "certainty") return renderCertaintyQuestion();
+    if (stepId === "certaintyIdea") return renderCertaintyIdeaQuestion();
+    if (stepId === "postPlans") return renderPostPlansQuestion();
+    if (stepId === "activities") return renderActivitiesQuestion();
+    if (stepId === "fun") return renderFunQuestion();
+    return renderSummary();
   }
+
+  function renderBottomNav() {
+    const items: React.ReactNode[] = [];
+
+    if (canGoBack()) {
+      items.push(
+        <BottomAction
+          key="back"
+          label="Back"
+          onClick={goBack}
+          muted
+        />
+      );
+    }
+
+    const micTarget: VoiceTarget | null =
+      stepId === "name"
+        ? "name"
+        : stepId === "zip"
+          ? "zip"
+          : stepId === "activities" && activities.includes("other")
+            ? "activitiesOther"
+            : stepId === "certaintyIdea"
+              ? "certaintyIdea"
+              : null;
+
+    if (micTarget && speechSupported && screenMode === "question") {
+      items.push(
+        <BottomAction
+          key="talk"
+          label="Talk"
+          onClick={() => toggleMic(micTarget)}
+          priority="primary"
+          icon={
+            isListening ? (
+              <MicOff className="h-[18px] w-[18px]" />
+            ) : (
+              <Mic className="h-[18px] w-[18px]" />
+            )
+          }
+        />
+      );
+    }
+
+    if (screenMode === "retort") {
+      items.push(
+        <BottomAction
+          key="continue"
+          label="Continue"
+          onClick={skipRetort}
+          priority="primary"
+        />
+      );
+
+      return (
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          {items}
+        </div>
+      );
+    }
+
+    if (stepId === "zip") {
+      items.push(
+        <BottomAction
+          key="skip"
+          label="Skip"
+          onClick={() => {
+            setZip("");
+            setDraft("");
+            if (!lockAdvance()) return;
+            void showRetortThenAdvance("zip", { zip5: "" }).finally(unlockAdvance);
+          }}
+          muted
+        />
+      );
+    }
+
+    items.push(
+      <BottomAction
+        key="continue"
+        label="Continue"
+        onClick={continueFromCurrentStep}
+        disabled={continueDisabled()}
+        priority="primary"
+      />
+    );
+
+    if (items.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+        {items}
+      </div>
+    );
+  }
+
+  const activeNode =
+    screenMode === "retort" ? renderRetort() : renderCurrentQuestion();
+  const bottomNav = renderBottomNav();
 
   return (
     <AppChrome
@@ -2268,56 +1919,49 @@ export default function OnboardingPage() {
       setGradientLevel={setGradientLevel}
       orbSource="questions_orb"
       ambientCap={0.22}
-      flushContent
       hideHeader
+      flushContent
     >
-      <div className="relative h-full overflow-y-auto overflow-x-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={pageBgStyle}
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,166,92,0.16),transparent_30%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_24%,rgba(217,70,239,0.16),transparent_34%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_68%,rgba(34,211,238,0.12),transparent_36%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,20,0.14)_0%,rgba(8,10,18,0.70)_56%,rgba(6,8,15,0.94)_100%)]" />
-          <div className="absolute -left-12 top-[10%] h-40 w-40 rounded-full bg-amber-300/12 blur-3xl" />
-          <div className="absolute right-[-2.5rem] top-[24%] h-44 w-44 rounded-full bg-fuchsia-400/10 blur-3xl" />
-          <div className="absolute bottom-[-3rem] left-[18%] h-40 w-40 rounded-full bg-cyan-300/10 blur-3xl" />
-        </div>
-
-        <div className="relative z-10 px-2 sm:px-3">
-          <div className="box-border flex min-h-[calc(100svh-5.75rem)] items-center justify-center supports-[height:100dvh]:min-h-[calc(100dvh-5.75rem)]">
-            <div className="w-full max-w-[560px]">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={screenKey}
-                  initial={
-                    screenMode === "retort"
-                      ? screenVariants.retortEnter
-                      : screenVariants.questionEnter
-                  }
-                  animate={
-                    screenMode === "retort"
-                      ? screenVariants.retortCenter
-                      : screenVariants.questionCenter
-                  }
-                  exit={
-                    screenMode === "retort"
-                      ? screenVariants.retortExit
-                      : screenVariants.questionExit
-                  }
-                  transition={spring}
-                  className="w-full"
-                >
-                  {screenMode === "retort"
-                    ? renderRetort()
-                    : renderCurrentQuestion()}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+      <div
+        className="relative min-h-full overflow-y-auto overflow-x-hidden"
+        style={pageBgStyle}
+      >
+        <div className="px-4 pt-5 pb-28 sm:px-5 sm:pt-6 sm:pb-32">
+          <div className="flex w-full flex-col items-center">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={`${screenMode}-${stepId}-${retortFromStep ?? "none"}`}
+                initial={
+                  screenMode === "retort"
+                    ? screenVariants.retortEnter
+                    : screenVariants.questionEnter
+                }
+                animate={
+                  screenMode === "retort"
+                    ? screenVariants.retortCenter
+                    : screenVariants.questionCenter
+                }
+                exit={
+                  screenMode === "retort"
+                    ? screenVariants.retortExit
+                    : screenVariants.questionExit
+                }
+                transition={spring}
+                className="w-full"
+              >
+                {activeNode}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
+
+        {bottomNav ? (
+          <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center">
+            <div className="pointer-events-auto">
+              {bottomNav}
+            </div>
+          </div>
+        ) : null}
       </div>
     </AppChrome>
   );
