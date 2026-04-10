@@ -34,16 +34,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          SERVER_PATH="$(find .next/standalone -type f -name server.js | head -n 1)"
-
-          if [ -z "$SERVER_PATH" ]; then
-            echo "Could not find server.js under .next/standalone"
+          # ✅ FIX: explicitly choose correct standalone root
+          if [ -f ".next/standalone/server.js" ]; then
+            SERVER_DIR=".next/standalone"
+          elif [ -f ".next/standalone/apps/web/server.js" ]; then
+            SERVER_DIR=".next/standalone/apps/web"
+          else
+            echo "Could not find standalone server.js at expected path"
+            find .next/standalone -type f -name server.js
             exit 1
           fi
 
-          SERVER_DIR="$(dirname "$SERVER_PATH")"
-
-          echo "Found server.js at: $SERVER_PATH"
           echo "Using standalone root: $SERVER_DIR"
 
           rm -rf deploy
@@ -51,13 +52,16 @@ jobs:
 
           cp -R "$SERVER_DIR"/. deploy/
 
+          # copy static assets
           rm -rf deploy/.next/static
           mkdir -p deploy/.next
           cp -R .next/static deploy/.next/static
 
+          # copy public assets
           rm -rf deploy/public
           cp -R public deploy/public
 
+          # sanity checks
           test -f deploy/server.js
           test -d deploy/.next/static
           test -d deploy/public
@@ -70,5 +74,7 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: "EverleapUI"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy
