@@ -33,9 +33,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Pick correct standalone root
           if [ -f ".next/standalone/server.js" ]; then
             SERVER_DIR=".next/standalone"
+          elif [ -f ".next/standalone/web/web/server.js" ]; then
+            SERVER_DIR=".next/standalone/web/web"
           elif [ -f ".next/standalone/apps/web/server.js" ]; then
             SERVER_DIR=".next/standalone/apps/web"
           else
@@ -51,16 +52,13 @@ jobs:
 
           cp -R "$SERVER_DIR"/. deploy/
 
-          # Static assets
           rm -rf deploy/.next/static
           mkdir -p deploy/.next
           cp -R .next/static deploy/.next/static
 
-          # Public assets
           rm -rf deploy/public
           cp -R public deploy/public
 
-          # Sanity checks
           test -f deploy/server.js
           test -d deploy/.next/static
           test -d deploy/public
