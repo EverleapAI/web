@@ -1,10 +1,9 @@
 // apps/web/server.mjs
-// (kept temporarily; no auth, no env logic)
 
-import express from "express";
 import next from "next";
+import http from "http";
 
-const port = parseInt(process.env.PORT || "3000", 10);
+const port = parseInt(process.env.PORT || "8080", 10);
 const dev = process.env.NODE_ENV !== "production";
 
 const app = next({ dev });
@@ -12,12 +11,10 @@ const handle = app.getRequestHandler();
 
 await app.prepare();
 
-const server = express();
-
-server.all("*", (req, res) => {
-  return handle(req, res);
+const server = http.createServer((req, res) => {
+  handle(req, res);
 });
 
 server.listen(port, () => {
-  console.log(`> Everleap server wrapper listening on http://localhost:${port}`);
+  console.log(`> Server running on http://localhost:${port}`);
 });
