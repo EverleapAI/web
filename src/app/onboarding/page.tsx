@@ -240,15 +240,11 @@ function BrandedNavLink({
           ].join(" ")}
         />
       </span>
+
       {arrow ? (
-        <motion.span
-          aria-hidden="true"
-          className="text-[17px]"
-          animate={disabled ? { x: 0 } : { x: [0, 3, 0] }}
-          transition={disabled ? undefined : { duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <span aria-hidden="true" className="text-[17px]">
           →
-        </motion.span>
+        </span>
       ) : null}
     </motion.button>
   );
