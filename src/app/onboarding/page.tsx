@@ -240,7 +240,6 @@ function BrandedNavLink({
           ].join(" ")}
         />
       </span>
-
       {arrow ? (
         <span aria-hidden="true" className="text-[17px]">
           →
@@ -260,16 +259,40 @@ function TalkControl({ active, onClick }: { active: boolean; onClick: () => void
       className={[
         "group inline-flex items-center gap-2 rounded-full px-1 py-1 transition",
         active
-          ? "text-cyan-100 drop-shadow-[0_0_14px_rgba(103,232,249,0.18)]"
-          : "text-white/72 hover:text-white",
+          ? "text-cyan-50 drop-shadow-[0_0_20px_rgba(103,232,249,0.34)]"
+          : "text-white/56 hover:text-white/84",
       ].join(" ")}
     >
-      <Mic className={["h-[16px] w-[16px] transition", active ? "scale-[1.06]" : ""].join(" ")} />
-      <span className="relative text-[15px] font-semibold tracking-[0.02em]">
-        Talk
+      <span
+        className={[
+          "relative flex h-[18px] w-[18px] items-center justify-center rounded-full transition",
+          active ? "bg-cyan-300/18 shadow-[0_0_18px_rgba(103,232,249,0.24)]" : "",
+        ].join(" ")}
+      >
+        <Mic
+          className={[
+            "transition",
+            active ? "h-[15px] w-[15px] scale-[1.08]" : "h-[16px] w-[16px]",
+          ].join(" ")}
+        />
+      </span>
+
+      <span className="relative inline-flex items-center gap-2 text-[15px] font-semibold tracking-[0.02em]">
+        {active ? (
+          <motion.span
+            aria-hidden="true"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-200"
+            animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.18, 1] }}
+            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+          />
+        ) : null}
+        {active ? "Listening" : "Talk"}
         <span
           aria-hidden="true"
-          className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 rounded-full bg-current transition-transform duration-200 group-hover:scale-x-100"
+          className={[
+            "absolute -bottom-1 left-0 h-px w-full origin-left rounded-full bg-current transition-transform duration-200",
+            active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100",
+          ].join(" ")}
         />
       </span>
     </motion.button>
@@ -406,11 +429,10 @@ function QuestionTextEntry({
   );
 }
 
-function QuestionShell({
+function QuestionFlat({
   title,
   whisper,
   children,
-  tone,
   currentStep,
   certainty,
   footer,
@@ -418,54 +440,31 @@ function QuestionShell({
   title: string;
   whisper?: string | null;
   children: React.ReactNode;
-  tone: ReturnType<typeof visualToneForStep>;
   currentStep: StepId;
   certainty: Certainty;
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="relative w-full max-w-[720px]">
-      <motion.div
-        aria-hidden="true"
-        animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-      />
-      <motion.div
-        aria-hidden="true"
-        animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-      />
-
-      <div className="relative rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]">
-        <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
-        <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
-
-        <div className="relative px-4 pt-3 pb-4 sm:px-5 sm:pt-3.5 sm:pb-5">
-          <div className="flex items-center justify-end">
-            {currentStep === "welcome" ? null : (
-              <ProgressDots currentStep={currentStep} certainty={certainty} />
-            )}
-          </div>
-
-          <div className="pt-3">
-            <h1 className={currentStep === "welcome" ? TYPE.welcomeHeadline : TYPE.headline}>
-              {title}
-            </h1>
-
-            {whisper ? (
-              <div className="mt-1">
-                <div className={TYPE.whisper}>{whisper}</div>
-              </div>
-            ) : null}
-
-            <div className={whisper ? "mt-3" : "mt-4"}>{children}</div>
-
-            {footer ? <div className="mt-4 flex items-center justify-start">{footer}</div> : null}
-          </div>
+    <div className="w-full max-w-[720px]">
+      {currentStep === "welcome" ? null : (
+        <div className="mb-3 flex justify-end">
+          <ProgressDots currentStep={currentStep} certainty={certainty} />
         </div>
-      </div>
+      )}
+
+      <h1 className={currentStep === "welcome" ? TYPE.welcomeHeadline : TYPE.headline}>
+        {title}
+      </h1>
+
+      {whisper ? (
+        <div className="mt-1">
+          <div className={TYPE.whisper}>{whisper}</div>
+        </div>
+      ) : null}
+
+      <div className={whisper ? "mt-4" : "mt-5"}>{children}</div>
+
+      {footer ? <div className="mt-4 flex items-center justify-start">{footer}</div> : null}
     </div>
   );
 }
@@ -913,9 +912,6 @@ export default function OnboardingPage() {
       setFunChoice(null);
       setDraft("");
       setWhisper(null);
-      if (stepId === "zip" && screenMode === "question") {
-  setDraft(zip);
-}
 
       if (recognitionRef.current) {
         try {
@@ -953,11 +949,20 @@ export default function OnboardingPage() {
       if (!shouldReset) {
         if (typeof saved.stepIndex === "number") setStepIndex(saved.stepIndex);
         if (typeof saved.name === "string") setName(saved.name);
-        if (saved.situation === "high_school" || saved.situation === "young_adult" || saved.situation === null) {
+        if (
+          saved.situation === "high_school" ||
+          saved.situation === "young_adult" ||
+          saved.situation === null
+        ) {
           setSituation(saved.situation);
         }
         if (typeof saved.zip === "string") setZip(saved.zip);
-        if (saved.certainty === "strong" || saved.certainty === "kinda" || saved.certainty === "no_clue" || saved.certainty === null) {
+        if (
+          saved.certainty === "strong" ||
+          saved.certainty === "kinda" ||
+          saved.certainty === "no_clue" ||
+          saved.certainty === null
+        ) {
           setCertainty(saved.certainty);
         }
         if (typeof saved.certaintyIdea === "string") setCertaintyIdea(saved.certaintyIdea);
@@ -979,7 +984,9 @@ export default function OnboardingPage() {
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
 
@@ -1014,40 +1021,40 @@ export default function OnboardingPage() {
     } catch {}
   }, [stepIndex, name, situation, zip, certainty, certaintyIdea, postPlans, activities, activitiesOther, funChoice]);
 
-React.useEffect(() => {
-  if (recognitionRef.current) {
-    try {
-      recognitionRef.current.stop();
-    } catch {}
-  }
-  setIsListening(false);
-  lastFinalRef.current = "";
-  activeTargetRef.current = null;
-  advanceLockRef.current = false;
-  setWhisper(null);
+  React.useEffect(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+    }
+    setIsListening(false);
+    lastFinalRef.current = "";
+    activeTargetRef.current = null;
+    advanceLockRef.current = false;
+    setWhisper(null);
 
-  if (stepId === "name" && screenMode === "question") {
-    setDraft(name);
-  } else if (stepId === "zip" && screenMode === "question") {
-    setDraft(zip);
-  } else if (stepId === "certaintyIdea" && screenMode === "question") {
-    setDraft(certaintyIdea);
-  } else if (
-    stepId === "activities" &&
-    screenMode === "question" &&
-    activities.includes("other")
-  ) {
-    setDraft(activitiesOther);
-  } else {
-    setDraft("");
-  }
+    if (stepId === "name" && screenMode === "question") {
+      setDraft(name);
+    } else if (stepId === "zip" && screenMode === "question") {
+      setDraft(zip);
+    } else if (stepId === "certaintyIdea" && screenMode === "question") {
+      setDraft(certaintyIdea);
+    } else if (
+      stepId === "activities" &&
+      screenMode === "question" &&
+      activities.includes("other")
+    ) {
+      setDraft(activitiesOther);
+    } else {
+      setDraft("");
+    }
 
-  if (stepId === "fun" && screenMode === "question") {
-    funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
-  } else {
-    funShownAtRef.current = null;
-  }
-}, [stepId, screenMode, name, zip, certaintyIdea, activities, activitiesOther]);
+    if (stepId === "fun" && screenMode === "question") {
+      funShownAtRef.current = typeof performance !== "undefined" ? performance.now() : Date.now();
+    } else {
+      funShownAtRef.current = null;
+    }
+  }, [stepId, screenMode, name, zip, certaintyIdea, activities, activitiesOther]);
 
   function lockAdvance(): boolean {
     if (advanceLockRef.current) return false;
@@ -1063,7 +1070,9 @@ React.useEffect(() => {
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
 
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
     if (!SpeechRec) return null;
 
     const rec = new SpeechRec();
@@ -1320,7 +1329,7 @@ React.useEffect(() => {
       return;
     }
 
-if (stepId === "zip") {
+   if (stepId === "zip") {
   const zip5 = draft.replace(/\D/g, "").slice(0, 5);
   setZip(zip5);
   setDraft("");
@@ -1440,22 +1449,19 @@ if (stepId === "zip") {
 
   function renderWelcome() {
     return (
-      <StatementCard tone={visualToneForStep("welcome")}>
-        <div className="space-y-3">
-          <div className={TYPE.summaryLead}>Let’s get to know you.</div>
-          <p className={TYPE.body}>
-            A few quick questions, then I’ll start shaping directions that feel like you.
-          </p>
-        </div>
-      </StatementCard>
+      <div className="w-full max-w-[720px] space-y-4">
+        <h1 className={TYPE.welcomeHeadline}>Let’s get to know you.</h1>
+        <p className="max-w-[36rem] text-[15px] leading-[1.65] text-white/74">
+          A few quick questions, then I’ll start shaping directions that feel like you.
+        </p>
+      </div>
     );
   }
 
   function renderNameQuestion() {
     return (
-      <QuestionShell
+      <QuestionFlat
         title={STEP_META.name.title}
-        tone={visualToneForStep("name")}
         currentStep="name"
         certainty={certainty}
         footer={renderQuestionFooter()}
@@ -1468,15 +1474,14 @@ if (stepId === "zip") {
           textareaRef={textareaRef}
           rows={1}
         />
-      </QuestionShell>
+      </QuestionFlat>
     );
   }
 
   function renderSituationQuestion() {
     return (
-      <QuestionShell
+      <QuestionFlat
         title={STEP_META.situation.title}
-        tone={visualToneForStep("situation")}
         currentStep="situation"
         certainty={certainty}
       >
@@ -1494,16 +1499,15 @@ if (stepId === "zip") {
             onClick={() => selectSituation("young_adult")}
           />
         </div>
-      </QuestionShell>
+      </QuestionFlat>
     );
   }
 
 function renderZipQuestion() {
   return (
-    <QuestionShell
+    <QuestionFlat
       title={STEP_META.zip.title}
       whisper={whisper}
-      tone={visualToneForStep("zip")}
       currentStep="zip"
       certainty={certainty}
       footer={renderQuestionFooter()}
@@ -1519,15 +1523,14 @@ function renderZipQuestion() {
         inputMode="numeric"
         rows={1}
       />
-    </QuestionShell>
+    </QuestionFlat>
   );
 }
 
   function renderCertaintyQuestion() {
     return (
-      <QuestionShell
+      <QuestionFlat
         title={STEP_META.certainty.title}
-        tone={visualToneForStep("certainty")}
         currentStep="certainty"
         certainty={certainty}
       >
@@ -1551,16 +1554,15 @@ function renderZipQuestion() {
             onClick={() => selectCertainty("no_clue")}
           />
         </div>
-      </QuestionShell>
+      </QuestionFlat>
     );
   }
 
   function renderCertaintyIdeaQuestion() {
     const prompt = certaintyIdeaPrompt(certainty);
     return (
-      <QuestionShell
+      <QuestionFlat
         title={prompt.title}
-        tone={visualToneForStep("certaintyIdea")}
         currentStep="certaintyIdea"
         certainty={certainty}
         footer={renderQuestionFooter()}
@@ -1572,137 +1574,184 @@ function renderZipQuestion() {
           placeholder={prompt.placeholder}
           textareaRef={textareaRef}
         />
-      </QuestionShell>
+      </QuestionFlat>
     );
   }
 
   function renderPostPlansQuestion() {
     return (
-      <QuestionShell
+      <QuestionFlat
         title={STEP_META.postPlans.title}
-        tone={visualToneForStep("postPlans")}
         currentStep="postPlans"
         certainty={certainty}
       >
         <div className="space-y-3">
-          <ChoiceRowText label="Get a job" selected={postPlans.includes("job")} onClick={() => setPostPlans((prev) => toggleInList(prev, "job"))} />
-          <ChoiceRowText label="Community college / associate path" selected={postPlans.includes("associates")} onClick={() => setPostPlans((prev) => toggleInList(prev, "associates"))} />
-          <ChoiceRowText label="Trade / certificate / credential" selected={postPlans.includes("credential")} onClick={() => setPostPlans((prev) => toggleInList(prev, "credential"))} />
-          <ChoiceRowText label="Military" selected={postPlans.includes("military")} onClick={() => setPostPlans((prev) => toggleInList(prev, "military"))} />
-          <ChoiceRowText label="Four-year college" selected={postPlans.includes("four_year")} onClick={() => setPostPlans((prev) => toggleInList(prev, "four_year"))} />
-          <ChoiceRowText label="Honestly, no idea yet" selected={postPlans.includes("no_idea")} onClick={() => setPostPlans((prev) => toggleInList(prev, "no_idea"))} />
+          <ChoiceRowText
+            label="Get a job"
+            selected={postPlans.includes("job")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "job"))}
+          />
+          <ChoiceRowText
+            label="Community college / associate path"
+            selected={postPlans.includes("associates")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "associates"))}
+          />
+          <ChoiceRowText
+            label="Trade / certificate / credential"
+            selected={postPlans.includes("credential")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "credential"))}
+          />
+          <ChoiceRowText
+            label="Military"
+            selected={postPlans.includes("military")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "military"))}
+          />
+          <ChoiceRowText
+            label="Four-year college"
+            selected={postPlans.includes("four_year")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "four_year"))}
+          />
+          <ChoiceRowText
+            label="Honestly, no idea yet"
+            selected={postPlans.includes("no_idea")}
+            onClick={() => setPostPlans((prev) => toggleInList(prev, "no_idea"))}
+          />
         </div>
-      </QuestionShell>
+      </QuestionFlat>
     );
   }
 
   function renderActivitiesQuestion() {
     return (
-      <QuestionShell
+      <QuestionFlat
         title={STEP_META.activities.title}
-        tone={visualToneForStep("activities")}
         currentStep="activities"
         certainty={certainty}
         footer={renderQuestionFooter()}
       >
         <div className="space-y-3">
-          <ChoiceRowText label="Sports" selected={activities.includes("sports")} onClick={() => setActivities((prev) => toggleInList(prev, "sports"))} />
-          <ChoiceRowText label="Visual arts / design" selected={activities.includes("visual_arts")} onClick={() => setActivities((prev) => toggleInList(prev, "visual_arts"))} />
-          <ChoiceRowText label="Music / dance / theater" selected={activities.includes("performing_arts")} onClick={() => setActivities((prev) => toggleInList(prev, "performing_arts"))} />
-          <ChoiceRowText label="Volunteering" selected={activities.includes("volunteer")} onClick={() => setActivities((prev) => toggleInList(prev, "volunteer"))} />
-          <ChoiceRowText label="Working a job" selected={activities.includes("job")} onClick={() => setActivities((prev) => toggleInList(prev, "job"))} />
-          <ChoiceRowText label="Something else" selected={activities.includes("other")} onClick={() => setActivities((prev) => toggleInList(prev, "other"))} />
+          <ChoiceRowText
+            label="Sports"
+            selected={activities.includes("sports")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "sports"))}
+          />
+          <ChoiceRowText
+            label="Art or design"
+            selected={activities.includes("visual_arts")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "visual_arts"))}
+          />
+          <ChoiceRowText
+            label="Music, dance, or theater"
+            selected={activities.includes("performing_arts")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "performing_arts"))}
+          />
+          <ChoiceRowText
+            label="Volunteering"
+            selected={activities.includes("volunteer")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "volunteer"))}
+          />
+          <ChoiceRowText
+            label="Working a job"
+            selected={activities.includes("job")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "job"))}
+          />
+          <ChoiceRowText
+            label="Something else"
+            selected={activities.includes("other")}
+            onClick={() => setActivities((prev) => toggleInList(prev, "other"))}
+          />
+        </div>
 
-          {activities.includes("other") ? (
+        {activities.includes("other") ? (
+          <div className="mt-4">
             <QuestionTextEntry
               value={draft}
               onChange={setDraft}
               onSubmit={continueFromCurrentStep}
-              placeholder="Tell me what that is"
+              placeholder="What is it?"
               textareaRef={textareaRef}
               rows={2}
             />
-          ) : null}
-        </div>
-      </QuestionShell>
+          </div>
+        ) : null}
+      </QuestionFlat>
     );
   }
 
   function renderFunQuestion() {
-  return (
-    <QuestionShell
-      title={STEP_META.fun.title}
-      tone={visualToneForStep("fun")}
-      currentStep="fun"
-      certainty={certainty}
-    >
-      <div className="grid grid-cols-2 gap-3">
-        {FUN_OPTIONS.map((item) => {
-          const selected = funChoice === item.key;
+    return (
+      <QuestionFlat
+        title={STEP_META.fun.title}
+        currentStep="fun"
+        certainty={certainty}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          {FUN_OPTIONS.map((item) => {
+            const selected = funChoice === item.key;
 
-          return (
-            <motion.button
-              key={item.key}
-              type="button"
-              onClick={() => selectFunChoice(item.key)}
-              whileHover={{ y: -3, scale: 1.02 }}
-              whileTap={{ scale: 0.975 }}
-              animate={{
-                scale: selected ? 1.01 : 1,
-                y: selected ? -1 : 0,
-              }}
-              transition={cardSpring}
-              className="group relative block w-full overflow-hidden rounded-[22px] text-left"
-              aria-label={item.alt}
-            >
-              <div
-                className={[
-                  "relative aspect-[1.38/1] overflow-hidden rounded-[22px] border transition-all duration-300",
-                  selected
-                    ? "border-cyan-50/80 shadow-[0_20px_48px_rgba(10,88,104,0.42)]"
-                    : "border-cyan-200/18 group-hover:border-cyan-100/36 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.24)]",
-                ].join(" ")}
+            return (
+              <motion.button
+                key={item.key}
+                type="button"
+                onClick={() => selectFunChoice(item.key)}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.975 }}
+                animate={{
+                  scale: selected ? 1.01 : 1,
+                  y: selected ? -1 : 0,
+                }}
+                transition={cardSpring}
+                className="group relative block w-full overflow-hidden rounded-[22px] text-left"
+                aria-label={item.alt}
               >
-                <Image
-                  src={item.src}
-                  alt={item.alt}
-                  fill
-                  sizes="(max-width: 640px) 44vw, 220px"
-                  className={[
-                    "object-cover transition duration-300",
-                    selected
-                      ? "scale-[1.03] brightness-[1.08] contrast-[1.04]"
-                      : "brightness-[0.92] contrast-[1.02] group-hover:scale-[1.05] group-hover:brightness-[1.04]",
-                  ].join(" ")}
-                />
-
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.14))]" />
-
                 <div
                   className={[
-                    "pointer-events-none absolute inset-0 rounded-[22px] transition duration-300",
+                    "relative aspect-[1.38/1] overflow-hidden rounded-[22px] border transition-all duration-300",
                     selected
-                      ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_52%)]"
-                      : "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%)] group-hover:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_52%)]",
+                      ? "border-cyan-50/80 shadow-[0_20px_48px_rgba(10,88,104,0.42)]"
+                      : "border-cyan-200/18 group-hover:border-cyan-100/36 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.24)]",
                   ].join(" ")}
-                />
+                >
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    fill
+                    sizes="(max-width: 640px) 44vw, 220px"
+                    className={[
+                      "object-cover transition duration-300",
+                      selected
+                        ? "scale-[1.03] brightness-[1.08] contrast-[1.04]"
+                        : "brightness-[0.92] contrast-[1.02] group-hover:scale-[1.05] group-hover:brightness-[1.04]",
+                    ].join(" ")}
+                  />
 
-                <div
-                  className={[
-                    "pointer-events-none absolute inset-0 rounded-[22px] ring-1 ring-inset transition duration-300",
-                    selected
-                      ? "ring-cyan-50/34"
-                      : "ring-white/0 group-hover:ring-cyan-100/14",
-                  ].join(" ")}
-                />
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
-    </QuestionShell>
-  );
-}
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.14))]" />
+
+                  <div
+                    className={[
+                      "pointer-events-none absolute inset-0 rounded-[22px] transition duration-300",
+                      selected
+                        ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_52%)]"
+                        : "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%)] group-hover:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_52%)]",
+                    ].join(" ")}
+                  />
+
+                  <div
+                    className={[
+                      "pointer-events-none absolute inset-0 rounded-[22px] ring-1 ring-inset transition duration-300",
+                      selected
+                        ? "ring-cyan-50/34"
+                        : "ring-white/0 group-hover:ring-cyan-100/14",
+                    ].join(" ")}
+                  />
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </QuestionFlat>
+    );
+  }
 
   function renderSummary() {
     const insight = buildInsight({
@@ -1717,22 +1766,26 @@ function renderZipQuestion() {
     });
 
     return (
-      <StatementCard tone={visualToneForStep("summary")}>
-        <div className="space-y-3">
-          <div className={TYPE.summaryLead}>Here’s the shape I’m getting.</div>
-          <p className={TYPE.body}>{insight}</p>
-        </div>
-      </StatementCard>
+      <div className="w-full max-w-[720px] space-y-4">
+        <h1 className={TYPE.headline}>Here’s the shape I’m getting.</h1>
+        <p className="max-w-[42rem] text-[15px] leading-[1.72] text-white/76">{insight}</p>
+      </div>
     );
   }
 
   function renderRetort() {
     return (
-      <RetortBand
-        text={retortText}
-        tone={visualToneForStep(retortFromStep ?? "name")}
+      <button
+        type="button"
         onClick={skipRetort}
-      />
+        className="block w-full max-w-[720px] text-left"
+      >
+        <div className="space-y-4">
+          <p className="max-w-[40rem] text-[1.24rem] font-semibold leading-[1.32] tracking-tight text-white sm:text-[1.42rem]">
+            {retortText}
+          </p>
+        </div>
+      </button>
     );
   }
 
@@ -1751,24 +1804,26 @@ function renderZipQuestion() {
 
   function renderNav() {
     return (
-      <div className="mt-[20px] flex flex-wrap items-center justify-start gap-x-6 gap-y-2">
-        {canGoBack() ? (
-          <BrandedNavLink label="Back" onClick={goBack} emphasis="quiet" />
-        ) : null}
+      <div className="mt-6 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-2">
+          {canGoBack() ? (
+            <BrandedNavLink label="Back" onClick={goBack} emphasis="quiet" />
+          ) : null}
 
-        {shouldShowSkip() ? (
-          <BrandedNavLink label="Skip" onClick={handleSkipZip} emphasis="quiet" />
-        ) : null}
+          {shouldShowSkip() ? (
+            <BrandedNavLink label="Skip" onClick={handleSkipZip} emphasis="quiet" />
+          ) : null}
 
-        {shouldShowContinue() ? (
-          <BrandedNavLink
-            label="Continue"
-            onClick={screenMode === "retort" ? skipRetort : continueFromCurrentStep}
-            disabled={screenMode === "retort" ? false : continueDisabled()}
-            emphasis="strong"
-            arrow
-          />
-        ) : null}
+          {shouldShowContinue() ? (
+            <BrandedNavLink
+              label="Continue"
+              onClick={screenMode === "retort" ? skipRetort : continueFromCurrentStep}
+              disabled={screenMode === "retort" ? false : continueDisabled()}
+              emphasis="strong"
+              arrow
+            />
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -1787,15 +1842,27 @@ function renderZipQuestion() {
       flushContent
     >
       <div className="relative min-h-[100svh] overflow-x-hidden" style={pageBgStyle}>
-        <main className="relative z-10 px-5 pt-[30px] pb-20 sm:px-5 sm:pt-[30px]">
+        <main className="relative z-10 min-h-[100svh] overflow-y-auto px-5 pt-[48px] pb-20 sm:px-5 sm:pt-[72px]">
           <div className="mx-auto flex w-full max-w-[720px] flex-col items-start">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={`${screenMode}-${stepId}-${retortFromStep ?? "none"}`}
                 className="w-full"
-                initial={screenMode === "retort" ? screenVariants.retortEnter : screenVariants.questionEnter}
-                animate={screenMode === "retort" ? screenVariants.retortCenter : screenVariants.questionCenter}
-                exit={screenMode === "retort" ? screenVariants.retortExit : screenVariants.questionExit}
+                initial={
+                  screenMode === "retort"
+                    ? screenVariants.retortEnter
+                    : screenVariants.questionEnter
+                }
+                animate={
+                  screenMode === "retort"
+                    ? screenVariants.retortCenter
+                    : screenVariants.questionCenter
+                }
+                exit={
+                  screenMode === "retort"
+                    ? screenVariants.retortExit
+                    : screenVariants.questionExit
+                }
                 transition={spring}
               >
                 {activeNode}
