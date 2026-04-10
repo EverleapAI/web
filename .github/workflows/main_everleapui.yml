@@ -24,8 +24,7 @@ jobs:
         run: npm ci --include=optional
 
       - name: Build app
-        run: |
-          npm run build
+        run: npm run build
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
 
@@ -34,13 +33,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          # ✅ FIX: explicitly choose correct standalone root
+          # Pick correct standalone root
           if [ -f ".next/standalone/server.js" ]; then
             SERVER_DIR=".next/standalone"
           elif [ -f ".next/standalone/apps/web/server.js" ]; then
             SERVER_DIR=".next/standalone/apps/web"
           else
-            echo "Could not find standalone server.js at expected path"
+            echo "Could not find standalone server.js"
             find .next/standalone -type f -name server.js
             exit 1
           fi
@@ -52,29 +51,26 @@ jobs:
 
           cp -R "$SERVER_DIR"/. deploy/
 
-          # copy static assets
+          # Static assets
           rm -rf deploy/.next/static
           mkdir -p deploy/.next
           cp -R .next/static deploy/.next/static
 
-          # copy public assets
+          # Public assets
           rm -rf deploy/public
           cp -R public deploy/public
 
-          # sanity checks
+          # Sanity checks
           test -f deploy/server.js
           test -d deploy/.next/static
           test -d deploy/public
 
-          echo "Deploy folder ready:"
+          echo "Deploy folder ready"
           ls -la deploy
-          ls -la deploy/.next
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "EverleapUI"
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: deploy
+          app-name: EverleapUI
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: deploy
