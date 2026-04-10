@@ -1618,43 +1618,80 @@ export default function OnboardingPage() {
   }
 
   function renderFunQuestion() {
-    return (
-      <QuestionShell
-        title={STEP_META.fun.title}
-        tone={visualToneForStep("fun")}
-        currentStep="fun"
-        certainty={certainty}
-      >
-        <div className="grid grid-cols-2 gap-3">
-          {FUN_OPTIONS.map((item) => {
-            const selected = funChoice === item.key;
-            return (
-              <motion.button
-                key={item.key}
-                type="button"
-                whileTap={{ scale: 0.985 }}
-                onClick={() => selectFunChoice(item.key)}
+  return (
+    <QuestionShell
+      title={STEP_META.fun.title}
+      tone={visualToneForStep("fun")}
+      currentStep="fun"
+      certainty={certainty}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        {FUN_OPTIONS.map((item) => {
+          const selected = funChoice === item.key;
+
+          return (
+            <motion.button
+              key={item.key}
+              type="button"
+              onClick={() => selectFunChoice(item.key)}
+              whileHover={{ y: -3, scale: 1.02 }}
+              whileTap={{ scale: 0.975 }}
+              animate={{
+                scale: selected ? 1.01 : 1,
+                y: selected ? -1 : 0,
+              }}
+              transition={cardSpring}
+              className="group relative block w-full overflow-hidden rounded-[22px] text-left"
+              aria-label={item.alt}
+            >
+              <div
                 className={[
-                  "group relative flex min-h-[84px] items-center gap-3 overflow-hidden rounded-[22px] border px-3 py-3 text-left transition",
+                  "relative aspect-[1.38/1] overflow-hidden rounded-[22px] border transition-all duration-300",
                   selected
-                    ? "border-cyan-100/36 bg-[linear-gradient(180deg,rgba(22,112,126,0.96),rgba(8,76,88,0.98))] shadow-[0_18px_44px_rgba(8,42,56,0.34)]"
-                    : "border-cyan-200/18 bg-[linear-gradient(180deg,rgba(33,129,144,0.60),rgba(14,87,100,0.72))] hover:border-cyan-100/24 hover:bg-[linear-gradient(180deg,rgba(42,144,159,0.74),rgba(18,98,111,0.84))]",
+                    ? "border-cyan-50/80 shadow-[0_20px_48px_rgba(10,88,104,0.42)]"
+                    : "border-cyan-200/18 group-hover:border-cyan-100/36 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.24)]",
                 ].join(" ")}
               >
-                <div className="relative h-[28px] w-[28px] shrink-0 overflow-hidden rounded-[10px] border border-cyan-100/14">
-                  <Image src={item.src} alt={item.alt} fill className="object-cover transition duration-300 group-hover:scale-[1.04]" />
-                </div>
-                <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                  <span className={["text-[15px] font-semibold tracking-[-0.015em]", selected ? "text-white" : "text-white/88"].join(" ")}>{item.alt}</span>
-                  <span className={["h-2.5 w-2.5 rounded-full transition", selected ? "bg-cyan-100 shadow-[0_0_14px_rgba(207,250,254,0.4)]" : "bg-white/30"].join(" ")} />
-                </div>
-              </motion.button>
-            );
-          })}
-        </div>
-      </QuestionShell>
-    );
-  }
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes="(max-width: 640px) 44vw, 220px"
+                  className={[
+                    "object-cover transition duration-300",
+                    selected
+                      ? "scale-[1.03] brightness-[1.08] contrast-[1.04]"
+                      : "brightness-[0.92] contrast-[1.02] group-hover:scale-[1.05] group-hover:brightness-[1.04]",
+                  ].join(" ")}
+                />
+
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.14))]" />
+
+                <div
+                  className={[
+                    "pointer-events-none absolute inset-0 rounded-[22px] transition duration-300",
+                    selected
+                      ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.14),transparent_52%)]"
+                      : "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_52%)] group-hover:bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_52%)]",
+                  ].join(" ")}
+                />
+
+                <div
+                  className={[
+                    "pointer-events-none absolute inset-0 rounded-[22px] ring-1 ring-inset transition duration-300",
+                    selected
+                      ? "ring-cyan-50/34"
+                      : "ring-white/0 group-hover:ring-cyan-100/14",
+                  ].join(" ")}
+                />
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </QuestionShell>
+  );
+}
 
   function renderSummary() {
     const insight = buildInsight({
