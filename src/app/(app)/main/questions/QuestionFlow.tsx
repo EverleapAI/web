@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mic, MicOff } from "lucide-react";
+import { Mic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ============================================================
@@ -44,11 +44,9 @@ const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
    ============================================================ */
 
 const TYPE = {
-  navSecondary: "text-[11px] font-medium uppercase tracking-[0.16em]",
   headline:
     "text-[1.42rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.68rem]",
   input: "text-[14px] font-medium leading-6 text-white",
-  whisper: "text-[12px] leading-[1.2rem] text-white/54",
 };
 
 /* ============================================================
@@ -195,8 +193,6 @@ function safeReturnTo(raw: string | null): string {
 function visualToneForCategory(category: Category) {
   if (category === "motivations") {
     return {
-      orbA: "bg-amber-300/18",
-      orbB: "bg-cyan-300/14",
       dotDone: "bg-cyan-300/85",
       dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
     };
@@ -204,16 +200,12 @@ function visualToneForCategory(category: Category) {
 
   if (category === "strengths") {
     return {
-      orbA: "bg-cyan-300/16",
-      orbB: "bg-teal-300/14",
       dotDone: "bg-cyan-300/85",
       dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
     };
   }
 
   return {
-    orbA: "bg-violet-400/16",
-    orbB: "bg-fuchsia-400/14",
     dotDone: "bg-cyan-300/85",
     dotActive: "bg-white shadow-[0_0_14px_rgba(255,255,255,0.35)]",
   };
@@ -223,47 +215,20 @@ function visualToneForCategory(category: Category) {
    UI atoms
    ============================================================ */
 
-function NavLink({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={Boolean(disabled)}
-      className={[
-        TYPE.navSecondary,
-        "transition",
-        disabled
-          ? "cursor-not-allowed text-white/20"
-          : "text-white/48 hover:text-white/72",
-      ].join(" ")}
-    >
-      {label}
-    </button>
-  );
-}
-
-function BottomAction({
+function BottomLink({
   label,
   onClick,
   disabled,
   muted = false,
-  icon,
   priority = "secondary",
+  arrow = false,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   muted?: boolean;
-  icon?: React.ReactNode;
   priority?: "primary" | "secondary";
+  arrow?: boolean;
 }) {
   return (
     <button
@@ -273,27 +238,59 @@ function BottomAction({
       className={[
         "inline-flex items-center gap-2 transition",
         priority === "primary"
-          ? "text-[15px] font-semibold text-white"
+          ? "text-[15px] font-semibold"
           : "text-[14px] font-semibold tracking-[0.01em]",
         disabled
           ? "cursor-not-allowed text-white/24"
           : muted
             ? "text-white/50 hover:text-white/74"
             : priority === "primary"
-              ? "hover:text-white active:translate-x-[1px]"
-              : "text-white/90 hover:text-white active:translate-x-[1px]",
+              ? "text-white hover:text-white"
+              : "text-white/90 hover:text-white",
       ].join(" ")}
     >
-      {icon}
       <span>{label}</span>
-      {label === "Continue" ? (
-        <span
-          aria-hidden="true"
-          className={priority === "primary" ? "text-[17px]" : "text-[16px]"}
-        >
+      {arrow ? (
+        <span aria-hidden="true" className="text-[17px]">
           →
         </span>
       ) : null}
+    </button>
+  );
+}
+
+function TalkAction({
+  active,
+  onClick,
+  disabled,
+}: {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={Boolean(disabled)}
+      className={[
+        "inline-flex items-center gap-2 transition",
+        disabled
+          ? "cursor-not-allowed text-white/24"
+          : active
+            ? "text-cyan-100 drop-shadow-[0_0_16px_rgba(103,232,249,0.24)]"
+            : "text-white/72 hover:text-white",
+      ].join(" ")}
+    >
+      <span className="relative inline-flex items-center">
+        {active ? (
+          <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.65)]" />
+        ) : null}
+        <Mic className={["h-[18px] w-[18px] transition", active ? "scale-[1.08]" : ""].join(" ")} />
+      </span>
+      <span className="text-[15px] font-semibold tracking-[0.01em]">
+        {active ? "Listening" : "Talk"}
+      </span>
     </button>
   );
 }
@@ -368,67 +365,35 @@ function QuestionTextEntry({
   );
 }
 
-function QuestionShell({
+function QuestionFlat({
   title,
   children,
-  tone,
   currentIndex,
   total,
   categoryLabel,
-  showExit,
-  showBack,
-  onExit,
-  onBack,
+  tone,
 }: {
   title: string;
   children: React.ReactNode;
-  tone: ReturnType<typeof visualToneForCategory>;
   currentIndex: number;
   total: number;
   categoryLabel: string;
-  showExit?: boolean;
-  showBack?: boolean;
-  onExit?: () => void;
-  onBack?: () => void;
+  tone: ReturnType<typeof visualToneForCategory>;
 }) {
   return (
-    <div className="relative w-full max-w-[720px]">
-      <motion.div
-        aria-hidden="true"
-        animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className={`pointer-events-none absolute -left-8 top-[-1.25rem] h-24 w-24 rounded-full blur-3xl ${tone.orbA}`}
-      />
-      <motion.div
-        aria-hidden="true"
-        animate={{ x: [0, -12, 0], y: [0, 12, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className={`pointer-events-none absolute right-[7%] top-[3rem] h-24 w-24 rounded-full blur-3xl ${tone.orbB}`}
-      />
-
-      <div className="relative rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(15,19,33,0.78),rgba(8,11,21,0.84))] shadow-[0_26px_90px_rgba(0,0,0,0.40)] backdrop-blur-[18px]">
-        <div className="pointer-events-none absolute -left-8 top-10 h-24 w-24 rounded-full bg-white/4 blur-3xl" />
-        <div className="pointer-events-none absolute -right-8 bottom-0 h-28 w-28 rounded-full bg-violet-400/8 blur-3xl" />
-
-        <div className="relative px-4 pt-3 pb-4 sm:px-5 sm:pt-3.5 sm:pb-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {showExit && onExit ? <NavLink label="Exit" onClick={onExit} /> : null}
-              {showBack && onBack ? <NavLink label="Back" onClick={onBack} /> : null}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-[12px] leading-none text-white/54">{categoryLabel}</div>
-              <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
-            </div>
-          </div>
-
-          <div className="pt-3">
-            <h1 className={TYPE.headline}>{title}</h1>
-            <div className="mt-4">{children}</div>
-          </div>
+    <div className="w-full max-w-[720px]">
+      <div className="flex items-start justify-end gap-4">
+        <div className="flex items-center gap-3">
+          <div className="text-[12px] leading-none text-white/54">{categoryLabel}</div>
+          <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
         </div>
       </div>
+
+      <div className="mt-5">
+        <h1 className={TYPE.headline}>{title}</h1>
+      </div>
+
+      <div className="mt-5">{children}</div>
     </div>
   );
 }
@@ -609,18 +574,14 @@ export default function QuestionFlow() {
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -14, scale: 0.994, filter: "blur(8px)" }}
             transition={{ type: "spring", stiffness: 260, damping: 24, mass: 0.9 }}
-            className="flex w-full items-center justify-center"
+            className="w-full max-w-[720px]"
           >
-            <QuestionShell
+            <QuestionFlat
               title={q?.question ?? ""}
               tone={tone}
               currentIndex={index}
               total={total}
               categoryLabel={categoryLabel}
-              showExit
-
-              onExit={exitNow}
-              onBack={goBackOne}
             >
               <QuestionTextEntry
                 value={draft}
@@ -633,44 +594,49 @@ export default function QuestionFlow() {
                 }
                 textareaRef={textareaRef}
               />
-            </QuestionShell>
+
+              <div className="mt-6 border-t border-white/10 pt-4">
+                <div className="flex flex-wrap items-center justify-start gap-x-6 gap-y-3">
+                  {index > 0 ? (
+                    <BottomLink
+                      label="Back"
+                      onClick={goBackOne}
+                      muted
+                    />
+                  ) : null}
+
+                  <BottomLink
+                    label="Skip"
+                    onClick={() => completeAndAdvance({ skipped: true })}
+                    muted
+                  />
+
+                  <TalkAction
+                    active={isListening}
+                    onClick={toggleMic}
+                    disabled={!speechSupported}
+                  />
+
+                  <BottomLink
+                    label="Continue"
+                    onClick={() => completeAndAdvance({ skipped: false })}
+                    disabled={!draft.trim()}
+                    priority="primary"
+                    arrow
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <BottomLink
+                    label="Exit"
+                    onClick={exitNow}
+                    muted
+                  />
+                </div>
+              </div>
+            </QuestionFlat>
           </motion.div>
         </AnimatePresence>
-      </div>
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center">
-        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-          {index > 0 ? (
-            <BottomAction label="Back" onClick={goBackOne} muted />
-          ) : null}
-
-          <BottomAction
-            label="Talk"
-            onClick={toggleMic}
-            disabled={!speechSupported}
-            priority="primary"
-            icon={
-              isListening ? (
-                <MicOff className="h-[18px] w-[18px]" />
-              ) : (
-                <Mic className="h-[18px] w-[18px]" />
-              )
-            }
-          />
-
-          <BottomAction
-            label="Skip"
-            onClick={() => completeAndAdvance({ skipped: true })}
-            muted
-          />
-
-          <BottomAction
-            label="Continue"
-            onClick={() => completeAndAdvance({ skipped: false })}
-            disabled={!draft.trim()}
-            priority="primary"
-          />
-        </div>
       </div>
     </div>
   );
