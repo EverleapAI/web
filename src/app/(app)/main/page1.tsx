@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -105,11 +104,11 @@ function isMeaningfulText(value: string): boolean {
 }
 
 function pagePadding() {
-  return "pb-24 pt-3 sm:pt-4 lg:pt-5";
+  return "pb-24 pt-2 sm:pt-3 lg:pt-5";
 }
 
 function pageShell() {
-  return "mx-auto w-full max-w-[52rem] px-4 sm:px-5 md:px-6 lg:px-7";
+  return "mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10";
 }
 
 function normalizeSourcePath(path: string): string | null {
@@ -325,59 +324,30 @@ function certaintyLine(certainty?: OnboardingV4["certainty"]) {
     return "You already sound pretty clear on what you want.";
   }
   if (certainty === "kinda") {
-    return "You’ve got signal already. Now it needs shape.";
+    return "You’ve got signal already, and now it needs sharpening.";
   }
   if (certainty === "no_clue") {
-    return "That is fine. Everleap works best when the signal comes first and the answer comes later.";
+    return "That’s okay — Everleap is built for finding signal before forcing a big answer.";
   }
   return "";
 }
 
 function nextWhy(next: RecommendedNext) {
   if (next === "motivations") {
-    return "That is where we get a clearer read on what pulls you in and what quietly drains you.";
+    return "Motivations shows what actually pulls you forward and what tends to drain you.";
   }
   if (next === "strengths") {
-    return "That is where your natural pattern starts to look more solid and usable.";
+    return "Strengths shows how you naturally operate when things are working.";
   }
-  return "That is where direction starts turning into something you can actually build.";
+  return "Skills turns self-knowledge into something more concrete, trainable, and usable.";
 }
 
 function primaryCtaLabel(next: RecommendedNext, allComplete: boolean) {
   return allComplete ? "Open Insights" : `Continue to ${labelForNext(next)}`;
 }
 
-function sectionEyebrowClass(dark: boolean) {
-  return [
-    "text-[10px] font-semibold uppercase tracking-[0.24em]",
-    dark ? "text-white/46" : "text-slate-500",
-  ].join(" ");
-}
-
-function sectionEyebrowRowClass() {
-  return "inline-flex items-center gap-2";
-}
-
-function signalsIconClass(dark: boolean) {
-  return dark ? "text-sky-200/80" : "text-sky-700";
-}
-
-function sectionTitleClass(dark: boolean) {
-  return [
-    "mt-2 text-[1.05rem] font-semibold tracking-[-0.01em] sm:text-[1.18rem]",
-    dark ? "text-white" : "text-slate-950",
-  ].join(" ");
-}
-
-function sectionBodyClass(dark: boolean) {
-  return [
-    "mt-2 max-w-[38rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
-    dark ? "text-white/66" : "text-slate-700",
-  ].join(" ");
-}
-
-function sectionSpacing() {
-  return "mt-10 sm:mt-12 lg:mt-14";
+function mutedText(dark: boolean) {
+  return dark ? "text-white/65" : "text-slate-600";
 }
 
 /* =============================================================================
@@ -545,10 +515,13 @@ export default function MainHomePage() {
     if (mode === "complete_signals") {
       return [
         <>
-          {welcome} The picture is starting to hold. Your <SignalWord>signals</SignalWord>{" "}
-          are no longer scattered inputs — they are beginning to read like a real pattern.
-          What pulls you in, how you operate, and what you can build now line up enough
-          for Everleap to read with more confidence. That makes the next step cleaner.
+          {welcome} You’re back on your home base. This is where everything you’ve
+          answered starts to connect. At this point, your <SignalWord>signals</SignalWord>{" "}
+          are no longer rough inputs — they’re a clear pattern. What you’re drawn to,
+          how you operate, and what you can build are now aligned enough for
+          Everleap to read with real confidence. That changes what comes next.
+          Insights is no longer guessing — it can now point you toward paths,
+          environments, and next moves that actually fit how you work.
         </>,
       ];
     }
@@ -558,10 +531,11 @@ export default function MainHomePage() {
 
       return [
         <>
-          {welcome} This is your home base — the place where early <SignalWord>signal</SignalWord>{" "}
-          starts turning into direction. You do not need a polished answer yet.{" "}
+          {welcome} This page is your home base — the place where we start building
+          real <SignalWord>signal</SignalWord> and turning it into direction. You
+          do not need to figure everything out yet.{" "}
           {certainty ? `${certainty} ` : ""}
-          Start with {labelForNext(next)} and let the pattern build from there.
+          Start with {labelForNext(next)} and let the picture build from there.
         </>,
       ];
     }
@@ -570,8 +544,11 @@ export default function MainHomePage() {
 
     return [
       <>
-        {welcome} {sourceSentence} You already have the beginning of a pattern. {stateRead}
-        The clearest move now is to finish {labelForNext(next)}. {nextWhy(next)}
+        {welcome} {sourceSentence} This page shows what is taking shape and what is
+        still missing. {stateRead}
+        Right now you are still missing part of the picture, so the clearest next
+        move is to finish {labelForNext(next)}. {nextWhy(next)} Once that is in,
+        Everleap can point you toward moves that actually fit.
       </>,
     ];
   }, [
@@ -605,10 +582,6 @@ export default function MainHomePage() {
     );
   }, [nextStepsPageId]);
 
-  const signalsIntro = allSignalsComplete
-    ? "The map is far enough along now that Everleap can read the pattern instead of isolated fragments."
-    : "These are the first clear signs taking shape underneath your answers. As they sharpen, the guidance gets more specific and more like you.";
-
   return (
     <>
       <AnimatePresence>
@@ -632,60 +605,178 @@ export default function MainHomePage() {
             <section className="relative">
               <motion.div
                 aria-hidden
-                className="pointer-events-none absolute right-2 top-1 h-20 w-20 rounded-full sm:right-4 sm:top-3 sm:h-24 sm:w-24"
+                className="pointer-events-none absolute right-3 top-3 h-24 w-24 rounded-full sm:right-6 sm:top-6"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: presenceSoft ? 0.12 : 0.2 }}
+                animate={{ opacity: presenceSoft ? 0.16 : 0.24 }}
                 transition={{ duration: 0.6 }}
               >
                 <motion.div
-                  className={`h-full w-full rounded-full ${orbGlowClass} blur-[14px]`}
-                  animate={{ scale: [1, 1.08, 1], opacity: [0.14, 0.22, 0.14] }}
+                  className={`h-full w-full rounded-full ${orbGlowClass} blur-[12px]`}
+                  animate={{ scale: [1, 1.08, 1], opacity: [0.16, 0.26, 0.16] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                 />
               </motion.div>
 
-              <div className="relative">
-                <TodayIntro
-                  dark={dark}
-                  motionEnabled={motionEnabled}
-                  isTransitioning={transitioning}
-                  quote={mounted ? vm.quote : undefined}
-                  paragraphs={paragraphs}
-                  primaryCtaLabel={ctaLabel}
-                  onPrimary={() => {
-                    if (allSignalsComplete) {
-                      void fadeThen(async () => router.push("/main/insights"));
-                      return;
-                    }
-                    void fadeThen(async () =>
-                      router.push(buildQuestionsHref(recommendedNext))
-                    );
-                  }}
-                />
+              <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-5 sm:py-6 lg:px-7 lg:py-7">
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_84%_18%,rgba(56,189,248,0.18),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(251,191,36,0.08),transparent_22%),linear-gradient(90deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0.015)_38%,rgba(56,189,248,0.05)_72%,rgba(255,255,255,0.02)_100%),linear-gradient(180deg,rgba(255,255,255,0.045)_0%,rgba(255,255,255,0.00)_48%)]" />
+
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-[-8%] top-[22%] h-[1px] w-[42%] rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.00)_0%,rgba(125,211,252,0.14)_28%,rgba(196,181,253,0.10)_60%,rgba(255,255,255,0.00)_100%)] blur-[0.3px]"
+                    animate={{
+                      x: [0, 16, 0],
+                      opacity: [0.18, 0.34, 0.18],
+                    }}
+                    transition={{
+                      duration: 8.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-[12%] top-[56%] h-[1px] w-[44%] rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.00)_0%,rgba(147,197,253,0.10)_25%,rgba(167,139,250,0.13)_60%,rgba(255,255,255,0.00)_100%)] blur-[0.3px]"
+                    animate={{
+                      x: [0, 22, 0],
+                      opacity: [0.14, 0.28, 0.14],
+                    }}
+                    transition={{
+                      duration: 10.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.8,
+                    }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-[28%] top-[36%] h-[1px] w-[40%] rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.00)_0%,rgba(251,191,36,0.09)_30%,rgba(56,189,248,0.12)_70%,rgba(255,255,255,0.00)_100%)] blur-[0.3px]"
+                    animate={{
+                      x: [0, 14, 0],
+                      opacity: [0.12, 0.24, 0.12],
+                    }}
+                    transition={{
+                      duration: 7.2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 1.3,
+                    }}
+                  />
+
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-[14%] top-[24%] h-1.5 w-1.5 rounded-full bg-amber-200/40 blur-[1px]"
+                    animate={{
+                      x: [0, 10, 0],
+                      y: [0, -2, 0],
+                      opacity: [0.14, 0.34, 0.14],
+                    }}
+                    transition={{
+                      duration: 6.8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute left-[46%] top-[48%] h-1.5 w-1.5 rounded-full bg-sky-200/40 blur-[1px]"
+                    animate={{
+                      x: [0, 8, 0],
+                      y: [0, 2, 0],
+                      opacity: [0.14, 0.32, 0.14],
+                    }}
+                    transition={{
+                      duration: 7.6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 0.9,
+                    }}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className="absolute right-[18%] top-[34%] h-1.5 w-1.5 rounded-full bg-violet-200/42 blur-[1px]"
+                    animate={{
+                      x: [0, 12, 0],
+                      y: [0, -1, 0],
+                      opacity: [0.14, 0.3, 0.14],
+                    }}
+                    transition={{
+                      duration: 8.1,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: 1.5,
+                    }}
+                  />
+
+                  <motion.div
+                    aria-hidden
+                    className="absolute right-[-2%] top-[18%] h-[190px] w-[210px] rounded-full bg-sky-400/12 blur-[52px]"
+                    animate={{
+                      scale: [1, 1.08, 1],
+                      opacity: [0.18, 0.3, 0.18],
+                    }}
+                    transition={{
+                      duration: 8.8,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </div>
+
+                <div className="pointer-events-none absolute inset-x-[7%] bottom-[74px] hidden sm:block">
+                  <div className="relative h-[18px]">
+                    <motion.div
+                      aria-hidden
+                      className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 rounded-full bg-[linear-gradient(90deg,rgba(255,255,255,0.00)_0%,rgba(255,255,255,0.05)_8%,rgba(125,211,252,0.10)_28%,rgba(196,181,253,0.12)_58%,rgba(56,189,248,0.22)_84%,rgba(255,255,255,0.00)_100%)]"
+                      animate={{ opacity: [0.2, 0.38, 0.2] }}
+                      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      aria-hidden
+                      className="absolute right-[4%] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-sky-200/70 blur-[1px]"
+                      animate={{
+                        x: [-8, 0, -8],
+                        opacity: [0.24, 0.62, 0.24],
+                        scale: [0.95, 1.08, 0.95],
+                      }}
+                      transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <TodayIntro
+                    dark={dark}
+                    motionEnabled={motionEnabled}
+                    isTransitioning={transitioning}
+                    quote={mounted ? vm.quote : undefined}
+                    paragraphs={paragraphs}
+                    primaryCtaLabel={ctaLabel}
+                    onPrimary={() => {
+                      if (allSignalsComplete) {
+                        void fadeThen(async () => router.push("/main/insights"));
+                        return;
+                      }
+                      void fadeThen(async () =>
+                        router.push(buildQuestionsHref(recommendedNext))
+                      );
+                    }}
+                  />
+                </div>
               </div>
             </section>
 
-            <section className={sectionSpacing()}>
-              <div className={sectionEyebrowRowClass()}>
-                <Activity className={`h-3.5 w-3.5 ${signalsIconClass(dark)}`} aria-hidden />
-                <div className={sectionEyebrowClass(dark)}>Signals</div>
-              </div>
-
-              <h2 className={sectionTitleClass(dark)}>What’s starting to take shape</h2>
-              <p className={sectionBodyClass(dark)}>{signalsIntro}</p>
-
-              <div className="mt-4 sm:mt-5">
+            {!allSignalsComplete && (
+              <section className="mt-4 sm:mt-5 lg:mt-6">
                 <SignalsCard
                   dark={dark}
                   progress={vm.progress}
                   nextKey={vm.nextKey}
                 />
-              </div>
-            </section>
+              </section>
+            )}
 
-            <div className="my-8 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent" />
-
-            <section className={sectionSpacing()}>
+            <section className="mt-4 sm:mt-5 lg:mt-6">
               {nextStepsDefinition ? (
                 <NextStepsStack
                   dark={dark}
@@ -695,10 +786,19 @@ export default function MainHomePage() {
                   collapsible={false}
                   defaultOpen
                 />
-              ) : null}
+              ) : (
+                <div
+                  className={[
+                    "text-[15px] leading-relaxed",
+                    mutedText(dark),
+                  ].join(" ")}
+                >
+                  Next steps are loading…
+                </div>
+              )}
             </section>
 
-            <div className="h-6 sm:h-8" />
+            <div className="h-2 sm:h-3" />
           </div>
         </main>
       </div>

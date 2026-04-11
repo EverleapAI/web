@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles, ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* =============================================================================
@@ -13,22 +13,8 @@ export type RecommendedNext = "motivations" | "strengths" | "skills";
 type Quote = { text: string; author: string };
 
 /* =============================================================================
-   Small UI helpers
+   Motion
    ============================================================================= */
-
-function SectionDivider({ dark }: { dark: boolean }) {
-  const line = dark ? "bg-white/10" : "bg-black/10";
-  const dot = dark ? "bg-white/25" : "bg-black/20";
-  return (
-    <div className="py-4" aria-hidden>
-      <div className="flex items-center gap-3">
-        <div className={`h-px flex-1 ${line}`} />
-        <div className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-        <div className={`h-px flex-1 ${line}`} />
-      </div>
-    </div>
-  );
-}
 
 const fadeIn = {
   initial: { opacity: 0, y: 4 },
@@ -64,12 +50,28 @@ export function TodayIntro(props: TodayIntroProps) {
     onPrimary,
   } = props;
 
-  const bodyClass = [
-    "text-[15px] leading-7 md:text-[17px] md:leading-8",
+  const eyebrowRow = "inline-flex items-center gap-2";
+
+  const eyebrowIcon = dark
+    ? "text-amber-200/80"
+    : "text-amber-700";
+
+  const eyebrow = [
+    "text-[10px] font-semibold uppercase tracking-[0.24em]",
+    dark ? "text-white/50" : "text-slate-500",
+  ].join(" ");
+
+  const title = [
+    "mt-3 text-[1.6rem] font-semibold tracking-[-0.02em] leading-tight sm:text-[1.9rem]",
+    dark ? "text-white" : "text-slate-950",
+  ].join(" ");
+
+  const body = [
+    "mt-4 max-w-[52rem] text-[15px] leading-7 sm:text-[16px] sm:leading-8",
     dark ? "text-white/82" : "text-slate-800",
   ].join(" ");
 
-  const ctaClass = [
+  const cta = [
     "group inline-flex items-center gap-2",
     "text-base md:text-lg font-semibold transition",
     dark ? "text-sky-300 hover:text-sky-200" : "text-sky-700 hover:text-sky-900",
@@ -81,28 +83,24 @@ export function TodayIntro(props: TodayIntroProps) {
 
   return (
     <div className="relative">
-      <div className="mb-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] opacity-85">
-        <span
-          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[0.7rem] ${
-            dark ? "bg-amber-200/90 text-slate-950" : "bg-amber-400 text-slate-900"
-          }`}
-        >
-          <Sparkles className="h-3 w-3" />
-        </span>
-        <span>Today</span>
+      <div className={eyebrowRow}>
+        <Sparkles className={`h-3.5 w-3.5 ${eyebrowIcon}`} aria-hidden />
+        <div className={eyebrow}>Today</div>
       </div>
+
+      <h1 className={title}>Where things stand right now</h1>
 
       <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
         {paragraphs?.length ? (
-          <div className={bodyClass}>
-            {paragraphs.map((paragraph, index) => (
-              <p key={index}>{paragraph}</p>
+          <div className={body}>
+            {paragraphs.map((p, i) => (
+              <p key={i}>{p}</p>
             ))}
           </div>
         ) : null}
 
         {primaryCtaLabel ? (
-          <div className="mt-6">
+          <div className="mt-7">
             <div className="h-8 md:h-9">
               <AnimatePresence mode="wait" initial={false}>
                 {motionEnabled ? (
@@ -114,7 +112,7 @@ export function TodayIntro(props: TodayIntroProps) {
                     animate={fadeIn.animate}
                     exit={fadeIn.exit}
                     transition={{ duration: 0.32, ease: "easeOut" }}
-                    className={ctaClass}
+                    className={cta}
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
@@ -127,7 +125,7 @@ export function TodayIntro(props: TodayIntroProps) {
                     key="today_primary_static"
                     type="button"
                     onClick={onPrimary}
-                    className={ctaClass}
+                    className={cta}
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
@@ -140,8 +138,6 @@ export function TodayIntro(props: TodayIntroProps) {
             </div>
           </div>
         ) : null}
-
-        <SectionDivider dark={dark} />
       </div>
     </div>
   );

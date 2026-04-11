@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket } from "lucide-react";
 
 import type {
   ActionItem,
@@ -36,8 +35,6 @@ type Props = {
   dark: boolean;
   useLocal: boolean;
   definition: ActionDefinition;
-  label?: string;
-  subtitle?: string;
   embedded?: boolean;
   alwaysExpanded?: boolean;
 };
@@ -46,150 +43,29 @@ type Props = {
    UI helpers
    ============================================================================= */
 
-function ring(dark: boolean) {
-  return dark ? "ring-1 ring-white/10" : "ring-1 ring-black/8";
-}
-
-function calmSurface(dark: boolean) {
-  return dark ? "bg-white/[0.03]" : "bg-white/90";
-}
-
 function muted(dark: boolean) {
   return dark ? "text-white/60" : "text-slate-600";
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white/92" : "text-slate-900";
+  return dark ? "text-white" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/76" : "text-slate-700";
+  return dark ? "text-white/75" : "text-slate-700";
 }
 
-function pill(dark: boolean, selected = false) {
+function actionLink(dark: boolean) {
   return [
-    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
-    "text-xs font-semibold transition active:scale-95",
-    "backdrop-blur-md",
-    dark
-      ? "border-white/12 bg-white/8 text-white/85 hover:bg-white/12"
-      : "border-black/10 bg-white/85 text-slate-900 hover:bg-white",
-    selected
-      ? dark
-        ? "ring-1 ring-sky-300/22"
-        : "ring-1 ring-sky-500/18"
-      : "",
-    dark
-      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/15",
+    "text-sm font-medium transition",
+    dark ? "text-white/80 hover:text-white" : "text-slate-700 hover:text-black",
   ].join(" ");
-}
-
-function headerChip(dark: boolean) {
-  return [
-    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5",
-    "text-xs font-semibold backdrop-blur-md",
-    dark
-      ? "border-violet-300/16 bg-violet-300/10 text-violet-100/92"
-      : "border-violet-500/18 bg-violet-500/10 text-violet-900",
-  ].join(" ");
-}
-
-function statusBadge(dark: boolean, status: ActionStatus) {
-  const base =
-    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold";
-
-  if (dark) {
-    return `${base} border-white/12 bg-white/6 text-white/72`;
-  }
-
-  return `${base} border-black/10 bg-black/3 text-slate-700`;
 }
 
 function statusLabel(status: ActionStatus) {
   if (status === "done") return "Done";
   if (status === "started") return "In progress";
   return "Planned";
-}
-
-function headerToggle(dark: boolean) {
-  return [
-    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5",
-    "text-xs font-semibold transition active:scale-[0.99]",
-    dark
-      ? "border-white/12 bg-white/6 text-white/75 hover:bg-white/10"
-      : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-    "focus-visible:outline-none",
-    dark
-      ? "focus-visible:ring-2 focus-visible:ring-white/16"
-      : "focus-visible:ring-2 focus-visible:ring-slate-900/12",
-  ].join(" ");
-}
-
-function relativeTime(ts: number) {
-  const d = Date.now() - ts;
-  const min = Math.floor(d / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 48) return `${hr}h ago`;
-  const days = Math.floor(hr / 24);
-  return `${days}d ago`;
-}
-
-/* =============================================================================
-   Proof log encoding
-   ============================================================================= */
-
-type ProofEntry = { ts: number; text: string };
-
-function encodeEntry(ts: number, t: string) {
-  return `[[ts:${ts}]] ${t}`;
-}
-
-function parseEntries(raw: string | null | undefined): ProofEntry[] {
-  const s = (raw ?? "").trim();
-  if (!s) return [];
-
-  const parts = s
-    .split(/\n{2,}/g)
-    .map((x) => x.trim())
-    .filter(Boolean);
-
-  const entries: ProofEntry[] = [];
-  for (const p of parts) {
-    const m = p.match(/^\[\[ts:(\d+)\]\]\s*/);
-    if (m) {
-      const ts = Number(m[1]);
-      const body = p.replace(/^\[\[ts:\d+\]\]\s*/, "").trim();
-      if (Number.isFinite(ts) && body) entries.push({ ts, text: body });
-      continue;
-    }
-    entries.push({ ts: NaN, text: p });
-  }
-
-  const hasTs = entries.some((e) => Number.isFinite(e.ts));
-  if (hasTs) {
-    const sorted = entries
-      .map((e, i) => ({ ...e, __order: i }))
-      .sort((a, b) => {
-        const at = Number.isFinite(a.ts) ? a.ts : -Infinity;
-        const bt = Number.isFinite(b.ts) ? b.ts : -Infinity;
-        if (bt !== at) return bt - at;
-        return b.__order - a.__order;
-      });
-
-    return sorted.map((e) => ({ ts: e.ts, text: e.text }));
-  }
-
-  return entries;
-}
-
-function appendEntry(existingRaw: string | null | undefined, nextText: string) {
-  const base = (existingRaw ?? "").trim();
-  const entry = encodeEntry(Date.now(), nextText.trim());
-  if (!base) return entry;
-  return `${base}\n\n${entry}`;
 }
 
 /* =============================================================================
@@ -200,9 +76,6 @@ export function ActionCard({
   dark,
   useLocal,
   definition,
-  label = "Make it real",
-  subtitle = "Take one real step — this is where your signal starts turning into something you can actually build.",
-  embedded = false,
   alwaysExpanded = false,
 }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
@@ -211,13 +84,8 @@ export function ActionCard({
   const [proofText, setProofText] = React.useState("");
 
   React.useEffect(() => {
-    const loaded = loadActions({ useLocal });
-    setItems(loaded);
+    setItems(loadActions({ useLocal }));
   }, [useLocal]);
-
-  React.useEffect(() => {
-    if (alwaysExpanded && !open) setOpen(true);
-  }, [alwaysExpanded, open]);
 
   const current = React.useMemo(() => {
     const latest = findLatestActionForPage(items, definition.pageId);
@@ -232,13 +100,11 @@ export function ActionCard({
     });
   }, [items, definition]);
 
-  const isPersisted = React.useMemo(() => {
-    return items.some((x) => x.id === current.id);
-  }, [items, current.id]);
+  const isPersisted = items.some((x) => x.id === current.id);
 
-  function persist(nextItems: ActionItem[]) {
-    setItems(nextItems);
-    saveActions(nextItems, { useLocal });
+  function persist(next: ActionItem[]) {
+    setItems(next);
+    saveActions(next, { useLocal });
   }
 
   function ensurePersisted(): ActionItem {
@@ -246,358 +112,116 @@ export function ActionCard({
 
     const next = upsertAction(items, current, { touchUpdatedAt: true });
     persist(next);
-
     return next.find((x) => x.id === current.id) ?? current;
   }
 
   function onStart() {
     const persisted = ensurePersisted();
-    const next = setActionStatus(
-      items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
-      persisted.id,
-      "started"
-    );
+    const next = setActionStatus(items, persisted.id, "started");
     persist(next);
   }
 
   function onDone() {
     const persisted = ensurePersisted();
-    const next = setActionStatus(
-      items.some((x) => x.id === persisted.id) ? items : loadActions({ useLocal }),
-      persisted.id,
-      "done"
-    );
+    const next = setActionStatus(items, persisted.id, "done");
     persist(next);
   }
 
   function onLogProof() {
     ensurePersisted();
-    setProofText("");
     setProofOpen(true);
   }
 
   function saveProof() {
     const persisted = ensurePersisted();
-    const trimmed = (proofText ?? "").trim();
-    if (!trimmed) {
-      setProofOpen(false);
-      return;
-    }
+    const trimmed = proofText.trim();
+    if (!trimmed) return;
 
-    const live = items.find((x) => x.id === persisted.id) ?? persisted;
-    const existingText = live.proof?.kind === "text" ? live.proof.text ?? "" : "";
-    const combined = appendEntry(existingText, trimmed);
-
-    const proof: ActionProof = { kind: "text", text: combined };
+    const proof: ActionProof = { kind: "text", text: trimmed };
     const next = attachActionProof(items, persisted.id, proof);
     persist(next);
     setProofOpen(false);
   }
 
-  const persistedItem = isPersisted ? items.find((x) => x.id === current.id) : null;
-
+  const persistedItem = items.find((x) => x.id === current.id);
   const status = (persistedItem?.status ?? current.status) as ActionStatus;
-  const proof = persistedItem?.proof ?? current.proof;
-  const updatedAt = persistedItem?.updatedAt ?? current.updatedAt;
 
-  const proofEntries = React.useMemo(() => {
-    if (proof?.kind !== "text") return [];
-    return parseEntries(proof.text);
-  }, [proof]);
-
-  const titleId = React.useId();
-
-  const panel = (
+  return (
     <div className="mt-4">
+
+      {/* Title + Goal */}
+      <div className={`text-[16px] font-semibold ${text(dark)}`}>
+        {definition.title}
+      </div>
+
+      <div className={`mt-1 text-sm ${softText(dark)}`}>
+        {definition.goal}
+      </div>
+
+      {/* Steps */}
       {definition.steps?.length ? (
-        <ul className="mt-1 space-y-2">
-          {definition.steps.map((s, idx) => (
-            <li key={`${definition.id}_step_${idx}`} className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className={[
-                  "mt-2 inline-block h-1.5 w-1.5 rounded-full",
-                  dark ? "bg-white/30" : "bg-black/20",
-                ].join(" ")}
-              />
-              <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
+        <ul className="mt-4 space-y-2">
+          {definition.steps.map((s, i) => (
+            <li key={i} className={`text-sm ${softText(dark)}`}>
+              • {s}
             </li>
           ))}
         </ul>
       ) : null}
 
-      {proofEntries.length ? (
-        <div className="mt-5">
-          <div
-            className={[
-              "flex items-center justify-between gap-3",
-              "text-xs font-semibold uppercase tracking-[0.18em]",
-              dark ? "text-white/50" : "text-slate-500",
-            ].join(" ")}
-          >
-            <span>Your logs</span>
-            <span className="font-semibold normal-case tracking-normal">
-              {proofEntries.length}
-            </span>
-          </div>
+      {/* Status */}
+      <div className={`mt-3 text-xs ${muted(dark)}`}>
+        {statusLabel(status)}
+      </div>
 
-          <div className="mt-3 space-y-3">
-            {proofEntries.slice(0, 3).map((e, idx) => {
-              const tsOk = Number.isFinite(e.ts);
-              return (
-                <div
-                  key={`${tsOk ? e.ts : "legacy"}_${idx}`}
-                  className={[
-                    "rounded-2xl border px-3.5 py-3 backdrop-blur-xl",
-                    dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white/90",
-                  ].join(" ")}
-                >
-                  <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
-                  <div className={`mt-1 text-xs ${muted(dark)}`}>
-                    {tsOk ? relativeTime(e.ts) : "Earlier"}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {proofEntries.length > 3 ? (
-            <div className={`mt-3 text-xs ${muted(dark)}`}>Showing the latest 3.</div>
-          ) : null}
-
-          {typeof updatedAt === "number" ? (
-            <div className={`mt-2 text-xs ${muted(dark)}`}>
-              Updated {relativeTime(updatedAt)}.
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {status !== "started" ? (
-          <button type="button" className={pill(dark)} onClick={onStart}>
-            <span aria-hidden className="opacity-80">
-              ▶
-            </span>
+      {/* Actions */}
+      <div className="mt-4 flex flex-wrap gap-5">
+        {status !== "started" && (
+          <button onClick={onStart} className={actionLink(dark)}>
             Start
           </button>
-        ) : null}
+        )}
 
-        {status !== "done" ? (
-          <button type="button" className={pill(dark)} onClick={onDone}>
-            <span aria-hidden className="opacity-80">
-              ✓
-            </span>
+        {status !== "done" && (
+          <button onClick={onDone} className={actionLink(dark)}>
             Mark done
           </button>
-        ) : null}
+        )}
 
-        <button type="button" className={pill(dark)} onClick={onLogProof}>
-          <span aria-hidden className="opacity-80">
-            ✎
-          </span>
+        <button onClick={onLogProof} className={actionLink(dark)}>
           Log result
         </button>
       </div>
-    </div>
-  );
 
-  return (
-    <div
-      className={[
-        "relative overflow-hidden rounded-3xl px-5 py-4 backdrop-blur-2xl",
-        ring(dark),
-        calmSurface(dark),
-        embedded
-          ? dark
-            ? "shadow-[0_18px_60px_rgba(0,0,0,0.16)]"
-            : "shadow-[0_12px_34px_rgba(0,0,0,0.10)]"
-          : dark
-            ? "shadow-[0_22px_80px_rgba(0,0,0,0.20)]"
-            : "shadow-[0_14px_40px_rgba(0,0,0,0.10)]",
-      ].join(" ")}
-      aria-labelledby={titleId}
-    >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_84%_8%,rgba(167,139,250,0.10),transparent_24%),radial-gradient(circle_at_16%_92%,rgba(56,189,248,0.08),transparent_28%)]" />
-        <div
-          className={[
-            "absolute right-5 top-5 opacity-[0.08]",
-            dark ? "text-white" : "text-slate-900",
-          ].join(" ")}
-          aria-hidden
-        >
-          <Rocket className="h-14 w-14" />
-        </div>
-        <div
-          className={[
-            "absolute inset-x-0 top-0 h-px",
-            dark ? "bg-white/10" : "bg-black/8",
-          ].join(" ")}
-        />
-      </div>
+      {/* Modal */}
+      {proofOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setProofOpen(false)}
+          />
 
-      <div className="relative">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={headerChip(dark)}>
-            <span aria-hidden className="opacity-90">
-              ⚡
-            </span>
-            <span>{label}</span>
-          </span>
+          <div
+            className={`relative w-full max-w-md rounded-2xl p-5 ${
+              dark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+            }`}
+          >
+            <div className="text-lg font-semibold">What happened?</div>
 
-          <span className={statusBadge(dark, status)}>
-            <span
-              aria-hidden
-              className={[
-                "h-1.5 w-1.5 rounded-full",
-                status === "done"
-                  ? "bg-emerald-300/75"
-                  : status === "started"
-                    ? "bg-sky-300/75"
-                    : dark
-                      ? "bg-white/22"
-                      : "bg-black/18",
-              ].join(" ")}
-            />
-            {statusLabel(status)}
-          </span>
-
-          {!alwaysExpanded ? (
-            <button
-              type="button"
-              className={headerToggle(dark)}
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-controls={`${titleId}-panel`}
-            >
-              <span aria-hidden className="opacity-80">
-                {open ? "▾" : "▸"}
-              </span>
-              {open ? "Hide" : "Details"}
-            </button>
-          ) : null}
-        </div>
-
-        <div className="mt-3 min-w-0">
-          <div id={titleId} className={`text-[17px] font-semibold leading-snug ${text(dark)}`}>
-            {definition.title}
-          </div>
-
-          <div className={`mt-1 text-sm leading-relaxed ${softText(dark)}`}>
-            {definition.goal}
-          </div>
-
-          {subtitle ? <div className={`mt-2 text-xs ${muted(dark)}`}>{subtitle}</div> : null}
-        </div>
-
-        {alwaysExpanded ? (
-          panel
-        ) : (
-          <AnimatePresence initial={false}>
-            {open ? (
-              <motion.div
-                id={`${titleId}-panel`}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                transition={{ duration: 0.18 }}
-              >
-                {panel}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        )}
-
-        {proofOpen ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div
-              className="absolute inset-0 bg-black/35 backdrop-blur-[6px]"
-              onClick={() => setProofOpen(false)}
-              aria-hidden
+            <textarea
+              value={proofText}
+              onChange={(e) => setProofText(e.target.value)}
+              className="mt-3 w-full rounded-lg border p-2 text-sm"
+              rows={4}
             />
 
-            <div
-              role="dialog"
-              aria-modal="true"
-              className={[
-                "relative w-full max-w-xl overflow-hidden rounded-[28px] border backdrop-blur-2xl",
-                dark
-                  ? "border-white/15 bg-white/9 shadow-[0_28px_95px_rgba(0,0,0,0.45)]"
-                  : "border-black/10 bg-white/90 shadow-[0_28px_95px_rgba(0,0,0,0.22)]",
-              ].join(" ")}
-            >
-              <div className="relative px-5 py-5 sm:px-7 sm:py-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className={`text-lg font-semibold ${text(dark)}`}>How did that go?</div>
-
-                    <div className={`mt-1 text-sm ${muted(dark)}`}>
-                      You just tried:{" "}
-                      <span className={dark ? "font-semibold text-white/85" : "font-semibold text-slate-900"}>
-                        {definition.title}
-                      </span>
-                    </div>
-
-                    <div className={`mt-2 text-sm ${muted(dark)}`}>
-                      One or two sentences is enough — we’ll keep a running log.
-                    </div>
-                  </div>
-
-                  <button type="button" className={pill(dark)} onClick={() => setProofOpen(false)}>
-                    Close
-                  </button>
-                </div>
-
-                <div className="mt-4">
-                  <textarea
-                    value={proofText}
-                    onChange={(e) => setProofText(e.target.value)}
-                    placeholder="What did you do, and what happened?"
-                    rows={4}
-                    className={[
-                      "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition",
-                      dark
-                        ? "border-white/12 bg-white/7 text-white placeholder:text-white/40 focus-visible:border-white/18 focus-visible:ring-2 focus-visible:ring-emerald-300/26"
-                        : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-black/15 focus-visible:ring-2 focus-visible:ring-emerald-500/18",
-                    ].join(" ")}
-                  />
-
-                  <div className={`mt-2 text-xs ${muted(dark)}`}>
-                    Tip: one concrete detail helps.
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between gap-3">
-                  <div className={`text-xs ${muted(dark)}`}>Stored locally for now.</div>
-
-                  <button
-                    type="button"
-                    className={[
-                      pill(dark, true),
-                      !(proofText ?? "").trim() ? "opacity-50" : "",
-                    ].join(" ")}
-                    onClick={saveProof}
-                    disabled={!(proofText ?? "").trim()}
-                  >
-                    Save →
-                  </button>
-                </div>
-
-                {proofEntries.length ? (
-                  <div className={`mt-4 text-xs ${muted(dark)}`}>
-                    Latest log:{" "}
-                    <span className={dark ? "text-white/80" : "text-slate-800"}>
-                      {proofEntries[0]?.text?.slice(0, 64) ?? ""}
-                      {proofEntries[0]?.text && proofEntries[0].text.length > 64 ? "…" : ""}
-                    </span>
-                  </div>
-                ) : null}
-              </div>
+            <div className="mt-4 flex justify-between">
+              <button onClick={() => setProofOpen(false)}>Cancel</button>
+              <button onClick={saveProof}>Save</button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

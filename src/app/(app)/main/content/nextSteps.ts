@@ -42,12 +42,12 @@ const INSIGHTS_SUMMARY_TINY: TinyTaskDefinition = {
 const INSIGHTS_SUMMARY_ACTION: ActionDefinition = {
   id: aid("insights.summary", "small_test"),
   pageId: "insights.summary",
-  title: "Run one small test (this week)",
-  goal: "Create one tiny thing and get 1 piece of feedback.",
+  title: "Run one small test this week",
+  goal: "Create something small and get one piece of real feedback.",
   steps: [
-    "Pick something you can finish in one session (a sketch, a short write-up, a mini build, a playlist, a one-page idea).",
-    "Show it to one person (friend, teacher, coach, online community) and ask: “What stands out?”",
-    "Log what you did + what the feedback was.",
+    "Pick something you can finish in one sitting.",
+    "Show it to one person and ask what stands out.",
+    "Notice what felt energizing, awkward, or surprisingly easy.",
   ],
   instanceStrategy: "reuse_latest",
 };
@@ -74,14 +74,14 @@ const HOME_MOTIVATIONS_TINY: TinyTaskDefinition = {
 };
 
 const HOME_MOTIVATIONS_ACTION: ActionDefinition = {
-  id: aid("main.home.need_motivations", "finish_motivations"),
+  id: aid("main.home.need_motivations", "real_signal_read"),
   pageId: "main.home.need_motivations",
-  title: "Finish Motivations",
-  goal: "Answer the remaining prompts so your map has a real foundation.",
+  title: "Get a real read on what pulls you in",
+  goal: "Notice what actually gives you energy today — not what you think should.",
   steps: [
-    "Open Motivations from the home page.",
-    "Answer the remaining questions honestly — short answers are fine.",
-    "Come back to home and let Everleap point to the next best move.",
+    "Pay attention to one moment today where you feel engaged or interested.",
+    "Notice one moment that drains your energy.",
+    "Write both down in a few words.",
   ],
   instanceStrategy: "reuse_latest",
 };
@@ -104,14 +104,14 @@ const HOME_STRENGTHS_TINY: TinyTaskDefinition = {
 };
 
 const HOME_STRENGTHS_ACTION: ActionDefinition = {
-  id: aid("main.home.need_strengths", "finish_strengths"),
+  id: aid("main.home.need_strengths", "see_yourself_in_action"),
   pageId: "main.home.need_strengths",
-  title: "Finish Strengths",
-  goal: "Close the loop on how you naturally operate day to day.",
+  title: "See how you actually show up",
+  goal: "Notice how you operate in a real moment, not in theory.",
   steps: [
-    "Open Strengths from the home page.",
-    "Finish the unanswered prompts.",
-    "Use that to make the advice feel more like you and less like a template.",
+    "Pick one thing you’re doing today — work, practice, a conversation, anything real.",
+    "Notice what you naturally do well without trying too hard.",
+    "Write down one thing you did that helped the situation move forward.",
   ],
   instanceStrategy: "reuse_latest",
 };
@@ -134,14 +134,14 @@ const HOME_SKILLS_TINY: TinyTaskDefinition = {
 };
 
 const HOME_SKILLS_ACTION: ActionDefinition = {
-  id: aid("main.home.need_skills", "finish_skills"),
+  id: aid("main.home.need_skills", "build_something_small"),
   pageId: "main.home.need_skills",
-  title: "Finish Skills",
-  goal: "Turn self-knowledge into something more concrete and trainable.",
+  title: "Build something small",
+  goal: "Turn direction into something real you can point to.",
   steps: [
-    "Open Skills from the home page.",
-    "Answer the remaining prompts.",
-    "Come back once it’s complete so Everleap can point toward clearer next steps.",
+    "Pick something you can finish in under 30 minutes.",
+    "Make it — don’t overthink it.",
+    "Keep it, share it, or show it to someone.",
   ],
   instanceStrategy: "reuse_latest",
 };
@@ -164,14 +164,14 @@ const HOME_COMPLETE_TINY: TinyTaskDefinition = {
 };
 
 const HOME_COMPLETE_ACTION: ActionDefinition = {
-  id: aid("main.home.complete", "go_deeper"),
+  id: aid("main.home.complete", "run_one_real_experiment"),
   pageId: "main.home.complete",
-  title: "Go deeper in Insights",
-  goal: "Turn your completed map into patterns, experiments, and real next moves.",
+  title: "Run one real experiment",
+  goal: "Test something small based on what you’ve learned about yourself.",
   steps: [
-    "Open Insights from home.",
-    "Read the summary, then check Motivations, Strengths, and Skills.",
-    "Pick one small experiment that feels real enough to try this week.",
+    "Pick one direction that feels interesting or promising.",
+    "Do one small real-world step toward it — reach out, try, build, or explore.",
+    "Notice what happens and how it feels.",
   ],
   instanceStrategy: "reuse_latest",
 };
@@ -181,34 +181,35 @@ export const NEXT_STEPS_BY_PAGE: Record<string, NextStepsDefinition> = {
     pageId: "insights.summary",
     tinyTask: INSIGHTS_SUMMARY_TINY,
     action: INSIGHTS_SUMMARY_ACTION,
-    bridgeLine: "Tiny signal now → a real test you can actually log.",
+    bridgeLine: "Tiny signal now → a real test you can actually run.",
   },
 
   "main.home.need_motivations": {
     pageId: "main.home.need_motivations",
     tinyTask: HOME_MOTIVATIONS_TINY,
     action: HOME_MOTIVATIONS_ACTION,
-    bridgeLine: "Start with what pulls you forward, then build from there.",
+    bridgeLine: "Start with what pulls you in, then test it in the real world.",
   },
 
   "main.home.need_strengths": {
     pageId: "main.home.need_strengths",
     tinyTask: HOME_STRENGTHS_TINY,
     action: HOME_STRENGTHS_ACTION,
-    bridgeLine: "You’ve started the map. Now sharpen how you actually operate.",
+    bridgeLine: "Notice the pattern, then catch it in action.",
   },
 
   "main.home.need_skills": {
     pageId: "main.home.need_skills",
     tinyTask: HOME_SKILLS_TINY,
     action: HOME_SKILLS_ACTION,
-    bridgeLine: "You’re close. Finish the part that turns this into something concrete.",
+    bridgeLine: "Turn direction into something concrete.",
   },
 
   "main.home.complete": {
     pageId: "main.home.complete",
     tinyTask: HOME_COMPLETE_TINY,
     action: HOME_COMPLETE_ACTION,
+    bridgeLine: "You’ve got the pattern. Now test it somewhere real.",
   },
 };
 
