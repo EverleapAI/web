@@ -484,6 +484,9 @@ export default function MainHomePage() {
   const strAnswered = progress.strengthsAnswered ?? 0;
   const sklAnswered = progress.skillsAnswered ?? 0;
 
+  const isZeroState =
+    motAnswered === 0 && strAnswered === 0 && sklAnswered === 0;
+
   const motComplete = motAnswered >= SIGNAL_COMPLETE_COUNT;
   const strComplete = strAnswered >= SIGNAL_COMPLETE_COUNT;
   const sklComplete = sklAnswered >= SIGNAL_COMPLETE_COUNT;
@@ -539,6 +542,24 @@ export default function MainHomePage() {
   const paragraphs: React.ReactNode[] = React.useMemo(() => {
     if (!mounted) return [];
 
+    if (isZeroState) {
+      return [
+        <>
+          You don’t need a clear answer yet — that’s not how this works. Everleap
+          uses a science-based system to turn small signals — what pulls you in,
+          what drains you, and how you operate — into clear, usable direction.
+          <br />
+          <br />
+          We start by understanding three things: your motivations, your strengths,
+          and your skills. From there, Everleap begins connecting patterns and
+          surfacing real paths you can actually explore.
+          <br />
+          <br />
+          It starts with a few simple questions.
+        </>,
+      ];
+    }
+
     const next = recommendedNext;
     const welcome = `${openingLine(name)} — welcome back.`;
 
@@ -576,6 +597,7 @@ export default function MainHomePage() {
     ];
   }, [
     mounted,
+    isZeroState,
     mode,
     name,
     sourceSentence,
@@ -586,9 +608,10 @@ export default function MainHomePage() {
 
   const ctaLabel = React.useMemo(() => {
     if (!mounted) return undefined;
+    if (isZeroState) return "Start with a few questions";
     if (allSignalsComplete) return "Open Insights";
     return primaryCtaLabel(recommendedNext, allSignalsComplete);
-  }, [mounted, recommendedNext, allSignalsComplete]);
+  }, [mounted, isZeroState, recommendedNext, allSignalsComplete]);
 
   const nextStepsPageId = allSignalsComplete
     ? "main.home.complete"
@@ -653,10 +676,18 @@ export default function MainHomePage() {
                   paragraphs={paragraphs}
                   primaryCtaLabel={ctaLabel}
                   onPrimary={() => {
+                    if (isZeroState) {
+                      void fadeThen(async () =>
+                        router.push(buildQuestionsHref("motivations"))
+                      );
+                      return;
+                    }
+
                     if (allSignalsComplete) {
                       void fadeThen(async () => router.push("/main/insights"));
                       return;
                     }
+
                     void fadeThen(async () =>
                       router.push(buildQuestionsHref(recommendedNext))
                     );
@@ -665,23 +696,25 @@ export default function MainHomePage() {
               </div>
             </section>
 
-            <section className={sectionSpacing()}>
-              <div className={sectionEyebrowRowClass()}>
-                <Activity className={`h-3.5 w-3.5 ${signalsIconClass(dark)}`} aria-hidden />
-                <div className={sectionEyebrowClass(dark)}>Signals</div>
-              </div>
+            {!isZeroState && (
+              <section className={sectionSpacing()}>
+                <div className={sectionEyebrowRowClass()}>
+                  <Activity className={`h-3.5 w-3.5 ${signalsIconClass(dark)}`} aria-hidden />
+                  <div className={sectionEyebrowClass(dark)}>Signals</div>
+                </div>
 
-              <h2 className={sectionTitleClass(dark)}>What’s starting to take shape</h2>
-              <p className={sectionBodyClass(dark)}>{signalsIntro}</p>
+                <h2 className={sectionTitleClass(dark)}>What’s starting to take shape</h2>
+                <p className={sectionBodyClass(dark)}>{signalsIntro}</p>
 
-              <div className="mt-4 sm:mt-5">
-                <SignalsCard
-                  dark={dark}
-                  progress={vm.progress}
-                  nextKey={vm.nextKey}
-                />
-              </div>
-            </section>
+                <div className="mt-4 sm:mt-5">
+                  <SignalsCard
+                    dark={dark}
+                    progress={vm.progress}
+                    nextKey={vm.nextKey}
+                  />
+                </div>
+              </section>
+            )}
 
             <div className="my-8 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent" />
 
