@@ -5,6 +5,12 @@ import { ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* =============================================================================
+   Types
+   ============================================================================= */
+
+export type RecommendedNext = "motivations" | "strengths" | "skills";
+
+/* =============================================================================
    Motion
    ============================================================================= */
 
@@ -72,7 +78,6 @@ export function TodayIntro(props: TodayIntroProps) {
 
   return (
     <div className="relative">
-      {/* Eyebrow */}
       <div className="inline-flex items-center gap-2">
         <Sparkles
           className={
@@ -80,16 +85,15 @@ export function TodayIntro(props: TodayIntroProps) {
               ? "h-3.5 w-3.5 text-amber-200/60"
               : "h-3.5 w-3.5 text-amber-700"
           }
+          aria-hidden
         />
         <div className={eyebrow}>Today</div>
       </div>
 
-      {/* Title */}
       <h1 className={title}>
         {introTitle ?? "Let’s start building your direction"}
       </h1>
 
-      {/* Body */}
       <div
         className={
           motionEnabled
@@ -109,7 +113,6 @@ export function TodayIntro(props: TodayIntroProps) {
           </div>
         ) : null}
 
-        {/* CTA */}
         {primaryCtaLabel ? (
           <div className="mt-3 sm:mt-4">
             <AnimatePresence mode="wait" initial={false}>
@@ -130,11 +133,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
                 </motion.button>
               ) : (
-                <button
-                  type="button"
-                  onClick={onPrimary}
-                  className={cta}
-                >
+                <button type="button" onClick={onPrimary} className={cta}>
                   <span>{primaryCtaLabel}</span>
                   <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
                 </button>
