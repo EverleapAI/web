@@ -1,0 +1,57 @@
+[
+  {
+    "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+    "slotSetting": false,
+    "value": "InstrumentationKey=e328fabb-48e3-4f14-b75a-be1a62e4b4ed;IngestionEndpoint=https://westus3-1.in.applicationinsights.azure.com/;LiveEndpoint=https://westus3.livediagnostics.monitor.azure.com/;ApplicationId=7af3c6d6-07bf-4f87-9b49-fde3101020e0"
+  },
+  {
+    "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+    "slotSetting": false,
+    "value": "~3"
+  },
+  {
+    "name": "EVERLEAP_ACCESS_CODE",
+    "slotSetting": false,
+    "value": "Evertango!"
+  },
+  {
+    "name": "NEXT_PUBLIC_API_BASE_URL",
+    "slotSetting": false,
+    "value": "https://everleapfunctionsdev-f5hbadhre9c8eqha.westus-01.azurewebsites.net/api"
+  },
+  {
+    "name": "NEXT_PUBLIC_ENV",
+    "slotSetting": false,
+    "value": "production"
+  },
+  {
+    "name": "NEXT_TELEMETRY_DISABLED",
+    "slotSetting": false,
+    "value": "1"
+  },
+  {
+    "name": "NODE_ENV",
+    "slotSetting": false,
+    "value": "production"
+  },
+  {
+    "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+    "slotSetting": false,
+    "value": "false"
+  },
+  {
+    "name": "SITE_BASIC_USER",
+    "slotSetting": false,
+    "value": "everleap"
+  },
+  {
+    "name": "WEBSITE_NODE_DEFAULT_VERSION",
+    "slotSetting": false,
+    "value": "~22"
+  },
+  {
+    "name": "XDT_MicrosoftApplicationInsights_Mode",
+    "slotSetting": false,
+    "value": "default"
+  }
+]

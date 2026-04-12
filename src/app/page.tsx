@@ -1,10 +1,8 @@
-// src/app/page.tsx
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import BrandBadge from "@/components/site/BrandBadge";
 
 type Phase = "boy" | "girl";
 
@@ -261,25 +259,24 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/35 to-black/65" />
         </div>
 
-        {/* Scrims (strengthen desktop separation without affecting mobile) */}
+        {/* Scrims */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-24 top-scrim" />
-        {/* Base scrim (keeps your current mobile look) */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/80 via-black/45 to-transparent md:h-64" />
-        {/* Desktop-only vignette to keep the subject from getting “lost” behind the card */}
         <div className="pointer-events-none absolute inset-0 hidden md:block bg-gradient-to-t from-black/90 via-black/55 to-transparent" />
       </div>
 
-      {/* Top-right Sign in link (quiet, non-competing) */}
-      <div className="absolute top-0 right-0 z-20 p-4">
+      {/* Top-left Everleap brand */}
+      <div className="absolute top-0 left-0 z-20 p-4">
         <Link
-          href="/regauth"
-          className="rounded-full px-3 py-1.5 text-sm font-semibold text-white/70 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+          href="/"
+          aria-label="Everleap home"
+          className="inline-flex items-center rounded-full px-1 py-1 text-white/90 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-white/25"
         >
-          Sign in
+          <span className="text-base font-semibold uppercase tracking-[0.22em]">
+            Everleap AI
+          </span>
         </Link>
       </div>
-
-      <BrandBadge />
 
       {/* ===== CONTENT ===== */}
       <main className="relative z-10 flex flex-1 flex-col">
@@ -301,7 +298,7 @@ export default function HomePage() {
   );
 }
 
-/* ---- cards unchanged (except adding subtle "Already have an account? Sign in") ---- */
+/* ---- cards ---- */
 
 function DesktopHeroCard({ authed }: { authed: boolean | null }) {
   return (
@@ -329,7 +326,7 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
 
       <p className="mt-4 text-xs text-white/55">
         Already have an account?{" "}
-        <Link href="/regauth" className="font-semibold text-white/70 hover:text-white transition">
+        <Link href="/regauth" className="font-semibold text-white/70 transition hover:text-white">
           Sign in
         </Link>
       </p>
@@ -365,7 +362,7 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
 
       <p className="mt-3 text-xs text-white/55">
         Already have an account?{" "}
-        <Link href="/regauth" className="font-semibold text-white/70 hover:text-white transition">
+        <Link href="/regauth" className="font-semibold text-white/70 transition hover:text-white">
           Sign in
         </Link>
       </p>
