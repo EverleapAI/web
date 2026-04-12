@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -17,12 +18,23 @@ import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 const SIGNAL_COMPLETE_COUNT = 5;
 
 function pagePadding() {
-  // 🔥 tightened vertical spacing
   return "pb-24 pt-1 sm:pt-1.5 lg:pt-2";
 }
 
 function pageShell() {
   return "mx-auto w-full max-w-[52rem] px-4 sm:px-5 md:px-6 lg:px-7";
+}
+
+function introCtaClass(dark: boolean) {
+  return [
+    "group inline-flex items-center gap-2",
+    "text-[1.02rem] font-medium transition",
+    "sm:text-[1.05rem]",
+    dark
+      ? "text-white/80 hover:text-white/92"
+      : "text-sky-700 hover:text-sky-900",
+    "focus-visible:outline-none",
+  ].join(" ");
 }
 
 export default function MainHomePage() {
@@ -96,6 +108,27 @@ export default function MainHomePage() {
         ? "Open Insights"
         : "Continue";
 
+  function handlePrimary() {
+    if (!hasVm) {
+      router.push("/main/insights");
+      return;
+    }
+
+    if (isZeroState) {
+      router.push("/main/questions?cat=motivations&returnTo=/main");
+      return;
+    }
+
+    if (allSignalsComplete) {
+      router.push("/main/insights");
+      return;
+    }
+
+    router.push(
+      `/main/questions?cat=${recommendedNext}&returnTo=/main`
+    );
+  }
+
   return (
     <>
       <AnimatePresence>
@@ -112,10 +145,9 @@ export default function MainHomePage() {
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
-            <section className="relative">
-              {/* 🔥 reduced glow intensity */}
-              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.04]">
-                <div className="h-full w-full rounded-full bg-sky-300/30" />
+            <section className="relative pt-4 sm:pt-5">
+              <div className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full opacity-[0.025]">
+                <div className="h-full w-full rounded-full bg-sky-300/20" />
               </div>
 
               <div className="relative z-10">
@@ -125,32 +157,38 @@ export default function MainHomePage() {
                   motionEnabled={motionEnabled}
                   isTransitioning={transitioning}
                   body={introBody}
-                  primaryCtaLabel={ctaLabel}
-                  onPrimary={() => {
-                    if (!hasVm) {
-                      router.push("/main/insights");
-                      return;
-                    }
-
-                    if (isZeroState) {
-                      router.push("/main/questions?cat=motivations&returnTo=/main");
-                      return;
-                    }
-
-                    if (allSignalsComplete) {
-                      router.push("/main/insights");
-                      return;
-                    }
-
-                    router.push(
-                      `/main/questions?cat=${recommendedNext}&returnTo=/main`
-                    );
-                  }}
                 />
+
+                <div className="mt-4 sm:mt-5">
+                  {motionEnabled ? (
+                    <motion.button
+                      type="button"
+                      onClick={handlePrimary}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.32, ease: "easeOut" }}
+                      whileHover={{ x: 2 }}
+                      whileTap={{ scale: 0.995 }}
+                      className={introCtaClass(dark)}
+                    >
+                      <span>{ctaLabel}</span>
+                      <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
+                    </motion.button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePrimary}
+                      className={introCtaClass(dark)}
+                    >
+                      <span>{ctaLabel}</span>
+                      <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
+                    </button>
+                  )}
+                </div>
               </div>
             </section>
 
-            <section className="mt-6 sm:mt-8">
+            <section className="mt-6 border-t border-white/6 pt-4 sm:mt-7 sm:pt-5">
               <NextStepsStack
                 dark={dark}
                 useLocal={mounted}

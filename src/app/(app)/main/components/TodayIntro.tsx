@@ -67,7 +67,7 @@ function ctaClass(dark: boolean) {
     "text-[1.02rem] font-medium transition",
     "sm:text-[1.05rem]",
     dark
-      ? "text-white/68 hover:text-white/80"
+      ? "text-white/80 hover:text-white/92"
       : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
   ].join(" ");
@@ -98,6 +98,7 @@ export function TodayIntro(props: TodayIntroProps) {
   } = props;
 
   const resolvedBody = body?.trim() || defaultBody();
+  const shouldShowCta = Boolean(primaryCtaLabel && onPrimary);
 
   return (
     <div className="relative">
@@ -112,8 +113,8 @@ export function TodayIntro(props: TodayIntroProps) {
 
       <p className={heroBodyClass(dark)}>{resolvedBody}</p>
 
-      {primaryCtaLabel ? (
-        <div className="mt-3 sm:mt-4">
+      {shouldShowCta ? (
+        <div className="mt-4 sm:mt-5">
           {motionEnabled ? (
             <motion.button
               type="button"
@@ -126,7 +127,7 @@ export function TodayIntro(props: TodayIntroProps) {
               className={ctaClass(dark)}
             >
               <span>{primaryCtaLabel}</span>
-              <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
+              <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
             </motion.button>
           ) : (
             <button
@@ -135,7 +136,7 @@ export function TodayIntro(props: TodayIntroProps) {
               className={ctaClass(dark)}
             >
               <span>{primaryCtaLabel}</span>
-              <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
+              <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
             </button>
           )}
         </div>
