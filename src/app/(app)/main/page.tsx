@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   isDarkTheme,
   type SpotlightThemeId,
-  INSIGHTS_THEMES,
 } from "@/theme/everleapVisuals";
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
@@ -15,15 +14,7 @@ import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
 import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 
-/* =============================================================================
-   Constants
-   ============================================================================= */
-
 const SIGNAL_COMPLETE_COUNT = 5;
-
-/* =============================================================================
-   Layout helpers
-   ============================================================================= */
 
 function pagePadding() {
   return "pb-24 pt-3 sm:pt-4 lg:pt-5";
@@ -33,22 +24,11 @@ function pageShell() {
   return "mx-auto w-full max-w-[52rem] px-4 sm:px-5 md:px-6 lg:px-7";
 }
 
-/* =============================================================================
-   Page
-   ============================================================================= */
-
 export default function MainHomePage() {
   const router = useRouter();
 
   const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
   const dark = isDarkTheme(themeId);
-
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-
-  const orbGlowClass =
-    (theme as { orbGlowClass?: string }).orbGlowClass ??
-    (dark ? "bg-sky-400/25" : "bg-amber-300/30");
 
   const [vm, setVm] = React.useState<any>(null);
   const [mounted, setMounted] = React.useState(false);
@@ -141,13 +121,11 @@ export default function MainHomePage() {
           <div className={pageShell()}>
             <section className="relative overflow-hidden">
               <div className="pointer-events-none absolute inset-x-0 top-[-1rem] bottom-[-2.5rem] z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/58 via-black/24 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/54 via-black/20 to-transparent" />
               </div>
 
-              <div className="pointer-events-none absolute right-2 top-2 h-16 w-16 rounded-full opacity-14">
-                <div
-                  className={`h-full w-full rounded-full ${orbGlowClass}`}
-                />
+              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.08]">
+                <div className="h-full w-full rounded-full bg-sky-300/30" />
               </div>
 
               <div className="relative z-10">
@@ -177,7 +155,7 @@ export default function MainHomePage() {
               </div>
             </section>
 
-            <div className="my-3.5 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent sm:my-5" />
+            <div className="my-4 h-px w-full bg-white/6 sm:my-5" />
 
             <section>
               <NextStepsStack

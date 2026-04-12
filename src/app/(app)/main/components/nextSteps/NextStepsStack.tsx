@@ -34,7 +34,7 @@ type Props = {
 };
 
 /* =============================================================================
-   UI helpers
+   Unified type system
    ============================================================================= */
 
 function eyebrowRowClass() {
@@ -44,30 +44,30 @@ function eyebrowRowClass() {
 function eyebrowClass(dark: boolean) {
   return [
     "text-[11px] font-semibold uppercase tracking-[0.22em]",
-    dark ? "text-white/48" : "text-slate-500",
+    dark ? "text-white/40" : "text-slate-500",
   ].join(" ");
 }
 
-function titleClass(dark: boolean) {
+function sectionTitleClass(dark: boolean) {
   return [
     "mt-2 text-[1.02rem] font-semibold tracking-tight sm:text-[1.08rem]",
-    dark ? "text-white" : "text-slate-950",
+    dark ? "text-white/82" : "text-slate-950",
   ].join(" ");
 }
 
-function bodyClass(dark: boolean) {
+function sectionBodyClass(dark: boolean) {
   return [
     "mt-2 max-w-[44rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
-    dark ? "text-white/66" : "text-slate-700",
+    dark ? "text-white/60" : "text-slate-700",
   ].join(" ");
 }
 
 function tinyTaskIconClass(dark: boolean) {
-  return dark ? "text-emerald-200/80" : "text-emerald-700";
+  return dark ? "text-emerald-200/60" : "text-emerald-700";
 }
 
 function actionIconClass(dark: boolean) {
-  return dark ? "text-amber-200/80" : "text-amber-700";
+  return dark ? "text-amber-200/60" : "text-amber-700";
 }
 
 /* =============================================================================
@@ -84,14 +84,21 @@ export function NextStepsStack({
       <div className="grid gap-10 sm:gap-12">
         <section>
           <div className={eyebrowRowClass()}>
-            <Sparkles className={`h-3.5 w-3.5 ${tinyTaskIconClass(dark)}`} aria-hidden />
+            <Sparkles
+              className={`h-3.5 w-3.5 ${tinyTaskIconClass(dark)}`}
+              aria-hidden
+            />
             <div className={eyebrowClass(dark)}>Tiny Task</div>
           </div>
 
-          <h3 className={titleClass(dark)}>{definition.tinyTask.title}</h3>
+          <h3 className={sectionTitleClass(dark)}>
+            {definition.tinyTask.title}
+          </h3>
 
           {definition.tinyTask.prompt ? (
-            <p className={bodyClass(dark)}>{definition.tinyTask.prompt}</p>
+            <p className={sectionBodyClass(dark)}>
+              {definition.tinyTask.prompt}
+            </p>
           ) : null}
 
           <div className="mt-4 sm:mt-5">
@@ -105,13 +112,18 @@ export function NextStepsStack({
 
         <section>
           <div className={eyebrowRowClass()}>
-            <Rocket className={`h-3.5 w-3.5 ${actionIconClass(dark)}`} aria-hidden />
+            <Rocket
+              className={`h-3.5 w-3.5 ${actionIconClass(dark)}`}
+              aria-hidden
+            />
             <div className={eyebrowClass(dark)}>Actions</div>
           </div>
 
-          <h3 className={titleClass(dark)}>{definition.action.title}</h3>
+          <h3 className={sectionTitleClass(dark)}>
+            {definition.action.title}
+          </h3>
 
-          <p className={bodyClass(dark)}>{definition.action.goal}</p>
+          <p className={sectionBodyClass(dark)}>{definition.action.goal}</p>
 
           <div className="mt-4 sm:mt-5">
             <ActionCard

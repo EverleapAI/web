@@ -35,6 +35,51 @@ export type TodayIntroProps = {
 };
 
 /* =============================================================================
+   Unified type system
+   ============================================================================= */
+
+function eyebrowClass(dark: boolean) {
+  return [
+    "text-[10px] font-semibold uppercase tracking-[0.24em]",
+    dark ? "text-white/40" : "text-slate-500",
+  ].join(" ");
+}
+
+function heroTitleClass(dark: boolean) {
+  return [
+    "mt-1.5 text-[1.4rem] font-semibold leading-tight tracking-[-0.02em]",
+    "sm:mt-2 sm:text-[1.65rem]",
+    dark ? "text-white/82" : "text-slate-950",
+  ].join(" ");
+}
+
+function heroBodyClass(dark: boolean) {
+  return [
+    "mt-2.5 max-w-[46rem] text-[14.5px] leading-6",
+    "sm:mt-3 sm:text-[15.5px] sm:leading-7",
+    dark ? "text-white/60" : "text-slate-800",
+  ].join(" ");
+}
+
+function ctaClass(dark: boolean) {
+  return [
+    "group inline-flex items-center gap-2",
+    "text-[1.02rem] font-medium transition",
+    "sm:text-[1.05rem]",
+    dark
+      ? "text-white/66 hover:text-white/78"
+      : "text-sky-700 hover:text-sky-900",
+    "focus-visible:outline-none",
+  ].join(" ");
+}
+
+function iconClass(dark: boolean) {
+  return dark
+    ? "h-3.5 w-3.5 text-amber-200/60"
+    : "h-3.5 w-3.5 text-amber-700";
+}
+
+/* =============================================================================
    Component
    ============================================================================= */
 
@@ -49,48 +94,14 @@ export function TodayIntro(props: TodayIntroProps) {
     onPrimary,
   } = props;
 
-  const eyebrow = [
-    "text-[10px] font-semibold uppercase tracking-[0.24em]",
-    dark ? "text-white/40" : "text-slate-500",
-  ].join(" ");
-
-  const title = [
-    "mt-1.5 text-[1.4rem] font-semibold leading-tight tracking-[-0.02em]",
-    "sm:mt-2 sm:text-[1.65rem]",
-    dark ? "text-white/85" : "text-slate-950",
-  ].join(" ");
-
-  const body = [
-    "mt-2.5 max-w-[46rem] text-[14.5px] leading-6",
-    "sm:mt-3 sm:text-[15.5px] sm:leading-7",
-    dark ? "text-white/65" : "text-slate-800",
-  ].join(" ");
-
-  const cta = [
-    "group inline-flex items-center gap-2",
-    "text-[1.02rem] font-semibold transition",
-    "sm:text-[1.05rem]",
-    dark
-      ? "text-sky-300/75 hover:text-sky-200"
-      : "text-sky-700 hover:text-sky-900",
-    "focus-visible:outline-none",
-  ].join(" ");
-
   return (
     <div className="relative">
       <div className="inline-flex items-center gap-2">
-        <Sparkles
-          className={
-            dark
-              ? "h-3.5 w-3.5 text-amber-200/60"
-              : "h-3.5 w-3.5 text-amber-700"
-          }
-          aria-hidden
-        />
-        <div className={eyebrow}>Today</div>
+        <Sparkles className={iconClass(dark)} aria-hidden />
+        <div className={eyebrowClass(dark)}>Today</div>
       </div>
 
-      <h1 className={title}>
+      <h1 className={heroTitleClass(dark)}>
         {introTitle ?? "Let’s start building your direction"}
       </h1>
 
@@ -104,7 +115,7 @@ export function TodayIntro(props: TodayIntroProps) {
         }
       >
         {paragraphs?.length ? (
-          <div className={body}>
+          <div className={heroBodyClass(dark)}>
             {paragraphs.map((p, i) => (
               <p key={i} className={i > 0 ? "mt-3.5" : ""}>
                 {p}
@@ -127,15 +138,19 @@ export function TodayIntro(props: TodayIntroProps) {
                   transition={{ duration: 0.32, ease: "easeOut" }}
                   whileHover={{ x: 2 }}
                   whileTap={{ scale: 0.995 }}
-                  className={cta}
+                  className={ctaClass(dark)}
                 >
                   <span>{primaryCtaLabel}</span>
-                  <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
+                  <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
                 </motion.button>
               ) : (
-                <button type="button" onClick={onPrimary} className={cta}>
+                <button
+                  type="button"
+                  onClick={onPrimary}
+                  className={ctaClass(dark)}
+                >
                   <span>{primaryCtaLabel}</span>
-                  <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
+                  <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
                 </button>
               )}
             </AnimatePresence>
