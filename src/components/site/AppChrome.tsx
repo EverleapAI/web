@@ -153,17 +153,15 @@ export function AppChrome({
   const intensity = intensityForLevel(gradientLevel);
 
   const chromeVars: CSSVars = {
-    "--el-chrome-bg": "rgba(255,255,255,0.028)",
+    "--el-chrome-bg": "rgba(2,6,23,0.85)", // ✅ more solid
     "--el-chrome-border": "rgba(255,255,255,0.09)",
     "--el-chrome-highlight": "rgba(255,255,255,0.10)",
     "--el-chrome-shadow": "0 16px 48px rgba(0,0,0,0.18)",
-    "--el-chrome-blur": "22px",
   };
 
   const chromeBg = "var(--el-chrome-bg)";
   const chromeHighlight = "var(--el-chrome-highlight)";
   const chromeShadow = "var(--el-chrome-shadow)";
-  const chromeBlur = "var(--el-chrome-blur)";
 
   const rootClasses =
     "relative flex h-[100svh] supports-[height:100dvh]:h-[100dvh] w-full flex-col overflow-hidden bg-slate-950 text-white";
@@ -203,12 +201,10 @@ export function AppChrome({
 
       {!hideHeader && (
         <header
-          className={cx("relative z-10")}
+          className="relative z-10"
           style={{
             background: chromeBg,
             boxShadow: chromeShadow,
-            backdropFilter: `blur(${chromeBlur})`,
-            WebkitBackdropFilter: `blur(${chromeBlur})`,
           }}
         >
           <div

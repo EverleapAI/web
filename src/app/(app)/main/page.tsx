@@ -141,12 +141,12 @@ export default function MainHomePage() {
           <div className={pageShell()}>
             <section className="relative overflow-hidden">
               <div className="pointer-events-none absolute inset-x-0 top-[-1rem] bottom-[-2.5rem] z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/18 to-transparent backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/58 via-black/24 to-transparent" />
               </div>
 
-              <div className="pointer-events-none absolute right-2 top-2 h-16 w-16 rounded-full opacity-20">
+              <div className="pointer-events-none absolute right-2 top-2 h-16 w-16 rounded-full opacity-14">
                 <div
-                  className={`h-full w-full rounded-full ${orbGlowClass} blur-xl`}
+                  className={`h-full w-full rounded-full ${orbGlowClass}`}
                 />
               </div>
 
