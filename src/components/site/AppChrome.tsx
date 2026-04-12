@@ -166,7 +166,7 @@ export function AppChrome({
   const chromeBlur = "var(--el-chrome-blur)";
 
   const rootClasses =
-    "relative flex h-[100svh] supports-[height:100dvh]:h-[100dvh] w-full flex-col bg-slate-950 text-white";
+    "relative flex h-[100svh] supports-[height:100dvh]:h-[100dvh] w-full flex-col overflow-hidden bg-slate-950 text-white";
 
   const contentClasses =
     hideHeader || flushContent
@@ -176,42 +176,17 @@ export function AppChrome({
   return (
     <div className={cx(rootClasses, className)} style={chromeVars}>
       {!minimalBackground && (
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <div
             className="absolute inset-0"
             style={{
               background: [
-                "radial-gradient(1100px 760px at 24% 10%, rgba(56,189,248,0.16) 0%, rgba(0,0,0,0) 60%)",
-                "radial-gradient(880px 660px at 76% 16%, rgba(167,139,250,0.14) 0%, rgba(0,0,0,0) 62%)",
-                "radial-gradient(900px 820px at 52% 86%, rgba(34,197,94,0.07) 0%, rgba(0,0,0,0) 58%)",
-                "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.90) 40%, rgba(0,0,0,0.95) 100%)",
+                "radial-gradient(1100px 760px at 24% 10%, rgba(56,189,248,0.12) 0%, rgba(0,0,0,0) 58%)",
+                "radial-gradient(880px 660px at 76% 16%, rgba(167,139,250,0.10) 0%, rgba(0,0,0,0) 60%)",
+                "radial-gradient(900px 820px at 52% 86%, rgba(34,197,94,0.05) 0%, rgba(0,0,0,0) 56%)",
+                "linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(2,6,23,0.92) 42%, rgba(0,0,0,0.96) 100%)",
               ].join(","),
               opacity: intensity.wash,
-            }}
-          />
-
-          <div
-            className="absolute -top-44 left-1/2 h-[520px] w-[760px] -translate-x-1/2 rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.22) 0%, rgba(0,0,0,0) 65%)",
-              opacity: intensity.bloom,
-            }}
-          />
-          <div
-            className="absolute top-20 -left-52 h-[500px] w-[500px] rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.20) 0%, rgba(0,0,0,0) 70%)",
-              opacity: intensity.bloom,
-            }}
-          />
-          <div
-            className="absolute bottom-[-80px] -right-60 h-[600px] w-[700px] rounded-full blur-3xl"
-            style={{
-              background:
-                "radial-gradient(circle at 35% 55%, rgba(14,165,233,0.16) 0%, rgba(0,0,0,0) 68%)",
-              opacity: intensity.bloom,
             }}
           />
 
