@@ -62,18 +62,18 @@ export function TodayIntro(props: TodayIntroProps) {
   ].join(" ");
 
   const title = [
-    "mt-2 text-[1.45rem] font-semibold leading-tight tracking-[-0.02em] sm:mt-3 sm:text-[1.75rem]",
+    "mt-1.5 text-[1.4rem] font-semibold leading-tight tracking-[-0.02em] sm:mt-2 sm:text-[1.65rem]",
     dark ? "text-white" : "text-slate-950",
   ].join(" ");
 
   const body = [
-    "mt-3 max-w-[52rem] text-[15px] leading-6 sm:mt-4 sm:text-[16px] sm:leading-7",
+    "mt-2.5 max-w-[46rem] text-[14.5px] leading-6 sm:mt-3 sm:text-[15.5px] sm:leading-7",
     dark ? "text-white/90" : "text-slate-800",
   ].join(" ");
 
   const cta = [
     "group inline-flex items-center gap-2",
-    "text-[1.02rem] font-bold transition sm:text-[1.08rem]",
+    "text-[1.05rem] font-bold transition sm:text-[1.1rem]",
     dark ? "text-sky-200 hover:text-white" : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
     dark
@@ -96,7 +96,7 @@ export function TodayIntro(props: TodayIntroProps) {
         {paragraphs?.length ? (
           <div className={body}>
             {paragraphs.map((p, i) => (
-              <p key={i} className={i > 0 ? "mt-4" : ""}>
+              <p key={i} className={i > 0 ? "mt-3.5" : ""}>
                 {p}
               </p>
             ))}
@@ -104,7 +104,7 @@ export function TodayIntro(props: TodayIntroProps) {
         ) : null}
 
         {primaryCtaLabel ? (
-          <div className="mt-4 sm:mt-5">
+          <div className="mt-3 sm:mt-4">
             <div className="h-7 sm:h-8">
               <AnimatePresence mode="wait" initial={false}>
                 {motionEnabled ? (
@@ -116,13 +116,13 @@ export function TodayIntro(props: TodayIntroProps) {
                     animate={fadeIn.animate}
                     exit={fadeIn.exit}
                     transition={{ duration: 0.32, ease: "easeOut" }}
-                    whileHover={{ x: 1 }}
+                    whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.995 }}
                     className={cta}
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className="h-4 w-4 translate-x-0 opacity-80 transition group-hover:translate-x-[2px] group-hover:opacity-100"
+                      className="h-4 w-4 translate-x-0 opacity-90 transition group-hover:translate-x-[3px] group-hover:opacity-100"
                       aria-hidden
                     />
                   </motion.button>
@@ -135,7 +135,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className="h-4 w-4 translate-x-0 opacity-80 transition group-hover:translate-x-[2px] group-hover:opacity-100"
+                      className="h-4 w-4 translate-x-0 opacity-90 transition group-hover:translate-x-[3px] group-hover:opacity-100"
                       aria-hidden
                     />
                   </button>
