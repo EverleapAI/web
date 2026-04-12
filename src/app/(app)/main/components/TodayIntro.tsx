@@ -71,8 +71,10 @@ export function TodayIntro(props: TodayIntroProps) {
 
   const cta = [
     "group inline-flex items-center gap-2",
-    "text-[1.02rem] font-semibold transition sm:text-[1.06rem]",
-    dark ? "text-sky-300 hover:text-sky-200" : "text-sky-700 hover:text-sky-900",
+    "text-[1.02rem] font-bold transition sm:text-[1.08rem]",
+    dark
+      ? "text-sky-200 hover:text-white"
+      : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-white/20"
@@ -112,11 +114,13 @@ export function TodayIntro(props: TodayIntroProps) {
                     animate={fadeIn.animate}
                     exit={fadeIn.exit}
                     transition={{ duration: 0.32, ease: "easeOut" }}
+                    whileHover={{ x: 1 }}
+                    whileTap={{ scale: 0.995 }}
                     className={cta}
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className="h-4 w-4 translate-x-0 opacity-70 transition group-hover:translate-x-[2px] group-hover:opacity-95"
+                      className="h-4 w-4 translate-x-0 opacity-80 transition group-hover:translate-x-[2px] group-hover:opacity-100"
                       aria-hidden
                     />
                   </motion.button>
@@ -129,7 +133,7 @@ export function TodayIntro(props: TodayIntroProps) {
                   >
                     <span>{primaryCtaLabel}</span>
                     <ChevronRight
-                      className="h-4 w-4 translate-x-0 opacity-70 transition group-hover:translate-x-[2px] group-hover:opacity-95"
+                      className="h-4 w-4 translate-x-0 opacity-80 transition group-hover:translate-x-[2px] group-hover:opacity-100"
                       aria-hidden
                     />
                   </button>
