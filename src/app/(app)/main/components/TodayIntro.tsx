@@ -67,7 +67,7 @@ function ctaClass(dark: boolean) {
     "text-[1.02rem] font-medium transition",
     "sm:text-[1.05rem]",
     dark
-      ? "text-white/80 hover:text-white/92"
+      ? "text-teal-300/90 hover:text-teal-200"
       : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
   ].join(" ");

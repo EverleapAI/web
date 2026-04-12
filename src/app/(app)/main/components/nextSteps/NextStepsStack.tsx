@@ -63,11 +63,11 @@ function sectionBodyClass(dark: boolean) {
 }
 
 function tinyTaskIconClass(dark: boolean) {
-  return dark ? "text-emerald-200/48" : "text-emerald-700";
+  return dark ? "text-teal-300/70" : "text-emerald-700";
 }
 
 function actionIconClass(dark: boolean) {
-  return dark ? "text-amber-200/48" : "text-amber-700";
+  return dark ? "text-amber-300/68" : "text-amber-700";
 }
 
 /* =============================================================================

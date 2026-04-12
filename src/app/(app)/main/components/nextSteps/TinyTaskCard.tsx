@@ -35,24 +35,21 @@ function optionBase(dark: boolean, selected: boolean) {
 
     dark
       ? selected
-        // 🔥 slightly flatter + less glow
-        ? "bg-white/[0.045] text-white/88 ring-1 ring-emerald-300/12"
-        : "bg-white/[0.028] hover:bg-white/[0.04] text-white/68"
+        ? "bg-teal-400/[0.18] text-white/92 ring-1 ring-teal-300/25"
+        : "bg-teal-400/[0.06] hover:bg-teal-400/[0.10] text-white/72"
       : selected
         ? "bg-black/8 text-slate-950 ring-1 ring-emerald-500/22"
         : "bg-black/5 hover:bg-black/10 text-slate-900",
 
     dark
-      ? "focus-visible:ring-2 focus-visible:ring-emerald-300/16"
+      ? "focus-visible:ring-2 focus-visible:ring-teal-300/20"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/18",
   ].join(" ");
 }
 
 function labelClass(dark: boolean, selected: boolean) {
   if (!dark) return "text-slate-900";
-
-  // 🔥 slightly dimmer to remove shimmer
-  return selected ? "text-white/88" : "text-white/68";
+  return selected ? "text-white/92" : "text-white/72";
 }
 
 function checkWrap(dark: boolean, selected: boolean) {
@@ -61,11 +58,10 @@ function checkWrap(dark: boolean, selected: boolean) {
 
     selected
       ? dark
-        // 🔥 reduced contrast glow
-        ? "bg-emerald-300/8 text-emerald-100 ring-1 ring-emerald-300/10"
+        ? "bg-teal-300/15 text-teal-100 ring-1 ring-teal-300/20"
         : "bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/18"
       : dark
-        ? "bg-white/5 text-white/16"
+        ? "bg-white/5 text-white/20"
         : "bg-black/6 text-black/18",
   ].join(" ");
 }
