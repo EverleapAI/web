@@ -8,38 +8,35 @@
 
 /* ========== 1) Semantic Design Tokens (CSS variables) ========== */
 @layer base {
-  /* ===== WHITE (Apple-like, soft & clean) — the app theme ===== */
   :root {
-    --bg-base: #FBFBFD;                /* page background */
+    --bg-base: #FBFBFD;
     --bg-grad-1: transparent;
     --bg-grad-2: transparent;
     --bg-grad-3: transparent;
 
-    --accent: #0A84FF;                 /* CTA / progress (Apple blue) */
+    --accent: #0A84FF;
     --accent-rgb: 10 132 255;
-    --accent-2: #7C3AED;               /* secondary accent for subtle gradients */
+    --accent-2: #7C3AED;
     --accent2-rgb: 124 58 237;
 
     --accent-contrast: #ffffff;
-    --accent-soft: #E7F0FF;            /* pale wash for callouts */
+    --accent-soft: #E7F0FF;
 
-    --tint-bg: #F8FAFF;                /* soft panel bg */
+    --tint-bg: #F8FAFF;
 
-    --text: #0f172a;                   /* slate-900 */
-    --muted: #334155;                  /* slate-700 */
-    --border: rgba(15,23,42,.10);      /* general border */
-    --hairline: rgba(15,23,42,.08);    /* hairline / separators */
-    --surface: 255 255 255;            /* for rgba(var(--surface), x) */
+    --text: #0f172a;
+    --muted: #334155;
+    --border: rgba(15,23,42,.10);
+    --hairline: rgba(15,23,42,.08);
+    --surface: 255 255 255;
 
-    /* Scrim (kept minimal on white) */
     --scrim-top: rgba(0,0,0,.10);
     --scrim-mid: rgba(0,0,0,.05);
     --scrim-bot: rgba(0,0,0,.10);
 
-    /* Micro-effects */
     --shimmer-alpha: .24;
 
-    /* ===== EVERLEAP DARK THEME ===== */
+    /* ===== EVERLEAP DARK THEME (FIXED) ===== */
     --el-bg: #020617;
     --el-bg-elevated: #020819;
     --el-bg-soft: #020617;
@@ -48,14 +45,14 @@
     --el-accent-soft: rgba(79, 156, 255, 0.15);
     --el-accent-strong: rgba(79, 156, 255, 0.7);
 
-    --el-text-primary: #f9fafb;
-    --el-text-muted: rgba(148, 163, 184, 0.95);
+    /* 🔥 FIX: reduce brightness */
+    --el-text-primary: rgba(249, 250, 251, 0.88);
+    --el-text-muted: rgba(148, 163, 184, 0.85);
 
     --el-border-subtle: rgba(148, 163, 184, 0.15);
     --el-border-strong: rgba(148, 163, 184, 0.3);
   }
 
-  /* ✅ FIX FOR LANE SHIFT / HORIZONTAL JITTER */
   html {
     scrollbar-gutter: stable;
     overflow-x: hidden;
@@ -69,6 +66,11 @@
     overflow-x: hidden;
     color: var(--text);
     background-color: var(--el-bg);
+
+    /* 🔥 FIX: smoother text rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   #__next {
@@ -81,10 +83,12 @@
   .bg-app { background-color: var(--bg-base); }
 
   .el-page {
+    /* 🔥 FIX: reduced glow intensity */
     background:
-      radial-gradient(circle at top left, rgba(79, 156, 255, 0.10), transparent 55%),
-      radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.07), transparent 55%),
+      radial-gradient(circle at top left, rgba(79, 156, 255, 0.05), transparent 55%),
+      radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.035), transparent 55%),
       var(--el-bg);
+
     color: var(--el-text-primary);
   }
 
@@ -127,6 +131,7 @@
   .bg-tint-soft{ background-color:var(--tint-bg); }
 
   .bg-brand{ background-color:rgb(var(--accent-rgb)); color:var(--accent-contrast); }
+
   .header-elevated{
     box-shadow:0 1px 0 rgba(255,255,255,.12) inset,
                0 8px 18px rgba(2,6,23,.06);
@@ -247,6 +252,7 @@
 [data-listening="true"] input {
   caret-color: var(--accent);
 }
+
 html,
 body {
   overflow-x: hidden;

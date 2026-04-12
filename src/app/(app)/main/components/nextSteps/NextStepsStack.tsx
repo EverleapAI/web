@@ -44,30 +44,30 @@ function eyebrowRowClass() {
 function eyebrowClass(dark: boolean) {
   return [
     "text-[11px] font-semibold uppercase tracking-[0.22em]",
-    dark ? "text-white/40" : "text-slate-500",
+    dark ? "text-white/34" : "text-slate-500",
   ].join(" ");
 }
 
 function sectionTitleClass(dark: boolean) {
   return [
     "mt-2 text-[1.02rem] font-semibold tracking-tight sm:text-[1.08rem]",
-    dark ? "text-white/82" : "text-slate-950",
+    dark ? "text-white/74" : "text-slate-950",
   ].join(" ");
 }
 
 function sectionBodyClass(dark: boolean) {
   return [
     "mt-1.5 max-w-[44rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
-    dark ? "text-white/60" : "text-slate-700",
+    dark ? "text-white/52" : "text-slate-700",
   ].join(" ");
 }
 
 function tinyTaskIconClass(dark: boolean) {
-  return dark ? "text-emerald-200/60" : "text-emerald-700";
+  return dark ? "text-emerald-200/48" : "text-emerald-700";
 }
 
 function actionIconClass(dark: boolean) {
-  return dark ? "text-amber-200/60" : "text-amber-700";
+  return dark ? "text-amber-200/48" : "text-amber-700";
 }
 
 /* =============================================================================

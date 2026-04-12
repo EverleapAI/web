@@ -40,7 +40,7 @@ export type TodayIntroProps = {
 function eyebrowClass(dark: boolean) {
   return [
     "text-[10px] font-semibold uppercase tracking-[0.24em]",
-    dark ? "text-white/40" : "text-slate-500",
+    dark ? "text-white/36" : "text-slate-500",
   ].join(" ");
 }
 
@@ -48,7 +48,7 @@ function heroTitleClass(dark: boolean) {
   return [
     "mt-1.5 text-[1.4rem] font-semibold leading-tight tracking-[-0.02em]",
     "sm:mt-2 sm:text-[1.65rem]",
-    dark ? "text-white/82" : "text-slate-950",
+    dark ? "text-white/74" : "text-slate-950",
   ].join(" ");
 }
 
@@ -57,7 +57,7 @@ function heroBodyClass(dark: boolean) {
     "mt-2.5 max-w-[46rem] text-[14.5px] leading-6",
     "sm:mt-3 sm:text-[15.5px] sm:leading-7",
     "whitespace-normal break-words",
-    dark ? "text-white/60" : "text-slate-800",
+    dark ? "text-white/52" : "text-slate-800",
   ].join(" ");
 }
 
@@ -67,7 +67,7 @@ function ctaClass(dark: boolean) {
     "text-[1.02rem] font-medium transition",
     "sm:text-[1.05rem]",
     dark
-      ? "text-white/72 hover:text-white/82"
+      ? "text-white/68 hover:text-white/80"
       : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
   ].join(" ");
@@ -75,7 +75,7 @@ function ctaClass(dark: boolean) {
 
 function iconClass(dark: boolean) {
   return dark
-    ? "h-3.5 w-3.5 text-amber-200/60"
+    ? "h-3.5 w-3.5 text-amber-200/50"
     : "h-3.5 w-3.5 text-amber-700";
 }
 

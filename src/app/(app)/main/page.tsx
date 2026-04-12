@@ -17,7 +17,8 @@ import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 const SIGNAL_COMPLETE_COUNT = 5;
 
 function pagePadding() {
-  return "pb-24 pt-1.5 sm:pt-2 lg:pt-3";
+  // 🔥 tightened vertical spacing
+  return "pb-24 pt-1 sm:pt-1.5 lg:pt-2";
 }
 
 function pageShell() {
@@ -112,7 +113,8 @@ export default function MainHomePage() {
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
             <section className="relative">
-              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.06]">
+              {/* 🔥 reduced glow intensity */}
+              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.04]">
                 <div className="h-full w-full rounded-full bg-sky-300/30" />
               </div>
 
