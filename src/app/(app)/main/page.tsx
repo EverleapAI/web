@@ -648,9 +648,9 @@ export default function MainHomePage() {
         <main className={`relative z-10 flex-1 ${pagePadding()}`}>
           <div className={pageShell()}>
             <section className="relative">
-              <div className="pointer-events-none absolute inset-x-[-1rem] top-[-1rem] bottom-[-1.25rem] z-0 sm:inset-x-[-1.25rem] sm:top-[-1.25rem] sm:bottom-[-1.5rem]">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/58 via-black/22 to-transparent backdrop-blur-[2px]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.22),transparent_58%)]" />
+              <div className="pointer-events-none absolute inset-x-[-1rem] top-[-1rem] bottom-[-2.5rem] z-0 sm:inset-x-[-1.25rem] sm:top-[-1.25rem] sm:bottom-[-3rem]">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/18 to-black/0 backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.18),transparent_58%)]" />
               </div>
 
               <motion.div
@@ -668,31 +668,34 @@ export default function MainHomePage() {
               </motion.div>
 
               <div className="relative z-10">
-                <TodayIntro
-                  dark={dark}
-                  motionEnabled={motionEnabled}
-                  isTransitioning={transitioning}
-                  quote={mounted ? vm.quote : undefined}
-                  paragraphs={paragraphs}
-                  primaryCtaLabel={ctaLabel}
-                  onPrimary={() => {
-                    if (isZeroState) {
+                <div className="pointer-events-none absolute -inset-4 bg-black/20 opacity-40 blur-2xl" />
+                <div className="relative">
+                  <TodayIntro
+                    dark={dark}
+                    motionEnabled={motionEnabled}
+                    isTransitioning={transitioning}
+                    quote={mounted ? vm.quote : undefined}
+                    paragraphs={paragraphs}
+                    primaryCtaLabel={ctaLabel}
+                    onPrimary={() => {
+                      if (isZeroState) {
+                        void fadeThen(async () =>
+                          router.push(buildQuestionsHref("motivations"))
+                        );
+                        return;
+                      }
+
+                      if (allSignalsComplete) {
+                        void fadeThen(async () => router.push("/main/insights"));
+                        return;
+                      }
+
                       void fadeThen(async () =>
-                        router.push(buildQuestionsHref("motivations"))
+                        router.push(buildQuestionsHref(recommendedNext))
                       );
-                      return;
-                    }
-
-                    if (allSignalsComplete) {
-                      void fadeThen(async () => router.push("/main/insights"));
-                      return;
-                    }
-
-                    void fadeThen(async () =>
-                      router.push(buildQuestionsHref(recommendedNext))
-                    );
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
             </section>
 
