@@ -377,7 +377,7 @@ function sectionBodyClass(dark: boolean) {
 }
 
 function sectionSpacing() {
-  return "mt-10 sm:mt-12 lg:mt-14";
+  return "mt-6 sm:mt-8 lg:mt-10";
 }
 
 /* =============================================================================
@@ -547,15 +547,10 @@ export default function MainHomePage() {
         <>
           You don’t need a clear answer yet — that’s not how this works. Everleap
           uses a science-based system to turn small signals — what pulls you in,
-          what drains you, and how you operate — into clear, usable direction.
-          <br />
-          <br />
-          We start by understanding three things: your motivations, your strengths,
-          and your skills. From there, Everleap begins connecting patterns and
-          surfacing real paths you can actually explore.
-          <br />
-          <br />
-          It starts with a few simple questions.
+          what drains you, and how you operate — into clear, usable direction. We
+          start by understanding your motivations, strengths, and skills, then
+          connect them into patterns and real paths you can actually explore. It
+          starts with a few simple questions.
         </>,
       ];
     }
@@ -697,26 +692,30 @@ export default function MainHomePage() {
             </section>
 
             {!isZeroState && (
-              <section className={sectionSpacing()}>
-                <div className={sectionEyebrowRowClass()}>
-                  <Activity className={`h-3.5 w-3.5 ${signalsIconClass(dark)}`} aria-hidden />
-                  <div className={sectionEyebrowClass(dark)}>Signals</div>
-                </div>
+              <>
+                <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent sm:my-8" />
 
-                <h2 className={sectionTitleClass(dark)}>What’s starting to take shape</h2>
-                <p className={sectionBodyClass(dark)}>{signalsIntro}</p>
+                <section className={sectionSpacing()}>
+                  <div className={sectionEyebrowRowClass()}>
+                    <Activity className={`h-3.5 w-3.5 ${signalsIconClass(dark)}`} aria-hidden />
+                    <div className={sectionEyebrowClass(dark)}>Signals</div>
+                  </div>
 
-                <div className="mt-4 sm:mt-5">
-                  <SignalsCard
-                    dark={dark}
-                    progress={vm.progress}
-                    nextKey={vm.nextKey}
-                  />
-                </div>
-              </section>
+                  <h2 className={sectionTitleClass(dark)}>What’s starting to take shape</h2>
+                  <p className={sectionBodyClass(dark)}>{signalsIntro}</p>
+
+                  <div className="mt-4 sm:mt-5">
+                    <SignalsCard
+                      dark={dark}
+                      progress={vm.progress}
+                      nextKey={vm.nextKey}
+                    />
+                  </div>
+                </section>
+              </>
             )}
 
-            <div className="my-8 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent" />
+            <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent sm:my-8" />
 
             <section className={sectionSpacing()}>
               {nextStepsDefinition ? (

@@ -52,9 +52,7 @@ export function TodayIntro(props: TodayIntroProps) {
 
   const eyebrowRow = "inline-flex items-center gap-2";
 
-  const eyebrowIcon = dark
-    ? "text-amber-200/80"
-    : "text-amber-700";
+  const eyebrowIcon = dark ? "text-amber-200/80" : "text-amber-700";
 
   const eyebrow = [
     "text-[10px] font-semibold uppercase tracking-[0.24em]",
@@ -62,18 +60,18 @@ export function TodayIntro(props: TodayIntroProps) {
   ].join(" ");
 
   const title = [
-    "mt-3 text-[1.6rem] font-semibold tracking-[-0.02em] leading-tight sm:text-[1.9rem]",
+    "mt-2 text-[1.45rem] font-semibold tracking-[-0.02em] leading-tight sm:mt-3 sm:text-[1.75rem]",
     dark ? "text-white" : "text-slate-950",
   ].join(" ");
 
   const body = [
-    "mt-4 max-w-[52rem] text-[15px] leading-7 sm:text-[16px] sm:leading-8",
+    "mt-3 max-w-[52rem] text-[15px] leading-6 sm:mt-4 sm:text-[16px] sm:leading-7",
     dark ? "text-white/82" : "text-slate-800",
   ].join(" ");
 
   const cta = [
     "group inline-flex items-center gap-2",
-    "text-base md:text-lg font-semibold transition",
+    "text-[1.02rem] font-semibold transition sm:text-[1.06rem]",
     dark ? "text-sky-300 hover:text-sky-200" : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
     dark
@@ -88,20 +86,22 @@ export function TodayIntro(props: TodayIntroProps) {
         <div className={eyebrow}>Today</div>
       </div>
 
-      <h1 className={title}>Where things stand right now</h1>
+      <h1 className={title}>Let’s start building your direction</h1>
 
       <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
         {paragraphs?.length ? (
           <div className={body}>
             {paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i} className={i > 0 ? "mt-4" : ""}>
+                {p}
+              </p>
             ))}
           </div>
         ) : null}
 
         {primaryCtaLabel ? (
-          <div className="mt-7">
-            <div className="h-8 md:h-9">
+          <div className="mt-4 sm:mt-5">
+            <div className="h-7 sm:h-8">
               <AnimatePresence mode="wait" initial={false}>
                 {motionEnabled ? (
                   <motion.button
