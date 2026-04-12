@@ -539,6 +539,13 @@ export default function MainHomePage() {
     ? `You just came from ${sourceLabel}.`
     : "You’re back on your home base.";
 
+  const introTitle = React.useMemo(() => {
+    if (!mounted) return "Let’s start building your direction";
+    if (isZeroState) return "Let’s start building your direction";
+    if (allSignalsComplete) return "Your direction is starting to take shape";
+    return "What’s starting to come into focus";
+  }, [mounted, isZeroState, allSignalsComplete]);
+
   const paragraphs: React.ReactNode[] = React.useMemo(() => {
     if (!mounted) return [];
 
@@ -668,9 +675,9 @@ export default function MainHomePage() {
               </motion.div>
 
               <div className="relative z-10">
-                <div className="pointer-events-none absolute -inset-4 bg-black/20 opacity-40 blur-2xl" />
                 <div className="relative">
                   <TodayIntro
+                    title={introTitle}
                     dark={dark}
                     motionEnabled={motionEnabled}
                     isTransitioning={transitioning}

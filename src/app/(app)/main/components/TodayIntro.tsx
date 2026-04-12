@@ -27,6 +27,7 @@ const fadeIn = {
    ============================================================================= */
 
 export type TodayIntroProps = {
+  title?: string;
   dark: boolean;
   motionEnabled: boolean;
   quote?: Quote;
@@ -42,6 +43,7 @@ export type TodayIntroProps = {
 
 export function TodayIntro(props: TodayIntroProps) {
   const {
+    title: introTitle,
     dark,
     motionEnabled,
     isTransitioning = false,
@@ -86,7 +88,9 @@ export function TodayIntro(props: TodayIntroProps) {
         <div className={eyebrow}>Today</div>
       </div>
 
-      <h1 className={title}>Let’s start building your direction</h1>
+      <h1 className={title}>
+        {introTitle ?? "Let’s start building your direction"}
+      </h1>
 
       <div className={motionEnabled ? (isTransitioning ? "opacity-70" : "opacity-100") : ""}>
         {paragraphs?.length ? (
