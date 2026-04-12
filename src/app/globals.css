@@ -247,3 +247,7 @@
 [data-listening="true"] input {
   caret-color: var(--accent);
 }
+html,
+body {
+  overflow-x: hidden;
+}

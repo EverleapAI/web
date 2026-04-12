@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Activity } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 
 import {
   isDarkTheme,
@@ -13,7 +12,6 @@ import {
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
 import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
-import { SignalsCard } from "./components/SignalsCard";
 import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 
@@ -41,11 +39,6 @@ function pageShell() {
 
 export default function MainHomePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  /* ----------------------------------------------------------------------------
-   Theme
-   ---------------------------------------------------------------------------- */
 
   const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
   const dark = isDarkTheme(themeId);
@@ -57,36 +50,15 @@ export default function MainHomePage() {
     (theme as { orbGlowClass?: string }).orbGlowClass ??
     (dark ? "bg-sky-400/25" : "bg-amber-300/30");
 
-  /* ----------------------------------------------------------------------------
-   State
-   ---------------------------------------------------------------------------- */
-
-  const [presenceSoft, setPresenceSoft] = React.useState(false);
   const [vm, setVm] = React.useState<any>(null);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
 
-  /* ----------------------------------------------------------------------------
-   Effects
-   ---------------------------------------------------------------------------- */
-
   React.useEffect(() => {
     setMounted(true);
     setVm(buildTodayViewModel());
   }, []);
-
-  React.useEffect(() => {
-    const onScroll = () => {
-      if (window.scrollY > 8) setPresenceSoft(true);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* ----------------------------------------------------------------------------
-   Progress
-   ---------------------------------------------------------------------------- */
 
   const progress = vm?.progress ?? {
     motivationsAnswered: 0,
@@ -112,10 +84,6 @@ export default function MainHomePage() {
       : strAnswered < SIGNAL_COMPLETE_COUNT
         ? "strengths"
         : "skills";
-
-  /* ----------------------------------------------------------------------------
-   Narrative
-   ---------------------------------------------------------------------------- */
 
   const introTitle = React.useMemo(() => {
     if (!mounted) return "Let’s start building your direction";
@@ -155,39 +123,32 @@ export default function MainHomePage() {
       ? "Open Insights"
       : "Continue";
 
-  /* ----------------------------------------------------------------------------
-   Render
-   ---------------------------------------------------------------------------- */
-
   return (
     <>
       <AnimatePresence>
-        {transitioning && motionEnabled && (
+        {transitioning && motionEnabled ? (
           <motion.div
             className="fixed inset-0 z-[60] bg-black/20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.22 }}
             exit={{ opacity: 0 }}
           />
-        )}
+        ) : null}
       </AnimatePresence>
 
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
-            
-            {/* INTRO */}
-            <section className="relative overflow-x-clip">
+            <section className="relative overflow-hidden">
               <div className="pointer-events-none absolute inset-x-0 top-[-1rem] bottom-[-2.5rem] z-0">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/18 to-transparent backdrop-blur-[2px]" />
               </div>
 
-              <motion.div
-                className="pointer-events-none absolute right-2 top-1 h-20 w-20 rounded-full"
-                animate={{ opacity: presenceSoft ? 0.12 : 0.18 }}
-              >
-                <div className={`h-full w-full rounded-full ${orbGlowClass} blur-[14px]`} />
-              </motion.div>
+              <div className="pointer-events-none absolute right-2 top-2 h-16 w-16 rounded-full opacity-20">
+                <div
+                  className={`h-full w-full rounded-full ${orbGlowClass} blur-xl`}
+                />
+              </div>
 
               <div className="relative z-10">
                 <TodayIntro
@@ -208,16 +169,16 @@ export default function MainHomePage() {
                       return;
                     }
 
-                    router.push(`/main/questions?cat=${recommendedNext}&returnTo=/main`);
+                    router.push(
+                      `/main/questions?cat=${recommendedNext}&returnTo=/main`
+                    );
                   }}
                 />
               </div>
             </section>
 
-            {/* DIVIDER */}
             <div className="my-3.5 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent sm:my-5" />
 
-            {/* NEXT STEPS */}
             <section>
               <NextStepsStack
                 dark={dark}
