@@ -1,4 +1,4 @@
-name: Deploy EverleapUI to Azure
+name: Deploy EverleapDevUI to Azure
 
 on:
   push:
