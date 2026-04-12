@@ -177,8 +177,8 @@ export default function MainHomePage() {
           <div className={pageShell()}>
             
             {/* INTRO */}
-            <section className="relative">
-              <div className="pointer-events-none absolute inset-x-[-1rem] top-[-1rem] bottom-[-2.5rem] z-0">
+            <section className="relative overflow-x-clip">
+              <div className="pointer-events-none absolute inset-x-0 top-[-1rem] bottom-[-2.5rem] z-0">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/18 to-transparent backdrop-blur-[2px]" />
               </div>
 
@@ -217,7 +217,7 @@ export default function MainHomePage() {
             {/* DIVIDER */}
             <div className="my-3.5 h-px w-full bg-gradient-to-r from-transparent via-white/8 to-transparent sm:my-5" />
 
-            {/* NEXT STEPS / TINY TASK */}
+            {/* NEXT STEPS */}
             <section>
               <NextStepsStack
                 dark={dark}
