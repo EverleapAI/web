@@ -647,10 +647,10 @@ export default function MainHomePage() {
       <div className="relative flex min-h-[100svh] flex-col">
         <main className={`relative z-10 flex-1 ${pagePadding()}`}>
           <div className={pageShell()}>
-            <section className="relative overflow-hidden rounded-[1.5rem]">
-              <div className="pointer-events-none absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/5 backdrop-blur-[2px]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.28),transparent_58%)]" />
+            <section className="relative">
+              <div className="pointer-events-none absolute inset-x-[-1rem] top-[-1rem] bottom-[-1.25rem] z-0 sm:inset-x-[-1.25rem] sm:top-[-1.25rem] sm:bottom-[-1.5rem]">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/58 via-black/22 to-transparent backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.22),transparent_58%)]" />
               </div>
 
               <motion.div
@@ -667,7 +667,7 @@ export default function MainHomePage() {
                 />
               </motion.div>
 
-              <div className="relative z-10 px-4 py-5 sm:px-5 sm:py-6 md:px-6">
+              <div className="relative z-10">
                 <TodayIntro
                   dark={dark}
                   motionEnabled={motionEnabled}

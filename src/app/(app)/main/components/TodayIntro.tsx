@@ -60,7 +60,7 @@ export function TodayIntro(props: TodayIntroProps) {
   ].join(" ");
 
   const title = [
-    "mt-2 text-[1.45rem] font-semibold tracking-[-0.02em] leading-tight sm:mt-3 sm:text-[1.75rem]",
+    "mt-2 text-[1.45rem] font-semibold leading-tight tracking-[-0.02em] sm:mt-3 sm:text-[1.75rem]",
     dark ? "text-white" : "text-slate-950",
   ].join(" ");
 
@@ -72,9 +72,7 @@ export function TodayIntro(props: TodayIntroProps) {
   const cta = [
     "group inline-flex items-center gap-2",
     "text-[1.02rem] font-bold transition sm:text-[1.08rem]",
-    dark
-      ? "text-sky-200 hover:text-white"
-      : "text-sky-700 hover:text-sky-900",
+    dark ? "text-sky-200 hover:text-white" : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-white/20"
