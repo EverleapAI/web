@@ -77,7 +77,7 @@ const HOME_MOTIVATIONS_ACTION: ActionDefinition = {
   id: aid("main.home.need_motivations", "real_signal_read"),
   pageId: "main.home.need_motivations",
   title: "Get a real read on what pulls you in",
-  goal: "Notice what actually gives you energy today — not what you think should.",
+  goal: "", // ✅ FIXED (removed instruction line)
   steps: [
     "Pay attention to one moment today where you feel engaged or interested.",
     "Notice one moment that drains your energy.",

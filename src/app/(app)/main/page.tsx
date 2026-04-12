@@ -17,7 +17,7 @@ import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 const SIGNAL_COMPLETE_COUNT = 5;
 
 function pagePadding() {
-  return "pb-24 pt-3 sm:pt-4 lg:pt-5";
+  return "pb-24 pt-1.5 sm:pt-2 lg:pt-3";
 }
 
 function pageShell() {
@@ -36,24 +36,27 @@ export default function MainHomePage() {
   const [transitioning] = React.useState(false);
 
   React.useEffect(() => {
+    const nextVm = buildTodayViewModel();
+    setVm(nextVm);
     setMounted(true);
-    setVm(buildTodayViewModel());
   }, []);
 
-  const progress = vm?.progress ?? {
-    motivationsAnswered: 0,
-    strengthsAnswered: 0,
-    skillsAnswered: 0,
-  };
+  const hasVm = vm !== null;
 
-  const motAnswered = progress.motivationsAnswered ?? 0;
-  const strAnswered = progress.strengthsAnswered ?? 0;
-  const sklAnswered = progress.skillsAnswered ?? 0;
+  const progress = vm?.progress;
+
+  const motAnswered = progress?.motivationsAnswered ?? 0;
+  const strAnswered = progress?.strengthsAnswered ?? 0;
+  const sklAnswered = progress?.skillsAnswered ?? 0;
 
   const isZeroState =
-    motAnswered === 0 && strAnswered === 0 && sklAnswered === 0;
+    hasVm &&
+    motAnswered === 0 &&
+    strAnswered === 0 &&
+    sklAnswered === 0;
 
   const allSignalsComplete =
+    hasVm &&
     motAnswered >= SIGNAL_COMPLETE_COUNT &&
     strAnswered >= SIGNAL_COMPLETE_COUNT &&
     sklAnswered >= SIGNAL_COMPLETE_COUNT;
@@ -66,42 +69,31 @@ export default function MainHomePage() {
         : "skills";
 
   const introTitle = React.useMemo(() => {
-    if (!mounted) return "Let’s start building your direction";
+    if (!hasVm) return "What’s starting to come into focus";
     if (isZeroState) return "Let’s start building your direction";
     if (allSignalsComplete) return "Your direction is starting to take shape";
     return "What’s starting to come into focus";
-  }, [mounted, isZeroState, allSignalsComplete]);
+  }, [hasVm, isZeroState, allSignalsComplete]);
 
-  const paragraphs = React.useMemo(() => {
-    if (!mounted) return [];
-
-    if (isZeroState) {
-      return [
-        <>
-          You don’t need a clear answer yet — that’s not how this works. Everleap
-          uses a science-based system to turn small signals — what pulls you in,
-          what drains you, and how you operate — into clear, usable direction. We
-          start by understanding your motivations, strengths, and skills, then
-          connect them into patterns and real paths you can actually explore. It
-          starts with a few simple questions.
-        </>,
-      ];
+  const introBody = React.useMemo(() => {
+    if (!hasVm) {
+      return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
     }
 
-    return [
-      <>
-        You’ve started giving Everleap something real to work with. The picture
-        is still early, but patterns are beginning to form. Keep going and the
-        guidance gets sharper.
-      </>,
-    ];
-  }, [mounted, isZeroState]);
+    if (isZeroState) {
+      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals — what pulls you in, what drains you, and how you operate — into clear, usable direction. We start by understanding your motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore. It starts with a few simple questions.";
+    }
 
-  const ctaLabel = isZeroState
-    ? "Start with a few questions"
-    : allSignalsComplete
-      ? "Open Insights"
-      : "Continue";
+    return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
+  }, [hasVm, isZeroState]);
+
+  const ctaLabel = !hasVm
+    ? "Continue"
+    : isZeroState
+      ? "Start with a few questions"
+      : allSignalsComplete
+        ? "Open Insights"
+        : "Continue";
 
   return (
     <>
@@ -119,12 +111,8 @@ export default function MainHomePage() {
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
-            <section className="relative overflow-hidden">
-              <div className="pointer-events-none absolute inset-x-0 top-[-1rem] bottom-[-2.5rem] z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-black/54 via-black/20 to-transparent" />
-              </div>
-
-              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.08]">
+            <section className="relative">
+              <div className="pointer-events-none absolute right-3 top-3 h-14 w-14 rounded-full opacity-[0.06]">
                 <div className="h-full w-full rounded-full bg-sky-300/30" />
               </div>
 
@@ -134,9 +122,14 @@ export default function MainHomePage() {
                   dark={dark}
                   motionEnabled={motionEnabled}
                   isTransitioning={transitioning}
-                  paragraphs={paragraphs}
+                  body={introBody}
                   primaryCtaLabel={ctaLabel}
                   onPrimary={() => {
+                    if (!hasVm) {
+                      router.push("/main/insights");
+                      return;
+                    }
+
                     if (isZeroState) {
                       router.push("/main/questions?cat=motivations&returnTo=/main");
                       return;
@@ -155,9 +148,7 @@ export default function MainHomePage() {
               </div>
             </section>
 
-            <div className="my-4 h-px w-full bg-white/6 sm:my-5" />
-
-            <section>
+            <section className="mt-6 sm:mt-8">
               <NextStepsStack
                 dark={dark}
                 useLocal={mounted}

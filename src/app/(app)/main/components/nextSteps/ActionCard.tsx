@@ -3,11 +3,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import type {
-  ActionItem,
-  ActionProof,
-  ActionStatus,
-} from "@/app/(app)/main/domain/actions";
+import type { ActionItem, ActionProof } from "@/app/(app)/main/domain/actions";
 import {
   loadActions,
   saveActions,
@@ -38,29 +34,23 @@ type Props = {
 };
 
 /* =============================================================================
-   Unified type system
+   Type system
    ============================================================================= */
 
 function muted(dark: boolean) {
-  return dark ? "text-white/40" : "text-slate-600";
+  return dark ? "text-white/50" : "text-slate-600";
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white/82" : "text-slate-900";
+  return dark ? "text-white/84" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/60" : "text-slate-700";
+  return dark ? "text-white/68" : "text-slate-700";
 }
 
-function actionLink(dark: boolean) {
-  return [
-    "text-sm font-medium transition",
-    "focus-visible:outline-none",
-    dark
-      ? "text-white/66 hover:text-white/78 focus-visible:ring-2 focus-visible:ring-white/12"
-      : "text-slate-700 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-slate-900/12",
-  ].join(" ");
+function noteText(dark: boolean) {
+  return dark ? "text-white/90" : "text-slate-950";
 }
 
 function drawerButton(dark: boolean, emph = false) {
@@ -77,32 +67,33 @@ function drawerButton(dark: boolean, emph = false) {
   ].join(" ");
 }
 
-function statusLabel(status: ActionStatus) {
-  if (status === "done") return "Done";
-  if (status === "started") return "In progress";
-  return "Planned";
+function primaryActionLink(dark: boolean) {
+  return [
+    "group inline-flex items-center gap-1.5",
+    "text-[15px] font-medium transition",
+    "focus-visible:outline-none",
+    dark
+      ? "text-white/86 hover:text-white focus-visible:ring-2 focus-visible:ring-white/12"
+      : "text-slate-900 hover:text-black focus-visible:ring-2 focus-visible:ring-slate-900/12",
+  ].join(" ");
 }
 
-function relativeTime(ts: number) {
-  const d = Date.now() - ts;
-  const min = Math.floor(d / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 48) return `${hr}h ago`;
-  const days = Math.floor(hr / 24);
-  return `${days}d ago`;
+function secondaryActionLink(dark: boolean) {
+  return [
+    "group inline-flex items-center gap-1.5",
+    "text-[15px] font-medium transition",
+    "focus-visible:outline-none",
+    dark
+      ? "text-white/78 hover:text-white/92 focus-visible:ring-2 focus-visible:ring-white/12"
+      : "text-slate-800 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-slate-900/12",
+  ].join(" ");
 }
 
 /* =============================================================================
-   Component (unchanged logic, only typography)
+   Component
    ============================================================================= */
 
-export function ActionCard({
-  dark,
-  useLocal,
-  definition,
-}: Props) {
+export function ActionCard({ dark, useLocal, definition }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
   const [proofOpen, setProofOpen] = React.useState(false);
   const [proofText, setProofText] = React.useState("");
@@ -143,14 +134,16 @@ export function ActionCard({
     persist(setActionStatus(items, persisted.id, "started"));
   }
 
-  function onDone() {
-    const persisted = ensurePersisted();
-    persist(setActionStatus(items, persisted.id, "done"));
-  }
-
   function onLogProof() {
-    ensurePersisted();
-    setProofText("");
+    const persisted = ensurePersisted();
+    const existingProof = persisted.proof;
+
+    if (existingProof?.kind === "text") {
+      setProofText(existingProof.text);
+    } else {
+      setProofText("");
+    }
+
     setProofOpen(true);
   }
 
@@ -160,55 +153,91 @@ export function ActionCard({
     if (!trimmed) return;
 
     const proof: ActionProof = { kind: "text", text: trimmed };
-    persist(attachActionProof(items, persisted.id, proof));
+
+    let next = attachActionProof(items, persisted.id, proof);
+    next = setActionStatus(next, persisted.id, "done");
+
+    persist(next);
     setProofOpen(false);
   }
 
   const persistedItem = items.find((x) => x.id === current.id);
-  const status = (persistedItem?.status ?? current.status) as ActionStatus;
+  const resolvedItem = persistedItem ?? current;
+  const proof = resolvedItem.proof;
+  const hasTextProof = proof?.kind === "text" && proof.text.trim().length > 0;
 
   return (
     <>
-      <div className="mt-4">
-        {definition.steps?.length && (
+      <div>
+        {definition.steps?.length ? (
           <ul className="space-y-2">
             {definition.steps.map((s, idx) => (
               <li key={idx} className="flex items-start gap-3">
                 <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/20" />
-                <div className={`text-sm leading-relaxed ${softText(dark)}`}>
+                <div className={`text-[15px] leading-7 ${softText(dark)}`}>
                   {s}
                 </div>
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {hasTextProof ? (
+          <div className="mt-5">
+            <div className={`text-[13px] ${muted(dark)}`}>Your note</div>
+
+            <div
+              className={`mt-1.5 max-w-[42rem] text-[18px] leading-7 ${noteText(
+                dark
+              )}`}
+            >
+              {proof.text}
+            </div>
+
+            <div className="mt-3">
+              <motion.button
+                type="button"
+                onClick={onLogProof}
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                className={secondaryActionLink(dark)}
+              >
+                <span>Edit note</span>
+                <span className="transition-transform group-hover:translate-x-[2px]">
+                  →
+                </span>
+              </motion.button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5">
+            <div className={`text-[13px] ${muted(dark)}`}>Give this a try</div>
+
+            <div className="mt-3">
+              <motion.button
+                type="button"
+                onClick={onStart}
+                whileHover={{ x: 3 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                className={primaryActionLink(dark)}
+              >
+                <span>Start</span>
+                <span className="transition-transform group-hover:translate-x-[2px]">
+                  →
+                </span>
+              </motion.button>
+            </div>
+          </div>
         )}
-
-        <div className={`mt-4 text-xs ${muted(dark)}`}>
-          {statusLabel(status)}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-5">
-          <button type="button" onClick={onStart} className={actionLink(dark)}>
-            Start
-          </button>
-          <button type="button" onClick={onDone} className={actionLink(dark)}>
-            Mark done
-          </button>
-          <button
-            type="button"
-            onClick={onLogProof}
-            className={actionLink(dark)}
-          >
-            Log result
-          </button>
-        </div>
       </div>
 
       <AnimatePresence>
-        {proofOpen && (
+        {proofOpen ? (
           <>
             <motion.div
-              className="fixed inset-0 bg-black/42"
+              className="fixed inset-0 z-40 bg-black/42"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -216,23 +245,27 @@ export function ActionCard({
             />
 
             <motion.div
-              className="fixed bottom-0 left-0 right-0 mx-auto max-w-3xl"
+              className="fixed inset-x-0 top-6 bottom-[92px] z-50 flex items-end px-4"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
             >
-              <div className="m-3 rounded-2xl border border-white/10 bg-[#0b1020]/98 p-5">
-                <div className={`text-lg font-semibold ${text(dark)}`}>
-                  What happened?
+              <div className="mx-auto flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1020]/98 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+                <div className="flex-1 overflow-y-auto p-5 pb-4">
+                  <div className={`text-lg font-semibold ${text(dark)}`}>
+                    {hasTextProof ? "Edit your note" : "What did you notice?"}
+                  </div>
+
+                  <textarea
+                    value={proofText}
+                    onChange={(e) => setProofText(e.target.value)}
+                    rows={5}
+                    className="mt-3 min-h-[140px] w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white/82 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12"
+                  />
                 </div>
 
-                <textarea
-                  value={proofText}
-                  onChange={(e) => setProofText(e.target.value)}
-                  className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white/82 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12"
-                />
-
-                <div className="mt-4 flex justify-between">
+                <div className="flex shrink-0 items-center justify-between border-t border-white/10 bg-[#0b1020]/98 px-5 py-4">
                   <button
                     type="button"
                     onClick={() => setProofOpen(false)}
@@ -240,6 +273,7 @@ export function ActionCard({
                   >
                     Cancel
                   </button>
+
                   <button
                     type="button"
                     onClick={saveProof}
@@ -251,7 +285,7 @@ export function ActionCard({
               </div>
             </motion.div>
           </>
-        )}
+        ) : null}
       </AnimatePresence>
     </>
   );

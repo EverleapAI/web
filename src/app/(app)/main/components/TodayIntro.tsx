@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronRight, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 /* =============================================================================
    Types
@@ -17,7 +17,6 @@ export type RecommendedNext = "motivations" | "strengths" | "skills";
 const fadeIn = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 2 },
 };
 
 /* =============================================================================
@@ -29,7 +28,7 @@ export type TodayIntroProps = {
   dark: boolean;
   motionEnabled: boolean;
   isTransitioning?: boolean;
-  paragraphs: React.ReactNode[];
+  body?: string;
   primaryCtaLabel?: string;
   onPrimary?: () => void;
 };
@@ -57,6 +56,7 @@ function heroBodyClass(dark: boolean) {
   return [
     "mt-2.5 max-w-[46rem] text-[14.5px] leading-6",
     "sm:mt-3 sm:text-[15.5px] sm:leading-7",
+    "whitespace-normal break-words",
     dark ? "text-white/60" : "text-slate-800",
   ].join(" ");
 }
@@ -67,7 +67,7 @@ function ctaClass(dark: boolean) {
     "text-[1.02rem] font-medium transition",
     "sm:text-[1.05rem]",
     dark
-      ? "text-white/66 hover:text-white/78"
+      ? "text-white/72 hover:text-white/82"
       : "text-sky-700 hover:text-sky-900",
     "focus-visible:outline-none",
   ].join(" ");
@@ -79,6 +79,10 @@ function iconClass(dark: boolean) {
     : "h-3.5 w-3.5 text-amber-700";
 }
 
+function defaultBody() {
+  return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
+}
+
 /* =============================================================================
    Component
    ============================================================================= */
@@ -88,11 +92,12 @@ export function TodayIntro(props: TodayIntroProps) {
     title: introTitle,
     dark,
     motionEnabled,
-    isTransitioning = false,
-    paragraphs,
+    body,
     primaryCtaLabel,
     onPrimary,
   } = props;
+
+  const resolvedBody = body?.trim() || defaultBody();
 
   return (
     <div className="relative">
@@ -102,61 +107,39 @@ export function TodayIntro(props: TodayIntroProps) {
       </div>
 
       <h1 className={heroTitleClass(dark)}>
-        {introTitle ?? "Let’s start building your direction"}
+        {introTitle ?? "Your direction is starting to take shape"}
       </h1>
 
-      <div
-        className={
-          motionEnabled
-            ? isTransitioning
-              ? "opacity-70"
-              : "opacity-100"
-            : ""
-        }
-      >
-        {paragraphs?.length ? (
-          <div className={heroBodyClass(dark)}>
-            {paragraphs.map((p, i) => (
-              <p key={i} className={i > 0 ? "mt-3.5" : ""}>
-                {p}
-              </p>
-            ))}
-          </div>
-        ) : null}
+      <p className={heroBodyClass(dark)}>{resolvedBody}</p>
 
-        {primaryCtaLabel ? (
-          <div className="mt-3 sm:mt-4">
-            <AnimatePresence mode="wait" initial={false}>
-              {motionEnabled ? (
-                <motion.button
-                  key="today_primary"
-                  type="button"
-                  onClick={onPrimary}
-                  initial={fadeIn.initial}
-                  animate={fadeIn.animate}
-                  exit={fadeIn.exit}
-                  transition={{ duration: 0.32, ease: "easeOut" }}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.995 }}
-                  className={ctaClass(dark)}
-                >
-                  <span>{primaryCtaLabel}</span>
-                  <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
-                </motion.button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onPrimary}
-                  className={ctaClass(dark)}
-                >
-                  <span>{primaryCtaLabel}</span>
-                  <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
-                </button>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : null}
-      </div>
+      {primaryCtaLabel ? (
+        <div className="mt-3 sm:mt-4">
+          {motionEnabled ? (
+            <motion.button
+              type="button"
+              onClick={onPrimary}
+              initial={fadeIn.initial}
+              animate={fadeIn.animate}
+              transition={{ duration: 0.32, ease: "easeOut" }}
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.995 }}
+              className={ctaClass(dark)}
+            >
+              <span>{primaryCtaLabel}</span>
+              <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
+            </motion.button>
+          ) : (
+            <button
+              type="button"
+              onClick={onPrimary}
+              className={ctaClass(dark)}
+            >
+              <span>{primaryCtaLabel}</span>
+              <ChevronRight className="h-4 w-4 opacity-75 transition group-hover:translate-x-[3px]" />
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

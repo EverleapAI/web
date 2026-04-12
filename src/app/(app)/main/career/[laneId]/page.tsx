@@ -12,11 +12,7 @@ import StepperShell from "@/components/career/StepperShell";
 import { getCareerLane } from "@/components/career/lanes";
 import type { StepperLaneId } from "@/components/career/stepperTypes";
 
-import {
-  isDarkTheme,
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+import { type GradientLevel } from "@/theme/everleapVisuals";
 
 /**
  * Back vs Exit behavior:
@@ -41,9 +37,8 @@ export default function CareerLanePage() {
   const laneId = (params?.laneId ?? "") as StepperLaneId;
   const lane = React.useMemo(() => getCareerLane(laneId), [laneId]);
 
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
-  const dark = isDarkTheme(themeId);
+  const [gradientLevel] = React.useState<GradientLevel>(3);
+  const dark = true;
 
   const mode = searchParams?.get("mode") ?? "";
   const exitHref = mode === "explore" ? "/main/explore" : "/main/insights";
@@ -59,14 +54,7 @@ export default function CareerLanePage() {
 
   if (!lane) {
     return (
-      <AppChrome
-        themeId={themeId}
-        setThemeId={setThemeId}
-        gradientLevel={gradientLevel}
-        setGradientLevel={setGradientLevel}
-        orbSource="career_lane_missing"
-        ambientCap={0.35}
-      >
+      <AppChrome gradientLevel={gradientLevel}>
         <div className="relative flex min-h-[100svh] flex-col">
           <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8">
             <div
@@ -121,14 +109,7 @@ export default function CareerLanePage() {
   }
 
   return (
-    <AppChrome
-      themeId={themeId}
-      setThemeId={setThemeId}
-      gradientLevel={gradientLevel}
-      setGradientLevel={setGradientLevel}
-      orbSource={`career_${lane.laneId}`}
-      ambientCap={0.35}
-    >
+    <AppChrome gradientLevel={gradientLevel}>
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8">
           <StepperShell

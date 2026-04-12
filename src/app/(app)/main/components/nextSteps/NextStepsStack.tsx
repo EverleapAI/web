@@ -57,7 +57,7 @@ function sectionTitleClass(dark: boolean) {
 
 function sectionBodyClass(dark: boolean) {
   return [
-    "mt-2 max-w-[44rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
+    "mt-1.5 max-w-[44rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
     dark ? "text-white/60" : "text-slate-700",
   ].join(" ");
 }
@@ -81,7 +81,7 @@ export function NextStepsStack({
 }: Props) {
   return (
     <div className="w-full">
-      <div className="grid gap-10 sm:gap-12">
+      <div className="grid gap-9 sm:gap-10">
         <section>
           <div className={eyebrowRowClass()}>
             <Sparkles
@@ -95,13 +95,7 @@ export function NextStepsStack({
             {definition.tinyTask.title}
           </h3>
 
-          {definition.tinyTask.prompt ? (
-            <p className={sectionBodyClass(dark)}>
-              {definition.tinyTask.prompt}
-            </p>
-          ) : null}
-
-          <div className="mt-4 sm:mt-5">
+          <div className="mt-3.5 sm:mt-4">
             <TinyTaskCard
               dark={dark}
               useLocal={useLocal}
@@ -123,9 +117,13 @@ export function NextStepsStack({
             {definition.action.title}
           </h3>
 
-          <p className={sectionBodyClass(dark)}>{definition.action.goal}</p>
+          {definition.action.goal ? (
+            <p className={sectionBodyClass(dark)}>
+              {definition.action.goal}
+            </p>
+          ) : null}
 
-          <div className="mt-4 sm:mt-5">
+          <div className="mt-3.5 sm:mt-4">
             <ActionCard
               dark={dark}
               useLocal={useLocal}

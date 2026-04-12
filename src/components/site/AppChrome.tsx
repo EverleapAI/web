@@ -1,10 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+import { type GradientLevel } from "@/theme/everleapVisuals";
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -94,6 +91,14 @@ export type AppChromeProps = {
   hideHeader?: boolean;
   minimalBackground?: boolean;
   flushContent?: boolean;
+
+  // Legacy props accepted for backward compatibility.
+  // They are intentionally ignored.
+  themeId?: unknown;
+  setThemeId?: unknown;
+  setGradientLevel?: unknown;
+  orbSource?: unknown;
+  ambientCap?: unknown;
 };
 
 function intensityForLevel(level: GradientLevel | undefined) {
@@ -121,7 +126,7 @@ export function AppChrome({
   const contentClasses =
     hideHeader || flushContent
       ? "flex-1 px-0 pt-0 pb-0"
-      : "flex-1 px-4 pt-2 pb-6 sm:px-6 lg:px-8";
+      : "flex-1 px-4 pt-1 pb-6 sm:px-6 lg:px-8";
 
   return (
     <div className={cx(rootClasses, className)}>
@@ -149,7 +154,7 @@ export function AppChrome({
             boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
           }}
         >
-          <div className="mx-auto flex max-w-6xl items-center px-4 py-2.5">
+          <div className="mx-auto flex max-w-6xl items-center px-4 py-1.5">
             <EverleapMark subtitle={brandSubtitle} />
           </div>
         </header>

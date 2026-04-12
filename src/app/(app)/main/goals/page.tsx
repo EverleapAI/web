@@ -331,7 +331,6 @@ function accentBarClass(accent: InsightRec["accent"]): string {
 }
 
 function subtleTintClass(accent: AlignedGoal["accent"]): string {
-  // very minimal: just a faint left gradient + slightly different border tone
   switch (accent) {
     case "sky":
       return "before:from-sky-400/20 before:via-cyan-400/5 before:to-transparent border-white/10";
@@ -379,7 +378,6 @@ function statusChipClasses(status: GoalStatus, dark: boolean) {
     if (status === "idea") return base + " border-white/10 bg-white/5 text-slate-200/80";
     return base + " border-slate-600/80 bg-slate-900/80 text-slate-300/90";
   }
-  // light fallback (rare for now)
   return base + " border-slate-200 bg-white text-slate-700";
 }
 
@@ -390,26 +388,19 @@ function statusChipClasses(status: GoalStatus, dark: boolean) {
 const SWIPE_HINT_KEY = "everleap.goals.swipeHint.v1";
 
 export default function GoalsPage() {
-  // Shared AppChrome visual state
-  const [themeId, setThemeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const [gradientLevel, setGradientLevel] = React.useState<GradientLevel>(3);
+  const themeId: SpotlightThemeId = "nightDusk";
+  const gradientLevel: GradientLevel = 3;
 
   const dark = isDarkTheme(themeId);
   const theme = INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
 
-  // Which recommendation we’re on (1..4)
   const [recIndex, setRecIndex] = React.useState(0);
-
-  // One-time swipe hint
   const [showSwipeHint, setShowSwipeHint] = React.useState(false);
-
-  // Infinite feed
   const [feedCount, setFeedCount] = React.useState(6);
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
 
   const rec = RECS[recIndex];
 
-  // Surface styles match Spotlight/Insights
   const cardShadow = dark
     ? "shadow-[0_24px_80px_rgba(0,0,0,0.75)]"
     : "shadow-[0_16px_45px_rgba(0,0,0,0.18)]";
@@ -421,7 +412,6 @@ export default function GoalsPage() {
 
   const pageTextMutedClass = dark ? "text-slate-300/90" : "text-slate-600";
 
-  // One-time swipe hint (show for a few seconds, then never again)
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -437,12 +427,10 @@ export default function GoalsPage() {
     return () => window.clearTimeout(t);
   }, []);
 
-  // Keep feed consistent per recommendation
   React.useEffect(() => {
     setFeedCount(6);
   }, [recIndex]);
 
-  // Infinite scroll observer (fixed deps)
   React.useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -460,7 +448,6 @@ export default function GoalsPage() {
     return () => obs.disconnect();
   }, [recIndex, rec.alignedIdeas.length]);
 
-  // Swipe on the hero header area (minimal + reliable)
   const drag = React.useRef<{ x: number; active: boolean } | null>(null);
 
   const goPrev = React.useCallback(() => {
@@ -481,7 +468,6 @@ export default function GoalsPage() {
     if (!d?.active) return;
 
     const dx = e.clientX - d.x;
-    // Ignore small drags
     if (Math.abs(dx) < 40) return;
 
     if (dx < 0) goNext();
@@ -505,19 +491,9 @@ export default function GoalsPage() {
   };
 
   return (
-    <AppChrome
-      themeId={themeId}
-      setThemeId={setThemeId}
-      gradientLevel={gradientLevel}
-      setGradientLevel={setGradientLevel}
-      orbSource="goals_orb"
-      ambientCap={0.35}
-    >
+    <AppChrome>
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
-          {/* =========================
-              HEADER (swipe-able)
-             ========================= */}
           <section
             className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
             onPointerDown={onPointerDown}
@@ -533,7 +509,6 @@ export default function GoalsPage() {
               />
             )}
 
-            {/* subtle accent bar */}
             <div
               className={`pointer-events-none absolute left-0 top-8 hidden h-[70%] w-[2px] rounded-full bg-gradient-to-b ${accentBarClass(
                 rec.accent
@@ -561,7 +536,6 @@ export default function GoalsPage() {
 
                   <p className={`mt-2 max-w-2xl text-sm ${pageTextMutedClass}`}>{rec.summary}</p>
 
-                  {/* tags */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {rec.tags.map((t) => (
                       <span
@@ -579,7 +553,6 @@ export default function GoalsPage() {
                   </div>
                 </div>
 
-                {/* Pager (chevrons + dots + one-time hint pill) */}
                 <div className="shrink-0">
                   <div className="flex items-center justify-end gap-2">
                     <button
@@ -639,7 +612,6 @@ export default function GoalsPage() {
                     </button>
                   </div>
 
-                  {/* one-time hint (minimal) */}
                   {showSwipeHint ? (
                     <div className="mt-2 flex justify-end">
                       <div
@@ -663,12 +635,8 @@ export default function GoalsPage() {
             </div>
           </section>
 
-          {/* =========================
-              NEXT MOVE
-             ========================= */}
           <section className="mt-5">
             <div className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
-              {/* accent rail */}
               <div
                 className={`pointer-events-none absolute left-0 top-7 h-[78%] w-[2px] rounded-full bg-gradient-to-b ${accentBarClass(
                   rec.accent
@@ -686,7 +654,6 @@ export default function GoalsPage() {
                     <span className="font-semibold">Next step:</span> {rec.nextMove.nextStep}
                   </div>
 
-                  {/* why chips */}
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <span className={`text-xs font-semibold ${dark ? "text-slate-300/70" : "text-slate-600"}`}>
                       Why this:
@@ -705,7 +672,6 @@ export default function GoalsPage() {
                     ))}
                   </div>
 
-                  {/* today box */}
                   <div
                     className={`mt-5 rounded-3xl border px-4 py-4 ${
                       dark ? "border-white/10 bg-slate-950/35" : "border-slate-200 bg-white"
@@ -730,7 +696,6 @@ export default function GoalsPage() {
                     </div>
                   </div>
 
-                  {/* CTA row */}
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     <button
                       type="button"
@@ -777,9 +742,6 @@ export default function GoalsPage() {
             </div>
           </section>
 
-          {/* =========================
-              COACH CHECK (feedback CTA)
-             ========================= */}
           <section className="mt-5">
             <div className={`rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -815,9 +777,6 @@ export default function GoalsPage() {
             </div>
           </section>
 
-          {/* =========================
-              ALIGNED IDEAS (true-ish infinite scroll)
-             ========================= */}
           <section className="mt-7">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
@@ -897,7 +856,6 @@ export default function GoalsPage() {
                 </button>
               ))}
 
-              {/* sentinel for infinite load */}
               <div ref={sentinelRef} className="h-6" />
 
               {feedCount >= rec.alignedIdeas.length ? (
