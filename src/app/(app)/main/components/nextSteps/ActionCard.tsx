@@ -46,15 +46,15 @@ type Props = {
    ============================================================================= */
 
 function muted(dark: boolean) {
-  return dark ? "text-white/60" : "text-slate-600";
+  return dark ? "text-white/44" : "text-slate-600";
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
+  return dark ? "text-white/88" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/78" : "text-slate-700";
+  return dark ? "text-white/60" : "text-slate-700";
 }
 
 function actionLink(dark: boolean) {
@@ -62,7 +62,7 @@ function actionLink(dark: boolean) {
     "text-sm font-medium transition",
     "focus-visible:outline-none",
     dark
-      ? "text-white/82 hover:text-white focus-visible:ring-2 focus-visible:ring-white/18"
+      ? "text-white/62 hover:text-white/82 focus-visible:ring-2 focus-visible:ring-white/14"
       : "text-slate-700 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-slate-900/12",
   ].join(" ");
 }
@@ -73,8 +73,8 @@ function drawerButton(dark: boolean, emph = false) {
     "focus-visible:outline-none",
     dark
       ? emph
-        ? "bg-white text-slate-950 hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-white/20"
-        : "bg-white/8 text-white/82 hover:bg-white/12 focus-visible:ring-2 focus-visible:ring-white/16"
+        ? "bg-white/90 text-slate-950 hover:bg-white/84 focus-visible:ring-2 focus-visible:ring-white/16"
+        : "bg-white/[0.06] text-white/72 hover:bg-white/[0.09] focus-visible:ring-2 focus-visible:ring-white/12"
       : emph
         ? "bg-slate-950 text-white hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-900/12"
         : "bg-black/5 text-slate-700 hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-slate-900/10",
@@ -264,7 +264,7 @@ export function ActionCard({
                   aria-hidden
                   className={[
                     "mt-2 inline-block h-1.5 w-1.5 rounded-full",
-                    dark ? "bg-white/30" : "bg-black/20",
+                    dark ? "bg-white/22" : "bg-black/20",
                   ].join(" ")}
                 />
                 <div className={`text-sm leading-relaxed ${softText(dark)}`}>{s}</div>
@@ -301,7 +301,7 @@ export function ActionCard({
             <div
               className={[
                 "text-[11px] font-semibold uppercase tracking-[0.18em]",
-                dark ? "text-white/46" : "text-slate-500",
+                dark ? "text-white/38" : "text-slate-500",
               ].join(" ")}
             >
               Your logs
@@ -315,7 +315,7 @@ export function ActionCard({
                     key={`${tsOk ? e.ts : "legacy"}_${idx}`}
                     className={[
                       "rounded-2xl border px-3.5 py-3",
-                      dark ? "border-white/10 bg-white/[0.03]" : "border-black/10 bg-black/[0.02]",
+                      dark ? "border-white/8 bg-white/[0.02]" : "border-black/10 bg-black/[0.02]",
                     ].join(" ")}
                   >
                     <div className={`text-sm leading-relaxed ${softText(dark)}`}>{e.text}</div>
@@ -339,7 +339,7 @@ export function ActionCard({
           <>
             <motion.div
               aria-hidden
-              className="fixed inset-0 z-40 bg-black/35 backdrop-blur-[4px]"
+              className="fixed inset-0 z-40 bg-black/42"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -359,8 +359,8 @@ export function ActionCard({
                 className={[
                   "mx-3 mb-3 overflow-hidden rounded-[28px] border shadow-[0_-18px_60px_rgba(0,0,0,0.28)]",
                   dark
-                    ? "border-white/12 bg-[#0b1020]/96 backdrop-blur-2xl"
-                    : "border-black/10 bg-white/96 backdrop-blur-2xl",
+                    ? "border-white/10 bg-[#0b1020]/98"
+                    : "border-black/10 bg-white/98",
                 ].join(" ")}
               >
                 <div className="px-5 pb-5 pt-3 sm:px-6 sm:pb-6 sm:pt-4">
@@ -368,7 +368,7 @@ export function ActionCard({
                     <div
                       className={[
                         "h-1.5 w-12 rounded-full",
-                        dark ? "bg-white/14" : "bg-black/10",
+                        dark ? "bg-white/10" : "bg-black/10",
                       ].join(" ")}
                     />
                   </div>
@@ -384,7 +384,7 @@ export function ActionCard({
                         <span
                           className={
                             dark
-                              ? "font-semibold text-white/86"
+                              ? "font-semibold text-white/82"
                               : "font-semibold text-slate-900"
                           }
                         >
@@ -415,7 +415,7 @@ export function ActionCard({
                       className={[
                         "w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition",
                         dark
-                          ? "border-white/12 bg-white/7 text-white placeholder:text-white/38 focus-visible:ring-2 focus-visible:ring-white/18 focus-visible:border-white/18"
+                          ? "border-white/10 bg-white/[0.04] text-white/84 placeholder:text-white/30 focus-visible:ring-2 focus-visible:ring-white/12 focus-visible:border-white/14"
                           : "border-black/10 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-slate-900/12 focus-visible:border-black/15",
                       ].join(" ")}
                     />

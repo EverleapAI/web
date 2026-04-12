@@ -23,10 +23,10 @@ export type TinyTasksProps = {
 export function TinyTasks(props: TinyTasksProps) {
   const { dark, tasks, onOpenTask } = props;
 
-  const text = dark ? "text-white" : "text-slate-900";
-  const sub = dark ? "text-white/60" : "text-slate-600";
-  const divider = dark ? "border-white/10" : "border-black/10";
-  const arrow = dark ? "text-white/30" : "text-slate-400";
+  const text = dark ? "text-white/88" : "text-slate-900";
+  const sub = dark ? "text-white/50" : "text-slate-600";
+  const divider = dark ? "border-white/8" : "border-black/10";
+  const arrow = dark ? "text-white/22" : "text-slate-400";
 
   const statusText = (status: TinyTaskSummary["status"]) => {
     if (status === "done") return "Done";
@@ -50,12 +50,15 @@ export function TinyTasks(props: TinyTasksProps) {
             >
               <button
                 type="button"
-                onClick={() => (disabled ? undefined : onOpenTask(t.id))}
+                onClick={() => {
+                  if (!disabled) onOpenTask(t.id);
+                }}
+                disabled={disabled}
                 className={[
                   "w-full text-left transition",
                   disabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:opacity-90",
+                    ? "cursor-not-allowed opacity-45"
+                    : "hover:opacity-85",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -75,7 +78,7 @@ export function TinyTasks(props: TinyTasksProps) {
                     ) : null}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex shrink-0 items-center gap-2">
                     <div className={`text-[12px] ${sub}`}>
                       {statusText(t.status)}
                     </div>

@@ -24,7 +24,7 @@ type Props = {
 };
 
 /* =============================================================================
-   UI helpers
+   UI helpers (SOFTENED)
    ============================================================================= */
 
 function optionBase(dark: boolean, selected: boolean) {
@@ -32,15 +32,17 @@ function optionBase(dark: boolean, selected: boolean) {
     "w-full text-left rounded-xl px-4 py-3",
     "text-sm font-medium transition",
     "focus-visible:outline-none",
+
     dark
       ? selected
-        ? "bg-white/10 text-white ring-1 ring-emerald-300/28"
-        : "bg-white/5 hover:bg-white/10 text-white/92"
+        ? "bg-white/[0.07] text-white/88 ring-1 ring-emerald-300/16"
+        : "bg-white/[0.035] hover:bg-white/[0.06] text-white/78"
       : selected
         ? "bg-black/8 text-slate-950 ring-1 ring-emerald-500/22"
         : "bg-black/5 hover:bg-black/10 text-slate-900",
+
     dark
-      ? "focus-visible:ring-2 focus-visible:ring-emerald-300/24"
+      ? "focus-visible:ring-2 focus-visible:ring-emerald-300/20"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/18",
   ].join(" ");
 }
@@ -48,12 +50,13 @@ function optionBase(dark: boolean, selected: boolean) {
 function checkWrap(dark: boolean, selected: boolean) {
   return [
     "flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition",
+
     selected
       ? dark
-        ? "bg-emerald-300/16 text-emerald-100 ring-1 ring-emerald-300/24"
+        ? "bg-emerald-300/12 text-emerald-100 ring-1 ring-emerald-300/14"
         : "bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/18"
       : dark
-        ? "bg-white/8 text-white/22"
+        ? "bg-white/6 text-white/20"
         : "bg-black/6 text-black/18",
   ].join(" ");
 }
@@ -102,12 +105,24 @@ export function TinyTaskCard({
             aria-pressed={selected}
           >
             <div className="flex items-center justify-between gap-3">
-              <span className={selected ? "text-white" : dark ? "text-white/92" : "text-slate-900"}>
+              <span
+                className={
+                  selected
+                    ? "text-white/88"
+                    : dark
+                    ? "text-white/78"
+                    : "text-slate-900"
+                }
+              >
                 {opt.label}
               </span>
 
               <span className={checkWrap(dark, selected)} aria-hidden>
-                {selected ? <Check className="h-3.5 w-3.5" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+                {selected ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                )}
               </span>
             </div>
           </button>
