@@ -66,7 +66,7 @@ export function TodayIntro(props: TodayIntroProps) {
 
   const body = [
     "mt-3 max-w-[52rem] text-[15px] leading-6 sm:mt-4 sm:text-[16px] sm:leading-7",
-    dark ? "text-white/82" : "text-slate-800",
+    dark ? "text-white/90" : "text-slate-800",
   ].join(" ");
 
   const cta = [
