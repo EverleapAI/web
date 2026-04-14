@@ -74,14 +74,15 @@ function optionBase(dark: boolean, selected: boolean) {
     "focus-visible:outline-none",
     dark
       ? selected
-        ? "bg-[linear-gradient(135deg,rgba(18,30,46,0.96)_0%,rgba(12,22,38,1)_100%)] text-white/92 ring-1 ring-white/10"
-        : // 🔥 DARKENED (main fix)
-          "bg-[linear-gradient(135deg,rgba(28,48,70,0.82)_0%,rgba(24,44,68,0.86)_100%)] hover:bg-[linear-gradient(135deg,rgba(32,54,78,0.86)_0%,rgba(28,50,72,0.90)_100%)] text-white/82 ring-1 ring-white/8"
+        ? // softened selected
+          "bg-[linear-gradient(135deg,rgba(18,30,46,0.94)_0%,rgba(12,22,38,0.98)_100%)] text-white/82 ring-1 ring-white/8"
+        : // slightly calmer default
+          "bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] hover:bg-[linear-gradient(135deg,rgba(32,54,78,0.82)_0%,rgba(28,50,72,0.86)_100%)] text-white/72 ring-1 ring-white/6"
       : selected
         ? "bg-slate-200 text-slate-950 ring-1 ring-slate-300"
         : "bg-white text-slate-900 hover:bg-slate-50 ring-1 ring-black/8",
     dark
-      ? "focus-visible:ring-2 focus-visible:ring-teal-300/20"
+      ? "focus-visible:ring-2 focus-visible:ring-teal-300/18"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
     "shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
   ].join(" ");
@@ -89,7 +90,7 @@ function optionBase(dark: boolean, selected: boolean) {
 
 function labelClass(dark: boolean, selected: boolean) {
   if (!dark) return "text-slate-900";
-  return selected ? "text-white/92" : "text-white/82";
+  return selected ? "text-white/82" : "text-white/72";
 }
 
 function checkWrap(dark: boolean, selected: boolean) {
@@ -97,10 +98,10 @@ function checkWrap(dark: boolean, selected: boolean) {
     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition",
     selected
       ? dark
-        ? "bg-teal-300/16 text-teal-100 ring-1 ring-teal-300/24"
+        ? "bg-teal-300/14 text-teal-100/90 ring-1 ring-teal-300/20"
         : "bg-emerald-500/12 text-emerald-700 ring-1 ring-emerald-500/18"
       : dark
-        ? "bg-white/[0.04] text-white/28 ring-1 ring-white/7"
+        ? "bg-white/[0.035] text-white/26 ring-1 ring-white/6"
         : "bg-black/6 text-black/18 ring-1 ring-black/6",
   ].join(" ");
 }
@@ -133,7 +134,7 @@ export function TinyTaskCard({ dark, useLocal, definition }: Props) {
       <div className="mb-1">
         <div className="mb-2 flex items-center gap-2">
           <TinyTaskLead dark={dark} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/42">
             Tiny Task
           </span>
         </div>
@@ -141,7 +142,7 @@ export function TinyTaskCard({ dark, useLocal, definition }: Props) {
         <div
           className={
             dark
-              ? "text-[17px] font-semibold tracking-[-0.01em] text-white/90 sm:text-[18px] mb-3"
+              ? "text-[17px] font-semibold tracking-[-0.01em] text-white/76 sm:text-[18px] mb-3"
               : "text-[17px] font-semibold tracking-[-0.01em] text-slate-950 sm:text-[18px] mb-3"
           }
         >

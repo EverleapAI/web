@@ -40,12 +40,12 @@ export function SignalWord({
   }, [open]);
 
   const textClass = subtle
-    ? "text-white/88 focus-visible:ring-2 focus-visible:ring-white/15"
-    : "text-white focus-visible:ring-2 focus-visible:ring-white/20";
+    ? "text-white/74 focus-visible:ring-2 focus-visible:ring-white/12"
+    : "text-white/70 focus-visible:ring-2 focus-visible:ring-white/16";
 
   const dashClass = subtle
-    ? "bg-[linear-gradient(90deg,rgba(94,234,212,0.42)_0%,rgba(125,211,252,0.38)_38%,rgba(167,139,250,0.44)_72%,rgba(244,114,182,0.34)_100%)] opacity-80"
-    : "bg-[linear-gradient(90deg,rgba(94,234,212,0.78)_0%,rgba(125,211,252,0.72)_38%,rgba(167,139,250,0.84)_72%,rgba(244,114,182,0.62)_100%)]";
+    ? "bg-[linear-gradient(90deg,rgba(94,234,212,0.28)_0%,rgba(125,211,252,0.24)_38%,rgba(167,139,250,0.30)_72%,rgba(244,114,182,0.22)_100%)] opacity-72"
+    : "bg-[linear-gradient(90deg,rgba(94,234,212,0.44)_0%,rgba(125,211,252,0.38)_38%,rgba(167,139,250,0.46)_72%,rgba(244,114,182,0.34)_100%)] opacity-82";
 
   return (
     <span
@@ -70,16 +70,15 @@ export function SignalWord({
 
           <span
             aria-hidden
-            className="pointer-events-none absolute left-0 right-0 bottom-[-0.24em] h-[7px]"
+            className="pointer-events-none absolute bottom-[-0.22em] left-0 right-0 h-[6px]"
           >
             <span className="absolute inset-0 flex items-center gap-[4px]">
               {Array.from({ length: 8 }).map((_, i) => (
                 <span
                   key={i}
                   className={[
-                    "h-[2.5px] flex-1 rounded-full",
+                    "h-[2px] flex-1 rounded-full shadow-none",
                     dashClass,
-                    subtle ? "shadow-none" : "shadow-[0_0_10px_rgba(125,211,252,0.16)]",
                   ].join(" ")}
                 />
               ))}
@@ -93,7 +92,7 @@ export function SignalWord({
           className="
             absolute left-1/2 top-[calc(100%+0.6rem)] z-50 w-[248px] -translate-x-1/2
             rounded-2xl border border-white/10 bg-[#0b1020]/94 px-3 py-2.5
-            text-left text-[11px] leading-5 text-white/78 shadow-[0_18px_50px_rgba(0,0,0,0.38)]
+            text-left text-[11px] leading-5 text-white/68 shadow-[0_18px_50px_rgba(0,0,0,0.38)]
             backdrop-blur-md
           "
           role="dialog"

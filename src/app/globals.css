@@ -36,21 +36,21 @@
 
     --shimmer-alpha: .24;
 
-    /* ===== EVERLEAP DARK THEME (FIXED) ===== */
+    /* ===== EVERLEAP DARK THEME ===== */
     --el-bg: #020617;
     --el-bg-elevated: #020819;
     --el-bg-soft: #020617;
 
     --el-accent: #4f9cff;
-    --el-accent-soft: rgba(79, 156, 255, 0.15);
-    --el-accent-strong: rgba(79, 156, 255, 0.7);
+    --el-accent-soft: rgba(79, 156, 255, 0.12);
+    --el-accent-strong: rgba(79, 156, 255, 0.58);
 
-    /* 🔥 FIX: reduce brightness */
-    --el-text-primary: rgba(249, 250, 251, 0.88);
-    --el-text-muted: rgba(148, 163, 184, 0.85);
+    /* ↓ Calmed system-wide text brightness */
+    --el-text-primary: rgba(249, 250, 251, 0.84);
+    --el-text-muted: rgba(148, 163, 184, 0.72);
 
-    --el-border-subtle: rgba(148, 163, 184, 0.15);
-    --el-border-strong: rgba(148, 163, 184, 0.3);
+    --el-border-subtle: rgba(148, 163, 184, 0.13);
+    --el-border-strong: rgba(148, 163, 184, 0.26);
   }
 
   html {
@@ -67,7 +67,6 @@
     color: var(--text);
     background-color: var(--el-bg);
 
-    /* 🔥 FIX: smoother text rendering */
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -83,10 +82,9 @@
   .bg-app { background-color: var(--bg-base); }
 
   .el-page {
-    /* 🔥 FIX: reduced glow intensity */
     background:
-      radial-gradient(circle at top left, rgba(79, 156, 255, 0.05), transparent 55%),
-      radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.035), transparent 55%),
+      radial-gradient(circle at top left, rgba(79, 156, 255, 0.03), transparent 55%),
+      radial-gradient(circle at bottom right, rgba(244, 114, 182, 0.02), transparent 55%),
       var(--el-bg);
 
     color: var(--el-text-primary);
@@ -95,11 +93,11 @@
   .el-page::-webkit-scrollbar { width: 8px; }
   .el-page::-webkit-scrollbar-track { background: transparent; }
   .el-page::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.3);
+    background: rgba(148, 163, 184, 0.24);
     border-radius: 9999px;
   }
   .el-page::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.5);
+    background: rgba(148, 163, 184, 0.38);
   }
 
   .spotlight-white { position: relative; isolation: isolate; }

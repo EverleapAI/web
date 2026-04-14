@@ -73,15 +73,15 @@ function ActionLead({ dark }: { dark: boolean }) {
    ============================================================================= */
 
 function muted(dark: boolean) {
-  return dark ? "text-white/42" : "text-slate-600";
+  return dark ? "text-white/38" : "text-slate-600";
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white/90" : "text-slate-900";
+  return dark ? "text-white/76" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/64" : "text-slate-700";
+  return dark ? "text-white/54" : "text-slate-700";
 }
 
 function primaryActionLink(dark: boolean) {
@@ -90,7 +90,7 @@ function primaryActionLink(dark: boolean) {
     "text-[14.5px] font-medium transition",
     "focus-visible:outline-none",
     dark
-      ? "text-white/92 hover:text-white"
+      ? "text-white/78 hover:text-white/88"
       : "text-slate-900 hover:text-black",
   ].join(" ");
 }
@@ -101,7 +101,7 @@ function secondaryActionLink(dark: boolean) {
     "text-[14px] font-medium transition",
     "focus-visible:outline-none",
     dark
-      ? "text-white/70 hover:text-white/88"
+      ? "text-white/60 hover:text-white/74"
       : "text-slate-800 hover:text-slate-950",
   ].join(" ");
 }
@@ -119,7 +119,7 @@ function textareaClass(dark: boolean) {
   return [
     "mt-3 w-full rounded-xl border p-3 text-sm focus-visible:outline-none",
     dark
-      ? "border-white/10 bg-white/[0.04] text-white/80"
+      ? "border-white/10 bg-white/[0.04] text-white/72"
       : "border-black/10 bg-white text-slate-900",
   ].join(" ");
 }
@@ -130,8 +130,8 @@ function actionButton(dark: boolean, emph = false) {
     "focus-visible:outline-none",
     dark
       ? emph
-        ? "bg-white/[0.08] text-white/82 hover:bg-white/[0.12]"
-        : "bg-white/[0.04] text-white/64 hover:bg-white/[0.07]"
+        ? "bg-white/[0.08] text-white/78 hover:bg-white/[0.12]"
+        : "bg-white/[0.04] text-white/58 hover:bg-white/[0.07]"
       : emph
         ? "bg-slate-950 text-white hover:bg-slate-800"
         : "bg-black/5 text-slate-700 hover:bg-black/10",
@@ -148,7 +148,7 @@ function logRow(dark: boolean) {
 function logBadge(dark: boolean, log: ActionLog) {
   if (log.type === "note") {
     return dark
-      ? "bg-white/[0.06] text-white/58 ring-1 ring-white/8"
+      ? "bg-white/[0.06] text-white/52 ring-1 ring-white/8"
       : "bg-black/[0.05] text-slate-600 ring-1 ring-black/8";
   }
 
@@ -156,18 +156,18 @@ function logBadge(dark: boolean, log: ActionLog) {
 
   if (text.includes("started")) {
     return dark
-      ? "bg-sky-300/12 text-sky-100/80 ring-1 ring-sky-300/14"
+      ? "bg-sky-300/12 text-sky-100/70 ring-1 ring-sky-300/14"
       : "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/14";
   }
 
   if (text.includes("done")) {
     return dark
-      ? "bg-emerald-300/12 text-emerald-100/80 ring-1 ring-emerald-300/14"
+      ? "bg-emerald-300/12 text-emerald-100/70 ring-1 ring-emerald-300/14"
       : "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/14";
   }
 
   return dark
-    ? "bg-violet-300/12 text-violet-100/80 ring-1 ring-violet-300/14"
+    ? "bg-violet-300/12 text-violet-100/70 ring-1 ring-violet-300/14"
     : "bg-violet-500/10 text-violet-700 ring-1 ring-violet-500/14";
 }
 
@@ -268,12 +268,12 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
       <div className="mb-4">
         <div className="mb-2 flex items-center gap-2">
           <ActionLead dark={dark} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/42">
             Actions
           </span>
         </div>
 
-        <div className="text-[17px] font-semibold tracking-[-0.01em] text-white/90 sm:text-[18px]">
+        <div className="text-[17px] font-semibold tracking-[-0.01em] text-white/76 sm:text-[18px]">
           {definition.title}
         </div>
 
@@ -288,7 +288,7 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
         <ul className="space-y-1.5">
           {definition.steps.map((s, idx) => (
             <li key={idx} className="flex items-start gap-2.5">
-              <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-white/18" />
+              <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-white/16" />
               <div className={`text-[14px] leading-6 ${softText(dark)}`}>
                 {s}
               </div>

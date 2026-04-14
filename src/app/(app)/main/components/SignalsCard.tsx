@@ -131,30 +131,10 @@ function highlightGlowClass(cat: Cat) {
 function CreativeSignalLead({ dark }: { dark: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5" aria-hidden>
-      <span
-        className={[
-          "h-1.5 w-1.5 rounded-full",
-          dark ? "bg-amber-200/78" : "bg-amber-600/74",
-        ].join(" ")}
-      />
-      <span
-        className={[
-          "h-1.5 w-1.5 rounded-full",
-          dark ? "bg-sky-200/62" : "bg-sky-600/58",
-        ].join(" ")}
-      />
-      <span
-        className={[
-          "h-1.5 w-1.5 rounded-full",
-          dark ? "bg-violet-200/62" : "bg-violet-600/58",
-        ].join(" ")}
-      />
-      <span
-        className={[
-          "ml-0.5 h-[1px] w-4 rounded-full",
-          dark ? "bg-white/16" : "bg-slate-900/14",
-        ].join(" ")}
-      />
+      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-amber-200/78" : "bg-amber-600/74"].join(" ")} />
+      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-sky-200/62" : "bg-sky-600/58"].join(" ")} />
+      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-violet-200/62" : "bg-violet-600/58"].join(" ")} />
+      <span className={["ml-0.5 h-[1px] w-4 rounded-full", dark ? "bg-white/16" : "bg-slate-900/14"].join(" ")} />
     </span>
   );
 }
@@ -172,9 +152,9 @@ export function SignalsCard(props: SignalsCardProps) {
     setSaved(loadSaved());
   }, []);
 
-  const text = dark ? "text-white/86" : "text-slate-900";
-  const sub = dark ? "text-white/60" : "text-slate-600";
-  const meta = dark ? "text-white/48" : "text-slate-500";
+  const text = dark ? "text-white/78" : "text-slate-900";
+  const sub = dark ? "text-white/52" : "text-slate-600";
+  const meta = dark ? "text-white/42" : "text-slate-500";
 
   const totalFor = (cat: Cat) => {
     const fallback = SIGNAL_COMPLETE_COUNT;
@@ -219,24 +199,15 @@ export function SignalsCard(props: SignalsCardProps) {
           const href = buildHref(it.cat, questionId);
 
           return (
-            <Link
-              key={it.cat}
-              href={href}
-              className={rowClass(dark, highlighted, idx !== 0)}
-            >
+            <Link key={it.cat} href={href} className={rowClass(dark, highlighted, idx !== 0)}>
               {highlighted ? (
-                <span
-                  aria-hidden
-                  className={`pointer-events-none absolute inset-0 ${highlightGlowClass(it.cat)}`}
-                />
+                <span className={`pointer-events-none absolute inset-0 ${highlightGlowClass(it.cat)}`} />
               ) : null}
 
               <div className="relative z-10 flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${accentClass(dark, it.cat)}`}
-                    />
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${accentClass(dark, it.cat)}`} />
                     <div className={`text-[15px] font-semibold ${text}`}>
                       {label(it.cat)}
                     </div>
