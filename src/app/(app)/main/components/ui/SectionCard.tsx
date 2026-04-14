@@ -27,21 +27,18 @@ function toneClasses(tone: SectionCardTone) {
   switch (tone) {
     case "hero":
       return {
-        shell:
-          [
-            "border-r-0 border-l-white/12 border-t-white/10 border-b-white/10",
-            "bg-[linear-gradient(135deg,rgba(22,30,64,0.90)_0%,rgba(10,16,38,0.98)_42%,rgba(6,10,24,1)_100%),radial-gradient(circle_at_top_left,rgba(129,140,248,0.14),transparent_34%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.10),transparent_32%),radial-gradient(ellipse_at_center,rgba(4,8,20,0.42)_0%,transparent_56%)]",
-            "shadow-[0_18px_60px_rgba(10,12,30,0.30)]",
-          ].join(" "),
-        rail:
-          "bg-[linear-gradient(180deg,rgba(129,140,248,0.84),rgba(96,165,250,0.48))]",
+        shell: [
+          "border border-white/10",
+          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.22)_0%,rgba(90,108,255,0.08)_26%,transparent_52%),radial-gradient(70%_60%_at_100%_0%,rgba(76,201,255,0.14)_0%,transparent_52%),linear-gradient(180deg,rgba(18,28,66,0.98)_0%,rgba(8,14,36,0.985)_44%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_22px_72px_rgba(5,10,28,0.48)]",
+        ].join(" "),
         sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.028),transparent_34%,transparent_100%)]",
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_22%,transparent_48%)]",
         clusterGlow:
-          "bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.14),transparent_64%)]",
-        clusterDotStrong: "bg-indigo-200/38",
-        clusterDotMid: "bg-sky-200/24",
-        clusterDotSoft: "bg-white/14",
+          "bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.18),transparent_64%)]",
+        clusterDotStrong: "bg-indigo-200/42",
+        clusterDotMid: "bg-sky-200/28",
+        clusterDotSoft: "bg-white/16",
         headerAccent: "text-[rgba(251,191,36,0.84)]",
         eyebrow:
           "text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46",
@@ -53,21 +50,18 @@ function toneClasses(tone: SectionCardTone) {
 
     case "plum":
       return {
-        shell:
-          [
-            "border-r-0 border-l-indigo-200/16 border-t-indigo-100/12 border-b-indigo-100/12",
-            "bg-[linear-gradient(135deg,rgba(34,46,96,0.88)_0%,rgba(12,18,44,0.98)_42%,rgba(6,10,24,1)_100%),radial-gradient(circle_at_top_left,rgba(129,140,248,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.06),transparent_30%),radial-gradient(ellipse_at_center,rgba(4,8,20,0.42)_0%,transparent_56%)]",
-            "shadow-[0_18px_60px_rgba(10,14,30,0.28)]",
-          ].join(" "),
-        rail:
-          "bg-[linear-gradient(180deg,rgba(129,140,248,0.74),rgba(96,165,250,0.44))]",
+        shell: [
+          "border border-white/10",
+          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.24)_0%,rgba(120,88,255,0.09)_24%,transparent_50%),radial-gradient(72%_58%_at_100%_0%,rgba(88,144,255,0.10)_0%,transparent_50%),linear-gradient(180deg,rgba(28,34,82,0.98)_0%,rgba(10,16,40,0.985)_44%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_22px_72px_rgba(7,10,28,0.48)]",
+        ].join(" "),
         sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_34%,transparent_100%)]",
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016)_22%,transparent_48%)]",
         clusterGlow:
-          "bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.14),transparent_64%)]",
-        clusterDotStrong: "bg-violet-200/34",
-        clusterDotMid: "bg-indigo-200/22",
-        clusterDotSoft: "bg-white/13",
+          "bg-[radial-gradient(circle_at_center,rgba(129,140,248,0.18),transparent_64%)]",
+        clusterDotStrong: "bg-violet-200/38",
+        clusterDotMid: "bg-indigo-200/26",
+        clusterDotSoft: "bg-white/15",
         headerAccent: "text-[rgba(251,191,36,0.82)]",
         eyebrow:
           "text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46",
@@ -79,21 +73,18 @@ function toneClasses(tone: SectionCardTone) {
 
     case "teal":
       return {
-        shell:
-          [
-            "border-r-0 border-l-emerald-200/18 border-t-emerald-100/14 border-b-emerald-100/14",
-            "bg-[linear-gradient(135deg,rgba(18,76,74,0.86)_0%,rgba(8,18,42,0.98)_42%,rgba(6,10,24,1)_100%),radial-gradient(circle_at_top_left,rgba(52,211,153,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_30%),radial-gradient(ellipse_at_center,rgba(4,8,20,0.42)_0%,transparent_56%)]",
-            "shadow-[0_18px_60px_rgba(8,24,28,0.30)]",
-          ].join(" "),
-        rail:
-          "bg-[linear-gradient(180deg,rgba(94,234,212,0.82),rgba(52,211,153,0.46))]",
+        shell: [
+          "border border-white/10",
+          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.26)_0%,rgba(42,196,170,0.10)_22%,transparent_48%),radial-gradient(72%_58%_at_100%_0%,rgba(90,188,255,0.10)_0%,transparent_50%),linear-gradient(180deg,rgba(14,64,72,0.98)_0%,rgba(8,16,38,0.985)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_22px_72px_rgba(5,18,24,0.5)]",
+        ].join(" "),
         sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_34%,transparent_100%)]",
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016)_22%,transparent_48%)]",
         clusterGlow:
-          "bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.14),transparent_64%)]",
-        clusterDotStrong: "bg-teal-200/34",
-        clusterDotMid: "bg-emerald-200/24",
-        clusterDotSoft: "bg-white/13",
+          "bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.18),transparent_64%)]",
+        clusterDotStrong: "bg-teal-200/38",
+        clusterDotMid: "bg-emerald-200/28",
+        clusterDotSoft: "bg-white/15",
         headerAccent: "text-[rgba(251,191,36,0.82)]",
         eyebrow:
           "text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46",
@@ -105,21 +96,18 @@ function toneClasses(tone: SectionCardTone) {
 
     case "amber":
       return {
-        shell:
-          [
-            "border-r-0 border-l-cyan-200/18 border-t-cyan-100/14 border-b-cyan-100/14",
-            "bg-[linear-gradient(135deg,rgba(20,64,96,0.88)_0%,rgba(8,18,42,0.98)_42%,rgba(6,10,24,1)_100%),radial-gradient(circle_at_top_left,rgba(56,189,248,0.12),transparent_34%),radial-gradient(circle_at_top_right,rgba(103,232,249,0.06),transparent_30%),radial-gradient(ellipse_at_center,rgba(4,8,20,0.42)_0%,transparent_56%)]",
-            "shadow-[0_18px_60px_rgba(8,22,34,0.30)]",
-          ].join(" "),
-        rail:
-          "bg-[linear-gradient(180deg,rgba(103,232,249,0.82),rgba(56,189,248,0.46))]",
+        shell: [
+          "border border-white/10",
+          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.24)_0%,rgba(90,152,255,0.09)_24%,transparent_50%),radial-gradient(70%_56%_at_100%_0%,rgba(96,220,255,0.11)_0%,transparent_50%),linear-gradient(180deg,rgba(16,54,78,0.98)_0%,rgba(8,16,38,0.985)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_22px_72px_rgba(5,16,24,0.5)]",
+        ].join(" "),
         sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_34%,transparent_100%)]",
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016)_22%,transparent_48%)]",
         clusterGlow:
-          "bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.14),transparent_64%)]",
-        clusterDotStrong: "bg-cyan-200/34",
-        clusterDotMid: "bg-sky-200/24",
-        clusterDotSoft: "bg-white/13",
+          "bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_64%)]",
+        clusterDotStrong: "bg-cyan-200/38",
+        clusterDotMid: "bg-sky-200/28",
+        clusterDotSoft: "bg-white/15",
         headerAccent: "text-[rgba(251,191,36,0.82)]",
         eyebrow:
           "text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46",
@@ -132,21 +120,18 @@ function toneClasses(tone: SectionCardTone) {
     case "neutral":
     default:
       return {
-        shell:
-          [
-            "border-r-0 border-l-white/12 border-t-white/10 border-b-white/10",
-            "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]",
-            "shadow-[0_18px_60px_rgba(8,10,24,0.28)]",
-          ].join(" "),
-        rail:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.36))]",
+        shell: [
+          "border border-white/10",
+          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.15)_0%,rgba(90,108,255,0.05)_24%,transparent_50%),linear-gradient(180deg,rgba(18,24,52,0.98)_0%,rgba(8,12,30,0.985)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_20px_68px_rgba(5,10,24,0.46)]",
+        ].join(" "),
         sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%,transparent_100%)]",
+          "bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.016)_22%,transparent_48%)]",
         clusterGlow:
-          "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),transparent_64%)]",
-        clusterDotStrong: "bg-white/24",
-        clusterDotMid: "bg-white/16",
-        clusterDotSoft: "bg-white/10",
+          "bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_64%)]",
+        clusterDotStrong: "bg-white/28",
+        clusterDotMid: "bg-white/18",
+        clusterDotSoft: "bg-white/12",
         headerAccent: "text-[rgba(251,191,36,0.80)]",
         eyebrow:
           "text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46",
@@ -267,7 +252,7 @@ export function SectionCard({
   return (
     <section
       className={[
-        "relative overflow-hidden rounded-[28px] border border-r-0 backdrop-blur-xl",
+        "relative overflow-hidden rounded-[28px] backdrop-blur-xl",
         compact ? "px-4 py-4 sm:px-5 sm:py-5" : "px-4 py-5 sm:px-5 sm:py-6",
         t.shell,
         className,
@@ -275,23 +260,7 @@ export function SectionCard({
     >
       <div
         aria-hidden="true"
-        className={[
-          "pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full",
-          t.rail,
-        ].join(" ")}
-      />
-
-      <div
-        aria-hidden="true"
-        className={[
-          "pointer-events-none absolute inset-0",
-          t.sheen,
-        ].join(" ")}
-      />
-
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-[18px] right-0 w-px bg-transparent"
+        className={["pointer-events-none absolute inset-0", t.sheen].join(" ")}
       />
 
       {tone !== "neutral" ? <CardCluster tone={t} compact={compact} /> : null}

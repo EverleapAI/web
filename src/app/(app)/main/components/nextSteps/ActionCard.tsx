@@ -138,18 +138,11 @@ function actionButton(dark: boolean, emph = false) {
   ].join(" ");
 }
 
-function logCard(dark: boolean, type: ActionLog["type"]) {
-  const base = "rounded-[16px] border px-3.5 py-3";
-  if (dark) {
-    if (type === "system") {
-      return `${base} border-white/8 bg-white/[0.025]`;
-    }
-    return `${base} border-white/10 bg-white/[0.04]`;
-  }
-  if (type === "system") {
-    return `${base} border-black/8 bg-black/[0.02]`;
-  }
-  return `${base} border-black/10 bg-black/[0.04]`;
+function logRow(dark: boolean) {
+  return [
+    "py-3",
+    dark ? "border-t border-white/8 first:border-t-0" : "border-t border-black/8 first:border-t-0",
+  ].join(" ");
 }
 
 function logBadge(dark: boolean, log: ActionLog) {
@@ -224,26 +217,30 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
 
   const isPersisted = items.some((x) => x.id === current.id);
 
-  function ensurePersisted(): ActionItem {
-    if (isPersisted) return current;
-    const next = upsertAction(items, current);
-    persist(next);
-    return next.find((x) => x.id === current.id) ?? current;
+  function ensurePersisted(): { action: ActionItem; nextItems: ActionItem[] } {
+    if (isPersisted) {
+      return { action: current, nextItems: items };
+    }
+
+    const nextItems = upsertAction(items, current);
+    const action = nextItems.find((x) => x.id === current.id) ?? current;
+    persist(nextItems);
+    return { action, nextItems };
   }
 
   function onStart() {
-    const action = ensurePersisted();
-    persist(startAction(items, action.id));
+    const { action, nextItems } = ensurePersisted();
+    persist(startAction(nextItems, action.id));
   }
 
   function onDone() {
-    const action = ensurePersisted();
-    persist(markDone(items, action.id));
+    const { action, nextItems } = ensurePersisted();
+    persist(markDone(nextItems, action.id));
   }
 
   function onReopen() {
-    const action = ensurePersisted();
-    persist(reopenAction(items, action.id));
+    const { action, nextItems } = ensurePersisted();
+    persist(reopenAction(nextItems, action.id));
   }
 
   function onLog() {
@@ -253,11 +250,11 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
   }
 
   function saveNoteEntry() {
-    const action = ensurePersisted();
     const trimmed = textValue.trim();
     if (!trimmed) return;
 
-    persist(addNote(items, action.id, trimmed));
+    const { action, nextItems } = ensurePersisted();
+    persist(addNote(nextItems, action.id, trimmed));
     setEditorOpen(false);
     setTextValue("");
   }
@@ -301,9 +298,9 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
       ) : null}
 
       {logs.length > 0 ? (
-        <div className="mt-4 space-y-2.5">
+        <div className="mt-4">
           {logs.map((log) => (
-            <div key={log.id} className={logCard(dark, log.type)}>
+            <div key={log.id} className={logRow(dark)}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -324,7 +321,7 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
                   ) : null}
                 </div>
 
-                <div className={`shrink-0 text-[11px] ${muted(dark)}`}>
+                <div className={`shrink-0 pt-0.5 text-[11px] ${muted(dark)}`}>
                   {formatTimestamp(log.createdAt)}
                 </div>
               </div>
@@ -334,54 +331,54 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
       ) : null}
 
       <div className="mt-5 flex items-center gap-4">
-  {status === "planned" ? (
-    <motion.button
-      type="button"
-      onClick={onStart}
-      whileHover={{ x: 2 }}
-      whileTap={{ scale: 0.98 }}
-      className={primaryActionLink(dark)}
-    >
-      Start
-    </motion.button>
-  ) : null}
+        {status === "planned" ? (
+          <motion.button
+            type="button"
+            onClick={onStart}
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+            className={primaryActionLink(dark)}
+          >
+            Start
+          </motion.button>
+        ) : null}
 
-  {status === "started" ? (
-    <>
-      <motion.button
-        type="button"
-        onClick={onDone}
-        whileHover={{ x: 2 }}
-        whileTap={{ scale: 0.98 }}
-        className={primaryActionLink(dark)}
-      >
-        Mark done
-      </motion.button>
+        {status === "started" ? (
+          <>
+            <motion.button
+              type="button"
+              onClick={onDone}
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              className={primaryActionLink(dark)}
+            >
+              Mark done
+            </motion.button>
 
-      <motion.button
-        type="button"
-        onClick={onLog}
-        whileHover={{ x: 2 }}
-        whileTap={{ scale: 0.98 }}
-        className={secondaryActionLink(dark)}
-      >
-        Log result
-      </motion.button>
-    </>
-  ) : null}
+            <motion.button
+              type="button"
+              onClick={onLog}
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              className={secondaryActionLink(dark)}
+            >
+              Log result
+            </motion.button>
+          </>
+        ) : null}
 
-  {status === "done" ? (
-    <motion.button
-      type="button"
-      onClick={onReopen}
-      whileHover={{ x: 2 }}
-      whileTap={{ scale: 0.98 }}
-      className={primaryActionLink(dark)}
-    >
-      Reopen
-    </motion.button>
-  ) : null}
-</div>
+        {status === "done" ? (
+          <motion.button
+            type="button"
+            onClick={onReopen}
+            whileHover={{ x: 2 }}
+            whileTap={{ scale: 0.98 }}
+            className={primaryActionLink(dark)}
+          >
+            Reopen
+          </motion.button>
+        ) : null}
+      </div>
 
       <AnimatePresence initial={false}>
         {editorOpen ? (
