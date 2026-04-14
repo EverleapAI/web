@@ -75,7 +75,8 @@ function optionBase(dark: boolean, selected: boolean) {
     dark
       ? selected
         ? "bg-[linear-gradient(135deg,rgba(18,30,46,0.96)_0%,rgba(12,22,38,1)_100%)] text-white/92 ring-1 ring-white/10"
-        : "bg-[linear-gradient(135deg,rgba(44,72,92,0.86)_0%,rgba(34,56,80,0.90)_100%)] hover:bg-[linear-gradient(135deg,rgba(48,78,98,0.90)_0%,rgba(36,60,84,0.94)_100%)] text-white/82 ring-1 ring-white/8"
+        : // 🔥 DARKENED (main fix)
+          "bg-[linear-gradient(135deg,rgba(28,48,70,0.82)_0%,rgba(24,44,68,0.86)_100%)] hover:bg-[linear-gradient(135deg,rgba(32,54,78,0.86)_0%,rgba(28,50,72,0.90)_100%)] text-white/82 ring-1 ring-white/8"
       : selected
         ? "bg-slate-200 text-slate-950 ring-1 ring-slate-300"
         : "bg-white text-slate-900 hover:bg-slate-50 ring-1 ring-black/8",
@@ -162,7 +163,9 @@ export function TinyTaskCard({ dark, useLocal, definition }: Props) {
               aria-pressed={selected}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className={labelClass(dark, selected)}>{opt.label}</span>
+                <span className={labelClass(dark, selected)}>
+                  {opt.label}
+                </span>
 
                 <span className={checkWrap(dark, selected)} aria-hidden>
                   {selected ? (

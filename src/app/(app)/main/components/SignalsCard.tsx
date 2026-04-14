@@ -110,38 +110,22 @@ function dashEmptyClass(dark: boolean) {
   return dark ? "bg-white/10" : "bg-black/10";
 }
 
-function rowClass(dark: boolean, highlighted: boolean, hasDivider: boolean) {
+function rowClass(dark: boolean, _highlighted: boolean, hasDivider: boolean) {
   return [
     "relative block px-0 py-4 transition",
     hasDivider ? (dark ? "border-t border-white/8" : "border-t border-black/8") : "",
-    highlighted
-      ? dark
-        ? "bg-white/[0.025] hover:bg-white/[0.04]"
-        : "bg-black/[0.03] hover:bg-black/[0.045]"
-      : dark
-        ? "hover:bg-white/[0.015]"
-        : "hover:bg-black/[0.015]",
+    dark ? "hover:bg-white/[0.015]" : "hover:bg-black/[0.015]",
   ].join(" ");
-}
-
-function highlightRingClass(dark: boolean, cat: Cat) {
-  if (cat === "motivations") {
-    return dark ? "ring-1 ring-amber-300/12" : "ring-1 ring-amber-500/12";
-  }
-  if (cat === "strengths") {
-    return dark ? "ring-1 ring-sky-300/12" : "ring-1 ring-sky-500/12";
-  }
-  return dark ? "ring-1 ring-violet-300/12" : "ring-1 ring-violet-500/12";
 }
 
 function highlightGlowClass(cat: Cat) {
   if (cat === "motivations") {
-    return "bg-[radial-gradient(circle_at_right,rgba(251,191,36,0.08),transparent_52%)]";
+    return "bg-[radial-gradient(circle_at_right,rgba(251,191,36,0.04),transparent_52%)]";
   }
   if (cat === "strengths") {
-    return "bg-[radial-gradient(circle_at_right,rgba(56,189,248,0.08),transparent_52%)]";
+    return "bg-[radial-gradient(circle_at_right,rgba(56,189,248,0.04),transparent_52%)]";
   }
-  return "bg-[radial-gradient(circle_at_right,rgba(167,139,250,0.08),transparent_52%)]";
+  return "bg-[radial-gradient(circle_at_right,rgba(167,139,250,0.04),transparent_52%)]";
 }
 
 function CreativeSignalLead({ dark }: { dark: boolean }) {
@@ -241,16 +225,10 @@ export function SignalsCard(props: SignalsCardProps) {
               className={rowClass(dark, highlighted, idx !== 0)}
             >
               {highlighted ? (
-                <>
-                  <span
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-0 ${highlightGlowClass(it.cat)}`}
-                  />
-                  <span
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-0 ${highlightRingClass(dark, it.cat)}`}
-                  />
-                </>
+                <span
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-0 ${highlightGlowClass(it.cat)}`}
+                />
               ) : null}
 
               <div className="relative z-10 flex items-start justify-between gap-4">
@@ -283,7 +261,7 @@ export function SignalsCard(props: SignalsCardProps) {
                   <span
                     key={i}
                     className={[
-                      "h-[4px] min-w-0 flex-1 rounded-full",
+                      "h-[5px] min-w-0 flex-1 rounded-full",
                       i < filled ? dashFillClass(dark, it.cat) : dashEmptyClass(dark),
                     ].join(" ")}
                   />

@@ -28,7 +28,7 @@ function pagePadding() {
 }
 
 function pageShell() {
-  return "mx-auto w-full max-w-[52rem] px-4 sm:px-5 md:px-6 lg:px-7";
+  return "mx-auto w-full max-w-[52rem] px-2.5 sm:px-4 md:px-5 lg:px-6";
 }
 
 function sectionSpacing() {
