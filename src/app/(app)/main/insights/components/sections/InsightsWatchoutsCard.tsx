@@ -20,6 +20,12 @@ type Props = {
   hasStrongSignal: boolean;
 };
 
+function bulletDotClass(dark: boolean) {
+  return dark
+    ? "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200/55 ring-1 ring-amber-100/12"
+    : "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/70 ring-1 ring-amber-600/12";
+}
+
 export default function InsightsWatchoutsCard({
   dark,
   intro,
@@ -27,9 +33,16 @@ export default function InsightsWatchoutsCard({
   hasStrongSignal,
 }: Props) {
   const safeBullets = React.useMemo(
-    () => bullets.map((b) => (b ?? "").trim()).filter(Boolean),
+    () => bullets.map((b) => (b ?? "").trim()).filter(Boolean).slice(0, 3),
     [bullets]
   );
+
+  const introLine = React.useMemo(() => {
+    return (
+      intro?.trim() ||
+      "These aren’t flaws — they’re what a strength can look like when it’s overused, stressed, or pointed at the wrong problem."
+    );
+  }, [intro]);
 
   return (
     <section className={sectionCard(dark, "watchouts")}>
@@ -56,24 +69,17 @@ export default function InsightsWatchoutsCard({
 
         {hasStrongSignal ? (
           <>
-            {intro ? (
-              <p className={["mt-3", bodyText(dark)].join(" ")}>{intro}</p>
-            ) : null}
+            {/* ONE paragraph */}
+            <p className={["mt-3", bodyText(dark)].join(" ")}>
+              {introLine}
+            </p>
 
+            {/* Bullets = where it shows up */}
             {safeBullets.length ? (
-              <ul className="mt-4 space-y-2.5">
+              <ul className="mt-4 space-y-3">
                 {safeBullets.map((bullet, index) => (
-                  <li key={`${bullet}_${index}`} className="flex gap-2">
-                    <span
-                      aria-hidden
-                      className={
-                        dark
-                          ? "pt-[2px] text-white/28"
-                          : "pt-[2px] text-slate-400"
-                      }
-                    >
-                      •
-                    </span>
+                  <li key={`${bullet}_${index}`} className="flex gap-3">
+                    <span aria-hidden className={bulletDotClass(dark)} />
                     <span className={bulletText(dark)}>{bullet}</span>
                   </li>
                 ))}
@@ -81,19 +87,12 @@ export default function InsightsWatchoutsCard({
             ) : null}
           </>
         ) : (
-          <>
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              Watchouts are the places where something good can start to work
-              against you. A strength can become expensive when it is overused,
-              stressed, or aimed at the wrong problem.
-            </p>
-
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              Once we have more signal, this section will show where your
-              strongest patterns may quietly create friction in your decisions,
-              energy, or relationships.
-            </p>
-          </>
+          <p className={["mt-3", bodyText(dark)].join(" ")}>
+            Watchouts are the places where something good can start to work
+            against you — when a strength is overused, stressed, or aimed at
+            the wrong problem. As we gather more signal, this will sharpen into
+            a clear read on where friction may show up.
+          </p>
         )}
       </div>
     </section>

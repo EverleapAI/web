@@ -23,6 +23,12 @@ type Props = {
   hasStrongSignal: boolean;
 };
 
+function bulletDotClass(dark: boolean) {
+  return dark
+    ? "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-200/55 ring-1 ring-emerald-100/12"
+    : "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/70 ring-1 ring-emerald-600/12";
+}
+
 export default function InsightsSuperpowersCard({
   dark,
   body,
@@ -35,6 +41,15 @@ export default function InsightsSuperpowersCard({
     () => bullets.map((b) => (b ?? "").trim()).filter(Boolean).slice(0, 3),
     [bullets]
   );
+
+  const intro = React.useMemo(() => {
+    const base =
+      body?.trim() ||
+      "These are the strengths that show up when it counts — the ways you naturally think, move, and respond that give you an edge.";
+
+    const strength = strengthsLine?.trim();
+    return strength ? `${base} ${strength}` : base;
+  }, [body, strengthsLine]);
 
   return (
     <section className={sectionCard(dark, "strengths")}>
@@ -61,35 +76,19 @@ export default function InsightsSuperpowersCard({
 
         {hasStrongSignal ? (
           <>
-            {/* ONE paragraph only */}
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              {(body?.trim() ||
-                "These are the strengths that show up when it counts — the ways you naturally think, move, and respond that give you an edge.") +
-                (strengthsLine ? ` ${strengthsLine}` : "")}
-            </p>
+            <p className={["mt-3", bodyText(dark)].join(" ")}>{intro}</p>
 
-            {/* Bullets = proof */}
             {safeBullets.length ? (
-              <ul className="mt-4 space-y-2.5">
+              <ul className="mt-4 space-y-3">
                 {safeBullets.map((bullet, index) => (
-                  <li key={`${bullet}_${index}`} className="flex gap-2">
-                    <span
-                      aria-hidden
-                      className={
-                        dark
-                          ? "pt-[2px] text-white/28"
-                          : "pt-[2px] text-slate-400"
-                      }
-                    >
-                      •
-                    </span>
+                  <li key={`${bullet}_${index}`} className="flex gap-3">
+                    <span aria-hidden className={bulletDotClass(dark)} />
                     <span className={bulletText(dark)}>{bullet}</span>
                   </li>
                 ))}
               </ul>
             ) : null}
 
-            {/* Skills = light add-on, not heavy */}
             {skillsLine ? (
               <p className={["mt-4", mutedText(dark)].join(" ")}>
                 {skillsLine}
@@ -97,15 +96,12 @@ export default function InsightsSuperpowersCard({
             ) : null}
           </>
         ) : (
-          <>
-            {/* ONE paragraph only (empty state) */}
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              Superpowers are the strengths that naturally work in your favor —
-              the ways you think and respond that help you most when something
-              matters. As we gather more signal, this will sharpen into a clear
-              read on what you can reliably lean on.
-            </p>
-          </>
+          <p className={["mt-3", bodyText(dark)].join(" ")}>
+            Superpowers are the strengths that naturally work in your favor —
+            the ways you think and respond that help you most when something
+            matters. As we gather more signal, this will sharpen into a clear
+            read on what you can reliably lean on.
+          </p>
         )}
       </div>
     </section>

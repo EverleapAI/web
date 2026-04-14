@@ -1251,7 +1251,7 @@ export default function Page() {
                 headline={vm.summary.headline || "We’re still building your signal."}
                 paragraph={agenticNote.paragraph}
                 hasStrongSignal={hasStrongSignal}
-                startHref="/main/questions?category=motivations"
+                startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
               />
 
               <InsightsThemesCard
@@ -1279,20 +1279,24 @@ export default function Page() {
 
               <InsightsTinyTaskCard
                 dark={dark}
+                useLocal={mounted}
                 eyebrow={summaryNext.tinyTask.eyebrow}
                 title={summaryNext.tinyTask.title}
                 body={summaryNext.tinyTask.body}
                 choices={summaryNext.tinyTask.choices}
                 hasStrongSignal={hasStrongSignal}
+                pageId="insights.summary"
               />
 
               <InsightsActionCard
                 dark={dark}
+                useLocal={mounted}
                 eyebrow={summaryNext.action.eyebrow}
                 title={summaryNext.action.title}
                 body={summaryNext.action.body}
                 bullets={summaryNext.action.bullets}
                 hasStrongSignal={hasStrongSignal}
+                pageId="insights.summary"
               />
 
               <InsightsQuickCheckCard
