@@ -3,15 +3,17 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import type { ActionItem, ActionProof } from "@/app/(app)/main/domain/actions";
+import type { ActionItem, ActionLog } from "@/app/(app)/main/domain/actions";
 import {
   loadActions,
   saveActions,
   upsertAction,
   createAction,
-  setActionStatus,
-  attachActionProof,
   findLatestActionForPage,
+  startAction,
+  markDone,
+  reopenAction,
+  addNote,
 } from "@/app/(app)/main/domain/actions";
 
 /* =============================================================================
@@ -34,46 +36,61 @@ type Props = {
 };
 
 /* =============================================================================
-   Type system (softened)
+   Header helpers
+   ============================================================================= */
+
+function ActionLead({ dark }: { dark: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5" aria-hidden>
+      <span
+        className={[
+          "flex h-4 w-4 items-center justify-center rounded-[5px] border",
+          dark
+            ? "border-sky-200/20 bg-sky-300/10"
+            : "border-sky-600/18 bg-sky-500/8",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "h-[7px] w-[2px] rounded-full",
+            dark ? "bg-sky-200/70" : "bg-sky-600/68",
+          ].join(" ")}
+        />
+      </span>
+
+      <span
+        className={[
+          "h-[1px] w-4 rounded-full",
+          dark ? "bg-white/16" : "bg-slate-900/14",
+        ].join(" ")}
+      />
+    </span>
+  );
+}
+
+/* =============================================================================
+   Style helpers
    ============================================================================= */
 
 function muted(dark: boolean) {
-  return dark ? "text-white/44" : "text-slate-600";
+  return dark ? "text-white/42" : "text-slate-600";
 }
 
 function text(dark: boolean) {
-  return dark ? "text-white/78" : "text-slate-900";
+  return dark ? "text-white/90" : "text-slate-900";
 }
 
 function softText(dark: boolean) {
-  return dark ? "text-white/60" : "text-slate-700";
-}
-
-function noteText(dark: boolean) {
-  return dark ? "text-white/82" : "text-slate-950";
-}
-
-function drawerButton(dark: boolean, emph = false) {
-  return [
-    "inline-flex items-center justify-center rounded-full px-3.5 py-2 text-xs font-medium transition",
-    "focus-visible:outline-none",
-    dark
-      ? emph
-        ? "bg-white/[0.08] text-white/80 hover:bg-white/[0.12]"
-        : "bg-white/[0.04] text-white/64 hover:bg-white/[0.07]"
-      : emph
-        ? "bg-slate-950 text-white hover:bg-slate-800"
-        : "bg-black/5 text-slate-700 hover:bg-black/10",
-  ].join(" ");
+  return dark ? "text-white/64" : "text-slate-700";
 }
 
 function primaryActionLink(dark: boolean) {
   return [
     "group inline-flex items-center gap-1.5",
-    "text-[15px] font-medium transition",
+    "text-[14.5px] font-medium transition",
     "focus-visible:outline-none",
     dark
-      ? "text-white/82 hover:text-white/92"
+      ? "text-white/92 hover:text-white"
       : "text-slate-900 hover:text-black",
   ].join(" ");
 }
@@ -81,12 +98,97 @@ function primaryActionLink(dark: boolean) {
 function secondaryActionLink(dark: boolean) {
   return [
     "group inline-flex items-center gap-1.5",
-    "text-[15px] font-medium transition",
+    "text-[14px] font-medium transition",
     "focus-visible:outline-none",
     dark
-      ? "text-white/72 hover:text-white/86"
+      ? "text-white/70 hover:text-white/88"
       : "text-slate-800 hover:text-slate-950",
   ].join(" ");
+}
+
+function editorShell(dark: boolean) {
+  return [
+    "mt-4 rounded-[18px] border p-4",
+    dark
+      ? "border-white/10 bg-white/[0.03]"
+      : "border-black/10 bg-black/[0.03]",
+  ].join(" ");
+}
+
+function textareaClass(dark: boolean) {
+  return [
+    "mt-3 w-full rounded-xl border p-3 text-sm focus-visible:outline-none",
+    dark
+      ? "border-white/10 bg-white/[0.04] text-white/80"
+      : "border-black/10 bg-white text-slate-900",
+  ].join(" ");
+}
+
+function actionButton(dark: boolean, emph = false) {
+  return [
+    "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium transition",
+    "focus-visible:outline-none",
+    dark
+      ? emph
+        ? "bg-white/[0.08] text-white/82 hover:bg-white/[0.12]"
+        : "bg-white/[0.04] text-white/64 hover:bg-white/[0.07]"
+      : emph
+        ? "bg-slate-950 text-white hover:bg-slate-800"
+        : "bg-black/5 text-slate-700 hover:bg-black/10",
+  ].join(" ");
+}
+
+function logCard(dark: boolean, type: ActionLog["type"]) {
+  const base = "rounded-[16px] border px-3.5 py-3";
+  if (dark) {
+    if (type === "system") {
+      return `${base} border-white/8 bg-white/[0.025]`;
+    }
+    return `${base} border-white/10 bg-white/[0.04]`;
+  }
+  if (type === "system") {
+    return `${base} border-black/8 bg-black/[0.02]`;
+  }
+  return `${base} border-black/10 bg-black/[0.04]`;
+}
+
+function logBadge(dark: boolean, log: ActionLog) {
+  if (log.type === "note") {
+    return dark
+      ? "bg-white/[0.06] text-white/58 ring-1 ring-white/8"
+      : "bg-black/[0.05] text-slate-600 ring-1 ring-black/8";
+  }
+
+  const text = log.text.toLowerCase();
+
+  if (text.includes("started")) {
+    return dark
+      ? "bg-sky-300/12 text-sky-100/80 ring-1 ring-sky-300/14"
+      : "bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/14";
+  }
+
+  if (text.includes("done")) {
+    return dark
+      ? "bg-emerald-300/12 text-emerald-100/80 ring-1 ring-emerald-300/14"
+      : "bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/14";
+  }
+
+  return dark
+    ? "bg-violet-300/12 text-violet-100/80 ring-1 ring-violet-300/14"
+    : "bg-violet-500/10 text-violet-700 ring-1 ring-violet-500/14";
+}
+
+function formatTimestamp(ts: number) {
+  try {
+    return new Date(ts).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
 }
 
 /* =============================================================================
@@ -95,12 +197,17 @@ function secondaryActionLink(dark: boolean) {
 
 export function ActionCard({ dark, useLocal, definition }: Props) {
   const [items, setItems] = React.useState<ActionItem[]>([]);
-  const [proofOpen, setProofOpen] = React.useState(false);
-  const [proofText, setProofText] = React.useState("");
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [textValue, setTextValue] = React.useState("");
 
   React.useEffect(() => {
     setItems(loadActions({ useLocal }));
   }, [useLocal]);
+
+  function persist(next: ActionItem[]) {
+    setItems(next);
+    saveActions(next, { useLocal });
+  }
 
   const current = React.useMemo(() => {
     const latest = findLatestActionForPage(items, definition.pageId);
@@ -117,158 +224,205 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
 
   const isPersisted = items.some((x) => x.id === current.id);
 
-  function persist(next: ActionItem[]) {
-    setItems(next);
-    saveActions(next, { useLocal });
-  }
-
   function ensurePersisted(): ActionItem {
     if (isPersisted) return current;
-    const next = upsertAction(items, current, { touchUpdatedAt: true });
+    const next = upsertAction(items, current);
     persist(next);
     return next.find((x) => x.id === current.id) ?? current;
   }
 
   function onStart() {
-    const persisted = ensurePersisted();
-    persist(setActionStatus(items, persisted.id, "started"));
+    const action = ensurePersisted();
+    persist(startAction(items, action.id));
   }
 
-  function onLogProof() {
-    const persisted = ensurePersisted();
-    const existingProof = persisted.proof;
-
-    setProofText(existingProof?.kind === "text" ? existingProof.text : "");
-    setProofOpen(true);
+  function onDone() {
+    const action = ensurePersisted();
+    persist(markDone(items, action.id));
   }
 
-  function saveProof() {
-    const persisted = ensurePersisted();
-    const trimmed = proofText.trim();
+  function onReopen() {
+    const action = ensurePersisted();
+    persist(reopenAction(items, action.id));
+  }
+
+  function onLog() {
+    ensurePersisted();
+    setTextValue("");
+    setEditorOpen(true);
+  }
+
+  function saveNoteEntry() {
+    const action = ensurePersisted();
+    const trimmed = textValue.trim();
     if (!trimmed) return;
 
-    const proof: ActionProof = { kind: "text", text: trimmed };
-
-    let next = attachActionProof(items, persisted.id, proof);
-    next = setActionStatus(next, persisted.id, "done");
-
-    persist(next);
-    setProofOpen(false);
+    persist(addNote(items, action.id, trimmed));
+    setEditorOpen(false);
+    setTextValue("");
   }
 
-  const persistedItem = items.find((x) => x.id === current.id);
-  const resolvedItem = persistedItem ?? current;
-  const proof = resolvedItem.proof;
-  const hasTextProof = proof?.kind === "text" && proof.text.trim().length > 0;
+  const resolved = items.find((x) => x.id === current.id) ?? current;
+  const status = resolved.status;
+  const logs = resolved.logs ?? [];
 
   return (
-    <>
-      <div>
-        {definition.steps?.length ? (
-          <ul className="space-y-2">
-            {definition.steps.map((s, idx) => (
-              <li key={idx} className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/16" />
-                <div className={`text-[15px] leading-7 ${softText(dark)}`}>
-                  {s}
-                </div>
-              </li>
-            ))}
-          </ul>
+    <div>
+      <div className="mb-4">
+        <div className="mb-2 flex items-center gap-2">
+          <ActionLead dark={dark} />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/46">
+            Actions
+          </span>
+        </div>
+
+        <div className="text-[17px] font-semibold tracking-[-0.01em] text-white/90 sm:text-[18px]">
+          {definition.title}
+        </div>
+
+        {definition.goal ? (
+          <div className={`mt-1 text-[13px] leading-6 ${softText(dark)}`}>
+            {definition.goal}
+          </div>
         ) : null}
-
-        {hasTextProof ? (
-          <div className="mt-5">
-            <div className={`text-[13px] ${muted(dark)}`}>
-              You said:
-            </div>
-
-            <div
-              className={`mt-1.5 max-w-[42rem] text-[18px] leading-7 ${noteText(
-                dark
-              )}`}
-            >
-              {proof.text}
-            </div>
-
-            <div className="mt-3">
-              <motion.button
-                type="button"
-                onClick={onLogProof}
-                whileHover={{ x: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className={secondaryActionLink(dark)}
-              >
-                Edit →
-              </motion.button>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-5">
-            <div className={`text-[13px] ${muted(dark)}`}>
-              Try it.
-            </div>
-
-            <div className="mt-3">
-              <motion.button
-                type="button"
-                onClick={onStart}
-                whileHover={{ x: 3 }}
-                whileTap={{ scale: 0.97 }}
-                className={primaryActionLink(dark)}
-              >
-                Try it →
-              </motion.button>
-            </div>
-          </div>
-        )}
       </div>
 
-      <AnimatePresence>
-        {proofOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setProofOpen(false)}
-            />
+      {definition.steps?.length ? (
+        <ul className="space-y-1.5">
+          {definition.steps.map((s, idx) => (
+            <li key={idx} className="flex items-start gap-2.5">
+              <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-white/18" />
+              <div className={`text-[14px] leading-6 ${softText(dark)}`}>
+                {s}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
-            <motion.div
-              className="fixed inset-x-0 top-6 bottom-[92px] z-50 flex items-end px-4"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-            >
-              <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0b1020]/98 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-                <div className="p-5">
-                  <div className={`text-lg font-semibold ${text(dark)}`}>
-                    What did you notice?
+      {logs.length > 0 ? (
+        <div className="mt-4 space-y-2.5">
+          {logs.map((log) => (
+            <div key={log.id} className={logCard(dark, log.type)}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={[
+                        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                        logBadge(dark, log),
+                      ].join(" ")}
+                    >
+                      {log.type === "note" ? "Log" : log.text}
+                    </span>
                   </div>
 
-                  <textarea
-                    value={proofText}
-                    onChange={(e) => setProofText(e.target.value)}
-                    rows={5}
-                    className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-sm text-white/80 focus-visible:outline-none"
-                  />
+                  {log.type === "note" ? (
+                    <div className={`mt-1.5 text-[14px] leading-6 ${text(dark)}`}>
+                      {log.text}
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="flex justify-between border-t border-white/10 px-5 py-4">
-                  <button onClick={() => setProofOpen(false)} className={drawerButton(dark)}>
-                    Cancel
-                  </button>
-
-                  <button onClick={saveProof} className={drawerButton(dark, true)}>
-                    Save
-                  </button>
+                <div className={`shrink-0 text-[11px] ${muted(dark)}`}>
+                  {formatTimestamp(log.createdAt)}
                 </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mt-5 flex items-center gap-4">
+  {status === "planned" ? (
+    <motion.button
+      type="button"
+      onClick={onStart}
+      whileHover={{ x: 2 }}
+      whileTap={{ scale: 0.98 }}
+      className={primaryActionLink(dark)}
+    >
+      Start
+    </motion.button>
+  ) : null}
+
+  {status === "started" ? (
+    <>
+      <motion.button
+        type="button"
+        onClick={onDone}
+        whileHover={{ x: 2 }}
+        whileTap={{ scale: 0.98 }}
+        className={primaryActionLink(dark)}
+      >
+        Mark done
+      </motion.button>
+
+      <motion.button
+        type="button"
+        onClick={onLog}
+        whileHover={{ x: 2 }}
+        whileTap={{ scale: 0.98 }}
+        className={secondaryActionLink(dark)}
+      >
+        Log result
+      </motion.button>
     </>
+  ) : null}
+
+  {status === "done" ? (
+    <motion.button
+      type="button"
+      onClick={onReopen}
+      whileHover={{ x: 2 }}
+      whileTap={{ scale: 0.98 }}
+      className={primaryActionLink(dark)}
+    >
+      Reopen
+    </motion.button>
+  ) : null}
+</div>
+
+      <AnimatePresence initial={false}>
+        {editorOpen ? (
+          <motion.div
+            className={editorShell(dark)}
+            initial={{ opacity: 0, height: 0, y: -6 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <div className={`text-base font-semibold ${text(dark)}`}>
+              What did you notice?
+            </div>
+
+            <textarea
+              value={textValue}
+              onChange={(e) => setTextValue(e.target.value)}
+              rows={5}
+              className={textareaClass(dark)}
+            />
+
+            <div className="mt-3 flex justify-between">
+              <button
+                type="button"
+                onClick={() => setEditorOpen(false)}
+                className={actionButton(dark)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={saveNoteEntry}
+                className={actionButton(dark, true)}
+              >
+                Save
+              </button>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }

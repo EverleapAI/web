@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function SignalWord({
-  children = "signal",
+  children = "signals",
   className = "",
   subtle = false,
 }: Props) {
@@ -39,6 +39,14 @@ export function SignalWord({
     };
   }, [open]);
 
+  const textClass = subtle
+    ? "text-white/88 focus-visible:ring-2 focus-visible:ring-white/15"
+    : "text-white focus-visible:ring-2 focus-visible:ring-white/20";
+
+  const dashClass = subtle
+    ? "bg-[linear-gradient(90deg,rgba(94,234,212,0.42)_0%,rgba(125,211,252,0.38)_38%,rgba(167,139,250,0.44)_72%,rgba(244,114,182,0.34)_100%)] opacity-80"
+    : "bg-[linear-gradient(90deg,rgba(94,234,212,0.78)_0%,rgba(125,211,252,0.72)_38%,rgba(167,139,250,0.84)_72%,rgba(244,114,182,0.62)_100%)]";
+
   return (
     <span
       ref={rootRef}
@@ -51,9 +59,7 @@ export function SignalWord({
         className={[
           "relative inline-flex items-center align-baseline font-semibold tracking-tight",
           "focus-visible:outline-none",
-          subtle
-            ? "text-white/88 focus-visible:ring-2 focus-visible:ring-white/15"
-            : "text-white focus-visible:ring-2 focus-visible:ring-white/20",
+          textClass,
         ].join(" ")}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -61,22 +67,31 @@ export function SignalWord({
       >
         <span className="relative inline-block">
           {children}
+
           <span
             aria-hidden
-            className={[
-              "pointer-events-none absolute left-0 right-0 bottom-[-0.16em] h-[2px] rounded-full",
-              subtle
-                ? "bg-[linear-gradient(90deg,rgba(125,211,252,0.32)_0%,rgba(167,139,250,0.42)_50%,rgba(196,181,253,0.32)_100%)]"
-                : "bg-[linear-gradient(90deg,rgba(125,211,252,0.62)_0%,rgba(167,139,250,0.78)_50%,rgba(196,181,253,0.62)_100%)]",
-            ].join(" ")}
-          />
+            className="pointer-events-none absolute left-0 right-0 bottom-[-0.24em] h-[7px]"
+          >
+            <span className="absolute inset-0 flex items-center gap-[4px]">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <span
+                  key={i}
+                  className={[
+                    "h-[2.5px] flex-1 rounded-full",
+                    dashClass,
+                    subtle ? "shadow-none" : "shadow-[0_0_10px_rgba(125,211,252,0.16)]",
+                  ].join(" ")}
+                />
+              ))}
+            </span>
+          </span>
         </span>
       </button>
 
       {open ? (
         <span
           className="
-            absolute left-1/2 top-[calc(100%+0.55rem)] z-50 w-[240px] -translate-x-1/2
+            absolute left-1/2 top-[calc(100%+0.6rem)] z-50 w-[248px] -translate-x-1/2
             rounded-2xl border border-white/10 bg-[#0b1020]/94 px-3 py-2.5
             text-left text-[11px] leading-5 text-white/78 shadow-[0_18px_50px_rgba(0,0,0,0.38)]
             backdrop-blur-md

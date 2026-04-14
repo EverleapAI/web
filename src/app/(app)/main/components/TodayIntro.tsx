@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+
+import { SignalWord } from "./SignalWord";
 
 /* =============================================================================
    Types
@@ -34,53 +36,89 @@ export type TodayIntroProps = {
 };
 
 /* =============================================================================
-   Unified type system
+   Header treatment
    ============================================================================= */
+
+function eyebrowWrapClass() {
+  return "inline-flex items-center gap-2.5";
+}
+
+function eyebrowLeadDotClass(dark: boolean, strong = false) {
+  return [
+    "rounded-full",
+    strong ? "h-1.5 w-1.5" : "h-[5px] w-[5px]",
+    dark
+      ? strong
+        ? "bg-sky-200/72 shadow-[0_0_10px_rgba(125,211,252,0.18)]"
+        : "bg-white/36"
+      : strong
+        ? "bg-sky-600/72"
+        : "bg-slate-400",
+  ].join(" ");
+}
+
+function eyebrowLineClass(dark: boolean) {
+  return [
+    "h-px w-6 rounded-full",
+    dark
+      ? "bg-gradient-to-r from-white/24 to-white/0"
+      : "bg-gradient-to-r from-slate-400/40 to-slate-400/0",
+  ].join(" ");
+}
 
 function eyebrowClass(dark: boolean) {
   return [
-    "text-[10px] font-semibold uppercase tracking-[0.24em]",
-    dark ? "text-white/36" : "text-slate-500",
+    "text-[12px] font-semibold uppercase tracking-[0.34em]",
+    dark ? "text-white/54" : "text-slate-500",
   ].join(" ");
 }
 
 function heroTitleClass(dark: boolean) {
   return [
-    "mt-1.5 text-[1.4rem] font-semibold leading-tight tracking-[-0.02em]",
-    "sm:mt-2 sm:text-[1.65rem]",
-    dark ? "text-white/74" : "text-slate-950",
+    "mt-3 text-[1.58rem] font-semibold leading-tight tracking-[-0.022em]",
+    "sm:text-[1.82rem]",
+    dark ? "text-white/88" : "text-slate-950",
   ].join(" ");
 }
 
 function heroBodyClass(dark: boolean) {
   return [
-    "mt-2.5 max-w-[46rem] text-[14.5px] leading-6",
-    "sm:mt-3 sm:text-[15.5px] sm:leading-7",
+    "mt-3 max-w-[48rem] text-[15px] leading-7",
+    "sm:text-[15.5px]",
     "whitespace-normal break-words",
-    dark ? "text-white/52" : "text-slate-800",
+    dark ? "text-white/60" : "text-slate-800",
   ].join(" ");
 }
 
 function ctaClass(dark: boolean) {
   return [
     "group inline-flex items-center gap-2",
-    "text-[1.02rem] font-medium transition",
-    "sm:text-[1.05rem]",
-    dark
-      ? "text-teal-300/90 hover:text-teal-200"
-      : "text-sky-700 hover:text-sky-900",
+    "text-[15px] font-medium transition",
     "focus-visible:outline-none",
+    dark
+      ? "text-sky-300/90 hover:text-sky-200"
+      : "text-sky-700 hover:text-sky-900",
   ].join(" ");
-}
-
-function iconClass(dark: boolean) {
-  return dark
-    ? "h-3.5 w-3.5 text-amber-200/50"
-    : "h-3.5 w-3.5 text-amber-700";
 }
 
 function defaultBody() {
   return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
+}
+
+function renderBodyWithSignalWord(body: string) {
+  const match = /\bsignals\b/i.exec(body);
+  if (!match || match.index === undefined) return body;
+
+  const start = match.index;
+  const end = start + match[0].length;
+
+  return (
+    <>
+      {body.slice(0, start)}
+      <SignalWord>{body.slice(start, end).toLowerCase()}</SignalWord>
+      {body.slice(end)}
+    </>
+  );
 }
 
 /* =============================================================================
@@ -102,8 +140,10 @@ export function TodayIntro(props: TodayIntroProps) {
 
   return (
     <div className="relative">
-      <div className="inline-flex items-center gap-2">
-        <Sparkles className={iconClass(dark)} aria-hidden />
+      <div className={eyebrowWrapClass()}>
+        <span className={eyebrowLeadDotClass(dark, true)} />
+        <span className={eyebrowLeadDotClass(dark)} />
+        <span className={eyebrowLineClass(dark)} />
         <div className={eyebrowClass(dark)}>Today</div>
       </div>
 
@@ -111,10 +151,12 @@ export function TodayIntro(props: TodayIntroProps) {
         {introTitle ?? "Your direction is starting to take shape"}
       </h1>
 
-      <p className={heroBodyClass(dark)}>{resolvedBody}</p>
+      <p className={heroBodyClass(dark)}>
+        {renderBodyWithSignalWord(resolvedBody)}
+      </p>
 
       {shouldShowCta ? (
-        <div className="mt-4 sm:mt-5">
+        <div className="mt-5">
           {motionEnabled ? (
             <motion.button
               type="button"

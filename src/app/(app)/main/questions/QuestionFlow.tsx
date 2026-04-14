@@ -121,6 +121,12 @@ function saveOne(id: string, payload: Saved) {
   } catch {}
 }
 
+function isAnswered(saved: Saved | undefined): boolean {
+  if (!saved) return false;
+  if (saved.skipped) return true;
+  return typeof saved.answer === "string" && saved.answer.trim().length > 0;
+}
+
 function readNameFromOnboarding(): string {
   if (typeof window === "undefined") return "";
 
@@ -409,6 +415,7 @@ export default function QuestionFlow() {
   const category = normalizeCategory(params?.get("cat"));
   const categoryLabel = labelForCategory(category);
   const returnTo = safeReturnTo(params?.get("returnTo"));
+  const questionIdParam = params?.get("questionId");
 
   const questions = React.useMemo(
     () => QUESTIONS_ALL.filter((q) => q.category === category),
@@ -417,8 +424,14 @@ export default function QuestionFlow() {
 
   const total = questions.length;
 
+  const initialIndex = React.useMemo(() => {
+    if (!questionIdParam) return 0;
+    const found = questions.findIndex((q) => q.id === questionIdParam);
+    return found >= 0 ? found : 0;
+  }, [questionIdParam, questions]);
+
   const [name, setName] = React.useState("");
-  const [index, setIndex] = React.useState(0);
+  const [index, setIndex] = React.useState(initialIndex);
   const [draft, setDraft] = React.useState("");
 
   const q = questions[index] ?? questions[0];
@@ -448,6 +461,10 @@ export default function QuestionFlow() {
     } catch {}
     setIsListening(false);
   }, []);
+
+  React.useEffect(() => {
+    setIndex(initialIndex);
+  }, [initialIndex]);
 
   React.useEffect(() => {
     setName(readNameFromOnboarding());
@@ -484,15 +501,35 @@ export default function QuestionFlow() {
     setIndex((i) => Math.max(0, i - 1));
   }
 
+  function findNextUnansweredIndex(startFromExclusive: number): number {
+    const saved = loadSaved();
+
+    for (let i = startFromExclusive + 1; i < questions.length; i += 1) {
+      if (!isAnswered(saved[questions[i]?.id])) {
+        return i;
+      }
+    }
+
+    for (let i = 0; i < questions.length; i += 1) {
+      if (!isAnswered(saved[questions[i]?.id])) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
   function advanceToNext() {
-    if (index + 1 >= total) {
-      stopListening();
-      router.push(returnTo);
+    const nextUnansweredIndex = findNextUnansweredIndex(index);
+
+    if (nextUnansweredIndex >= 0) {
+      setIndex(nextUnansweredIndex);
+      window.setTimeout(() => focusAnswer(), 50);
       return;
     }
 
-    setIndex((i) => i + 1);
-    window.setTimeout(() => focusAnswer(), 50);
+    stopListening();
+    router.push(returnTo);
   }
 
   function completeAndAdvance(opts: { skipped: boolean }) {

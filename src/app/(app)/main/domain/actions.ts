@@ -2,39 +2,33 @@
 
 export type ActionStatus = "planned" | "started" | "done";
 
-export type ActionProof =
-  | { kind: "text"; text: string }
-  | { kind: "link"; url: string; label?: string }
-  | { kind: "photo"; dataUrl: string; caption?: string };
+export type ActionLog =
+  | { id: string; type: "system"; text: string; createdAt: number }
+  | { id: string; type: "note"; text: string; createdAt: number };
 
 export type ActionItem = {
   id: string;
 
-  // Display
   title: string;
-  goal: string; // explicit, measurable-ish
+  goal: string;
   steps?: string[];
 
-  // Meta
-  sourcePageId: string; // e.g. "insights.summary"
+  sourcePageId: string;
   createdAt: number;
   updatedAt: number;
 
-  // State
   status: ActionStatus;
 
-  // Optional “evidence”
-  proof?: ActionProof;
+  logs: ActionLog[]; // ✅ NEW
 
-  // Optional check-in fields (useful for badges later)
-  minutesSpent?: number; // rough
+  minutesSpent?: number;
   felt?: "energized" | "neutral" | "drained";
 };
 
-const ACTIONS_STORAGE_KEY = "everleap.actions.v1";
+const ACTIONS_STORAGE_KEY = "everleap.actions.v2";
 
 type StoredActionsPayload = {
-  v: 1;
+  v: 2;
   items: ActionItem[];
 };
 
@@ -42,104 +36,47 @@ function now() {
   return Date.now();
 }
 
+function uid() {
+  return `log_${Math.random().toString(36).slice(2)}`;
+}
+
 function isBrowser() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return typeof window !== "undefined" && window.localStorage;
 }
 
 function safeJsonParse<T>(raw: string | null): T | null {
-  if (!raw) return null;
   try {
-    return JSON.parse(raw) as T;
+    return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-function normalizeItems(items: ActionItem[]): ActionItem[] {
-  // Sort newest-updated first; cap later in save.
-  return [...items].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+function normalize(items: ActionItem[]) {
+  return [...items].sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export function loadActions(opts?: { useLocal?: boolean }): ActionItem[] {
-  if (!opts?.useLocal) return [];
-  if (!isBrowser()) return [];
+  if (!opts?.useLocal || !isBrowser()) return [];
 
   const parsed = safeJsonParse<StoredActionsPayload>(
     window.localStorage.getItem(ACTIONS_STORAGE_KEY)
   );
 
-  if (!parsed || parsed.v !== 1 || !Array.isArray(parsed.items)) return [];
+  if (!parsed || parsed.v !== 2) return [];
 
-  // Light validation + defaults
-  const cleaned: ActionItem[] = parsed.items
-    .filter((x): x is ActionItem => !!x && typeof x === "object")
-    .map((x) => {
-      const createdAt = Number.isFinite(x.createdAt) ? x.createdAt : now();
-      const updatedAt = Number.isFinite(x.updatedAt) ? x.updatedAt : createdAt;
-
-      const status: ActionStatus =
-        x.status === "done" || x.status === "started" || x.status === "planned"
-          ? x.status
-          : "planned";
-
-      return {
-        id: String(x.id ?? `act_${createdAt}`),
-        title: String(x.title ?? "Action"),
-        goal: String(x.goal ?? ""),
-        steps: Array.isArray(x.steps) ? x.steps.map(String) : undefined,
-        sourcePageId: String(x.sourcePageId ?? "unknown"),
-        createdAt,
-        updatedAt,
-        status,
-        proof: x.proof as ActionProof | undefined,
-        minutesSpent: Number.isFinite(x.minutesSpent) ? x.minutesSpent : undefined,
-        felt:
-          x.felt === "energized" || x.felt === "neutral" || x.felt === "drained"
-            ? x.felt
-            : undefined,
-      };
-    });
-
-  return normalizeItems(cleaned);
+  return normalize(parsed.items);
 }
 
 export function saveActions(items: ActionItem[], opts?: { useLocal?: boolean }) {
-  if (!opts?.useLocal) return;
-  if (!isBrowser()) return;
+  if (!opts?.useLocal || !isBrowser()) return;
 
-  const payload: StoredActionsPayload = {
-    v: 1,
-    items: normalizeItems(items).slice(0, 100),
-  };
-
-  window.localStorage.setItem(ACTIONS_STORAGE_KEY, JSON.stringify(payload));
+  window.localStorage.setItem(
+    ACTIONS_STORAGE_KEY,
+    JSON.stringify({ v: 2, items: normalize(items).slice(0, 100) })
+  );
 }
 
-/**
- * Upsert by id (most common). Returns the updated list.
- */
-export function upsertAction(
-  items: ActionItem[],
-  next: ActionItem,
-  opts?: { touchUpdatedAt?: boolean }
-): ActionItem[] {
-  const touch = opts?.touchUpdatedAt ?? true;
-  const updated: ActionItem = {
-    ...next,
-    updatedAt: touch ? now() : next.updatedAt ?? now(),
-  };
-
-  const idx = items.findIndex((x) => x.id === updated.id);
-  if (idx === -1) return normalizeItems([updated, ...items]);
-
-  const copy = [...items];
-  copy[idx] = { ...copy[idx], ...updated };
-  return normalizeItems(copy);
-}
-
-/**
- * Convenience: create a new ActionItem with sane defaults.
- */
 export function createAction(input: {
   id?: string;
   title: string;
@@ -157,42 +94,82 @@ export function createAction(input: {
     createdAt: t,
     updatedAt: t,
     status: "planned",
+    logs: [], // ✅
   };
 }
 
-export function setActionStatus(
+export function upsertAction(items: ActionItem[], next: ActionItem) {
+  const idx = items.findIndex((x) => x.id === next.id);
+  if (idx === -1) return normalize([next, ...items]);
+
+  const copy = [...items];
+  copy[idx] = { ...next, updatedAt: now() };
+  return normalize(copy);
+}
+
+/* ================================
+   LOGGING
+================================ */
+
+export function addLog(
   items: ActionItem[],
   id: string,
-  status: ActionStatus
+  log: Omit<ActionLog, "id" | "createdAt">
 ): ActionItem[] {
+  const idx = items.findIndex((x) => x.id === id);
+  if (idx === -1) return items;
+
+  const entry: ActionLog = {
+    ...log,
+    id: uid(),
+    createdAt: now(),
+  };
+
+  const copy = [...items];
+  copy[idx] = {
+    ...copy[idx],
+    logs: [entry, ...(copy[idx].logs ?? [])], // newest first
+    updatedAt: now(),
+  };
+
+  return normalize(copy);
+}
+
+/* ================================
+   STATUS + SYSTEM LOGS
+================================ */
+
+export function startAction(items: ActionItem[], id: string) {
+  let next = setStatus(items, id, "started");
+  return addLog(next, id, { type: "system", text: "Started" });
+}
+
+export function markDone(items: ActionItem[], id: string) {
+  let next = setStatus(items, id, "done");
+  return addLog(next, id, { type: "system", text: "Marked done" });
+}
+
+export function reopenAction(items: ActionItem[], id: string) {
+  let next = setStatus(items, id, "started");
+  return addLog(next, id, { type: "system", text: "Reopened" });
+}
+
+function setStatus(items: ActionItem[], id: string, status: ActionStatus) {
   const idx = items.findIndex((x) => x.id === id);
   if (idx === -1) return items;
 
   const copy = [...items];
   copy[idx] = { ...copy[idx], status, updatedAt: now() };
-  return normalizeItems(copy);
+  return normalize(copy);
 }
 
-export function attachActionProof(
-  items: ActionItem[],
-  id: string,
-  proof: ActionProof
-): ActionItem[] {
-  const idx = items.findIndex((x) => x.id === id);
-  if (idx === -1) return items;
-
-  const copy = [...items];
-  copy[idx] = { ...copy[idx], proof, updatedAt: now() };
-  return normalizeItems(copy);
+export function addNote(items: ActionItem[], id: string, text: string) {
+  return addLog(items, id, { type: "note", text });
 }
 
-/**
- * Finds the most recently updated Action for a given page.
- */
 export function findLatestActionForPage(
   items: ActionItem[],
   pageId: string
-): ActionItem | null {
-  const match = normalizeItems(items).find((a) => a.sourcePageId === pageId);
-  return match ?? null;
+) {
+  return normalize(items).find((x) => x.sourcePageId === pageId) ?? null;
 }

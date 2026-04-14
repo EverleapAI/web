@@ -43,31 +43,35 @@ function eyebrowRowClass() {
 
 function eyebrowClass(dark: boolean) {
   return [
-    "text-[11px] font-semibold uppercase tracking-[0.22em]",
-    dark ? "text-white/34" : "text-slate-500",
+    "text-[10px] font-semibold uppercase tracking-[0.18em]",
+    dark ? "text-white/36" : "text-slate-500",
   ].join(" ");
 }
 
 function sectionTitleClass(dark: boolean) {
   return [
-    "mt-2 text-[1.02rem] font-semibold tracking-tight sm:text-[1.08rem]",
-    dark ? "text-white/74" : "text-slate-950",
+    "mt-1.5 text-[1rem] font-semibold leading-[1.2] tracking-tight sm:text-[1.04rem]",
+    dark ? "text-white/84" : "text-slate-950",
   ].join(" ");
 }
 
 function sectionBodyClass(dark: boolean) {
   return [
-    "mt-1.5 max-w-[44rem] text-[14px] leading-6 sm:text-[15px] sm:leading-7",
-    dark ? "text-white/52" : "text-slate-700",
+    "mt-1.5 text-[13px] leading-5 sm:text-[14px] sm:leading-6",
+    dark ? "text-white/58" : "text-slate-700",
   ].join(" ");
 }
 
 function tinyTaskIconClass(dark: boolean) {
-  return dark ? "text-teal-300/70" : "text-emerald-700";
+  return dark ? "text-teal-300/72" : "text-emerald-700";
 }
 
 function actionIconClass(dark: boolean) {
-  return dark ? "text-amber-300/68" : "text-amber-700";
+  return dark ? "text-amber-300/72" : "text-amber-700";
+}
+
+function dividerClass(dark: boolean) {
+  return dark ? "border-white/8" : "border-black/8";
 }
 
 /* =============================================================================
@@ -81,7 +85,7 @@ export function NextStepsStack({
 }: Props) {
   return (
     <div className="w-full">
-      <div className="grid gap-9 sm:gap-10">
+      <div className="grid gap-5 sm:gap-6">
         <section>
           <div className={eyebrowRowClass()}>
             <Sparkles
@@ -95,7 +99,7 @@ export function NextStepsStack({
             {definition.tinyTask.title}
           </h3>
 
-          <div className="mt-3.5 sm:mt-4">
+          <div className="mt-3">
             <TinyTaskCard
               dark={dark}
               useLocal={useLocal}
@@ -104,7 +108,7 @@ export function NextStepsStack({
           </div>
         </section>
 
-        <section>
+        <section className={`border-t pt-5 sm:pt-6 ${dividerClass(dark)}`}>
           <div className={eyebrowRowClass()}>
             <Rocket
               className={`h-3.5 w-3.5 ${actionIconClass(dark)}`}
@@ -123,7 +127,7 @@ export function NextStepsStack({
             </p>
           ) : null}
 
-          <div className="mt-3.5 sm:mt-4">
+          <div className="mt-3">
             <ActionCard
               dark={dark}
               useLocal={useLocal}

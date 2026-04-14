@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -12,10 +11,17 @@ import {
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
 import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
-import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
+import { SignalsCard } from "./components/SignalsCard";
+import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
+import { ActionCard } from "./components/nextSteps/ActionCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
+import { SectionCard } from "./components/ui/SectionCard";
 
 const SIGNAL_COMPLETE_COUNT = 5;
+const STORAGE_KEY_V3 = "everleap.story.answers.v3";
+
+type Category = RecommendedNext;
+type Saved = { answer?: string; skipped?: boolean };
 
 function pagePadding() {
   return "pb-24 pt-1 sm:pt-1.5 lg:pt-2";
@@ -25,16 +31,54 @@ function pageShell() {
   return "mx-auto w-full max-w-[52rem] px-4 sm:px-5 md:px-6 lg:px-7";
 }
 
-function introCtaClass(dark: boolean) {
-  return [
-    "group inline-flex items-center gap-2",
-    "text-[1.02rem] font-medium transition",
-    "sm:text-[1.05rem]",
-    dark
-      ? "text-white/80 hover:text-white/92"
-      : "text-sky-700 hover:text-sky-900",
-    "focus-visible:outline-none",
-  ].join(" ");
+function sectionSpacing() {
+  return "mt-4 sm:mt-5";
+}
+
+function labelForCategory(cat: Category) {
+  return cat === "motivations"
+    ? "Motivations"
+    : cat === "strengths"
+      ? "Strengths"
+      : "Skills";
+}
+
+function loadSaved(): Record<string, Saved> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_V3);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed as Record<string, Saved>;
+  } catch {
+    return {};
+  }
+}
+
+function isAnswered(saved: Saved | undefined): boolean {
+  if (!saved) return false;
+  if (saved.skipped) return true;
+  return typeof saved.answer === "string" && saved.answer.trim().length > 0;
+}
+
+function getNextUnansweredTarget(): {
+  cat: Category;
+  questionId: string;
+} {
+  const saved = loadSaved();
+  const order: Category[] = ["motivations", "strengths", "skills"];
+
+  for (const cat of order) {
+    for (let i = 1; i <= SIGNAL_COMPLETE_COUNT; i += 1) {
+      const questionId = `${cat}_${i}`;
+      if (!isAnswered(saved[questionId])) {
+        return { cat, questionId };
+      }
+    }
+  }
+
+  return { cat: "motivations", questionId: "motivations_1" };
 }
 
 export default function MainHomePage() {
@@ -54,78 +98,85 @@ export default function MainHomePage() {
     setMounted(true);
   }, []);
 
-  const hasVm = vm !== null;
-
-  const progress = vm?.progress;
+  const progress = vm?.progress ?? {
+    motivationsAnswered: 0,
+    strengthsAnswered: 0,
+    skillsAnswered: 0,
+    motivationsTotal: SIGNAL_COMPLETE_COUNT,
+    strengthsTotal: SIGNAL_COMPLETE_COUNT,
+    skillsTotal: SIGNAL_COMPLETE_COUNT,
+  };
 
   const motAnswered = progress?.motivationsAnswered ?? 0;
   const strAnswered = progress?.strengthsAnswered ?? 0;
   const sklAnswered = progress?.skillsAnswered ?? 0;
 
   const isZeroState =
-    hasVm &&
+    mounted &&
     motAnswered === 0 &&
     strAnswered === 0 &&
     sklAnswered === 0;
 
   const allSignalsComplete =
-    hasVm &&
+    mounted &&
     motAnswered >= SIGNAL_COMPLETE_COUNT &&
     strAnswered >= SIGNAL_COMPLETE_COUNT &&
     sklAnswered >= SIGNAL_COMPLETE_COUNT;
 
-  const recommendedNext: RecommendedNext =
-    motAnswered < SIGNAL_COMPLETE_COUNT
-      ? "motivations"
-      : strAnswered < SIGNAL_COMPLETE_COUNT
-        ? "strengths"
-        : "skills";
+  const nextTarget = React.useMemo(
+    () => (
+      mounted
+        ? getNextUnansweredTarget()
+        : { cat: "motivations" as const, questionId: "motivations_1" }
+    ),
+    [mounted, vm]
+  );
+
+  const recommendedNext: RecommendedNext = nextTarget.cat;
+  const nextCategoryLabel = labelForCategory(recommendedNext);
+
+  const nextSteps = React.useMemo(
+    () => getNextStepsDefinition("main.home.need_motivations"),
+    []
+  );
 
   const introTitle = React.useMemo(() => {
-    if (!hasVm) return "What’s starting to come into focus";
     if (isZeroState) return "Let’s start building your direction";
     if (allSignalsComplete) return "Your direction is starting to take shape";
-    return "What’s starting to come into focus";
-  }, [hasVm, isZeroState, allSignalsComplete]);
+    return "We need a bit more to go on";
+  }, [isZeroState, allSignalsComplete]);
 
   const introBody = React.useMemo(() => {
-    if (!hasVm) {
-      return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
-    }
-
     if (isZeroState) {
-      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals — what pulls you in, what drains you, and how you operate — into clear, usable direction. We start by understanding your motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore. It starts with a few simple questions.";
+      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction. We start with motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore.";
     }
 
-    return "You’ve already helped Everleap understand your motivations, strengths, and skills, so Insights is where those signals can start turning into a clearer picture of who you are and what may fit.";
-  }, [hasVm, isZeroState]);
+    if (allSignalsComplete) {
+      return "You’ve now given Everleap enough signal across motivations, strengths, and skills to start turning those patterns into clearer ideas about what may fit.";
+    }
 
-  const ctaLabel = !hasVm
-    ? "Continue"
+    return `You still have a few questions to answer before Everleap can give you ideas that actually fit. Everleap looks for patterns in what pulls you in, what drains you, and how you think — those patterns become your signals. The clearest next move is to continue ${nextCategoryLabel} and pick up at the first question in that section you have not answered yet.`;
+  }, [isZeroState, allSignalsComplete, nextCategoryLabel]);
+
+  const ctaLabel = !mounted
+    ? ""
     : isZeroState
       ? "Start with a few questions"
       : allSignalsComplete
         ? "Open Insights"
-        : "Continue";
+        : `Continue to ${nextCategoryLabel}`;
 
   function handlePrimary() {
-    if (!hasVm) {
-      router.push("/main/insights");
-      return;
-    }
-
-    if (isZeroState) {
-      router.push("/main/questions?cat=motivations&returnTo=/main");
-      return;
-    }
+    if (!mounted) return;
 
     if (allSignalsComplete) {
       router.push("/main/insights");
       return;
     }
 
+    const target = getNextUnansweredTarget();
     router.push(
-      `/main/questions?cat=${recommendedNext}&returnTo=/main`
+      `/main/questions?cat=${target.cat}&questionId=${target.questionId}&returnTo=/main`
     );
   }
 
@@ -146,57 +197,50 @@ export default function MainHomePage() {
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
             <section className="relative pt-4 sm:pt-5">
-              <div className="pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full opacity-[0.025]">
-                <div className="h-full w-full rounded-full bg-sky-300/20" />
-              </div>
-
-              <div className="relative z-10">
+              <SectionCard tone="hero" className="px-4 py-5 sm:px-5 sm:py-5">
                 <TodayIntro
-                  title={introTitle}
+                  title={introTitle || "Let’s start building your direction"}
                   dark={dark}
                   motionEnabled={motionEnabled}
                   isTransitioning={transitioning}
-                  body={introBody}
+                  body={
+                    introBody ||
+                    "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction. We start with motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore."
+                  }
+                  primaryCtaLabel={ctaLabel || "Start with a few questions"}
+                  onPrimary={handlePrimary}
                 />
-
-                <div className="mt-4 sm:mt-5">
-                  {motionEnabled ? (
-                    <motion.button
-                      type="button"
-                      onClick={handlePrimary}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.32, ease: "easeOut" }}
-                      whileHover={{ x: 2 }}
-                      whileTap={{ scale: 0.995 }}
-                      className={introCtaClass(dark)}
-                    >
-                      <span>{ctaLabel}</span>
-                      <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
-                    </motion.button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handlePrimary}
-                      className={introCtaClass(dark)}
-                    >
-                      <span>{ctaLabel}</span>
-                      <ChevronRight className="h-4 w-4 opacity-80 transition group-hover:translate-x-[3px]" />
-                    </button>
-                  )}
-                </div>
-              </div>
+              </SectionCard>
             </section>
 
-            <section className="mt-6 border-t border-white/6 pt-4 sm:mt-7 sm:pt-5">
-              <NextStepsStack
-                dark={dark}
-                useLocal={mounted}
-                definition={getNextStepsDefinition("main.home.need_motivations")}
-                variant="embedded"
-                collapsible={false}
-                defaultOpen
-              />
+            <section className={sectionSpacing()}>
+              <SectionCard tone="plum" compact>
+                <SignalsCard
+                  dark={dark}
+                  progress={progress}
+                  nextKey={recommendedNext}
+                />
+              </SectionCard>
+            </section>
+
+            <section className={sectionSpacing()}>
+              <SectionCard tone="teal" compact>
+                <TinyTaskCard
+                  dark={dark}
+                  useLocal={mounted}
+                  definition={nextSteps.tinyTask}
+                />
+              </SectionCard>
+            </section>
+
+            <section className={sectionSpacing()}>
+              <SectionCard tone="amber" compact>
+                <ActionCard
+                  dark={dark}
+                  useLocal={mounted}
+                  definition={nextSteps.action}
+                />
+              </SectionCard>
             </section>
 
             <div className="h-6 sm:h-8" />
