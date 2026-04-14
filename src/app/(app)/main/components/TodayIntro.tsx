@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { SignalWord } from "./SignalWord";
@@ -36,46 +36,36 @@ export type TodayIntroProps = {
 };
 
 /* =============================================================================
-   Header treatment
+   Header (INSIGHTS-ALIGNED)
    ============================================================================= */
 
-function eyebrowWrapClass() {
-  return "inline-flex items-center gap-2";
+function headerRow(dark: boolean) {
+  return "flex items-center gap-2 mb-2";
 }
 
-function eyebrowLeadDotClass(dark: boolean, strong = false) {
+function headerIconWrap(dark: boolean) {
   return [
-    "rounded-full",
-    strong ? "h-1.5 w-1.5" : "h-[5px] w-[5px]",
+    "flex h-4 w-4 items-center justify-center rounded-[5px]",
     dark
-      ? strong
-        ? "bg-sky-200/54"
-        : "bg-white/24"
-      : strong
-        ? "bg-sky-600/72"
-        : "bg-slate-400",
+      ? "bg-amber-300/10 text-amber-200/70"
+      : "bg-amber-500/10 text-amber-600/70",
   ].join(" ");
 }
 
-function eyebrowLineClass(dark: boolean) {
+function headerTitle(dark: boolean) {
   return [
-    "h-px w-5 rounded-full",
-    dark
-      ? "bg-gradient-to-r from-white/16 to-white/0"
-      : "bg-gradient-to-r from-slate-400/40 to-slate-400/0",
+    "text-[11px] font-semibold uppercase tracking-[0.28em]",
+    dark ? "text-white/42" : "text-slate-600",
   ].join(" ");
 }
 
-function eyebrowClass(dark: boolean) {
-  return [
-    "text-[11px] font-semibold uppercase tracking-[0.32em]",
-    dark ? "text-white/36" : "text-slate-500",
-  ].join(" ");
-}
+/* =============================================================================
+   Body styles
+   ============================================================================= */
 
 function heroTitleClass(dark: boolean) {
   return [
-    "mt-2 text-[1.56rem] font-semibold leading-[1.08] tracking-[-0.024em]",
+    "text-[1.56rem] font-semibold leading-[1.08] tracking-[-0.024em]",
     "sm:text-[1.8rem]",
     dark ? "text-white/72" : "text-slate-950",
   ].join(" ");
@@ -142,11 +132,12 @@ export function TodayIntro(props: TodayIntroProps) {
 
   return (
     <div className="relative">
-      <div className={eyebrowWrapClass()}>
-        <span className={eyebrowLeadDotClass(dark, true)} />
-        <span className={eyebrowLeadDotClass(dark)} />
-        <span className={eyebrowLineClass(dark)} />
-        <div className={eyebrowClass(dark)}>Today</div>
+      {/* INSIGHTS-STYLE HEADER */}
+      <div className={headerRow(dark)}>
+        <span className={headerIconWrap(dark)}>
+          <Sparkles className="h-3.5 w-3.5" />
+        </span>
+        <div className={headerTitle(dark)}>Today</div>
       </div>
 
       <h1 className={heroTitleClass(dark)}>

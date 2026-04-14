@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Activity } from "lucide-react";
 
 import type { RecommendedNext } from "./TodayIntro";
-import { SignalWord } from "./SignalWord";
 
 /* =============================================================================
    Types
@@ -33,6 +33,30 @@ const SIGNAL_COMPLETE_COUNT = 5;
 const DASH_COUNT = 12;
 
 /* =============================================================================
+   Header
+   ============================================================================= */
+
+function headerRow() {
+  return "mb-3 flex items-center gap-2";
+}
+
+function headerIconWrap(dark: boolean) {
+  return [
+    "flex h-4 w-4 items-center justify-center rounded-[5px]",
+    dark
+      ? "bg-violet-300/10 text-violet-200/70"
+      : "bg-violet-500/10 text-violet-600/70",
+  ].join(" ");
+}
+
+function headerTitleClass(dark: boolean) {
+  return [
+    "text-[11px] font-semibold uppercase tracking-[0.28em]",
+    dark ? "text-white/42" : "text-slate-600",
+  ].join(" ");
+}
+
+/* =============================================================================
    Helpers
    ============================================================================= */
 
@@ -44,8 +68,8 @@ function label(cat: Cat) {
   return cat === "motivations"
     ? "Motivations"
     : cat === "strengths"
-      ? "Strengths"
-      : "Skills";
+    ? "Strengths"
+    : "Skills";
 }
 
 function desc(cat: Cat) {
@@ -59,9 +83,7 @@ function loadSaved(): Record<string, Saved> {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_V3);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-    return parsed as Record<string, Saved>;
+    return JSON.parse(raw);
   } catch {
     return {};
   }
@@ -75,14 +97,10 @@ function isAnswered(saved: Saved | undefined): boolean {
 
 function firstUnansweredQuestionId(cat: Cat, saved?: Record<string, Saved>) {
   const source = saved ?? {};
-
-  for (let i = 1; i <= SIGNAL_COMPLETE_COUNT; i += 1) {
-    const questionId = `${cat}_${i}`;
-    if (!isAnswered(source[questionId])) {
-      return questionId;
-    }
+  for (let i = 1; i <= SIGNAL_COMPLETE_COUNT; i++) {
+    const id = `${cat}_${i}`;
+    if (!isAnswered(source[id])) return id;
   }
-
   return `${cat}_1`;
 }
 
@@ -110,33 +128,11 @@ function dashEmptyClass(dark: boolean) {
   return dark ? "bg-white/10" : "bg-black/10";
 }
 
-function rowClass(dark: boolean, _highlighted: boolean, hasDivider: boolean) {
+function rowClass(dark: boolean, hasDivider: boolean) {
   return [
-    "relative block px-0 py-4 transition",
+    "relative block px-0 py-3 transition",
     hasDivider ? (dark ? "border-t border-white/8" : "border-t border-black/8") : "",
-    dark ? "hover:bg-white/[0.015]" : "hover:bg-black/[0.015]",
   ].join(" ");
-}
-
-function highlightGlowClass(cat: Cat) {
-  if (cat === "motivations") {
-    return "bg-[radial-gradient(circle_at_right,rgba(251,191,36,0.04),transparent_52%)]";
-  }
-  if (cat === "strengths") {
-    return "bg-[radial-gradient(circle_at_right,rgba(56,189,248,0.04),transparent_52%)]";
-  }
-  return "bg-[radial-gradient(circle_at_right,rgba(167,139,250,0.04),transparent_52%)]";
-}
-
-function CreativeSignalLead({ dark }: { dark: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-1.5" aria-hidden>
-      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-amber-200/78" : "bg-amber-600/74"].join(" ")} />
-      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-sky-200/62" : "bg-sky-600/58"].join(" ")} />
-      <span className={["h-1.5 w-1.5 rounded-full", dark ? "bg-violet-200/62" : "bg-violet-600/58"].join(" ")} />
-      <span className={["ml-0.5 h-[1px] w-4 rounded-full", dark ? "bg-white/16" : "bg-slate-900/14"].join(" ")} />
-    </span>
-  );
 }
 
 /* =============================================================================
@@ -144,7 +140,7 @@ function CreativeSignalLead({ dark }: { dark: boolean }) {
    ============================================================================= */
 
 export function SignalsCard(props: SignalsCardProps) {
-  const { dark, progress, nextKey } = props;
+  const { dark, progress } = props;
 
   const [saved, setSaved] = React.useState<Record<string, Saved>>({});
 
@@ -156,69 +152,58 @@ export function SignalsCard(props: SignalsCardProps) {
   const sub = dark ? "text-white/52" : "text-slate-600";
   const meta = dark ? "text-white/42" : "text-slate-500";
 
-  const totalFor = (cat: Cat) => {
-    const fallback = SIGNAL_COMPLETE_COUNT;
-    if (cat === "motivations") return Number(progress?.motivationsTotal ?? fallback);
-    if (cat === "strengths") return Number(progress?.strengthsTotal ?? fallback);
-    return Number(progress?.skillsTotal ?? fallback);
-  };
-
-  const answeredFor = (cat: Cat) => {
-    if (cat === "motivations") return Number(progress?.motivationsAnswered ?? 0);
-    if (cat === "strengths") return Number(progress?.strengthsAnswered ?? 0);
-    return Number(progress?.skillsAnswered ?? 0);
-  };
-
   const items: Array<{ cat: Cat; answered: number; total: number }> = [
-    { cat: "motivations", answered: answeredFor("motivations"), total: totalFor("motivations") },
-    { cat: "strengths", answered: answeredFor("strengths"), total: totalFor("strengths") },
-    { cat: "skills", answered: answeredFor("skills"), total: totalFor("skills") },
+    {
+      cat: "motivations",
+      answered: Number(progress?.motivationsAnswered ?? 0),
+      total: Number(progress?.motivationsTotal ?? SIGNAL_COMPLETE_COUNT),
+    },
+    {
+      cat: "strengths",
+      answered: Number(progress?.strengthsAnswered ?? 0),
+      total: Number(progress?.strengthsTotal ?? SIGNAL_COMPLETE_COUNT),
+    },
+    {
+      cat: "skills",
+      answered: Number(progress?.skillsAnswered ?? 0),
+      total: Number(progress?.skillsTotal ?? SIGNAL_COMPLETE_COUNT),
+    },
   ];
 
   return (
     <div className="w-full">
-      <div className="mb-4">
-        <div className="mb-2 flex items-center gap-2">
-          <CreativeSignalLead dark={dark} />
-          <SignalWord>Signals</SignalWord>
-        </div>
+      {/* HEADER */}
+      <div className={headerRow()}>
+        <span className={headerIconWrap(dark)}>
+          <Activity className="h-3.5 w-3.5" />
+        </span>
 
-        <div className={`text-[13px] leading-6 ${sub}`}>
-          Signals show patterns in what pulls you forward — and what drains you.
-        </div>
+        <div className={headerTitleClass(dark)}>Signals</div>
       </div>
 
-      <div className="relative">
+      {/* CONTENT */}
+      <div>
         {items.map((it, idx) => {
           const total = Math.max(1, it.total);
           const answered = clamp(it.answered, 0, total);
           const pct = answered / total;
           const filled = Math.round(pct * DASH_COUNT);
-          const highlighted = nextKey === it.cat;
           const questionId = firstUnansweredQuestionId(it.cat, saved);
           const href = buildHref(it.cat, questionId);
 
           return (
-            <Link key={it.cat} href={href} className={rowClass(dark, highlighted, idx !== 0)}>
-              {highlighted ? (
-                <span className={`pointer-events-none absolute inset-0 ${highlightGlowClass(it.cat)}`} />
-              ) : null}
-
-              <div className="relative z-10 flex items-start justify-between gap-4">
+            <Link key={it.cat} href={href} className={rowClass(dark, idx !== 0)}>
+              <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${accentClass(dark, it.cat)}`} />
+                    <span className={`h-2 w-2 rounded-full ${accentClass(dark, it.cat)}`} />
                     <div className={`text-[15px] font-semibold ${text}`}>
                       {label(it.cat)}
                     </div>
                   </div>
 
-                  <div className={`mt-1 text-[13px] ${sub}`}>
+                  <div className={`mt-0.5 text-[13px] ${sub}`}>
                     {desc(it.cat)}
-                  </div>
-
-                  <div className={`mt-2 text-[12px] ${meta}`}>
-                    {answered} of {total}
                   </div>
                 </div>
 
@@ -227,12 +212,12 @@ export function SignalsCard(props: SignalsCardProps) {
                 </div>
               </div>
 
-              <div className="relative z-10 mt-3 flex w-full gap-1">
+              <div className="mt-2 flex w-full gap-1">
                 {Array.from({ length: DASH_COUNT }).map((_, i) => (
                   <span
                     key={i}
                     className={[
-                      "h-[5px] min-w-0 flex-1 rounded-full",
+                      "h-[5px] flex-1 rounded-full",
                       i < filled ? dashFillClass(dark, it.cat) : dashEmptyClass(dark),
                     ].join(" ")}
                   />

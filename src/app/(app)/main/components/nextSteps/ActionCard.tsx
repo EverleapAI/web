@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 import type { ActionItem, ActionLog } from "@/app/(app)/main/domain/actions";
 import {
@@ -36,36 +37,27 @@ type Props = {
 };
 
 /* =============================================================================
-   Header helpers
+   Header (INSIGHTS-ALIGNED)
    ============================================================================= */
 
-function ActionLead({ dark }: { dark: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-1.5" aria-hidden>
-      <span
-        className={[
-          "flex h-4 w-4 items-center justify-center rounded-[5px] border",
-          dark
-            ? "border-sky-200/20 bg-sky-300/10"
-            : "border-sky-600/18 bg-sky-500/8",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "h-[7px] w-[2px] rounded-full",
-            dark ? "bg-sky-200/70" : "bg-sky-600/68",
-          ].join(" ")}
-        />
-      </span>
+function headerRow() {
+  return "mb-3 flex items-center gap-2";
+}
 
-      <span
-        className={[
-          "h-[1px] w-4 rounded-full",
-          dark ? "bg-white/16" : "bg-slate-900/14",
-        ].join(" ")}
-      />
-    </span>
-  );
+function headerIconWrap(dark: boolean) {
+  return [
+    "flex h-4 w-4 items-center justify-center rounded-[5px]",
+    dark
+      ? "bg-sky-300/10 text-sky-200/70"
+      : "bg-sky-500/10 text-sky-600/70",
+  ].join(" ");
+}
+
+function headerTitleClass(dark: boolean) {
+  return [
+    "text-[11px] font-semibold uppercase tracking-[0.28em]",
+    dark ? "text-white/42" : "text-slate-600",
+  ].join(" ");
 }
 
 /* =============================================================================
@@ -141,7 +133,9 @@ function actionButton(dark: boolean, emph = false) {
 function logRow(dark: boolean) {
   return [
     "py-3",
-    dark ? "border-t border-white/8 first:border-t-0" : "border-t border-black/8 first:border-t-0",
+    dark
+      ? "border-t border-white/8 first:border-t-0"
+      : "border-t border-black/8 first:border-t-0",
   ].join(" ");
 }
 
@@ -266,11 +260,12 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
   return (
     <div>
       <div className="mb-4">
-        <div className="mb-2 flex items-center gap-2">
-          <ActionLead dark={dark} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/42">
-            Actions
+        {/* HEADER */}
+        <div className={headerRow()}>
+          <span className={headerIconWrap(dark)}>
+            <ArrowRight className="h-3.5 w-3.5" />
           </span>
+          <div className={headerTitleClass(dark)}>Actions</div>
         </div>
 
         <div className="text-[17px] font-semibold tracking-[-0.01em] text-white/76 sm:text-[18px]">
@@ -331,7 +326,7 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
       ) : null}
 
       <div className="mt-5 flex items-center gap-4">
-        {status === "planned" ? (
+        {status === "planned" && (
           <motion.button
             type="button"
             onClick={onStart}
@@ -341,9 +336,9 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
           >
             Start
           </motion.button>
-        ) : null}
+        )}
 
-        {status === "started" ? (
+        {status === "started" && (
           <>
             <motion.button
               type="button"
@@ -365,9 +360,9 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
               Log result
             </motion.button>
           </>
-        ) : null}
+        )}
 
-        {status === "done" ? (
+        {status === "done" && (
           <motion.button
             type="button"
             onClick={onReopen}
@@ -377,11 +372,11 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
           >
             Reopen
           </motion.button>
-        ) : null}
+        )}
       </div>
 
       <AnimatePresence initial={false}>
-        {editorOpen ? (
+        {editorOpen && (
           <motion.div
             className={editorShell(dark)}
             initial={{ opacity: 0, height: 0, y: -6 }}
@@ -418,7 +413,7 @@ export function ActionCard({ dark, useLocal, definition }: Props) {
               </button>
             </div>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
     </div>
   );
