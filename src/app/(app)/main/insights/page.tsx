@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Sparkles, Shield } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -21,7 +20,6 @@ import {
   type MotivationHit,
 } from "./content/motivationsTaxonomy";
 
-import { NextStepsStack } from "@/app/(app)/main/components/nextSteps/NextStepsStack";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { getInsightLens } from "@/app/(app)/main/content/insightLenses";
 
@@ -29,6 +27,14 @@ import MotivationsTab from "./components/MotivationsTab";
 import StrengthsTab from "./components/StrengthsTab";
 import SkillsTab from "./components/SkillsTab";
 import FunFactsTab from "./components/FunFactsTab";
+
+import InsightsSummaryCard from "./components/sections/InsightsSummaryCard";
+import InsightsThemesCard from "./components/sections/InsightsThemesCard";
+import InsightsSuperpowersCard from "./components/sections/InsightsSuperpowersCard";
+import InsightsWatchoutsCard from "./components/sections/InsightsWatchoutsCard";
+import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
+import InsightsActionCard from "./components/sections/InsightsActionCard";
+import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
 
 /* =============================================================================
    Tabs
@@ -134,32 +140,32 @@ function tabPillStyle(args: {
   const { dark, selected, accent } = args;
   const c = rgb(accent);
 
-  const inactiveBg = dark ? `rgba(${c}, 0.10)` : `rgba(${c}, 0.14)`;
-  const inactiveBorder = dark ? `rgba(${c}, 0.26)` : `rgba(${c}, 0.30)`;
+  const inactiveBg = dark ? `rgba(${c}, 0.08)` : `rgba(${c}, 0.14)`;
+  const inactiveBorder = dark ? `rgba(${c}, 0.22)` : `rgba(${c}, 0.30)`;
 
   const activeBg = dark
-    ? `linear-gradient(180deg, rgba(${c}, 0.34), rgba(255,255,255,0.06))`
+    ? `linear-gradient(180deg, rgba(${c}, 0.22), rgba(255,255,255,0.04))`
     : `linear-gradient(180deg, rgba(${c}, 0.22), rgba(255,255,255,0.85))`;
 
   const glow = dark
-    ? `0 0 0 1px rgba(${c}, 0.30), 0 22px 70px rgba(0,0,0,0.60), 0 0 54px rgba(${c}, 0.28)`
-    : `0 0 0 1px rgba(${c}, 0.22), 0 14px 40px rgba(0,0,0,0.16), 0 0 44px rgba(${c}, 0.18)`;
+    ? `0 0 0 1px rgba(${c}, 0.24), 0 16px 36px rgba(0,0,0,0.42)`
+    : `0 0 0 1px rgba(${c}, 0.22), 0 14px 40px rgba(0,0,0,0.16)`;
 
   const idleShadow = dark
-    ? `inset 0 1px 0 rgba(255,255,255,0.07), 0 8px 22px rgba(0,0,0,0.34)`
+    ? `inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 20px rgba(0,0,0,0.24)`
     : `inset 0 1px 0 rgba(255,255,255,0.60), 0 8px 18px rgba(0,0,0,0.09)`;
 
   return selected
     ? {
         background: activeBg,
-        borderColor: dark ? `rgba(${c}, 0.40)` : `rgba(${c}, 0.35)`,
-        color: dark ? "rgba(255,255,255,0.96)" : "rgba(15,23,42,0.96)",
+        borderColor: dark ? `rgba(${c}, 0.32)` : `rgba(${c}, 0.35)`,
+        color: dark ? "rgba(255,255,255,0.88)" : "rgba(15,23,42,0.96)",
         boxShadow: glow,
       }
     : {
         background: inactiveBg,
         borderColor: inactiveBorder,
-        color: dark ? "rgba(255,255,255,0.82)" : "rgba(15,23,42,0.82)",
+        color: dark ? "rgba(255,255,255,0.70)" : "rgba(15,23,42,0.82)",
         boxShadow: idleShadow,
       };
 }
@@ -174,568 +180,16 @@ function tabDotStyle(args: {
 
   return {
     background: selected
-      ? `rgba(${c}, 0.95)`
-      : `rgba(${c}, ${dark ? 0.45 : 0.55})`,
+      ? `rgba(${c}, 0.88)`
+      : `rgba(${c}, ${dark ? 0.38 : 0.55})`,
     boxShadow: selected
-      ? `0 0 18px rgba(${c}, 0.65)`
-      : `0 0 10px rgba(${c}, 0.35)`,
+      ? `0 0 10px rgba(${c}, 0.34)`
+      : `0 0 6px rgba(${c}, 0.18)`,
   };
 }
 
-function readingSurface(dark: boolean) {
-  return [
-    "relative overflow-hidden rounded-[28px] border",
-    "px-4 py-5 md:px-6 md:py-6",
-    "backdrop-blur-xl",
-    dark ? "border-white/10 bg-slate-950/20" : "border-black/10 bg-white/80",
-    "shadow-[0_18px_55px_rgba(0,0,0,0.22)]",
-  ].join(" ");
-}
-
-function subtleDivider(dark: boolean) {
-  return dark ? "bg-white/10" : "bg-black/10";
-}
-
-function sectionKicker(dark: boolean) {
-  return [
-    "text-[12px] font-semibold uppercase tracking-[0.16em]",
-    dark ? "text-white/50" : "text-slate-600",
-  ].join(" ");
-}
-
-function sectionTitle(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
-}
-
-function bodyText(dark: boolean) {
-  return dark ? "text-slate-200/90" : "text-slate-700";
-}
-
-function mutedText(dark: boolean) {
-  return dark ? "text-white/65" : "text-slate-600";
-}
-
-function counselorHeadline(dark: boolean) {
-  return dark
-    ? [
-        "text-[22px] md:text-[26px] font-semibold tracking-tight leading-snug",
-        "text-transparent bg-clip-text",
-        "bg-gradient-to-b from-white/95 via-white/86 to-white/70",
-        "drop-shadow-[0_10px_22px_rgba(0,0,0,0.45)]",
-      ].join(" ")
-    : [
-        "text-[22px] md:text-[26px] font-semibold tracking-tight leading-snug",
-        "text-slate-900",
-      ].join(" ");
-}
-
-function counselorPara(dark: boolean) {
-  return dark
-    ? [
-        "text-[15px] leading-relaxed",
-        "text-white/82",
-        "drop-shadow-[0_1px_10px_rgba(0,0,0,0.35)]",
-      ].join(" ")
-    : "text-[15px] leading-relaxed text-slate-700";
-}
-
-function summaryZoneShell(
-  dark: boolean,
-  tone: "themes" | "strengths" | "watchouts" | "next"
-) {
-  const toneMap = {
-    themes: dark
-      ? "border-white/6 bg-white/[0.025]"
-      : "border-black/6 bg-black/[0.02]",
-    strengths: dark
-      ? "border-emerald-300/12 bg-emerald-300/[0.03]"
-      : "border-emerald-500/12 bg-emerald-500/[0.04]",
-    watchouts: dark
-      ? "border-amber-300/12 bg-amber-300/[0.03]"
-      : "border-amber-500/12 bg-amber-500/[0.04]",
-    next: dark
-      ? "border-orange-300/12 bg-orange-300/[0.03]"
-      : "border-orange-500/12 bg-orange-500/[0.04]",
-  } as const;
-
-  return [
-    "relative overflow-hidden rounded-[26px] border px-4 py-4 md:px-5 md:py-5",
-    "backdrop-blur-xl shadow-[0_16px_44px_rgba(0,0,0,0.18)]",
-    toneMap[tone],
-  ].join(" ");
-}
-
-function summaryZoneGlow(
-  tone: "themes" | "strengths" | "watchouts" | "next"
-): string {
-  switch (tone) {
-    case "themes":
-      return "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.12) 0%, transparent 28%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.08) 0%, transparent 24%)";
-    case "strengths":
-      return "radial-gradient(circle at 10% 0%, rgba(120,255,190,0.14) 0%, transparent 28%), radial-gradient(circle at 92% 18%, rgba(120,200,255,0.06) 0%, transparent 22%)";
-    case "watchouts":
-      return "radial-gradient(circle at 10% 0%, rgba(255,200,120,0.12) 0%, transparent 28%), radial-gradient(circle at 88% 100%, rgba(255,150,120,0.06) 0%, transparent 22%)";
-    case "next":
-      return "radial-gradient(circle at 14% 0%, rgba(255,180,120,0.14) 0%, transparent 30%), radial-gradient(circle at 88% 10%, rgba(255,150,230,0.06) 0%, transparent 22%)";
-  }
-}
-
-function summaryZoneTitle(
-  dark: boolean,
-  tone: "themes" | "strengths" | "watchouts" | "next"
-) {
-  const toneMap = {
-    themes: dark ? "text-white/92" : "text-slate-900",
-    strengths: dark ? "text-emerald-50" : "text-slate-900",
-    watchouts: dark ? "text-amber-50" : "text-slate-900",
-    next: dark ? "text-orange-50" : "text-slate-900",
-  } as const;
-
-  return [
-    "text-[16px] font-semibold tracking-[-0.02em]",
-    toneMap[tone],
-  ].join(" ");
-}
-
-function summaryZoneKicker(
-  dark: boolean,
-  tone: "themes" | "strengths" | "watchouts" | "next"
-) {
-  const toneMap = {
-    themes: dark ? "text-white/50" : "text-slate-600",
-    strengths: dark ? "text-emerald-100/68" : "text-emerald-700/80",
-    watchouts: dark ? "text-amber-100/68" : "text-amber-700/80",
-    next: dark ? "text-orange-100/68" : "text-orange-700/80",
-  } as const;
-
-  return [
-    "text-[11px] font-semibold uppercase tracking-[0.16em]",
-    toneMap[tone],
-  ].join(" ");
-}
-
-function summarySeparator(dark: boolean) {
-  return [
-    "relative h-px overflow-hidden",
-    dark ? "bg-transparent" : "bg-transparent",
-  ].join(" ");
-}
-
-/* --- Quick Feedback (inline expand; no overlay) ----------------------------- */
-
-type QuickRating = "mostly" | "somewhat" | "not_really";
-
-const QUICK_FEEDBACK_STORAGE_KEY = "everleap.insights.quickFeedback.v1";
-
-function quickChip(dark: boolean, active: boolean) {
-  return [
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3.5 py-2",
-    "text-[13px] font-semibold",
-    "backdrop-blur-xl transition active:scale-95",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    dark ? "border-white/10" : "border-black/10",
-    active
-      ? dark
-        ? "bg-white/[0.10] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_44px_rgba(0,0,0,0.40),0_0_42px_rgba(251,146,60,0.16)]"
-        : "bg-white text-slate-900 shadow-[0_14px_40px_rgba(0,0,0,0.12)]"
-      : dark
-        ? "bg-white/[0.045] text-white/78 hover:bg-white/[0.07]"
-        : "bg-white/80 text-slate-800 hover:bg-white",
-  ].join(" ");
-}
-
-function softInputShell(dark: boolean) {
-  return [
-    "relative overflow-hidden rounded-[22px] border",
-    "backdrop-blur-2xl",
-    dark ? "border-white/10 bg-white/[0.035]" : "border-black/10 bg-white/80",
-    "shadow-[0_18px_55px_rgba(0,0,0,0.18)]",
-  ].join(" ");
-}
-
-function saveButton(dark: boolean, disabled: boolean) {
-  return [
-    "h-10 rounded-2xl px-4 text-[13px] font-semibold",
-    "transition active:scale-[0.99]",
-    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-    disabled
-      ? dark
-        ? "cursor-not-allowed bg-white/[0.07] text-white/40 border border-white/10"
-        : "cursor-not-allowed bg-black/5 text-black/40 border border-black/10"
-      : dark
-        ? "bg-white text-black hover:bg-white/95"
-        : "bg-slate-900 text-white hover:bg-slate-900/90",
-  ].join(" ");
-}
-
-function readLocalQuickFeedback(): {
-  rating: QuickRating;
-  note: string;
-  savedAt: number;
-} | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(QUICK_FEEDBACK_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return null;
-    const rec = parsed as {
-      rating?: unknown;
-      note?: unknown;
-      savedAt?: unknown;
-    };
-    const rating =
-      rec.rating === "mostly" ||
-      rec.rating === "somewhat" ||
-      rec.rating === "not_really"
-        ? rec.rating
-        : null;
-    const note = typeof rec.note === "string" ? rec.note : "";
-    const savedAt =
-      typeof rec.savedAt === "number" && Number.isFinite(rec.savedAt)
-        ? rec.savedAt
-        : 0;
-    if (!rating) return null;
-    return { rating, note, savedAt };
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalQuickFeedback(v: { rating: QuickRating; note: string }) {
-  if (typeof window === "undefined") return;
-  const payload = { ...v, savedAt: Date.now() };
-  window.localStorage.setItem(
-    QUICK_FEEDBACK_STORAGE_KEY,
-    JSON.stringify(payload)
-  );
-}
-
-function QuickFeedbackInline({
-  dark,
-  contextTag,
-}: {
-  dark: boolean;
-  contextTag: string;
-}): React.JSX.Element {
-  const [open, setOpen] = React.useState(false);
-  const [rating, setRating] = React.useState<QuickRating | null>(null);
-  const [note, setNote] = React.useState("");
-  const [saved, setSaved] = React.useState(false);
-
-  React.useEffect(() => {
-    const existing = readLocalQuickFeedback();
-    if (!existing) return;
-    setRating(existing.rating);
-    setNote(existing.note ?? "");
-    setSaved(true);
-  }, []);
-
-  function onPick(next: QuickRating) {
-    setRating(next);
-    setSaved(false);
-    setOpen(true);
-  }
-
-  function onClose() {
-    setOpen(false);
-  }
-
-  function onSave() {
-    if (!rating) return;
-    writeLocalQuickFeedback({
-      rating,
-      note: (note ?? "").trim(),
-    });
-    setSaved(true);
-    setOpen(false);
-  }
-
-  const canSave = !!rating;
-
-  return (
-    <div className="mt-6">
-      <div className={sectionKicker(dark)}>Quick Check</div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          className={quickChip(dark, rating === "mostly")}
-          onClick={() => onPick("mostly")}
-        >
-          <span aria-hidden>👍</span>
-          <span>Mostly right</span>
-        </button>
-
-        <button
-          type="button"
-          className={quickChip(dark, rating === "somewhat")}
-          onClick={() => onPick("somewhat")}
-        >
-          <span aria-hidden>🙂</span>
-          <span>Somewhat</span>
-        </button>
-
-        <button
-          type="button"
-          className={quickChip(dark, rating === "not_really")}
-          onClick={() => onPick("not_really")}
-        >
-          <span aria-hidden>👎</span>
-          <span>Not really</span>
-        </button>
-
-        {saved ? (
-          <div
-            className={[
-              "ml-1 flex items-center text-[12px]",
-              dark ? "text-white/45" : "text-slate-600",
-            ].join(" ")}
-          >
-            (Saved locally)
-          </div>
-        ) : null}
-      </div>
-
-      <div
-        className={[
-          "mt-3 overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
-          open ? "max-h-[340px] opacity-100" : "max-h-0 opacity-0",
-        ].join(" ")}
-        aria-hidden={!open}
-      >
-        <div className={softInputShell(dark)}>
-          <div className="pointer-events-none absolute inset-0" aria-hidden>
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(520px 220px at 12% 0%, rgba(255,170,110,0.14), transparent 62%)," +
-                  "radial-gradient(520px 220px at 88% 0%, rgba(120,160,255,0.10), transparent 62%)," +
-                  "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))",
-                opacity: dark ? 1 : 0.7,
-              }}
-            />
-          </div>
-
-          <div className="relative p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div
-                  className={[
-                    "text-[12px] font-semibold uppercase tracking-[0.16em]",
-                    dark ? "text-white/55" : "text-slate-600",
-                  ].join(" ")}
-                >
-                  Quick feedback
-                </div>
-                <div
-                  className={[
-                    "mt-1 text-[13px] leading-relaxed",
-                    mutedText(dark),
-                  ].join(" ")}
-                >
-                  Add a note if something felt off (or especially accurate).
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                className={[
-                  "shrink-0 h-9 rounded-full px-3 text-[12px] font-semibold border backdrop-blur-xl transition",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark
-                    ? "border-white/10 bg-white/[0.04] text-white/75 hover:bg-white/[0.07]"
-                    : "border-black/10 bg-white/80 text-slate-800 hover:bg-white",
-                ].join(" ")}
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-3">
-              <textarea
-                value={note}
-                onChange={(e) => {
-                  setNote(e.target.value);
-                  if (saved) setSaved(false);
-                }}
-                rows={3}
-                placeholder="Tell us what felt off / missing / dead-on…"
-                className={[
-                  "w-full resize-none rounded-[18px] px-4 py-3 text-[14px] leading-relaxed",
-                  "bg-transparent outline-none ring-1 ring-inset",
-                  dark
-                    ? "text-white placeholder:text-white/32 ring-white/12 focus:ring-white/20"
-                    : "text-slate-900 placeholder:text-slate-500 ring-black/10 focus:ring-black/15",
-                  "focus-visible:ring-2 focus-visible:ring-orange-200/20",
-                ].join(" ")}
-                style={{
-                  boxShadow:
-                    "inset 0 0 0 1px rgba(0,0,0,0.10), " +
-                    "inset 0 14px 26px rgba(0,0,0,0.18), " +
-                    "inset 0 1px 0 rgba(255,255,255,0.10)",
-                }}
-                aria-label={`Quick feedback note (${contextTag})`}
-              />
-              <div className={["mt-2 text-[12px]", mutedText(dark)].join(" ")}>
-                Tip: one sentence is enough.
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setNote("");
-                  setSaved(false);
-                  setOpen(false);
-                }}
-                className={[
-                  "h-10 rounded-2xl px-4 text-[13px] font-semibold border backdrop-blur-xl transition active:scale-[0.99]",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
-                  dark
-                    ? "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"
-                    : "border-black/10 bg-white/70 text-slate-800 hover:bg-white",
-                ].join(" ")}
-              >
-                Skip note
-              </button>
-
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={!canSave}
-                className={saveButton(dark, !canSave)}
-              >
-                Save
-              </button>
-            </div>
-
-            <div
-              className={[
-                "mt-3 text-[11px] leading-relaxed",
-                dark ? "text-white/30" : "text-slate-500",
-              ].join(" ")}
-            >
-              Saved to localStorage:{" "}
-              <span className={dark ? "text-white/40" : "text-slate-600"}>
-                {QUICK_FEEDBACK_STORAGE_KEY}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* =============================================================================
-   Word cloud helpers
-   ============================================================================= */
-
-type CSSVars = React.CSSProperties & {
-  [key: `--${string}`]: string | number;
-};
-
-function hashString(input: string) {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function wordSizePx(weight: number) {
-  const w = clamp01(weight);
-  return 14 + Math.round(w * 10);
-}
-
-function wordOpacity(weight: number) {
-  const w = clamp01(weight);
-  return 0.74 + w * 0.22;
-}
-
-function isScienceyTerm(term: string) {
-  const t = (term ?? "").toLowerCase().trim();
-
-  const rx =
-    /\b(science|physics|chem|chemistry|bio|biology|genetic|genetics|neuro|neuroscience|quantum|lab|research|experiment|data|stats|statistics|math|algebra|geometry|calculus|engineering|robot|robotics|ai|ml|model|code|coding|program|programming|algorithm|systems?)\b/;
-
-  const rx2 = /\b(stem|computer|computers|comp(?:sci)?|cs)\b/;
-
-  return rx.test(t) || rx2.test(t);
-}
-
-function wordColorClasses(dark: boolean, term: string) {
-  if (isScienceyTerm(term)) {
-    return [
-      dark ? "text-cyan-200/95" : "text-cyan-700/95",
-      dark ? "drop-shadow-[0_1px_12px_rgba(0,0,0,0.38)]" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  const paletteDark = [
-    "text-sky-200/90",
-    "text-fuchsia-200/85",
-    "text-amber-200/90",
-    "text-emerald-200/85",
-    "text-violet-200/85",
-    "text-rose-200/85",
-    "text-lime-200/85",
-  ] as const;
-
-  const paletteLight = [
-    "text-sky-700/95",
-    "text-fuchsia-700/90",
-    "text-amber-700/95",
-    "text-emerald-700/90",
-    "text-violet-700/90",
-    "text-rose-700/90",
-    "text-lime-700/90",
-  ] as const;
-
-  const i = hashString(term.toLowerCase()) % paletteDark.length;
-  return [
-    dark ? paletteDark[i] : paletteLight[i],
-    dark ? "drop-shadow-[0_1px_10px_rgba(0,0,0,0.34)]" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function wordChaosVars(term: string, weight: number): CSSVars {
-  const h = hashString((term ?? "").toLowerCase());
-  const w = clamp01(weight);
-  const allow = w < 0.92 && (h % 10) < 3;
-
-  const rot = allow ? ((h % 5) - 2) * 0.35 : 0;
-  const ty = allow ? ((h % 7) - 3) * 0.25 : 0;
-  const ls = w > 0.78 ? 0.15 : 0;
-
-  return {
-    "--el-rot": `${rot}deg`,
-    "--el-ty": `${ty}px`,
-    "--el-ls": `${ls}px`,
-  };
-}
-
-function topTerms(items: WordCloudItem[]) {
-  const sorted = [...items].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
-  return new Set(sorted.slice(0, 3).map((x) => x.term.toLowerCase()));
-}
-
-function highlightWrap(dark: boolean) {
-  return dark ? "bg-white/8 ring-1 ring-white/10" : "bg-black/5 ring-1 ring-black/10";
-}
-
-/* =============================================================================
-   Summary extraction (safe)
+   Summary extraction
    ============================================================================= */
 
 type SignalId = "action" | "people" | "curiosity" | "clarity";
@@ -854,7 +308,7 @@ function pickWatchoutSentence(watchouts: { bullets: string[] }) {
 
 type AgenticNote = {
   title: string;
-  paragraphs: string[];
+  paragraph: string;
   motivatorsLine: string;
   strengthsLine: string;
   skillsLine: string;
@@ -956,43 +410,41 @@ function buildAgenticSummaryNote(args: {
     ? `${who}okay — here’s what I think is true about you right now.`
     : `${who}okay — this is an early read, but it’s already pointing somewhere.`;
 
-  const p1Parts: string[] = [];
-  p1Parts.push(opener);
+  const parts: string[] = [opener];
 
   if (topBooster || topDrainer) {
     const b = topBooster ? `You light up when ${topBooster}` : "";
     const d = topDrainer ? `and you lose energy when ${topDrainer}` : "";
     const line = [b, d].filter(Boolean).join(" ");
-    if (line) p1Parts.push(`${line}.`);
+    if (line) parts.push(`${line}.`);
   } else {
-    p1Parts.push(
+    parts.push(
       "I’m watching for what reliably creates energy for you — and what quietly drains it."
     );
   }
 
   if (motivatorLabels.length) {
-    p1Parts.push(`Under that, I keep seeing ${joinLabels(motivatorLabels, 3)}.`);
+    parts.push(`Under that, I keep seeing ${joinLabels(motivatorLabels, 3)}.`);
   }
 
-  const p1 = p1Parts.join(" ");
-
-  const proofLine = proof
-    ? `I’m not guessing — you literally gave me clues like: “${proof}.”`
-    : "";
+  if (proof) {
+    parts.push(`I’m not guessing — you literally gave me clues like: “${proof}.”`);
+  }
 
   const watch = cleanOneLine(args.watchoutLine)
     ? `Watchout: ${cleanOneLine(args.watchoutLine).replace(/\.$/, "")}.`
     : "Watchout: when you care about getting it right, it’s easy to overthink the first step.";
 
   const move = hasSignal
-    ? "So here’s your move: pick one thing you care about this week and do a 15-minute rep today (start imperfect, finish real). That feeds your strongest driver — and it gives me cleaner signal."
-    : "So here’s your move: give me one real example (a time you felt locked-in, and a time you felt drained). I’ll tighten your motivators fast — and make the advice feel like you, not like a quiz.";
+    ? "So here’s your move: pick one thing you care about this week and do a 15-minute rep today. Start imperfect, finish real."
+    : "So here’s your move: give me one real example — a time you felt locked-in and a time you felt drained — and I’ll tighten this fast.";
 
-  const paragraphs = [p1, [proofLine, watch, move].filter(Boolean).join(" ")].filter(Boolean);
+  parts.push(watch);
+  parts.push(move);
 
   return {
     title: "Summary",
-    paragraphs,
+    paragraph: parts.join(" "),
     motivatorsLine,
     strengthsLine,
     skillsLine,
@@ -1001,7 +453,7 @@ function buildAgenticSummaryNote(args: {
 }
 
 /* =============================================================================
-   Watchouts (self-contained)
+   Watchouts
    ============================================================================= */
 
 function guessWatchoutsFromSuperpowers(
@@ -1030,7 +482,7 @@ function guessWatchoutsFromSuperpowers(
     },
     {
       rx: /\b(creat|idea|vision|imagin)\b/i,
-      out: "Ideas can multiply faster than closure — it starts to feel like you’re “behind” your own brain.",
+      out: "Ideas can multiply faster than closure — it starts to feel like you’re behind your own brain.",
     },
     {
       rx: /\b(lead|own|responsib|standard)\b/i,
@@ -1048,7 +500,7 @@ function guessWatchoutsFromSuperpowers(
 
   const defaults = [
     "When you’re good at reading the room, you can start self-editing mid-sentence.",
-    "When you’re reliable, you can become the “default adult” — even in your own life.",
+    "When you’re reliable, you can become the default adult — even in your own life.",
     "When you’re capable, you can delay asking for help until it’s urgent.",
   ];
 
@@ -1066,7 +518,7 @@ function guessWatchoutsFromSuperpowers(
 }
 
 /* =============================================================================
-   Motivations (Top 3 universal drivers)
+   Motivations
    ============================================================================= */
 
 type DriverId =
@@ -1097,7 +549,7 @@ const MOTIVATION_DRIVERS: DriverDef[] = [
       "You care more, stay longer, and you’ll push through friction because it matters.",
     drainsWhen: "it’s busywork, status, or the point feels foggy.",
     tryThis:
-      "Pick one thing you’re doing this week and write the “real reason” in one sentence. Then do one 20-minute rep.",
+      "Pick one thing you’re doing this week and write the real reason in one sentence. Then do one 20-minute rep.",
   },
   {
     id: "mastery",
@@ -1109,7 +561,7 @@ const MOTIVATION_DRIVERS: DriverDef[] = [
     drainsWhen:
       "there’s no measurable improvement (same loop, same result).",
     tryThis:
-      "Choose one skill. Do 3 short reps this week and track one metric (speed, accuracy, clarity, time).",
+      "Choose one skill. Do 3 short reps this week and track one metric: speed, accuracy, clarity, or time.",
   },
   {
     id: "people",
@@ -1118,7 +570,7 @@ const MOTIVATION_DRIVERS: DriverDef[] = [
     whenItHits:
       "when there’s real interaction: feedback, challenge, shared effort.",
     looksLike:
-      "You sharpen around mentors/teammates and you move faster with a real loop.",
+      "You sharpen around mentors or teammates and move faster with a real loop.",
     drainsWhen:
       "it’s isolated for too long or you can’t get honest feedback.",
     tryThis:
@@ -1203,10 +655,8 @@ function scoreDrivers(args: {
 
   base.people += (bySignal.get("people") ?? 0) * 0.65;
   base.curiosity += (bySignal.get("curiosity") ?? 0) * 0.65;
-
   base.momentum += (bySignal.get("action") ?? 0) * 0.45;
   base.mastery += (bySignal.get("action") ?? 0) * 0.35;
-
   base.meaning += (bySignal.get("clarity") ?? 0) * 0.28;
   base.momentum += (bySignal.get("clarity") ?? 0) * 0.18;
 
@@ -1305,7 +755,7 @@ function scoreDrivers(args: {
 }
 
 /* =============================================================================
-   Superpowers (typed normalization)
+   Superpowers
    ============================================================================= */
 
 type LensLike = {
@@ -1327,6 +777,110 @@ function normalizeLens(raw: unknown): LensLike {
     : [];
 
   return { body, bullets };
+}
+
+/* =============================================================================
+   Loose next-step normalization
+   ============================================================================= */
+
+function textFromUnknown(value: unknown): string {
+  if (typeof value === "string") return cleanOneLine(value);
+  return "";
+}
+
+function listFromUnknown(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return cleanOneLine(item);
+      if (isRecord(item)) {
+        const preferred = [
+          "label",
+          "title",
+          "text",
+          "body",
+          "name",
+          "subtitle",
+        ];
+        for (const key of preferred) {
+          const v = item[key];
+          if (typeof v === "string" && cleanOneLine(v)) return cleanOneLine(v);
+        }
+      }
+      return "";
+    })
+    .filter(Boolean);
+}
+
+function firstString(...values: unknown[]) {
+  for (const v of values) {
+    const out = textFromUnknown(v);
+    if (out) return out;
+  }
+  return "";
+}
+
+function normalizeChoice(item: unknown): { label: string; meta?: string } | null {
+  if (typeof item === "string") {
+    const label = cleanOneLine(item);
+    return label ? { label } : null;
+  }
+
+  if (!isRecord(item)) return null;
+
+  const label = firstString(
+    item.label,
+    item.title,
+    item.text,
+    item.name,
+    item.prompt
+  );
+  const meta = firstString(
+    item.subtitle,
+    item.helper,
+    item.description,
+    item.body
+  );
+
+  if (!label) return null;
+  return meta ? { label, meta } : { label };
+}
+
+function normalizeChoices(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => normalizeChoice(item))
+    .filter((item): item is { label: string; meta?: string } => !!item);
+}
+
+function normalizeTinyTask(definition: unknown) {
+  const rec = isRecord(definition) ? definition : {};
+  return {
+    eyebrow: firstString(rec.eyebrow, rec.kicker, "Tiny Task"),
+    title: firstString(
+      rec.title,
+      rec.name,
+      rec.prompt,
+      "Pick the one that’s most true this week."
+    ),
+    body: firstString(rec.subtitle, rec.body, rec.description),
+    choices: normalizeChoices(
+      rec.choices ?? rec.options ?? rec.answers ?? rec.items
+    ),
+  };
+}
+
+function normalizeAction(definition: unknown) {
+  const rec = isRecord(definition) ? definition : {};
+  const bullets = listFromUnknown(
+    rec.steps ?? rec.bullets ?? rec.items ?? rec.actions
+  );
+  return {
+    eyebrow: firstString(rec.eyebrow, rec.kicker, "Actions"),
+    title: firstString(rec.title, rec.name, "Run one small test this week."),
+    body: firstString(rec.subtitle, rec.body, rec.description),
+    bullets,
+  };
 }
 
 /* =============================================================================
@@ -1425,7 +979,6 @@ export default function Page() {
     () => wordCloudRaw ?? [],
     [wordCloudRaw]
   );
-  const topWordSet = React.useMemo(() => topTerms(wordCloud), [wordCloud]);
 
   const wordCloudDisplay = React.useMemo(() => {
     if (!wordCloud?.length) return [];
@@ -1502,16 +1055,6 @@ export default function Page() {
       return null;
     }
   }, [nameFromHeadline, signals, wordCloudDisplay, baseMotivationReceipts]);
-
-  const motivationReceipts = React.useMemo(() => {
-    const maybe = motivationProfile?.top?.receipts ?? [];
-    if (Array.isArray(maybe) && maybe.length) {
-      return maybe
-        .map((x: unknown) => cleanOneLine(String(x)))
-        .filter(Boolean);
-    }
-    return baseMotivationReceipts;
-  }, [motivationProfile, baseMotivationReceipts]);
 
   const energyBoosters = React.useMemo(() => {
     const maybeRaw: unknown =
@@ -1609,6 +1152,24 @@ export default function Page() {
     energyDrainers,
   ]);
 
+  const summaryNext = React.useMemo(() => {
+    const rec = (nextStepsSummary ?? {}) as Record<string, unknown>;
+    return {
+      tinyTask: normalizeTinyTask(rec.tinyTask),
+      action: normalizeAction(rec.action),
+    };
+  }, [nextStepsSummary]);
+
+  const hasStrongSignal = React.useMemo(() => {
+    if (!mounted) return false;
+    if (wordCloudDisplay.length > 0) return true;
+    if (signals.some((s) => (s.strength ?? 0) >= 0.22)) return true;
+    if (baseMotivationReceipts.length > 0) return true;
+    return false;
+  }, [mounted, wordCloudDisplay, signals, baseMotivationReceipts]);
+
+  const isSummaryReady = mounted;
+
   const skillsModel = React.useMemo(() => {
     const anyVm = vm as unknown as Record<string, unknown>;
     if (anyVm && typeof anyVm === "object" && "skills" in anyVm) {
@@ -1630,22 +1191,6 @@ export default function Page() {
   return (
     <>
       <style jsx global>{`
-        .el-word {
-          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg))
-            scale(1);
-          letter-spacing: var(--el-ls, 0px);
-          will-change: transform;
-          transition: transform 160ms ease;
-        }
-        .el-word:hover {
-          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg))
-            scale(1.03);
-        }
-        .el-word:active {
-          transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg))
-            scale(0.988);
-        }
-
         button[aria-label*="sign out" i],
         a[aria-label*="sign out" i],
         button[title*="sign out" i],
@@ -1655,22 +1200,6 @@ export default function Page() {
       `}</style>
 
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col pb-28 pt-0">
-        <div className="mb-3 pt-0">
-          <h1
-            className={[
-              "text-[36px] md:text-[44px] font-semibold tracking-tight",
-              "text-white/92",
-              "leading-[1.08] pb-1",
-            ].join(" ")}
-            style={{ overflow: "visible" }}
-          >
-            Insights
-          </h1>
-          <div className="mt-0.5 text-[14px] md:text-[15px] text-white/60">
-            What it all means
-          </div>
-        </div>
-
         <div className="relative mb-5">
           <div className="relative flex gap-2 overflow-x-auto pb-0 pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {TABS.map((t) => {
@@ -1715,295 +1244,63 @@ export default function Page() {
         </div>
 
         {tab === "summary" ? (
-          <section className="mb-6">
-            <div className={readingSurface(dark)}>
-              <div className="pointer-events-none absolute inset-0" aria-hidden>
-                <div
-                  className={[
-                    "absolute -top-24 left-1/2 h-[260px] w-[680px] -translate-x-1/2 rounded-full blur-3xl",
-                    dark ? "bg-orange-300/10" : "bg-orange-400/10",
-                  ].join(" ")}
-                />
-                <div
-                  className={[
-                    "absolute top-12 -left-24 h-[220px] w-[360px] rounded-full blur-3xl",
-                    dark ? "bg-sky-300/10" : "bg-sky-400/10",
-                  ].join(" ")}
-                />
-                <div
-                  className={[
-                    "absolute inset-0",
-                    dark
-                      ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent"
-                      : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
-                  ].join(" ")}
-                />
-              </div>
+          isSummaryReady ? (
+            <section className="space-y-4">
+              <InsightsSummaryCard
+                dark={dark}
+                headline={vm.summary.headline || "We’re still building your signal."}
+                paragraph={agenticNote.paragraph}
+                hasStrongSignal={hasStrongSignal}
+                startHref="/main/questions?category=motivations"
+              />
 
-              <div className="relative">
-                <div className={sectionKicker(dark)}>{agenticNote.title}</div>
+              <InsightsThemesCard
+                dark={dark}
+                items={wordCloudDisplay}
+                hasStrongSignal={hasStrongSignal}
+                motivatorsLine={agenticNote.motivatorsLine}
+              />
 
-                <div className={["mt-2", counselorHeadline(dark)].join(" ")}>
-                  {vm.summary.headline || "Here’s what I think I’m seeing."}
-                </div>
+              <InsightsSuperpowersCard
+                dark={dark}
+                body={safeSuper.body || "What you naturally do well when it matters."}
+                bullets={superBullets}
+                strengthsLine={agenticNote.strengthsLine}
+                skillsLine={agenticNote.skillsLine}
+                hasStrongSignal={hasStrongSignal}
+              />
 
-                <div className="mt-4 space-y-3">
-                  {agenticNote.paragraphs.map((p, i) => (
-                    <p key={`an_${i}`} className={counselorPara(dark)}>
-                      {p}
-                    </p>
-                  ))}
-                </div>
+              <InsightsWatchoutsCard
+                dark={dark}
+                intro={watchouts.intro}
+                bullets={watchouts.bullets}
+                hasStrongSignal={hasStrongSignal}
+              />
 
-                <div
-                  className={[
-                    "mt-5 text-[14px] leading-relaxed",
-                    mutedText(dark),
-                  ].join(" ")}
-                >
-                  The deeper read is in the tabs above. Open{" "}
-                  <span
-                    className={
-                      dark
-                        ? "text-white/82 font-semibold"
-                        : "text-slate-900 font-semibold"
-                    }
-                  >
-                    Motivations
-                  </span>
-                  ,{" "}
-                  <span
-                    className={
-                      dark
-                        ? "text-white/82 font-semibold"
-                        : "text-slate-900 font-semibold"
-                    }
-                  >
-                    Strengths
-                  </span>
-                  , or{" "}
-                  <span
-                    className={
-                      dark
-                        ? "text-white/82 font-semibold"
-                        : "text-slate-900 font-semibold"
-                    }
-                  >
-                    Skills
-                  </span>{" "}
-                  to see how this breaks down.
-                </div>
-              </div>
+              <InsightsTinyTaskCard
+                dark={dark}
+                eyebrow={summaryNext.tinyTask.eyebrow}
+                title={summaryNext.tinyTask.title}
+                body={summaryNext.tinyTask.body}
+                choices={summaryNext.tinyTask.choices}
+                hasStrongSignal={hasStrongSignal}
+              />
 
-              <div className="mt-8" />
+              <InsightsActionCard
+                dark={dark}
+                eyebrow={summaryNext.action.eyebrow}
+                title={summaryNext.action.title}
+                body={summaryNext.action.body}
+                bullets={summaryNext.action.bullets}
+                hasStrongSignal={hasStrongSignal}
+              />
 
-              <div className={summaryZoneShell(dark, "themes")}>
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  aria-hidden
-                  style={{ background: summaryZoneGlow("themes") }}
-                />
-                <div className="relative">
-                  <div className={summaryZoneKicker(dark, "themes")}>Themes</div>
-                  <div className={["mt-1", summaryZoneTitle(dark, "themes")].join(" ")}>
-                    Signal field
-                  </div>
-
-                  <div className="mt-4">
-                    {wordCloudDisplay.length ? (
-                      <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                        {wordCloudDisplay.map((w) => {
-                          const isTop = topWordSet.has(w.term.toLowerCase());
-                          return (
-                            <span
-                              key={w.term}
-                              className={[
-                                "select-none el-word",
-                                wordColorClasses(dark, w.term),
-                                isTop
-                                  ? ["rounded-full px-2.5 py-1", highlightWrap(dark)].join(" ")
-                                  : "",
-                              ].join(" ")}
-                              style={{
-                                fontSize: `${wordSizePx(w.weight)}px`,
-                                opacity: wordOpacity(w.weight),
-                                ...wordChaosVars(w.term, w.weight),
-                              }}
-                            >
-                              {w.term}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className={["text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                        Nothing to map yet — give me 1–2 real examples and this will fill in.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    {agenticNote.motivatorsLine}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6" />
-
-              <div className={summaryZoneShell(dark, "strengths")}>
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  aria-hidden
-                  style={{ background: summaryZoneGlow("strengths") }}
-                />
-                <div className="relative">
-                  <div className="flex items-center gap-2">
-                    <Sparkles
-                      className={[
-                        "h-4 w-4",
-                        dark ? "text-lime-200/80" : "text-lime-700/80",
-                      ].join(" ")}
-                    />
-                    <div className={summaryZoneKicker(dark, "strengths")}>
-                      Superpowers
-                    </div>
-                  </div>
-
-                  <div className={["mt-1", summaryZoneTitle(dark, "strengths")].join(" ")}>
-                    What tends to work in your favor
-                  </div>
-
-                  <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    {safeSuper.body || "What you naturally do well when it matters."}
-                  </div>
-
-                  <div className={["mt-3 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    {agenticNote.strengthsLine}
-                  </div>
-
-                  {superBullets.length ? (
-                    <ul className="mt-4 space-y-2.5">
-                      {superBullets.map((b, i) => (
-                        <li key={`sp_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
-                          <span
-                            aria-hidden
-                            className={dark ? "text-white/35" : "text-slate-400"}
-                          >
-                            •
-                          </span>
-                          <span className={dark ? "text-white/78" : "text-slate-700"}>
-                            {b}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-
-                  <div className={["mt-4 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    {agenticNote.skillsLine}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6" />
-
-              <div className={summaryZoneShell(dark, "watchouts")}>
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  aria-hidden
-                  style={{ background: summaryZoneGlow("watchouts") }}
-                />
-                <div className="relative">
-                  <div className="flex items-center gap-2">
-                    <Shield
-                      className={[
-                        "h-4 w-4",
-                        dark ? "text-amber-200/80" : "text-amber-700/80",
-                      ].join(" ")}
-                    />
-                    <div className={summaryZoneKicker(dark, "watchouts")}>
-                      Watchouts
-                    </div>
-                  </div>
-
-                  <div className={["mt-1", summaryZoneTitle(dark, "watchouts")].join(" ")}>
-                    Where the same strengths can get expensive
-                  </div>
-
-                  <div className={["mt-3 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                    {watchouts.intro}
-                  </div>
-
-                  <ul className="mt-4 space-y-2.5">
-                    {watchouts.bullets.map((b, i) => (
-                      <li key={`wo_b_${i}`} className="flex gap-2 text-[15px] leading-relaxed">
-                        <span
-                          aria-hidden
-                          className={dark ? "text-white/35" : "text-slate-400"}
-                        >
-                          •
-                        </span>
-                        <span className={dark ? "text-white/74" : "text-slate-700"}>
-                          {b}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-6">
-                    <div className={summarySeparator(dark)}>
-                      <div
-                        className="absolute inset-x-0 top-0 h-px"
-                        style={{
-                          background: dark
-                            ? "linear-gradient(90deg, transparent 0%, rgba(255,190,120,0.28) 18%, rgba(255,255,255,0.06) 82%, transparent 100%)"
-                            : "linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.22) 18%, rgba(0,0,0,0.06) 82%, transparent 100%)",
-                        }}
-                      />
-                    </div>
-                    <QuickFeedbackInline dark={dark} contextTag={`insights:${tab}`} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6" />
-
-              <div className={summaryZoneShell(dark, "next")}>
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  aria-hidden
-                  style={{ background: summaryZoneGlow("next") }}
-                />
-                <div className="relative">
-                  <div className={summaryZoneKicker(dark, "next")}>Next Steps</div>
-                  <div className={["mt-1", summaryZoneTitle(dark, "next")].join(" ")}>
-                    Turn the read into one real move
-                  </div>
-
-                  <div className={["mt-3 text-[14px] leading-relaxed", mutedText(dark)].join(" ")}>
-                    One real move. Small is fine. Real is the point.
-                  </div>
-
-                  {nextStepsSummary ? (
-                    <div className="mt-4">
-                      <NextStepsStack
-                        dark={dark}
-                        useLocal={mounted}
-                        definition={nextStepsSummary}
-                        variant="embedded"
-                        collapsible={false}
-                        defaultOpen
-                      />
-                    </div>
-                  ) : (
-                    <div className={["mt-4 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-                      Next steps are loading…
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
+              <InsightsQuickCheckCard
+                dark={dark}
+                contextTag={`insights:${tab}`}
+              />
+            </section>
+          ) : null
         ) : tab === "motivations" ? (
           <MotivationsTab
             dark={dark}
@@ -2012,7 +1309,7 @@ export default function Page() {
             setOpenDriver={setOpenDriver}
             energyBoosters={energyBoosters}
             energyDrainers={energyDrainers}
-            motivationReceipts={motivationReceipts}
+            motivationReceipts={baseMotivationReceipts}
             nextStepsMotivations={nextStepsMotivations}
             mounted={mounted}
             tab={tab}
@@ -2044,25 +1341,7 @@ export default function Page() {
             nameFromHeadline={nameFromHeadline}
             wordCloudDisplay={wordCloudDisplay}
           />
-        ) : (
-          <section className="mb-6">
-            <div
-              className={[
-                "rounded-[28px] px-5 py-5",
-                "shadow-[0_28px_95px_rgba(0,0,0,0.70)]",
-                "backdrop-blur-xl",
-                dark ? "text-white/80 bg-slate-950/25" : "text-slate-800 bg-white/80",
-              ].join(" ")}
-            >
-              <div className={["text-lg font-semibold", sectionTitle(dark)].join(" ")}>
-                Section
-              </div>
-              <div className={["mt-1 text-sm", mutedText(dark)].join(" ")}>
-                This section is scaffolded.
-              </div>
-            </div>
-          </section>
-        )}
+        ) : null}
       </div>
     </>
   );
