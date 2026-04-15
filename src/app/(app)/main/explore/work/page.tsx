@@ -7,19 +7,26 @@ import * as React from "react";
 import {
   ArrowRight,
   BriefcaseBusiness,
+  Camera,
   CircleHelp,
   Clapperboard,
   Code2,
-  Rocket,
+  FlaskConical,
+  Gamepad2,
+  Landmark,
+  Megaphone,
+  Music4,
+  PenTool,
+  Scale,
   Sparkles,
+  Stethoscope,
+  Wrench,
 } from "lucide-react";
 
 import {
-  ExploreLaneTabs,
   SignalConstellation,
   SignalMeter,
   rgb,
-  type ExploreLaneTab,
   type Rgb,
 } from "../_components/ExploreShared";
 import { WORK_PATHS } from "./_data/workPaths";
@@ -28,6 +35,7 @@ import type { WorkPathContent } from "./_data/workPathSchema";
 type UserProfileSignals = {
   firstName: string | null;
   knowsDirection: boolean;
+  hasSomeIdeas: boolean;
   motivations: string[];
   strengths: string[];
   skills: string[];
@@ -35,6 +43,8 @@ type UserProfileSignals = {
   statedCareerGoal: string | null;
   statedCareerReason: string | null;
   hasQuestionSignal: boolean;
+  postPlans: string[];
+  certainty: "strong" | "kinda" | "no_clue" | null;
 };
 
 type PathAtmosphere = {
@@ -47,11 +57,22 @@ type PathAtmosphere = {
   futureNode: Rgb;
 };
 
+type WorkLaneTab = {
+  id: "work" | "learning" | "world" | "impact" | "play";
+  label: string;
+  href: string;
+  active: boolean;
+  dotClass: string;
+  activeClasses: string;
+};
+
 const MAX_VISIBLE_WORK_PATHS = 4;
+const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
 
 const EMPTY_PROFILE: UserProfileSignals = {
   firstName: null,
   knowsDirection: false,
+  hasSomeIdeas: false,
   motivations: [],
   strengths: [],
   skills: [],
@@ -59,15 +80,19 @@ const EMPTY_PROFILE: UserProfileSignals = {
   statedCareerGoal: null,
   statedCareerReason: null,
   hasQuestionSignal: false,
+  postPlans: [],
+  certainty: null,
 };
 
-const EXPLORE_LANES: readonly ExploreLaneTab[] = [
+const EXPLORE_LANES: readonly WorkLaneTab[] = [
   {
     id: "work",
     label: "Work",
     href: "/main/explore/work",
     active: true,
     dotClass: "bg-cyan-300",
+    activeClasses:
+      "border-cyan-300/42 bg-cyan-300/[0.18] text-white shadow-[0_0_0_1px_rgba(103,232,249,0.06),0_14px_32px_rgba(34,211,238,0.14)]",
   },
   {
     id: "learning",
@@ -75,6 +100,8 @@ const EXPLORE_LANES: readonly ExploreLaneTab[] = [
     href: "/main/explore/learning",
     active: false,
     dotClass: "bg-violet-300",
+    activeClasses:
+      "border-violet-300/35 bg-violet-300/[0.14] text-white shadow-[0_0_0_1px_rgba(196,181,253,0.05),0_14px_32px_rgba(139,92,246,0.14)]",
   },
   {
     id: "world",
@@ -82,6 +109,8 @@ const EXPLORE_LANES: readonly ExploreLaneTab[] = [
     href: "/main/explore/world",
     active: false,
     dotClass: "bg-amber-300",
+    activeClasses:
+      "border-amber-300/35 bg-amber-300/[0.14] text-white shadow-[0_0_0_1px_rgba(253,224,71,0.05),0_14px_32px_rgba(245,158,11,0.14)]",
   },
   {
     id: "impact",
@@ -89,6 +118,8 @@ const EXPLORE_LANES: readonly ExploreLaneTab[] = [
     href: "/main/explore/impact",
     active: false,
     dotClass: "bg-emerald-300",
+    activeClasses:
+      "border-emerald-300/35 bg-emerald-300/[0.14] text-white shadow-[0_0_0_1px_rgba(110,231,183,0.05),0_14px_32px_rgba(16,185,129,0.14)]",
   },
   {
     id: "play",
@@ -96,6 +127,8 @@ const EXPLORE_LANES: readonly ExploreLaneTab[] = [
     href: "/main/explore/play",
     active: false,
     dotClass: "bg-pink-300",
+    activeClasses:
+      "border-pink-300/35 bg-pink-300/[0.14] text-white shadow-[0_0_0_1px_rgba(249,168,212,0.05),0_14px_32px_rgba(236,72,153,0.14)]",
   },
 ] as const;
 
@@ -279,359 +312,6 @@ function hasAnsweredQuestions(value: unknown): boolean {
   return false;
 }
 
-function looksLikeMedicineGoal(value: string) {
-  const normalized = value.toLowerCase();
-  return (
-    normalized.includes("doctor") ||
-    normalized.includes("physician") ||
-    normalized.includes("surgeon") ||
-    normalized.includes("medicine") ||
-    normalized.includes("medical")
-  );
-}
-
-function humanizeCareerGoal(goal: string) {
-  const trimmed = goal.trim();
-  if (!trimmed) return "that path";
-  if (looksLikeMedicineGoal(trimmed)) return "doctor";
-
-  const lower = trimmed.toLowerCase();
-  if (
-    lower.startsWith("a ") ||
-    lower.startsWith("an ") ||
-    lower.startsWith("the ")
-  ) {
-    return trimmed;
-  }
-
-  return trimmed;
-}
-
-function summarizeCareerReason(reason: string | null) {
-  if (!reason) return null;
-
-  const normalized = reason.toLowerCase();
-
-  if (
-    normalized.includes("money") ||
-    normalized.includes("rich") ||
-    normalized.includes("wealth") ||
-    normalized.includes("salary") ||
-    normalized.includes("pay")
-  ) {
-    return "meaningful, successful, and financially strong";
-  }
-
-  if (
-    normalized.includes("help") ||
-    normalized.includes("care") ||
-    normalized.includes("save")
-  ) {
-    return "meaningful and deeply human";
-  }
-
-  if (
-    normalized.includes("respect") ||
-    normalized.includes("prestige") ||
-    normalized.includes("status")
-  ) {
-    return "respected and substantial";
-  }
-
-  return null;
-}
-
-function readStoredProfileSignals(): UserProfileSignals {
-  if (typeof window === "undefined") {
-    return EMPTY_PROFILE;
-  }
-
-  const candidateKeys = [
-    "everleapOnboarding_v4_convo_min",
-    "everleap.story.answers.v3",
-    "everleap.story.answers.v2",
-    "everleap.onboarding.answers",
-    "everleap.user.profile",
-  ];
-
-  let firstName: string | null = null;
-  const motivations: string[] = [];
-  const strengths: string[] = [];
-  const skills: string[] = [];
-  const allStrings: string[] = [];
-  let knowsDirection = false;
-  let statedCareerGoal: string | null = null;
-  let statedCareerReason: string | null = null;
-  let hasQuestionSignal = false;
-
-  for (const key of candidateKeys) {
-    try {
-      const raw = window.localStorage.getItem(key);
-      if (!raw) continue;
-
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      const profile = asRecord(parsed.profile);
-      const answers = asRecord(parsed.answers);
-
-      if (
-        key === "everleap.story.answers.v3" ||
-        key === "everleap.story.answers.v2" ||
-        key === "everleap.onboarding.answers" ||
-        key === "everleapOnboarding_v4_convo_min"
-      ) {
-        if (hasAnsweredQuestions(parsed) || hasAnsweredQuestions(answers)) {
-          hasQuestionSignal = true;
-        }
-      }
-
-      const nameCandidates = [
-        parsed.firstName,
-        parsed.firstname,
-        parsed.first_name,
-        parsed.name,
-        profile?.firstName,
-        profile?.name,
-        answers?.firstName,
-        answers?.name,
-      ];
-
-      if (!firstName) {
-        for (const value of nameCandidates) {
-          const found = asString(value);
-          if (found) {
-            firstName = found.split(" ")[0];
-            break;
-          }
-        }
-      }
-
-      const rawDirectionCandidates = [
-        parsed.knowsWhatTheyWant,
-        parsed.knowsWhatToDo,
-        parsed.knowsDirection,
-        parsed.alreadyKnowsPath,
-        parsed.hasDirection,
-        profile?.knowsWhatTheyWant,
-        profile?.knowsDirection,
-        answers?.knowsWhatTheyWant,
-        answers?.knowsDirection,
-        answers?.futureDirection,
-      ];
-
-      if (!knowsDirection) {
-        for (const candidate of rawDirectionCandidates) {
-          if (candidate === true) {
-            knowsDirection = true;
-            break;
-          }
-
-          const text = asString(candidate)?.toLowerCase();
-          if (
-            text &&
-            (text.includes("yes") ||
-              text.includes("i do") ||
-              text.includes("already know") ||
-              text.includes("know what") ||
-              text.includes("have a direction"))
-          ) {
-            knowsDirection = true;
-            break;
-          }
-        }
-      }
-
-      const careerGoalCandidates = [
-        parsed.careerGoal,
-        parsed.dreamJob,
-        parsed.futureJob,
-        parsed.whatWantToBe,
-        parsed.wantToBe,
-        parsed.jobGoal,
-        profile?.careerGoal,
-        profile?.dreamJob,
-        answers?.careerGoal,
-        answers?.dreamJob,
-        answers?.futureJob,
-        answers?.whatWantToBe,
-        answers?.wantToBe,
-      ];
-
-      if (!statedCareerGoal) {
-        for (const candidate of careerGoalCandidates) {
-          const text = asString(candidate);
-          if (text) {
-            statedCareerGoal = text;
-            break;
-          }
-        }
-      }
-
-      const careerReasonCandidates = [
-        parsed.careerReason,
-        parsed.whyThisCareer,
-        parsed.whyWantToBeThat,
-        parsed.reasonForCareer,
-        profile?.careerReason,
-        answers?.careerReason,
-        answers?.whyThisCareer,
-        answers?.whyWantToBeThat,
-        answers?.reasonForCareer,
-      ];
-
-      if (!statedCareerReason) {
-        for (const candidate of careerReasonCandidates) {
-          const text = asString(candidate);
-          if (text) {
-            statedCareerReason = text;
-            break;
-          }
-        }
-      }
-
-      const motivationSources = [
-        parsed.motivations,
-        parsed.motivation,
-        profile?.motivations,
-        answers?.motivations,
-        answers?.motivation,
-      ];
-
-      const strengthSources = [
-        parsed.strengths,
-        parsed.strength,
-        profile?.strengths,
-        answers?.strengths,
-        answers?.strength,
-      ];
-
-      const skillSources = [
-        parsed.skills,
-        parsed.skill,
-        profile?.skills,
-        answers?.skills,
-        answers?.skill,
-      ];
-
-      for (const source of motivationSources) {
-        collectStringsDeep(source, motivations);
-      }
-
-      for (const source of strengthSources) {
-        collectStringsDeep(source, strengths);
-      }
-
-      for (const source of skillSources) {
-        collectStringsDeep(source, skills);
-      }
-
-      collectStringsDeep(parsed, allStrings);
-
-      const rawJoined = JSON.stringify(parsed).toLowerCase();
-      if (
-        !knowsDirection &&
-        (rawJoined.includes("know what i want") ||
-          rawJoined.includes("already know what i want") ||
-          rawJoined.includes("i know what i want to do") ||
-          rawJoined.includes("already know what i want to do") ||
-          rawJoined.includes("know what to do in life"))
-      ) {
-        knowsDirection = true;
-      }
-
-      if (!statedCareerGoal && looksLikeMedicineGoal(rawJoined)) {
-        statedCareerGoal = "doctor";
-      }
-
-      if (
-        !statedCareerReason &&
-        (rawJoined.includes("because i want to make money") ||
-          rawJoined.includes("want to make money") ||
-          rawJoined.includes("because money"))
-      ) {
-        statedCareerReason = "make money";
-      }
-    } catch {}
-  }
-
-  return {
-    firstName,
-    knowsDirection,
-    motivations: Array.from(new Set(motivations)).slice(0, 24),
-    strengths: Array.from(new Set(strengths)).slice(0, 24),
-    skills: Array.from(new Set(skills)).slice(0, 24),
-    fullText: allStrings.join(" ").toLowerCase(),
-    statedCareerGoal,
-    statedCareerReason,
-    hasQuestionSignal,
-  };
-}
-
-function getAgenticOpening(profile: UserProfileSignals) {
-  const goal = profile.statedCareerGoal
-    ? humanizeCareerGoal(profile.statedCareerGoal)
-    : null;
-  const reasonSummary = summarizeCareerReason(profile.statedCareerReason);
-
-  if (profile.firstName && goal && looksLikeMedicineGoal(goal)) {
-    return {
-      title: `${profile.firstName}, doctor is already on your mind - and that matters.`,
-      bodyA:
-        "You came in with a clear ambition, which is a big advantage. Medicine suggests you want a future that feels " +
-        (reasonSummary ?? "meaningful, successful, and financially strong") +
-        ".",
-      bodyB:
-        "That is a great place to start. I pulled a few nearby paths that seem to match that same drive - not instead of doctor, but alongside it, in case one of them surprises you.",
-      bodyC:
-        "Work usually gets clearer when you look past the title and notice what actually holds your attention. The goal here is to follow that instinct and give it something real to move toward.",
-    };
-  }
-
-  if (profile.firstName && goal) {
-    return {
-      title: `${profile.firstName}, ${goal} is already on your mind - and that matters.`,
-      bodyA:
-        "You came in with a clear ambition, which is a big advantage. That tells me you want a future that feels " +
-        (reasonSummary ?? "meaningful, substantial, and worth building") +
-        ".",
-      bodyB:
-        "That is a great place to start. I pulled a few nearby paths that seem to match that same drive - not instead of your goal, but alongside it, in case one of them surprises you.",
-      bodyC:
-        "Work usually gets clearer when you look past the title and notice what actually holds your attention. The goal here is to follow that instinct and give it something real to move toward.",
-    };
-  }
-
-  if (profile.firstName && profile.knowsDirection) {
-    return {
-      title: `${profile.firstName}, having a direction already is a great sign.`,
-      bodyA:
-        "You may already have a strong idea of what you want to do - and that matters. This section is here to pressure-test that instinct against a few other paths that fit how you think, build, and move through the world.",
-      bodyB:
-        "Sometimes the right answer stays the same. Sometimes a nearby path opens up and gives you a stronger version of what you were already reaching for.",
-      bodyC: null,
-    };
-  }
-
-  if (profile.firstName) {
-    return {
-      title: `${profile.firstName}, this is not about picking a forever answer.`,
-      bodyA:
-        "Work becomes easier to explore when you stop asking which title sounds impressive and start asking which kinds of problems, people, systems, or worlds keep catching your attention in a real way.",
-      bodyB:
-        "The goal here is to notice where your mind already leans - then give that instinct something more concrete to move toward.",
-      bodyC: null,
-    };
-  }
-
-  return {
-    title: "This is not about picking a forever answer.",
-    bodyA:
-      "Work becomes easier to explore when you stop asking which title sounds impressive and start asking which kinds of problems, people, systems, or worlds keep catching your attention in a real way.",
-    bodyB:
-      "The goal here is to notice where your mind already leans - then give that instinct something more concrete to move toward.",
-    bodyC: null,
-  };
-}
-
 function normalizePaths(input: unknown): WorkPathContent[] {
   if (Array.isArray(input)) return input as WorkPathContent[];
 
@@ -783,6 +463,8 @@ function getSignalStrength(path: WorkPathContent, profile: UserProfileSignals) {
     profile.strengths.join(" "),
     profile.skills.join(" "),
     profile.fullText,
+    profile.statedCareerGoal ?? "",
+    profile.postPlans.join(" "),
   ]
     .join(" ")
     .toLowerCase();
@@ -823,6 +505,11 @@ function ensureSentence(value: string) {
   const trimmed = cleanSentence(value);
   if (!trimmed) return "";
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function capitalize(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function buildAgenticSummary(path: WorkPathContent) {
@@ -875,18 +562,469 @@ function buildAgenticSummary(path: WorkPathContent) {
   return "This path could be worth a closer look if the way this work feels already sounds like you.";
 }
 
+function getGoalTheme(goal: string | null, postPlans: string[] = []): string | null {
+  const normalized = goal?.toLowerCase().trim() ?? "";
+  const plans = postPlans.map((item) => item.toLowerCase());
+
+  if (
+    normalized.includes("military") ||
+    normalized.includes("army") ||
+    normalized.includes("navy") ||
+    normalized.includes("air force") ||
+    normalized.includes("marines") ||
+    normalized.includes("marine corps") ||
+    normalized.includes("coast guard") ||
+    normalized.includes("space force") ||
+    plans.includes("military")
+  ) {
+    return "military service";
+  }
+
+  if (
+    normalized.includes("doctor") ||
+    normalized.includes("medicine") ||
+    normalized.includes("physician") ||
+    normalized.includes("surgeon") ||
+    normalized.includes("medical")
+  ) {
+    return "medicine";
+  }
+
+  if (
+    normalized.includes("software") ||
+    normalized.includes("developer") ||
+    normalized.includes("coding") ||
+    normalized.includes("programming") ||
+    normalized.includes("engineer") ||
+    normalized.includes("computer science")
+  ) {
+    return "software";
+  }
+
+  if (
+    normalized.includes("game") ||
+    normalized.includes("gaming") ||
+    normalized.includes("game design")
+  ) {
+    return "games";
+  }
+
+  if (
+    normalized.includes("film") ||
+    normalized.includes("video") ||
+    normalized.includes("media") ||
+    normalized.includes("producer") ||
+    normalized.includes("cinema")
+  ) {
+    return "film and video";
+  }
+
+  if (
+    normalized.includes("design") ||
+    normalized.includes("designer") ||
+    normalized.includes("graphic") ||
+    normalized.includes("art")
+  ) {
+    return "design";
+  }
+
+  if (
+    normalized.includes("law") ||
+    normalized.includes("lawyer") ||
+    normalized.includes("attorney") ||
+    normalized.includes("legal")
+  ) {
+    return "law";
+  }
+
+  if (
+    normalized.includes("science") ||
+    normalized.includes("scientist") ||
+    normalized.includes("research")
+  ) {
+    return "science";
+  }
+
+  if (
+    normalized.includes("teach") ||
+    normalized.includes("teacher") ||
+    normalized.includes("education")
+  ) {
+    return "teaching";
+  }
+
+  if (
+    normalized.includes("business") ||
+    normalized.includes("marketing") ||
+    normalized.includes("finance") ||
+    normalized.includes("entrepreneur")
+  ) {
+    return "business";
+  }
+
+  return null;
+}
+
+function readStoredProfileSignals(): UserProfileSignals {
+  if (typeof window === "undefined") {
+    return EMPTY_PROFILE;
+  }
+
+  const candidateKeys = [
+    ONBOARDING_STORAGE_KEY,
+    "everleap.story.answers.v3",
+    "everleap.story.answers.v2",
+    "everleap.onboarding.answers",
+    "everleap.user.profile",
+  ];
+
+  let firstName: string | null = null;
+  let knowsDirection = false;
+  let hasSomeIdeas = false;
+  let statedCareerGoal: string | null = null;
+  let statedCareerReason: string | null = null;
+  let hasQuestionSignal = false;
+  let certainty: "strong" | "kinda" | "no_clue" | null = null;
+  let postPlans: string[] = [];
+
+  const motivations: string[] = [];
+  const strengths: string[] = [];
+  const skills: string[] = [];
+  const allStrings: string[] = [];
+
+  for (const key of candidateKeys) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const profile = asRecord(parsed.profile);
+      const answers = asRecord(parsed.answers);
+
+      if (
+        key === ONBOARDING_STORAGE_KEY ||
+        key === "everleap.story.answers.v3" ||
+        key === "everleap.story.answers.v2" ||
+        key === "everleap.onboarding.answers"
+      ) {
+        if (hasAnsweredQuestions(parsed) || hasAnsweredQuestions(answers)) {
+          hasQuestionSignal = true;
+        }
+      }
+
+      const nameCandidates = [
+        parsed.name,
+        parsed.firstName,
+        parsed.firstname,
+        parsed.first_name,
+        profile?.firstName,
+        profile?.name,
+        answers?.firstName,
+        answers?.name,
+      ];
+
+      if (!firstName) {
+        for (const value of nameCandidates) {
+          const found = asString(value);
+          if (found) {
+            firstName = found.split(" ")[0] ?? null;
+            break;
+          }
+        }
+      }
+
+      if (key === ONBOARDING_STORAGE_KEY) {
+        const onboardingCertainty = asString(parsed.certainty);
+        if (
+          onboardingCertainty === "strong" ||
+          onboardingCertainty === "kinda" ||
+          onboardingCertainty === "no_clue"
+        ) {
+          certainty = onboardingCertainty;
+          if (onboardingCertainty === "strong") knowsDirection = true;
+          if (onboardingCertainty === "kinda") hasSomeIdeas = true;
+        }
+
+        const onboardingIdea = asString(parsed.certaintyIdea);
+        if (!statedCareerGoal && onboardingIdea) {
+          statedCareerGoal = onboardingIdea;
+        }
+
+        const onboardingPlans = Array.isArray(parsed.postPlans)
+          ? parsed.postPlans.filter((item): item is string => typeof item === "string")
+          : [];
+
+        if (onboardingPlans.length > 0) {
+          postPlans = Array.from(new Set([...postPlans, ...onboardingPlans]));
+        }
+
+        if (!statedCareerGoal && onboardingPlans.includes("military")) {
+          statedCareerGoal = "military";
+        }
+      }
+
+      const directionCandidates = [
+        parsed.knowsWhatTheyWant,
+        parsed.knowsWhatToDo,
+        parsed.knowsDirection,
+        parsed.alreadyKnowsPath,
+        parsed.hasDirection,
+        parsed.directionConfidence,
+        parsed.certainty,
+        profile?.knowsWhatTheyWant,
+        profile?.knowsDirection,
+        answers?.knowsWhatTheyWant,
+        answers?.knowsDirection,
+        answers?.futureDirection,
+        answers?.directionConfidence,
+        answers?.careerDirection,
+        answers?.certainty,
+      ];
+
+      for (const candidate of directionCandidates) {
+        if (candidate === true) {
+          knowsDirection = true;
+          continue;
+        }
+
+        const text = asString(candidate)?.toLowerCase();
+        if (!text) continue;
+
+        if (
+          text === "strong" ||
+          text === "yes" ||
+          text.includes("i know exactly what i want") ||
+          text.includes("i know what i want") ||
+          text.includes("already know") ||
+          text.includes("know what to do") ||
+          text.includes("have a direction") ||
+          text.includes("yes i do")
+        ) {
+          knowsDirection = true;
+          continue;
+        }
+
+        if (
+          text === "kinda" ||
+          text === "maybe" ||
+          text.includes("some ideas") ||
+          text.includes("a few ideas") ||
+          text.includes("kind of") ||
+          text.includes("sort of") ||
+          text.includes("i think so") ||
+          text.includes("not fully")
+        ) {
+          hasSomeIdeas = true;
+        }
+
+        if (text === "no_clue") {
+          certainty = "no_clue";
+        }
+      }
+
+      const careerGoalCandidates = [
+        parsed.certaintyIdea,
+        parsed.careerGoal,
+        parsed.dreamJob,
+        parsed.futureJob,
+        parsed.whatWantToBe,
+        parsed.wantToBe,
+        parsed.jobGoal,
+        profile?.careerGoal,
+        profile?.dreamJob,
+        answers?.careerGoal,
+        answers?.dreamJob,
+        answers?.futureJob,
+        answers?.whatWantToBe,
+        answers?.wantToBe,
+        answers?.oneIdea,
+        answers?.someIdea,
+        answers?.certaintyIdea,
+      ];
+
+      if (!statedCareerGoal) {
+        for (const candidate of careerGoalCandidates) {
+          const text = asString(candidate);
+          if (text) {
+            statedCareerGoal = text;
+            break;
+          }
+        }
+      }
+
+      const careerReasonCandidates = [
+        parsed.careerReason,
+        parsed.whyThisCareer,
+        parsed.whyWantToBeThat,
+        parsed.reasonForCareer,
+        profile?.careerReason,
+        answers?.careerReason,
+        answers?.whyThisCareer,
+        answers?.whyWantToBeThat,
+        answers?.reasonForCareer,
+      ];
+
+      if (!statedCareerReason) {
+        for (const candidate of careerReasonCandidates) {
+          const text = asString(candidate);
+          if (text) {
+            statedCareerReason = text;
+            break;
+          }
+        }
+      }
+
+      const motivationSources = [
+        parsed.motivations,
+        parsed.motivation,
+        profile?.motivations,
+        answers?.motivations,
+        answers?.motivation,
+      ];
+
+      const strengthSources = [
+        parsed.strengths,
+        parsed.strength,
+        profile?.strengths,
+        answers?.strengths,
+        answers?.strength,
+      ];
+
+      const skillSources = [
+        parsed.skills,
+        parsed.skill,
+        profile?.skills,
+        answers?.skills,
+        answers?.skill,
+      ];
+
+      for (const source of motivationSources) {
+        collectStringsDeep(source, motivations);
+      }
+
+      for (const source of strengthSources) {
+        collectStringsDeep(source, strengths);
+      }
+
+      for (const source of skillSources) {
+        collectStringsDeep(source, skills);
+      }
+
+      collectStringsDeep(parsed, allStrings);
+
+      const rawJoined = JSON.stringify(parsed).toLowerCase();
+
+      if (
+        !knowsDirection &&
+        (rawJoined.includes('"certainty":"strong"') ||
+          rawJoined.includes('"yes"') ||
+          rawJoined.includes("i know exactly what i want") ||
+          rawJoined.includes("i know what i want") ||
+          rawJoined.includes("already know what i want") ||
+          rawJoined.includes("i know what i want to do"))
+      ) {
+        knowsDirection = true;
+      }
+
+      if (
+        !hasSomeIdeas &&
+        (rawJoined.includes('"certainty":"kinda"') ||
+          rawJoined.includes('"maybe"') ||
+          rawJoined.includes("some ideas") ||
+          rawJoined.includes("a few ideas") ||
+          rawJoined.includes("i have a couple ideas"))
+      ) {
+        hasSomeIdeas = true;
+      }
+
+      if (!certainty && rawJoined.includes('"certainty":"no_clue"')) {
+        certainty = "no_clue";
+      }
+    } catch {}
+  }
+
+  if (knowsDirection) {
+    hasSomeIdeas = false;
+    if (!certainty) certainty = "strong";
+  } else if (hasSomeIdeas && !certainty) {
+    certainty = "kinda";
+  }
+
+  return {
+    firstName,
+    knowsDirection,
+    hasSomeIdeas,
+    motivations: Array.from(new Set(motivations)).slice(0, 24),
+    strengths: Array.from(new Set(strengths)).slice(0, 24),
+    skills: Array.from(new Set(skills)).slice(0, 24),
+    fullText: allStrings.join(" ").toLowerCase(),
+    statedCareerGoal,
+    statedCareerReason,
+    hasQuestionSignal,
+    postPlans,
+    certainty,
+  };
+}
+
+function getAgenticOpening(profile: UserProfileSignals) {
+  const goalTheme = getGoalTheme(profile.statedCareerGoal, profile.postPlans);
+
+  if (profile.firstName && profile.knowsDirection) {
+    return {
+      title: `${profile.firstName}, having a direction already is a real advantage.`,
+      bodyA: goalTheme
+        ? `${capitalize(goalTheme)} is already on your mind. That gives this page a real place to start.`
+        : "You came in with something specific in mind. That gives this page a real place to start.",
+      bodyB:
+        "The goal here is not to pull you away from that direction, but to pressure-test it and show you what else might sit right next to it.",
+      bodyC: null,
+    };
+  }
+
+  if (profile.firstName && profile.hasSomeIdeas) {
+    return {
+      title: `${profile.firstName}, you already have a few directions forming.`,
+      bodyA:
+        "Everleap picked up that you’re not starting from zero — you came in with some early ideas, and that matters.",
+      bodyB:
+        "Explore is where those instincts get tested against real paths, so you can start to see which ones keep getting stronger and which ones fade once they get more concrete.",
+      bodyC: null,
+    };
+  }
+
+  if (profile.firstName) {
+    return {
+      title: `${profile.firstName}, this is actually a great place to start.`,
+      bodyA:
+        "Even without a clear direction yet, Everleap is already picking up signal from what you shared — in what seems to hold your attention and where your energy already goes.",
+      bodyB:
+        "Explore turns that into real paths you can test and react to, so something starts to feel real enough to follow.",
+      bodyC: null,
+    };
+  }
+
+  return {
+    title: "This is actually a great place to start.",
+    bodyA:
+      "Even without a clear direction yet, Everleap is already picking up signal from what you shared — in what seems to hold your attention and where your energy already goes.",
+    bodyB:
+      "Explore turns that into real paths you can test and react to, so something starts to feel real enough to follow.",
+    bodyC: null,
+  };
+}
+
 function IntroOrbitArt() {
   return (
-    <div className="pointer-events-none absolute right-3 top-3 hidden h-[112px] w-[112px] sm:block">
-      <div className="absolute inset-0 rounded-full border border-cyan-300/10" />
-      <div className="absolute inset-[15px] rounded-full border border-cyan-300/11" />
-      <div className="absolute left-[16px] top-[20px] h-2.5 w-2.5 rounded-full bg-cyan-200/55 shadow-[0_0_16px_rgba(103,232,249,0.5)]" />
-      <div className="absolute left-[72px] top-[26px] h-2 w-2 rounded-full bg-white/24" />
-      <div className="absolute left-[40px] top-[72px] h-2.5 w-2.5 rounded-full bg-cyan-100/68 shadow-[0_0_14px_rgba(186,230,253,0.42)]" />
-      <div className="absolute left-[28px] top-[32px] h-px w-[40px] bg-gradient-to-r from-cyan-300/26 to-transparent" />
-      <div className="absolute left-[48px] top-[43px] h-px w-[24px] rotate-[12deg] bg-gradient-to-r from-cyan-300/20 to-transparent" />
-      <div className="absolute left-[48px] top-[64px] h-px w-[26px] -rotate-[9deg] bg-gradient-to-r from-cyan-300/16 to-transparent" />
-      <div className="absolute bottom-[10px] right-[2px] flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/14 bg-cyan-300/[0.05] text-[11px] font-semibold text-cyan-100/68">
+    <div className="pointer-events-none absolute right-2 top-2 h-[52px] w-[52px] opacity-50 sm:right-3 sm:top-3 sm:h-[62px] sm:w-[62px] sm:opacity-56 md:h-[96px] md:w-[96px] md:opacity-80">
+      <div className="absolute inset-0 rounded-full border border-cyan-300/8" />
+      <div className="absolute inset-[9px] rounded-full border border-cyan-300/9 sm:inset-[11px] md:inset-[15px]" />
+      <div className="absolute left-[8px] top-[9px] h-2 w-2 rounded-full bg-cyan-200/42 shadow-[0_0_8px_rgba(103,232,249,0.28)] sm:left-[10px] sm:top-[11px] md:left-[16px] md:top-[20px] md:h-2.5 md:w-2.5 md:shadow-[0_0_16px_rgba(103,232,249,0.5)]" />
+      <div className="absolute left-[34px] top-[12px] h-1.5 w-1.5 rounded-full bg-white/16 sm:left-[40px] sm:top-[15px] md:left-[61px] md:top-[22px] md:h-2 md:w-2 md:bg-white/24" />
+      <div className="absolute left-[19px] top-[31px] h-2 w-2 rounded-full bg-cyan-100/48 shadow-[0_0_7px_rgba(186,230,253,0.22)] sm:left-[23px] sm:top-[38px] md:left-[36px] md:top-[60px] md:h-2.5 md:w-2.5 md:shadow-[0_0_14px_rgba(186,230,253,0.42)]" />
+      <div className="absolute left-[12px] top-[16px] h-px w-[17px] bg-gradient-to-r from-cyan-300/14 to-transparent sm:left-[14px] sm:top-[20px] sm:w-[21px] md:left-[25px] md:top-[31px] md:w-[34px] md:from-cyan-300/26" />
+      <div className="absolute left-[21px] top-[21px] h-px w-[10px] rotate-[12deg] bg-gradient-to-r from-cyan-300/11 to-transparent sm:left-[25px] sm:top-[27px] sm:w-[12px] md:left-[42px] md:top-[40px] md:w-[20px] md:from-cyan-300/20" />
+      <div className="absolute left-[21px] top-[29px] h-px w-[11px] -rotate-[9deg] bg-gradient-to-r from-cyan-300/10 to-transparent sm:left-[25px] sm:top-[37px] sm:w-[13px] md:left-[42px] md:top-[58px] md:w-[22px] md:from-cyan-300/16" />
+      <div className="absolute bottom-[4px] right-[0px] flex h-5 w-5 items-center justify-center rounded-full border border-cyan-300/9 bg-cyan-300/[0.035] text-[8px] font-semibold text-cyan-100/50 sm:h-5.5 sm:w-5.5 md:bottom-[8px] md:right-[1px] md:h-8 md:w-8 md:text-[10px]">
         ◎
       </div>
     </div>
@@ -917,16 +1055,124 @@ function SignalWord() {
   );
 }
 
-function getCareerCtaTitle(path: WorkPathContent, title: string) {
+function ExploreLaneRail({ lanes }: { lanes: readonly WorkLaneTab[] }) {
+  return (
+    <div className="relative mt-1">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-4 bg-gradient-to-r from-[#07131f] via-[#07131f]/85 to-transparent sm:hidden" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-7 bg-gradient-to-l from-[#07131f] via-[#07131f]/88 to-transparent sm:hidden" />
+
+      <div className="overflow-hidden">
+        <div className="flex gap-2 overflow-x-auto pb-1 pr-10 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pr-0">
+          {lanes.map((lane) => {
+            const active = lane.active;
+
+            return (
+              <Link
+                key={lane.id}
+                href={lane.href}
+                aria-current={active ? "page" : undefined}
+                className={[
+                  "group relative shrink-0 snap-start rounded-full border px-3.5 py-2 text-[13px] font-medium tracking-[-0.01em] transition duration-200 sm:px-4",
+                  "border-white/10 bg-white/[0.045] text-white/66 hover:border-white/14 hover:bg-white/[0.06] hover:text-white/82",
+                  active ? lane.activeClasses : "",
+                ].join(" ")}
+                style={{
+                  minWidth: "fit-content",
+                }}
+              >
+                {active ? (
+                  <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-white/20" />
+                ) : null}
+
+                <span className="relative flex items-center gap-2">
+                  <span
+                    className={[
+                      "h-1.5 w-1.5 rounded-full transition",
+                      lane.dotClass,
+                      active ? "opacity-100" : "opacity-75 group-hover:opacity-90",
+                    ].join(" ")}
+                  />
+                  <span>{lane.label}</span>
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getPathIcon(path: WorkPathContent) {
   switch (path.slug) {
-    case "game-designer":
-      return `See the full breakdown of ${title}`;
     case "software-developer":
-      return `Explore the full picture for ${title}`;
+      return Code2;
     case "film-video-producer":
-      return `Go deeper into ${title}`;
+      return Clapperboard;
+    case "game-designer":
+      return Gamepad2;
+    case "doctor":
+    case "physician":
+    case "medical-career":
+      return Stethoscope;
+    case "lawyer":
+    case "attorney":
+      return Scale;
+    case "graphic-designer":
+    case "designer":
+      return PenTool;
+    case "scientist":
+    case "researcher":
+      return FlaskConical;
+    case "teacher":
+    case "public-policy":
+      return Landmark;
+    case "marketing":
+    case "brand-strategist":
+      return Megaphone;
+    case "photographer":
+      return Camera;
+    case "music-producer":
+    case "musician":
+      return Music4;
+    case "mechanic":
+    case "technician":
+      return Wrench;
     default:
-      return "See everything inside this path";
+      return BriefcaseBusiness;
+  }
+}
+
+function getPathForwardCopy(path: WorkPathContent, title: string) {
+  switch (path.slug) {
+    case "software-developer":
+      return {
+        eyebrow: "See how this path gets built",
+        title: "Open up the real developer path",
+        body:
+          "See the specialties, how the work actually feels day to day, what the pay range looks like, and where you can start building now.",
+      };
+    case "film-video-producer":
+      return {
+        eyebrow: "Step into the production world",
+        title: "See how this work comes together",
+        body:
+          "Get the real picture on roles behind the shoot, the pace of the work, salary range, and ways to start stepping into it now.",
+      };
+    case "game-designer":
+      return {
+        eyebrow: "See how game ideas become real",
+        title: "Open up the world behind the games",
+        body:
+          "Explore the roles, specialties, creative workflow, pay, and real ways to start testing this path for yourself now.",
+      };
+    default:
+      return {
+        eyebrow: "Get the fuller picture",
+        title: `Open up ${title}`,
+        body:
+          "See the specialties, the real rhythm of the work, salary range, and the local or virtual opportunities that can help you start now.",
+      };
   }
 }
 
@@ -939,24 +1185,22 @@ function WorkIntroPanel({
 }) {
   if (noSignal) {
     return (
-      <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-7">
+      <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-6 lg:py-7">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
         <IntroOrbitArt />
 
-        <div className="relative max-w-4xl pr-0 sm:pr-20 lg:pr-24">
+        <div className="relative pr-0 md:max-w-4xl md:pr-20 lg:pr-24">
           <IntroHeader />
 
-          <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[30px] lg:text-[34px] xl:text-[36px]">
+          <h2 className="mt-2.5 text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[30px] md:max-w-3xl lg:text-[34px] xl:text-[36px]">
             This is where Everleap&apos;s recommendations get real.
           </h2>
 
-          <p className="mt-4 max-w-3xl text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
-            {profile.firstName ? `${profile.firstName}, ` : ""}
-            Explore is where Everleap turns your <SignalWord /> into real paths
-            you can actually test, but right now we do not have enough of it yet
-            to make those recommendations feel personal and grounded. Answer a
-            few motivations questions, then come back — this page will sharpen
-            fast.
+          <p className="mt-4 text-[14px] leading-[1.72] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+            Explore is designed to turn your <SignalWord /> into real paths you
+            can test, compare, and move toward — but there isn&apos;t enough of
+            it yet to make this page feel sharp. Answer a few quick questions,
+            then come back. You&apos;ll see this change immediately.
           </p>
 
           <div className="mt-5">
@@ -964,7 +1208,7 @@ function WorkIntroPanel({
               href="/main/questions?cat=motivations&returnTo=/main/explore/work"
               className="group inline-flex items-center gap-1.5 text-[14.5px] font-medium text-white/80 transition hover:text-white/92"
             >
-              <span>Start with Motivations Questions</span>
+              <span>Start with a few quick questions</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -974,29 +1218,24 @@ function WorkIntroPanel({
   }
 
   const opening = getAgenticOpening(profile);
-  void opening;
 
   return (
-    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-7">
+    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-6 lg:py-7">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
       <IntroOrbitArt />
 
-      <div className="relative max-w-4xl pr-0 sm:pr-20 lg:pr-24">
+      <div className="relative pr-0 md:max-w-4xl md:pr-20 lg:pr-24">
         <IntroHeader />
 
-        <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[30px] lg:text-[34px] xl:text-[36px]">
-          {profile.firstName
-            ? `${profile.firstName}, this is where your work paths start getting real.`
-            : "This is where your work paths start getting real."}
+        <h2 className="mt-2.5 text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[30px] md:max-w-3xl lg:text-[34px] xl:text-[36px]">
+          {opening.title}
         </h2>
 
-        <p className="mt-4 max-w-3xl text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
-          {profile.firstName
-            ? `${profile.firstName}, these recommendations are built from the `
-            : "These recommendations are built from the "}
-          <SignalWord />{" "}
-          Everleap is picking up in what you answer and lean toward — then
-          matched to paths that seem to fit how you think, build, and move.
+        <p className="mt-4 text-[14px] leading-[1.72] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+          These recommendations come from the <SignalWord /> Everleap is already
+          picking up in what you answer and lean toward — then turning that into
+          paths worth testing for real. {opening.bodyA} {opening.bodyB}
+          {opening.bodyC ? ` ${opening.bodyC}` : ""}
         </p>
       </div>
     </section>
@@ -1040,30 +1279,79 @@ function SectionAnchor({
 function MobilePathCornerArt({ atmosphere }: { atmosphere: PathAtmosphere }) {
   return (
     <div
-      className="pointer-events-none absolute right-0 top-0 h-24 w-24 sm:hidden"
+      className="pointer-events-none absolute -right-1 top-0 h-16 w-16 md:hidden"
       aria-hidden="true"
       style={{
-        background: `radial-gradient(circle at 70% 28%, ${rgb(
+        background: `radial-gradient(circle at 78% 24%, ${rgb(
           atmosphere.futureGlow,
-          0.12
-        )} 0%, transparent 34%)`,
+          0.09
+        )} 0%, transparent 36%)`,
       }}
     />
   );
 }
 
+function MobileMiniConstellation({ accent }: { accent: Rgb }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -right-3 top-2 h-[72px] w-[72px] opacity-82 md:hidden"
+    >
+      <div
+        className="absolute right-[4px] top-[4px] h-[54px] w-[54px] rounded-full border"
+        style={{ borderColor: rgb(accent, 0.08) }}
+      />
+      <div
+        className="absolute left-[20px] top-[17px] h-px w-[17px] rotate-[12deg]"
+        style={{
+          background: `linear-gradient(90deg, ${rgb(accent, 0.16)} 0%, ${rgb(
+            accent,
+            0.04
+          )} 100%)`,
+        }}
+      />
+      <div
+        className="absolute left-[30px] top-[31px] h-px w-[15px] -rotate-[18deg]"
+        style={{
+          background: `linear-gradient(90deg, ${rgb(accent, 0.14)} 0%, ${rgb(
+            accent,
+            0.04
+          )} 100%)`,
+        }}
+      />
+      <div
+        className="absolute left-[16px] top-[14px] h-2.5 w-2.5 rounded-full"
+        style={{
+          backgroundColor: rgb(accent, 0.84),
+          boxShadow: `0 0 8px ${rgb(accent, 0.24)}`,
+        }}
+      />
+      <div
+        className="absolute left-[38px] top-[21px] h-2 w-2 rounded-full"
+        style={{
+          backgroundColor: rgb(accent, 0.68),
+          boxShadow: `0 0 6px ${rgb(accent, 0.18)}`,
+        }}
+      />
+      <div
+        className="absolute left-[31px] top-[37px] h-2 w-2 rounded-full"
+        style={{
+          backgroundColor: rgb(accent, 0.62),
+          boxShadow: `0 0 6px ${rgb(accent, 0.16)}`,
+        }}
+      />
+    </div>
+  );
+}
+
 function JobHeaderIcon({
-  slug,
+  path,
   dark = true,
 }: {
-  slug: string;
+  path: WorkPathContent;
   dark?: boolean;
 }) {
-  let Icon = BriefcaseBusiness;
-
-  if (slug === "software-developer") Icon = Code2;
-  if (slug === "film-video-producer") Icon = Clapperboard;
-  if (slug === "game-designer") Icon = Rocket;
+  const Icon = getPathIcon(path);
 
   return (
     <div
@@ -1088,28 +1376,30 @@ function PathForwardSection({
   atmosphere: PathAtmosphere;
   title: string;
 }) {
+  const copy = getPathForwardCopy(path, title);
+
   return (
-    <div className="relative mt-6 lg:mt-7">
+    <div className="relative mt-5 lg:mt-6">
       <div
-        className="pointer-events-none absolute inset-x-0 top-3 h-20"
+        className="pointer-events-none absolute inset-x-0 top-2 h-16"
         style={{
           background: `radial-gradient(circle at 82% 34%, ${rgb(
             atmosphere.futureGlow,
-            0.1
+            0.08
           )} 0%, transparent 24%)`,
         }}
       />
 
-      <div className="relative px-1 pt-4 lg:pt-5">
+      <div className="relative px-1 pt-3 lg:pt-4">
         <SectionAnchor
-          label="See the full path"
+          label={copy.eyebrow}
           color={atmosphere.futureNode}
           lineAlpha={0.24}
         />
 
         <Link
           href={`/main/explore/work/${path.slug}`}
-          className="group relative mt-4 block overflow-hidden rounded-[2px] px-0 py-0 transition"
+          className="group relative mt-3 block overflow-hidden rounded-[2px] px-0 py-0 transition"
         >
           <div
             className="pointer-events-none absolute inset-x-0 top-0 h-px"
@@ -1122,32 +1412,34 @@ function PathForwardSection({
           />
 
           <div
-            className="pointer-events-none absolute inset-y-0 right-0 w-[22%]"
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[20%] md:block"
             style={{
               background: `radial-gradient(circle at 78% 50%, ${rgb(
                 atmosphere.futureGlow,
-                0.1
+                0.08
               )} 0%, transparent 54%)`,
             }}
           />
 
-          <div className="relative flex items-center gap-3 py-4 sm:gap-4 sm:py-5">
+          <div className="relative flex items-center gap-3 py-3.5 sm:gap-4 sm:py-4.5">
             <div className="min-w-0 flex-1">
-              <h3 className="text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[21px] lg:text-[22px]">
-                {getCareerCtaTitle(path, title)}
+              <h3 className="text-[18px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[20px] lg:text-[21px]">
+                {copy.title}
               </h3>
+
+              <p className="mt-1.5 max-w-[42rem] pr-10 text-[13px] leading-[1.6] text-white/72 md:pr-0 lg:text-[14px]">
+                {copy.body}
+              </p>
             </div>
 
-            <div className="relative ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:ml-2 sm:h-[52px] sm:w-[52px]">
-              <div
-                className="pointer-events-none absolute inset-0 rounded-full"
-                style={{
-                  borderColor: rgb(atmosphere.futureGlow, 0.22),
-                  backgroundColor: rgb(atmosphere.futureGlow, 0.08),
-                  boxShadow: `0 0 24px ${rgb(atmosphere.futureGlow, 0.12)}`,
-                }}
-              />
-              <ArrowRight className="relative z-10 h-5 w-5" />
+            <div
+              className="relative ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:h-12 sm:w-12"
+              style={{
+                borderColor: rgb(atmosphere.futureGlow, 0.2),
+                backgroundColor: rgb(atmosphere.futureGlow, 0.08),
+              }}
+            >
+              <ArrowRight className="h-5 w-5" />
             </div>
           </div>
         </Link>
@@ -1174,89 +1466,56 @@ function WorkPathCard({
 
   return (
     <article
-      className="group relative overflow-hidden rounded-[30px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5 lg:p-6"
+      className="group relative overflow-hidden rounded-[30px] border p-3.5 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5 lg:p-6"
       style={{
         borderColor: rgb(atmosphere.border, 0.22),
-        background: `
-          radial-gradient(circle at 18% 0%, ${rgb(atmosphere.washA, 0.16)} 0%, transparent 28%),
-          radial-gradient(circle at 92% 12%, ${rgb(atmosphere.washB, 0.16)} 0%, transparent 24%),
-          linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%)
-        `,
-        boxShadow: `0 24px 80px rgba(0,0,0,0.32), 0 0 0 1px ${rgb(
-          atmosphere.border,
-          0.08
-        )}`,
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%)",
       }}
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-28"
-        style={{
-          background: `linear-gradient(180deg, ${rgb(
-            atmosphere.topGlow,
-            0.2
-          )} 0%, ${rgb(atmosphere.topGlow, 0.06)} 42%, transparent 100%)`,
-        }}
-      />
-      <div
-        className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.washA, 0.15) }}
-      />
-      <div
-        className="pointer-events-none absolute right-[-28px] top-[-14px] h-32 w-32 rounded-full blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.washB, 0.14) }}
-      />
-      <div
-        className="pointer-events-none absolute left-[22%] top-0 h-24 w-40 blur-3xl"
-        style={{ backgroundColor: rgb(atmosphere.topGlow, 0.1) }}
-      />
-
-      <MobilePathCornerArt atmosphere={atmosphere} />
-      <div
-        className="pointer-events-none absolute right-1 top-1 hidden origin-top-right opacity-32 md:block lg:right-2 lg:top-2"
-        style={{ transform: "scale(0.58)" }}
-      >
+      <div className="pointer-events-none absolute right-0 top-0 hidden md:block md:opacity-100">
         <SignalConstellation accent={atmosphere.border} />
       </div>
 
+      <MobileMiniConstellation accent={atmosphere.border} />
+      <MobilePathCornerArt atmosphere={atmosphere} />
+
       <div className="relative">
-        <div className="min-w-0 pr-0">
-          <div className="flex items-center gap-2.5">
-            <JobHeaderIcon slug={path.slug} />
-            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px] lg:text-[25px]">
-              {title}
-            </h2>
-          </div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <JobHeaderIcon path={path} />
+              <h2 className="min-w-0 text-[22px] font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-[25px] lg:text-[27px]">
+                {title}
+              </h2>
+            </div>
 
-          <div className="relative mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
-            <SignalMeter score={signalStrength} accent={atmosphere.border} />
+            <div className="mt-2.5 inline-flex items-center gap-2">
+              <SignalMeter score={signalStrength} accent={atmosphere.border} />
 
-            <button
-              type="button"
-              aria-label="What signal means"
-              onClick={() => setShowSignalHelp((current) => !current)}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/54 transition hover:bg-white/[0.1] hover:text-white/84"
-            >
-              <CircleHelp className="h-3.5 w-3.5" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowSignalHelp((v) => !v)}
+                className="text-white/60 transition hover:text-white/82"
+                aria-label="Explain signal score"
+              >
+                <CircleHelp className="h-4 w-4" />
+              </button>
+            </div>
 
             {showSignalHelp ? (
-              <div className="absolute left-0 top-[calc(100%+10px)] z-20 w-[240px] rounded-[16px] border border-white/12 bg-[#0b1220]/96 px-3.5 py-3 text-[12px] leading-[1.55] text-white/78 shadow-[0_18px_40px_rgba(0,0,0,0.38)]">
-                This is Everleap&apos;s best guess, right now, of how well this
-                path fits your profile.
+              <div className="mt-1.5 text-[12px] leading-[1.5] text-white/70">
+                Everleap&apos;s current read on how well this path fits you.
               </div>
             ) : null}
           </div>
-
-          <p className="mt-4 max-w-[52rem] text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:text-[15px]">
-            {summary}
-          </p>
         </div>
 
-        <PathForwardSection
-          path={path}
-          atmosphere={atmosphere}
-          title={title}
-        />
+        <p className="mt-3.5 max-w-none text-[14px] leading-[1.68] text-white/76 sm:mt-4 sm:text-[15px] md:max-w-3xl lg:text-[15px]">
+          {summary}
+        </p>
+
+        <PathForwardSection path={path} atmosphere={atmosphere} title={title} />
       </div>
     </article>
   );
@@ -1289,11 +1548,8 @@ export default function WorkExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <div className="mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10">
-        <ExploreLaneTabs
-          lanes={EXPLORE_LANES}
-          activeClassName="border-cyan-300/30 bg-cyan-300/[0.11] text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.05)]"
-        />
+      <div className="mx-auto w-full max-w-5xl px-2">
+        <ExploreLaneRail lanes={EXPLORE_LANES} />
 
         <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} />
 
