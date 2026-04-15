@@ -4,11 +4,18 @@
 
 import Link from "next/link";
 import * as React from "react";
-import { ArrowRight, CircleHelp } from "lucide-react";
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CircleHelp,
+  Clapperboard,
+  Code2,
+  Rocket,
+  Sparkles,
+} from "lucide-react";
 
 import {
   ExploreLaneTabs,
-  SectionKicker,
   SignalConstellation,
   SignalMeter,
   rgb,
@@ -27,6 +34,7 @@ type UserProfileSignals = {
   fullText: string;
   statedCareerGoal: string | null;
   statedCareerReason: string | null;
+  hasQuestionSignal: boolean;
 };
 
 type PathAtmosphere = {
@@ -41,16 +49,16 @@ type PathAtmosphere = {
 
 const MAX_VISIBLE_WORK_PATHS = 4;
 
-const MOCK_DOCTOR_PROFILE: UserProfileSignals = {
-  firstName: "Thomas",
-  knowsDirection: true,
-  motivations: ["success", "security", "impact"],
-  strengths: ["discipline", "focus", "follow-through"],
-  skills: ["science", "problem solving", "communication"],
-  fullText:
-    "I want to be a doctor because it pays a lot of money and I want a strong successful future.",
-  statedCareerGoal: "doctor",
-  statedCareerReason: "because it pays a lot of money",
+const EMPTY_PROFILE: UserProfileSignals = {
+  firstName: null,
+  knowsDirection: false,
+  motivations: [],
+  strengths: [],
+  skills: [],
+  fullText: "",
+  statedCareerGoal: null,
+  statedCareerReason: null,
+  hasQuestionSignal: false,
 };
 
 const EXPLORE_LANES: readonly ExploreLaneTab[] = [
@@ -251,6 +259,26 @@ function collectStringsDeep(
   }
 }
 
+function hasAnsweredQuestions(value: unknown): boolean {
+  if (value == null) return false;
+
+  if (typeof value === "string") {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasAnsweredQuestions(item));
+  }
+
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.values(record).some((child) => hasAnsweredQuestions(child));
+  }
+
+  if (typeof value === "boolean") return value;
+  return false;
+}
+
 function looksLikeMedicineGoal(value: string) {
   const normalized = value.toLowerCase();
   return (
@@ -315,16 +343,7 @@ function summarizeCareerReason(reason: string | null) {
 
 function readStoredProfileSignals(): UserProfileSignals {
   if (typeof window === "undefined") {
-    return {
-      firstName: null,
-      knowsDirection: false,
-      motivations: [],
-      strengths: [],
-      skills: [],
-      fullText: "",
-      statedCareerGoal: null,
-      statedCareerReason: null,
-    };
+    return EMPTY_PROFILE;
   }
 
   const candidateKeys = [
@@ -343,6 +362,7 @@ function readStoredProfileSignals(): UserProfileSignals {
   let knowsDirection = false;
   let statedCareerGoal: string | null = null;
   let statedCareerReason: string | null = null;
+  let hasQuestionSignal = false;
 
   for (const key of candidateKeys) {
     try {
@@ -352,6 +372,17 @@ function readStoredProfileSignals(): UserProfileSignals {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const profile = asRecord(parsed.profile);
       const answers = asRecord(parsed.answers);
+
+      if (
+        key === "everleap.story.answers.v3" ||
+        key === "everleap.story.answers.v2" ||
+        key === "everleap.onboarding.answers" ||
+        key === "everleapOnboarding_v4_convo_min"
+      ) {
+        if (hasAnsweredQuestions(parsed) || hasAnsweredQuestions(answers)) {
+          hasQuestionSignal = true;
+        }
+      }
 
       const nameCandidates = [
         parsed.firstName,
@@ -531,6 +562,7 @@ function readStoredProfileSignals(): UserProfileSignals {
     fullText: allStrings.join(" ").toLowerCase(),
     statedCareerGoal,
     statedCareerReason,
+    hasQuestionSignal,
   };
 }
 
@@ -861,8 +893,88 @@ function IntroOrbitArt() {
   );
 }
 
-function WorkIntroPanel({ profile }: { profile: UserProfileSignals }) {
+function IntroHeader() {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-teal-300/10 text-teal-200/70">
+        <Sparkles className="h-3.5 w-3.5" />
+      </div>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/42">
+        Explore
+      </div>
+    </div>
+  );
+}
+
+function SignalWord() {
+  return (
+    <Link
+      href="/main/insights?tab=summary"
+      className="font-semibold text-white/90 underline decoration-white/20 underline-offset-[3px] transition hover:text-white"
+    >
+      Signal
+    </Link>
+  );
+}
+
+function getCareerCtaTitle(path: WorkPathContent, title: string) {
+  switch (path.slug) {
+    case "game-designer":
+      return `See the full breakdown of ${title}`;
+    case "software-developer":
+      return `Explore the full picture for ${title}`;
+    case "film-video-producer":
+      return `Go deeper into ${title}`;
+    default:
+      return "See everything inside this path";
+  }
+}
+
+function WorkIntroPanel({
+  profile,
+  noSignal,
+}: {
+  profile: UserProfileSignals;
+  noSignal: boolean;
+}) {
+  if (noSignal) {
+    return (
+      <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-7">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
+        <IntroOrbitArt />
+
+        <div className="relative max-w-4xl pr-0 sm:pr-20 lg:pr-24">
+          <IntroHeader />
+
+          <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[30px] lg:text-[34px] xl:text-[36px]">
+            This is where Everleap&apos;s recommendations get real.
+          </h2>
+
+          <p className="mt-4 max-w-3xl text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+            {profile.firstName ? `${profile.firstName}, ` : ""}
+            Explore is where Everleap turns your <SignalWord /> into real paths
+            you can actually test, but right now we do not have enough of it yet
+            to make those recommendations feel personal and grounded. Answer a
+            few motivations questions, then come back — this page will sharpen
+            fast.
+          </p>
+
+          <div className="mt-5">
+            <Link
+              href="/main/questions?cat=motivations&returnTo=/main/explore/work"
+              className="group inline-flex items-center gap-1.5 text-[14.5px] font-medium text-white/80 transition hover:text-white/92"
+            >
+              <span>Start with Motivations Questions</span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const opening = getAgenticOpening(profile);
+  void opening;
 
   return (
     <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-7 lg:py-7">
@@ -870,25 +982,22 @@ function WorkIntroPanel({ profile }: { profile: UserProfileSignals }) {
       <IntroOrbitArt />
 
       <div className="relative max-w-4xl pr-0 sm:pr-20 lg:pr-24">
-        <SectionKicker>Work</SectionKicker>
+        <IntroHeader />
 
         <h2 className="mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:mt-3 sm:text-[30px] lg:text-[34px] xl:text-[36px]">
-          {opening.title}
+          {profile.firstName
+            ? `${profile.firstName}, this is where your work paths start getting real.`
+            : "This is where your work paths start getting real."}
         </h2>
 
-        <p className="mt-4 max-w-3xl text-[14px] leading-[1.68] text-white/74 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.75]">
-          {opening.bodyA}
+        <p className="mt-4 max-w-3xl text-[14px] leading-[1.72] text-white/76 sm:text-[15px] lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+          {profile.firstName
+            ? `${profile.firstName}, these recommendations are built from the `
+            : "These recommendations are built from the "}
+          <SignalWord />{" "}
+          Everleap is picking up in what you answer and lean toward — then
+          matched to paths that seem to fit how you think, build, and move.
         </p>
-
-        <p className="mt-3 max-w-3xl text-[14px] leading-[1.68] text-white/78 sm:text-[15px] lg:mt-4 lg:text-[16px] lg:leading-[1.75]">
-          {opening.bodyB}
-        </p>
-
-        {opening.bodyC ? (
-          <p className="mt-3 max-w-3xl text-[14px] leading-[1.68] text-white/72 sm:text-[15px] lg:mt-4 lg:text-[16px] lg:leading-[1.75]">
-            {opening.bodyC}
-          </p>
-        ) : null}
       </div>
     </section>
   );
@@ -943,12 +1052,41 @@ function MobilePathCornerArt({ atmosphere }: { atmosphere: PathAtmosphere }) {
   );
 }
 
+function JobHeaderIcon({
+  slug,
+  dark = true,
+}: {
+  slug: string;
+  dark?: boolean;
+}) {
+  let Icon = BriefcaseBusiness;
+
+  if (slug === "software-developer") Icon = Code2;
+  if (slug === "film-video-producer") Icon = Clapperboard;
+  if (slug === "game-designer") Icon = Rocket;
+
+  return (
+    <div
+      className={[
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px]",
+        dark
+          ? "bg-cyan-300/10 text-cyan-200/72"
+          : "bg-cyan-500/10 text-cyan-700/72",
+      ].join(" ")}
+    >
+      <Icon className="h-4 w-4" />
+    </div>
+  );
+}
+
 function PathForwardSection({
   path,
   atmosphere,
+  title,
 }: {
   path: WorkPathContent;
   atmosphere: PathAtmosphere;
+  title: string;
 }) {
   return (
     <div className="relative mt-6 lg:mt-7">
@@ -993,17 +1131,11 @@ function PathForwardSection({
             }}
           />
 
-
           <div className="relative flex items-center gap-3 py-4 sm:gap-4 sm:py-5">
             <div className="min-w-0 flex-1">
               <h3 className="text-[20px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[21px] lg:text-[22px]">
-                Go deeper into this path
+                {getCareerCtaTitle(path, title)}
               </h3>
-
-              <p className="mt-2 max-w-[42rem] text-[13px] leading-[1.65] text-white/72 lg:text-[14px]">
-                See how this path actually works — and how to try it in the real
-                world.
-              </p>
             </div>
 
             <div className="relative ml-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:ml-2 sm:h-[52px] sm:w-[52px]">
@@ -1066,15 +1198,6 @@ function WorkPathCard({
         }}
       />
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-[2px]"
-        style={{
-          background: `linear-gradient(180deg, transparent 0%, ${rgb(
-            atmosphere.border,
-            0.5
-          )} 20%, ${rgb(atmosphere.sideGlow, 0.2)} 72%, transparent 100%)`,
-        }}
-      />
-      <div
         className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full blur-3xl"
         style={{ backgroundColor: rgb(atmosphere.washA, 0.15) }}
       />
@@ -1097,9 +1220,12 @@ function WorkPathCard({
 
       <div className="relative">
         <div className="min-w-0 pr-0">
-          <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px] lg:text-[25px]">
-            {title}
-          </h2>
+          <div className="flex items-center gap-2.5">
+            <JobHeaderIcon slug={path.slug} />
+            <h2 className="text-[23px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[24px] lg:text-[25px]">
+              {title}
+            </h2>
+          </div>
 
           <div className="relative mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-2.5 py-1.5">
             <SignalMeter score={signalStrength} accent={atmosphere.border} />
@@ -1126,30 +1252,21 @@ function WorkPathCard({
           </p>
         </div>
 
-        <PathForwardSection path={path} atmosphere={atmosphere} />
+        <PathForwardSection
+          path={path}
+          atmosphere={atmosphere}
+          title={title}
+        />
       </div>
     </article>
   );
 }
 
 export default function WorkExplorePage() {
-  const [profile, setProfile] = React.useState<UserProfileSignals>(
-    MOCK_DOCTOR_PROFILE
-  );
+  const [profile, setProfile] = React.useState<UserProfileSignals>(EMPTY_PROFILE);
 
   React.useEffect(() => {
-    const stored = readStoredProfileSignals();
-    const hasRealProfile =
-      Boolean(stored.firstName) ||
-      stored.knowsDirection ||
-      stored.motivations.length > 0 ||
-      stored.strengths.length > 0 ||
-      stored.skills.length > 0 ||
-      Boolean(stored.statedCareerGoal) ||
-      Boolean(stored.statedCareerReason) ||
-      Boolean(stored.fullText.trim());
-
-    setProfile(hasRealProfile ? stored : MOCK_DOCTOR_PROFILE);
+    setProfile(readStoredProfileSignals());
   }, []);
 
   const allPaths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
@@ -1168,40 +1285,31 @@ export default function WorkExplorePage() {
       .map((item) => item.path);
   }, [allPaths, profile]);
 
+  const showOnlyIntro = !profile.hasQuestionSignal;
+
   return (
     <div className={pagePadding()}>
       <div className="mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10">
-        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:px-5 sm:py-5 lg:px-7 lg:py-6">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(129,93,255,0.10),transparent_18%),radial-gradient(circle_at_18%_12%,rgba(56,189,248,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0.00)_50%)]" />
+        <ExploreLaneTabs
+          lanes={EXPLORE_LANES}
+          activeClassName="border-cyan-300/30 bg-cyan-300/[0.11] text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.05)]"
+        />
 
-          <div className="relative">
-            <h1 className="text-[34px] font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-[42px] lg:text-[50px]">
-              Explore
-            </h1>
-            <p className="mt-1 text-[14px] leading-[1.45] text-white/62 sm:text-[15px] lg:text-[16px]">
-              Where I can go
-            </p>
+        <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} />
 
-            <ExploreLaneTabs
-              lanes={EXPLORE_LANES}
-              activeClassName="border-cyan-300/30 bg-cyan-300/[0.11] text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.05)]"
-            />
-          </div>
-        </section>
+        {!showOnlyIntro ? (
+          <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+            {visiblePaths.map((path) => (
+              <WorkPathCard key={path.id} path={path} profile={profile} />
+            ))}
 
-        <WorkIntroPanel profile={profile} />
-
-        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
-          {visiblePaths.map((path) => (
-            <WorkPathCard key={path.id} path={path} profile={profile} />
-          ))}
-
-          {allPaths.length === 0 ? (
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
-              No work paths are registered yet.
-            </div>
-          ) : null}
-        </section>
+            {allPaths.length === 0 ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5 text-[15px] leading-relaxed text-white/72">
+                No work paths are registered yet.
+              </div>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </div>
   );
