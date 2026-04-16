@@ -24,15 +24,15 @@ type Category = RecommendedNext;
 type Saved = { answer?: string; skipped?: boolean };
 
 function pagePadding() {
-  return "pb-24 pt-1 sm:pt-1.5 lg:pt-2";
+  return "pt-4 pb-6";
 }
 
 function pageShell() {
-  return "mx-auto w-full max-w-[52rem] px-2.5 sm:px-4 md:px-5 lg:px-6";
+  return "mx-auto w-full max-w-[720px] px-3";
 }
 
 function sectionSpacing() {
-  return "mt-4 sm:mt-5";
+  return "mt-4";
 }
 
 function labelForCategory(cat: Category) {
@@ -124,11 +124,10 @@ export default function MainHomePage() {
     sklAnswered >= SIGNAL_COMPLETE_COUNT;
 
   const nextTarget = React.useMemo(
-    () => (
+    () =>
       mounted
         ? getNextUnansweredTarget()
-        : { cat: "motivations" as const, questionId: "motivations_1" }
-    ),
+        : { cat: "motivations" as const, questionId: "motivations_1" },
     [mounted, vm]
   );
 
@@ -196,8 +195,8 @@ export default function MainHomePage() {
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
-            <section className="relative pt-4 sm:pt-5">
-              <SectionCard tone="hero" className="px-4 py-5 sm:px-5 sm:py-5">
+            <section className="relative">
+              <SectionCard tone="hero" className="px-3 py-4">
                 <TodayIntro
                   title={introTitle || "Let’s start building your direction"}
                   dark={dark}
@@ -243,7 +242,7 @@ export default function MainHomePage() {
               </SectionCard>
             </section>
 
-            <div className="h-6 sm:h-8" />
+            <div className="h-4" />
           </div>
         </main>
       </div>
