@@ -92,7 +92,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     active: true,
     dotClass: "bg-cyan-300",
     activeClasses:
-      "border-cyan-300/42 bg-cyan-300/[0.18] text-white shadow-[0_0_0_1px_rgba(103,232,249,0.06),0_14px_32px_rgba(34,211,238,0.14)]",
+      "border-cyan-200/70 bg-cyan-300/[0.28] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(103,232,249,0.08),0_14px_32px_rgba(34,211,238,0.18)]",
   },
   {
     id: "learning",
@@ -1081,7 +1081,7 @@ function ExploreLaneRail({ lanes }: { lanes: readonly WorkLaneTab[] }) {
                 }}
               >
                 {active ? (
-                  <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-white/20" />
+                  <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-white/35" />
                 ) : null}
 
                 <span className="relative flex items-center gap-2">
