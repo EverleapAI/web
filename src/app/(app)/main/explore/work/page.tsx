@@ -392,6 +392,7 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         futureGlow: { r: 83, g: 132, b: 255 },
         futureNode: { r: 117, g: 207, b: 255 },
       };
+
     case "software-developer":
       return {
         border: { r: 59, g: 214, b: 255 },
@@ -402,6 +403,7 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         futureGlow: { r: 53, g: 198, b: 255 },
         futureNode: { r: 162, g: 245, b: 255 },
       };
+
     case "film-video-producer":
       return {
         border: { r: 255, g: 177, b: 92 },
@@ -412,15 +414,39 @@ function getPathAtmosphere(path: WorkPathContent, accent: Rgb): PathAtmosphere {
         futureGlow: { r: 255, g: 152, b: 72 },
         futureNode: { r: 255, g: 211, b: 138 },
       };
+
+    case "physical-therapist":
+      return {
+        border: { r: 52, g: 211, b: 153 },
+        topGlow: { r: 34, g: 197, b: 94 },
+        sideGlow: { r: 16, g: 185, b: 129 },
+        washA: { r: 74, g: 222, b: 128 },
+        washB: { r: 16, g: 185, b: 129 },
+        futureGlow: { r: 34, g: 197, b: 94 },
+        futureNode: { r: 167, g: 243, b: 208 },
+      };
+
     default:
       return {
         border: accent,
         topGlow: accent,
-        sideGlow: { r: Math.max(0, accent.r - 10), g: accent.g, b: accent.b },
+        sideGlow: {
+          r: Math.max(0, accent.r - 20),
+          g: accent.g,
+          b: accent.b,
+        },
         washA: accent,
-        washB: { r: accent.r, g: Math.max(0, accent.g - 24), b: accent.b },
+        washB: {
+          r: accent.r,
+          g: Math.max(0, accent.g - 30),
+          b: accent.b,
+        },
         futureGlow: accent,
-        futureNode: { r: 220, g: 240, b: 255 },
+        futureNode: {
+          r: Math.min(255, accent.r + 80),
+          g: Math.min(255, accent.g + 80),
+          b: Math.min(255, accent.b + 80),
+        },
       };
   }
 }
