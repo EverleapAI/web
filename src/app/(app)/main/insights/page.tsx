@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -121,7 +122,7 @@ function tabPillBaseClass() {
   return [
     "relative inline-flex items-center gap-2",
     "rounded-full border",
-    "px-4 py-2.5",
+    "px-3.5 py-2",
     "text-sm font-semibold tracking-[-0.01em]",
     "backdrop-blur-xl",
     "transition-[transform,box-shadow,background-color,border-color,color] duration-200",
@@ -129,6 +130,7 @@ function tabPillBaseClass() {
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30 focus-visible:ring-offset-0",
     "select-none",
     "whitespace-nowrap",
+    "shrink-0",
   ].join(" ");
 }
 
@@ -141,31 +143,31 @@ function tabPillStyle(args: {
   const c = rgb(accent);
 
   const inactiveBg = dark ? `rgba(${c}, 0.08)` : `rgba(${c}, 0.14)`;
-  const inactiveBorder = dark ? `rgba(${c}, 0.22)` : `rgba(${c}, 0.30)`;
+  const inactiveBorder = dark ? `rgba(${c}, 0.22)` : `rgba(${c}, 0.3)`;
 
   const activeBg = dark
-    ? `linear-gradient(180deg, rgba(${c}, 0.22), rgba(255,255,255,0.04))`
+    ? `linear-gradient(180deg, rgba(${c}, 0.24), rgba(255,255,255,0.05))`
     : `linear-gradient(180deg, rgba(${c}, 0.22), rgba(255,255,255,0.85))`;
 
   const glow = dark
-    ? `0 0 0 1px rgba(${c}, 0.24), 0 16px 36px rgba(0,0,0,0.42)`
-    : `0 0 0 1px rgba(${c}, 0.22), 0 14px 40px rgba(0,0,0,0.16)`;
+    ? `0 0 0 1px rgba(${c}, 0.28), 0 14px 30px rgba(0,0,0,0.38)`
+    : `0 0 0 1px rgba(${c}, 0.22), 0 12px 28px rgba(0,0,0,0.14)`;
 
   const idleShadow = dark
-    ? `inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 20px rgba(0,0,0,0.24)`
-    : `inset 0 1px 0 rgba(255,255,255,0.60), 0 8px 18px rgba(0,0,0,0.09)`;
+    ? `inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 16px rgba(0,0,0,0.22)`
+    : `inset 0 1px 0 rgba(255,255,255,0.60), 0 6px 14px rgba(0,0,0,0.08)`;
 
   return selected
     ? {
         background: activeBg,
-        borderColor: dark ? `rgba(${c}, 0.32)` : `rgba(${c}, 0.35)`,
-        color: dark ? "rgba(255,255,255,0.88)" : "rgba(15,23,42,0.96)",
+        borderColor: dark ? `rgba(${c}, 0.36)` : `rgba(${c}, 0.35)`,
+        color: dark ? "rgba(255,255,255,0.9)" : "rgba(15,23,42,0.96)",
         boxShadow: glow,
       }
     : {
         background: inactiveBg,
         borderColor: inactiveBorder,
-        color: dark ? "rgba(255,255,255,0.70)" : "rgba(15,23,42,0.82)",
+        color: dark ? "rgba(255,255,255,0.72)" : "rgba(15,23,42,0.82)",
         boxShadow: idleShadow,
       };
 }
@@ -180,12 +182,41 @@ function tabDotStyle(args: {
 
   return {
     background: selected
-      ? `rgba(${c}, 0.88)`
-      : `rgba(${c}, ${dark ? 0.38 : 0.55})`,
+      ? `rgba(${c}, 0.9)`
+      : `rgba(${c}, ${dark ? 0.42 : 0.55})`,
     boxShadow: selected
       ? `0 0 10px rgba(${c}, 0.34)`
       : `0 0 6px rgba(${c}, 0.18)`,
   };
+}
+
+function desktopRailArrowButtonClass() {
+  return [
+    "hidden md:inline-flex",
+    "absolute top-1/2 -translate-y-1/2 z-10",
+    "h-8 w-8 items-center justify-center rounded-full border",
+    "backdrop-blur-xl",
+    "transition-all duration-200",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30 focus-visible:ring-offset-0",
+  ].join(" ");
+}
+
+function desktopRailArrowButtonStyle(dark: boolean): React.CSSProperties {
+  return dark
+    ? {
+        background: "rgba(12,18,32,0.7)",
+        borderColor: "rgba(255,255,255,0.08)",
+        color: "rgba(255,255,255,0.78)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0,0,0,0.34)",
+      }
+    : {
+        background: "rgba(255,255,255,0.78)",
+        borderColor: "rgba(15,23,42,0.08)",
+        color: "rgba(15,23,42,0.78)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 24px rgba(0,0,0,0.12)",
+      };
 }
 
 /* =============================================================================
@@ -266,11 +297,6 @@ function normalizeSignals(raw: unknown): Array<{
   return out;
 }
 
-function topTwoSignals<T extends { strength: number }>(items: T[]) {
-  const sorted = [...items].sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0));
-  return { top: sorted[0], second: sorted[1] };
-}
-
 function cleanOneLine(s: string) {
   return (s ?? "").replace(/\s+/g, " ").trim();
 }
@@ -334,6 +360,76 @@ function bestReceipt(profile: MotivationProfile | null) {
   return r.replace(/^Theme:\s*/i, "").replace(/^“|”$/g, "");
 }
 
+function describeTopSignals(
+  signalIds: SignalId[],
+  motivatorLabels: string[]
+) {
+  const hasPeople = signalIds.includes("people");
+  const hasAction = signalIds.includes("action");
+  const hasCuriosity = signalIds.includes("curiosity");
+  const hasClarity = signalIds.includes("clarity");
+
+  const topMotivators = joinLabels(motivatorLabels, 3);
+
+  if (hasPeople && hasAction) {
+    return {
+      pattern:
+        "You seem to do best when things feel real, interactive, and in motion.",
+      energy: topMotivators
+        ? `You come alive around ${topMotivators.toLowerCase()}, especially when there is a real feedback loop and momentum behind what you are doing.`
+        : "You come alive when there is a real feedback loop, movement, and something that actually matters.",
+      friction:
+        "You lose energy fast in vague, low-feedback situations or when the work feels performative instead of real.",
+    };
+  }
+
+  if (hasCuriosity && hasClarity) {
+    return {
+      pattern:
+        "You seem wired for making sense of things, especially when there is something real to figure out.",
+      energy: topMotivators
+        ? `What seems to energize you most is ${topMotivators.toLowerCase()} — situations where questions actually lead somewhere.`
+        : "You seem most energized when curiosity leads somewhere real, not just noise.",
+      friction:
+        "You lose steam when things stay fuzzy too long or when there is no clear signal.",
+    };
+  }
+
+  if (hasAction) {
+    return {
+      pattern:
+        "You look more like someone who gets clarity by moving than by sitting with theory.",
+      energy: topMotivators
+        ? `You come alive when ${topMotivators.toLowerCase()} turns into visible progress.`
+        : "You come alive when effort turns into visible progress.",
+      friction:
+        "You get drained by drag, overthinking, and situations where nothing is moving.",
+    };
+  }
+
+  if (hasPeople) {
+    return {
+      pattern:
+        "You seem shaped heavily by people, feedback, and the tone of the environment around you.",
+      energy: topMotivators
+        ? `You’re energized by ${topMotivators.toLowerCase()} in settings that feel real and responsive.`
+        : "You’re energized by honest feedback and real interaction.",
+      friction:
+        "You lose energy when the environment feels fake, disconnected, or low-signal.",
+    };
+  }
+
+  return {
+    pattern:
+      "The pattern so far points to needing things to feel real before they feel motivating.",
+    energy: topMotivators
+      ? `The strongest signal right now points toward ${topMotivators.toLowerCase()}.`
+      : "The strongest signal points toward meaning, momentum, and clarity.",
+    friction:
+      "What drains you most is vagueness, low signal, and effort that feels disconnected.",
+  };
+}
+
 function buildAgenticSummaryNote(args: {
   headline: string;
   signals: Array<{
@@ -351,104 +447,54 @@ function buildAgenticSummaryNote(args: {
   const name = extractNameFromHeadline(args.headline || "");
   const who = name ? `${name}, ` : "";
 
-  const { top } = topTwoSignals(args.signals);
-  const topSignalStrength = top?.strength ?? 0;
+  const sortedSignals = [...(args.signals ?? [])].sort(
+    (a, b) => (b.strength ?? 0) - (a.strength ?? 0)
+  );
 
-  const topMotivationScore = args.motivationProfile?.top?.score ?? 0;
-  const hasMotivationSignal = topMotivationScore >= 0.2;
-  const hasSignal = topSignalStrength >= 0.22 || hasMotivationSignal;
-
-  const confidenceTag: AgenticNote["confidenceTag"] = hasSignal
-    ? "strong"
-    : "early";
-
-  const boosters = (args.energyBoosters ?? []).map(cleanOneLine).filter(Boolean);
-  const drainers = (args.energyDrainers ?? []).map(cleanOneLine).filter(Boolean);
-
-  const topBooster = boosters[0] ?? "";
-  const topDrainer = drainers[0] ?? "";
+  const topSignals = sortedSignals.slice(0, 2).map((s) => s.id);
 
   const top5 = (args.motivationProfile?.top5 ?? []) as MotivationHit[];
   const motivatorLabels = top5.map((h) => h?.def?.label ?? "").filter(Boolean);
 
-  const motivatorsLine =
-    motivatorLabels.length >= 2
-      ? `Right now your motivators look like: ${joinLabels(motivatorLabels, 5)}`
-      : args.wordCloudDisplay?.length
-        ? `Right now your themes look like: ${joinLabels(
-            args.wordCloudDisplay.slice(0, 5).map((w) => w.term),
-            5
-          )}`
-        : `Right now I’m still collecting signal — give me 1–2 real examples and this tightens fast.`;
-
-  const superShort = (args.signals ?? [])
-    .sort((a, b) => (b.strength ?? 0) - (a.strength ?? 0))
-    .slice(0, 2)
-    .map((s) => s.id);
-
-  const strengthsLine = superShort.includes("people")
-    ? "Strengths I’d bet on: reading the room, learning fast through feedback."
-    : superShort.includes("action")
-      ? "Strengths I’d bet on: momentum-building, shipping real progress."
-      : superShort.includes("curiosity")
-        ? "Strengths I’d bet on: pattern-spotting, learning by investigation."
-        : "Strengths I’d bet on: making fog clearer and turning it into a next step.";
-
-  const skillsLine = superShort.includes("action")
-    ? "Skills you’re building: closing loops, starting before you feel ready."
-    : superShort.includes("people")
-      ? "Skills you’re building: using feedback without collapsing, getting sharper with others."
-      : superShort.includes("curiosity")
-        ? "Skills you’re building: better questions, better mental models."
-        : "Skills you’re building: decision clarity and follow-through.";
+  const { pattern, energy, friction } = describeTopSignals(
+    topSignals,
+    motivatorLabels
+  );
 
   const receipt = bestReceipt(args.motivationProfile);
-  const quote = pickQuote(args.signals);
-  const proof = receipt || quote;
 
-  const opener = hasSignal
-    ? `${who}okay — here’s what I think is true about you right now.`
-    : `${who}okay — this is an early read, but it’s already pointing somewhere.`;
+  const paragraphParts: string[] = [];
 
-  const parts: string[] = [opener];
+  paragraphParts.push(`${who}here’s what’s starting to look true about you.`);
+  paragraphParts.push(`${pattern} ${energy}`);
 
-  if (topBooster || topDrainer) {
-    const b = topBooster ? `You light up when ${topBooster}` : "";
-    const d = topDrainer ? `and you lose energy when ${topDrainer}` : "";
-    const line = [b, d].filter(Boolean).join(" ");
-    if (line) parts.push(`${line}.`);
-  } else {
-    parts.push(
-      "I’m watching for what reliably creates energy for you — and what quietly drains it."
+  if (friction) {
+    paragraphParts.push(friction);
+  }
+
+  if (receipt) {
+    paragraphParts.push(`Clues like “${receipt}” keep pointing the same way.`);
+  }
+
+  if (cleanOneLine(args.watchoutLine)) {
+    paragraphParts.push(
+      `Watch for this: ${cleanOneLine(args.watchoutLine).replace(/\.$/, "")}.`
     );
   }
 
-  if (motivatorLabels.length) {
-    parts.push(`Under that, I keep seeing ${joinLabels(motivatorLabels, 3)}.`);
-  }
-
-  if (proof) {
-    parts.push(`I’m not guessing — you literally gave me clues like: “${proof}.”`);
-  }
-
-  const watch = cleanOneLine(args.watchoutLine)
-    ? `Watchout: ${cleanOneLine(args.watchoutLine).replace(/\.$/, "")}.`
-    : "Watchout: when you care about getting it right, it’s easy to overthink the first step.";
-
-  const move = hasSignal
-    ? "So here’s your move: pick one thing you care about this week and do a 15-minute rep today. Start imperfect, finish real."
-    : "So here’s your move: give me one real example — a time you felt locked-in and a time you felt drained — and I’ll tighten this fast.";
-
-  parts.push(watch);
-  parts.push(move);
+  paragraphParts.push(
+    "Below is where this gets real — what’s working, where it can slip, and what to try."
+  );
 
   return {
     title: "Summary",
-    paragraph: parts.join(" "),
-    motivatorsLine,
-    strengthsLine,
-    skillsLine,
-    confidenceTag,
+    paragraph: paragraphParts.join(" "),
+    motivatorsLine: motivatorLabels.length
+      ? `Motivators: ${joinLabels(motivatorLabels, 5)}`
+      : "",
+    strengthsLine: "",
+    skillsLine: "",
+    confidenceTag: "strong",
   };
 }
 
@@ -897,6 +943,8 @@ export default function Page() {
 
   const dark = isDarkTheme(themeId);
 
+  const railRef = React.useRef<HTMLDivElement | null>(null);
+
   const initialTabFromUrl = React.useMemo<LocalTab>(() => {
     const raw = searchParams?.get("tab") ?? searchParams?.get("section");
     return coerceTab(raw);
@@ -972,6 +1020,16 @@ export default function Page() {
     params.set("tab", next);
     params.delete("section");
     router.replace(`/main/insights?${params.toString()}`);
+  }
+
+  function scrollRailBy(direction: "left" | "right") {
+    const el = railRef.current;
+    if (!el) return;
+    const delta = Math.max(160, Math.floor(el.clientWidth * 0.55));
+    el.scrollBy({
+      left: direction === "left" ? -delta : delta,
+      behavior: "smooth",
+    });
   }
 
   const wordCloudRaw = vm.summary.wordCloud;
@@ -1160,7 +1218,7 @@ export default function Page() {
     };
   }, [nextStepsSummary]);
 
-  const hasStrongSignal = React.useMemo(() => {
+  const hasAnySignal = React.useMemo(() => {
     if (!mounted) return false;
     if (wordCloudDisplay.length > 0) return true;
     if (signals.some((s) => (s.strength ?? 0) >= 0.22)) return true;
@@ -1199,9 +1257,22 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col pb-28 pt-0">
-        <div className="relative mb-5">
-          <div className="relative flex gap-2 overflow-x-auto pb-0 pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="relative z-10 mx-auto flex w-full max-w-[680px] flex-1 flex-col px-2 pb-28 pt-0 sm:px-0">
+        <div className="relative mb-3">
+          <button
+            type="button"
+            aria-label="Scroll insights tabs left"
+            className={desktopRailArrowButtonClass() + " left-[-12px]"}
+            style={desktopRailArrowButtonStyle(dark)}
+            onClick={() => scrollRailBy("left")}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div
+            ref={railRef}
+            className="relative flex gap-2 overflow-x-auto pb-0 pr-6 md:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {TABS.map((t) => {
               const selected = t.id === tab;
               return (
@@ -1232,10 +1303,20 @@ export default function Page() {
             })}
           </div>
 
+          <button
+            type="button"
+            aria-label="Scroll insights tabs right"
+            className={desktopRailArrowButtonClass() + " right-[-12px]"}
+            style={desktopRailArrowButtonStyle(dark)}
+            onClick={() => scrollRailBy("right")}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
           <div
             aria-hidden
             className={[
-              "pointer-events-none absolute right-0 top-0 h-full w-10",
+              "pointer-events-none absolute right-0 top-0 h-full w-10 md:hidden",
               dark
                 ? "bg-gradient-to-l from-[#0b1220] to-transparent"
                 : "bg-gradient-to-l from-white to-transparent",
@@ -1245,64 +1326,70 @@ export default function Page() {
 
         {tab === "summary" ? (
           isSummaryReady ? (
-            <section className="space-y-4">
-              <InsightsSummaryCard
-                dark={dark}
-                headline={vm.summary.headline || "We’re still building your signal."}
-                paragraph={agenticNote.paragraph}
-                hasStrongSignal={hasStrongSignal}
-                startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
-              />
+            <section className="space-y-3">
+              <div className="mb-1.5">
+                <InsightsSummaryCard
+                  dark={dark}
+                  headline={vm.summary.headline || "We’re still building your signal."}
+                  paragraph={agenticNote.paragraph}
+                  hasStrongSignal={hasAnySignal}
+                  startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
+                />
+              </div>
 
-              <InsightsThemesCard
-                dark={dark}
-                items={wordCloudDisplay}
-                hasStrongSignal={hasStrongSignal}
-                motivatorsLine={agenticNote.motivatorsLine}
-              />
+              {hasAnySignal ? (
+                <>
+                  <InsightsThemesCard
+                    dark={dark}
+                    items={wordCloudDisplay}
+                    hasStrongSignal={hasAnySignal}
+                    motivatorsLine={agenticNote.motivatorsLine}
+                  />
 
-              <InsightsSuperpowersCard
-                dark={dark}
-                body={safeSuper.body || "What you naturally do well when it matters."}
-                bullets={superBullets}
-                strengthsLine={agenticNote.strengthsLine}
-                skillsLine={agenticNote.skillsLine}
-                hasStrongSignal={hasStrongSignal}
-              />
+                  <InsightsSuperpowersCard
+                    dark={dark}
+                    body={safeSuper.body || "What you naturally do well when it matters."}
+                    bullets={superBullets}
+                    strengthsLine={agenticNote.strengthsLine}
+                    skillsLine={agenticNote.skillsLine}
+                    hasStrongSignal={hasAnySignal}
+                  />
 
-              <InsightsWatchoutsCard
-                dark={dark}
-                intro={watchouts.intro}
-                bullets={watchouts.bullets}
-                hasStrongSignal={hasStrongSignal}
-              />
+                  <InsightsWatchoutsCard
+                    dark={dark}
+                    intro={watchouts.intro}
+                    bullets={watchouts.bullets}
+                    hasStrongSignal={hasAnySignal}
+                  />
 
-              <InsightsTinyTaskCard
-                dark={dark}
-                useLocal={mounted}
-                eyebrow={summaryNext.tinyTask.eyebrow}
-                title={summaryNext.tinyTask.title}
-                body={summaryNext.tinyTask.body}
-                choices={summaryNext.tinyTask.choices}
-                hasStrongSignal={hasStrongSignal}
-                pageId="insights.summary"
-              />
+                  <InsightsTinyTaskCard
+                    dark={dark}
+                    useLocal={mounted}
+                    eyebrow={summaryNext.tinyTask.eyebrow}
+                    title={summaryNext.tinyTask.title}
+                    body={summaryNext.tinyTask.body}
+                    choices={summaryNext.tinyTask.choices}
+                    hasStrongSignal={hasAnySignal}
+                    pageId="insights.summary"
+                  />
 
-              <InsightsActionCard
-                dark={dark}
-                useLocal={mounted}
-                eyebrow={summaryNext.action.eyebrow}
-                title={summaryNext.action.title}
-                body={summaryNext.action.body}
-                bullets={summaryNext.action.bullets}
-                hasStrongSignal={hasStrongSignal}
-                pageId="insights.summary"
-              />
+                  <InsightsActionCard
+                    dark={dark}
+                    useLocal={mounted}
+                    eyebrow={summaryNext.action.eyebrow}
+                    title={summaryNext.action.title}
+                    body={summaryNext.action.body}
+                    bullets={summaryNext.action.bullets}
+                    hasStrongSignal={hasAnySignal}
+                    pageId="insights.summary"
+                  />
 
-              <InsightsQuickCheckCard
-                dark={dark}
-                contextTag={`insights:${tab}`}
-              />
+                  <InsightsQuickCheckCard
+                    dark={dark}
+                    contextTag={`insights:${tab}`}
+                  />
+                </>
+              ) : null}
             </section>
           ) : null
         ) : tab === "motivations" ? (

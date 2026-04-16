@@ -1,4 +1,3 @@
-// src/app/main/insights/components/InsightsHeader.tsx
 "use client";
 
 import * as React from "react";
@@ -31,55 +30,60 @@ export function InsightsHeader(props: {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const chipBase = dark
-    ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/8"
-    : "border-black/10 bg-white/75 text-slate-800 hover:bg-white";
-
-  const chipActive = dark
-    ? "border-white/18 bg-gradient-to-r from-white/12 via-white/8 to-white/6 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_28px_rgba(56,189,248,0.12)]"
-    : "border-sky-300 bg-gradient-to-r from-sky-50 via-white to-white text-slate-900 shadow-[0_0_0_1px_rgba(56,189,248,0.20),0_10px_24px_rgba(56,189,248,0.12)]";
-
-  const labelMuted = dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/55"
-    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500";
-
-  const titleClass = dark ? "text-white" : "text-slate-900";
-  const subClass = dark ? "text-white/65" : "text-slate-600";
-
-  const lenses: Array<{ id: InsightsLens; label: string; sub: string }> = [
-    { id: "all", label: "All", sub: "Full read" },
-    { id: "motivations", label: "Motivations", sub: "What drives you" },
-    { id: "strengths", label: "Strengths", sub: "How you operate" },
-    { id: "skills", label: "Skills", sub: "What you build" },
-    { id: "doppelganger", label: "Doppelgänger", sub: "Fun match" },
+  const lenses: Array<{ id: InsightsLens; label: string }> = [
+    { id: "all", label: "All" },
+    { id: "motivations", label: "Motivations" },
+    { id: "strengths", label: "Strengths" },
+    { id: "skills", label: "Skills" },
+    { id: "doppelganger", label: "Doppelgänger" },
   ];
 
-  const scroll = (dir: "left" | "right") => {
+  const pillBase = [
+    "relative inline-flex items-center",
+    "rounded-full border px-4 py-2.5",
+    "text-sm font-semibold tracking-[-0.01em]",
+    "backdrop-blur-xl",
+    "transition",
+    "active:scale-95",
+    "whitespace-nowrap",
+  ].join(" ");
+
+  const pillInactive = dark
+    ? "border-white/10 bg-white/[0.05] text-white/70 hover:bg-white/[0.08]"
+    : "border-black/10 bg-black/[0.04] text-slate-800 hover:bg-black/[0.06]";
+
+  const pillActive = dark
+    ? "border-white/20 bg-gradient-to-b from-white/[0.16] to-white/[0.04] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_10px_30px_rgba(0,0,0,0.35)]"
+    : "border-slate-300 bg-white text-slate-900 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_8px_24px_rgba(0,0,0,0.12)]";
+
+  function scroll(dir: "left" | "right") {
     const el = wrapRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir === "left" ? -260 : 260, behavior: "smooth" });
-    window.setTimeout(compute, 250);
-  };
+    el.scrollBy({
+      left: dir === "left" ? -220 : 220,
+      behavior: "smooth",
+    });
+    window.setTimeout(compute, 240);
+  }
 
   return (
-    <div className="mb-5">
-      <div className={labelMuted}>Insights</div>
-      <div className={`mt-1 text-2xl font-semibold ${titleClass}`}>Your report so far</div>
-      <div className={`mt-1 max-w-2xl text-sm ${subClass}`}>
-        A coach-style read of your Motivations, Strengths, and Skills — plus what to do next.
-      </div>
-
-      <div className="relative mt-4">
+    <div className="mb-3">
+      <div className="relative">
         <div
           aria-hidden
-          className={`pointer-events-none absolute inset-y-0 left-0 w-10 ${
-            dark ? "bg-gradient-to-r from-slate-950/70 to-transparent" : "bg-gradient-to-r from-white/80 to-transparent"
+          className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 ${
+            dark
+              ? "bg-gradient-to-r from-[#0b1220] to-transparent"
+              : "bg-gradient-to-r from-white to-transparent"
           } ${canLeft ? "opacity-100" : "opacity-0"} transition-opacity`}
         />
+
         <div
           aria-hidden
-          className={`pointer-events-none absolute inset-y-0 right-0 w-10 ${
-            dark ? "bg-gradient-to-l from-slate-950/70 to-transparent" : "bg-gradient-to-l from-white/80 to-transparent"
+          className={`pointer-events-none absolute inset-y-0 right-0 z-10 w-8 ${
+            dark
+              ? "bg-gradient-to-l from-[#0b1220] to-transparent"
+              : "bg-gradient-to-l from-white to-transparent"
           } ${canRight ? "opacity-100" : "opacity-0"} transition-opacity`}
         />
 
@@ -87,11 +91,13 @@ export function InsightsHeader(props: {
           <button
             type="button"
             onClick={() => scroll("left")}
-            className={`absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
-              dark ? "border-white/10 bg-slate-950/55 text-white hover:bg-slate-950/70" : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-            }`}
-            aria-label="Scroll lenses left"
-            title="Scroll left"
+            className={[
+              "absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border p-2 transition active:scale-95 md:flex",
+              dark
+                ? "border-white/10 bg-[#0b1220]/80 text-white/72 hover:bg-[#0b1220]"
+                : "border-black/10 bg-white/90 text-slate-800 hover:bg-white",
+            ].join(" ")}
+            aria-label="Scroll left"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -101,11 +107,13 @@ export function InsightsHeader(props: {
           <button
             type="button"
             onClick={() => scroll("right")}
-            className={`absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border p-2 shadow-lg transition active:scale-95 ${
-              dark ? "border-white/10 bg-slate-950/55 text-white hover:bg-slate-950/70" : "border-slate-200 bg-white/85 text-slate-800 hover:bg-white"
-            }`}
-            aria-label="Scroll lenses right"
-            title="Scroll right"
+            className={[
+              "absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border p-2 transition active:scale-95 md:flex",
+              dark
+                ? "border-white/10 bg-[#0b1220]/80 text-white/72 hover:bg-[#0b1220]"
+                : "border-black/10 bg-white/90 text-slate-800 hover:bg-white",
+            ].join(" ")}
+            aria-label="Scroll right"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -113,38 +121,25 @@ export function InsightsHeader(props: {
 
         <div
           ref={wrapRef}
-          onScroll={() => compute()}
-          className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={compute}
+          className="flex gap-2 overflow-x-auto pr-8 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:px-8"
         >
-          <div className="flex items-stretch gap-2 pr-2">
-            {lenses.map((l) => {
-              const active = l.id === lens;
-              return (
-                <button
-                  key={l.id}
-                  type="button"
-                  onClick={() => onLens(l.id)}
-                  className={[
-                    "relative inline-flex shrink-0 flex-col items-start gap-0.5 rounded-2xl border px-4 py-2.5 text-left transition",
-                    active ? chipActive : chipBase,
-                  ].join(" ")}
-                >
-                  {active ? (
-                    <span
-                      aria-hidden
-                      className={`absolute left-1 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full ${
-                        dark ? "bg-white/35" : "bg-sky-400/70"
-                      }`}
-                    />
-                  ) : null}
-                  <span className="text-sm font-semibold leading-tight">{l.label}</span>
-                  <span className={`text-xs leading-tight ${dark ? "text-white/55" : "text-slate-600/80"}`}>
-                    {l.sub}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {lenses.map((l) => {
+            const active = l.id === lens;
+
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => onLens(l.id)}
+                className={[pillBase, active ? pillActive : pillInactive].join(
+                  " "
+                )}
+              >
+                {l.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

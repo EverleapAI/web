@@ -40,12 +40,17 @@ export default function InsightsWatchoutsCard({
   const introLine = React.useMemo(() => {
     return (
       intro?.trim() ||
-      "These aren’t flaws — they’re what a strength can look like when it’s overused, stressed, or pointed at the wrong problem."
+      "These are not flaws. They are what a strength can look like when it is overused, stressed, or pointed at the wrong problem."
     );
   }, [intro]);
 
   return (
-    <section className={sectionCard(dark, "watchouts")}>
+    <section
+      className={[
+        sectionCard(dark, "watchouts"),
+        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+      ].join(" ")}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
@@ -55,7 +60,20 @@ export default function InsightsWatchoutsCard({
         }}
       />
 
-      <div className="relative">
+      <div
+        aria-hidden
+        className={[
+          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
+          "sm:right-4 sm:top-4 sm:p-3",
+          dark
+            ? "border-amber-200/14 bg-amber-100/[0.05] text-amber-100/24"
+            : "border-amber-200/70 bg-white/70 text-amber-500/45",
+        ].join(" ")}
+      >
+        <Shield className="h-5 w-5 sm:h-6 sm:w-6" />
+      </div>
+
+      <div className="relative pr-14 sm:pr-16">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "amber")}>
             <Shield className="h-3.5 w-3.5" />
@@ -69,14 +87,18 @@ export default function InsightsWatchoutsCard({
 
         {hasStrongSignal ? (
           <>
-            {/* ONE paragraph */}
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
+            <p
+              className={[
+                "mt-3 max-w-[40rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
               {introLine}
             </p>
 
-            {/* Bullets = where it shows up */}
             {safeBullets.length ? (
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-4 space-y-2.5">
                 {safeBullets.map((bullet, index) => (
                   <li key={`${bullet}_${index}`} className="flex gap-3">
                     <span aria-hidden className={bulletDotClass(dark)} />
@@ -87,12 +109,29 @@ export default function InsightsWatchoutsCard({
             ) : null}
           </>
         ) : (
-          <p className={["mt-3", bodyText(dark)].join(" ")}>
-            Watchouts are the places where something good can start to work
-            against you — when a strength is overused, stressed, or aimed at
-            the wrong problem. As we gather more signal, this will sharpen into
-            a clear read on where friction may show up.
-          </p>
+          <>
+            <p
+              className={[
+                "mt-3 max-w-[40rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
+              Watchouts are the places where something good can start working
+              against you.
+            </p>
+
+            <p
+              className={[
+                "mt-2 max-w-[38rem]",
+                bodyText(dark),
+                "text-[14px] leading-6 sm:text-[14.5px]",
+              ].join(" ")}
+            >
+              As Everleap picks up more signal, this becomes a clearer read on
+              where friction is most likely to show up.
+            </p>
+          </>
         )}
       </div>
     </section>

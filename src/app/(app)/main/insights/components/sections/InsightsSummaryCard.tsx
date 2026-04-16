@@ -4,15 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
-import { SignalWord } from "../../../components/SignalWord";
 import {
   bodyText,
   headerIconWrap,
   headerLabel,
   headerRow,
-  mutedText,
   sectionCard,
-  titleText,
 } from "./summaryShared";
 
 type Props = {
@@ -22,6 +19,72 @@ type Props = {
   hasStrongSignal: boolean;
   startHref?: string;
 };
+
+function cleanLine(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function splitIntoSentences(text: string) {
+  return cleanLine(text)
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function compressSummaryParagraph(paragraph?: string) {
+  const raw = cleanLine(paragraph ?? "");
+  if (!raw) return { lead: "", close: "" };
+
+  const sentences = splitIntoSentences(raw);
+  if (!sentences.length) return { lead: "", close: "" };
+
+  const leadParts: string[] = [];
+  const closeParts: string[] = [];
+
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+
+    const isMove =
+      lower.startsWith("so here’s your move") ||
+      lower.startsWith("so here's your move") ||
+      lower.includes("start imperfect") ||
+      lower.includes("finish real");
+
+    const isProof =
+      lower.startsWith("i’m not guessing") ||
+      lower.startsWith("i'm not guessing");
+
+    if (isMove || isProof) {
+      continue;
+    }
+
+    if (leadParts.length < 2) {
+      leadParts.push(sentence);
+      continue;
+    }
+
+    if (closeParts.length < 2) {
+      closeParts.push(sentence);
+    }
+  }
+
+  if (!leadParts.length) {
+    leadParts.push(sentences[0]);
+  }
+
+  let lead = cleanLine(leadParts.join(" "));
+  let close = cleanLine(closeParts.slice(0, 2).join(" "));
+
+  if (lead.length > 260) {
+    lead = cleanLine(splitIntoSentences(lead).slice(0, 2).join(" "));
+  }
+
+  if (close.length > 220) {
+    close = cleanLine(splitIntoSentences(close).slice(0, 2).join(" "));
+  }
+
+  return { lead, close };
+}
 
 export default function InsightsSummaryCard({
   dark,
@@ -33,18 +96,43 @@ export default function InsightsSummaryCard({
   const resolvedHeadline =
     headline?.trim() || "We’re still building your signal.";
 
+  const noSignalTitle = "Your insights get sharper once we have more signal.";
+
+  const compressed = React.useMemo(
+    () => compressSummaryParagraph(paragraph),
+    [paragraph]
+  );
+
   return (
-    <section className={sectionCard(dark, "neutral")}>
+    <section
+      className={[
+        sectionCard(dark, "neutral"),
+        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+      ].join(" ")}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{
           background:
-            "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.08) 0%, transparent 28%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.05) 0%, transparent 24%)",
+            "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.14) 0%, transparent 30%), radial-gradient(circle at 92% 14%, rgba(255,210,150,0.12) 0%, transparent 18%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.06) 0%, transparent 24%)",
         }}
       />
 
-      <div className="relative">
+      <div
+        aria-hidden
+        className={[
+          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
+          "sm:right-4 sm:top-4 sm:p-3",
+          dark
+            ? "border-amber-200/14 bg-amber-100/[0.05] text-amber-100/22"
+            : "border-amber-200/70 bg-white/70 text-amber-500/45",
+        ].join(" ")}
+      >
+        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+      </div>
+
+      <div className="relative pr-14 sm:pr-16">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "neutral")}>
             <Sparkles className="h-3.5 w-3.5" />
@@ -52,27 +140,65 @@ export default function InsightsSummaryCard({
           <div className={headerLabel(dark)}>Insights</div>
         </div>
 
-        <div className={titleText(dark)}>
-          {hasStrongSignal
-            ? resolvedHeadline
-            : "Your insights will get sharper once we have more signal."}
-        </div>
+        <h2
+          className={[
+            dark ? "text-white" : "text-slate-950",
+            "mt-1 max-w-[36rem] text-[1.55rem] font-semibold leading-[1.06] tracking-[-0.03em]",
+            "sm:text-[1.74rem]",
+          ].join(" ")}
+        >
+          {hasStrongSignal ? resolvedHeadline : noSignalTitle}
+        </h2>
 
         {hasStrongSignal ? (
           <>
-            {paragraph ? (
-              <p className={["mt-3", bodyText(dark)].join(" ")}>{paragraph}</p>
+            {compressed.lead ? (
+              <p
+                className={[
+                  "mt-3 max-w-[38rem]",
+                  bodyText(dark),
+                  "text-[14.5px] leading-6 sm:text-[15px]",
+                ].join(" ")}
+              >
+                {compressed.lead}
+              </p>
             ) : null}
 
-            
+            {compressed.close ? (
+              <p
+                className={[
+                  "mt-2 max-w-[38rem]",
+                  bodyText(dark),
+                  "text-[14.5px] leading-6 sm:text-[15px]",
+                ].join(" ")}
+              >
+                {compressed.close}
+              </p>
+            ) : null}
           </>
         ) : (
           <>
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              We do not have a strong enough signal yet to give you meaningful
-              insights. Once you answer a few questions, this becomes your first
-              grounded read on what seems to drive you, where your energy shows
-              up, and what patterns are starting to repeat.
+            <p
+              className={[
+                "mt-3 max-w-[38rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
+              This page gets much more useful once Everleap has a little more
+              real signal from you.
+            </p>
+
+            <p
+              className={[
+                "mt-2 max-w-[38rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
+              A few Motivations questions is enough to start grounding this in
+              what gives you energy, what drains it, and which patterns keep
+              repeating.
             </p>
 
             <div className="mt-4">
@@ -81,11 +207,11 @@ export default function InsightsSummaryCard({
                 className={[
                   "group inline-flex items-center gap-1.5 text-[14.5px] font-medium transition focus-visible:outline-none",
                   dark
-                    ? "text-white/78 hover:text-white/88"
+                    ? "text-white/82 hover:text-white/94"
                     : "text-slate-900 hover:text-black",
                 ].join(" ")}
               >
-                <span>Start with Motivations Questions</span>
+                <span>Start with Motivations</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>

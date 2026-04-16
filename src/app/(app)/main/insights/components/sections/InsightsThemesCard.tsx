@@ -95,7 +95,12 @@ export default function InsightsThemesCard({
   const topSet = React.useMemo(() => topTerms(items ?? []), [items]);
 
   return (
-    <section className={sectionCard(dark, "themes")}>
+    <section
+      className={[
+        sectionCard(dark, "themes"),
+        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+      ].join(" ")}
+    >
       <style jsx global>{`
         .el-word {
           transform: translateY(var(--el-ty, 0px)) rotate(var(--el-rot, 0deg));
@@ -112,7 +117,21 @@ export default function InsightsThemesCard({
         }}
       />
 
-      <div className="relative">
+      {/* NEW: top-right icon */}
+      <div
+        aria-hidden
+        className={[
+          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
+          "sm:right-4 sm:top-4 sm:p-3",
+          dark
+            ? "border-white/10 bg-white/[0.045] text-white/18"
+            : "border-slate-200/80 bg-white/70 text-slate-400/60",
+        ].join(" ")}
+      >
+        <Radar className="h-5 w-5 sm:h-6 sm:w-6" />
+      </div>
+
+      <div className="relative pr-14 sm:pr-16">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "amber")}>
             <Radar className="h-3.5 w-3.5" />
@@ -120,12 +139,12 @@ export default function InsightsThemesCard({
           <div className={headerLabel(dark)}>Signals</div>
         </div>
 
+        <div className={sectionTitle(dark)}>
+          Your signals are patterns in what you choose and follow through on.
+        </div>
+
         {hasStrongSignal ? (
           <>
-            <div className={sectionTitle(dark)}>
-              Your signals are patterns built from what you answer and do.
-            </div>
-
             <div className="mt-3">
               {items.length ? (
                 <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
@@ -163,22 +182,22 @@ export default function InsightsThemesCard({
             </div>
 
             {motivatorsLine ? (
-              <p className={["mt-3", mutedText(dark)].join(" ")}>
+              <p
+                className={[
+                  "mt-3 max-w-[40rem]",
+                  mutedText(dark),
+                  "text-[13.5px]",
+                ].join(" ")}
+              >
                 {motivatorsLine}
               </p>
             ) : null}
           </>
         ) : (
-          <>
-            <div className={sectionTitle(dark)}>
-              Your signals are patterns built from what you answer and do.
-            </div>
-
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
-              We do not have a strong enough signal yet to map them. Answer a
-              few questions and this will start to take shape.
-            </p>
-          </>
+          <p className={["mt-3", bodyText(dark)].join(" ")}>
+            Once you answer a few questions, this will start mapping what
+            actually gives you energy and where your patterns show up.
+          </p>
         )}
       </div>
     </section>

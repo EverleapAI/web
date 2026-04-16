@@ -9,7 +9,6 @@ import {
   headerIconWrap,
   headerLabel,
   headerRow,
-  mutedText,
   sectionCard,
   sectionTitle,
 } from "./summaryShared";
@@ -47,12 +46,16 @@ export default function InsightsSuperpowersCard({
       body?.trim() ||
       "These are the strengths that show up when it counts — the ways you naturally think, move, and respond that give you an edge.";
 
-    const strength = strengthsLine?.trim();
-    return strength ? `${base} ${strength}` : base;
-  }, [body, strengthsLine]);
+    return base;
+  }, [body]);
 
   return (
-    <section className={sectionCard(dark, "strengths")}>
+    <section
+      className={[
+        sectionCard(dark, "strengths"),
+        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+      ].join(" ")}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
@@ -62,7 +65,20 @@ export default function InsightsSuperpowersCard({
         }}
       />
 
-      <div className="relative">
+      <div
+        aria-hidden
+        className={[
+          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
+          "sm:right-4 sm:top-4 sm:p-3",
+          dark
+            ? "border-teal-200/14 bg-teal-100/[0.05] text-teal-100/24"
+            : "border-teal-200/70 bg-white/70 text-teal-500/45",
+        ].join(" ")}
+      >
+        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
+      </div>
+
+      <div className="relative pr-14 sm:pr-16">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "teal")}>
             <Sparkles className="h-3.5 w-3.5" />
@@ -76,10 +92,30 @@ export default function InsightsSuperpowersCard({
 
         {hasStrongSignal ? (
           <>
-            <p className={["mt-3", bodyText(dark)].join(" ")}>{intro}</p>
+            <p
+              className={[
+                "mt-3 max-w-[40rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
+              {intro}
+            </p>
+
+            {strengthsLine ? (
+              <p
+                className={[
+                  "mt-2 max-w-[38rem]",
+                  bodyText(dark),
+                  "text-[14px] leading-6 sm:text-[14.5px]",
+                ].join(" ")}
+              >
+                {strengthsLine}
+              </p>
+            ) : null}
 
             {safeBullets.length ? (
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-4 space-y-2.5">
                 {safeBullets.map((bullet, index) => (
                   <li key={`${bullet}_${index}`} className="flex gap-3">
                     <span aria-hidden className={bulletDotClass(dark)} />
@@ -90,18 +126,41 @@ export default function InsightsSuperpowersCard({
             ) : null}
 
             {skillsLine ? (
-              <p className={["mt-4", mutedText(dark)].join(" ")}>
+              <p
+                className={[
+                  "mt-4 max-w-[38rem]",
+                  bodyText(dark),
+                  "text-[14px] leading-6 sm:text-[14.5px]",
+                ].join(" ")}
+              >
                 {skillsLine}
               </p>
             ) : null}
           </>
         ) : (
-          <p className={["mt-3", bodyText(dark)].join(" ")}>
-            Superpowers are the strengths that naturally work in your favor —
-            the ways you think and respond that help you most when something
-            matters. As we gather more signal, this will sharpen into a clear
-            read on what you can reliably lean on.
-          </p>
+          <>
+            <p
+              className={[
+                "mt-3 max-w-[40rem]",
+                bodyText(dark),
+                "text-[14.5px] leading-6 sm:text-[15px]",
+              ].join(" ")}
+            >
+              Superpowers are the strengths that naturally help you when
+              something matters.
+            </p>
+
+            <p
+              className={[
+                "mt-2 max-w-[38rem]",
+                bodyText(dark),
+                "text-[14px] leading-6 sm:text-[14.5px]",
+              ].join(" ")}
+            >
+              As Everleap picks up more signal, this becomes a clearer read on
+              what you can reliably lean on.
+            </p>
+          </>
         )}
       </div>
     </section>
