@@ -8,6 +8,8 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   CircleHelp,
   Clapperboard,
   Code2,
@@ -64,6 +66,7 @@ type WorkLaneTab = {
   active: boolean;
   dotClass: string;
   activeClasses: string;
+  accent: Rgb;
 };
 
 const MAX_VISIBLE_WORK_PATHS = 4;
@@ -93,6 +96,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     dotClass: "bg-cyan-300",
     activeClasses:
       "border-cyan-200/70 bg-cyan-300/[0.28] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_0_0_1px_rgba(103,232,249,0.08),0_14px_32px_rgba(34,211,238,0.18)]",
+    accent: { r: 120, g: 200, b: 255 },
   },
   {
     id: "learning",
@@ -102,6 +106,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     dotClass: "bg-violet-300",
     activeClasses:
       "border-violet-300/35 bg-violet-300/[0.14] text-white shadow-[0_0_0_1px_rgba(196,181,253,0.05),0_14px_32px_rgba(139,92,246,0.14)]",
+    accent: { r: 190, g: 140, b: 255 },
   },
   {
     id: "world",
@@ -111,6 +116,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     dotClass: "bg-amber-300",
     activeClasses:
       "border-amber-300/35 bg-amber-300/[0.14] text-white shadow-[0_0_0_1px_rgba(253,224,71,0.05),0_14px_32px_rgba(245,158,11,0.14)]",
+    accent: { r: 255, g: 190, b: 90 },
   },
   {
     id: "impact",
@@ -120,6 +126,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     dotClass: "bg-emerald-300",
     activeClasses:
       "border-emerald-300/35 bg-emerald-300/[0.14] text-white shadow-[0_0_0_1px_rgba(110,231,183,0.05),0_14px_32px_rgba(16,185,129,0.14)]",
+    accent: { r: 110, g: 231, b: 183 },
   },
   {
     id: "play",
@@ -129,6 +136,7 @@ const EXPLORE_LANES: readonly WorkLaneTab[] = [
     dotClass: "bg-pink-300",
     activeClasses:
       "border-pink-300/35 bg-pink-300/[0.14] text-white shadow-[0_0_0_1px_rgba(249,168,212,0.05),0_14px_32px_rgba(236,72,153,0.14)]",
+    accent: { r: 249, g: 168, b: 212 },
   },
 ] as const;
 
@@ -1081,50 +1089,227 @@ function SignalWord() {
   );
 }
 
-function ExploreLaneRail({ lanes }: { lanes: readonly WorkLaneTab[] }) {
-  return (
-    <div className="relative mt-1">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-4 bg-gradient-to-r from-[#07131f] via-[#07131f]/85 to-transparent sm:hidden" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-7 bg-gradient-to-l from-[#07131f] via-[#07131f]/88 to-transparent sm:hidden" />
+function tabPillBaseClass() {
+  return [
+    "relative inline-flex items-center gap-2",
+    "rounded-full border",
+    "px-3.5 py-2",
+    "text-sm font-semibold tracking-[-0.01em]",
+    "backdrop-blur-xl",
+    "transition-[transform,box-shadow,background-color,border-color,color] duration-200",
+    "active:scale-95",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30 focus-visible:ring-offset-0",
+    "select-none",
+    "whitespace-nowrap",
+    "shrink-0",
+  ].join(" ");
+}
 
-      <div className="overflow-hidden">
-        <div className="flex gap-2 overflow-x-auto pb-1 pr-10 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pr-0">
-          {lanes.map((lane) => {
+function tabPillStyle(args: {
+  selected: boolean;
+  accent: Rgb;
+}): React.CSSProperties {
+  const { selected, accent } = args;
+  const c = `${accent.r}, ${accent.g}, ${accent.b}`;
+
+  const inactiveBg = `rgba(${c}, 0.08)`;
+  const inactiveBorder = `rgba(${c}, 0.22)`;
+
+  const activeBg = `linear-gradient(180deg, rgba(${c}, 0.24), rgba(255,255,255,0.05))`;
+
+  const glow = `0 0 0 1px rgba(${c}, 0.28), 0 14px 30px rgba(0,0,0,0.38)`;
+
+  const idleShadow =
+    "inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 16px rgba(0,0,0,0.22)";
+
+  return selected
+    ? {
+        background: activeBg,
+        borderColor: `rgba(${c}, 0.36)`,
+        color: "rgba(255,255,255,0.9)",
+        boxShadow: glow,
+      }
+    : {
+        background: inactiveBg,
+        borderColor: inactiveBorder,
+        color: "rgba(255,255,255,0.72)",
+        boxShadow: idleShadow,
+      };
+}
+
+function tabDotStyle(args: {
+  selected: boolean;
+  accent: Rgb;
+}): React.CSSProperties {
+  const { selected, accent } = args;
+  const c = `${accent.r}, ${accent.g}, ${accent.b}`;
+
+  return {
+    background: selected ? `rgba(${c}, 0.9)` : `rgba(${c}, 0.42)`,
+    boxShadow: selected
+      ? `0 0 10px rgba(${c}, 0.34)`
+      : `0 0 6px rgba(${c}, 0.18)`,
+  };
+}
+
+function desktopRailArrowButtonClass() {
+  return [
+    "hidden lg:inline-flex",
+    "absolute top-1/2 -translate-y-1/2 z-10",
+    "h-8 w-8 items-center justify-center rounded-full border",
+    "backdrop-blur-xl",
+    "transition-all duration-200",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30 focus-visible:ring-offset-0",
+  ].join(" ");
+}
+
+function desktopRailArrowButtonStyle(): React.CSSProperties {
+  return {
+    background: "rgba(12,18,32,0.7)",
+    borderColor: "rgba(255,255,255,0.08)",
+    color: "rgba(255,255,255,0.78)",
+    boxShadow:
+      "inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0,0,0,0.34)",
+  };
+}
+
+function ExploreLaneRail({ lanes }: { lanes: readonly WorkLaneTab[] }) {
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const itemRefs = React.useRef<Array<HTMLAnchorElement | null>>([]);
+
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+  const updateRailState = React.useCallback(() => {
+    const viewport = viewportRef.current;
+    const items = itemRefs.current;
+
+    if (!viewport || items.length === 0) return;
+
+    const viewportRect = viewport.getBoundingClientRect();
+
+    const first = items[0];
+    const last = items[items.length - 1];
+
+    if (!first || !last) return;
+
+    const firstRect = first.getBoundingClientRect();
+    const lastRect = last.getBoundingClientRect();
+
+    // ✅ Detect visual clipping (NOT scrollWidth)
+    const firstClipped = firstRect.left < viewportRect.left + 2;
+    const lastClipped = lastRect.right > viewportRect.right - 2;
+
+    setCanScrollLeft(firstClipped);
+    setCanScrollRight(lastClipped);
+  }, []);
+
+  React.useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const onScroll = () => updateRailState();
+    const onResize = () => updateRailState();
+
+    updateRailState();
+
+    viewport.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+
+    // handle layout settling
+    const t1 = setTimeout(updateRailState, 0);
+    const t2 = setTimeout(updateRailState, 120);
+    const t3 = setTimeout(updateRailState, 300);
+
+    return () => {
+      viewport.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [updateRailState, lanes]);
+
+  function scrollRailBy(direction: "left" | "right") {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const delta = Math.max(180, Math.floor(viewport.clientWidth * 0.6));
+
+    viewport.scrollBy({
+      left: direction === "left" ? -delta : delta,
+      behavior: "smooth",
+    });
+  }
+
+  return (
+    <div className="relative mt-1 mb-0.5">
+      {/* LEFT ARROW */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scrollRailBy("left")}
+          className="hidden md:inline-flex absolute left-[-6px] top-1/2 -translate-y-1/2 z-10 h-8 w-8 items-center justify-center rounded-full border backdrop-blur-xl"
+          style={{
+            background: "rgba(12,18,32,0.7)",
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+
+      {/* VIEWPORT */}
+      <div
+        ref={viewportRef}
+        className="overflow-x-auto pb-1 pr-6 md:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="flex w-max gap-2">
+          {lanes.map((lane, i) => {
             const active = lane.active;
 
             return (
               <Link
-                key={lane.id}
-                href={lane.href}
-                aria-current={active ? "page" : undefined}
-                className={[
-                  "group relative shrink-0 snap-start rounded-full border px-3.5 py-2 text-[13px] font-medium tracking-[-0.01em] transition duration-200 sm:px-4",
-                  "border-white/10 bg-white/[0.045] text-white/66 hover:border-white/14 hover:bg-white/[0.06] hover:text-white/82",
-                  active ? lane.activeClasses : "",
-                ].join(" ")}
-                style={{
-                  minWidth: "fit-content",
-                }}
-              >
-                {active ? (
-                  <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-white/35" />
-                ) : null}
-
-                <span className="relative flex items-center gap-2">
-                  <span
-                    className={[
-                      "h-1.5 w-1.5 rounded-full transition",
-                      lane.dotClass,
-                      active ? "opacity-100" : "opacity-75 group-hover:opacity-90",
-                    ].join(" ")}
-                  />
-                  <span>{lane.label}</span>
-                </span>
+  key={lane.id}
+  ref={(el) => {
+    itemRefs.current[i] = el;
+  }}
+  href={lane.href}
+  aria-current={active ? "page" : undefined}
+  className={tabPillBaseClass()}
+  style={tabPillStyle({
+    selected: active,
+    accent: lane.accent,
+  })}
+>
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={tabDotStyle({
+                    selected: active,
+                    accent: lane.accent,
+                  })}
+                />
+                <span>{lane.label}</span>
               </Link>
             );
           })}
         </div>
       </div>
+
+      {/* RIGHT ARROW */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scrollRailBy("right")}
+          className="hidden md:inline-flex absolute right-[-6px] top-1/2 -translate-y-1/2 z-10 h-8 w-8 items-center justify-center rounded-full border backdrop-blur-xl"
+          style={{
+            background: "rgba(12,18,32,0.7)",
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -1173,28 +1358,24 @@ function getPathForwardCopy(path: WorkPathContent, title: string) {
   switch (path.slug) {
     case "software-developer":
       return {
-        eyebrow: "See how this path gets built",
         title: "Open up the real developer path",
         body:
           "See the specialties, how the work actually feels day to day, what the pay range looks like, and where you can start building now.",
       };
     case "film-video-producer":
       return {
-        eyebrow: "Step into the production world",
         title: "See how this work comes together",
         body:
           "Get the real picture on roles behind the shoot, the pace of the work, salary range, and ways to start stepping into it now.",
       };
     case "game-designer":
       return {
-        eyebrow: "See how game ideas become real",
         title: "Open up the world behind the games",
         body:
           "Explore the roles, specialties, creative workflow, pay, and real ways to start testing this path for yourself now.",
       };
     default:
       return {
-        eyebrow: "Get the fuller picture",
         title: `Open up ${title}`,
         body:
           "See the specialties, the real rhythm of the work, salary range, and the local or virtual opportunities that can help you start now.",
@@ -1268,49 +1449,15 @@ function WorkIntroPanel({
   );
 }
 
-function SectionAnchor({
-  label,
-  color,
-  lineAlpha = 0.22,
-}: {
-  label: string;
-  color: Rgb;
-  lineAlpha?: number;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div
-        className="h-2.5 w-2.5 rounded-full"
-        style={{
-          backgroundColor: rgb(color, 0.96),
-          boxShadow: `0 0 12px ${rgb(color, 0.34)}`,
-        }}
-      />
-      <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-white/74">
-        {label}
-      </p>
-      <div
-        className="h-px flex-1"
-        style={{
-          background: `linear-gradient(90deg, ${rgb(
-            color,
-            lineAlpha
-          )} 0%, transparent 100%)`,
-        }}
-      />
-    </div>
-  );
-}
-
 function MobilePathCornerArt({ atmosphere }: { atmosphere: PathAtmosphere }) {
   return (
     <div
-      className="pointer-events-none absolute -right-1 top-0 h-16 w-16 md:hidden"
+      className="pointer-events-none absolute -right-1 top-0 h-14 w-14 md:hidden"
       aria-hidden="true"
       style={{
         background: `radial-gradient(circle at 78% 24%, ${rgb(
           atmosphere.futureGlow,
-          0.09
+          0.08
         )} 0%, transparent 36%)`,
       }}
     />
@@ -1321,46 +1468,46 @@ function MobileMiniConstellation({ accent }: { accent: Rgb }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute -right-3 top-2 h-[72px] w-[72px] opacity-82 md:hidden"
+      className="pointer-events-none absolute right-1 top-2 h-[46px] w-[46px] opacity-72 md:hidden"
     >
       <div
-        className="absolute right-[4px] top-[4px] h-[54px] w-[54px] rounded-full border"
+        className="absolute inset-0 rounded-full border"
         style={{ borderColor: rgb(accent, 0.08) }}
       />
       <div
-        className="absolute left-[20px] top-[17px] h-px w-[17px] rotate-[12deg]"
+        className="absolute left-[12px] top-[10px] h-px w-[11px] rotate-[10deg]"
         style={{
-          background: `linear-gradient(90deg, ${rgb(accent, 0.16)} 0%, ${rgb(
+          background: `linear-gradient(90deg, ${rgb(accent, 0.15)} 0%, ${rgb(
             accent,
             0.04
           )} 100%)`,
         }}
       />
       <div
-        className="absolute left-[30px] top-[31px] h-px w-[15px] -rotate-[18deg]"
+        className="absolute left-[20px] top-[21px] h-px w-[10px] -rotate-[16deg]"
         style={{
-          background: `linear-gradient(90deg, ${rgb(accent, 0.14)} 0%, ${rgb(
+          background: `linear-gradient(90deg, ${rgb(accent, 0.13)} 0%, ${rgb(
             accent,
             0.04
           )} 100%)`,
         }}
       />
       <div
-        className="absolute left-[16px] top-[14px] h-2.5 w-2.5 rounded-full"
+        className="absolute left-[9px] top-[8px] h-1.5 w-1.5 rounded-full"
         style={{
-          backgroundColor: rgb(accent, 0.84),
-          boxShadow: `0 0 8px ${rgb(accent, 0.24)}`,
+          backgroundColor: rgb(accent, 0.82),
+          boxShadow: `0 0 7px ${rgb(accent, 0.22)}`,
         }}
       />
       <div
-        className="absolute left-[38px] top-[21px] h-2 w-2 rounded-full"
+        className="absolute left-[24px] top-[13px] h-1.5 w-1.5 rounded-full"
         style={{
           backgroundColor: rgb(accent, 0.68),
           boxShadow: `0 0 6px ${rgb(accent, 0.18)}`,
         }}
       />
       <div
-        className="absolute left-[31px] top-[37px] h-2 w-2 rounded-full"
+        className="absolute left-[19px] top-[25px] h-1.5 w-1.5 rounded-full"
         style={{
           backgroundColor: rgb(accent, 0.62),
           boxShadow: `0 0 6px ${rgb(accent, 0.16)}`,
@@ -1393,6 +1540,19 @@ function JobHeaderIcon({
   );
 }
 
+function HeaderConstellation({ accent }: { accent: Rgb }) {
+  return (
+    <div
+      className="pointer-events-none absolute right-1 top-1 hidden h-[44px] w-[44px] md:block lg:h-[52px] lg:w-[52px]"
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 flex origin-top-right items-start justify-end scale-[0.42] lg:scale-[0.5]">
+        <SignalConstellation accent={accent} />
+      </div>
+    </div>
+  );
+}
+
 function PathForwardSection({
   path,
   atmosphere,
@@ -1405,71 +1565,43 @@ function PathForwardSection({
   const copy = getPathForwardCopy(path, title);
 
   return (
-    <div className="relative mt-5 lg:mt-6">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-2 h-16"
-        style={{
-          background: `radial-gradient(circle at 82% 34%, ${rgb(
-            atmosphere.futureGlow,
-            0.08
-          )} 0%, transparent 24%)`,
-        }}
-      />
-
-      <div className="relative px-1 pt-3 lg:pt-4">
-        <SectionAnchor
-          label={copy.eyebrow}
-          color={atmosphere.futureNode}
-          lineAlpha={0.24}
+    <div className="relative mt-3.5 lg:mt-4">
+      <Link
+        href={`/main/explore/work/${path.slug}`}
+        className="group relative block overflow-hidden rounded-[2px] transition"
+      >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${rgb(
+              atmosphere.futureGlow,
+              0.12
+            )} 18%, ${rgb(atmosphere.futureGlow, 0.04)} 62%, transparent 100%)`,
+          }}
         />
 
-        <Link
-          href={`/main/explore/work/${path.slug}`}
-          className="group relative mt-3 block overflow-hidden rounded-[2px] px-0 py-0 transition"
-        >
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{
-              background: `linear-gradient(90deg, transparent 0%, ${rgb(
-                atmosphere.futureGlow,
-                0.12
-              )} 18%, ${rgb(atmosphere.futureGlow, 0.04)} 62%, transparent 100%)`,
-            }}
-          />
+        <div className="relative flex items-center gap-3 py-2.5 sm:gap-4 sm:py-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[18px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[20px] lg:text-[21px]">
+              {copy.title}
+            </h3>
 
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[20%] md:block"
-            style={{
-              background: `radial-gradient(circle at 78% 50%, ${rgb(
-                atmosphere.futureGlow,
-                0.08
-              )} 0%, transparent 54%)`,
-            }}
-          />
-
-          <div className="relative flex items-center gap-3 py-3.5 sm:gap-4 sm:py-4.5">
-            <div className="min-w-0 flex-1">
-              <h3 className="text-[18px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[20px] lg:text-[21px]">
-                {copy.title}
-              </h3>
-
-              <p className="mt-1.5 max-w-[42rem] pr-10 text-[13px] leading-[1.6] text-white/72 md:pr-0 lg:text-[14px]">
-                {copy.body}
-              </p>
-            </div>
-
-            <div
-              className="relative ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:h-12 sm:w-12"
-              style={{
-                borderColor: rgb(atmosphere.futureGlow, 0.2),
-                backgroundColor: rgb(atmosphere.futureGlow, 0.08),
-              }}
-            >
-              <ArrowRight className="h-5 w-5" />
-            </div>
+            <p className="mt-1.5 text-[13px] leading-[1.6] text-white/72 lg:text-[14px]">
+              {copy.body}
+            </p>
           </div>
-        </Link>
-      </div>
+
+          <div
+            className="relative ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-white/90 transition-transform duration-200 group-hover:translate-x-0.5 sm:h-12 sm:w-12"
+            style={{
+              borderColor: rgb(atmosphere.futureGlow, 0.2),
+              backgroundColor: rgb(atmosphere.futureGlow, 0.08),
+            }}
+          >
+            <ArrowRight className="h-5 w-5" />
+          </div>
+        </div>
+      </Link>
     </div>
   );
 }
@@ -1492,52 +1624,52 @@ function WorkPathCard({
 
   return (
     <article
-      className="group relative overflow-hidden rounded-[30px] border p-3.5 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-5 lg:p-6"
+      className="group relative overflow-hidden rounded-[30px] border px-3 py-3.5 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:px-4 sm:py-4.5 lg:px-5 lg:py-5"
       style={{
         borderColor: rgb(atmosphere.border, 0.22),
         background:
           "linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%)",
       }}
     >
-      <div className="pointer-events-none absolute right-0 top-0 hidden md:block md:opacity-100">
-        <SignalConstellation accent={atmosphere.border} />
-      </div>
-
       <MobileMiniConstellation accent={atmosphere.border} />
       <MobilePathCornerArt atmosphere={atmosphere} />
 
       <div className="relative">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2.5">
-              <JobHeaderIcon path={path} />
-              <h2 className="min-w-0 text-[22px] font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-[25px] lg:text-[27px]">
-                {title}
-              </h2>
-            </div>
+        <div className="relative">
+          <div className="relative min-h-[52px] md:min-h-[60px]">
+            <HeaderConstellation accent={atmosphere.border} />
 
-            <div className="mt-2.5 inline-flex items-center gap-2">
-              <SignalMeter score={signalStrength} accent={atmosphere.border} />
-
-              <button
-                type="button"
-                onClick={() => setShowSignalHelp((v) => !v)}
-                className="text-white/60 transition hover:text-white/82"
-                aria-label="Explain signal score"
-              >
-                <CircleHelp className="h-4 w-4" />
-              </button>
-            </div>
-
-            {showSignalHelp ? (
-              <div className="mt-1.5 text-[12px] leading-[1.5] text-white/70">
-                Everleap&apos;s current read on how well this path fits you.
+            <div className="min-w-0 pr-[56px] md:pr-[62px]">
+              <div className="flex items-center gap-2.5">
+                <JobHeaderIcon path={path} />
+                <h2 className="min-w-0 text-[22px] font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-[25px] lg:text-[27px]">
+                  {title}
+                </h2>
               </div>
-            ) : null}
+
+              <div className="mt-2.5 inline-flex items-center gap-2">
+                <SignalMeter score={signalStrength} accent={atmosphere.border} />
+
+                <button
+                  type="button"
+                  onClick={() => setShowSignalHelp((v) => !v)}
+                  className="text-white/60 transition hover:text-white/82"
+                  aria-label="Explain signal score"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </button>
+              </div>
+
+              {showSignalHelp ? (
+                <div className="mt-1.5 text-[12px] leading-[1.5] text-white/70">
+                  Everleap&apos;s current read on how well this path fits you.
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        <p className="mt-3.5 max-w-none text-[14px] leading-[1.68] text-white/76 sm:mt-4 sm:text-[15px] md:max-w-3xl lg:text-[15px]">
+        <p className="mt-3 max-w-none text-[14px] leading-[1.68] text-white/76 sm:mt-3.5 sm:text-[15px] lg:text-[15px]">
           {summary}
         </p>
 
@@ -1577,7 +1709,7 @@ export default function WorkExplorePage() {
 
   return (
     <div className={pagePadding()}>
-      <div className="mx-auto w-full max-w-5xl px-2">
+      <div className="mx-auto w-full max-w-5xl px-1 sm:px-1.5 lg:px-2">
         <ExploreLaneRail lanes={EXPLORE_LANES} />
 
         {isReady ? <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} /> : null}
