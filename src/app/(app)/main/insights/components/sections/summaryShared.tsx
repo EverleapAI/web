@@ -2,13 +2,75 @@
 
 import * as React from "react";
 
+type HeaderTone = "neutral" | "teal" | "violet" | "amber" | "sky";
+type CardTone =
+  | "neutral"
+  | "themes"
+  | "strengths"
+  | "watchouts"
+  | "task"
+  | "action";
+
+function toneRgb(
+  tone: HeaderTone | CardTone
+): { dark: string; light: string } {
+  switch (tone) {
+    case "teal":
+    case "strengths":
+      return {
+        dark: "45,212,191",
+        light: "13,148,136",
+      };
+    case "violet":
+    case "action":
+      return {
+        dark: "167,139,250",
+        light: "124,58,237",
+      };
+    case "amber":
+    case "themes":
+      return {
+        dark: "251,191,36",
+        light: "217,119,6",
+      };
+    case "sky":
+    case "task":
+      return {
+        dark: "56,189,248",
+        light: "2,132,199",
+      };
+    case "watchouts":
+      return {
+        dark: "251,146,60",
+        light: "234,88,12",
+      };
+    default:
+      return {
+        dark: "251,191,36",
+        light: "217,119,6",
+      };
+  }
+}
+
 export function headerRow() {
-  return "mb-3 flex items-center gap-2";
+  return "relative mb-3 flex items-start gap-2.5 pr-12";
+}
+
+export function headerMain() {
+  return "min-w-0 flex-1";
+}
+
+export function headerCopyStack() {
+  return "min-w-0";
+}
+
+export function cardBody() {
+  return "relative min-w-0";
 }
 
 export function headerIconWrap(
   dark: boolean,
-  tone?: "neutral" | "teal" | "violet" | "amber" | "sky"
+  tone?: HeaderTone
 ) {
   const toneMap = {
     neutral: dark
@@ -31,9 +93,93 @@ export function headerIconWrap(
   const t = tone ?? "neutral";
 
   return [
-    "flex h-4 w-4 items-center justify-center rounded-[5px]",
+    "mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px]",
     toneMap[t],
   ].join(" ");
+}
+
+export function constellationOrnamentWrap() {
+  return "pointer-events-none absolute right-0 top-0 h-10 w-10";
+}
+
+export function constellationOrnament(
+  dark: boolean,
+  tone: HeaderTone | CardTone = "neutral"
+) {
+  const rgb = toneRgb(tone);
+  const c = dark ? rgb.dark : rgb.light;
+
+  return (
+    <div className={constellationOrnamentWrap()} aria-hidden>
+      <span
+        className="absolute right-[2px] top-[1px] h-[3px] w-[3px] rounded-full"
+        style={{
+          background: `rgba(${c}, ${dark ? 0.88 : 0.7})`,
+          boxShadow: dark
+            ? `0 0 10px rgba(${c}, 0.28)`
+            : `0 0 8px rgba(${c}, 0.14)`,
+        }}
+      />
+      <span
+        className="absolute right-[13px] top-[8px] h-[2px] w-[2px] rounded-full"
+        style={{
+          background: `rgba(${c}, ${dark ? 0.56 : 0.46})`,
+        }}
+      />
+      <span
+        className="absolute right-[5px] top-[16px] h-[2px] w-[2px] rounded-full"
+        style={{
+          background: `rgba(${c}, ${dark ? 0.62 : 0.5})`,
+        }}
+      />
+      <span
+        className="absolute right-[17px] top-[20px] h-[3px] w-[3px] rounded-full"
+        style={{
+          background: `rgba(${c}, ${dark ? 0.78 : 0.62})`,
+          boxShadow: dark
+            ? `0 0 9px rgba(${c}, 0.2)`
+            : `0 0 7px rgba(${c}, 0.1)`,
+        }}
+      />
+      <span
+        className="absolute right-[1px] top-[25px] h-[2px] w-[2px] rounded-full"
+        style={{
+          background: `rgba(${c}, ${dark ? 0.48 : 0.38})`,
+        }}
+      />
+
+      <span
+        className="absolute right-[8px] top-[10px] h-px origin-left"
+        style={{
+          width: 12,
+          background: `linear-gradient(90deg, rgba(${c}, ${
+            dark ? 0.16 : 0.1
+          }), rgba(${c}, ${dark ? 0.36 : 0.24}))`,
+          transform: "rotate(-18deg)",
+        }}
+      />
+      <span
+        className="absolute right-[7px] top-[18px] h-px origin-left"
+        style={{
+          width: 10,
+          background: `linear-gradient(90deg, rgba(${c}, ${
+            dark ? 0.1 : 0.08
+          }), rgba(${c}, ${dark ? 0.28 : 0.18}))`,
+          transform: "rotate(18deg)",
+        }}
+      />
+      <span
+        className="absolute right-[14px] top-[22px] h-px origin-left"
+        style={{
+          width: 8,
+          background: `linear-gradient(90deg, rgba(${c}, ${
+            dark ? 0.08 : 0.06
+          }), rgba(${c}, ${dark ? 0.22 : 0.14}))`,
+          transform: "rotate(28deg)",
+        }}
+      />
+    </div>
+  );
 }
 
 export function headerLabel(dark: boolean) {
@@ -75,13 +221,7 @@ export function bulletText(dark: boolean) {
 
 export function sectionCard(
   dark: boolean,
-  tone:
-    | "neutral"
-    | "themes"
-    | "strengths"
-    | "watchouts"
-    | "task"
-    | "action" = "neutral"
+  tone: CardTone = "neutral"
 ) {
   const toneMap = {
     neutral: dark

@@ -6,8 +6,12 @@ import { Sparkles } from "lucide-react";
 import {
   bodyText,
   bulletText,
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   sectionCard,
   sectionTitle,
@@ -65,103 +69,99 @@ export default function InsightsSuperpowersCard({
         }}
       />
 
-      <div
-        aria-hidden
-        className={[
-          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
-          "sm:right-4 sm:top-4 sm:p-3",
-          dark
-            ? "border-teal-200/14 bg-teal-100/[0.05] text-teal-100/24"
-            : "border-teal-200/70 bg-white/70 text-teal-500/45",
-        ].join(" ")}
-      >
-        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
-      </div>
-
-      <div className="relative pr-14 sm:pr-16">
+      <div className="relative">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "teal")}>
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>Superpowers</div>
+
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>Superpowers</div>
+            </div>
+          </div>
+
+          {constellationOrnament(dark, "strengths")}
         </div>
 
-        <div className={sectionTitle(dark)}>
-          What tends to work in your favor
-        </div>
+        <div className={cardBody()}>
+          <div className={sectionTitle(dark)}>
+            What tends to work in your favor
+          </div>
 
-        {hasStrongSignal ? (
-          <>
-            <p
-              className={[
-                "mt-3 max-w-[40rem]",
-                bodyText(dark),
-                "text-[14.5px] leading-6 sm:text-[15px]",
-              ].join(" ")}
-            >
-              {intro}
-            </p>
-
-            {strengthsLine ? (
+          {hasStrongSignal ? (
+            <>
               <p
                 className={[
-                  "mt-2 max-w-[38rem]",
+                  "mt-3",
+                  bodyText(dark),
+                  "text-[14.5px] leading-6 sm:text-[15px]",
+                ].join(" ")}
+              >
+                {intro}
+              </p>
+
+              {strengthsLine ? (
+                <p
+                  className={[
+                    "mt-2",
+                    bodyText(dark),
+                    "text-[14px] leading-6 sm:text-[14.5px]",
+                  ].join(" ")}
+                >
+                  {strengthsLine}
+                </p>
+              ) : null}
+
+              {safeBullets.length ? (
+                <ul className="mt-4 space-y-2.5">
+                  {safeBullets.map((bullet, index) => (
+                    <li key={`${bullet}_${index}`} className="flex gap-3">
+                      <span aria-hidden className={bulletDotClass(dark)} />
+                      <span className={bulletText(dark)}>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              {skillsLine ? (
+                <p
+                  className={[
+                    "mt-4",
+                    bodyText(dark),
+                    "text-[14px] leading-6 sm:text-[14.5px]",
+                  ].join(" ")}
+                >
+                  {skillsLine}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <p
+                className={[
+                  "mt-3",
+                  bodyText(dark),
+                  "text-[14.5px] leading-6 sm:text-[15px]",
+                ].join(" ")}
+              >
+                Superpowers are the strengths that naturally help you when
+                something matters.
+              </p>
+
+              <p
+                className={[
+                  "mt-2",
                   bodyText(dark),
                   "text-[14px] leading-6 sm:text-[14.5px]",
                 ].join(" ")}
               >
-                {strengthsLine}
+                As Everleap picks up more signal, this becomes a clearer read on
+                what you can reliably lean on.
               </p>
-            ) : null}
-
-            {safeBullets.length ? (
-              <ul className="mt-4 space-y-2.5">
-                {safeBullets.map((bullet, index) => (
-                  <li key={`${bullet}_${index}`} className="flex gap-3">
-                    <span aria-hidden className={bulletDotClass(dark)} />
-                    <span className={bulletText(dark)}>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            {skillsLine ? (
-              <p
-                className={[
-                  "mt-4 max-w-[38rem]",
-                  bodyText(dark),
-                  "text-[14px] leading-6 sm:text-[14.5px]",
-                ].join(" ")}
-              >
-                {skillsLine}
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <p
-              className={[
-                "mt-3 max-w-[40rem]",
-                bodyText(dark),
-                "text-[14.5px] leading-6 sm:text-[15px]",
-              ].join(" ")}
-            >
-              Superpowers are the strengths that naturally help you when
-              something matters.
-            </p>
-
-            <p
-              className={[
-                "mt-2 max-w-[38rem]",
-                bodyText(dark),
-                "text-[14px] leading-6 sm:text-[14.5px]",
-              ].join(" ")}
-            >
-              As Everleap picks up more signal, this becomes a clearer read on
-              what you can reliably lean on.
-            </p>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </section>
   );

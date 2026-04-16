@@ -6,8 +6,12 @@ import { Radar } from "lucide-react";
 import type { WordCloudItem } from "../../app/buildInsightsViewModel";
 import {
   bodyText,
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   mutedText,
   sectionCard,
@@ -117,88 +121,85 @@ export default function InsightsThemesCard({
         }}
       />
 
-      {/* NEW: top-right icon */}
-      <div
-        aria-hidden
-        className={[
-          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
-          "sm:right-4 sm:top-4 sm:p-3",
-          dark
-            ? "border-white/10 bg-white/[0.045] text-white/18"
-            : "border-slate-200/80 bg-white/70 text-slate-400/60",
-        ].join(" ")}
-      >
-        <Radar className="h-5 w-5 sm:h-6 sm:w-6" />
-      </div>
-
-      <div className="relative pr-14 sm:pr-16">
+      <div className="relative">
+        {/* HEADER */}
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "amber")}>
             <Radar className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>Signals</div>
-        </div>
 
-        <div className={sectionTitle(dark)}>
-          Your signals are patterns in what you choose and follow through on.
-        </div>
-
-        {hasStrongSignal ? (
-          <>
-            <div className="mt-3">
-              {items.length ? (
-                <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
-                  {items.map((w) => {
-                    const isTop = topSet.has(w.term.toLowerCase());
-                    return (
-                      <span
-                        key={w.term}
-                        className={[
-                          "select-none el-word",
-                          wordColorClasses(dark, w.term),
-                          isTop
-                            ? [
-                                "rounded-full px-2.5 py-1",
-                                highlightWrap(dark),
-                              ].join(" ")
-                            : "",
-                        ].join(" ")}
-                        style={{
-                          fontSize: `${wordSizePx(w.weight)}px`,
-                          opacity: wordOpacity(w.weight),
-                          ...wordChaosVars(w.term, w.weight),
-                        }}
-                      >
-                        {w.term}
-                      </span>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className={bodyText(dark)}>
-                  Nothing to map yet — give me 1–2 real examples.
-                </div>
-              )}
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>Signals</div>
             </div>
+          </div>
 
-            {motivatorsLine ? (
-              <p
-                className={[
-                  "mt-3 max-w-[40rem]",
-                  mutedText(dark),
-                  "text-[13.5px]",
-                ].join(" ")}
-              >
-                {motivatorsLine}
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <p className={["mt-3", bodyText(dark)].join(" ")}>
-            Once you answer a few questions, this will start mapping what
-            actually gives you energy and where your patterns show up.
-          </p>
-        )}
+          {constellationOrnament(dark, "themes")}
+        </div>
+
+        {/* BODY */}
+        <div className={cardBody()}>
+          <div className={sectionTitle(dark)}>
+            Your signals are patterns in what you choose and follow through on.
+          </div>
+
+          {hasStrongSignal ? (
+            <>
+              <div className="mt-3">
+                {items.length ? (
+                  <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                    {items.map((w) => {
+                      const isTop = topSet.has(w.term.toLowerCase());
+                      return (
+                        <span
+                          key={w.term}
+                          className={[
+                            "select-none el-word",
+                            wordColorClasses(dark, w.term),
+                            isTop
+                              ? [
+                                  "rounded-full px-2.5 py-1",
+                                  highlightWrap(dark),
+                                ].join(" ")
+                              : "",
+                          ].join(" ")}
+                          style={{
+                            fontSize: `${wordSizePx(w.weight)}px`,
+                            opacity: wordOpacity(w.weight),
+                            ...wordChaosVars(w.term, w.weight),
+                          }}
+                        >
+                          {w.term}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className={bodyText(dark)}>
+                    Nothing to map yet — give me 1–2 real examples.
+                  </div>
+                )}
+              </div>
+
+              {motivatorsLine ? (
+                <p
+                  className={[
+                    "mt-3",
+                    mutedText(dark),
+                    "text-[13.5px]",
+                  ].join(" ")}
+                >
+                  {motivatorsLine}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className={["mt-3", bodyText(dark)].join(" ")}>
+              Once you answer a few questions, this will start mapping what
+              actually gives you energy and where your patterns show up.
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

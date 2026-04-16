@@ -4,8 +4,12 @@ import * as React from "react";
 import { Shield } from "lucide-react";
 
 import {
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   mutedText,
   sectionCard,
@@ -76,10 +80,40 @@ export default function InsightsQuickCheckCard({
   dark,
   contextTag,
 }: Props): React.JSX.Element {
+  const storageKey = `${QUICK_FEEDBACK_STORAGE_KEY}:${contextTag}`;
+
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
   const [saved, setSaved] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as {
+        rating?: QuickRating;
+        note?: string;
+      };
+
+      if (
+        parsed?.rating === "mostly" ||
+        parsed?.rating === "somewhat" ||
+        parsed?.rating === "not_really"
+      ) {
+        setRating(parsed.rating);
+      }
+
+      if (typeof parsed?.note === "string") {
+        setNote(parsed.note);
+      }
+
+      setSaved(true);
+    } catch {
+      // ignore bad local data
+    }
+  }, [storageKey]);
 
   function onPick(next: QuickRating) {
     setRating(next);
@@ -95,8 +129,8 @@ export default function InsightsQuickCheckCard({
     if (!rating) return;
 
     localStorage.setItem(
-      QUICK_FEEDBACK_STORAGE_KEY,
-      JSON.stringify({ rating, note, savedAt: Date.now() })
+      storageKey,
+      JSON.stringify({ rating, note, savedAt: Date.now(), contextTag })
     );
 
     setSaved(true);
@@ -121,105 +155,116 @@ export default function InsightsQuickCheckCard({
           <div className={headerIconWrap(dark, "neutral")}>
             <Shield className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>Quick Check</div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={quickChip(dark, rating === "mostly", "good")}
-            onClick={() => onPick("mostly")}
-          >
-            👍 Mostly right
-          </button>
-
-          <button
-            type="button"
-            className={quickChip(dark, rating === "somewhat", "mid")}
-            onClick={() => onPick("somewhat")}
-          >
-            🙂 Somewhat
-          </button>
-
-          <button
-            type="button"
-            className={quickChip(dark, rating === "not_really", "bad")}
-            onClick={() => onPick("not_really")}
-          >
-            👎 Not really
-          </button>
-
-          {saved ? (
-            <div
-              className={[
-                "ml-1 flex items-center text-[12px]",
-                dark ? "text-white/36" : "text-slate-600",
-              ].join(" ")}
-            >
-              (Saved)
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>Quick Check</div>
             </div>
-          ) : null}
+          </div>
+
+          {constellationOrnament(dark, "neutral")}
         </div>
 
-        <div
-          className={[
-            "overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
-            open ? "mt-3 max-h-[340px] opacity-100" : "max-h-0 opacity-0",
-          ].join(" ")}
-        >
-          <div className={softInputShell(dark)}>
-            <div className="relative p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className={headerLabel(dark)}>Add a note</div>
-                  <div className={["mt-1", mutedText(dark)].join(" ")}>
-                    One sentence is enough.
+        <div className={cardBody()}>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={quickChip(dark, rating === "mostly", "good")}
+              onClick={() => onPick("mostly")}
+            >
+              👍 Mostly right
+            </button>
+
+            <button
+              type="button"
+              className={quickChip(dark, rating === "somewhat", "mid")}
+              onClick={() => onPick("somewhat")}
+            >
+              🙂 Somewhat
+            </button>
+
+            <button
+              type="button"
+              className={quickChip(dark, rating === "not_really", "bad")}
+              onClick={() => onPick("not_really")}
+            >
+              👎 Not really
+            </button>
+
+            {saved ? (
+              <div
+                className={[
+                  "ml-1 flex items-center text-[12px]",
+                  dark ? "text-white/36" : "text-slate-600",
+                ].join(" ")}
+              >
+                (Saved)
+              </div>
+            ) : null}
+          </div>
+
+          <div
+            className={[
+              "overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
+              open ? "mt-3 max-h-[340px] opacity-100" : "max-h-0 opacity-0",
+            ].join(" ")}
+          >
+            <div className={softInputShell(dark)}>
+              <div className="relative p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className={headerLabel(dark)}>Add a note</div>
+                    <div className={["mt-1", mutedText(dark)].join(" ")}>
+                      One sentence is enough.
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className={[
+                      "h-9 rounded-full px-3 text-[12px] font-semibold border",
+                      dark
+                        ? "border-white/10 bg-white/[0.04] text-white/56"
+                        : "border-black/10 bg-white/80 text-slate-800",
+                    ].join(" ")}
+                  >
+                    Close
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={onClose}
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  placeholder="What felt off or surprisingly accurate?"
                   className={[
-                    "h-9 rounded-full px-3 text-[12px] font-semibold border",
+                    "mt-3 w-full resize-none rounded-[18px] px-4 py-3 text-[14px]",
+                    "bg-transparent outline-none ring-1 ring-inset",
                     dark
-                      ? "border-white/10 bg-white/[0.04] text-white/56"
-                      : "border-black/10 bg-white/80 text-slate-800",
+                      ? "text-white/66 placeholder:text-white/28 ring-white/12"
+                      : "text-slate-900 placeholder:text-slate-500 ring-black/10",
                   ].join(" ")}
-                >
-                  Close
-                </button>
-              </div>
+                />
 
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-                placeholder="What felt off or surprisingly accurate?"
-                className={[
-                  "mt-3 w-full resize-none rounded-[18px] px-4 py-3 text-[14px]",
-                  "bg-transparent outline-none ring-1 ring-inset",
-                  dark
-                    ? "text-white/66 placeholder:text-white/28 ring-white/12"
-                    : "text-slate-900 placeholder:text-slate-500 ring-black/10",
-                ].join(" ")}
-              />
+                <div className="mt-4 flex justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="text-sm opacity-70"
+                  >
+                    Skip
+                  </button>
 
-              <div className="mt-4 flex justify-between">
-                <button
-                  onClick={() => setOpen(false)}
-                  className="text-sm opacity-70"
-                >
-                  Skip
-                </button>
-
-                <button
-                  onClick={onSave}
-                  disabled={!canSave}
-                  className={saveButton(dark, !canSave)}
-                >
-                  Save
-                </button>
+                  <button
+                    type="button"
+                    onClick={onSave}
+                    disabled={!canSave}
+                    className={saveButton(dark, !canSave)}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
           </div>

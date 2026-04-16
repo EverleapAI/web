@@ -959,6 +959,9 @@ export default function Page() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  const [showLeft, setShowLeft] = React.useState(false);
+  const [showRight, setShowRight] = React.useState(false);
+
   const vmTab: InsightsTab = tab === "funFacts" ? "summary" : tab;
   const vm = React.useMemo(
     () => buildInsightsViewModel(vmTab, { useLocal: mounted }),
@@ -1031,6 +1034,39 @@ export default function Page() {
       behavior: "smooth",
     });
   }
+
+  const updateArrows = React.useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+
+    setShowLeft(scrollLeft > 4);
+    setShowRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  React.useEffect(() => {
+    if (!mounted) return;
+
+    const el = railRef.current;
+    if (!el) return;
+
+    updateArrows();
+
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    window.addEventListener("resize", updateArrows);
+
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      window.removeEventListener("resize", updateArrows);
+    };
+  }, [mounted, updateArrows]);
+
+  React.useEffect(() => {
+    if (!mounted) return;
+    const id = window.requestAnimationFrame(() => updateArrows());
+    return () => window.cancelAnimationFrame(id);
+  }, [mounted, tab, updateArrows]);
 
   const wordCloudRaw = vm.summary.wordCloud;
   const wordCloud = React.useMemo<WordCloudItem[]>(
@@ -1257,17 +1293,19 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[680px] flex-1 flex-col px-2 pb-28 pt-0 sm:px-0">
+      <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col px-2 pb-24 pt-0 sm:px-1">
         <div className="relative mb-3">
-          <button
-            type="button"
-            aria-label="Scroll insights tabs left"
-            className={desktopRailArrowButtonClass() + " left-[-12px]"}
-            style={desktopRailArrowButtonStyle(dark)}
-            onClick={() => scrollRailBy("left")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
+          {mounted && showLeft ? (
+            <button
+              type="button"
+              aria-label="Scroll insights tabs left"
+              className={desktopRailArrowButtonClass() + " left-[-12px]"}
+              style={desktopRailArrowButtonStyle(dark)}
+              onClick={() => scrollRailBy("left")}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          ) : null}
 
           <div
             ref={railRef}
@@ -1303,15 +1341,17 @@ export default function Page() {
             })}
           </div>
 
-          <button
-            type="button"
-            aria-label="Scroll insights tabs right"
-            className={desktopRailArrowButtonClass() + " right-[-12px]"}
-            style={desktopRailArrowButtonStyle(dark)}
-            onClick={() => scrollRailBy("right")}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          {mounted && showRight ? (
+            <button
+              type="button"
+              aria-label="Scroll insights tabs right"
+              className={desktopRailArrowButtonClass() + " right-[-12px]"}
+              style={desktopRailArrowButtonStyle(dark)}
+              onClick={() => scrollRailBy("right")}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : null}
 
           <div
             aria-hidden

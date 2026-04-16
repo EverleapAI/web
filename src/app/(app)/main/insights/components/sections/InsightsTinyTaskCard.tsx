@@ -12,8 +12,12 @@ import {
 
 import {
   bodyText,
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   sectionCard,
   sectionTitle,
@@ -143,81 +147,90 @@ export default function InsightsTinyTaskCard({
         }}
       />
 
-      <div className="relative pr-14 sm:pr-16">
+      <div className="relative">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "sky")}>
             <CheckSquare className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>{eyebrow}</div>
+
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>{eyebrow}</div>
+            </div>
+          </div>
+
+          {constellationOrnament(dark, "task")}
         </div>
 
-        <div className={sectionTitle(dark)}>
-          {title?.trim() || "Pick the one that’s most true this week."}
-        </div>
+        <div className={cardBody()}>
+          <div className={sectionTitle(dark)}>
+            {title?.trim() || "Pick the one that’s most true this week."}
+          </div>
 
-        {hasStrongSignal ? (
-          <>
-            {body ? (
-              <p className={["mt-3", bodyText(dark)].join(" ")}>{body}</p>
-            ) : null}
+          {hasStrongSignal ? (
+            <>
+              {body ? (
+                <p className={["mt-3", bodyText(dark)].join(" ")}>{body}</p>
+              ) : null}
 
-            {safeChoices.length ? (
-              <div className="mt-4 space-y-2.5">
-                {safeChoices.map((choice) => {
-                  const selected =
-                    result?.kind === "choice" && result.choiceId === choice.id;
+              {safeChoices.length ? (
+                <div className="mt-4 space-y-2.5">
+                  {safeChoices.map((choice) => {
+                    const selected =
+                      result?.kind === "choice" && result.choiceId === choice.id;
 
-                  return (
-                    <button
-                      key={choice.id}
-                      type="button"
-                      onClick={() => select(choice.id)}
-                      className={optionBase(dark, selected)}
-                      aria-pressed={selected}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div
-                            className={[
-                              "text-[14px] font-medium leading-5",
-                              labelClass(dark, selected),
-                            ].join(" ")}
-                          >
-                            {choice.label}
-                          </div>
-
-                          {choice.meta ? (
+                    return (
+                      <button
+                        key={choice.id}
+                        type="button"
+                        onClick={() => select(choice.id)}
+                        className={optionBase(dark, selected)}
+                        aria-pressed={selected}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
                             <div
                               className={[
-                                "mt-1 text-[12.5px] leading-5",
-                                metaClass(dark, selected),
+                                "text-[14px] font-medium leading-5",
+                                labelClass(dark, selected),
                               ].join(" ")}
                             >
-                              {choice.meta}
+                              {choice.label}
                             </div>
-                          ) : null}
-                        </div>
 
-                        <span className={checkWrap(dark, selected)} aria-hidden>
-                          {selected ? (
-                            <Check className="h-3.5 w-3.5" />
-                          ) : (
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <p className={["mt-3", bodyText(dark)].join(" ")}>
-            A Tiny Task is one small experiment. Once we have more signal, this
-            turns into something simple you can actually try this week.
-          </p>
-        )}
+                            {choice.meta ? (
+                              <div
+                                className={[
+                                  "mt-1 text-[12.5px] leading-5",
+                                  metaClass(dark, selected),
+                                ].join(" ")}
+                              >
+                                {choice.meta}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <span className={checkWrap(dark, selected)} aria-hidden>
+                            {selected ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : (
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                            )}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className={["mt-3", bodyText(dark)].join(" ")}>
+              A Tiny Task is one small experiment. Once we have more signal, this
+              turns into something simple you can actually try this week.
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

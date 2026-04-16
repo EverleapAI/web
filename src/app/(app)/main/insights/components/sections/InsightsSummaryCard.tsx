@@ -6,8 +6,12 @@ import { Sparkles, ArrowRight } from "lucide-react";
 
 import {
   bodyText,
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   sectionCard,
 } from "./summaryShared";
@@ -119,104 +123,100 @@ export default function InsightsSummaryCard({
         }}
       />
 
-      <div
-        aria-hidden
-        className={[
-          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
-          "sm:right-4 sm:top-4 sm:p-3",
-          dark
-            ? "border-amber-200/14 bg-amber-100/[0.05] text-amber-100/22"
-            : "border-amber-200/70 bg-white/70 text-amber-500/45",
-        ].join(" ")}
-      >
-        <Sparkles className="h-5 w-5 sm:h-6 sm:w-6" />
-      </div>
-
-      <div className="relative pr-14 sm:pr-16">
+      <div className="relative">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "neutral")}>
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>Insights</div>
+
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>Insights</div>
+            </div>
+          </div>
+
+          {constellationOrnament(dark, "neutral")}
         </div>
 
-        <h2
-          className={[
-            dark ? "text-white" : "text-slate-950",
-            "mt-1 max-w-[36rem] text-[1.55rem] font-semibold leading-[1.06] tracking-[-0.03em]",
-            "sm:text-[1.74rem]",
-          ].join(" ")}
-        >
-          {hasStrongSignal ? resolvedHeadline : noSignalTitle}
-        </h2>
+        <div className={cardBody()}>
+          <h2
+            className={[
+              dark ? "text-white" : "text-slate-950",
+              "mt-1 text-[1.55rem] font-semibold leading-[1.06] tracking-[-0.03em]",
+              "sm:text-[1.74rem]",
+            ].join(" ")}
+          >
+            {hasStrongSignal ? resolvedHeadline : noSignalTitle}
+          </h2>
 
-        {hasStrongSignal ? (
-          <>
-            {compressed.lead ? (
+          {hasStrongSignal ? (
+            <>
+              {compressed.lead ? (
+                <p
+                  className={[
+                    "mt-3",
+                    bodyText(dark),
+                    "text-[14.5px] leading-6 sm:text-[15px]",
+                  ].join(" ")}
+                >
+                  {compressed.lead}
+                </p>
+              ) : null}
+
+              {compressed.close ? (
+                <p
+                  className={[
+                    "mt-2",
+                    bodyText(dark),
+                    "text-[14.5px] leading-6 sm:text-[15px]",
+                  ].join(" ")}
+                >
+                  {compressed.close}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
               <p
                 className={[
-                  "mt-3 max-w-[38rem]",
+                  "mt-3",
                   bodyText(dark),
                   "text-[14.5px] leading-6 sm:text-[15px]",
                 ].join(" ")}
               >
-                {compressed.lead}
+                This page gets much more useful once Everleap has a little more
+                real signal from you.
               </p>
-            ) : null}
 
-            {compressed.close ? (
               <p
                 className={[
-                  "mt-2 max-w-[38rem]",
+                  "mt-2",
                   bodyText(dark),
                   "text-[14.5px] leading-6 sm:text-[15px]",
                 ].join(" ")}
               >
-                {compressed.close}
+                A few Motivations questions is enough to start grounding this in
+                what gives you energy, what drains it, and which patterns keep
+                repeating.
               </p>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <p
-              className={[
-                "mt-3 max-w-[38rem]",
-                bodyText(dark),
-                "text-[14.5px] leading-6 sm:text-[15px]",
-              ].join(" ")}
-            >
-              This page gets much more useful once Everleap has a little more
-              real signal from you.
-            </p>
 
-            <p
-              className={[
-                "mt-2 max-w-[38rem]",
-                bodyText(dark),
-                "text-[14.5px] leading-6 sm:text-[15px]",
-              ].join(" ")}
-            >
-              A few Motivations questions is enough to start grounding this in
-              what gives you energy, what drains it, and which patterns keep
-              repeating.
-            </p>
-
-            <div className="mt-4">
-              <Link
-                href={startHref}
-                className={[
-                  "group inline-flex items-center gap-1.5 text-[14.5px] font-medium transition focus-visible:outline-none",
-                  dark
-                    ? "text-white/82 hover:text-white/94"
-                    : "text-slate-900 hover:text-black",
-                ].join(" ")}
-              >
-                <span>Start with Motivations</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-          </>
-        )}
+              <div className="mt-4">
+                <Link
+                  href={startHref}
+                  className={[
+                    "group inline-flex items-center gap-1.5 text-[14.5px] font-medium transition focus-visible:outline-none",
+                    dark
+                      ? "text-white/82 hover:text-white/94"
+                      : "text-slate-900 hover:text-black",
+                  ].join(" ")}
+                >
+                  <span>Start with Motivations</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </section>
   );

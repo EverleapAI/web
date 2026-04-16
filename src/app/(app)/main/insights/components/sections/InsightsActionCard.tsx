@@ -20,8 +20,12 @@ import {
 import {
   bodyText,
   bulletText,
+  cardBody,
+  constellationOrnament,
+  headerCopyStack,
   headerIconWrap,
   headerLabel,
+  headerMain,
   headerRow,
   mutedText,
   sectionCard,
@@ -259,227 +263,223 @@ export default function InsightsActionCard({
         }}
       />
 
-      <div
-        aria-hidden
-        className={[
-          "pointer-events-none absolute right-3 top-3 rounded-2xl border p-2.5",
-          "sm:right-4 sm:top-4 sm:p-3",
-          dark
-            ? "border-white/10 bg-white/[0.045] text-white/18"
-            : "border-slate-200/80 bg-white/70 text-slate-400/60",
-        ].join(" ")}
-      >
-        <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-      </div>
-
-      <div className="relative pr-14 sm:pr-16">
+      <div className="relative">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "violet")}>
             <ArrowRight className="h-3.5 w-3.5" />
           </div>
-          <div className={headerLabel(dark)}>{eyebrow}</div>
+
+          <div className={headerMain()}>
+            <div className={headerCopyStack()}>
+              <div className={headerLabel(dark)}>{eyebrow}</div>
+            </div>
+          </div>
+
+          {constellationOrnament(dark, "action")}
         </div>
 
-        <div className={sectionTitle(dark)}>{actionTitle}</div>
+        <div className={cardBody()}>
+          <div className={sectionTitle(dark)}>{actionTitle}</div>
 
-        {hasStrongSignal ? (
-          <>
-            {body ? (
-              <p
-                className={[
-                  "mt-3 max-w-[40rem]",
-                  bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
-                ].join(" ")}
-              >
-                {body}
-              </p>
-            ) : null}
+          {hasStrongSignal ? (
+            <>
+              {body ? (
+                <p
+                  className={[
+                    "mt-3",
+                    bodyText(dark),
+                    "text-[14.5px] leading-6 sm:text-[15px]",
+                  ].join(" ")}
+                >
+                  {body}
+                </p>
+              ) : null}
 
-            {safeBullets.length ? (
-              <ul
-                className={[
-                  "mt-4 space-y-2.5 border-t pt-4",
-                  subDivider(dark),
-                ].join(" ")}
-              >
-                {safeBullets.map((bullet, index) => (
-                  <li key={`${bullet}_${index}`} className="flex gap-3">
-                    <span aria-hidden className={bulletDotClass(dark)} />
-                    <span className={bulletText(dark)}>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+              {safeBullets.length ? (
+                <ul
+                  className={[
+                    "mt-4 space-y-2.5 border-t pt-4",
+                    subDivider(dark),
+                  ].join(" ")}
+                >
+                  {safeBullets.map((bullet, index) => (
+                    <li key={`${bullet}_${index}`} className="flex gap-3">
+                      <span aria-hidden className={bulletDotClass(dark)} />
+                      <span className={bulletText(dark)}>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
-            {logs.length > 0 ? (
-              <div className="mt-4">
-                {logs.map((log) => (
-                  <div key={log.id} className={logRow(dark)}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={[
-                              "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                              logBadge(dark, log),
-                            ].join(" ")}
-                          >
-                            {log.type === "note" ? "Log" : log.text}
-                          </span>
+              {logs.length > 0 ? (
+                <div className="mt-4">
+                  {logs.map((log) => (
+                    <div key={log.id} className={logRow(dark)}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={[
+                                "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                                logBadge(dark, log),
+                              ].join(" ")}
+                            >
+                              {log.type === "note" ? "Log" : log.text}
+                            </span>
+                          </div>
+
+                          {log.type === "note" ? (
+                            <div
+                              className={[
+                                "mt-1.5 text-[14px] leading-6",
+                                dark ? "text-white/78" : "text-slate-900",
+                              ].join(" ")}
+                            >
+                              {log.text}
+                            </div>
+                          ) : null}
                         </div>
 
-                        {log.type === "note" ? (
-                          <div
-                            className={[
-                              "mt-1.5 text-[14px] leading-6",
-                              dark ? "text-white/78" : "text-slate-900",
-                            ].join(" ")}
-                          >
-                            {log.text}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div
-                        className={[
-                          "shrink-0 pt-0.5 text-[11px]",
-                          mutedText(dark),
-                        ].join(" ")}
-                      >
-                        {formatTimestamp(log.createdAt)}
+                        <div
+                          className={[
+                            "shrink-0 pt-0.5 text-[11px]",
+                            mutedText(dark),
+                          ].join(" ")}
+                        >
+                          {formatTimestamp(log.createdAt)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+                  ))}
+                </div>
+              ) : null}
 
-            <div className="mt-5 flex flex-wrap items-center gap-4">
-              {status === "planned" && (
-                <motion.button
-                  type="button"
-                  onClick={onStart}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={primaryActionLink(dark)}
-                >
-                  Start
-                </motion.button>
-              )}
-
-              {status === "started" && (
-                <>
+              <div className="mt-5 flex flex-wrap items-center gap-4">
+                {status === "planned" && (
                   <motion.button
                     type="button"
-                    onClick={onDone}
+                    onClick={onStart}
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.98 }}
                     className={primaryActionLink(dark)}
                   >
-                    Mark done
+                    Start
                   </motion.button>
+                )}
 
+                {status === "started" && (
+                  <>
+                    <motion.button
+                      type="button"
+                      onClick={onDone}
+                      whileHover={{ x: 2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={primaryActionLink(dark)}
+                    >
+                      Mark done
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      onClick={onLog}
+                      whileHover={{ x: 2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={secondaryActionLink(dark)}
+                    >
+                      Log result
+                    </motion.button>
+                  </>
+                )}
+
+                {status === "done" && (
                   <motion.button
                     type="button"
-                    onClick={onLog}
+                    onClick={onReopen}
                     whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.98 }}
-                    className={secondaryActionLink(dark)}
+                    className={primaryActionLink(dark)}
                   >
-                    Log result
+                    Reopen
                   </motion.button>
-                </>
-              )}
+                )}
+              </div>
 
-              {status === "done" && (
-                <motion.button
-                  type="button"
-                  onClick={onReopen}
-                  whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={primaryActionLink(dark)}
-                >
-                  Reopen
-                </motion.button>
-              )}
-            </div>
-
-            <AnimatePresence initial={false}>
-              {editorOpen ? (
-                <motion.div
-                  className={editorShell(dark)}
-                  initial={{ opacity: 0, height: 0, y: -6 }}
-                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  <div
-                    className={
-                      dark
-                        ? "text-[14px] font-medium text-white/82"
-                        : "text-[14px] font-medium text-slate-900"
-                    }
+              <AnimatePresence initial={false}>
+                {editorOpen ? (
+                  <motion.div
+                    className={editorShell(dark)}
+                    initial={{ opacity: 0, height: 0, y: -6 }}
+                    animate={{ opacity: 1, height: "auto", y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                    What did you notice?
-                  </div>
-
-                  <textarea
-                    value={textValue}
-                    onChange={(e) => setTextValue(e.target.value)}
-                    rows={5}
-                    placeholder="Write a quick note about what you tried, what happened, or what stood out."
-                    className={textAreaClass(dark)}
-                  />
-
-                  <div className="mt-3 flex justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditorOpen(false);
-                        setTextValue("");
-                      }}
-                      className={actionButton(dark)}
+                    <div
+                      className={
+                        dark
+                          ? "text-[14px] font-medium text-white/82"
+                          : "text-[14px] font-medium text-slate-900"
+                      }
                     >
-                      Cancel
-                    </button>
+                      What did you notice?
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={saveNoteEntry}
-                      className={actionButton(dark, true)}
-                    >
-                      Save
-                    </button>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </>
-        ) : (
-          <>
-            <p
-              className={[
-                "mt-3 max-w-[40rem]",
-                bodyText(dark),
-                "text-[14.5px] leading-6 sm:text-[15px]",
-              ].join(" ")}
-            >
-              Actions are the next moves that turn insight into something real.
-            </p>
+                    <textarea
+                      value={textValue}
+                      onChange={(e) => setTextValue(e.target.value)}
+                      rows={5}
+                      placeholder="Write a quick note about what you tried, what happened, or what stood out."
+                      className={textAreaClass(dark)}
+                    />
 
-            <p
-              className={[
-                "mt-2 max-w-[38rem]",
-                mutedText(dark),
-                "text-[13.5px] leading-5 sm:text-[14px]",
-              ].join(" ")}
-            >
-              Once Everleap has more signal, this sharpens into one clearer move
-              you can actually test.
-            </p>
-          </>
-        )}
+                    <div className="mt-3 flex justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditorOpen(false);
+                          setTextValue("");
+                        }}
+                        className={actionButton(dark)}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={saveNoteEntry}
+                        className={actionButton(dark, true)}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </>
+          ) : (
+            <>
+              <p
+                className={[
+                  "mt-3",
+                  bodyText(dark),
+                  "text-[14.5px] leading-6 sm:text-[15px]",
+                ].join(" ")}
+              >
+                Actions are the next moves that turn insight into something real.
+              </p>
+
+              <p
+                className={[
+                  "mt-2",
+                  mutedText(dark),
+                  "text-[13.5px] leading-5 sm:text-[14px]",
+                ].join(" ")}
+              >
+                Once Everleap has more signal, this sharpens into one clearer move
+                you can actually test.
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </section>
   );
