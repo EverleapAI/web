@@ -1522,7 +1522,7 @@ function WorkPathCard({
 }
 
 export default function WorkExplorePage() {
-  const [profile, setProfile] = React.useState<UserProfileSignals>(EMPTY_PROFILE);
+  const [profile, setProfile] = React.useState<UserProfileSignals | null>(null);
 
   React.useEffect(() => {
     setProfile(readStoredProfileSignals());
@@ -1530,6 +1530,8 @@ export default function WorkExplorePage() {
 
   const allPaths = React.useMemo(() => normalizePaths(WORK_PATHS), []);
   const visiblePaths = React.useMemo(() => {
+    if (!profile) return [];
+
     return allPaths
       .map((path, index) => ({
         path,
@@ -1544,16 +1546,17 @@ export default function WorkExplorePage() {
       .map((item) => item.path);
   }, [allPaths, profile]);
 
-  const showOnlyIntro = !profile.hasQuestionSignal;
+  const isReady = profile !== null;
+  const showOnlyIntro = profile ? !profile.hasQuestionSignal : true;
 
   return (
     <div className={pagePadding()}>
       <div className="mx-auto w-full max-w-5xl px-2">
         <ExploreLaneRail lanes={EXPLORE_LANES} />
 
-        <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} />
+        {isReady ? <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} /> : null}
 
-        {!showOnlyIntro ? (
+        {isReady && !showOnlyIntro ? (
           <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
             {visiblePaths.map((path) => (
               <WorkPathCard key={path.id} path={path} profile={profile} />
