@@ -24,15 +24,15 @@ type Category = RecommendedNext;
 type Saved = { answer?: string; skipped?: boolean };
 
 function pagePadding() {
-  return "pt-4 pb-6";
+  return "pt-3 pb-5";
 }
 
 function pageShell() {
-  return "mx-auto w-full max-w-[720px] px-3";
+  return "mx-auto w-full max-w-[720px] px-2";
 }
 
 function sectionSpacing() {
-  return "mt-4";
+  return "mt-3";
 }
 
 function labelForCategory(cat: Category) {
@@ -198,15 +198,12 @@ export default function MainHomePage() {
             <section className="relative">
               <SectionCard tone="hero" className="px-3 py-4">
                 <TodayIntro
-                  title={introTitle || "Let’s start building your direction"}
+                  title={introTitle}
                   dark={dark}
                   motionEnabled={motionEnabled}
                   isTransitioning={transitioning}
-                  body={
-                    introBody ||
-                    "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction. We start with motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore."
-                  }
-                  primaryCtaLabel={ctaLabel || "Start with a few questions"}
+                  body={introBody}
+                  primaryCtaLabel={ctaLabel}
                   onPrimary={handlePrimary}
                 />
               </SectionCard>
