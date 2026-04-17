@@ -47,7 +47,7 @@ type Props = {
 function primaryActionLink(dark: boolean) {
   return [
     "group inline-flex items-center gap-1.5",
-    "text-[14.5px] font-medium transition",
+    "text-[14px] font-medium transition",
     "focus-visible:outline-none",
     dark
       ? "text-white/80 hover:text-white/92"
@@ -58,7 +58,7 @@ function primaryActionLink(dark: boolean) {
 function secondaryActionLink(dark: boolean) {
   return [
     "group inline-flex items-center gap-1.5",
-    "text-[14px] font-medium transition",
+    "text-[13.5px] font-medium transition",
     "focus-visible:outline-none",
     dark
       ? "text-white/62 hover:text-white/76"
@@ -68,7 +68,7 @@ function secondaryActionLink(dark: boolean) {
 
 function editorShell(dark: boolean) {
   return [
-    "mt-4 rounded-[18px] border p-4",
+    "mt-3 rounded-[16px] border p-3",
     dark
       ? "border-white/10 bg-white/[0.03]"
       : "border-black/10 bg-black/[0.03]",
@@ -77,7 +77,7 @@ function editorShell(dark: boolean) {
 
 function textAreaClass(dark: boolean) {
   return [
-    "mt-3 w-full rounded-2xl border px-3.5 py-3 text-[14px] leading-6 transition",
+    "mt-2.5 w-full rounded-2xl border px-3 py-2.5 text-[14px] leading-[1.65] transition",
     "focus:outline-none focus-visible:ring-2",
     dark
       ? "border-white/10 bg-white/[0.04] text-white/82 placeholder:text-white/28 focus-visible:ring-violet-300/20"
@@ -87,7 +87,7 @@ function textAreaClass(dark: boolean) {
 
 function actionButton(dark: boolean, emph = false) {
   return [
-    "inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-medium transition",
+    "inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium transition",
     "focus-visible:outline-none",
     dark
       ? emph
@@ -101,13 +101,13 @@ function actionButton(dark: boolean, emph = false) {
 
 function bulletDotClass(dark: boolean) {
   return dark
-    ? "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-200/55 ring-1 ring-violet-100/12"
-    : "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500/70 ring-1 ring-violet-600/12";
+    ? "mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-200/55 ring-1 ring-violet-100/12"
+    : "mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500/70 ring-1 ring-violet-600/12";
 }
 
 function logRow(dark: boolean) {
   return [
-    "py-3",
+    "py-2.5",
     dark
       ? "border-t border-white/8 first:border-t-0"
       : "border-t border-black/8 first:border-t-0",
@@ -251,7 +251,7 @@ export default function InsightsActionCard({
     <section
       className={[
         sectionCard(dark, "action"),
-        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
       <div
@@ -286,9 +286,9 @@ export default function InsightsActionCard({
               {body ? (
                 <p
                   className={[
-                    "mt-3",
+                    "mt-2.5",
                     bodyText(dark),
-                    "text-[14.5px] leading-6 sm:text-[15px]",
+                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
                   ].join(" ")}
                 >
                   {body}
@@ -298,12 +298,12 @@ export default function InsightsActionCard({
               {safeBullets.length ? (
                 <ul
                   className={[
-                    "mt-4 space-y-2.5 border-t pt-4",
+                    "mt-3 space-y-2 border-t pt-3",
                     subDivider(dark),
                   ].join(" ")}
                 >
                   {safeBullets.map((bullet, index) => (
-                    <li key={`${bullet}_${index}`} className="flex gap-3">
+                    <li key={`${bullet}_${index}`} className="flex gap-2.5">
                       <span aria-hidden className={bulletDotClass(dark)} />
                       <span className={bulletText(dark)}>{bullet}</span>
                     </li>
@@ -312,10 +312,10 @@ export default function InsightsActionCard({
               ) : null}
 
               {logs.length > 0 ? (
-                <div className="mt-4">
+                <div className="mt-3">
                   {logs.map((log) => (
                     <div key={log.id} className={logRow(dark)}>
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2.5">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <span
@@ -331,7 +331,7 @@ export default function InsightsActionCard({
                           {log.type === "note" ? (
                             <div
                               className={[
-                                "mt-1.5 text-[14px] leading-6",
+                                "mt-1 text-[13.5px] leading-[1.6]",
                                 dark ? "text-white/78" : "text-slate-900",
                               ].join(" ")}
                             >
@@ -342,7 +342,7 @@ export default function InsightsActionCard({
 
                         <div
                           className={[
-                            "shrink-0 pt-0.5 text-[11px]",
+                            "shrink-0 pt-0.5 text-[10.5px]",
                             mutedText(dark),
                           ].join(" ")}
                         >
@@ -354,7 +354,7 @@ export default function InsightsActionCard({
                 </div>
               ) : null}
 
-              <div className="mt-5 flex flex-wrap items-center gap-4">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 {status === "planned" && (
                   <motion.button
                     type="button"
@@ -431,7 +431,7 @@ export default function InsightsActionCard({
                       className={textAreaClass(dark)}
                     />
 
-                    <div className="mt-3 flex justify-between gap-2">
+                    <div className="mt-2.5 flex justify-between gap-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -459,9 +459,9 @@ export default function InsightsActionCard({
             <>
               <p
                 className={[
-                  "mt-3",
+                  "mt-2.5",
                   bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 Actions are the next moves that turn insight into something real.
@@ -469,9 +469,9 @@ export default function InsightsActionCard({
 
               <p
                 className={[
-                  "mt-2",
+                  "mt-1.5",
                   mutedText(dark),
-                  "text-[13.5px] leading-5 sm:text-[14px]",
+                  "text-[13px] leading-[1.55] sm:text-[13.5px]",
                 ].join(" ")}
               >
                 Once Everleap has more signal, this sharpens into one clearer move

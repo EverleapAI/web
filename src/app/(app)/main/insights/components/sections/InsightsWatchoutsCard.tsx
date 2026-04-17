@@ -26,8 +26,8 @@ type Props = {
 
 function bulletDotClass(dark: boolean) {
   return dark
-    ? "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200/55 ring-1 ring-amber-100/12"
-    : "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/70 ring-1 ring-amber-600/12";
+    ? "mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200/55 ring-1 ring-amber-100/12"
+    : "mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/70 ring-1 ring-amber-600/12";
 }
 
 export default function InsightsWatchoutsCard({
@@ -52,7 +52,7 @@ export default function InsightsWatchoutsCard({
     <section
       className={[
         sectionCard(dark, "watchouts"),
-        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
       <div
@@ -88,18 +88,18 @@ export default function InsightsWatchoutsCard({
             <>
               <p
                 className={[
-                  "mt-3",
+                  "mt-2.5",
                   bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 {introLine}
               </p>
 
               {safeBullets.length ? (
-                <ul className="mt-4 space-y-2.5">
+                <ul className="mt-3 space-y-2">
                   {safeBullets.map((bullet, index) => (
-                    <li key={`${bullet}_${index}`} className="flex gap-3">
+                    <li key={`${bullet}_${index}`} className="flex gap-2.5">
                       <span aria-hidden className={bulletDotClass(dark)} />
                       <span className={bulletText(dark)}>{bullet}</span>
                     </li>
@@ -111,9 +111,9 @@ export default function InsightsWatchoutsCard({
             <>
               <p
                 className={[
-                  "mt-3",
+                  "mt-2.5",
                   bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 Watchouts are the places where something good can start working
@@ -122,9 +122,9 @@ export default function InsightsWatchoutsCard({
 
               <p
                 className={[
-                  "mt-2",
+                  "mt-1.5",
                   bodyText(dark),
-                  "text-[14px] leading-6 sm:text-[14.5px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 As Everleap picks up more signal, this becomes a clearer read on

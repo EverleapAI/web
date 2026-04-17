@@ -1293,8 +1293,8 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col px-2 pb-24 pt-0 sm:px-1">
-        <div className="relative mb-3">
+      <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col px-[4px] pb-4 pt-1">
+        <div className="relative mb-2">
           {mounted && showLeft ? (
             <button
               type="button"
@@ -1309,7 +1309,7 @@ export default function Page() {
 
           <div
             ref={railRef}
-            className="relative flex gap-2 overflow-x-auto pb-0 pr-6 md:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="relative flex gap-2 overflow-x-auto pb-0 pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {TABS.map((t) => {
               const selected = t.id === tab;

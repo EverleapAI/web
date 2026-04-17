@@ -51,7 +51,7 @@ function slugify(input: string) {
 
 function optionBase(dark: boolean, selected: boolean) {
   return [
-    "w-full rounded-[16px] px-4 py-3.5 text-left transition",
+    "w-full rounded-[14px] px-3 py-2.5 text-left transition",
     "focus-visible:outline-none",
     dark
       ? selected
@@ -79,7 +79,7 @@ function metaClass(dark: boolean, selected: boolean) {
 
 function checkWrap(dark: boolean, selected: boolean) {
   return [
-    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition",
+    "flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full transition",
     selected
       ? dark
         ? "bg-sky-300/22 text-sky-100 ring-1 ring-sky-300/30"
@@ -135,7 +135,7 @@ export default function InsightsTinyTaskCard({
     <section
       className={[
         sectionCard(dark, "task"),
-        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
       <div
@@ -170,11 +170,19 @@ export default function InsightsTinyTaskCard({
           {hasStrongSignal ? (
             <>
               {body ? (
-                <p className={["mt-3", bodyText(dark)].join(" ")}>{body}</p>
+                <p
+                  className={[
+                    "mt-2.5",
+                    bodyText(dark),
+                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                  ].join(" ")}
+                >
+                  {body}
+                </p>
               ) : null}
 
               {safeChoices.length ? (
-                <div className="mt-4 space-y-2.5">
+                <div className="mt-3 space-y-2">
                   {safeChoices.map((choice) => {
                     const selected =
                       result?.kind === "choice" && result.choiceId === choice.id;
@@ -187,11 +195,11 @@ export default function InsightsTinyTaskCard({
                         className={optionBase(dark, selected)}
                         aria-pressed={selected}
                       >
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-2.5">
                           <div className="min-w-0">
                             <div
                               className={[
-                                "text-[14px] font-medium leading-5",
+                                "text-[13.5px] font-medium leading-5 sm:text-[14px]",
                                 labelClass(dark, selected),
                               ].join(" ")}
                             >
@@ -201,7 +209,7 @@ export default function InsightsTinyTaskCard({
                             {choice.meta ? (
                               <div
                                 className={[
-                                  "mt-1 text-[12.5px] leading-5",
+                                  "mt-0.5 text-[12px] leading-5 sm:text-[12.5px]",
                                   metaClass(dark, selected),
                                 ].join(" ")}
                               >
@@ -225,7 +233,13 @@ export default function InsightsTinyTaskCard({
               ) : null}
             </>
           ) : (
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
+            <p
+              className={[
+                "mt-2.5",
+                bodyText(dark),
+                "text-[14px] leading-[1.65] sm:text-[14.5px]",
+              ].join(" ")}
+            >
               A Tiny Task is one small experiment. Once we have more signal, this
               turns into something simple you can actually try this week.
             </p>

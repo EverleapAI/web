@@ -102,7 +102,7 @@ export default function InsightsThemesCard({
     <section
       className={[
         sectionCard(dark, "themes"),
-        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
       <style jsx global>{`
@@ -145,9 +145,9 @@ export default function InsightsThemesCard({
 
           {hasStrongSignal ? (
             <>
-              <div className="mt-3">
+              <div className="mt-2.5">
                 {items.length ? (
-                  <div className="flex flex-wrap gap-x-3 gap-y-2 leading-none">
+                  <div className="flex flex-wrap gap-x-2.5 gap-y-1.5 leading-none">
                     {items.map((w) => {
                       const isTop = topSet.has(w.term.toLowerCase());
                       return (
@@ -158,7 +158,7 @@ export default function InsightsThemesCard({
                             wordColorClasses(dark, w.term),
                             isTop
                               ? [
-                                  "rounded-full px-2.5 py-1",
+                                  "rounded-full px-2 py-[3px]",
                                   highlightWrap(dark),
                                 ].join(" ")
                               : "",
@@ -175,7 +175,12 @@ export default function InsightsThemesCard({
                     })}
                   </div>
                 ) : (
-                  <div className={bodyText(dark)}>
+                  <div
+                    className={[
+                      bodyText(dark),
+                      "text-[14px] leading-[1.65]",
+                    ].join(" ")}
+                  >
                     Nothing to map yet — give me 1–2 real examples.
                   </div>
                 )}
@@ -184,9 +189,9 @@ export default function InsightsThemesCard({
               {motivatorsLine ? (
                 <p
                   className={[
-                    "mt-3",
+                    "mt-2.5",
                     mutedText(dark),
-                    "text-[13.5px]",
+                    "text-[13px] leading-[1.55] sm:text-[13.5px]",
                   ].join(" ")}
                 >
                   {motivatorsLine}
@@ -194,7 +199,13 @@ export default function InsightsThemesCard({
               ) : null}
             </>
           ) : (
-            <p className={["mt-3", bodyText(dark)].join(" ")}>
+            <p
+              className={[
+                "mt-2.5",
+                bodyText(dark),
+                "text-[14px] leading-[1.65] sm:text-[14.5px]",
+              ].join(" ")}
+            >
               Once you answer a few questions, this will start mapping what
               actually gives you energy and where your patterns show up.
             </p>

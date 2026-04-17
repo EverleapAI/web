@@ -68,10 +68,7 @@ export function cardBody() {
   return "relative min-w-0";
 }
 
-export function headerIconWrap(
-  dark: boolean,
-  tone?: HeaderTone
-) {
+export function headerIconWrap(dark: boolean, tone?: HeaderTone) {
   const toneMap = {
     neutral: dark
       ? "bg-amber-300/14 text-amber-100/72 ring-1 ring-amber-200/12"
@@ -219,10 +216,7 @@ export function bulletText(dark: boolean) {
     : "text-[15px] leading-relaxed text-slate-700";
 }
 
-export function sectionCard(
-  dark: boolean,
-  tone: CardTone = "neutral"
-) {
+export function sectionCard(dark: boolean, tone: CardTone = "neutral") {
   const toneMap = {
     neutral: dark
       ? "border-amber-300/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02))]"
@@ -251,7 +245,6 @@ export function sectionCard(
 
   return [
     "relative overflow-hidden rounded-[24px] border",
-    "px-4 py-4 md:px-5 md:py-5",
     "backdrop-blur-xl",
     dark
       ? "shadow-[0_14px_40px_rgba(0,0,0,0.24)]"

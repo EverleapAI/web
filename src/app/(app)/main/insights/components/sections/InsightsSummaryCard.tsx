@@ -111,7 +111,7 @@ export default function InsightsSummaryCard({
     <section
       className={[
         sectionCard(dark, "neutral"),
-        "overflow-hidden px-4 py-4 sm:px-5 sm:py-5",
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
       <div
@@ -142,8 +142,8 @@ export default function InsightsSummaryCard({
           <h2
             className={[
               dark ? "text-white" : "text-slate-950",
-              "mt-1 text-[1.55rem] font-semibold leading-[1.06] tracking-[-0.03em]",
-              "sm:text-[1.74rem]",
+              "mt-0.5 text-[1.5rem] font-semibold leading-[1.07] tracking-[-0.03em]",
+              "sm:text-[1.68rem]",
             ].join(" ")}
           >
             {hasStrongSignal ? resolvedHeadline : noSignalTitle}
@@ -154,9 +154,9 @@ export default function InsightsSummaryCard({
               {compressed.lead ? (
                 <p
                   className={[
-                    "mt-3",
+                    "mt-2.5",
                     bodyText(dark),
-                    "text-[14.5px] leading-6 sm:text-[15px]",
+                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
                   ].join(" ")}
                 >
                   {compressed.lead}
@@ -166,9 +166,9 @@ export default function InsightsSummaryCard({
               {compressed.close ? (
                 <p
                   className={[
-                    "mt-2",
+                    "mt-1.5",
                     bodyText(dark),
-                    "text-[14.5px] leading-6 sm:text-[15px]",
+                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
                   ].join(" ")}
                 >
                   {compressed.close}
@@ -179,9 +179,9 @@ export default function InsightsSummaryCard({
             <>
               <p
                 className={[
-                  "mt-3",
+                  "mt-2.5",
                   bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 This page gets much more useful once Everleap has a little more
@@ -190,9 +190,9 @@ export default function InsightsSummaryCard({
 
               <p
                 className={[
-                  "mt-2",
+                  "mt-1.5",
                   bodyText(dark),
-                  "text-[14.5px] leading-6 sm:text-[15px]",
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
                 ].join(" ")}
               >
                 A few Motivations questions is enough to start grounding this in
@@ -200,11 +200,11 @@ export default function InsightsSummaryCard({
                 repeating.
               </p>
 
-              <div className="mt-4">
+              <div className="mt-3">
                 <Link
                   href={startHref}
                   className={[
-                    "group inline-flex items-center gap-1.5 text-[14.5px] font-medium transition focus-visible:outline-none",
+                    "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
                     dark
                       ? "text-white/82 hover:text-white/94"
                       : "text-slate-900 hover:text-black",

@@ -996,7 +996,7 @@ function IntroOrbitArt() {
 
 function IntroHeader() {
   return (
-    <div className="mb-3 flex items-center gap-2">
+    <div className="mb-2 flex items-center gap-2">
       <div className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-teal-300/10 text-teal-200/70">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
@@ -1096,28 +1096,28 @@ function WorkIntroPanel({
 }) {
   if (noSignal) {
     return (
-      <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-6 lg:py-7">
+      <section className="relative mt-1 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-1.5 sm:px-5 sm:py-5 lg:mt-2 lg:px-6 lg:py-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
         <IntroOrbitArt />
 
         <div className="relative pr-0 md:max-w-4xl md:pr-20 lg:pr-24">
           <IntroHeader />
 
-          <h2 className="mt-2.5 text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[30px] md:max-w-3xl lg:text-[34px] xl:text-[36px]">
+          <h2 className="mt-1.5 text-[24px] font-semibold leading-[1.08] tracking-[-0.04em] text-white sm:text-[28px] md:max-w-3xl lg:text-[31px] xl:text-[33px]">
             This is where Everleap&apos;s recommendations get real.
           </h2>
 
-          <p className="mt-4 text-[14px] leading-[1.72] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+          <p className="mt-3 text-[14px] leading-[1.66] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-3.5 lg:text-[15px] lg:leading-[1.72]">
             Explore is designed to turn your <SignalWord /> into real paths you
             can test, compare, and move toward — but there isn&apos;t enough of
             it yet to make this page feel sharp. Answer a few quick questions,
             then come back. You&apos;ll see this change immediately.
           </p>
 
-          <div className="mt-5">
+          <div className="mt-4">
             <Link
               href="/main/questions?cat=motivations&returnTo=/main/explore/work"
-              className="group inline-flex items-center gap-1.5 text-[14.5px] font-medium text-white/80 transition hover:text-white/92"
+              className="group inline-flex items-center gap-1.5 text-[14px] font-medium text-white/80 transition hover:text-white/92"
             >
               <span>Start with a few quick questions</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -1131,18 +1131,18 @@ function WorkIntroPanel({
   const opening = getAgenticOpening(profile);
 
   return (
-    <section className="relative mt-4 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-5 sm:px-5 sm:py-6 lg:mt-6 lg:px-6 lg:py-7">
+    <section className="relative mt-1 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.045] px-4 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-1.5 sm:px-5 sm:py-5 lg:mt-2 lg:px-6 lg:py-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(129,93,255,0.12),transparent_18%),radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.10),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.00)_46%)]" />
       <IntroOrbitArt />
 
       <div className="relative pr-0 md:max-w-4xl md:pr-20 lg:pr-24">
         <IntroHeader />
 
-        <h2 className="mt-2.5 text-[26px] font-semibold leading-[1.07] tracking-[-0.04em] text-white sm:text-[30px] md:max-w-3xl lg:text-[34px] xl:text-[36px]">
+        <h2 className="mt-1.5 text-[24px] font-semibold leading-[1.08] tracking-[-0.04em] text-white sm:text-[28px] md:max-w-3xl lg:text-[31px] xl:text-[33px]">
           {opening.title}
         </h2>
 
-        <p className="mt-4 text-[14px] leading-[1.72] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-5 lg:text-[16px] lg:leading-[1.78]">
+        <p className="mt-3 text-[14px] leading-[1.66] text-white/76 sm:text-[15px] md:max-w-3xl lg:mt-3.5 lg:text-[15px] lg:leading-[1.72]">
           These recommendations come from the <SignalWord /> Everleap is already
           picking up in what you answer and lean toward — then turning that into
           paths worth testing for real. {opening.bodyA} {opening.bodyB}
@@ -1416,7 +1416,7 @@ export default function WorkExplorePage() {
       {isReady ? <WorkIntroPanel profile={profile} noSignal={showOnlyIntro} /> : null}
 
       {isReady && !showOnlyIntro ? (
-        <section className="mt-4 grid grid-cols-1 gap-4 sm:mt-5 sm:gap-5 lg:mt-6 lg:gap-6">
+        <section className="mt-2.5 grid grid-cols-1 gap-4 sm:mt-3 sm:gap-5 lg:mt-4 lg:gap-6">
           {visiblePaths.map((path) => (
             <WorkPathCard key={path.id} path={path} profile={profile} />
           ))}
