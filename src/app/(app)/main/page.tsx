@@ -24,11 +24,11 @@ type Category = RecommendedNext;
 type Saved = { answer?: string; skipped?: boolean };
 
 function pagePadding() {
-  return "pt-3 pb-5";
+  return "pt-2 pb-5";
 }
 
 function pageShell() {
-  return "mx-auto w-full max-w-[720px] px-2";
+  return "mx-auto w-full max-w-[720px] px-[4px]";
 }
 
 function sectionSpacing() {
