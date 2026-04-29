@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { startRegistration } from "@simplewebauthn/browser";
 
 type Phase = "boy" | "girl";
 
@@ -16,6 +17,9 @@ export default function HomePage() {
   const [girlReady, setGirlReady] = React.useState(false);
 
   const [phase, setPhase] = React.useState<Phase>("boy");
+
+  const [passkeyBusy, setPasskeyBusy] = React.useState(false);
+  const [passkeyMessage, setPasskeyMessage] = React.useState<string | null>(null);
 
   // Guard so we don’t retrigger fade repeatedly during timeupdate
   const fadingRef = React.useRef(false);
@@ -52,6 +56,49 @@ export default function HomePage() {
     return () => {
       alive = false;
     };
+  }, []);
+
+  const registerPasskey = React.useCallback(async () => {
+    try {
+      setPasskeyBusy(true);
+      setPasskeyMessage(null);
+
+      const optionsRes = await fetch("/api/auth/passkey/register/options", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const optionsData = await optionsRes.json();
+
+      if (!optionsRes.ok || !optionsData?.ok) {
+        throw new Error(optionsData?.error || "Failed to get passkey options.");
+      }
+
+      const attResp = await startRegistration({ optionsJSON: optionsData.options });
+
+      const verifyRes = await fetch("/api/auth/passkey/register/verify", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ response: attResp }),
+      });
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok || !verifyData?.ok) {
+        throw new Error(verifyData?.error || "Failed to verify passkey.");
+      }
+
+      setPasskeyMessage("Passkey registered.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Passkey registration failed.";
+      setPasskeyMessage(message);
+    } finally {
+      setPasskeyBusy(false);
+    }
   }, []);
 
   // Mobile crop (approved)
@@ -283,14 +330,32 @@ export default function HomePage() {
         {/* Desktop/tablet centered card */}
         <div className="hidden flex-1 items-center justify-center px-4 md:flex">
           <section className="w-full max-w-3xl">
-            {authed === false ? <AuthOverlay /> : <DesktopHeroCard authed={authed} />}
+            {authed === false ? (
+              <AuthOverlay />
+            ) : (
+              <DesktopHeroCard
+                authed={authed}
+                onRegisterPasskey={registerPasskey}
+                passkeyBusy={passkeyBusy}
+                passkeyMessage={passkeyMessage}
+              />
+            )}
           </section>
         </div>
 
         {/* Mobile bottom sheet */}
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 md:hidden">
           <section className="pointer-events-auto px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
-            {authed === false ? <AuthOverlay /> : <MobileBottomSheet authed={authed} />}
+            {authed === false ? (
+              <AuthOverlay />
+            ) : (
+              <MobileBottomSheet
+                authed={authed}
+                onRegisterPasskey={registerPasskey}
+                passkeyBusy={passkeyBusy}
+                passkeyMessage={passkeyMessage}
+              />
+            )}
           </section>
         </div>
       </main>
@@ -300,7 +365,17 @@ export default function HomePage() {
 
 /* ---- cards ---- */
 
-function DesktopHeroCard({ authed }: { authed: boolean | null }) {
+function DesktopHeroCard({
+  authed,
+  onRegisterPasskey,
+  passkeyBusy,
+  passkeyMessage,
+}: {
+  authed: boolean | null;
+  onRegisterPasskey: () => void;
+  passkeyBusy: boolean;
+  passkeyMessage: string | null;
+}) {
   return (
     <div className="w-full rounded-3xl border border-white/10 bg-slate-950/58 px-6 py-7 text-center shadow-[0_18px_70px_rgba(0,0,0,0.72)] backdrop-blur-lg md:px-8 md:py-10">
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-sky-200/80">
@@ -324,6 +399,19 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
         </Link>
       </div>
 
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          onClick={onRegisterPasskey}
+          disabled={passkeyBusy}
+          className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {passkeyBusy ? "Registering…" : "Register Passkey (test)"}
+        </button>
+      </div>
+
+      {passkeyMessage && <p className="mt-3 text-xs text-white/65">{passkeyMessage}</p>}
+
       <p className="mt-4 text-xs text-white/55">
         Already have an account?{" "}
         <Link href="/regauth" className="font-semibold text-white/70 transition hover:text-white">
@@ -336,7 +424,17 @@ function DesktopHeroCard({ authed }: { authed: boolean | null }) {
   );
 }
 
-function MobileBottomSheet({ authed }: { authed: boolean | null }) {
+function MobileBottomSheet({
+  authed,
+  onRegisterPasskey,
+  passkeyBusy,
+  passkeyMessage,
+}: {
+  authed: boolean | null;
+  onRegisterPasskey: () => void;
+  passkeyBusy: boolean;
+  passkeyMessage: string | null;
+}) {
   return (
     <div className="w-full rounded-3xl border border-white/10 bg-slate-950/60 px-5 py-5 text-center shadow-[0_16px_60px_rgba(0,0,0,0.7)] backdrop-blur-lg">
       <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-sky-200/80">
@@ -359,6 +457,19 @@ function MobileBottomSheet({ authed }: { authed: boolean | null }) {
           Start talking
         </Link>
       </div>
+
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          onClick={onRegisterPasskey}
+          disabled={passkeyBusy}
+          className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {passkeyBusy ? "Registering…" : "Register Passkey (test)"}
+        </button>
+      </div>
+
+      {passkeyMessage && <p className="mt-3 text-xs text-white/65">{passkeyMessage}</p>}
 
       <p className="mt-3 text-xs text-white/55">
         Already have an account?{" "}

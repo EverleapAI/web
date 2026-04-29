@@ -27,3 +27,6 @@ Thumbs.db
 *.zip
 *.tar
 *.gz
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -1,4 +1,9 @@
 // src/app/api/regauth/start/route.ts
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -10,47 +15,55 @@ type StartBody = {
 type PendingPayload = {
   v: 1;
   identifier: string;
-  codeHash: string;
-  iat: number; // epoch ms
-  exp: number; // epoch ms
+  iat: number;
+  exp: number;
 };
 
 const PENDING_COOKIE = "regauth_pending";
-const PENDING_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PENDING_TTL_MS = 10 * 60 * 1000;
+
+const RAW_BASE = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7071/api"
+).replace(/\/+$/, "");
+
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const REQUEST_CODE_URL = `${API_BASE}/auth/email/request-code`;
+
+function noStore(res: NextResponse): NextResponse {
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Vary", "Cookie");
+  return res;
+}
 
 function jsonError(message: string, status = 400): NextResponse {
-  return NextResponse.json({ ok: false, error: message } as const, { status });
+  return noStore(
+    NextResponse.json({ ok: false, error: message } as const, { status })
+  );
 }
 
 function getSecret(): string {
   const secret = process.env.REGAUTH_COOKIE_SECRET;
+
   if (!secret) {
-    // Fail closed in prod; in dev we still want you to notice quickly.
     throw new Error("Missing env REGAUTH_COOKIE_SECRET");
   }
+
   return secret;
 }
 
 function normalizeIdentifier(raw: string): string {
-  const s = raw.trim();
-  // Keep minimal normalization for now (email/phone). Validation can evolve later.
-  return s;
+  return String(raw || "").trim().toLowerCase();
 }
 
-function isReasonableIdentifier(s: string): boolean {
-  if (s.length < 3) return false;
-  if (s.length > 200) return false;
-  return true;
-}
+function isLikelyEmail(v: string): boolean {
+  const s = (v ?? "").trim();
+  const at = s.indexOf("@");
 
-function generateCode6(): string {
-  // cryptographically strong 6-digit code
-  const n = crypto.randomInt(0, 1_000_000);
-  return String(n).padStart(6, "0");
-}
+  if (at <= 0) return false;
 
-function sha256Hex(input: string): string {
-  return crypto.createHash("sha256").update(input).digest("hex");
+  const dot = s.lastIndexOf(".");
+  return dot > at + 1 && dot < s.length - 1;
 }
 
 function hmacHex(secret: string, input: string): string {
@@ -61,11 +74,13 @@ function encodePending(secret: string, payload: PendingPayload): string {
   const json = JSON.stringify(payload);
   const b64 = Buffer.from(json, "utf8").toString("base64url");
   const sig = hmacHex(secret, b64);
+
   return `${b64}.${sig}`;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
   let body: StartBody;
+
   try {
     body = (await req.json()) as StartBody;
   } catch {
@@ -75,42 +90,65 @@ export async function POST(req: Request): Promise<NextResponse> {
   const identifierRaw = typeof body.identifier === "string" ? body.identifier : "";
   const identifier = normalizeIdentifier(identifierRaw);
 
-  if (!isReasonableIdentifier(identifier)) {
-    return jsonError("Enter a valid email or phone number.", 400);
+  if (!isLikelyEmail(identifier)) {
+    return jsonError("Enter a valid email address.", 400);
   }
 
-  // Generate the code (delivery is stubbed for now).
-  const code = generateCode6();
+  let upstream: Response;
+
+  try {
+    upstream = await fetch(REQUEST_CODE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify({ email: identifier }),
+    });
+  } catch {
+    return jsonError("Couldn’t reach sign-in service.", 502);
+  }
+
+  const text = await upstream.text().catch(() => "");
+  let data: unknown = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!upstream.ok) {
+    const message =
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
+      typeof (data as { error?: unknown }).error === "string"
+        ? (data as { error: string }).error
+        : "Couldn’t send it. Try again.";
+
+    return jsonError(message, upstream.status);
+  }
 
   const now = Date.now();
+
   const payload: PendingPayload = {
     v: 1,
     identifier,
-    codeHash: sha256Hex(code),
     iat: now,
     exp: now + PENDING_TTL_MS,
   };
 
   let cookieValue: string;
+
   try {
     cookieValue = encodePending(getSecret(), payload);
   } catch {
-    // In production we want a clean failure if misconfigured.
     return jsonError("Server not configured for sign-in.", 500);
   }
 
-  // In a real system: send code via SMS/email provider here.
-  // For now: log it in dev to support UI testing.
-  if (process.env.NODE_ENV !== "production") {
-    console.info(`[regauth] dev code for ${identifier}: ${code}`);
-  }
-
-  const resBody: { ok: true; devCode?: string } = { ok: true };
-  if (process.env.NODE_ENV !== "production") {
-    resBody.devCode = code;
-  }
-
-  const res = NextResponse.json(resBody, { status: 200 });
+  const res = NextResponse.json({ ok: true }, { status: 200 });
 
   res.cookies.set(PENDING_COOKIE, cookieValue, {
     httpOnly: true,
@@ -120,5 +158,5 @@ export async function POST(req: Request): Promise<NextResponse> {
     maxAge: Math.floor(PENDING_TTL_MS / 1000),
   });
 
-  return res;
+  return noStore(res);
 }

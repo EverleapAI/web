@@ -1,44 +1,39 @@
-// src/app/(public)/regauth/logout/page.tsx
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 
-import { REGAUTH_ROUTES } from "@/regauth/config";
-import { clearAuthStorage, clearRegAuthDraft } from "@/regauth/state/storage";
-import { sanitizeReturnTo } from "@/regauth/lib/returnTo";
 import { clearAuthedCache } from "@/regauth/state/session";
+import { clearAuthStorage, clearRegAuthDraft } from "@/regauth/state/storage";
 
-async function postLogout(): Promise<boolean> {
+async function postLogout(): Promise<void> {
   try {
-    const res = await fetch("/api/regauth/logout", { method: "POST" });
-    return res.ok;
+    await fetch("/api/regauth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
   } catch {
-    return false;
+    // Still continue with local cleanup + hard redirect.
   }
 }
 
-export default function RegAuthLogoutPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
+export default function RegAuthLogoutPage(): React.JSX.Element {
   React.useEffect(() => {
-    (async () => {
-      // Clear server session cookie (httpOnly)
+    async function logout() {
       await postLogout();
 
-      // Bust in-memory authed cache
       clearAuthedCache();
-
-      // Clear client-local auth state (UI stub)
       clearAuthStorage();
       clearRegAuthDraft();
 
-      // Redirect back to auth entry (or safe returnTo)
-      const returnTo = sanitizeReturnTo(searchParams?.get("returnTo"));
-      router.replace(returnTo || REGAUTH_ROUTES.entry);
-    })();
-  }, [router, searchParams]);
+      window.location.href = "/";
+    }
 
-  return <div className="text-sm text-neutral-300">Signing you out…</div>;
+    void logout();
+  }, []);
+
+  return (
+    <main className="flex min-h-screen items-center justify-center px-4 text-white">
+      <div className="text-sm text-white/55">Signing you out…</div>
+    </main>
+  );
 }

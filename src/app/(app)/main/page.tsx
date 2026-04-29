@@ -147,14 +147,14 @@ export default function MainHomePage() {
 
   const introBody = React.useMemo(() => {
     if (isZeroState) {
-      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction. We start with motivations, strengths, and skills, then connect them into patterns and real paths you can actually explore.";
+      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction.";
     }
 
     if (allSignalsComplete) {
       return "You’ve now given Everleap enough signal across motivations, strengths, and skills to start turning those patterns into clearer ideas about what may fit.";
     }
 
-    return `You still have a few questions to answer before Everleap can give you ideas that actually fit. Everleap looks for patterns in what pulls you in, what drains you, and how you think — those patterns become your signals. The clearest next move is to continue ${nextCategoryLabel} and pick up at the first question in that section you have not answered yet.`;
+    return `You still have a few questions to answer before Everleap can give you ideas that actually fit. Continue ${nextCategoryLabel}.`;
   }, [isZeroState, allSignalsComplete, nextCategoryLabel]);
 
   const ctaLabel = !mounted
@@ -195,7 +195,7 @@ export default function MainHomePage() {
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
-            <section className="relative">
+            <section>
               <SectionCard tone="hero" className="px-3 py-4">
                 <TodayIntro
                   title={introTitle}
@@ -211,31 +211,19 @@ export default function MainHomePage() {
 
             <section className={sectionSpacing()}>
               <SectionCard tone="plum" compact>
-                <SignalsCard
-                  dark={dark}
-                  progress={progress}
-                  nextKey={recommendedNext}
-                />
+                <SignalsCard dark={dark} progress={progress} nextKey={recommendedNext} />
               </SectionCard>
             </section>
 
             <section className={sectionSpacing()}>
               <SectionCard tone="teal" compact>
-                <TinyTaskCard
-                  dark={dark}
-                  useLocal={mounted}
-                  definition={nextSteps.tinyTask}
-                />
+                <TinyTaskCard dark={dark} useLocal={mounted} definition={nextSteps.tinyTask} />
               </SectionCard>
             </section>
 
             <section className={sectionSpacing()}>
               <SectionCard tone="amber" compact>
-                <ActionCard
-                  dark={dark}
-                  useLocal={mounted}
-                  definition={nextSteps.action}
-                />
+                <ActionCard dark={dark} useLocal={mounted} definition={nextSteps.action} />
               </SectionCard>
             </section>
 

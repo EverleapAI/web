@@ -38,9 +38,9 @@ function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad")
   };
 
   return [
-    "inline-flex items-center gap-2",
-    "rounded-full border px-3.5 py-2",
-    "text-[13px] font-semibold",
+    "inline-flex items-center gap-1.5",
+    "rounded-full border px-3 py-1.5",
+    "text-[12.5px] font-semibold",
     "backdrop-blur-xl transition active:scale-95",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
     dark ? "border-white/10" : "border-black/10",
@@ -54,16 +54,16 @@ function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad")
 
 function softInputShell(dark: boolean) {
   return [
-    "relative overflow-hidden rounded-[20px] border",
+    "relative overflow-hidden rounded-[18px] border",
     "backdrop-blur-2xl",
     dark ? "border-white/10 bg-white/[0.03]" : "border-black/10 bg-white/80",
-    "shadow-[0_14px_36px_rgba(0,0,0,0.16)]",
+    "shadow-[0_10px_28px_rgba(0,0,0,0.14)]",
   ].join(" ");
 }
 
 function saveButton(dark: boolean, disabled: boolean) {
   return [
-    "h-10 rounded-2xl px-4 text-[13px] font-semibold",
+    "h-9 rounded-xl px-3 text-[12.5px] font-semibold",
     "transition active:scale-[0.99]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
     disabled
@@ -110,9 +110,7 @@ export default function InsightsQuickCheckCard({
       }
 
       setSaved(true);
-    } catch {
-      // ignore bad local data
-    }
+    } catch {}
   }, [storageKey]);
 
   function onPick(next: QuickRating) {
@@ -140,7 +138,12 @@ export default function InsightsQuickCheckCard({
   const canSave = !!rating;
 
   return (
-    <section className={sectionCard(dark, "neutral")}>
+    <section
+      className={[
+        sectionCard(dark, "neutral"),
+        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
+      ].join(" ")}
+    >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
@@ -166,7 +169,7 @@ export default function InsightsQuickCheckCard({
         </div>
 
         <div className={cardBody()}>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
               className={quickChip(dark, rating === "mostly", "good")}
@@ -194,7 +197,7 @@ export default function InsightsQuickCheckCard({
             {saved ? (
               <div
                 className={[
-                  "ml-1 flex items-center text-[12px]",
+                  "ml-1 flex items-center text-[11.5px]",
                   dark ? "text-white/36" : "text-slate-600",
                 ].join(" ")}
               >
@@ -206,15 +209,15 @@ export default function InsightsQuickCheckCard({
           <div
             className={[
               "overflow-hidden transition-[max-height,opacity] duration-200 ease-out",
-              open ? "mt-3 max-h-[340px] opacity-100" : "max-h-0 opacity-0",
+              open ? "mt-2.5 max-h-[320px] opacity-100" : "max-h-0 opacity-0",
             ].join(" ")}
           >
             <div className={softInputShell(dark)}>
-              <div className="relative p-4">
-                <div className="flex items-start justify-between gap-3">
+              <div className="relative p-3">
+                <div className="flex items-start justify-between gap-2.5">
                   <div>
                     <div className={headerLabel(dark)}>Add a note</div>
-                    <div className={["mt-1", mutedText(dark)].join(" ")}>
+                    <div className={["mt-0.5", mutedText(dark)].join(" ")}>
                       One sentence is enough.
                     </div>
                   </div>
@@ -223,7 +226,7 @@ export default function InsightsQuickCheckCard({
                     type="button"
                     onClick={onClose}
                     className={[
-                      "h-9 rounded-full px-3 text-[12px] font-semibold border",
+                      "h-8 rounded-full px-2.5 text-[11.5px] font-semibold border",
                       dark
                         ? "border-white/10 bg-white/[0.04] text-white/56"
                         : "border-black/10 bg-white/80 text-slate-800",
@@ -239,7 +242,7 @@ export default function InsightsQuickCheckCard({
                   rows={3}
                   placeholder="What felt off or surprisingly accurate?"
                   className={[
-                    "mt-3 w-full resize-none rounded-[18px] px-4 py-3 text-[14px]",
+                    "mt-2.5 w-full resize-none rounded-[16px] px-3 py-2.5 text-[14px]",
                     "bg-transparent outline-none ring-1 ring-inset",
                     dark
                       ? "text-white/66 placeholder:text-white/28 ring-white/12"
@@ -247,11 +250,11 @@ export default function InsightsQuickCheckCard({
                   ].join(" ")}
                 />
 
-                <div className="mt-4 flex justify-between">
+                <div className="mt-3 flex justify-between">
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="text-sm opacity-70"
+                    className="text-[12.5px] opacity-70"
                   >
                     Skip
                   </button>
