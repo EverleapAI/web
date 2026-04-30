@@ -169,18 +169,9 @@ export default function ProfilePage() {
     };
   }, []);
 
-  async function goLogout() {
-    try {
-      await fetch("/api/regauth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {}
-
-    clearLocalAuthState();
-
-    window.location.href = "/"; // ✅ correct
-  }
+  function goLogout() {
+  window.location.href = "/api/regauth/logout?redirect=/";
+}
 
   function goSignIn() {
     router.push("/regauth");
