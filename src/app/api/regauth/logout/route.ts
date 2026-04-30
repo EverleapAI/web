@@ -38,13 +38,10 @@ export async function POST() {
 }
 
 export async function GET(req: NextRequest) {
-  const url = req.nextUrl.clone();
   const redirectTo = req.nextUrl.searchParams.get("redirect") || "/";
+  const safePath = redirectTo.startsWith("/") ? redirectTo : "/";
 
-  url.pathname = redirectTo.startsWith("/") ? redirectTo : "/";
-  url.search = "";
-
-  const res = NextResponse.redirect(url);
+  const res = NextResponse.redirect(new URL(safePath, req.url));
   clearCookies(res);
   return noStore(res);
 }
