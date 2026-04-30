@@ -169,8 +169,18 @@ export default function ProfilePage() {
     };
   }, []);
 
-  function goLogout() {
-  window.location.href = "/api/regauth/logout?redirect=/";
+async function goLogout() {
+  try {
+    await fetch("/api/regauth/logout", {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    });
+  } catch {}
+
+  clearLocalAuthState();
+
+  window.location.replace("/");
 }
 
   function goSignIn() {
