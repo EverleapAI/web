@@ -7,7 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 const SESSION_COOKIE = "everleap_session";
 
 const RAW_BASE = (
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7071/api"
+  process.env.EVERLEAP_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://localhost:7071/api"
 ).replace(/\/+$/, "");
 
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
