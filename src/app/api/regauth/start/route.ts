@@ -23,7 +23,9 @@ const PENDING_COOKIE = "regauth_pending";
 const PENDING_TTL_MS = 10 * 60 * 1000;
 
 const RAW_BASE = (
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7071/api"
+  process.env.EVERLEAP_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://localhost:7071/api"
 ).replace(/\/+$/, "");
 
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
@@ -106,9 +108,12 @@ export async function POST(req: Request): Promise<NextResponse> {
       cache: "no-store",
       body: JSON.stringify({ email: identifier }),
     });
-  } catch {
-    return jsonError("Couldn’t reach sign-in service.", 502);
-  }
+ } catch (error) {
+  return jsonError(
+    `Couldn’t reach sign-in service. Target: ${REQUEST_CODE_URL}. Error: ${String(error)}`,
+    502
+  );
+}
 
   const text = await upstream.text().catch(() => "");
   let data: unknown = null;
