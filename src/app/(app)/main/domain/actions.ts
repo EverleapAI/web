@@ -19,7 +19,7 @@ export type ActionItem = {
 
   status: ActionStatus;
 
-  logs: ActionLog[]; // ✅ NEW
+  logs: ActionLog[];
 
   minutesSpent?: number;
   felt?: "energized" | "neutral" | "drained";
@@ -85,6 +85,7 @@ export function createAction(input: {
   sourcePageId: string;
 }): ActionItem {
   const t = now();
+
   return {
     id: input.id ?? `act_${t}`,
     title: input.title,
@@ -94,16 +95,20 @@ export function createAction(input: {
     createdAt: t,
     updatedAt: t,
     status: "planned",
-    logs: [], // ✅
+    logs: [],
   };
 }
 
 export function upsertAction(items: ActionItem[], next: ActionItem) {
   const idx = items.findIndex((x) => x.id === next.id);
-  if (idx === -1) return normalize([next, ...items]);
+
+  if (idx === -1) {
+    return normalize([next, ...items]);
+  }
 
   const copy = [...items];
   copy[idx] = { ...next, updatedAt: now() };
+
   return normalize(copy);
 }
 
@@ -117,7 +122,10 @@ export function addLog(
   log: Omit<ActionLog, "id" | "createdAt">
 ): ActionItem[] {
   const idx = items.findIndex((x) => x.id === id);
-  if (idx === -1) return items;
+
+  if (idx === -1) {
+    return items;
+  }
 
   const entry: ActionLog = {
     ...log,
@@ -126,9 +134,10 @@ export function addLog(
   };
 
   const copy = [...items];
+
   copy[idx] = {
     ...copy[idx],
-    logs: [entry, ...(copy[idx].logs ?? [])], // newest first
+    logs: [entry, ...(copy[idx].logs ?? [])],
     updatedAt: now(),
   };
 
@@ -140,26 +149,38 @@ export function addLog(
 ================================ */
 
 export function startAction(items: ActionItem[], id: string) {
-  let next = setStatus(items, id, "started");
+  const next = setStatus(items, id, "started");
+
   return addLog(next, id, { type: "system", text: "Started" });
 }
 
 export function markDone(items: ActionItem[], id: string) {
-  let next = setStatus(items, id, "done");
+  const next = setStatus(items, id, "done");
+
   return addLog(next, id, { type: "system", text: "Marked done" });
 }
 
 export function reopenAction(items: ActionItem[], id: string) {
-  let next = setStatus(items, id, "started");
+  const next = setStatus(items, id, "started");
+
   return addLog(next, id, { type: "system", text: "Reopened" });
 }
 
 function setStatus(items: ActionItem[], id: string, status: ActionStatus) {
   const idx = items.findIndex((x) => x.id === id);
-  if (idx === -1) return items;
+
+  if (idx === -1) {
+    return items;
+  }
 
   const copy = [...items];
-  copy[idx] = { ...copy[idx], status, updatedAt: now() };
+
+  copy[idx] = {
+    ...copy[idx],
+    status,
+    updatedAt: now(),
+  };
+
   return normalize(copy);
 }
 
@@ -167,9 +188,6 @@ export function addNote(items: ActionItem[], id: string, text: string) {
   return addLog(items, id, { type: "note", text });
 }
 
-export function findLatestActionForPage(
-  items: ActionItem[],
-  pageId: string
-) {
+export function findLatestActionForPage(items: ActionItem[], pageId: string) {
   return normalize(items).find((x) => x.sourcePageId === pageId) ?? null;
 }

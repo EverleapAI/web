@@ -5,6 +5,7 @@ export type AnimationPreset =
   | "scatter"
   | "connect"
   | "anchor"
+  | "nameTag"
   | "terrain"
   | "branching"
   | "branchExtend"
@@ -14,8 +15,10 @@ export type AnimationPreset =
 
 export const nodeVisuals: Record<string, AnimationPreset> = {
   // Intro
+  welcome: "connect",
   intro_1: "scatter",
-  intro_name: "anchor",
+  intro_name: "nameTag",
+  name: "nameTag",
 
   // Pattern / system explanation
   signals_intro: "connect",
@@ -27,17 +30,23 @@ export const nodeVisuals: Record<string, AnimationPreset> = {
 
   // Certainty
   certainty: "branching",
+  certainty_response: "connect",
   certainty_idea: "branchExtend",
+  idea_response: "connect",
 
   // Direction
   post_plans: "branching",
+  post_plans_response: "connect",
 
-  // Signals (growth)
+  // Signals / activities
   activities: "networkGrow",
+  activities_response: "connect",
 
-  // Instinct (big visual shift)
+  // Instinct
   fun_instinct: "instinctShift",
+  fun_instinct_response: "connect",
 
   // Final
   summary_transition: "finalMap",
+  summary: "finalMap",
 };

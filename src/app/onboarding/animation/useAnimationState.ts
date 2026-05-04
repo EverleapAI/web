@@ -27,6 +27,28 @@ function getInstinctStyle(value: string): InstinctStyle {
   return "none";
 }
 
+function getPresetForNode(node: FlowNode): AnimationPreset {
+  const mappedPreset = nodeVisuals[node.key];
+
+  if (mappedPreset) {
+    return mappedPreset;
+  }
+
+  if (node.type === "story") {
+    return "connect";
+  }
+
+  if (node.type === "question") {
+    return "scatter";
+  }
+
+  if (node.type === "summary") {
+    return "finalMap";
+  }
+
+  return "idle";
+}
+
 export function useAnimationState({
   currentNode,
   nodes,
@@ -38,7 +60,7 @@ export function useAnimationState({
 }): OnboardingAnimationState {
   return React.useMemo(() => {
     const nodeKey = currentNode?.key ?? "none";
-    const preset = currentNode ? nodeVisuals[currentNode.key] ?? "idle" : "idle";
+    const preset = currentNode ? getPresetForNode(currentNode) : "idle";
 
     const progress =
       currentNode && nodes.length > 0

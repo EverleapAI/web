@@ -22,6 +22,7 @@ const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 
 type Category = RecommendedNext;
 type Saved = { answer?: string; skipped?: boolean };
+type TodayViewModel = ReturnType<typeof buildTodayViewModel>;
 
 function pagePadding() {
   return "pt-2 pb-5";
@@ -45,11 +46,14 @@ function labelForCategory(cat: Category) {
 
 function loadSaved(): Record<string, Saved> {
   if (typeof window === "undefined") return {};
+
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_V3);
     if (!raw) return {};
+
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return {};
+
     return parsed as Record<string, Saved>;
   } catch {
     return {};
@@ -59,6 +63,7 @@ function loadSaved(): Record<string, Saved> {
 function isAnswered(saved: Saved | undefined): boolean {
   if (!saved) return false;
   if (saved.skipped) return true;
+
   return typeof saved.answer === "string" && saved.answer.trim().length > 0;
 }
 
@@ -72,6 +77,7 @@ function getNextUnansweredTarget(): {
   for (const cat of order) {
     for (let i = 1; i <= SIGNAL_COMPLETE_COUNT; i += 1) {
       const questionId = `${cat}_${i}`;
+
       if (!isAnswered(saved[questionId])) {
         return { cat, questionId };
       }
@@ -87,13 +93,14 @@ export default function MainHomePage() {
   const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
   const dark = isDarkTheme(themeId);
 
-  const [vm, setVm] = React.useState<any>(null);
+  const [vm, setVm] = React.useState<TodayViewModel | null>(null);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
 
   React.useEffect(() => {
     const nextVm = buildTodayViewModel();
+
     setVm(nextVm);
     setMounted(true);
   }, []);
@@ -107,9 +114,9 @@ export default function MainHomePage() {
     skillsTotal: SIGNAL_COMPLETE_COUNT,
   };
 
-  const motAnswered = progress?.motivationsAnswered ?? 0;
-  const strAnswered = progress?.strengthsAnswered ?? 0;
-  const sklAnswered = progress?.skillsAnswered ?? 0;
+  const motAnswered = progress.motivationsAnswered ?? 0;
+  const strAnswered = progress.strengthsAnswered ?? 0;
+  const sklAnswered = progress.skillsAnswered ?? 0;
 
   const isZeroState =
     mounted &&
@@ -128,7 +135,7 @@ export default function MainHomePage() {
       mounted
         ? getNextUnansweredTarget()
         : { cat: "motivations" as const, questionId: "motivations_1" },
-    [mounted, vm]
+    [mounted]
   );
 
   const recommendedNext: RecommendedNext = nextTarget.cat;
@@ -142,6 +149,7 @@ export default function MainHomePage() {
   const introTitle = React.useMemo(() => {
     if (isZeroState) return "Let’s start building your direction";
     if (allSignalsComplete) return "Your direction is starting to take shape";
+
     return "We need a bit more to go on";
   }, [isZeroState, allSignalsComplete]);
 
@@ -174,6 +182,7 @@ export default function MainHomePage() {
     }
 
     const target = getNextUnansweredTarget();
+
     router.push(
       `/main/questions?cat=${target.cat}&questionId=${target.questionId}&returnTo=/main`
     );
@@ -211,19 +220,31 @@ export default function MainHomePage() {
 
             <section className={sectionSpacing()}>
               <SectionCard tone="plum" compact>
-                <SignalsCard dark={dark} progress={progress} nextKey={recommendedNext} />
+                <SignalsCard
+                  dark={dark}
+                  progress={progress}
+                  nextKey={recommendedNext}
+                />
               </SectionCard>
             </section>
 
             <section className={sectionSpacing()}>
               <SectionCard tone="teal" compact>
-                <TinyTaskCard dark={dark} useLocal={mounted} definition={nextSteps.tinyTask} />
+                <TinyTaskCard
+                  dark={dark}
+                  useLocal={mounted}
+                  definition={nextSteps.tinyTask}
+                />
               </SectionCard>
             </section>
 
             <section className={sectionSpacing()}>
               <SectionCard tone="amber" compact>
-                <ActionCard dark={dark} useLocal={mounted} definition={nextSteps.action} />
+                <ActionCard
+                  dark={dark}
+                  useLocal={mounted}
+                  definition={nextSteps.action}
+                />
               </SectionCard>
             </section>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-
 import type { OnboardingAnimationState } from "./useAnimationState";
 
 type Props = {
@@ -35,22 +34,34 @@ function getMainPath(state: OnboardingAnimationState) {
   switch (state.preset) {
     case "scatter":
       return "M82 120 C160 65, 240 148, 318 105 C405 55, 495 105, 615 58";
+
     case "anchor":
       return "M126 70 C185 132, 250 132, 310 88 C380 36, 462 84, 535 130 C590 165, 660 145, 720 92";
+
     case "connect":
       return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
+
+    case "nameTag":
+  return "M300 54 L500 54 C534 54, 558 78, 558 108 C558 138, 534 162, 500 162 L300 162 C266 162, 242 138, 242 108 C242 78, 266 54, 300 54 M320 102 L486 102 M320 126 L438 126";
+
     case "terrain":
       return "M70 122 C140 88, 205 96, 272 74 C355 46, 435 122, 508 86 C580 52, 658 66, 730 42";
+
     case "branching":
       return "M92 130 C175 96, 260 92, 335 78 C430 58, 545 50, 700 28";
+
     case "branchExtend":
       return "M82 138 C165 102, 250 98, 330 78 C425 52, 548 44, 718 18";
+
     case "networkGrow":
       return "M92 126 C168 70, 235 128, 316 76 C394 24, 482 112, 560 66 C620 30, 678 50, 725 18";
+
     case "instinctShift":
       return "M88 136 C160 42, 245 190, 330 78 C425 -12, 530 166, 706 38";
+
     case "finalMap":
       return "M70 145 C145 92, 222 118, 300 72 C390 18, 488 82, 578 44 C650 14, 705 26, 754 6";
+
     default:
       return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
   }
@@ -66,6 +77,7 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 452, y: 76, tone: "white" },
         { x: 596, y: 60 },
       ];
+
     case "anchor":
       return [
         { x: 126, y: 70, r: 5, tone: "white" },
@@ -73,6 +85,13 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 535, y: 130, tone: "violet" },
         { x: 720, y: 92 },
       ];
+
+    case "nameTag":
+      return [
+        { x: 224, y: 108, r: 4.8, tone: "white" },
+        { x: 650, y: 238, r: 3.6 },
+      ];
+
     case "terrain":
       return [
         { x: 70, y: 122 },
@@ -80,6 +99,7 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 508, y: 86, tone: "violet" },
         { x: 730, y: 42, tone: "white" },
       ];
+
     case "branching":
     case "branchExtend":
       return [
@@ -88,6 +108,7 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 520, y: 118 },
         { x: 700, y: 28, tone: "white" },
       ];
+
     case "networkGrow":
       return [
         { x: 92, y: 126 },
@@ -98,6 +119,7 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 650, y: 44, tone: "violet" },
         { x: 725, y: 18 },
       ];
+
     case "finalMap":
       return [
         { x: 70, y: 145 },
@@ -106,6 +128,7 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
         { x: 578, y: 44 },
         { x: 754, y: 6, tone: "white" },
       ];
+
     default:
       return [
         { x: 120, y: 88 },
@@ -124,6 +147,7 @@ function getInstinctPath(state: OnboardingAnimationState) {
 }
 
 export default function AnimatedCanvas({ state }: Props) {
+    
   const mainPath = getMainPath(state);
   const nodes = getNodes(state);
   const instinctPath = getInstinctPath(state);
@@ -133,7 +157,6 @@ export default function AnimatedCanvas({ state }: Props) {
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(34,211,238,0.18),transparent_32%),radial-gradient(circle_at_72%_70%,rgba(168,85,247,0.14),transparent_36%)]" />
 
-      {/* Text safety gradient: keeps the drawing cinematic without fighting the copy. */}
       <div className="absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-b from-transparent via-[#040817]/70 to-[#040817]/95" />
       <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-[#040817]/82 via-[#040817]/42 to-transparent" />
 
@@ -141,10 +164,10 @@ export default function AnimatedCanvas({ state }: Props) {
         viewBox="0 0 800 260"
         preserveAspectRatio="xMidYMid slice"
         className={[
-          "absolute left-1/2 w-[125vw] -translate-x-1/2 opacity-95",
+          "absolute left-1/2 w-[100vw] -translate-x-1/2 opacity-95",
           textHeavy
             ? "top-[4%] h-[38vh] min-h-[250px]"
-            : "top-[7%] h-[48vh] min-h-[320px]",
+            : "top-[2%] h-[32vh] min-h-[220px]",
         ].join(" ")}
       >
         <defs>
@@ -184,74 +207,6 @@ export default function AnimatedCanvas({ state }: Props) {
           transition={{ duration: 1.45, ease: "easeInOut" }}
         />
 
-        {(state.preset === "branching" ||
-          state.preset === "branchExtend" ||
-          state.preset === "finalMap") && (
-          <>
-            <motion.path
-              d="M334 78 C420 102, 490 126, 612 156"
-              fill="none"
-              stroke="rgba(125,249,255,0.48)"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.72 }}
-              transition={{ duration: 1.05, delay: 0.3 }}
-            />
-            <motion.path
-              d="M358 72 C430 32, 514 18, 642 30"
-              fill="none"
-              stroke="rgba(196,181,253,0.48)"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.72 }}
-              transition={{ duration: 1.05, delay: 0.48 }}
-            />
-          </>
-        )}
-
-        {state.preset === "networkGrow" || state.preset === "finalMap" ? (
-          <>
-            <motion.path
-              d="M205 104 L316 76 L438 82 L560 66 L650 44"
-              fill="none"
-              stroke="rgba(255,255,255,0.34)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.72 }}
-              transition={{ duration: 1.1, delay: 0.35 }}
-            />
-            <motion.path
-              d="M316 76 L390 150 L560 66"
-              fill="none"
-              stroke="rgba(125,249,255,0.34)"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.64 }}
-              transition={{ duration: 1.1, delay: 0.55 }}
-            />
-          </>
-        ) : null}
-
-        {instinctPath ? (
-          <motion.path
-            key={`instinct-${state.instinctStyle}`}
-            d={instinctPath}
-            fill="none"
-            stroke="rgba(255,255,255,0.88)"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="url(#everleap-glow)"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.92 }}
-            transition={{ duration: 1.1, ease: "easeInOut" }}
-          />
-        ) : null}
-
         {nodes.map((node, index) => (
           <motion.circle
             key={`${state.nodeKey}-${index}`}
@@ -266,20 +221,6 @@ export default function AnimatedCanvas({ state }: Props) {
           />
         ))}
       </svg>
-
-      <motion.div
-        aria-hidden="true"
-        className="absolute left-[10%] top-[16%] h-32 w-32 rounded-full bg-cyan-300/12 blur-3xl"
-        animate={{ x: [0, 24, 0], y: [0, -18, 0], scale: [1, 1.12, 1] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        aria-hidden="true"
-        className="absolute right-[8%] top-[38%] h-36 w-36 rounded-full bg-violet-400/12 blur-3xl"
-        animate={{ x: [0, -20, 0], y: [0, 22, 0], scale: [1, 1.14, 1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      />
     </div>
   );
 }

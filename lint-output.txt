@@ -1,0 +1,120 @@
+
+> web@0.1.0 lint C:\Projects\everleap-app\apps\web
+> eslint .
+
+
+C:\Projects\everleap-app\apps\web\eslint.config.mjs
+  12:1  warning  Assign array to a variable before exporting as module default  import/no-anonymous-default-export
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\components\TodayIntro.tsx
+  42:20  warning  'dark' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\components\ui\SectionCard.tsx
+  14:6  warning  'SectionCardHeaderProps' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\explore\work\[pathId]\forecast\page.tsx
+  41:3  warning  'accent' is defined but never used  @typescript-eslint/no-unused-vars
+  59:3  warning  'accent' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\explore\work\[pathId]\specialties\page.tsx
+  89:25  warning  '_pathId' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\insights\tabs\MotivationsTab.tsx
+    4:10  warning  'motion' is defined but never used                       @typescript-eslint/no-unused-vars
+    4:18  warning  'AnimatePresence' is defined but never used              @typescript-eslint/no-unused-vars
+    5:10  warning  'ArrowUpRight' is defined but never used                 @typescript-eslint/no-unused-vars
+   74:10  warning  'textAffordance' is defined but never used               @typescript-eslint/no-unused-vars
+   85:10  warning  'fadeMaskStyle' is defined but never used                @typescript-eslint/no-unused-vars
+  104:10  warning  'softDivider' is defined but never used                  @typescript-eslint/no-unused-vars
+  108:10  warning  'tinyLabel' is defined but never used                    @typescript-eslint/no-unused-vars
+  115:10  warning  'sectionTitle' is defined but never used                 @typescript-eslint/no-unused-vars
+  119:10  warning  'sectionMuted' is defined but never used                 @typescript-eslint/no-unused-vars
+  123:10  warning  'bodyText' is defined but never used                     @typescript-eslint/no-unused-vars
+  127:10  warning  'pillButton' is defined but never used                   @typescript-eslint/no-unused-vars
+  137:10  warning  'emphasisPill' is defined but never used                 @typescript-eslint/no-unused-vars
+  145:10  warning  'railDot' is defined but never used                      @typescript-eslint/no-unused-vars
+  167:21  warning  'router' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  174:9   warning  'headline' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  180:9   warning  'storyTextCollapsed' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  181:9   warning  'storyTextExpanded' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  183:9   warning  'canToggleStory' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  185:9   warning  'drivers' is assigned a value but never used             @typescript-eslint/no-unused-vars
+  186:9   warning  'boosts' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  187:9   warning  'drains' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  190:9   warning  'experimentTitle' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  191:9   warning  'experimentSteps' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  193:9   warning  'unlock' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  195:10  warning  'storyExpanded' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  195:25  warning  'setStoryExpanded' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\insights\tabs\SkillsTab.tsx
+    4:10  warning  'motion' is defined but never used                       @typescript-eslint/no-unused-vars
+    4:18  warning  'AnimatePresence' is defined but never used              @typescript-eslint/no-unused-vars
+    5:10  warning  'ArrowUpRight' is defined but never used                 @typescript-eslint/no-unused-vars
+   73:10  warning  'textAffordance' is defined but never used               @typescript-eslint/no-unused-vars
+   84:10  warning  'fadeMaskStyle' is defined but never used                @typescript-eslint/no-unused-vars
+  103:10  warning  'softDivider' is defined but never used                  @typescript-eslint/no-unused-vars
+  107:10  warning  'tinyLabel' is defined but never used                    @typescript-eslint/no-unused-vars
+  114:10  warning  'sectionTitle' is defined but never used                 @typescript-eslint/no-unused-vars
+  118:10  warning  'sectionMuted' is defined but never used                 @typescript-eslint/no-unused-vars
+  122:10  warning  'bodyText' is defined but never used                     @typescript-eslint/no-unused-vars
+  126:10  warning  'pillButton' is defined but never used                   @typescript-eslint/no-unused-vars
+  140:10  warning  'emphasisPill' is defined but never used                 @typescript-eslint/no-unused-vars
+  148:10  warning  'railDot' is defined but never used                      @typescript-eslint/no-unused-vars
+  170:21  warning  'router' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  177:9   warning  'headline' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  183:9   warning  'storyTextCollapsed' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  184:9   warning  'storyTextExpanded' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  186:9   warning  'canToggleStory' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  188:9   warning  'tools' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  189:9   warning  'strongestRightNow' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  190:9   warning  'nextToBuild' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  192:9   warning  'experimentTitle' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  193:9   warning  'experimentSteps' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  195:9   warning  'unlock' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  199:10  warning  'storyExpanded' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  199:25  warning  'setStoryExpanded' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\insights\tabs\StrengthsTab.tsx
+    4:10  warning  'motion' is defined but never used                    @typescript-eslint/no-unused-vars
+    4:18  warning  'AnimatePresence' is defined but never used           @typescript-eslint/no-unused-vars
+    5:10  warning  'ArrowUpRight' is defined but never used              @typescript-eslint/no-unused-vars
+   73:10  warning  'textAffordance' is defined but never used            @typescript-eslint/no-unused-vars
+   80:10  warning  'fadeMaskStyle' is defined but never used             @typescript-eslint/no-unused-vars
+  103:10  warning  'tinyLabel' is defined but never used                 @typescript-eslint/no-unused-vars
+  114:10  warning  'sectionMuted' is defined but never used              @typescript-eslint/no-unused-vars
+  122:10  warning  'pillButton' is defined but never used                @typescript-eslint/no-unused-vars
+  129:10  warning  'emphasisPill' is defined but never used              @typescript-eslint/no-unused-vars
+  136:10  warning  'railDot' is defined but never used                   @typescript-eslint/no-unused-vars
+  157:21  warning  'router' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  175:9   warning  'patterns' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  176:9   warning  'inYourElement' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  177:9   warning  'hardMode' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  180:9   warning  'experimentTitle' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  181:9   warning  'experimentSteps' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  183:9   warning  'unlock' is assigned a value but never used           @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(app)\main\profile\page.tsx
+   7:3   warning  'Accessibility' is defined but never used  @typescript-eslint/no-unused-vars
+   9:3   warning  'LifeBuoy' is defined but never used       @typescript-eslint/no-unused-vars
+  12:3   warning  'Mail' is defined but never used           @typescript-eslint/no-unused-vars
+  13:3   warning  'Shield' is defined but never used         @typescript-eslint/no-unused-vars
+  14:3   warning  'Sparkles' is defined but never used       @typescript-eslint/no-unused-vars
+  56:10  warning  'divider' is defined but never used        @typescript-eslint/no-unused-vars
+  60:10  warning  'rowHover' is defined but never used       @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\(public)\regauth\logout.ts
+  7:12  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Projects\everleap-app\apps\web\src\app\dev\auth-test\page.tsx
+   16:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 90 problems (7 errors, 83 warnings)
+
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
