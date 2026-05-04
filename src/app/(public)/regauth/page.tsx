@@ -72,7 +72,9 @@ export default function RegAuthEntryPage(): React.JSX.Element {
         return;
       }
 
-      const credential = await startAuthentication(startData.options);
+      const credential = await startAuthentication({
+  optionsJSON: startData.options,
+});
 
       const verifyRes = await fetch("/api/regauth/passkey/login/verify", {
         method: "POST",
