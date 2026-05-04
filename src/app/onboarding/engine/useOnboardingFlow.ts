@@ -255,9 +255,10 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
     setAnswers({});
   }
 
-  function goNext(nextAnswers: Answers = answers) {
-    setNodeIndex((index) => nextVisibleIndex(nodes, nextAnswers, index));
-  }
+ function goNext(nextAnswers: Answers = answers) {
+  setAnswers(nextAnswers); // 🔥 force sync before navigation
+  setNodeIndex((index) => nextVisibleIndex(nodes, nextAnswers, index));
+}
 
   function goBack() {
     setNodeIndex((index) => previousVisibleIndex(nodes, answers, index));

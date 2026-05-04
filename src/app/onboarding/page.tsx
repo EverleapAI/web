@@ -117,7 +117,7 @@ export default function OnboardingPage() {
             }
             continueLabel={currentNode.type === "summary" ? "Enter Everleap" : "Continue"}
             onBack={goBack}
-            onContinue={handleNext}
+            onContinue={() => handleNext()}
           />
         </div>
       </main>
