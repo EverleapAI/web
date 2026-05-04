@@ -1,11 +1,11 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-const nextConfig: NextConfig = {
-  // Disabled for QA deploy (Windows + pnpm symlink issue)
-  // output: "standalone",
+const isCI = process.env.CI === "true";
 
-  // Still useful for tracing in monorepo (safe to keep)
+const nextConfig: NextConfig = {
+  output: isCI ? "standalone" : undefined,
+
   outputFileTracingRoot: path.join(__dirname, "../../"),
 
   trailingSlash: false,
@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
 
-  // Do not fail builds because of ESLint
   eslint: {
     ignoreDuringBuilds: true,
   },
