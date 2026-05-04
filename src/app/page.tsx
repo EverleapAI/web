@@ -291,7 +291,7 @@ function DesktopHeroCard() {
   return (
     <div className="w-full rounded-3xl border border-white/10 bg-slate-950/58 px-6 py-8 text-center shadow-[0_18px_70px_rgba(0,0,0,0.72)] backdrop-blur-lg md:px-8 md:py-11">
       <h1 className="text-3xl font-semibold tracking-tight text-white md:text-[2.15rem]">
-        See what your future could look like.
+        Imagine your future.
       </h1>
 
       <div className="mt-7 flex justify-center md:mt-8">
@@ -317,7 +317,7 @@ function MobileBottomSheet() {
   return (
     <div className="w-full rounded-3xl border border-white/10 bg-slate-950/60 px-5 py-6 text-center shadow-[0_16px_60px_rgba(0,0,0,0.7)] backdrop-blur-lg">
       <h1 className="text-2xl font-semibold tracking-tight text-white">
-        See what your future could look like.
+        Imagine your future.
       </h1>
 
       <div className="mt-5 flex justify-center">
