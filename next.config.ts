@@ -2,10 +2,10 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  // Required for Azure standalone deployment
-  output: "standalone",
+  // Disabled for QA deploy (Windows + pnpm symlink issue)
+  // output: "standalone",
 
-  // Ensure tracing resolves from the monorepo/workspace root
+  // Still useful for tracing in monorepo (safe to keep)
   outputFileTracingRoot: path.join(__dirname, "../../"),
 
   trailingSlash: false,
