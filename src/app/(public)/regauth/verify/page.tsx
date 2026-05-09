@@ -19,12 +19,17 @@ export default function VerifyPage(): React.JSX.Element {
   const rawReturnTo = sanitizeReturnTo(searchParams?.get("returnTo"));
 
   const returnTo =
-    rawReturnTo && !rawReturnTo.startsWith("/regauth") ? rawReturnTo : "/main";
+    rawReturnTo && !rawReturnTo.startsWith("/regauth")
+      ? rawReturnTo
+      : "/main";
 
-  const [digits, setDigits] = React.useState<string[]>(() =>
-    new Array(6).fill("")
+  const [digits, setDigits] = React.useState<string[]>(
+    () => new Array(6).fill("")
   );
-  const [pendingEmail, setPendingEmail] = React.useState<string | null>(null);
+
+  const [pendingIdentifier, setPendingIdentifier] =
+    React.useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -40,10 +45,13 @@ export default function VerifyPage(): React.JSX.Element {
 
   React.useEffect(() => {
     try {
-      setPendingEmail(window.sessionStorage.getItem("regauth_pending_email"));
+      setPendingIdentifier(
+        window.sessionStorage.getItem("regauth_pending_identifier")
+      );
     } catch {}
 
     const t = window.setTimeout(() => refs[0]?.current?.focus(), 0);
+
     return () => window.clearTimeout(t);
   }, [refs]);
 
@@ -53,48 +61,61 @@ export default function VerifyPage(): React.JSX.Element {
 
   async function submit(nextCode = code) {
     if (!/^\d{6}$/.test(nextCode) || isSubmitting) return;
+
     if (lastSubmittedRef.current === nextCode) return;
 
     setIsSubmitting(true);
     setError(null);
+
     lastSubmittedRef.current = nextCode;
 
     try {
       const res = await fetch("/api/regauth/verify", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+        },
         credentials: "include",
-        body: JSON.stringify({ code: nextCode }),
+        body: JSON.stringify({
+          code: nextCode,
+        }),
       });
 
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
         setError(data?.error || "That code didn’t match. Try again.");
+
         setIsSubmitting(false);
         setDigits(new Array(6).fill(""));
+
         lastSubmittedRef.current = null;
+
         window.setTimeout(() => focusIndex(0), 0);
+
         return;
       }
 
       try {
-        window.sessionStorage.removeItem("regauth_pending_email");
+        window.sessionStorage.removeItem(
+          "regauth_pending_identifier"
+        );
       } catch {}
 
-      // ✅ UPDATED REDIRECT
-      window.location.href = `/main/secure-device?returnTo=${encodeURIComponent(
-        returnTo
-      )}`;
+      window.location.href = returnTo;
     } catch {
       setError("Something went wrong.");
+
       setIsSubmitting(false);
       lastSubmittedRef.current = null;
     }
   }
 
   React.useEffect(() => {
-    if (isComplete) void submit(code);
+    if (isComplete) {
+      void submit(code);
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isComplete, code]);
 
@@ -116,26 +137,43 @@ export default function VerifyPage(): React.JSX.Element {
 
     setDigits(next);
 
-    const nextFocus = Math.min(5, i + Math.max(clean.length, 1));
-    if (clean && nextFocus <= 5) focusIndex(nextFocus);
+    const nextFocus = Math.min(
+      5,
+      i + Math.max(clean.length, 1)
+    );
+
+    if (clean && nextFocus <= 5) {
+      focusIndex(nextFocus);
+    }
   }
 
-  function onKeyDown(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+  function onKeyDown(
+    i: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) {
     if (e.key === "Backspace" && !digits[i] && i > 0) {
       const next = [...digits];
+
       next[i - 1] = "";
+
       setDigits(next);
+
       lastSubmittedRef.current = null;
+
       focusIndex(i - 1);
     }
   }
 
-  function useDifferentEmail() {
+  function useDifferentIdentifier() {
     try {
-      window.sessionStorage.removeItem("regauth_pending_email");
+      window.sessionStorage.removeItem(
+        "regauth_pending_identifier"
+      );
     } catch {}
 
-    router.replace(`/regauth?returnTo=${encodeURIComponent(returnTo)}`);
+    router.replace(
+      `/regauth?returnTo=${encodeURIComponent(returnTo)}`
+    );
   }
 
   return (
@@ -143,15 +181,18 @@ export default function VerifyPage(): React.JSX.Element {
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">
-            Check your email.
+            Check your messages.
           </h1>
 
           <p className="text-sm text-white/60">
             Enter the 6-digit code
-            {pendingEmail ? (
+            {pendingIdentifier ? (
               <>
                 {" "}
-                sent to <span className="text-white/80">{pendingEmail}</span>.
+                sent to{" "}
+                <span className="text-white/80">
+                  {pendingIdentifier}
+                </span>.
               </>
             ) : (
               "."
@@ -178,18 +219,24 @@ export default function VerifyPage(): React.JSX.Element {
         </div>
 
         {isSubmitting ? (
-          <p className="text-sm text-white/60">Checking…</p>
+          <p className="text-sm text-white/60">
+            Checking…
+          </p>
         ) : null}
 
-        {error ? <p className="text-sm text-red-300">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-red-300">
+            {error}
+          </p>
+        ) : null}
 
         <button
           type="button"
-          onClick={useDifferentEmail}
+          onClick={useDifferentIdentifier}
           disabled={isSubmitting}
           className="text-sm text-white/50 underline transition hover:text-white/75 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Use a different email
+          Use a different email or phone number
         </button>
       </div>
     </main>

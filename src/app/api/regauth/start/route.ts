@@ -15,6 +15,7 @@ type StartBody = {
 type PendingPayload = {
   v: 1;
   identifier: string;
+  method: "email" | "sms";
   iat: number;
   exp: number;
 };
@@ -29,7 +30,9 @@ const RAW_BASE = (
 ).replace(/\/+$/, "");
 
 const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
-const REQUEST_CODE_URL = `${API_BASE}/auth/email/request-code`;
+
+const REQUEST_EMAIL_CODE_URL = `${API_BASE}/auth/email/request-code`;
+const REQUEST_SMS_CODE_URL = `${API_BASE}/auth/sms/request-code`;
 
 function noStore(res: NextResponse): NextResponse {
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
@@ -58,14 +61,28 @@ function normalizeIdentifier(raw: string): string {
   return String(raw || "").trim().toLowerCase();
 }
 
-function isLikelyEmail(v: string): boolean {
-  const s = (v ?? "").trim();
+function isLikelyEmail(value: string): boolean {
+  const s = String(value || "").trim();
   const at = s.indexOf("@");
 
   if (at <= 0) return false;
 
   const dot = s.lastIndexOf(".");
   return dot > at + 1 && dot < s.length - 1;
+}
+
+function normalizePhone(raw: string): string | null {
+  const digits = String(raw || "").replace(/\D/g, "");
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
+
+  return null;
 }
 
 function hmacHex(secret: string, input: string): string {
@@ -89,31 +106,48 @@ export async function POST(req: Request): Promise<NextResponse> {
     return jsonError("Invalid request.", 400);
   }
 
-  const identifierRaw = typeof body.identifier === "string" ? body.identifier : "";
-  const identifier = normalizeIdentifier(identifierRaw);
+  const identifierRaw =
+    typeof body.identifier === "string" ? body.identifier : "";
 
-  if (!isLikelyEmail(identifier)) {
-    return jsonError("Enter a valid email address.", 400);
+  const normalizedRaw = normalizeIdentifier(identifierRaw);
+  const phone = normalizePhone(identifierRaw);
+
+  const method: "email" | "sms" = isLikelyEmail(normalizedRaw)
+    ? "email"
+    : phone
+      ? "sms"
+      : "email";
+
+  const identifier = method === "email" ? normalizedRaw : phone;
+
+  if (!identifier) {
+    return jsonError("Enter a valid email or phone number.", 400);
   }
+
+  const targetUrl =
+    method === "sms" ? REQUEST_SMS_CODE_URL : REQUEST_EMAIL_CODE_URL;
+
+  const requestBody =
+    method === "sms" ? { phone: identifier } : { email: identifier };
 
   let upstream: Response;
 
   try {
-    upstream = await fetch(REQUEST_CODE_URL, {
+    upstream = await fetch(targetUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
       cache: "no-store",
-      body: JSON.stringify({ email: identifier }),
+      body: JSON.stringify(requestBody),
     });
- } catch (error) {
-  return jsonError(
-    `Couldn’t reach sign-in service. Target: ${REQUEST_CODE_URL}. Error: ${String(error)}`,
-    502
-  );
-}
+  } catch (error) {
+    return jsonError(
+      `Couldn’t reach sign-in service. Target: ${targetUrl}. Error: ${String(error)}`,
+      502
+    );
+  }
 
   const text = await upstream.text().catch(() => "");
   let data: unknown = null;
@@ -141,6 +175,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const payload: PendingPayload = {
     v: 1,
     identifier,
+    method,
     iat: now,
     exp: now + PENDING_TTL_MS,
   };
@@ -153,7 +188,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     return jsonError("Server not configured for sign-in.", 500);
   }
 
-  const res = NextResponse.json({ ok: true }, { status: 200 });
+  const res = NextResponse.json(
+    {
+      ok: true,
+      method,
+      destination: identifier,
+    },
+    { status: 200 }
+  );
 
   res.cookies.set(PENDING_COOKIE, cookieValue, {
     httpOnly: true,

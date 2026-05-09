@@ -19,6 +19,8 @@ import { SectionCard } from "./components/ui/SectionCard";
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
+const ONBOARDING_STORAGE_KEY = "everleap_onboarding_answers";
+const ONBOARDING_SNAPSHOT_KEY = "everleapOnboarding_v4_convo_min";
 
 type Category = RecommendedNext;
 type Saved = { answer?: string; skipped?: boolean };
@@ -99,10 +101,70 @@ export default function MainHomePage() {
   const [transitioning] = React.useState(false);
 
   React.useEffect(() => {
-    const nextVm = buildTodayViewModel();
+    async function claimOnboarding() {
+      try {
+        const raw = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+        if (!raw) return;
 
-    setVm(nextVm);
-    setMounted(true);
+        const answers = JSON.parse(raw);
+        if (!answers || Object.keys(answers).length === 0) return;
+
+        const res = await fetch("/api/onboarding/claim", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ answers }),
+        });
+
+        if (res.ok) {
+          localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+        }
+      } catch {
+        // retry next load
+      }
+    }
+
+    claimOnboarding();
+  }, []);
+
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/regauth/me", { cache: "no-store" });
+        const data = await res.json();
+
+        if (data?.ok) {
+          try {
+            const existing = localStorage.getItem(ONBOARDING_SNAPSHOT_KEY);
+
+            if (!existing) {
+              const snapshot = {
+                name: data.user?.email?.split("@")[0] ?? null,
+                zip_code: data.user?.zip_code ?? null,
+              };
+
+              localStorage.setItem(
+                ONBOARDING_SNAPSHOT_KEY,
+                JSON.stringify(snapshot)
+              );
+            }
+          } catch {
+            // ignore local snapshot bridge failures
+          }
+        }
+
+        const nextVm = buildTodayViewModel();
+        setVm(nextVm);
+        setMounted(true);
+      } catch {
+        const nextVm = buildTodayViewModel();
+        setVm(nextVm);
+        setMounted(true);
+      }
+    }
+
+    load();
   }, []);
 
   const progress = vm?.progress ?? {
@@ -149,7 +211,6 @@ export default function MainHomePage() {
   const introTitle = React.useMemo(() => {
     if (isZeroState) return "Let’s start building your direction";
     if (allSignalsComplete) return "Your direction is starting to take shape";
-
     return "We need a bit more to go on";
   }, [isZeroState, allSignalsComplete]);
 

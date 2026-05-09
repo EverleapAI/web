@@ -82,6 +82,8 @@ type ShowIfRule = {
   values?: string[];
 };
 
+const STORAGE_KEY = "everleap_onboarding_answers";
+
 function normalizeInputType(
   inputType: FlowQuestion["inputType"] | undefined
 ): NormalizedFlowQuestion["inputType"] {
@@ -233,15 +235,32 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
   }, [flow]);
 
   const [nodeIndex, setNodeIndex] = React.useState(0);
-  const [answers, setAnswers] = React.useState<Answers>({});
+
+  const [answers, setAnswers] = React.useState<Answers>(() => {
+    if (typeof window === "undefined") return {};
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const currentNode = nodes[nodeIndex] ?? null;
   const currentQuestion = currentNode?.question ?? null;
 
   React.useEffect(() => {
     setNodeIndex(0);
-    setAnswers({});
   }, [flow?.id]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+    } catch {}
+  }, [answers]);
 
   React.useEffect(() => {
     if (!currentNode) return;
@@ -255,10 +274,10 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
     setAnswers({});
   }
 
- function goNext(nextAnswers: Answers = answers) {
-  setAnswers(nextAnswers); // 🔥 force sync before navigation
-  setNodeIndex((index) => nextVisibleIndex(nodes, nextAnswers, index));
-}
+  function goNext(nextAnswers: Answers = answers) {
+    setAnswers(nextAnswers);
+    setNodeIndex((index) => nextVisibleIndex(nodes, nextAnswers, index));
+  }
 
   function goBack() {
     setNodeIndex((index) => previousVisibleIndex(nodes, answers, index));

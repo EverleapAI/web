@@ -6,10 +6,6 @@ import { Activity } from "lucide-react";
 
 import type { RecommendedNext } from "./TodayIntro";
 
-/* =============================================================================
-   Types
-   ============================================================================= */
-
 export type SignalsProgress = {
   motivationsAnswered: number;
   strengthsAnswered: number;
@@ -32,10 +28,6 @@ const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 const SIGNAL_COMPLETE_COUNT = 5;
 const DASH_COUNT = 12;
 
-/* =============================================================================
-   Header
-   ============================================================================= */
-
 function headerRow() {
   return "mb-3 flex items-center gap-2";
 }
@@ -56,10 +48,6 @@ function headerTitleClass(dark: boolean) {
   ].join(" ");
 }
 
-/* =============================================================================
-   Helpers
-   ============================================================================= */
-
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
@@ -68,8 +56,8 @@ function label(cat: Cat) {
   return cat === "motivations"
     ? "Motivations"
     : cat === "strengths"
-    ? "Strengths"
-    : "Skills";
+      ? "Strengths"
+      : "Skills";
 }
 
 function desc(cat: Cat) {
@@ -84,6 +72,34 @@ function loadSaved(): Record<string, Saved> {
     const raw = window.localStorage.getItem(STORAGE_KEY_V3);
     if (!raw) return {};
     return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function getOnboardingSignalBias(): Partial<Record<Cat, number>> {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.localStorage.getItem("everleapOnboarding_v4_convo_min");
+    if (!raw) return {};
+
+    const snapshot = JSON.parse(raw);
+    const bias: Partial<Record<Cat, number>> = {};
+
+    if (snapshot?.interests?.length) {
+      bias.skills = 1;
+    }
+
+    if (snapshot?.certainty === "low") {
+      bias.motivations = 1;
+    }
+
+    if (snapshot?.certainty === "high") {
+      bias.strengths = 1;
+    }
+
+    return bias;
   } catch {
     return {};
   }
@@ -135,17 +151,15 @@ function rowClass(dark: boolean, hasDivider: boolean) {
   ].join(" ");
 }
 
-/* =============================================================================
-   Component
-   ============================================================================= */
-
 export function SignalsCard(props: SignalsCardProps) {
   const { dark, progress } = props;
 
   const [saved, setSaved] = React.useState<Record<string, Saved>>({});
+  const [bias, setBias] = React.useState<Partial<Record<Cat, number>>>({});
 
   React.useEffect(() => {
     setSaved(loadSaved());
+    setBias(getOnboardingSignalBias());
   }, []);
 
   const text = dark ? "text-white/78" : "text-slate-900";
@@ -155,24 +169,23 @@ export function SignalsCard(props: SignalsCardProps) {
   const items: Array<{ cat: Cat; answered: number; total: number }> = [
     {
       cat: "motivations",
-      answered: Number(progress?.motivationsAnswered ?? 0),
+      answered: Number(progress?.motivationsAnswered ?? 0) + (bias.motivations ?? 0),
       total: Number(progress?.motivationsTotal ?? SIGNAL_COMPLETE_COUNT),
     },
     {
       cat: "strengths",
-      answered: Number(progress?.strengthsAnswered ?? 0),
+      answered: Number(progress?.strengthsAnswered ?? 0) + (bias.strengths ?? 0),
       total: Number(progress?.strengthsTotal ?? SIGNAL_COMPLETE_COUNT),
     },
     {
       cat: "skills",
-      answered: Number(progress?.skillsAnswered ?? 0),
+      answered: Number(progress?.skillsAnswered ?? 0) + (bias.skills ?? 0),
       total: Number(progress?.skillsTotal ?? SIGNAL_COMPLETE_COUNT),
     },
   ];
 
   return (
     <div className="w-full">
-      {/* HEADER */}
       <div className={headerRow()}>
         <span className={headerIconWrap(dark)}>
           <Activity className="h-3.5 w-3.5" />
@@ -181,7 +194,6 @@ export function SignalsCard(props: SignalsCardProps) {
         <div className={headerTitleClass(dark)}>Signals</div>
       </div>
 
-      {/* CONTENT */}
       <div>
         {items.map((it, idx) => {
           const total = Math.max(1, it.total);

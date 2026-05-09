@@ -4,14 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Accessibility,
   ChevronRight,
-  LifeBuoy,
   LogIn,
   LogOut,
-  Mail,
-  Shield,
-  Sparkles,
   User,
 } from "lucide-react";
 
@@ -20,10 +15,6 @@ import {
   isDarkTheme,
   type SpotlightThemeId,
 } from "@/theme/everleapVisuals";
-
-/* =============================================================================
-   UI helpers
-   ============================================================================= */
 
 function pagePadding() {
   return "pb-24 pt-2 sm:pt-3 lg:pt-5";
@@ -51,14 +42,6 @@ function text(dark: boolean) {
 
 function softText(dark: boolean) {
   return dark ? "text-white/78" : "text-slate-700";
-}
-
-function divider(dark: boolean) {
-  return dark ? "border-white/10" : "border-black/10";
-}
-
-function rowHover(dark: boolean) {
-  return dark ? "hover:bg-white/[0.06]" : "hover:bg-black/[0.03]";
 }
 
 function iconChip(dark: boolean) {
@@ -90,10 +73,6 @@ function quietButton(dark: boolean) {
   ].join(" ");
 }
 
-/* =============================================================================
-   Auth
-   ============================================================================= */
-
 type AuthState = {
   isAuthed: boolean;
   email?: string;
@@ -104,13 +83,13 @@ async function readAuthState(): Promise<AuthState> {
   try {
     const res = await fetch("/api/regauth/me", {
       method: "GET",
-      credentials: "include", // ✅ critical fix
+      credentials: "include",
       cache: "no-store",
     });
 
     const data = await res.json().catch(() => null);
 
-    if (!data?.authed || !data?.user) {
+    if (!data?.ok || !data?.user) {
       return { isAuthed: false };
     }
 
@@ -136,10 +115,6 @@ function clearLocalAuthState() {
   } catch {}
 }
 
-/* =============================================================================
-   Page
-   ============================================================================= */
-
 export default function ProfilePage() {
   const router = useRouter();
 
@@ -163,25 +138,26 @@ export default function ProfilePage() {
     const refresh = () => void load();
 
     window.addEventListener("focus", refresh);
+
     return () => {
       cancelled = true;
       window.removeEventListener("focus", refresh);
     };
   }, []);
 
-async function goLogout() {
-  try {
-    await fetch("/api/regauth/logout", {
-      method: "POST",
-      credentials: "include",
-      cache: "no-store",
-    });
-  } catch {}
+  async function goLogout() {
+    try {
+      await fetch("/api/regauth/logout", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+    } catch {}
 
-  clearLocalAuthState();
+    clearLocalAuthState();
 
-  window.location.replace("/");
-}
+    window.location.replace("/");
+  }
 
   function goSignIn() {
     router.push("/regauth");
@@ -192,7 +168,11 @@ async function goLogout() {
       <div className={pageShell()}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className={`h-10 w-10 flex items-center justify-center rounded-2xl border ${iconChip(dark)}`}>
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${iconChip(
+                dark
+              )}`}
+            >
               <User className="h-5 w-5" />
             </span>
 
@@ -210,23 +190,21 @@ async function goLogout() {
         </div>
 
         <div className={`mt-4 rounded-3xl p-5 ${surface(dark)} ${ring(dark)}`}>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div className={`text-lg font-semibold ${text(dark)}`}>
               {auth.displayName ?? "You"}
             </div>
           </div>
 
           <div className={`mt-1 text-sm ${softText(dark)}`}>
-            {auth.isAuthed
-              ? "Signed in on this device."
-              : "Not signed in yet."}
+            {auth.isAuthed ? "Signed in on this device." : "Not signed in yet."}
           </div>
 
-          {auth.email && (
+          {auth.email ? (
             <div className={`mt-1 text-xs ${muted(dark)}`}>
               {auth.email}
             </div>
-          )}
+          ) : null}
 
           <div className="mt-4">
             {auth.isAuthed ? (

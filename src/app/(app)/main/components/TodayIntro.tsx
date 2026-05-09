@@ -6,24 +6,12 @@ import { motion } from "framer-motion";
 
 import { SignalWord } from "./SignalWord";
 
-/* =============================================================================
-   Types
-   ============================================================================= */
-
 export type RecommendedNext = "motivations" | "strengths" | "skills";
-
-/* =============================================================================
-   Motion
-   ============================================================================= */
 
 const fadeIn = {
   initial: { opacity: 0, y: 4 },
   animate: { opacity: 1, y: 0 },
 };
-
-/* =============================================================================
-   Props
-   ============================================================================= */
 
 export type TodayIntroProps = {
   title?: string;
@@ -34,10 +22,6 @@ export type TodayIntroProps = {
   primaryCtaLabel?: string;
   onPrimary?: () => void;
 };
-
-/* =============================================================================
-   Header (INSIGHTS-ALIGNED)
-   ============================================================================= */
 
 function headerRow(dark: boolean) {
   return "flex items-center gap-2 mb-2";
@@ -58,10 +42,6 @@ function headerTitle(dark: boolean) {
     dark ? "text-white/42" : "text-slate-600",
   ].join(" ");
 }
-
-/* =============================================================================
-   Body styles
-   ============================================================================= */
 
 function heroTitleClass(dark: boolean) {
   return [
@@ -113,10 +93,6 @@ function renderBodyWithSignalWord(body: string) {
   );
 }
 
-/* =============================================================================
-   Component
-   ============================================================================= */
-
 export function TodayIntro(props: TodayIntroProps) {
   const {
     title: introTitle,
@@ -127,12 +103,36 @@ export function TodayIntro(props: TodayIntroProps) {
     onPrimary,
   } = props;
 
-  const resolvedBody = body?.trim() || defaultBody();
+  const resolvedBody = React.useMemo(() => {
+    if (body && body.trim().length > 0) return body;
+
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("everleapOnboarding_v4_convo_min");
+        if (raw) {
+          const snapshot = JSON.parse(raw);
+
+          const name = snapshot?.name;
+          const zip = snapshot?.zip_code || snapshot?.zip;
+
+          if (name && zip) {
+            return `Alright ${name}, we’ve started mapping out how you think and what drives you. Now we can begin shaping real paths and opportunities around you — including things happening near ${zip}.`;
+          }
+
+          if (name) {
+            return `Alright ${name}, we’ve started mapping out how you think and what drives you. Now we can begin turning those signals into real paths that fit you.`;
+          }
+        }
+      } catch {}
+    }
+
+    return defaultBody();
+  }, [body]);
+
   const shouldShowCta = Boolean(primaryCtaLabel && onPrimary);
 
   return (
     <div className="relative">
-      {/* INSIGHTS-STYLE HEADER */}
       <div className={headerRow(dark)}>
         <span className={headerIconWrap(dark)}>
           <Sparkles className="h-3.5 w-3.5" />
@@ -165,11 +165,7 @@ export function TodayIntro(props: TodayIntroProps) {
               <ChevronRight className="h-4 w-4 opacity-55 transition group-hover:translate-x-[3px]" />
             </motion.button>
           ) : (
-            <button
-              type="button"
-              onClick={onPrimary}
-              className={ctaClass(dark)}
-            >
+            <button type="button" onClick={onPrimary} className={ctaClass(dark)}>
               <span>{primaryCtaLabel}</span>
               <ChevronRight className="h-4 w-4 opacity-55 transition group-hover:translate-x-[3px]" />
             </button>
