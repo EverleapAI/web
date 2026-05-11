@@ -96,14 +96,18 @@ function normalizeInputType(
   return "text";
 }
 
-function normalizeQuestion(question: FlowQuestion | null | undefined): NormalizedFlowQuestion | null {
+function normalizeQuestion(
+  question: FlowQuestion | null | undefined
+): NormalizedFlowQuestion | null {
   if (!question) return null;
 
   return {
     ...question,
     inputType: normalizeInputType(question.inputType),
     options: [...(question.options ?? [])].sort(
-      (a, b) => (a.sortOrder ?? a.sort_order ?? 0) - (b.sortOrder ?? b.sort_order ?? 0)
+      (a, b) =>
+        (a.sortOrder ?? a.sort_order ?? 0) -
+        (b.sortOrder ?? b.sort_order ?? 0)
     ),
   };
 }
@@ -140,11 +144,16 @@ function normalizeNode(node: FlowNode): NormalizedFlowNode {
 
 function getShowIfRule(node: NormalizedFlowNode): ShowIfRule | null {
   const rule = node.metadata?.show_if;
+
   if (!rule || typeof rule !== "object") return null;
+
   return rule as ShowIfRule;
 }
 
-export function shouldShowNode(node: NormalizedFlowNode, answers: Answers): boolean {
+export function shouldShowNode(
+  node: NormalizedFlowNode,
+  answers: Answers
+): boolean {
   const rule = getShowIfRule(node);
 
   if (!rule) return true;
@@ -156,7 +165,9 @@ export function shouldShowNode(node: NormalizedFlowNode, answers: Answers): bool
   const value = answers[questionKey];
 
   if (rule.operator === "in") {
-    const allowed: string[] = Array.isArray(rule.values) ? rule.values : [];
+    const allowed: string[] = Array.isArray(rule.values)
+      ? rule.values
+      : [];
 
     if (Array.isArray(value)) {
       return value.some((item) => allowed.includes(item));
@@ -172,9 +183,14 @@ export function shouldShowNode(node: NormalizedFlowNode, answers: Answers): bool
   return true;
 }
 
-function nextVisibleIndex(nodes: NormalizedFlowNode[], answers: Answers, fromIndex: number): number {
+function nextVisibleIndex(
+  nodes: NormalizedFlowNode[],
+  answers: Answers,
+  fromIndex: number
+): number {
   for (let i = fromIndex + 1; i < nodes.length; i += 1) {
     const node = nodes[i];
+
     if (node && shouldShowNode(node, answers)) return i;
   }
 
@@ -188,19 +204,28 @@ function previousVisibleIndex(
 ): number {
   for (let i = fromIndex - 1; i >= 0; i -= 1) {
     const node = nodes[i];
+
     if (node && shouldShowNode(node, answers)) return i;
   }
 
   return 0;
 }
 
-export function getTextAnswer(answers: Answers, questionKey: string): string {
+export function getTextAnswer(
+  answers: Answers,
+  questionKey: string
+): string {
   const value = answers[questionKey];
+
   return typeof value === "string" ? value : "";
 }
 
-export function getArrayAnswer(answers: Answers, questionKey: string): string[] {
+export function getArrayAnswer(
+  answers: Answers,
+  questionKey: string
+): string[] {
   const value = answers[questionKey];
+
   return Array.isArray(value) ? value : [];
 }
 
@@ -215,19 +240,30 @@ export function setAnswer(
   };
 }
 
-export function toggleArrayAnswer(list: string[], value: string, maxChoices?: number | null) {
+export function toggleArrayAnswer(
+  list: string[],
+  value: string,
+  maxChoices?: number | null
+) {
   if (list.includes(value)) {
     return list.filter((item) => item !== value);
   }
 
-  if (typeof maxChoices === "number" && maxChoices > 0 && list.length >= maxChoices) {
+  if (
+    typeof maxChoices === "number" &&
+    maxChoices > 0 &&
+    list.length >= maxChoices
+  ) {
     return list;
   }
 
   return [...list, value];
 }
 
-export function useOnboardingFlow(flow: FlowPayload | null) {
+export function useOnboardingFlow(
+  flow: FlowPayload | null,
+  storageKey: string = STORAGE_KEY
+) {
   const nodes = React.useMemo(() => {
     return [...(flow?.nodes ?? [])]
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -240,7 +276,8 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
     if (typeof window === "undefined") return {};
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKey);
+
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
@@ -258,12 +295,13 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
     if (typeof window === "undefined") return;
 
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
+      localStorage.setItem(storageKey, JSON.stringify(answers));
     } catch {}
-  }, [answers]);
+  }, [answers, storageKey]);
 
   React.useEffect(() => {
     if (!currentNode) return;
+
     if (shouldShowNode(currentNode, answers)) return;
 
     setNodeIndex(nextVisibleIndex(nodes, answers, nodeIndex));
@@ -276,16 +314,30 @@ export function useOnboardingFlow(flow: FlowPayload | null) {
 
   function goNext(nextAnswers: Answers = answers) {
     setAnswers(nextAnswers);
-    setNodeIndex((index) => nextVisibleIndex(nodes, nextAnswers, index));
+
+    setNodeIndex((index) =>
+      nextVisibleIndex(nodes, nextAnswers, index)
+    );
   }
 
   function goBack() {
-    setNodeIndex((index) => previousVisibleIndex(nodes, answers, index));
+    setNodeIndex((index) =>
+      previousVisibleIndex(nodes, answers, index)
+    );
   }
 
-  function updateAnswer(questionKey: string, value: string | string[]) {
-    const nextAnswers = setAnswer(answers, questionKey, value);
+  function updateAnswer(
+    questionKey: string,
+    value: string | string[]
+  ) {
+    const nextAnswers = setAnswer(
+      answers,
+      questionKey,
+      value
+    );
+
     setAnswers(nextAnswers);
+
     return nextAnswers;
   }
 

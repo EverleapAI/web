@@ -308,7 +308,26 @@ export default function MainHomePage() {
                 />
               </SectionCard>
             </section>
+<section className={sectionSpacing()}>
+  <button
+    type="button"
+    onClick={() => {
+      const code = window.prompt("Enter AI Lab access code");
 
+      if (code === "101010") {
+        router.push("/main/ai-lab");
+        return;
+      }
+
+      if (code !== null) {
+        window.alert("Invalid code");
+      }
+    }}
+    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-white/35 transition hover:border-cyan-300/30 hover:text-cyan-200"
+  >
+    Internal AI Lab
+  </button>
+</section>
             <div className="h-4" />
           </div>
         </main>

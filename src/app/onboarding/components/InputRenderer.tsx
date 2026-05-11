@@ -40,7 +40,11 @@ const cardSpring = {
   damping: 28,
 } as const;
 
-function setAnswerLocal(answers: Answers, questionKey: string, value: string | string[]): Answers {
+function setAnswerLocal(
+  answers: Answers,
+  questionKey: string,
+  value: string | string[]
+): Answers {
   return {
     ...answers,
     [questionKey]: value,
@@ -79,7 +83,9 @@ function TalkControl({
       <span
         className={[
           "relative flex h-[18px] w-[18px] items-center justify-center rounded-full transition",
-          active ? "bg-cyan-300/18 shadow-[0_0_18px_rgba(103,232,249,0.24)]" : "",
+          active
+            ? "bg-cyan-300/18 shadow-[0_0_18px_rgba(103,232,249,0.24)]"
+            : "",
         ].join(" ")}
       >
         <Mic
@@ -96,10 +102,16 @@ function TalkControl({
             aria-hidden="true"
             className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-200"
             animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.18, 1] }}
-            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+            transition={{
+              duration: 1.1,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
           />
         ) : null}
+
         {active ? "Listening" : "Talk"}
+
         <span
           aria-hidden="true"
           className={[
@@ -149,11 +161,15 @@ function ChoiceRowText({
         animate={{ scale: selected ? 1.004 : 1 }}
         transition={cardSpring}
       />
+
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+
       <div
         className={[
           "relative text-[14px] leading-[1.35rem] transition",
-          selected ? "font-semibold text-white" : "font-medium text-white/86 group-hover:text-white",
+          selected
+            ? "font-semibold text-white"
+            : "font-medium text-white/86 group-hover:text-white",
         ].join(" ")}
       >
         {label}
@@ -190,14 +206,13 @@ export default function InputRenderer({
     window.requestAnimationFrame(() => {
       textareaRef.current?.focus();
     });
-  }, [question?.key, answers, question]);
+  }, [question?.key]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-      | SpeechRecognitionConstructor
-      | undefined;
+    const SpeechRec = (window.SpeechRecognition ??
+      window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
 
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
@@ -216,9 +231,8 @@ export default function InputRenderer({
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
 
-    const SpeechRec = (window.SpeechRecognition ?? window.webkitSpeechRecognition) as
-      | SpeechRecognitionConstructor
-      | undefined;
+    const SpeechRec = (window.SpeechRecognition ??
+      window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
 
     if (!SpeechRec) return null;
 
@@ -236,7 +250,9 @@ export default function InputRenderer({
         const transcript = (res?.[0]?.transcript ?? "").trim();
 
         if (!transcript) continue;
-        if (res.isFinal) finalChunk += (finalChunk ? " " : "") + transcript;
+        if (res.isFinal) {
+          finalChunk += (finalChunk ? " " : "") + transcript;
+        }
       }
 
       const cleaned = finalChunk.trim();
@@ -246,10 +262,14 @@ export default function InputRenderer({
 
       lastFinalRef.current = cleaned;
 
-      setDraft((prev) => {
-        const base = prev.trim();
-        return base ? `${base} ${cleaned}` : cleaned;
-      });
+      const base = draft.trim();
+      const next = base ? `${base} ${cleaned}` : cleaned;
+
+      setDraft(next);
+
+      if (question) {
+        onAnswer(question.key, next);
+      }
     };
 
     rec.onerror = () => setIsListening(false);
@@ -293,11 +313,22 @@ export default function InputRenderer({
         <textarea
           ref={textareaRef}
           value={draft}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            const value = event.target.value;
+
+            setDraft(value);
+            onAnswer(question.key, value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              const nextAnswers = setAnswerLocal(answers, question.key, draft);
+
+              const nextAnswers = setAnswerLocal(
+                answers,
+                question.key,
+                draft
+              );
+
               onAnswer(question.key, draft);
               onAutoAdvance(nextAnswers);
             }
@@ -313,7 +344,11 @@ export default function InputRenderer({
           </div>
         ) : null}
 
-        <TalkControl active={isListening} supported={speechSupported} onClick={toggleMic} />
+        <TalkControl
+          active={isListening}
+          supported={speechSupported}
+          onClick={toggleMic}
+        />
       </div>
     );
   }
@@ -330,9 +365,17 @@ export default function InputRenderer({
             selected={selected === option.key}
             dimmed={Boolean(selected && selected !== option.key)}
             onClick={() => {
-              const nextAnswers = setAnswerLocal(answers, question.key, option.key);
+              const nextAnswers = setAnswerLocal(
+                answers,
+                question.key,
+                option.key
+              );
+
               onAnswer(question.key, option.key);
-              window.setTimeout(() => onAutoAdvance(nextAnswers), 220);
+
+              window.setTimeout(() => {
+                onAutoAdvance(nextAnswers);
+              }, 220);
             }}
           />
         ))}
@@ -358,14 +401,21 @@ export default function InputRenderer({
             label={option.label}
             selected={selected.includes(option.key)}
             onClick={() => {
-              const nextValue = toggleArrayAnswer(selected, option.key, maxChoices);
+              const nextValue = toggleArrayAnswer(
+                selected,
+                option.key,
+                maxChoices
+              );
+
               onAnswer(question.key, nextValue);
             }}
           />
         ))}
 
         {typeof maxChoices === "number" ? (
-          <div className="pt-1 text-[12px] leading-5 text-white/44">Pick up to {maxChoices}.</div>
+          <div className="pt-1 text-[12px] leading-5 text-white/44">
+            Pick up to {maxChoices}.
+          </div>
         ) : null}
 
         {validationMessage ? (
@@ -391,9 +441,17 @@ export default function InputRenderer({
               key={option.key}
               type="button"
               onClick={() => {
-                const nextAnswers = setAnswerLocal(answers, question.key, option.key);
+                const nextAnswers = setAnswerLocal(
+                  answers,
+                  question.key,
+                  option.key
+                );
+
                 onAnswer(question.key, option.key);
-                window.setTimeout(() => onAutoAdvance(nextAnswers), 220);
+
+                window.setTimeout(() => {
+                  onAutoAdvance(nextAnswers);
+                }, 220);
               }}
               whileHover={{ y: -3, scale: 1.02 }}
               whileTap={{ scale: 0.975 }}
