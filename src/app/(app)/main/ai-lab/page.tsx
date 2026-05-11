@@ -522,6 +522,7 @@ export default function AiLabPage() {
   const [customPrompt, setCustomPrompt] = React.useState(
     "Generate a meaningful Everleap-style retort for this user. Make it specific, concise, and useful."
   );
+  const [userCharacterLimit, setUserCharacterLimit] = React.useState(700);
   const [aiRun, setAiRun] = React.useState<AiLabRun | null>(null);
   const [aiError, setAiError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -683,6 +684,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
           provider,
           prompt: finalPrompt,
           answers: readableAnswers,
+          userCharacterLimit,
         }),
       });
 
@@ -836,6 +838,34 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
 
               <label className="mt-5 block">
                 <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                  User View Character Limit
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="number"
+                    min={120}
+                    max={4000}
+                    step={10}
+                    value={userCharacterLimit}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setUserCharacterLimit(Number.isFinite(value) ? value : 700);
+                      setAiRun(null);
+                      setAiError(null);
+                    }}
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300 sm:w-[160px]"
+                  />
+
+                  <div className="text-sm leading-6 text-white/45">
+                    Maximum characters allowed in the compressed user-facing
+                    response.
+                  </div>
+                </div>
+              </label>
+
+              <label className="mt-5 block">
+                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
                   Custom lab request
                 </div>
 
@@ -907,7 +937,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
                   {aiError}
                 </div>
               ) : aiRun ? (
-                <div className="grid gap-5 xl:grid-cols-2">
+                <div className="grid gap-5 lg:grid-cols-2">
                   <ResultPanel
                     title="Internal View"
                     subtitle="Longer team-facing interpretation for testing signal extraction and prompt behavior."
@@ -916,7 +946,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
 
                   <ResultPanel
                     title="User View"
-                    subtitle="Compressed user-facing copy closer to what Everleap could actually show."
+                    subtitle={`Compressed user-facing copy capped at ${userCharacterLimit.toLocaleString()} characters.`}
                     result={aiRun.user}
                   />
                 </div>
