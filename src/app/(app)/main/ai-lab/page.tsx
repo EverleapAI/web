@@ -42,6 +42,14 @@ type AiLabRun = {
   total?: AiLabTotal;
 };
 
+type LabQuestionItem = {
+  key: string;
+  prompt: string;
+  inputType: string;
+  options: { key: string; label: string }[];
+  answer: unknown;
+};
+
 const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     key: "hybrid",
@@ -192,6 +200,81 @@ Return:
 3. Exploration recommendations
 4. Follow-up questions Everleap should ask`,
   },
+  {
+    key: "ikigai",
+    label: "Ikigai",
+    prompt: `You are using Ikigai as an exploratory career and life-direction framework.
+
+Use the onboarding responses to explore possible overlap between:
+- what the user enjoys or is curious about
+- what they may become good at
+- what the world/community may need
+- what could become economically or practically sustainable
+
+Do NOT treat Ikigai as a diagnostic tool.
+Do NOT force a perfect answer.
+Do NOT over-romanticize purpose.
+
+Instead:
+- identify possible areas of overlap
+- identify gaps where Everleap needs more information
+- identify practical experiments the user could try
+- identify tensions between passion, skill, usefulness, and viability
+
+Return:
+1. Possible Ikigai overlaps
+2. What seems strongest
+3. What is missing or uncertain
+4. Practical next experiments Everleap should suggest`,
+  },
+  {
+    key: "enneagram",
+    label: "Enneagram",
+    prompt: `You are using the Enneagram only as a reflective, exploratory lens.
+
+Do NOT type the user definitively.
+Do NOT diagnose.
+Do NOT present Enneagram claims as scientific fact.
+Do NOT reduce the user to a number.
+
+Use the onboarding responses to explore possible motivation patterns such as:
+- desire for achievement
+- desire for security
+- desire for autonomy
+- desire for connection
+- desire for meaning
+- desire for mastery
+- desire to help or improve the world
+
+Return:
+1. Possible motivational themes
+2. Possible Enneagram-style patterns, stated cautiously
+3. What evidence supports or weakens each hypothesis
+4. How Everleap could use this lens to ask better follow-up questions`,
+  },
+  {
+    key: "parachute",
+    label: "What Color Is Your Parachute?",
+    prompt: `You are using What Color Is Your Parachute? as a practical career-discovery framework.
+
+Analyze the onboarding responses to identify:
+- preferred skills
+- people/environments they may enjoy
+- working conditions that may fit
+- fields worth exploring
+- next practical steps
+- questions that would help clarify direction
+
+Do NOT give generic career advice.
+Do NOT assume the first stated interest is the final answer.
+
+Return:
+1. Possible career/work themes
+2. Skills and environments to investigate
+3. Practical exploration paths
+4. Questions Everleap should ask next
+5. Near-term next steps`,
+  },
 ];
 
 function getApiBaseUrl() {
@@ -231,6 +314,62 @@ function formatCost(value: number | null | undefined) {
   if (value === 0) return "$0.000000";
   if (value < 0.01) return `$${value.toFixed(6)}`;
   return `$${value.toFixed(4)}`;
+}
+
+function isAnswerFilled(value: unknown) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "string") return value.trim().length > 0;
+  return value !== null && value !== undefined;
+}
+
+function getShowIf(node: FlowPayload["nodes"][number]) {
+  const metadata = node.metadata as
+    | {
+        show_if?: {
+          question_key?: string;
+          operator?: string;
+          values?: string[];
+        };
+      }
+    | undefined;
+
+  return metadata?.show_if;
+}
+
+function isNodeVisible(node: FlowPayload["nodes"][number], answers: Answers) {
+  const showIf = getShowIf(node);
+
+  if (!showIf?.question_key) return true;
+
+  const value = answers[showIf.question_key];
+  const values = showIf.values ?? [];
+
+  if (showIf.operator === "in") {
+    if (Array.isArray(value)) {
+      return value.some((item) => values.includes(String(item)));
+    }
+
+    return values.includes(String(value ?? ""));
+  }
+
+  return true;
+}
+
+function areRequiredVisibleQuestionsAnswered(
+  nodes: FlowPayload["nodes"],
+  answers: Answers
+) {
+  const requiredQuestionNodes = nodes.filter(
+    (node) => node.question && node.isRequired && isNodeVisible(node, answers)
+  );
+
+  if (requiredQuestionNodes.length === 0) return false;
+
+  return requiredQuestionNodes.every((node) => {
+    const key = node.question?.key;
+    if (!key) return true;
+    return isAnswerFilled(answers[key]);
+  });
 }
 
 function ResultPanel({
@@ -300,6 +439,77 @@ function ResultPanel({
   );
 }
 
+function EditableAnswer({
+  item,
+  onUpdate,
+}: {
+  item: LabQuestionItem;
+  onUpdate: (key: string, value: string | string[]) => void;
+}) {
+  if (item.inputType === "multi_choice") {
+    const selected = Array.isArray(item.answer)
+      ? item.answer.map((value) => String(value))
+      : [];
+
+    return (
+      <div className="mt-3 grid gap-2">
+        {item.options.map((option) => {
+          const checked = selected.includes(option.key);
+
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => {
+                const next = checked
+                  ? selected.filter((value) => value !== option.key)
+                  : [...selected, option.key];
+
+                onUpdate(item.key, next);
+              }}
+              className={[
+                "rounded-2xl border px-4 py-3 text-left text-sm transition",
+                checked
+                  ? "border-cyan-200 bg-cyan-300 text-slate-950"
+                  : "border-white/10 bg-black/30 text-white/75 hover:border-white/25",
+              ].join(" ")}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (item.options.length > 0) {
+    return (
+      <select
+        value={typeof item.answer === "string" ? item.answer : ""}
+        onChange={(event) => onUpdate(item.key, event.target.value)}
+        className="mt-3 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+      >
+        <option value="">Select an answer</option>
+        {item.options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <textarea
+      value={typeof item.answer === "string" ? item.answer : ""}
+      onChange={(event) => onUpdate(item.key, event.target.value)}
+      rows={3}
+      className="mt-3 w-full resize-y rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/30 focus:border-cyan-300"
+      placeholder="Type an answer"
+    />
+  );
+}
+
 export default function AiLabPage() {
   const [flow, setFlow] = React.useState<FlowPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -351,34 +561,54 @@ export default function AiLabPage() {
     canGoBack,
   } = useOnboardingFlow(flow, "everleap_ai_lab_answers");
 
-  const readableAnswers = React.useMemo(() => {
+  React.useEffect(() => {
+    if (!flow || completed) return;
+
+    if (areRequiredVisibleQuestionsAnswered(nodes, answers)) {
+      setCompleted(true);
+    }
+  }, [answers, completed, flow, nodes]);
+
+  const labQuestionItems = React.useMemo<LabQuestionItem[]>(() => {
     return nodes
-      .filter((node) => node.question)
+      .filter((node) => node.question && isNodeVisible(node, answers))
       .map((node) => {
         const question = node.question!;
-        const rawAnswer = answers[question.key];
 
+        return {
+          key: question.key,
+          prompt: question.prompt,
+          inputType: question.inputType,
+          options: question.options,
+          answer: answers[question.key],
+        };
+      });
+  }, [answers, nodes]);
+
+  const readableAnswers = React.useMemo(() => {
+    return labQuestionItems
+      .map((item) => {
         let formattedAnswer = "";
 
-        if (Array.isArray(rawAnswer)) {
-          formattedAnswer = rawAnswer
+        if (Array.isArray(item.answer)) {
+          formattedAnswer = item.answer
             .map((value) => {
-              const option = question.options.find((opt) => opt.key === value);
-              return option?.label ?? value;
+              const option = item.options.find((opt) => opt.key === value);
+              return option?.label ?? String(value);
             })
             .join(", ");
-        } else if (typeof rawAnswer === "string") {
-          const option = question.options.find((opt) => opt.key === rawAnswer);
-          formattedAnswer = option?.label ?? rawAnswer;
+        } else if (typeof item.answer === "string") {
+          const option = item.options.find((opt) => opt.key === item.answer);
+          formattedAnswer = option?.label ?? item.answer;
         }
 
         return {
-          question: question.prompt,
+          question: item.prompt,
           answer: formattedAnswer,
         };
       })
       .filter((item) => item.answer.trim());
-  }, [answers, nodes]);
+  }, [labQuestionItems]);
 
   const selectedTemplate =
     PROMPT_TEMPLATES.find((template) => template.key === templateKey) ??
@@ -423,6 +653,19 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
     }
 
     goNext(nextAnswers);
+  }
+
+  function handleEditableAnswer(key: string, value: string | string[]) {
+    updateAnswer(key, value);
+    setAiRun(null);
+    setAiError(null);
+  }
+
+  function restartLabQuestions() {
+    setAiRun(null);
+    setAiError(null);
+    setCompleted(false);
+    setShowContext(false);
   }
 
   async function runPrompt() {
@@ -522,13 +765,23 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
               onboarding responses.
             </p>
 
-            <button
-              type="button"
-              onClick={() => setShowContext(true)}
-              className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/75 transition hover:border-cyan-300/40 hover:text-white"
-            >
-              View onboarding context
-            </button>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setShowContext(true)}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/75 transition hover:border-cyan-300/40 hover:text-white"
+              >
+                View / edit onboarding context
+              </button>
+
+              <button
+                type="button"
+                onClick={restartLabQuestions}
+                className="rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-white/50 transition hover:border-white/25 hover:text-white"
+              >
+                Walk through questions
+              </button>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -678,14 +931,14 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
 
         {showContext ? (
           <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-4 backdrop-blur-sm sm:items-center sm:justify-center">
-            <div className="max-h-[88svh] w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
+            <div className="max-h-[88svh] w-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
               <div className="flex items-center justify-between gap-4 border-b border-white/10 p-5">
                 <div>
                   <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
                     Onboarding Context
                   </div>
                   <div className="mt-1 text-sm text-white/45">
-                    Readable answers being sent into the lab prompt.
+                    Edit the answers being sent into the lab prompt.
                   </div>
                 </div>
 
@@ -699,15 +952,19 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
               </div>
 
               <div className="max-h-[70svh] space-y-6 overflow-auto p-5">
-                {readableAnswers.map((item, index) => (
-                  <div key={`${item.question}-${index}`}>
+                {labQuestionItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                  >
                     <div className="text-xs uppercase tracking-[0.15em] text-white/40">
-                      {item.question}
+                      {item.prompt}
                     </div>
 
-                    <div className="mt-2 text-base leading-relaxed text-white/85">
-                      {item.answer}
-                    </div>
+                    <EditableAnswer
+                      item={item}
+                      onUpdate={handleEditableAnswer}
+                    />
                   </div>
                 ))}
               </div>
