@@ -57,11 +57,20 @@ export type FlowNode = {
 
 export type NormalizedFlowNode = Omit<FlowNode, "type" | "question"> & {
   rawType: FlowNode["type"];
-  type: "story" | "text" | "single_choice" | "multi_choice" | "image_choice" | "summary";
+  type:
+    | "story"
+    | "text"
+    | "single_choice"
+    | "multi_choice"
+    | "image_choice"
+    | "summary";
   question?: NormalizedFlowQuestion | null;
 };
 
-export type NormalizedFlowQuestion = Omit<FlowQuestion, "inputType" | "options"> & {
+export type NormalizedFlowQuestion = Omit<
+  FlowQuestion,
+  "inputType" | "options"
+> & {
   inputType: "text" | "single_choice" | "multi_choice" | "image_choice";
   options: FlowOption[];
 };
@@ -93,6 +102,7 @@ function normalizeInputType(
   if (inputType === "single_choice") return "single_choice";
   if (inputType === "multi_choice") return "multi_choice";
   if (inputType === "image_choice") return "image_choice";
+
   return "text";
 }
 
@@ -165,9 +175,7 @@ export function shouldShowNode(
   const value = answers[questionKey];
 
   if (rule.operator === "in") {
-    const allowed: string[] = Array.isArray(rule.values)
-      ? rule.values
-      : [];
+    const allowed = Array.isArray(rule.values) ? rule.values : [];
 
     if (Array.isArray(value)) {
       return value.some((item) => allowed.includes(item));
@@ -183,6 +191,10 @@ export function shouldShowNode(
   return true;
 }
 
+function getVisibleNodes(nodes: NormalizedFlowNode[], answers: Answers) {
+  return nodes.filter((node) => shouldShowNode(node, answers));
+}
+
 function nextVisibleIndex(
   nodes: NormalizedFlowNode[],
   answers: Answers,
@@ -194,7 +206,7 @@ function nextVisibleIndex(
     if (node && shouldShowNode(node, answers)) return i;
   }
 
-  return Math.max(0, nodes.length - 1);
+  return fromIndex;
 }
 
 function previousVisibleIndex(
@@ -208,13 +220,19 @@ function previousVisibleIndex(
     if (node && shouldShowNode(node, answers)) return i;
   }
 
-  return 0;
+  return fromIndex;
 }
 
-export function getTextAnswer(
-  answers: Answers,
-  questionKey: string
-): string {
+function firstVisibleIndex(
+  nodes: NormalizedFlowNode[],
+  answers: Answers
+): number {
+  const index = nodes.findIndex((node) => shouldShowNode(node, answers));
+
+  return index >= 0 ? index : 0;
+}
+
+export function getTextAnswer(answers: Answers, questionKey: string): string {
   const value = answers[questionKey];
 
   return typeof value === "string" ? value : "";
@@ -260,6 +278,48 @@ export function toggleArrayAnswer(
   return [...list, value];
 }
 
+export function isQuestionAnswered(
+  question: NormalizedFlowQuestion | null | undefined,
+  answers: Answers
+): boolean {
+  if (!question) return true;
+
+  if (question.inputType === "multi_choice") {
+    return getArrayAnswer(answers, question.key).length > 0;
+  }
+
+  return getTextAnswer(answers, question.key).trim().length > 0;
+}
+
+export function getQuestionValidationMessage(
+  question: NormalizedFlowQuestion | null | undefined,
+  answers: Answers
+): string | null {
+  if (!question) return null;
+
+  if (question.inputType === "multi_choice") {
+    return getArrayAnswer(answers, question.key).length > 0
+      ? null
+      : "Pick at least one that fits.";
+  }
+
+  const value = getTextAnswer(answers, question.key).trim();
+
+  if (!value) {
+    return "Add an answer to keep going.";
+  }
+
+  if (
+    typeof question.minLength === "number" &&
+    question.minLength > 0 &&
+    value.length < question.minLength
+  ) {
+    return `Add at least ${question.minLength} characters.`;
+  }
+
+  return null;
+}
+
 export function useOnboardingFlow(
   flow: FlowPayload | null,
   storageKey: string = STORAGE_KEY
@@ -271,6 +331,9 @@ export function useOnboardingFlow(
   }, [flow]);
 
   const [nodeIndex, setNodeIndex] = React.useState(0);
+  const [validationMessage, setValidationMessage] = React.useState<
+    string | null
+  >(null);
 
   const [answers, setAnswers] = React.useState<Answers>(() => {
     if (typeof window === "undefined") return {};
@@ -287,8 +350,23 @@ export function useOnboardingFlow(
   const currentNode = nodes[nodeIndex] ?? null;
   const currentQuestion = currentNode?.question ?? null;
 
+  const visibleNodes = React.useMemo(() => {
+    return getVisibleNodes(nodes, answers);
+  }, [answers, nodes]);
+
+  const isComplete = Boolean(
+    nodes.length > 0 &&
+      currentNode &&
+      nodeIndex === nodes.length - 1 &&
+      nextVisibleIndex(nodes, answers, nodeIndex) === nodeIndex
+  );
+
   React.useEffect(() => {
-    setNodeIndex(0);
+    setNodeIndex(firstVisibleIndex(nodes, answers));
+    setValidationMessage(null);
+    // Only reset when a new flow loads.
+    // Do NOT include answers here or every answer sends the user back to the first screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow?.id]);
 
   React.useEffect(() => {
@@ -304,45 +382,69 @@ export function useOnboardingFlow(
 
     if (shouldShowNode(currentNode, answers)) return;
 
-    setNodeIndex(nextVisibleIndex(nodes, answers, nodeIndex));
-  }, [answers, currentNode, nodeIndex, nodes]);
+    setNodeIndex((currentIndex) => {
+      const nextIndex = nextVisibleIndex(nodes, answers, currentIndex);
+
+      if (nextIndex !== currentIndex) return nextIndex;
+
+      return previousVisibleIndex(nodes, answers, currentIndex);
+    });
+  }, [answers, currentNode, nodes]);
 
   function reset() {
-    setNodeIndex(0);
+    setNodeIndex(firstVisibleIndex(nodes, {}));
     setAnswers({});
+    setValidationMessage(null);
+  }
+
+  function canContinue(nextAnswers: Answers = answers) {
+    if (!currentNode) return false;
+    if (!currentNode.isRequired) return true;
+
+    return isQuestionAnswered(currentQuestion, nextAnswers);
   }
 
   function goNext(nextAnswers: Answers = answers) {
     setAnswers(nextAnswers);
 
-    setNodeIndex((index) =>
-      nextVisibleIndex(nodes, nextAnswers, index)
-    );
+    if (!currentNode) return false;
+
+    if (!canContinue(nextAnswers)) {
+      setValidationMessage(
+        getQuestionValidationMessage(currentQuestion, nextAnswers)
+      );
+      return false;
+    }
+
+    setValidationMessage(null);
+
+    const nextIndex = nextVisibleIndex(nodes, nextAnswers, nodeIndex);
+
+    if (nextIndex === nodeIndex) {
+      return false;
+    }
+
+    setNodeIndex(nextIndex);
+    return true;
   }
 
   function goBack() {
-    setNodeIndex((index) =>
-      previousVisibleIndex(nodes, answers, index)
-    );
+    setValidationMessage(null);
+    setNodeIndex((index) => previousVisibleIndex(nodes, answers, index));
   }
 
-  function updateAnswer(
-    questionKey: string,
-    value: string | string[]
-  ) {
-    const nextAnswers = setAnswer(
-      answers,
-      questionKey,
-      value
-    );
+  function updateAnswer(questionKey: string, value: string | string[]) {
+    const nextAnswers = setAnswer(answers, questionKey, value);
 
     setAnswers(nextAnswers);
+    setValidationMessage(null);
 
     return nextAnswers;
   }
 
   return {
     nodes,
+    visibleNodes,
     nodeIndex,
     currentNode,
     currentQuestion,
@@ -352,6 +454,9 @@ export function useOnboardingFlow(
     goNext,
     goBack,
     updateAnswer,
-    canGoBack: nodeIndex > 0,
+    canContinue,
+    canGoBack: previousVisibleIndex(nodes, answers, nodeIndex) !== nodeIndex,
+    isComplete,
+    validationMessage,
   };
 }

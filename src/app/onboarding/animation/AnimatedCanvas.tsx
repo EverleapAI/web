@@ -20,7 +20,7 @@ function toneFill(tone: VisualNode["tone"]) {
   return "rgba(125,249,255,0.92)";
 }
 
-function isTextHeavyQuestion(state: OnboardingAnimationState) {
+function isDenseQuestion(state: OnboardingAnimationState) {
   return (
     state.nodeKey === "current_situation" ||
     state.nodeKey === "certainty" ||
@@ -28,6 +28,36 @@ function isTextHeavyQuestion(state: OnboardingAnimationState) {
     state.nodeKey === "activities" ||
     state.nodeKey === "fun_instinct"
   );
+}
+
+function getSectionVisuals(state: OnboardingAnimationState) {
+  if (state.isWelcome) {
+    return {
+      glowOpacity: 0.56,
+      lineOpacity: 0.68,
+      backgroundOpacity: 0.66,
+      scale: 0.985,
+      blur: 0,
+    };
+  }
+
+  if (state.isReflection) {
+    return {
+      glowOpacity: 0.28,
+      lineOpacity: 0.24,
+      backgroundOpacity: 0.48,
+      scale: 1,
+      blur: 6,
+    };
+  }
+
+  return {
+    glowOpacity: 0.82,
+    lineOpacity: 0.9,
+    backgroundOpacity: 0.84,
+    scale: 1,
+    blur: 0,
+  };
 }
 
 function getMainPath(state: OnboardingAnimationState) {
@@ -41,26 +71,11 @@ function getMainPath(state: OnboardingAnimationState) {
     case "connect":
       return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
 
-    case "nameTag":
-  return "M300 54 L500 54 C534 54, 558 78, 558 108 C558 138, 534 162, 500 162 L300 162 C266 162, 242 138, 242 108 C242 78, 266 54, 300 54 M320 102 L486 102 M320 126 L438 126";
-
-    case "terrain":
-      return "M70 122 C140 88, 205 96, 272 74 C355 46, 435 122, 508 86 C580 52, 658 66, 730 42";
-
-    case "branching":
-      return "M92 130 C175 96, 260 92, 335 78 C430 58, 545 50, 700 28";
-
     case "branchExtend":
       return "M82 138 C165 102, 250 98, 330 78 C425 52, 548 44, 718 18";
 
-    case "networkGrow":
-      return "M92 126 C168 70, 235 128, 316 76 C394 24, 482 112, 560 66 C620 30, 678 50, 725 18";
-
     case "instinctShift":
       return "M88 136 C160 42, 245 190, 330 78 C425 -12, 530 166, 706 38";
-
-    case "finalMap":
-      return "M70 145 C145 92, 222 118, 300 72 C390 18, 488 82, 578 44 C650 14, 705 26, 754 6";
 
     default:
       return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
@@ -88,45 +103,45 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
 
     case "nameTag":
       return [
-        { x: 224, y: 108, r: 4.8, tone: "white" },
-        { x: 650, y: 238, r: 3.6 },
+        { x: 248, y: 112, r: 5.2, tone: "white" },
+        { x: 574, y: 112, r: 4.2, tone: "violet" },
+        { x: 452, y: 128, r: 3.4 },
       ];
 
     case "terrain":
       return [
-        { x: 70, y: 122 },
-        { x: 272, y: 74 },
-        { x: 508, y: 86, tone: "violet" },
-        { x: 730, y: 42, tone: "white" },
+        { x: 120, y: 152 },
+        { x: 302, y: 86, tone: "white" },
+        { x: 508, y: 118, tone: "violet" },
+        { x: 690, y: 74 },
       ];
 
     case "branching":
     case "branchExtend":
       return [
-        { x: 335, y: 78, r: 5 },
-        { x: 500, y: 22, tone: "violet" },
-        { x: 520, y: 118 },
-        { x: 700, y: 28, tone: "white" },
+        { x: 292, y: 132, r: 5, tone: "white" },
+        { x: 438, y: 72, tone: "violet" },
+        { x: 486, y: 152 },
+        { x: 640, y: 40, tone: "white" },
       ];
 
     case "networkGrow":
       return [
-        { x: 92, y: 126 },
-        { x: 205, y: 104, tone: "violet" },
-        { x: 316, y: 76 },
-        { x: 438, y: 82, tone: "white" },
-        { x: 560, y: 66 },
-        { x: 650, y: 44, tone: "violet" },
-        { x: 725, y: 18 },
+        { x: 150, y: 142 },
+        { x: 238, y: 88, tone: "violet" },
+        { x: 338, y: 126 },
+        { x: 448, y: 72, tone: "white" },
+        { x: 552, y: 118 },
+        { x: 642, y: 66, tone: "violet" },
       ];
 
     case "finalMap":
       return [
-        { x: 70, y: 145 },
-        { x: 300, y: 72 },
-        { x: 430, y: 62, tone: "violet" },
-        { x: 578, y: 44 },
-        { x: 754, y: 6, tone: "white" },
+        { x: 104, y: 150 },
+        { x: 234, y: 96 },
+        { x: 372, y: 132, tone: "violet" },
+        { x: 518, y: 74 },
+        { x: 674, y: 122, tone: "white" },
       ];
 
     default:
@@ -139,88 +154,340 @@ function getNodes(state: OnboardingAnimationState): VisualNode[] {
 }
 
 function getInstinctPath(state: OnboardingAnimationState) {
-  if (state.instinctStyle === "wolf") return "M120 155 L248 88 L386 76 L535 38 L710 26";
-  if (state.instinctStyle === "fox") return "M105 138 C185 82, 218 126, 302 72 C370 28, 420 96, 492 48 C562 4, 620 60, 712 18";
-  if (state.instinctStyle === "dolphin") return "M94 122 C174 38, 260 192, 352 112 C452 24, 525 168, 704 78";
-  if (state.instinctStyle === "hawk") return "M112 162 L215 80 L308 104 L405 28 L508 58 L705 10";
+  if (state.instinctStyle === "wolf") {
+    return "M120 155 L248 88 L386 76 L535 38 L710 26";
+  }
+
+  if (state.instinctStyle === "fox") {
+    return "M105 138 C185 82, 218 126, 302 72 C370 28, 420 96, 492 48 C562 4, 620 60, 712 18";
+  }
+
+  if (state.instinctStyle === "dolphin") {
+    return "M94 122 C174 38, 260 192, 352 112 C452 24, 525 168, 704 78";
+  }
+
+  if (state.instinctStyle === "hawk") {
+    return "M112 162 L215 80 L308 104 L405 28 L508 58 L705 10";
+  }
+
   return null;
 }
 
+function DrawPath({
+  d,
+  opacity,
+  delay = 0,
+  duration = 1,
+  stroke = "url(#everleap-line)",
+  strokeWidth = 2.6,
+  dash,
+  pathKey,
+}: {
+  d: string;
+  opacity: number;
+  delay?: number;
+  duration?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  dash?: string;
+  pathKey: string;
+}) {
+  return (
+    <motion.path
+      key={pathKey}
+      d={d}
+      fill="none"
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeDasharray={dash}
+      filter="url(#everleap-glow)"
+      initial={{ pathLength: 0, opacity: 0 }}
+      animate={{ pathLength: 1, opacity }}
+      transition={{
+        duration,
+        delay,
+        ease: "easeInOut",
+      }}
+    />
+  );
+}
+
+function SemanticDrawing({
+  state,
+  opacity,
+}: {
+  state: OnboardingAnimationState;
+  opacity: number;
+}) {
+  if (state.preset === "nameTag") {
+    return (
+      <>
+        <DrawPath
+          pathKey={`tag-outline-${state.nodeKey}`}
+          opacity={0.92 * opacity}
+          duration={1.15}
+          d="M278 54 L514 54 C548 54, 574 80, 574 112 C574 144, 548 170, 514 170 L278 170 C244 170, 218 144, 218 112 C218 80, 244 54, 278 54"
+        />
+
+        <DrawPath
+          pathKey={`tag-notch-${state.nodeKey}`}
+          opacity={0.72 * opacity}
+          delay={0.92}
+          duration={0.45}
+          strokeWidth={2.2}
+          d="M248 84 L278 112 L248 140"
+        />
+
+        {[
+          "M320 100 L500 100",
+          "M320 128 L452 128",
+          "M320 146 L410 146",
+        ].map((path, index) => (
+          <DrawPath
+            key={path}
+            pathKey={`tag-line-${index}-${state.nodeKey}`}
+            d={path}
+            opacity={0.5 * opacity}
+            delay={1.18 + index * 0.12}
+            duration={0.32}
+            stroke="rgba(255,255,255,0.52)"
+            strokeWidth={1.7}
+          />
+        ))}
+      </>
+    );
+  }
+
+  if (state.preset === "terrain") {
+    return (
+      <>
+        <DrawPath
+          pathKey={`terrain-horizon-${state.nodeKey}`}
+          opacity={0.82 * opacity}
+          duration={1.1}
+          d="M90 156 C154 122, 210 132, 270 98 C336 58, 410 128, 472 96 C548 56, 620 78, 710 42"
+        />
+
+        <DrawPath
+          pathKey={`terrain-ground-${state.nodeKey}`}
+          opacity={0.34 * opacity}
+          delay={0.55}
+          duration={0.8}
+          stroke="rgba(255,255,255,0.22)"
+          strokeWidth={1.5}
+          d="M130 184 C230 166, 320 188, 420 170 C520 152, 610 168, 700 146"
+        />
+
+        <DrawPath
+          pathKey={`terrain-trail-${state.nodeKey}`}
+          opacity={0.6 * opacity}
+          delay={0.85}
+          duration={0.85}
+          stroke="rgba(125,249,255,0.64)"
+          strokeWidth={1.8}
+          dash="4 8"
+          d="M300 188 C338 156, 386 150, 420 124 C458 96, 488 94, 520 82"
+        />
+      </>
+    );
+  }
+
+  if (state.preset === "networkGrow") {
+    const links = [
+      "M150 142 L238 88",
+      "M238 88 L338 126",
+      "M338 126 L448 72",
+      "M448 72 L552 118",
+      "M552 118 L642 66",
+      "M238 88 L448 72",
+      "M338 126 L552 118",
+    ];
+
+    return (
+      <>
+        {links.map((path, index) => (
+          <DrawPath
+            key={path}
+            pathKey={`network-link-${index}-${state.nodeKey}`}
+            d={path}
+            opacity={(index < 5 ? 0.52 : 0.22) * opacity}
+            delay={index * 0.12}
+            duration={0.55}
+            stroke={
+              index < 5
+                ? "rgba(125,249,255,0.66)"
+                : "rgba(255,255,255,0.22)"
+            }
+            strokeWidth={index < 5 ? 1.8 : 1.1}
+          />
+        ))}
+      </>
+    );
+  }
+
+  if (state.preset === "finalMap") {
+    return (
+      <>
+        <DrawPath
+          pathKey={`map-path-${state.nodeKey}`}
+          opacity={0.58 * opacity}
+          duration={1.2}
+          d="M104 150 C172 112, 226 106, 292 126 C356 146, 408 132, 466 94 C536 48, 608 80, 674 122"
+        />
+
+        <DrawPath
+          pathKey={`map-secondary-${state.nodeKey}`}
+          opacity={0.22 * opacity}
+          delay={0.58}
+          duration={0.9}
+          stroke="rgba(255,255,255,0.22)"
+          strokeWidth={1.4}
+          d="M234 96 C310 74, 382 82, 448 72 C524 60, 590 88, 674 122"
+        />
+
+        <DrawPath
+          pathKey={`map-orbit-${state.nodeKey}`}
+          opacity={0.18 * opacity}
+          delay={0.86}
+          duration={1}
+          stroke="rgba(196,181,253,0.34)"
+          strokeWidth={1.2}
+          dash="5 10"
+          d="M170 150 C250 44, 426 34, 574 78 C670 106, 710 160, 610 184 C470 218, 260 206, 170 150"
+        />
+      </>
+    );
+  }
+
+  return (
+    <DrawPath
+      pathKey={`main-${state.nodeKey}-${state.preset}`}
+      d={getMainPath(state)}
+      opacity={0.92 * opacity}
+      duration={1.4}
+      strokeWidth={2.4}
+    />
+  );
+}
+
 export default function AnimatedCanvas({ state }: Props) {
-    
-  const mainPath = getMainPath(state);
   const nodes = getNodes(state);
   const instinctPath = getInstinctPath(state);
-  const textHeavy = isTextHeavyQuestion(state);
+  const denseQuestion = isDenseQuestion(state);
+  const sectionVisuals = getSectionVisuals(state);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(34,211,238,0.18),transparent_32%),radial-gradient(circle_at_72%_70%,rgba(168,85,247,0.14),transparent_36%)]" />
+      <motion.div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_78%_20%,rgba(168,85,247,0.10),transparent_26%)]"
+        animate={{
+          opacity: sectionVisuals.backgroundOpacity,
+        }}
+        transition={{ duration: 1.2 }}
+      />
 
-      <div className="absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-b from-transparent via-[#040817]/70 to-[#040817]/95" />
-      <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-[#040817]/82 via-[#040817]/42 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-b from-transparent via-[#040817]/74 to-[#040817]/96" />
 
-      <svg
-        viewBox="0 0 800 260"
-        preserveAspectRatio="xMidYMid slice"
-        className={[
-          "absolute left-1/2 w-[100vw] -translate-x-1/2 opacity-95",
-          textHeavy
-            ? "top-[4%] h-[38vh] min-h-[250px]"
-            : "top-[2%] h-[32vh] min-h-[220px]",
-        ].join(" ")}
-      >
-        <defs>
-          <filter id="everleap-glow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="5" result="blur" />
-            <feColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.18  0 0 0 0 0.95  0 0 0 0 1  0 0 0 0.75 0"
-              result="glow"
+      <div className="absolute inset-y-0 left-0 w-[42%] bg-gradient-to-r from-[#040817]/72 via-[#040817]/24 to-transparent" />
+
+      <div className="absolute inset-x-0 top-[72px] flex justify-center">
+        <div
+          className={[
+            "relative w-full max-w-[760px] transition-all duration-700",
+            denseQuestion
+              ? "h-[270px] sm:h-[300px]"
+              : "h-[240px] sm:h-[270px]",
+          ].join(" ")}
+        >
+          <svg
+            viewBox="0 0 800 260"
+            preserveAspectRatio="xMidYMid meet"
+            className="absolute inset-0 h-full w-full"
+            style={{
+              opacity: sectionVisuals.lineOpacity,
+              transform: `scale(${sectionVisuals.scale})`,
+              filter: `blur(${sectionVisuals.blur}px)`,
+            }}
+          >
+            <defs>
+              <filter
+                id="everleap-glow"
+                x="-60%"
+                y="-60%"
+                width="220%"
+                height="220%"
+              >
+                <feGaussianBlur stdDeviation="5" result="blur" />
+
+                <feColorMatrix
+                  in="blur"
+                  type="matrix"
+                  values="0 0 0 0 0.18  0 0 0 0 0.95  0 0 0 0 1  0 0 0 0.75 0"
+                  result="glow"
+                />
+
+                <feMerge>
+                  <feMergeNode in="glow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              <linearGradient
+                id="everleap-line"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
+                <stop offset="34%" stopColor="rgba(125,249,255,0.88)" />
+                <stop offset="68%" stopColor="rgba(196,181,253,0.84)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0.24)" />
+              </linearGradient>
+            </defs>
+
+            <SemanticDrawing
+              state={state}
+              opacity={sectionVisuals.glowOpacity}
             />
-            <feMerge>
-              <feMergeNode in="glow" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
 
-          <linearGradient id="everleap-line" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
-            <stop offset="34%" stopColor="rgba(125,249,255,0.95)" />
-            <stop offset="68%" stopColor="rgba(196,181,253,0.9)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.28)" />
-          </linearGradient>
-        </defs>
+            {instinctPath ? (
+              <DrawPath
+                pathKey={`instinct-${state.nodeKey}`}
+                d={instinctPath}
+                opacity={0.58}
+                delay={0.12}
+                duration={1.6}
+                stroke="rgba(255,255,255,0.14)"
+                strokeWidth={1.1}
+                dash="5 9"
+              />
+            ) : null}
 
-        <motion.path
-          key={`main-${state.nodeKey}-${state.preset}`}
-          d={mainPath}
-          fill="none"
-          stroke="url(#everleap-line)"
-          strokeWidth={state.preset === "finalMap" ? 3.2 : 2.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#everleap-glow)"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.95 }}
-          transition={{ duration: 1.45, ease: "easeInOut" }}
-        />
-
-        {nodes.map((node, index) => (
-          <motion.circle
-            key={`${state.nodeKey}-${index}`}
-            cx={node.x}
-            cy={node.y}
-            r={node.r ?? (index % 3 === 0 ? 4.8 : 3.5)}
-            fill={toneFill(node.tone)}
-            filter="url(#everleap-glow)"
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: [0, 1.35, 1], opacity: [0, 1, 0.8] }}
-            transition={{ duration: 0.5, delay: 0.15 + index * 0.09 }}
-          />
-        ))}
-      </svg>
+            {nodes.map((node, index) => (
+              <motion.circle
+                key={`${state.nodeKey}-${index}`}
+                cx={node.x}
+                cy={node.y}
+                r={node.r ?? (index % 3 === 0 ? 4.6 : 3.4)}
+                fill={toneFill(node.tone)}
+                filter="url(#everleap-glow)"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{
+                  scale: [0, 1.3, 1],
+                  opacity: [0, 1, 0.78 * sectionVisuals.glowOpacity],
+                }}
+                transition={{
+                  duration: 0.5,
+                  delay: 0.15 + index * 0.09,
+                }}
+              />
+            ))}
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,52 +1,112 @@
 // apps/web/src/app/onboarding/animation/nodeVisuals.ts
 
 export type AnimationPreset =
+  /*
+    Transitional / fallback
+  */
   | "idle"
-  | "scatter"
-  | "connect"
+
+  /*
+    Arrival / orientation
+  */
   | "anchor"
+  | "connect"
   | "nameTag"
+
+  /*
+    Signal discovery
+  */
+  | "scatter"
+  | "networkGrow"
+
+  /*
+    Grounding / understanding
+  */
   | "terrain"
+
+  /*
+    Branching / possibility
+  */
   | "branching"
   | "branchExtend"
-  | "networkGrow"
+
+  /*
+    Emotional / instinctive
+  */
   | "instinctShift"
+
+  /*
+    Map / convergence
+  */
   | "finalMap";
 
+/*
+  VISUAL SYSTEM DIRECTION
+
+  Everleap onboarding now has two visual languages:
+
+  1. WHAT IS EVERLEAP
+     - semantic icons
+     - calm, symbolic, memorable
+     - examples: mirror, story, compass, stars, rudder
+
+  2. DISCOVERY
+     - active line motion
+     - signals, branches, terrain, networks
+     - reflects the system learning about the user
+
+  Transition / synthesis screens should stay quiet.
+  They can map to finalMap for compatibility, but page-level rendering
+  should avoid active animated line art when possible.
+*/
+
 export const nodeVisuals: Record<string, AnimationPreset> = {
-  // Intro
-  welcome: "connect",
-  intro_1: "scatter",
-  intro_name: "nameTag",
+  /*
+    PHASE 1 — What is Everleap?
+
+    These screens are primarily rendered through semantic icon assets
+    in page.tsx. The presets below are fallbacks only.
+  */
+  welcome: "anchor",
+  how_it_works: "connect",
+  what_you_get: "anchor",
+  progress: "networkGrow",
+  lets_get_started: "connect",
+
+  /*
+    PHASE 2 — Discovery
+
+    This is where animated line visuals belong.
+  */
+
+  // Permissions
+  permissions: "scatter",
+
+  // Identity
   name: "nameTag",
 
-  // Pattern / system explanation
-  signals_intro: "connect",
-  patterns_intro: "connect",
-
-  // Situation
+  // Grounding
   current_situation: "terrain",
-  situation_response: "connect",
 
-  // Certainty
-  certainty: "branching",
-  certainty_response: "connect",
-  certainty_idea: "branchExtend",
-  idea_response: "connect",
-
-  // Direction
+  // Future horizon
   post_plans: "branching",
-  post_plans_response: "connect",
 
-  // Signals / activities
+  // Certainty / branching
+  certainty: "branching",
+  certainty_idea: "branchExtend",
+
+  // Personal signals
   activities: "networkGrow",
-  activities_response: "connect",
 
-  // Instinct
+  // Natural pull / instinct
   fun_instinct: "instinctShift",
-  fun_instinct_response: "connect",
 
-  // Final
+  /*
+    PHASE 3 — Transition / synthesis
+
+    Quiet handoff into RegAuth.
+  */
   summary_transition: "finalMap",
   summary: "finalMap",
+  regauth_transition: "finalMap",
 };

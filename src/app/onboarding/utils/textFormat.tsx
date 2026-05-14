@@ -1,17 +1,30 @@
 import * as React from "react";
 
 const HIGHLIGHTS = [
-  "patterns",
-  "naturally operate",
-  "paths",
-  "ideas",
-  "opportunities",
-  "next steps",
-  "signals",
   "starting point",
+  "next steps",
+  "naturally operate",
+  "what fits",
+  "who you are",
+  "where to begin",
+  "your map",
+  "save your map",
+  "patterns",
+  "signals",
+  "momentum",
+  "direction",
+  "possibility",
+  "possibilities",
+  "opportunities",
+  "opportunity",
   "map",
-  "explore",
-  "fit",
+  "paths",
+  "path",
+  "curiosity",
+  "strengths",
+  "instincts",
+  "future",
+  "ready",
 ];
 
 function escapeRegex(value: string) {
@@ -28,7 +41,8 @@ export function splitBodyLines(body: string) {
 
 export function firstName(value: string) {
   if (!value) return "";
-  return value.trim().split(" ")[0] ?? "";
+
+  return value.trim().split(/\s+/)[0] ?? "";
 }
 
 export function renderHighlightedText(text: string) {
@@ -53,7 +67,7 @@ export function renderHighlightedText(text: string) {
     return (
       <span
         key={`${part}-${index}`}
-        className="font-semibold tracking-tight text-cyan-200 drop-shadow-[0_0_16px_rgba(103,232,249,0.34)]"
+        className="font-semibold tracking-tight text-cyan-100 drop-shadow-[0_0_14px_rgba(103,232,249,0.22)]"
       >
         {part}
       </span>

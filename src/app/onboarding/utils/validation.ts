@@ -15,6 +15,7 @@ function hasRepeatedChars(value: string) {
 
 function hasKeyboardSmash(value: string) {
   const trimmed = value.toLowerCase().replace(/\s+/g, "");
+
   if (trimmed.length < 5) return false;
 
   const badPatterns = [
@@ -34,17 +35,31 @@ function hasKeyboardSmash(value: string) {
 }
 
 function hasProfanity(value: string) {
-  const text = value.toLowerCase();
-  const blocked = ["fuck", "shit", "bitch", "asshole", "dick", "cunt"];
-  return blocked.some((word) => text.includes(word));
+  const blocked = [
+    "fuck",
+    "shit",
+    "bitch",
+    "asshole",
+    "dick",
+    "cunt",
+  ];
+
+  return blocked.some((word) => {
+    const regex = new RegExp(`\\b${word}\\b`, "i");
+    return regex.test(value);
+  });
 }
 
 export function cleanTextAnswer(value: string) {
   return normalizeText(value);
 }
 
-export function validateTextAnswer(value: string, question: FlowQuestion): string | null {
+export function validateTextAnswer(
+  value: string,
+  question: FlowQuestion
+): string | null {
   const trimmed = normalizeText(value);
+
   const rules = question.validationRules ?? {};
   const min = question.minLength ?? 1;
   const max = question.maxLength ?? 500;

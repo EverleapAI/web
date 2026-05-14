@@ -56,7 +56,47 @@ function getMaxChoices(node: FlowNode | null) {
   return typeof value === "number" ? value : null;
 }
 
-function TalkControl({
+function getSection(node: FlowNode | null) {
+  if (!node) return "discovery";
+
+  if (
+    node.type === "summary" ||
+    node.key === "summary_transition" ||
+    node.key === "summary" ||
+    node.key === "regauth_transition"
+  ) {
+    return "transition";
+  }
+
+  if (
+    node.key === "welcome" ||
+    node.key === "how_it_works" ||
+    node.key === "what_you_get" ||
+    node.key === "progress" ||
+    node.key === "lets_get_started"
+  ) {
+    return "what-is-everleap";
+  }
+
+  return "discovery";
+}
+
+function ValidationNote({ message }: { message?: string | null }) {
+  if (!message) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+      className="mt-3 rounded-2xl border border-cyan-200/12 bg-cyan-950/18 px-4 py-3 text-[13px] leading-5 text-cyan-50/70"
+    >
+      {message}
+    </motion.div>
+  );
+}
+
+function InlineMicButton({
   active,
   supported,
   onClick,
@@ -70,58 +110,32 @@ function TalkControl({
   return (
     <motion.button
       type="button"
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.988 }}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.96 }}
       onClick={onClick}
+      aria-label={active ? "Stop listening" : "Use voice input"}
       className={[
-        "group mt-4 inline-flex items-center gap-2 rounded-full px-1 py-1 transition",
+        "absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full border transition",
         active
-          ? "text-cyan-50 drop-shadow-[0_0_20px_rgba(103,232,249,0.34)]"
-          : "text-white/56 hover:text-white/84",
+          ? "border-cyan-100/44 bg-cyan-200/14 text-cyan-50 shadow-[0_0_22px_rgba(103,232,249,0.22)]"
+          : "border-white/10 bg-black/14 text-white/48 hover:border-cyan-100/22 hover:text-white/72",
       ].join(" ")}
     >
-      <span
-        className={[
-          "relative flex h-[18px] w-[18px] items-center justify-center rounded-full transition",
-          active
-            ? "bg-cyan-300/18 shadow-[0_0_18px_rgba(103,232,249,0.24)]"
-            : "",
-        ].join(" ")}
-      >
-        <Mic
-          className={[
-            "transition",
-            active ? "h-[15px] w-[15px] scale-[1.08]" : "h-[16px] w-[16px]",
-          ].join(" ")}
-        />
-      </span>
-
-      <span className="relative inline-flex items-center gap-2 text-[15px] font-semibold tracking-[0.02em]">
-        {active ? (
-          <motion.span
-            aria-hidden="true"
-            className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-200"
-            animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.18, 1] }}
-            transition={{
-              duration: 1.1,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ) : null}
-
-        {active ? "Listening" : "Talk"}
-
-        <span
+      {active ? (
+        <motion.span
           aria-hidden="true"
-          className={[
-            "absolute -bottom-1 left-0 h-px w-full origin-left rounded-full bg-current transition-transform duration-200",
-            active
-              ? "scale-x-100 opacity-100"
-              : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100",
-          ].join(" ")}
+          className="absolute h-9 w-9 rounded-full border border-cyan-100/20"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.32, 0.06, 0.32] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
         />
-      </span>
+      ) : null}
+
+      <Mic
+        className={[
+          "relative transition",
+          active ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
+        ].join(" ")}
+      />
     </motion.button>
   );
 }
@@ -130,11 +144,15 @@ function ChoiceRowText({
   label,
   selected,
   dimmed,
+  compact,
+  multi,
   onClick,
 }: {
   label: string;
   selected?: boolean;
   dimmed?: boolean;
+  compact?: boolean;
+  multi?: boolean;
   onClick?: () => void;
 }) {
   return (
@@ -145,34 +163,59 @@ function ChoiceRowText({
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
       animate={{
-        scale: selected ? 1.01 : 1,
+        scale: selected ? 1.005 : 1,
         opacity: dimmed ? 0.42 : 1,
         y: selected ? -1 : 0,
       }}
-      className="group relative block w-full overflow-hidden rounded-[22px] px-4 py-4 text-left"
+      className={[
+        "group relative block w-full overflow-hidden text-left transition",
+        compact
+          ? "rounded-[18px] px-3.5 py-3"
+          : "rounded-[22px] px-4 py-4",
+      ].join(" ")}
     >
       <motion.div
         className={[
-          "pointer-events-none absolute inset-0 rounded-[22px] border transition",
+          "pointer-events-none absolute inset-0 border transition",
+          compact ? "rounded-[18px]" : "rounded-[22px]",
           selected
-            ? "border-cyan-50/72 bg-[linear-gradient(180deg,rgba(18,150,166,0.98),rgba(4,104,118,0.99))] shadow-[0_22px_52px_rgba(4,76,89,0.42)]"
-            : "border-cyan-200/18 bg-[linear-gradient(180deg,rgba(33,129,144,0.60),rgba(14,87,100,0.72))] group-hover:border-cyan-100/28 group-hover:bg-[linear-gradient(180deg,rgba(48,154,169,0.78),rgba(18,105,118,0.86))]",
+            ? "border-cyan-50/58 bg-[linear-gradient(180deg,rgba(18,150,166,0.86),rgba(4,104,118,0.92))] shadow-[0_16px_36px_rgba(4,76,89,0.28)]"
+            : "border-cyan-200/10 bg-[linear-gradient(180deg,rgba(33,129,144,0.32),rgba(14,87,100,0.42))] group-hover:border-cyan-100/18 group-hover:bg-[linear-gradient(180deg,rgba(48,154,169,0.46),rgba(18,105,118,0.56))]",
         ].join(" ")}
-        animate={{ scale: selected ? 1.004 : 1 }}
+        animate={{ scale: selected ? 1.002 : 1 }}
         transition={cardSpring}
       />
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/16 via-white/10 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/6 to-transparent" />
 
-      <div
-        className={[
-          "relative text-[14px] leading-[1.35rem] transition",
-          selected
-            ? "font-semibold text-white"
-            : "font-medium text-white/86 group-hover:text-white",
-        ].join(" ")}
-      >
-        {label}
+      <div className="relative flex items-center gap-3">
+        {multi ? (
+          <span
+            aria-hidden="true"
+            className={[
+              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition",
+              selected
+                ? "border-cyan-50/70 bg-cyan-50/14 text-cyan-50"
+                : "border-cyan-100/16 bg-black/6 text-transparent",
+            ].join(" ")}
+          >
+            <span className="text-[10px] leading-none">✓</span>
+          </span>
+        ) : null}
+
+        <div
+          className={[
+            "min-w-0 flex-1 transition",
+            compact
+              ? "text-[13.5px] leading-[1.22rem]"
+              : "text-[14px] leading-[1.35rem]",
+            selected
+              ? "font-semibold text-white"
+              : "font-medium text-white/82 group-hover:text-white",
+          ].join(" ")}
+        >
+          {label}
+        </div>
       </div>
     </motion.button>
   );
@@ -194,6 +237,9 @@ export default function InputRenderer({
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastFinalRef = React.useRef("");
 
+  const section = getSection(node);
+  const isWelcome = section === "what-is-everleap";
+
   React.useEffect(() => {
     if (!question) {
       setDraft("");
@@ -212,7 +258,9 @@ export default function InputRenderer({
     if (typeof window === "undefined") return;
 
     const SpeechRec = (window.SpeechRecognition ??
-      window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+      window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
 
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
@@ -232,7 +280,9 @@ export default function InputRenderer({
     if (recognitionRef.current) return recognitionRef.current;
 
     const SpeechRec = (window.SpeechRecognition ??
-      window.webkitSpeechRecognition) as SpeechRecognitionConstructor | undefined;
+      window.webkitSpeechRecognition) as
+      | SpeechRecognitionConstructor
+      | undefined;
 
     if (!SpeechRec) return null;
 
@@ -250,6 +300,7 @@ export default function InputRenderer({
         const transcript = (res?.[0]?.transcript ?? "").trim();
 
         if (!transcript) continue;
+
         if (res.isFinal) {
           finalChunk += (finalChunk ? " " : "") + transcript;
         }
@@ -308,47 +359,71 @@ export default function InputRenderer({
   if (!node || !question) return null;
 
   if (question.inputType === "text") {
+    const isName = question.key === "name";
+
     return (
-      <div className="mt-7 w-full max-w-[720px] px-5">
-        <textarea
-          ref={textareaRef}
-          value={draft}
-          onChange={(event) => {
-            const value = event.target.value;
+      <div
+        className={[
+          "w-full transition-all duration-700",
+          isWelcome ? "mt-6 sm:mt-8" : "mt-4 sm:mt-5",
+        ].join(" ")}
+      >
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(event) => {
+              const value = event.target.value;
 
-            setDraft(value);
-            onAnswer(question.key, value);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
+              setDraft(value);
+              onAnswer(question.key, value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
 
-              const nextAnswers = setAnswerLocal(
-                answers,
-                question.key,
-                draft
-              );
+                const nextAnswers = setAnswerLocal(
+                  answers,
+                  question.key,
+                  draft
+                );
 
-              onAnswer(question.key, draft);
-              onAutoAdvance(nextAnswers);
-            }
-          }}
-          rows={question.key === "name" ? 1 : 3}
-          placeholder={question.placeholder ?? ""}
-          className="w-full resize-none rounded-[22px] border border-cyan-200/18 bg-[linear-gradient(180deg,rgba(41,126,142,0.58),rgba(20,77,93,0.72))] px-4 py-3 text-[15px] font-medium leading-6 text-white shadow-[0_18px_44px_rgba(8,42,56,0.26)] outline-none placeholder:text-cyan-50/38 focus:border-cyan-200/30"
-        />
+                onAnswer(question.key, draft);
+                onAutoAdvance(nextAnswers);
+              }
+            }}
+            rows={isName ? 1 : 3}
+            placeholder={question.placeholder ?? ""}
+            className={[
+              "w-full resize-none rounded-[24px] border outline-none transition",
+              "bg-[linear-gradient(180deg,rgba(41,126,142,0.38),rgba(20,77,93,0.56))]",
+              "border-cyan-200/12",
+              "text-[15px] font-medium leading-6 text-white",
+              "placeholder:text-cyan-50/30",
+              "shadow-[0_18px_44px_rgba(8,42,56,0.18)]",
+              "focus:border-cyan-200/24",
+              "focus:bg-[linear-gradient(180deg,rgba(48,139,154,0.46),rgba(23,88,104,0.64))]",
+              speechSupported ? "pr-14" : "pr-4",
+              isName
+                ? "min-h-[54px] px-4 py-3"
+                : "min-h-[118px] px-4 py-3.5",
+            ].join(" ")}
+          />
 
-        {validationMessage ? (
-          <div className="mt-3 rounded-2xl border border-cyan-200/18 bg-cyan-950/28 px-4 py-3 text-[13px] leading-5 text-cyan-50/78">
-            {validationMessage}
+          <InlineMicButton
+            active={isListening}
+            supported={speechSupported}
+            onClick={toggleMic}
+          />
+        </div>
+
+        {isListening ? (
+          <div className="mt-2 text-[12px] font-medium tracking-[0.04em] text-cyan-100/54">
+            Listening…
           </div>
         ) : null}
 
-        <TalkControl
-          active={isListening}
-          supported={speechSupported}
-          onClick={toggleMic}
-        />
+        <ValidationNote message={validationMessage} />
       </div>
     );
   }
@@ -357,7 +432,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-7 w-full max-w-[720px] space-y-3 px-5">
+      <div className="mt-4 sm:mt-5 w-full space-y-2.5">
         {question.options.map((option) => (
           <ChoiceRowText
             key={option.key}
@@ -380,11 +455,7 @@ export default function InputRenderer({
           />
         ))}
 
-        {validationMessage ? (
-          <div className="mt-3 rounded-2xl border border-cyan-200/18 bg-cyan-950/28 px-4 py-3 text-[13px] leading-5 text-cyan-50/78">
-            {validationMessage}
-          </div>
-        ) : null}
+        <ValidationNote message={validationMessage} />
       </div>
     );
   }
@@ -394,35 +465,41 @@ export default function InputRenderer({
     const maxChoices = getMaxChoices(node);
 
     return (
-      <div className="mt-7 w-full max-w-[720px] space-y-3 px-5">
-        {question.options.map((option) => (
-          <ChoiceRowText
-            key={option.key}
-            label={option.label}
-            selected={selected.includes(option.key)}
-            onClick={() => {
-              const nextValue = toggleArrayAnswer(
-                selected,
-                option.key,
-                maxChoices
-              );
-
-              onAnswer(question.key, nextValue);
-            }}
-          />
-        ))}
-
-        {typeof maxChoices === "number" ? (
-          <div className="pt-1 text-[12px] leading-5 text-white/44">
-            Pick up to {maxChoices}.
+      <div className="mt-3.5 sm:mt-4 w-full">
+        <div className="mb-2.5 flex items-center justify-between gap-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100/46">
+            Pick as many as fit.
           </div>
-        ) : null}
 
-        {validationMessage ? (
-          <div className="mt-3 rounded-2xl border border-cyan-200/18 bg-cyan-950/28 px-4 py-3 text-[13px] leading-5 text-cyan-50/78">
-            {validationMessage}
-          </div>
-        ) : null}
+          {typeof maxChoices === "number" ? (
+            <div className="shrink-0 text-[11px] font-medium text-white/34">
+              Up to {maxChoices}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          {question.options.map((option) => (
+            <ChoiceRowText
+              key={option.key}
+              label={option.label}
+              selected={selected.includes(option.key)}
+              compact
+              multi
+              onClick={() => {
+                const nextValue = toggleArrayAnswer(
+                  selected,
+                  option.key,
+                  maxChoices
+                );
+
+                onAnswer(question.key, nextValue);
+              }}
+            />
+          ))}
+        </div>
+
+        <ValidationNote message={validationMessage} />
       </div>
     );
   }
@@ -431,7 +508,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-7 grid w-full max-w-[720px] grid-cols-2 gap-3 px-5">
+      <div className="mt-5 grid w-full grid-cols-2 gap-3">
         {question.options.map((option) => {
           const isSelected = selected === option.key;
           const imageUrl = option.image_url ?? option.imageUrl;
@@ -458,6 +535,7 @@ export default function InputRenderer({
               animate={{
                 scale: isSelected ? 1.01 : 1,
                 y: isSelected ? -1 : 0,
+                opacity: selected && !isSelected ? 0.58 : 1,
               }}
               transition={cardSpring}
               className="group relative block w-full overflow-hidden rounded-[24px] text-left"
@@ -467,8 +545,8 @@ export default function InputRenderer({
                 className={[
                   "relative aspect-[1.38/1] overflow-hidden rounded-[24px] border transition-all duration-300",
                   isSelected
-                    ? "border-cyan-50/80 shadow-[0_20px_48px_rgba(10,88,104,0.42)]"
-                    : "border-cyan-200/18 group-hover:border-cyan-100/36 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.24)]",
+                    ? "border-cyan-50/70 shadow-[0_20px_48px_rgba(10,88,104,0.36)]"
+                    : "border-cyan-200/14 group-hover:border-cyan-100/28 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.22)]",
                 ].join(" ")}
               >
                 {imageUrl ? (
@@ -503,8 +581,8 @@ export default function InputRenderer({
         })}
 
         {validationMessage ? (
-          <div className="col-span-2 mt-3 rounded-2xl border border-cyan-200/18 bg-cyan-950/28 px-4 py-3 text-[13px] leading-5 text-cyan-50/78">
-            {validationMessage}
+          <div className="col-span-2">
+            <ValidationNote message={validationMessage} />
           </div>
         ) : null}
       </div>
