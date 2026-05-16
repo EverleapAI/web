@@ -56,40 +56,15 @@ function getMaxChoices(node: FlowNode | null) {
   return typeof value === "number" ? value : null;
 }
 
-function getSection(node: FlowNode | null) {
-  if (!node) return "discovery";
-
-  if (
-    node.type === "summary" ||
-    node.key === "summary_transition" ||
-    node.key === "summary" ||
-    node.key === "regauth_transition"
-  ) {
-    return "transition";
-  }
-
-  if (
-    node.key === "welcome" ||
-    node.key === "how_it_works" ||
-    node.key === "what_you_get" ||
-    node.key === "progress" ||
-    node.key === "lets_get_started"
-  ) {
-    return "what-is-everleap";
-  }
-
-  return "discovery";
-}
-
 function ValidationNote({ message }: { message?: string | null }) {
   if (!message) return null;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: "easeOut" }}
-      className="mt-3 rounded-2xl border border-cyan-200/12 bg-cyan-950/18 px-4 py-3 text-[13px] leading-5 text-cyan-50/70"
+      transition={{ duration: 0.22 }}
+      className="mt-3 text-[13px] leading-5 text-cyan-100/62"
     >
       {message}
     </motion.div>
@@ -108,35 +83,33 @@ function InlineMicButton({
   if (!supported) return null;
 
   return (
-    <motion.button
+    <button
       type="button"
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.96 }}
       onClick={onClick}
       aria-label={active ? "Stop listening" : "Use voice input"}
       className={[
-        "absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full border transition",
+        "absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full transition",
         active
-          ? "border-cyan-100/44 bg-cyan-200/14 text-cyan-50 shadow-[0_0_22px_rgba(103,232,249,0.22)]"
-          : "border-white/10 bg-black/14 text-white/48 hover:border-cyan-100/22 hover:text-white/72",
+          ? "bg-cyan-200/14 text-cyan-50"
+          : "bg-white/[0.045] text-white/46 hover:text-white/76",
       ].join(" ")}
     >
       {active ? (
-        <motion.span
-          aria-hidden="true"
-          className="absolute h-9 w-9 rounded-full border border-cyan-100/20"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.32, 0.06, 0.32] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+        <motion.div
+          className="absolute inset-0 rounded-full border border-cyan-100/24"
+          animate={{
+            scale: [1, 1.18, 1],
+            opacity: [0.35, 0.08, 0.35],
+          }}
+          transition={{
+            duration: 1.2,
+            repeat: Infinity,
+          }}
         />
       ) : null}
 
-      <Mic
-        className={[
-          "relative transition",
-          active ? "h-[17px] w-[17px]" : "h-[15px] w-[15px]",
-        ].join(" ")}
-      />
-    </motion.button>
+      <Mic className="relative h-[16px] w-[16px]" />
+    </button>
   );
 }
 
@@ -163,55 +136,41 @@ function ChoiceRowText({
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
       animate={{
-        scale: selected ? 1.005 : 1,
         opacity: dimmed ? 0.42 : 1,
-        y: selected ? -1 : 0,
       }}
       className={[
-        "group relative block w-full overflow-hidden text-left transition",
-        compact
-          ? "rounded-[18px] px-3.5 py-3"
-          : "rounded-[22px] px-4 py-4",
+        "group relative block w-full overflow-hidden rounded-[22px] border text-left transition",
+        selected
+          ? "border-cyan-100/44 bg-cyan-900/42"
+          : "border-white/8 bg-white/[0.035] hover:border-white/16 hover:bg-white/[0.05]",
+        compact ? "px-4 py-3" : "px-4 py-4",
       ].join(" ")}
     >
-      <motion.div
-        className={[
-          "pointer-events-none absolute inset-0 border transition",
-          compact ? "rounded-[18px]" : "rounded-[22px]",
-          selected
-            ? "border-cyan-50/58 bg-[linear-gradient(180deg,rgba(18,150,166,0.86),rgba(4,104,118,0.92))] shadow-[0_16px_36px_rgba(4,76,89,0.28)]"
-            : "border-cyan-200/10 bg-[linear-gradient(180deg,rgba(33,129,144,0.32),rgba(14,87,100,0.42))] group-hover:border-cyan-100/18 group-hover:bg-[linear-gradient(180deg,rgba(48,154,169,0.46),rgba(18,105,118,0.56))]",
-        ].join(" ")}
-        animate={{ scale: selected ? 1.002 : 1 }}
-        transition={cardSpring}
-      />
-
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-white/12 via-white/6 to-transparent" />
-
-      <div className="relative flex items-center gap-3">
+      <div className="flex items-center gap-3">
         {multi ? (
-          <span
-            aria-hidden="true"
+          <div
             className={[
-              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition",
+              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
               selected
-                ? "border-cyan-50/70 bg-cyan-50/14 text-cyan-50"
-                : "border-cyan-100/16 bg-black/6 text-transparent",
+                ? "border-cyan-50/70 bg-cyan-50/12"
+                : "border-white/18",
             ].join(" ")}
           >
-            <span className="text-[10px] leading-none">✓</span>
-          </span>
+            {selected ? (
+              <div className="h-1.5 w-1.5 rounded-full bg-cyan-50" />
+            ) : null}
+          </div>
         ) : null}
 
         <div
           className={[
-            "min-w-0 flex-1 transition",
+            "min-w-0 flex-1",
             compact
-              ? "text-[13.5px] leading-[1.22rem]"
-              : "text-[14px] leading-[1.35rem]",
+              ? "text-[14px] leading-[1.3rem]"
+              : "text-[15px] leading-[1.45rem]",
             selected
               ? "font-semibold text-white"
-              : "font-medium text-white/82 group-hover:text-white",
+              : "font-medium text-white/82",
           ].join(" ")}
         >
           {label}
@@ -236,9 +195,6 @@ export default function InputRenderer({
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const lastFinalRef = React.useRef("");
-
-  const section = getSection(node);
-  const isWelcome = section === "what-is-everleap";
 
   React.useEffect(() => {
     if (!question) {
@@ -265,16 +221,6 @@ export default function InputRenderer({
     setSpeechSupported(Boolean(SpeechRec));
   }, []);
 
-  React.useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
-    };
-  }, []);
-
   function getOrCreateRecognition(): SpeechRecognition | null {
     if (typeof window === "undefined") return null;
     if (recognitionRef.current) return recognitionRef.current;
@@ -287,6 +233,7 @@ export default function InputRenderer({
     if (!SpeechRec) return null;
 
     const rec = new SpeechRec();
+
     rec.lang = "en-US";
     rec.interimResults = true;
     rec.maxAlternatives = 1;
@@ -327,6 +274,7 @@ export default function InputRenderer({
     rec.onend = () => setIsListening(false);
 
     recognitionRef.current = rec;
+
     return rec;
   }
 
@@ -335,17 +283,16 @@ export default function InputRenderer({
     lastFinalRef.current = "";
 
     if (isListening) {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {}
-      }
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
 
       setIsListening(false);
       return;
     }
 
     const rec = getOrCreateRecognition();
+
     if (!rec) return;
 
     try {
@@ -362,12 +309,11 @@ export default function InputRenderer({
     const isName = question.key === "name";
 
     return (
-      <div
-        className={[
-          "w-full transition-all duration-700",
-          isWelcome ? "mt-6 sm:mt-8" : "mt-4 sm:mt-5",
-        ].join(" ")}
-      >
+      <div className="mt-5 w-full">
+        <div className="mb-3 text-[12px] leading-5 text-white/40">
+          Type your answer or use the microphone to speak.
+        </div>
+
         <div className="relative">
           <textarea
             ref={textareaRef}
@@ -392,21 +338,15 @@ export default function InputRenderer({
                 onAutoAdvance(nextAnswers);
               }
             }}
-            rows={isName ? 1 : 3}
+            rows={isName ? 1 : 4}
             placeholder={question.placeholder ?? ""}
             className={[
-              "w-full resize-none rounded-[24px] border outline-none transition",
-              "bg-[linear-gradient(180deg,rgba(41,126,142,0.38),rgba(20,77,93,0.56))]",
-              "border-cyan-200/12",
-              "text-[15px] font-medium leading-6 text-white",
-              "placeholder:text-cyan-50/30",
-              "shadow-[0_18px_44px_rgba(8,42,56,0.18)]",
-              "focus:border-cyan-200/24",
-              "focus:bg-[linear-gradient(180deg,rgba(48,139,154,0.46),rgba(23,88,104,0.64))]",
-              speechSupported ? "pr-14" : "pr-4",
-              isName
-                ? "min-h-[54px] px-4 py-3"
-                : "min-h-[118px] px-4 py-3.5",
+              "w-full resize-none rounded-[24px] border border-white/10 bg-white/[0.04]",
+              "px-5 py-4 pr-16 outline-none transition",
+              "text-[16px] leading-7 text-white",
+              "placeholder:text-white/26",
+              "focus:border-cyan-100/24 focus:bg-white/[0.055]",
+              isName ? "min-h-[58px]" : "min-h-[132px]",
             ].join(" ")}
           />
 
@@ -418,7 +358,7 @@ export default function InputRenderer({
         </div>
 
         {isListening ? (
-          <div className="mt-2 text-[12px] font-medium tracking-[0.04em] text-cyan-100/54">
+          <div className="mt-2 text-[12px] text-cyan-100/56">
             Listening…
           </div>
         ) : null}
@@ -432,7 +372,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-4 sm:mt-5 w-full space-y-2.5">
+      <div className="mt-4 w-full space-y-2.5">
         {question.options.map((option) => (
           <ChoiceRowText
             key={option.key}
@@ -450,7 +390,7 @@ export default function InputRenderer({
 
               window.setTimeout(() => {
                 onAutoAdvance(nextAnswers);
-              }, 220);
+              }, 180);
             }}
           />
         ))}
@@ -465,14 +405,14 @@ export default function InputRenderer({
     const maxChoices = getMaxChoices(node);
 
     return (
-      <div className="mt-3.5 sm:mt-4 w-full">
-        <div className="mb-2.5 flex items-center justify-between gap-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100/46">
-            Pick as many as fit.
+      <div className="mt-4 w-full">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-white/36">
+            Select all that apply
           </div>
 
           {typeof maxChoices === "number" ? (
-            <div className="shrink-0 text-[11px] font-medium text-white/34">
+            <div className="text-[11px] text-white/34">
               Up to {maxChoices}
             </div>
           ) : null}
@@ -528,25 +468,15 @@ export default function InputRenderer({
 
                 window.setTimeout(() => {
                   onAutoAdvance(nextAnswers);
-                }, 220);
+                }, 180);
               }}
-              whileHover={{ y: -3, scale: 1.02 }}
-              whileTap={{ scale: 0.975 }}
-              animate={{
-                scale: isSelected ? 1.01 : 1,
-                y: isSelected ? -1 : 0,
-                opacity: selected && !isSelected ? 0.58 : 1,
-              }}
-              transition={cardSpring}
-              className="group relative block w-full overflow-hidden rounded-[24px] text-left"
-              aria-label={option.label}
+              whileTap={{ scale: 0.98 }}
+              className="group relative overflow-hidden rounded-[24px] border border-white/10"
             >
               <div
                 className={[
-                  "relative aspect-[1.38/1] overflow-hidden rounded-[24px] border transition-all duration-300",
-                  isSelected
-                    ? "border-cyan-50/70 shadow-[0_20px_48px_rgba(10,88,104,0.36)]"
-                    : "border-cyan-200/14 group-hover:border-cyan-100/28 group-hover:shadow-[0_16px_38px_rgba(10,88,104,0.22)]",
+                  "relative aspect-[1.38/1] overflow-hidden",
+                  isSelected ? "ring-2 ring-cyan-100/60" : "",
                 ].join(" ")}
               >
                 {imageUrl ? (
@@ -555,25 +485,14 @@ export default function InputRenderer({
                     alt={option.label}
                     fill
                     sizes="(max-width: 640px) 44vw, 220px"
-                    className={[
-                      "object-cover transition duration-300",
-                      isSelected
-                        ? "scale-[1.03] brightness-[1.08] contrast-[1.04]"
-                        : "brightness-[0.92] contrast-[1.02] group-hover:scale-[1.05] group-hover:brightness-[1.04]",
-                    ].join(" ")}
+                    className="object-cover transition duration-300 group-hover:scale-[1.03]"
                   />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-cyan-950/40 text-[13px] text-white/70">
-                    {option.label}
-                  </div>
-                )}
+                ) : null}
 
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(0,0,0,0.20))]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
-                <div className="absolute inset-x-0 bottom-0 p-3">
-                  <div className="inline-flex rounded-full bg-black/28 px-3 py-1 text-[12px] font-semibold text-white/88 backdrop-blur-md">
-                    {option.label}
-                  </div>
+                <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                  {option.label}
                 </div>
               </div>
             </motion.button>

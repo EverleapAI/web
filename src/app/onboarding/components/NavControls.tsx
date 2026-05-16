@@ -11,75 +11,35 @@ type Props = {
   onContinue: () => void;
 };
 
-function BrandedNavLink({
+function NavButton({
   label,
   onClick,
   disabled,
-  emphasis = "default",
-  arrow = false,
+  variant,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  emphasis?: "default" | "quiet" | "strong";
-  arrow?: boolean;
+  variant: "back" | "continue";
 }) {
-  const isStrong = emphasis === "strong";
+  const isContinue = variant === "continue";
 
   return (
     <motion.button
       type="button"
-      whileHover={disabled ? undefined : { y: -1 }}
-      whileTap={disabled ? undefined : { scale: 0.985 }}
+      whileTap={disabled ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "group inline-flex min-h-10 items-center gap-2 rounded-full transition",
-        isStrong ? "px-4 py-2" : "px-1 py-1",
+        "inline-flex min-h-11 items-center justify-center rounded-full text-[15px] font-semibold transition",
         disabled
-          ? "cursor-not-allowed text-white/18"
-          : emphasis === "quiet"
-            ? "text-white/36 hover:text-white/66"
-            : isStrong
-              ? "border border-cyan-100/16 bg-cyan-100/7 text-cyan-50 shadow-[0_12px_30px_rgba(8,145,178,0.12)] hover:border-cyan-100/28 hover:bg-cyan-100/11 hover:text-white"
-              : "text-white/68 hover:text-white",
+          ? "cursor-not-allowed text-white/20"
+          : isContinue
+            ? "bg-white px-5 text-slate-950 hover:bg-cyan-50"
+            : "px-1 text-white/46 hover:text-white/78",
       ].join(" ")}
     >
-      <span
-        className={[
-          "relative font-semibold tracking-[0.02em]",
-          isStrong ? "text-[14px]" : "text-[15px]",
-          isStrong && !disabled
-            ? "drop-shadow-[0_0_14px_rgba(103,232,249,0.12)]"
-            : "",
-        ].join(" ")}
-      >
-        {label}
-
-        {!isStrong ? (
-          <span
-            aria-hidden="true"
-            className={[
-              "absolute -bottom-1 left-0 h-px origin-left rounded-full bg-current transition-transform duration-200",
-              disabled
-                ? "w-full scale-x-0"
-                : "w-full scale-x-0 group-hover:scale-x-100",
-            ].join(" ")}
-          />
-        ) : null}
-      </span>
-
-      {arrow ? (
-        <span
-          aria-hidden="true"
-          className={[
-            "text-[17px] transition-transform duration-200",
-            disabled ? "" : "group-hover:translate-x-0.5",
-          ].join(" ")}
-        >
-          →
-        </span>
-      ) : null}
+      {isContinue ? `${label} →` : label}
     </motion.button>
   );
 }
@@ -93,27 +53,26 @@ export default function NavControls({
   onContinue,
 }: Props) {
   return (
-    <nav className="w-full pt-2 transition-all duration-700">
-      <div className="grid min-h-10 grid-cols-[1fr_auto] items-center gap-4 border-t border-white/6 pt-3">
-        <div className="flex min-w-0 justify-start">
+    <nav className="w-full border-t border-white/8 pt-3">
+      <div className="flex min-h-12 items-center justify-between gap-4">
+        <div>
           {canGoBack ? (
-            <BrandedNavLink label="Back" onClick={onBack} emphasis="quiet" />
+            <NavButton label="Back" onClick={onBack} variant="back" />
           ) : (
-            <span aria-hidden="true" className="block min-h-10" />
+            <span aria-hidden="true" className="block min-h-11 w-12" />
           )}
         </div>
 
-        <div className="flex min-w-0 justify-end">
+        <div>
           {showContinue ? (
-            <BrandedNavLink
+            <NavButton
               label={continueLabel}
               onClick={onContinue}
               disabled={continueDisabled}
-              emphasis="strong"
-              arrow
+              variant="continue"
             />
           ) : (
-            <span aria-hidden="true" className="block min-h-10" />
+            <span aria-hidden="true" className="block min-h-11 w-24" />
           )}
         </div>
       </div>

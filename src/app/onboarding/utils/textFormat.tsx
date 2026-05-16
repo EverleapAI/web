@@ -53,6 +53,7 @@ export function renderHighlightedText(text: string) {
   if (matches.length === 0) return text;
 
   const regex = new RegExp(`(${matches.join("|")})`, "gi");
+
   const parts = text.split(regex);
 
   return parts.map((part, index) => {
@@ -61,13 +62,17 @@ export function renderHighlightedText(text: string) {
     );
 
     if (!isHighlighted) {
-      return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+      return (
+        <React.Fragment key={`${part}-${index}`}>
+          {part}
+        </React.Fragment>
+      );
     }
 
     return (
       <span
         key={`${part}-${index}`}
-        className="font-semibold tracking-tight text-cyan-100 drop-shadow-[0_0_14px_rgba(103,232,249,0.22)]"
+        className="font-semibold text-white"
       >
         {part}
       </span>

@@ -34,7 +34,10 @@ export default function VerifyPage(): React.JSX.Element {
   const [error, setError] = React.useState<string | null>(null);
 
   const refs = React.useMemo(
-    () => Array.from({ length: 6 }, () => React.createRef<HTMLInputElement>()),
+    () =>
+      Array.from({ length: 6 }, () =>
+        React.createRef<HTMLInputElement>()
+      ),
     []
   );
 
@@ -57,6 +60,39 @@ export default function VerifyPage(): React.JSX.Element {
 
   function focusIndex(i: number) {
     refs[Math.max(0, Math.min(5, i))]?.current?.focus();
+  }
+
+  async function claimOnboarding() {
+    try {
+      const rawAnswers = window.localStorage.getItem(
+        "everleap_onboarding_answers"
+      );
+
+      const rawZip = window.localStorage.getItem("everleap_zip");
+
+      let answers: unknown = null;
+
+      try {
+        answers = rawAnswers ? JSON.parse(rawAnswers) : null;
+      } catch {
+        answers = null;
+      }
+
+      await fetch("/api/onboarding/claim", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          flowKey: "onboarding_v1",
+          answers,
+          zipCode: rawZip ?? "",
+        }),
+      });
+    } catch {
+      // Non-blocking. Auth should still succeed even if onboarding claim fails.
+    }
   }
 
   async function submit(nextCode = code) {
@@ -96,10 +132,10 @@ export default function VerifyPage(): React.JSX.Element {
         return;
       }
 
+      await claimOnboarding();
+
       try {
-        window.sessionStorage.removeItem(
-          "regauth_pending_identifier"
-        );
+        window.sessionStorage.removeItem("regauth_pending_identifier");
       } catch {}
 
       window.location.href = returnTo;
@@ -128,8 +164,8 @@ export default function VerifyPage(): React.JSX.Element {
     const next = [...digits];
 
     if (clean.length > 1) {
-      for (let j = 0; j < clean.length && i + j < 6; j++) {
-        next[i + j] = clean[j];
+      for (let j = 0; j < clean.length && i + j < 6; j += 1) {
+        next[i + j] = clean[j] ?? "";
       }
     } else {
       next[i] = clean || "";
@@ -137,10 +173,7 @@ export default function VerifyPage(): React.JSX.Element {
 
     setDigits(next);
 
-    const nextFocus = Math.min(
-      5,
-      i + Math.max(clean.length, 1)
-    );
+    const nextFocus = Math.min(5, i + Math.max(clean.length, 1));
 
     if (clean && nextFocus <= 5) {
       focusIndex(nextFocus);
@@ -166,14 +199,10 @@ export default function VerifyPage(): React.JSX.Element {
 
   function useDifferentIdentifier() {
     try {
-      window.sessionStorage.removeItem(
-        "regauth_pending_identifier"
-      );
+      window.sessionStorage.removeItem("regauth_pending_identifier");
     } catch {}
 
-    router.replace(
-      `/regauth?returnTo=${encodeURIComponent(returnTo)}`
-    );
+    router.replace(`/regauth?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   return (
@@ -192,7 +221,8 @@ export default function VerifyPage(): React.JSX.Element {
                 sent to{" "}
                 <span className="text-white/80">
                   {pendingIdentifier}
-                </span>.
+                </span>
+                .
               </>
             ) : (
               "."
@@ -219,15 +249,11 @@ export default function VerifyPage(): React.JSX.Element {
         </div>
 
         {isSubmitting ? (
-          <p className="text-sm text-white/60">
-            Checking…
-          </p>
+          <p className="text-sm text-white/60">Checking…</p>
         ) : null}
 
         {error ? (
-          <p className="text-sm text-red-300">
-            {error}
-          </p>
+          <p className="text-sm text-red-300">{error}</p>
         ) : null}
 
         <button

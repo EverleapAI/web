@@ -15,172 +15,90 @@ type VisualNode = {
 };
 
 function toneFill(tone: VisualNode["tone"]) {
-  if (tone === "violet") return "rgba(196,181,253,0.9)";
-  if (tone === "white") return "rgba(255,255,255,0.82)";
-  return "rgba(125,249,255,0.92)";
-}
-
-function isDenseQuestion(state: OnboardingAnimationState) {
-  return (
-    state.nodeKey === "current_situation" ||
-    state.nodeKey === "certainty" ||
-    state.nodeKey === "post_plans" ||
-    state.nodeKey === "activities" ||
-    state.nodeKey === "fun_instinct"
-  );
+  if (tone === "violet") return "rgba(196,181,253,0.82)";
+  if (tone === "white") return "rgba(255,255,255,0.76)";
+  return "rgba(125,249,255,0.88)";
 }
 
 function getSectionVisuals(state: OnboardingAnimationState) {
-  if (state.isWelcome) {
+  if (state.isTransition) {
     return {
-      glowOpacity: 0.56,
-      lineOpacity: 0.68,
-      backgroundOpacity: 0.66,
-      scale: 0.985,
-      blur: 0,
-    };
-  }
-
-  if (state.isReflection) {
-    return {
-      glowOpacity: 0.28,
-      lineOpacity: 0.24,
-      backgroundOpacity: 0.48,
-      scale: 1,
-      blur: 6,
+      glowOpacity: 0.34,
+      lineOpacity: 0.32,
+      backgroundOpacity: 0.34,
+      blur: 4,
     };
   }
 
   return {
-    glowOpacity: 0.82,
-    lineOpacity: 0.9,
-    backgroundOpacity: 0.84,
-    scale: 1,
+    glowOpacity: 0.72,
+    lineOpacity: 0.78,
+    backgroundOpacity: 0.62,
     blur: 0,
   };
 }
 
-function getMainPath(state: OnboardingAnimationState) {
-  switch (state.preset) {
-    case "scatter":
-      return "M82 120 C160 65, 240 148, 318 105 C405 55, 495 105, 615 58";
-
-    case "anchor":
-      return "M126 70 C185 132, 250 132, 310 88 C380 36, 462 84, 535 130 C590 165, 660 145, 720 92";
-
-    case "connect":
-      return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
-
-    case "branchExtend":
-      return "M82 138 C165 102, 250 98, 330 78 C425 52, 548 44, 718 18";
-
-    case "instinctShift":
-      return "M88 136 C160 42, 245 190, 330 78 C425 -12, 530 166, 706 38";
-
-    default:
-      return "M95 118 C170 86, 235 146, 318 106 C402 66, 480 118, 574 86 C632 66, 690 78, 740 108";
-  }
-}
-
 function getNodes(state: OnboardingAnimationState): VisualNode[] {
   switch (state.preset) {
-    case "scatter":
-      return [
-        { x: 120, y: 88 },
-        { x: 225, y: 150, tone: "violet" },
-        { x: 318, y: 104 },
-        { x: 452, y: 76, tone: "white" },
-        { x: 596, y: 60 },
-      ];
-
-    case "anchor":
-      return [
-        { x: 126, y: 70, r: 5, tone: "white" },
-        { x: 310, y: 88 },
-        { x: 535, y: 130, tone: "violet" },
-        { x: 720, y: 92 },
-      ];
-
     case "nameTag":
       return [
-        { x: 248, y: 112, r: 5.2, tone: "white" },
-        { x: 574, y: 112, r: 4.2, tone: "violet" },
-        { x: 452, y: 128, r: 3.4 },
+        { x: 292, y: 128, tone: "white" },
+        { x: 380, y: 98 },
+        { x: 468, y: 128, tone: "violet" },
       ];
 
     case "terrain":
       return [
-        { x: 120, y: 152 },
-        { x: 302, y: 86, tone: "white" },
-        { x: 508, y: 118, tone: "violet" },
-        { x: 690, y: 74 },
+        { x: 210, y: 132, tone: "white" },
+        { x: 330, y: 92 },
+        { x: 462, y: 118, tone: "violet" },
+        { x: 585, y: 78 },
       ];
 
     case "branching":
     case "branchExtend":
       return [
-        { x: 292, y: 132, r: 5, tone: "white" },
-        { x: 438, y: 72, tone: "violet" },
-        { x: 486, y: 152 },
-        { x: 640, y: 40, tone: "white" },
+        { x: 275, y: 148, r: 4.8, tone: "white" },
+        { x: 420, y: 88, tone: "violet" },
+        { x: 505, y: 154 },
+        { x: 638, y: 58, tone: "white" },
       ];
 
     case "networkGrow":
       return [
-        { x: 150, y: 142 },
-        { x: 238, y: 88, tone: "violet" },
-        { x: 338, y: 126 },
-        { x: 448, y: 72, tone: "white" },
-        { x: 552, y: 118 },
-        { x: 642, y: 66, tone: "violet" },
+        { x: 170, y: 138 },
+        { x: 250, y: 86, tone: "violet" },
+        { x: 352, y: 132 },
+        { x: 455, y: 76, tone: "white" },
+        { x: 560, y: 124 },
+        { x: 650, y: 72, tone: "violet" },
       ];
 
     case "finalMap":
       return [
-        { x: 104, y: 150 },
-        { x: 234, y: 96 },
-        { x: 372, y: 132, tone: "violet" },
-        { x: 518, y: 74 },
-        { x: 674, y: 122, tone: "white" },
+        { x: 118, y: 152 },
+        { x: 244, y: 98 },
+        { x: 382, y: 132, tone: "violet" },
+        { x: 520, y: 78 },
+        { x: 675, y: 122, tone: "white" },
       ];
 
     default:
       return [
-        { x: 120, y: 88 },
-        { x: 318, y: 104 },
-        { x: 574, y: 86, tone: "violet" },
+        { x: 150, y: 118 },
+        { x: 330, y: 96 },
+        { x: 560, y: 116, tone: "violet" },
       ];
   }
-}
-
-function getInstinctPath(state: OnboardingAnimationState) {
-  if (state.instinctStyle === "wolf") {
-    return "M120 155 L248 88 L386 76 L535 38 L710 26";
-  }
-
-  if (state.instinctStyle === "fox") {
-    return "M105 138 C185 82, 218 126, 302 72 C370 28, 420 96, 492 48 C562 4, 620 60, 712 18";
-  }
-
-  if (state.instinctStyle === "dolphin") {
-    return "M94 122 C174 38, 260 192, 352 112 C452 24, 525 168, 704 78";
-  }
-
-  if (state.instinctStyle === "hawk") {
-    return "M112 162 L215 80 L308 104 L405 28 L508 58 L705 10";
-  }
-
-  return null;
 }
 
 function DrawPath({
   d,
   opacity,
   delay = 0,
-  duration = 1,
+  duration = 1.15,
   stroke = "url(#everleap-line)",
-  strokeWidth = 2.6,
-  dash,
+  strokeWidth = 2.2,
   pathKey,
 }: {
   d: string;
@@ -189,7 +107,6 @@ function DrawPath({
   duration?: number;
   stroke?: string;
   strokeWidth?: number;
-  dash?: string;
   pathKey: string;
 }) {
   return (
@@ -201,239 +118,254 @@ function DrawPath({
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeDasharray={dash}
-      filter="url(#everleap-glow)"
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{ pathLength: 1, opacity }}
-      transition={{
-        duration,
-        delay,
-        ease: "easeInOut",
-      }}
+      transition={{ duration, delay, ease: "easeInOut" }}
     />
   );
 }
 
-function SemanticDrawing({
+function PresetLines({
   state,
   opacity,
 }: {
   state: OnboardingAnimationState;
   opacity: number;
 }) {
-  if (state.preset === "nameTag") {
-    return (
-      <>
-        <DrawPath
-          pathKey={`tag-outline-${state.nodeKey}`}
-          opacity={0.92 * opacity}
-          duration={1.15}
-          d="M278 54 L514 54 C548 54, 574 80, 574 112 C574 144, 548 170, 514 170 L278 170 C244 170, 218 144, 218 112 C218 80, 244 54, 278 54"
-        />
+  const key = `${state.nodeKey}-${state.preset}`;
 
-        <DrawPath
-          pathKey={`tag-notch-${state.nodeKey}`}
-          opacity={0.72 * opacity}
-          delay={0.92}
-          duration={0.45}
-          strokeWidth={2.2}
-          d="M248 84 L278 112 L248 140"
-        />
-
-        {[
-          "M320 100 L500 100",
-          "M320 128 L452 128",
-          "M320 146 L410 146",
-        ].map((path, index) => (
+  switch (state.preset) {
+    case "nameTag":
+      return (
+        <>
           <DrawPath
-            key={path}
-            pathKey={`tag-line-${index}-${state.nodeKey}`}
-            d={path}
-            opacity={0.5 * opacity}
-            delay={1.18 + index * 0.12}
-            duration={0.32}
-            stroke="rgba(255,255,255,0.52)"
+            pathKey={`${key}-face`}
+            d="M310 152 C268 116, 286 56, 350 50 C424 44, 490 94, 470 152 C452 206, 352 210, 310 152"
+            opacity={opacity}
+            duration={1.25}
+          />
+          <DrawPath
+            pathKey={`${key}-voice`}
+            d="M205 128 C245 92, 282 166, 326 128 C370 90, 405 166, 452 128 C498 92, 536 154, 595 118"
+            opacity={opacity * 0.72}
+            delay={0.16}
+            duration={1.1}
+            strokeWidth={1.8}
+          />
+        </>
+      );
+
+    case "terrain":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-contour-1`}
+            d="M130 150 C220 88, 302 178, 390 118 C480 56, 570 142, 690 84"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-contour-2`}
+            d="M150 184 C245 126, 324 204, 422 150 C522 96, 590 170, 704 128"
+            opacity={opacity * 0.58}
+            delay={0.14}
+            strokeWidth={1.6}
+          />
+          <DrawPath
+            pathKey={`${key}-thought`}
+            d="M312 88 C342 58, 402 58, 430 92 C456 126, 430 164, 382 166 C336 168, 286 126, 312 88"
+            opacity={opacity * 0.52}
+            delay={0.22}
             strokeWidth={1.7}
           />
-        ))}
-      </>
-    );
-  }
+        </>
+      );
 
-  if (state.preset === "terrain") {
-    return (
-      <>
-        <DrawPath
-          pathKey={`terrain-horizon-${state.nodeKey}`}
-          opacity={0.82 * opacity}
-          duration={1.1}
-          d="M90 156 C154 122, 210 132, 270 98 C336 58, 410 128, 472 96 C548 56, 620 78, 710 42"
-        />
-
-        <DrawPath
-          pathKey={`terrain-ground-${state.nodeKey}`}
-          opacity={0.34 * opacity}
-          delay={0.55}
-          duration={0.8}
-          stroke="rgba(255,255,255,0.22)"
-          strokeWidth={1.5}
-          d="M130 184 C230 166, 320 188, 420 170 C520 152, 610 168, 700 146"
-        />
-
-        <DrawPath
-          pathKey={`terrain-trail-${state.nodeKey}`}
-          opacity={0.6 * opacity}
-          delay={0.85}
-          duration={0.85}
-          stroke="rgba(125,249,255,0.64)"
-          strokeWidth={1.8}
-          dash="4 8"
-          d="M300 188 C338 156, 386 150, 420 124 C458 96, 488 94, 520 82"
-        />
-      </>
-    );
-  }
-
-  if (state.preset === "networkGrow") {
-    const links = [
-      "M150 142 L238 88",
-      "M238 88 L338 126",
-      "M338 126 L448 72",
-      "M448 72 L552 118",
-      "M552 118 L642 66",
-      "M238 88 L448 72",
-      "M338 126 L552 118",
-    ];
-
-    return (
-      <>
-        {links.map((path, index) => (
+    case "connect":
+      return (
+        <>
           <DrawPath
-            key={path}
-            pathKey={`network-link-${index}-${state.nodeKey}`}
-            d={path}
-            opacity={(index < 5 ? 0.52 : 0.22) * opacity}
-            delay={index * 0.12}
-            duration={0.55}
-            stroke={
-              index < 5
-                ? "rgba(125,249,255,0.66)"
-                : "rgba(255,255,255,0.22)"
-            }
-            strokeWidth={index < 5 ? 1.8 : 1.1}
+            pathKey={`${key}-links`}
+            d="M140 132 L255 82 L374 138 L492 86 L640 124"
+            opacity={opacity}
+            duration={1}
           />
-        ))}
-      </>
-    );
+          <DrawPath
+            pathKey={`${key}-process`}
+            d="M190 170 C282 116, 378 204, 470 138 C548 82, 610 110, 680 78"
+            opacity={opacity * 0.46}
+            delay={0.18}
+            strokeWidth={1.6}
+          />
+        </>
+      );
+
+    case "branching":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-trunk`}
+            d="M118 156 C230 126, 318 118, 402 92"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-branch-a`}
+            d="M402 92 C494 42, 584 42, 704 28"
+            opacity={opacity * 0.88}
+            delay={0.18}
+          />
+          <DrawPath
+            pathKey={`${key}-branch-b`}
+            d="M402 92 C504 118, 560 158, 698 150"
+            opacity={opacity * 0.64}
+            delay={0.24}
+            strokeWidth={1.8}
+          />
+          <DrawPath
+            pathKey={`${key}-branch-c`}
+            d="M402 92 C490 82, 560 96, 670 82"
+            opacity={opacity * 0.5}
+            delay={0.32}
+            strokeWidth={1.5}
+          />
+        </>
+      );
+
+    case "branchExtend":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-single-signal`}
+            d="M110 158 C220 136, 314 114, 402 92 C500 66, 590 52, 712 32"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-echo`}
+            d="M194 188 C292 160, 382 144, 482 112 C570 84, 626 82, 706 68"
+            opacity={opacity * 0.48}
+            delay={0.18}
+            strokeWidth={1.6}
+          />
+        </>
+      );
+
+    case "networkGrow":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-network-a`}
+            d="M170 138 L250 86 L352 132 L455 76 L560 124 L650 72"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-network-b`}
+            d="M250 86 L455 76 M352 132 L560 124 M170 138 L352 132"
+            opacity={opacity * 0.5}
+            delay={0.18}
+            strokeWidth={1.5}
+          />
+          <DrawPath
+            pathKey={`${key}-orbit`}
+            d="M248 116 C305 54, 448 54, 510 116 C568 174, 386 204, 248 116"
+            opacity={opacity * 0.32}
+            delay={0.28}
+            strokeWidth={1.4}
+          />
+        </>
+      );
+
+    case "instinctShift":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-instinct`}
+            d="M120 170 C190 42, 270 198, 352 82 C442 -2, 520 166, 690 52"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-angle`}
+            d="M352 82 L430 134 L512 72 M352 82 L302 144"
+            opacity={opacity * 0.6}
+            delay={0.18}
+            strokeWidth={1.6}
+          />
+        </>
+      );
+
+    case "finalMap":
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-map-a`}
+            d="M118 152 C218 98, 300 168, 382 132 C472 92, 565 80, 675 122"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-map-b`}
+            d="M244 98 C328 58, 456 58, 520 78 C596 104, 632 118, 675 122"
+            opacity={opacity * 0.48}
+            delay={0.18}
+            strokeWidth={1.6}
+          />
+          <DrawPath
+            pathKey={`${key}-map-c`}
+            d="M118 152 C262 188, 430 182, 675 122"
+            opacity={opacity * 0.36}
+            delay={0.28}
+            strokeWidth={1.4}
+          />
+        </>
+      );
+
+    case "anchor":
+    default:
+      return (
+        <>
+          <DrawPath
+            pathKey={`${key}-horizon`}
+            d="M96 142 C200 92, 300 178, 408 124 C520 68, 612 122, 724 82"
+            opacity={opacity}
+          />
+          <DrawPath
+            pathKey={`${key}-path`}
+            d="M330 188 C374 150, 420 132, 480 116 C548 98, 620 92, 710 72"
+            opacity={opacity * 0.42}
+            delay={0.2}
+            strokeWidth={1.7}
+          />
+        </>
+      );
   }
-
-  if (state.preset === "finalMap") {
-    return (
-      <>
-        <DrawPath
-          pathKey={`map-path-${state.nodeKey}`}
-          opacity={0.58 * opacity}
-          duration={1.2}
-          d="M104 150 C172 112, 226 106, 292 126 C356 146, 408 132, 466 94 C536 48, 608 80, 674 122"
-        />
-
-        <DrawPath
-          pathKey={`map-secondary-${state.nodeKey}`}
-          opacity={0.22 * opacity}
-          delay={0.58}
-          duration={0.9}
-          stroke="rgba(255,255,255,0.22)"
-          strokeWidth={1.4}
-          d="M234 96 C310 74, 382 82, 448 72 C524 60, 590 88, 674 122"
-        />
-
-        <DrawPath
-          pathKey={`map-orbit-${state.nodeKey}`}
-          opacity={0.18 * opacity}
-          delay={0.86}
-          duration={1}
-          stroke="rgba(196,181,253,0.34)"
-          strokeWidth={1.2}
-          dash="5 10"
-          d="M170 150 C250 44, 426 34, 574 78 C670 106, 710 160, 610 184 C470 218, 260 206, 170 150"
-        />
-      </>
-    );
-  }
-
-  return (
-    <DrawPath
-      pathKey={`main-${state.nodeKey}-${state.preset}`}
-      d={getMainPath(state)}
-      opacity={0.92 * opacity}
-      duration={1.4}
-      strokeWidth={2.4}
-    />
-  );
 }
 
 export default function AnimatedCanvas({ state }: Props) {
   const nodes = getNodes(state);
-  const instinctPath = getInstinctPath(state);
-  const denseQuestion = isDenseQuestion(state);
   const sectionVisuals = getSectionVisuals(state);
+  const opacity = 0.9 * sectionVisuals.glowOpacity;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       <motion.div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_14%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_78%_20%,rgba(168,85,247,0.10),transparent_26%)]"
-        animate={{
-          opacity: sectionVisuals.backgroundOpacity,
-        }}
+        className="absolute inset-0 bg-[radial-gradient(circle_at_50%_11%,rgba(34,211,238,0.12),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(168,85,247,0.09),transparent_24%)]"
+        animate={{ opacity: sectionVisuals.backgroundOpacity }}
         transition={{ duration: 1.2 }}
       />
 
-      <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-b from-transparent via-[#040817]/74 to-[#040817]/96" />
+      <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-b from-transparent via-[#040817]/72 to-[#040817]/96" />
 
-      <div className="absolute inset-y-0 left-0 w-[42%] bg-gradient-to-r from-[#040817]/72 via-[#040817]/24 to-transparent" />
+      <div className="absolute inset-y-0 left-0 w-[42%] bg-gradient-to-r from-[#040817]/64 via-[#040817]/20 to-transparent" />
 
-      <div className="absolute inset-x-0 top-[72px] flex justify-center">
-        <div
-          className={[
-            "relative w-full max-w-[760px] transition-all duration-700",
-            denseQuestion
-              ? "h-[270px] sm:h-[300px]"
-              : "h-[240px] sm:h-[270px]",
-          ].join(" ")}
-        >
+      <div className="absolute inset-x-0 top-[86px] flex h-[32svh] min-h-[210px] max-h-[310px] justify-center">
+        <div className="relative h-full w-full max-w-[760px] px-4">
           <svg
             viewBox="0 0 800 260"
             preserveAspectRatio="xMidYMid meet"
             className="absolute inset-0 h-full w-full"
             style={{
               opacity: sectionVisuals.lineOpacity,
-              transform: `scale(${sectionVisuals.scale})`,
               filter: `blur(${sectionVisuals.blur}px)`,
             }}
           >
             <defs>
-              <filter
-                id="everleap-glow"
-                x="-60%"
-                y="-60%"
-                width="220%"
-                height="220%"
-              >
-                <feGaussianBlur stdDeviation="5" result="blur" />
-
-                <feColorMatrix
-                  in="blur"
-                  type="matrix"
-                  values="0 0 0 0 0.18  0 0 0 0 0.95  0 0 0 0 1  0 0 0 0.75 0"
-                  result="glow"
-                />
-
-                <feMerge>
-                  <feMergeNode in="glow" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
               <linearGradient
                 id="everleap-line"
                 x1="0%"
@@ -441,47 +373,30 @@ export default function AnimatedCanvas({ state }: Props) {
                 x2="100%"
                 y2="0%"
               >
-                <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
-                <stop offset="34%" stopColor="rgba(125,249,255,0.88)" />
-                <stop offset="68%" stopColor="rgba(196,181,253,0.84)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0.24)" />
+                <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
+                <stop offset="34%" stopColor="rgba(125,249,255,0.7)" />
+                <stop offset="68%" stopColor="rgba(196,181,253,0.64)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0.18)" />
               </linearGradient>
             </defs>
 
-            <SemanticDrawing
-              state={state}
-              opacity={sectionVisuals.glowOpacity}
-            />
-
-            {instinctPath ? (
-              <DrawPath
-                pathKey={`instinct-${state.nodeKey}`}
-                d={instinctPath}
-                opacity={0.58}
-                delay={0.12}
-                duration={1.6}
-                stroke="rgba(255,255,255,0.14)"
-                strokeWidth={1.1}
-                dash="5 9"
-              />
-            ) : null}
+            <PresetLines state={state} opacity={opacity} />
 
             {nodes.map((node, index) => (
               <motion.circle
                 key={`${state.nodeKey}-${index}`}
                 cx={node.x}
                 cy={node.y}
-                r={node.r ?? (index % 3 === 0 ? 4.6 : 3.4)}
+                r={node.r ?? (index % 3 === 0 ? 4.2 : 3.2)}
                 fill={toneFill(node.tone)}
-                filter="url(#everleap-glow)"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{
-                  scale: [0, 1.3, 1],
-                  opacity: [0, 1, 0.78 * sectionVisuals.glowOpacity],
+                  scale: [0, 1.2, 1],
+                  opacity: [0, 1, 0.72 * sectionVisuals.glowOpacity],
                 }}
                 transition={{
-                  duration: 0.5,
-                  delay: 0.15 + index * 0.09,
+                  duration: 0.45,
+                  delay: 0.12 + index * 0.08,
                 }}
               />
             ))}

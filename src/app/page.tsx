@@ -418,7 +418,7 @@ function DesktopHeroCard({
 }) {
   const ctaHref = authed
     ? "/main"
-    : "/consent";
+    : "/onboarding";
 
   const ctaLabel = authed
     ? "Continue your path"
@@ -463,7 +463,7 @@ function MobileBottomSheet({
 }) {
   const ctaHref = authed
     ? "/main"
-    : "/consent";
+    : "/onboarding";
 
   const ctaLabel = authed
     ? "Continue your path"

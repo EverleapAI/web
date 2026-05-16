@@ -288,7 +288,26 @@ export function isQuestionAnswered(
     return getArrayAnswer(answers, question.key).length > 0;
   }
 
-  return getTextAnswer(answers, question.key).trim().length > 0;
+  if (question.inputType === "single_choice") {
+    return getTextAnswer(answers, question.key).trim().length > 0;
+  }
+
+  if (question.inputType === "image_choice") {
+    return getTextAnswer(answers, question.key).trim().length > 0;
+  }
+
+  const value = getTextAnswer(answers, question.key).trim();
+
+  if (!value) return false;
+
+  if (
+    typeof question.minLength === "number" &&
+    question.minLength > 0
+  ) {
+    return value.length >= question.minLength;
+  }
+
+  return true;
 }
 
 export function getQuestionValidationMessage(
@@ -300,13 +319,22 @@ export function getQuestionValidationMessage(
   if (question.inputType === "multi_choice") {
     return getArrayAnswer(answers, question.key).length > 0
       ? null
-      : "Pick at least one that fits.";
+      : "Select at least one option.";
+  }
+
+  if (
+    question.inputType === "single_choice" ||
+    question.inputType === "image_choice"
+  ) {
+    return getTextAnswer(answers, question.key).trim()
+      ? null
+      : "Select an option to continue.";
   }
 
   const value = getTextAnswer(answers, question.key).trim();
 
   if (!value) {
-    return "Add an answer to keep going.";
+    return "This question is required.";
   }
 
   if (
@@ -314,7 +342,7 @@ export function getQuestionValidationMessage(
     question.minLength > 0 &&
     value.length < question.minLength
   ) {
-    return `Add at least ${question.minLength} characters.`;
+    return `Please enter at least ${question.minLength} characters.`;
   }
 
   return null;
@@ -399,7 +427,6 @@ export function useOnboardingFlow(
 
   function canContinue(nextAnswers: Answers = answers) {
     if (!currentNode) return false;
-    if (!currentNode.isRequired) return true;
 
     return isQuestionAnswered(currentQuestion, nextAnswers);
   }

@@ -21,13 +21,11 @@ type Section =
 
 function getSectionForNode(node: FlowNode): Section {
   if (
-  node.type === "summary" ||
-  node.key === "summary_transition" ||
-  node.key === "summary" ||
-  node.key === "regauth_transition"
-) {
-  return "transition";
-}{
+    node.type === "summary" ||
+    node.key === "summary_transition" ||
+    node.key === "summary" ||
+    node.key === "regauth_transition"
+  ) {
     return "transition";
   }
 
@@ -47,36 +45,36 @@ function getSectionForNode(node: FlowNode): Section {
 function getPacing(section: Section) {
   if (section === "transition") {
     return {
-      titleDuration: 0.9,
-      bodyDuration: 0.8,
-      bodyBaseDelay: 0.24,
-      bodyStepDelay: 0.2,
+      titleDuration: 0.55,
+      bodyDuration: 0.5,
+      bodyBaseDelay: 0.12,
+      bodyStepDelay: 0.08,
       titleY: 10,
       bodyY: 8,
-      blur: 4,
+      blur: 3,
     };
   }
 
   if (section === "what-is-everleap") {
     return {
-      titleDuration: 0.72,
-      bodyDuration: 0.66,
-      bodyBaseDelay: 0.16,
-      bodyStepDelay: 0.16,
-      titleY: 18,
-      bodyY: 14,
-      blur: 6,
+      titleDuration: 0.5,
+      bodyDuration: 0.45,
+      bodyBaseDelay: 0.08,
+      bodyStepDelay: 0.06,
+      titleY: 12,
+      bodyY: 10,
+      blur: 4,
     };
   }
 
   return {
-    titleDuration: 0.48,
-    bodyDuration: 0.48,
-    bodyBaseDelay: 0.08,
-    bodyStepDelay: 0.1,
-    titleY: 14,
-    bodyY: 12,
-    blur: 5,
+    titleDuration: 0.34,
+    bodyDuration: 0.3,
+    bodyBaseDelay: 0.04,
+    bodyStepDelay: 0.04,
+    titleY: 8,
+    bodyY: 6,
+    blur: 2,
   };
 }
 
@@ -102,18 +100,17 @@ export default function Conversation({ node, answers }: Props) {
   return (
     <section
       className={[
-        "w-full transition-all duration-700",
+        "w-full",
         isTransition ? "text-center" : "text-left",
       ].join(" ")}
     >
       <div
         className={[
-          "transition-all duration-700",
           isTransition
-            ? "mx-auto max-w-[640px] space-y-5 sm:space-y-6"
+            ? "mx-auto max-w-[640px] space-y-5"
             : isWelcome
-              ? "space-y-5 sm:space-y-6"
-              : "space-y-3.5 sm:space-y-4",
+              ? "space-y-5"
+              : "space-y-3",
         ].join(" ")}
       >
         {title ? (
@@ -134,12 +131,12 @@ export default function Conversation({ node, answers }: Props) {
               ease: "easeOut",
             }}
             className={[
-              "text-balance font-semibold tracking-[-0.04em] text-white transition-all duration-700",
+              "text-balance font-semibold tracking-[-0.045em] text-white",
               isTransition
-                ? "mx-auto max-w-[620px] text-[2rem] leading-[1.04] sm:text-[2.7rem]"
+                ? "mx-auto max-w-[620px] text-[2rem] leading-[1.02] sm:text-[2.7rem]"
                 : isWelcome
-                  ? "max-w-[700px] text-[2rem] leading-[1.02] sm:text-[2.9rem]"
-                  : "max-w-[680px] text-[1.62rem] leading-[1.12] sm:text-[2.2rem]",
+                  ? "max-w-[700px] text-[2.2rem] leading-[0.98] sm:text-[3rem]"
+                  : "max-w-[680px] text-[1.5rem] leading-[1.08] sm:text-[2rem]",
             ].join(" ")}
           >
             {renderHighlightedText(title)}
@@ -149,12 +146,11 @@ export default function Conversation({ node, answers }: Props) {
         {lines.length > 0 ? (
           <div
             className={[
-              "transition-all duration-700",
               isTransition
                 ? "mx-auto max-w-[580px] space-y-4"
                 : isWelcome
                   ? "max-w-[640px] space-y-4"
-                  : "max-w-[620px] space-y-3 sm:space-y-3.5",
+                  : "max-w-[620px] space-y-2.5",
             ].join(" ")}
           >
             {lines.map((line, index) => (
@@ -178,13 +174,13 @@ export default function Conversation({ node, answers }: Props) {
                     : index * pacing.bodyStepDelay,
                 }}
                 className={[
-                  "text-pretty transition-all duration-700",
+                  "text-pretty",
                   isTransition
-                    ? "text-[17px] leading-[1.74] text-white/76 sm:text-[19px]"
+                    ? "text-[17px] leading-[1.72] text-white/74 sm:text-[19px]"
                     : isWelcome
-                      ? "text-[17px] leading-[1.72] text-white/82 sm:text-[19px]"
+                      ? "text-[18px] leading-[1.72] text-white/78 sm:text-[20px]"
                       : isDiscovery
-                        ? "text-[15.5px] leading-[1.58] text-white/80 sm:text-[17px]"
+                        ? "text-[15px] leading-[1.55] text-white/74 sm:text-[16px]"
                         : "",
                 ].join(" ")}
               >
