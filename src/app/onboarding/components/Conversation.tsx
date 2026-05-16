@@ -14,10 +14,7 @@ type Props = {
   answers: Answers;
 };
 
-type Section =
-  | "what-is-everleap"
-  | "discovery"
-  | "transition";
+type Section = "discovery" | "transition";
 
 function getSectionForNode(node: FlowNode): Section {
   if (
@@ -27,16 +24,6 @@ function getSectionForNode(node: FlowNode): Section {
     node.key === "regauth_transition"
   ) {
     return "transition";
-  }
-
-  if (
-    node.key === "welcome" ||
-    node.key === "how_it_works" ||
-    node.key === "what_you_get" ||
-    node.key === "progress" ||
-    node.key === "lets_get_started"
-  ) {
-    return "what-is-everleap";
   }
 
   return "discovery";
@@ -55,18 +42,6 @@ function getPacing(section: Section) {
     };
   }
 
-  if (section === "what-is-everleap") {
-    return {
-      titleDuration: 0.5,
-      bodyDuration: 0.45,
-      bodyBaseDelay: 0.08,
-      bodyStepDelay: 0.06,
-      titleY: 12,
-      bodyY: 10,
-      blur: 4,
-    };
-  }
-
   return {
     titleDuration: 0.34,
     bodyDuration: 0.3,
@@ -82,9 +57,6 @@ export default function Conversation({ node, answers }: Props) {
   if (!node) return null;
 
   const section = getSectionForNode(node);
-
-  const isWelcome = section === "what-is-everleap";
-  const isDiscovery = section === "discovery";
   const isTransition = section === "transition";
 
   const name = firstName(typeof answers.name === "string" ? answers.name : "");
@@ -100,17 +72,14 @@ export default function Conversation({ node, answers }: Props) {
   return (
     <section
       className={[
-        "w-full",
+        "flex w-full justify-center",
         isTransition ? "text-center" : "text-left",
       ].join(" ")}
     >
       <div
         className={[
-          isTransition
-            ? "mx-auto max-w-[640px] space-y-5"
-            : isWelcome
-              ? "space-y-5"
-              : "space-y-3",
+          "w-full",
+          isTransition ? "max-w-[640px] space-y-5" : "max-w-[420px] space-y-4",
         ].join(" ")}
       >
         {title ? (
@@ -134,9 +103,7 @@ export default function Conversation({ node, answers }: Props) {
               "text-balance font-semibold tracking-[-0.045em] text-white",
               isTransition
                 ? "mx-auto max-w-[620px] text-[2rem] leading-[1.02] sm:text-[2.7rem]"
-                : isWelcome
-                  ? "max-w-[700px] text-[2.2rem] leading-[0.98] sm:text-[3rem]"
-                  : "max-w-[680px] text-[1.5rem] leading-[1.08] sm:text-[2rem]",
+                : "max-w-[420px] text-[1.75rem] leading-[1.04] sm:text-[2.15rem]",
             ].join(" ")}
           >
             {renderHighlightedText(title)}
@@ -148,9 +115,7 @@ export default function Conversation({ node, answers }: Props) {
             className={[
               isTransition
                 ? "mx-auto max-w-[580px] space-y-4"
-                : isWelcome
-                  ? "max-w-[640px] space-y-4"
-                  : "max-w-[620px] space-y-2.5",
+                : "max-w-[410px] space-y-3",
             ].join(" ")}
           >
             {lines.map((line, index) => (
@@ -174,14 +139,10 @@ export default function Conversation({ node, answers }: Props) {
                     : index * pacing.bodyStepDelay,
                 }}
                 className={[
-                  "text-pretty",
+                  "text-pretty tracking-[-0.015em]",
                   isTransition
                     ? "text-[17px] leading-[1.72] text-white/74 sm:text-[19px]"
-                    : isWelcome
-                      ? "text-[18px] leading-[1.72] text-white/78 sm:text-[20px]"
-                      : isDiscovery
-                        ? "text-[15px] leading-[1.55] text-white/74 sm:text-[16px]"
-                        : "",
+                    : "text-[15px] leading-[1.65] text-white/70 sm:text-[16px]",
                 ].join(" ")}
               >
                 {renderHighlightedText(line)}

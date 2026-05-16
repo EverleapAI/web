@@ -27,19 +27,27 @@ function NavButton({
   return (
     <motion.button
       type="button"
-      whileTap={disabled ? undefined : { scale: 0.98 }}
+      whileTap={disabled ? undefined : { scale: 0.985 }}
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex min-h-11 items-center justify-center rounded-full text-[15px] font-semibold transition",
+        "inline-flex min-h-[56px] items-center justify-center rounded-full px-6 text-[16px] font-semibold tracking-[-0.02em] transition",
+        "sm:min-h-[58px] sm:text-[17px]",
         disabled
-          ? "cursor-not-allowed text-white/20"
+          ? "cursor-not-allowed border border-white/10 bg-white/[0.02] text-white/22"
           : isContinue
-            ? "bg-white px-5 text-slate-950 hover:bg-cyan-50"
-            : "px-1 text-white/46 hover:text-white/78",
+            ? "min-w-[156px] bg-cyan-300 text-slate-950 shadow-[0_14px_38px_rgba(34,211,238,0.22)] hover:bg-cyan-200"
+            : "min-w-[136px] border border-white/18 bg-white/[0.015] text-white/86 hover:border-white/32 hover:bg-white/[0.035]",
       ].join(" ")}
     >
-      {isContinue ? `${label} →` : label}
+      {isContinue ? (
+        <span>{label}</span>
+      ) : (
+        <span className="flex items-center gap-3">
+          <span className="text-[22px] leading-none">←</span>
+          <span>{label}</span>
+        </span>
+      )}
     </motion.button>
   );
 }
@@ -53,17 +61,17 @@ export default function NavControls({
   onContinue,
 }: Props) {
   return (
-    <nav className="w-full border-t border-white/8 pt-3">
-      <div className="flex min-h-12 items-center justify-between gap-4">
-        <div>
+    <nav className="w-full translate-y-[-20px] pt-4">
+      <div className="mx-auto flex min-h-[64px] w-full max-w-[420px] items-center justify-between gap-5">
+        <div className="flex-1">
           {canGoBack ? (
             <NavButton label="Back" onClick={onBack} variant="back" />
           ) : (
-            <span aria-hidden="true" className="block min-h-11 w-12" />
+            <span aria-hidden="true" className="block min-h-[56px] w-full" />
           )}
         </div>
 
-        <div>
+        <div className="flex-1">
           {showContinue ? (
             <NavButton
               label={continueLabel}
@@ -72,7 +80,7 @@ export default function NavControls({
               variant="continue"
             />
           ) : (
-            <span aria-hidden="true" className="block min-h-11 w-24" />
+            <span aria-hidden="true" className="block min-h-[56px] w-full" />
           )}
         </div>
       </div>

@@ -136,24 +136,24 @@ function ChoiceRowText({
       whileTap={{ scale: 0.988 }}
       onClick={onClick}
       animate={{
-        opacity: dimmed ? 0.42 : 1,
+        opacity: dimmed ? 0.46 : 1,
       }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[22px] border text-left transition",
+        "group relative block w-full overflow-hidden rounded-[20px] border text-left transition",
         selected
-          ? "border-cyan-100/44 bg-cyan-900/42"
-          : "border-white/8 bg-white/[0.035] hover:border-white/16 hover:bg-white/[0.05]",
-        compact ? "px-4 py-3" : "px-4 py-4",
+          ? "border-cyan-100/36 bg-cyan-300/[0.105] shadow-[0_0_24px_rgba(103,232,249,0.055)]"
+          : "border-white/8 bg-white/[0.026] hover:border-white/15 hover:bg-white/[0.045]",
+        compact ? "px-4 py-3" : "px-4 py-3.5",
       ].join(" ")}
     >
       <div className="flex items-center gap-3">
         {multi ? (
           <div
             className={[
-              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+              "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition",
               selected
                 ? "border-cyan-50/70 bg-cyan-50/12"
-                : "border-white/18",
+                : "border-white/18 bg-white/[0.02]",
             ].join(" ")}
           >
             {selected ? (
@@ -164,13 +164,13 @@ function ChoiceRowText({
 
         <div
           className={[
-            "min-w-0 flex-1",
+            "min-w-0 flex-1 tracking-[-0.015em]",
             compact
-              ? "text-[14px] leading-[1.3rem]"
+              ? "text-[14px] leading-[1.35rem]"
               : "text-[15px] leading-[1.45rem]",
             selected
               ? "font-semibold text-white"
-              : "font-medium text-white/82",
+              : "font-medium text-white/80",
           ].join(" ")}
         >
           {label}
@@ -309,8 +309,8 @@ export default function InputRenderer({
     const isName = question.key === "name";
 
     return (
-      <div className="mt-5 w-full">
-        <div className="mb-3 text-[12px] leading-5 text-white/40">
+      <div className="mt-5 w-full max-w-[420px]">
+        <div className="mb-3 text-[12px] leading-5 tracking-[-0.01em] text-white/36">
           Type your answer or use the microphone to speak.
         </div>
 
@@ -341,12 +341,12 @@ export default function InputRenderer({
             rows={isName ? 1 : 4}
             placeholder={question.placeholder ?? ""}
             className={[
-              "w-full resize-none rounded-[24px] border border-white/10 bg-white/[0.04]",
+              "w-full resize-none rounded-[22px] border border-white/9 bg-white/[0.032]",
               "px-5 py-4 pr-16 outline-none transition",
-              "text-[16px] leading-7 text-white",
-              "placeholder:text-white/26",
-              "focus:border-cyan-100/24 focus:bg-white/[0.055]",
-              isName ? "min-h-[58px]" : "min-h-[132px]",
+              "text-[16px] leading-7 text-white tracking-[-0.015em]",
+              "placeholder:text-white/25",
+              "focus:border-cyan-100/22 focus:bg-white/[0.05]",
+              isName ? "min-h-[56px]" : "min-h-[124px]",
             ].join(" ")}
           />
 
@@ -372,7 +372,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-4 w-full space-y-2.5">
+      <div className="mt-5 w-full max-w-[420px] space-y-2">
         {question.options.map((option) => (
           <ChoiceRowText
             key={option.key}
@@ -405,14 +405,14 @@ export default function InputRenderer({
     const maxChoices = getMaxChoices(node);
 
     return (
-      <div className="mt-4 w-full">
+      <div className="mt-5 w-full max-w-[420px]">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-white/36">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
             Select all that apply
           </div>
 
           {typeof maxChoices === "number" ? (
-            <div className="text-[11px] text-white/34">
+            <div className="text-[11px] text-white/32">
               Up to {maxChoices}
             </div>
           ) : null}
@@ -448,7 +448,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-5 grid w-full grid-cols-2 gap-3">
+      <div className="mt-5 grid w-full max-w-[420px] grid-cols-2 gap-3">
         {question.options.map((option) => {
           const isSelected = selected === option.key;
           const imageUrl = option.image_url ?? option.imageUrl;
@@ -471,12 +471,17 @@ export default function InputRenderer({
                 }, 180);
               }}
               whileTap={{ scale: 0.98 }}
-              className="group relative overflow-hidden rounded-[24px] border border-white/10"
+              className={[
+                "group relative overflow-hidden rounded-[22px] border transition",
+                isSelected
+                  ? "border-cyan-100/48"
+                  : "border-white/10 hover:border-white/18",
+              ].join(" ")}
             >
               <div
                 className={[
                   "relative aspect-[1.38/1] overflow-hidden",
-                  isSelected ? "ring-2 ring-cyan-100/60" : "",
+                  isSelected ? "ring-2 ring-cyan-100/52" : "",
                 ].join(" ")}
               >
                 {imageUrl ? (
@@ -489,7 +494,7 @@ export default function InputRenderer({
                   />
                 ) : null}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
                 <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-[12px] font-medium text-white backdrop-blur-md">
                   {option.label}

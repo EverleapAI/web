@@ -7,7 +7,7 @@ export type AnimationPreset =
   | "idle"
 
   /*
-    Arrival / orientation
+    Icon-supporting symbolic marks
   */
   | "anchor"
   | "connect"
@@ -36,75 +36,87 @@ export type AnimationPreset =
   | "instinctShift"
 
   /*
-    Map / convergence
+    Claude synthesis / convergence
   */
   | "finalMap";
 
 /*
   VISUAL SYSTEM DIRECTION
 
-  Everleap onboarding now has two visual languages:
+  Everleap onboarding now uses icons as the primary visual language.
 
-  1. WHAT IS EVERLEAP
-     - semantic icons
-     - calm, symbolic, memorable
-     - examples: mirror, story, compass, stars, rudder
+  Most screens should feel:
+  - simple
+  - symbolic
+  - compact
+  - readable on mobile
+  - emotionally calm
 
-  2. DISCOVERY
-     - active line motion
-     - signals, branches, terrain, networks
-     - reflects the system learning about the user
+  Animated line art is reserved mainly for:
+  - supporting icon-like motion
+  - discovery moments
+  - the Claude synthesis / summary transition
 
-  Transition / synthesis screens should stay quiet.
-  They can map to finalMap for compatibility, but page-level rendering
-  should avoid active animated line art when possible.
+  The synthesis moment is the one place where richer animated line work
+  should feel intentional, because the user is waiting while Everleap
+  interprets their answers.
 */
 
 export const nodeVisuals: Record<string, AnimationPreset> = {
   /*
-    PHASE 1 — What is Everleap?
+    PHASE 1 — Intro / explanation
 
-    These screens are primarily rendered through semantic icon assets
-    in page.tsx. The presets below are fallbacks only.
+    These screens are rendered primarily by semantic icon assets in page.tsx.
+    Presets here are fallback/support only.
   */
   welcome: "anchor",
   how_it_works: "connect",
   what_you_get: "anchor",
   progress: "networkGrow",
-  lets_get_started: "connect",
+  lets_get_started: "branchExtend",
 
   /*
-    PHASE 2 — Discovery
-
-    This is where animated line visuals belong.
+    PHASE 2 — Identity / setup
   */
-
-  // Permissions
-  permissions: "scatter",
-
-  // Identity
+  permissions: "anchor",
   name: "nameTag",
-
-  // Grounding
-  current_situation: "terrain",
-
-  // Future horizon
-  post_plans: "branching",
-
-  // Certainty / branching
-  certainty: "branching",
-  certainty_idea: "branchExtend",
-
-  // Personal signals
-  activities: "networkGrow",
-
-  // Natural pull / instinct
-  fun_instinct: "instinctShift",
+  intro_name: "nameTag",
 
   /*
-    PHASE 3 — Transition / synthesis
+    PHASE 3 — Certainty / direction
+  */
+  current_situation: "terrain",
+  certainty: "branching",
+  certainty_response: "anchor",
+  certainty_idea: "branchExtend",
+  idea_response: "branchExtend",
 
-    Quiet handoff into RegAuth.
+  /*
+    PHASE 4 — Plans / interests / signals
+  */
+  post_plans: "branching",
+  post_plans_response: "terrain",
+  activities: "networkGrow",
+  activities_response: "connect",
+
+  /*
+    PHASE 5 — Strengths / friction / instinct
+  */
+  strengths: "anchor",
+  challenges: "terrain",
+  fun_instinct: "instinctShift",
+  instinct_response: "instinctShift",
+
+  /*
+    PHASE 6 — Future / permissions / synthesis
+  */
+  future: "branchExtend",
+
+  /*
+    Claude-backed synthesis moment.
+
+    This is where the richer line drawing should appear:
+    scattered signals resolving into a connected map.
   */
   summary_transition: "finalMap",
   summary: "finalMap",
