@@ -59,7 +59,9 @@ export default function Conversation({ node, answers }: Props) {
   const section = getSectionForNode(node);
   const isTransition = section === "transition";
 
-  const name = firstName(typeof answers.name === "string" ? answers.name : "");
+  const name = firstName(
+    typeof answers.name === "string" ? answers.name : ""
+  );
 
   const pacing = getPacing(section);
 
@@ -79,7 +81,9 @@ export default function Conversation({ node, answers }: Props) {
       <div
         className={[
           "w-full",
-          isTransition ? "max-w-[640px] space-y-5" : "max-w-[420px] space-y-4",
+          isTransition
+            ? "max-w-[620px] space-y-4"
+            : "max-w-[400px] space-y-3",
         ].join(" ")}
       >
         {title ? (
@@ -103,7 +107,7 @@ export default function Conversation({ node, answers }: Props) {
               "text-balance font-semibold tracking-[-0.045em] text-white",
               isTransition
                 ? "mx-auto max-w-[620px] text-[2rem] leading-[1.02] sm:text-[2.7rem]"
-                : "max-w-[420px] text-[1.75rem] leading-[1.04] sm:text-[2.15rem]",
+                : "max-w-[400px] text-[1.68rem] leading-[1.03] sm:text-[2.05rem]",
             ].join(" ")}
           >
             {renderHighlightedText(title)}
@@ -114,8 +118,8 @@ export default function Conversation({ node, answers }: Props) {
           <div
             className={[
               isTransition
-                ? "mx-auto max-w-[580px] space-y-4"
-                : "max-w-[410px] space-y-3",
+                ? "mx-auto max-w-[560px] space-y-3"
+                : "max-w-[390px] space-y-2.5",
             ].join(" ")}
           >
             {lines.map((line, index) => (
@@ -142,7 +146,7 @@ export default function Conversation({ node, answers }: Props) {
                   "text-pretty tracking-[-0.015em]",
                   isTransition
                     ? "text-[17px] leading-[1.72] text-white/74 sm:text-[19px]"
-                    : "text-[15px] leading-[1.65] text-white/70 sm:text-[16px]",
+                    : "text-[15px] leading-[1.55] text-white/70 sm:text-[16px]",
                 ].join(" ")}
               >
                 {renderHighlightedText(line)}

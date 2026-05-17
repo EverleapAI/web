@@ -64,7 +64,7 @@ export default function OnboardingVisual({ visualKey }: Props) {
 
 function SvgShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="pointer-events-none mx-auto mb-9 flex h-[190px] w-full max-w-[340px] items-center justify-center overflow-visible">
+    <div className="pointer-events-none mx-auto mb-6 flex h-[164px] w-full max-w-[320px] items-center justify-center overflow-visible">
       <svg
         viewBox="0 0 340 190"
         className="h-full w-full overflow-visible"

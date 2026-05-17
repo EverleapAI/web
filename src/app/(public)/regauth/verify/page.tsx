@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sanitizeReturnTo } from "@/regauth/lib/returnTo";
+import RegAuthVisual from "../components/RegAuthVisual";
 
 function onlyDigits(raw: string): string {
   return (raw ?? "").replace(/\D+/g, "");
@@ -91,7 +92,7 @@ export default function VerifyPage(): React.JSX.Element {
         }),
       });
     } catch {
-      // Non-blocking. Auth should still succeed even if onboarding claim fails.
+      // Non-blocking.
     }
   }
 
@@ -135,10 +136,14 @@ export default function VerifyPage(): React.JSX.Element {
       await claimOnboarding();
 
       try {
-        window.sessionStorage.removeItem("regauth_pending_identifier");
+        window.sessionStorage.removeItem(
+          "regauth_pending_identifier"
+        );
       } catch {}
 
-      window.location.href = returnTo;
+      router.replace(
+        `/regauth/zip?returnTo=${encodeURIComponent(returnTo)}`
+      );
     } catch {
       setError("Something went wrong.");
 
@@ -164,7 +169,11 @@ export default function VerifyPage(): React.JSX.Element {
     const next = [...digits];
 
     if (clean.length > 1) {
-      for (let j = 0; j < clean.length && i + j < 6; j += 1) {
+      for (
+        let j = 0;
+        j < clean.length && i + j < 6;
+        j += 1
+      ) {
         next[i + j] = clean[j] ?? "";
       }
     } else {
@@ -173,7 +182,10 @@ export default function VerifyPage(): React.JSX.Element {
 
     setDigits(next);
 
-    const nextFocus = Math.min(5, i + Math.max(clean.length, 1));
+    const nextFocus = Math.min(
+      5,
+      i + Math.max(clean.length, 1)
+    );
 
     if (clean && nextFocus <= 5) {
       focusIndex(nextFocus);
@@ -199,21 +211,27 @@ export default function VerifyPage(): React.JSX.Element {
 
   function useDifferentIdentifier() {
     try {
-      window.sessionStorage.removeItem("regauth_pending_identifier");
+      window.sessionStorage.removeItem(
+        "regauth_pending_identifier"
+      );
     } catch {}
 
-    router.replace(`/regauth?returnTo=${encodeURIComponent(returnTo)}`);
+    router.replace(
+      `/regauth?returnTo=${encodeURIComponent(returnTo)}`
+    );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 text-white">
-      <div className="w-full max-w-md space-y-8 text-center">
+    <main className="flex min-h-screen justify-center px-4 pb-8 pt-10 text-white">
+      <div className="w-full max-w-md space-y-4 text-center">
+        <RegAuthVisual kind="verify" />
+
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Check your messages.
+          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+            Check your email.
           </h1>
 
-          <p className="text-sm text-white/60">
+          <p className="text-[15px] leading-6 text-white/64">
             Enter the 6-digit code
             {pendingIdentifier ? (
               <>
@@ -236,24 +254,32 @@ export default function VerifyPage(): React.JSX.Element {
               key={i}
               ref={ref}
               value={digits[i]}
-              onChange={(e) => onChange(i, e.target.value)}
+              onChange={(e) =>
+                onChange(i, e.target.value)
+              }
               onKeyDown={(e) => onKeyDown(i, e)}
               disabled={isSubmitting}
               inputMode="numeric"
-              autoComplete={i === 0 ? "one-time-code" : "off"}
+              autoComplete={
+                i === 0 ? "one-time-code" : "off"
+              }
               pattern="[0-9]*"
-              className="h-14 w-11 rounded-xl border border-white/10 bg-white/10 text-center text-xl text-white outline-none transition focus:border-white/25 focus:bg-white/15 focus:ring-2 focus:ring-white/20 disabled:opacity-50"
+              className="h-12 w-10 rounded-xl border border-white/10 bg-white/[0.06] text-center text-lg text-white outline-none transition focus:border-white/25 focus:bg-white/[0.09] focus:ring-2 focus:ring-white/20 disabled:opacity-50"
               maxLength={1}
             />
           ))}
         </div>
 
         {isSubmitting ? (
-          <p className="text-sm text-white/60">Checking…</p>
+          <p className="text-sm text-white/60">
+            Checking…
+          </p>
         ) : null}
 
         {error ? (
-          <p className="text-sm text-red-300">{error}</p>
+          <p className="text-sm text-red-300">
+            {error}
+          </p>
         ) : null}
 
         <button

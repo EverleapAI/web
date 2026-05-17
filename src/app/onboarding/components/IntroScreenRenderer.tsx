@@ -118,7 +118,7 @@ function ProgressIcons() {
   ];
 
   return (
-    <div className="mt-8 flex items-center justify-center gap-3">
+    <div className="mt-6 flex items-center justify-center gap-3">
       {icons.map((src, index) => (
         <motion.div
           key={src}
@@ -193,7 +193,7 @@ function WhatYouGetList() {
   ];
 
   return (
-    <div className="mt-8 flex flex-col gap-5">
+    <div className="mt-6 flex flex-col gap-4">
       {items.map((item, index) => (
         <motion.div
           key={index}
@@ -225,7 +225,7 @@ function WhatYouGetList() {
 
 function StepList({ steps }: { steps: string[] }) {
   return (
-    <div className="mt-10 flex flex-col gap-4">
+    <div className="mt-7 flex flex-col gap-3">
       {steps.map((step, index) => (
         <motion.div
           key={step}
@@ -253,7 +253,7 @@ function StepList({ steps }: { steps: string[] }) {
 
 function BulletList({ bullets }: { bullets: string[] }) {
   return (
-    <div className="mt-10 flex flex-col gap-5">
+    <div className="mt-7 flex flex-col gap-4">
       {bullets.map((bullet, index) => (
         <motion.div
           key={bullet}
@@ -285,7 +285,7 @@ function BodyLines({
   answers: Answers;
 }) {
   return (
-    <div className="mt-8 flex max-w-[370px] flex-col gap-5">
+    <div className="mt-6 flex max-w-[370px] flex-col gap-4">
       {lines.map((line, index) => (
         <motion.p
           key={line}
@@ -296,7 +296,7 @@ function BodyLines({
             ease: "easeOut",
             delay: 0.1 + index * 0.06,
           }}
-          className="text-[16px] font-medium leading-8 tracking-[-0.018em] text-white/72 sm:text-[17px]"
+          className="text-[16px] font-medium leading-7 tracking-[-0.018em] text-white/72 sm:text-[17px]"
         >
           {replaceName(line, answers)}
         </motion.p>
@@ -313,7 +313,7 @@ function PermissionApproval({
   onChange: (accepted: boolean) => void;
 }) {
   return (
-    <div className="mt-10 space-y-5">
+    <div className="mt-7 space-y-4">
       <label className="flex cursor-pointer gap-4 text-left">
         <input
           type="checkbox"
@@ -322,7 +322,7 @@ function PermissionApproval({
           className="mt-1 h-4 w-4 shrink-0 accent-cyan-300"
         />
 
-        <span className="max-w-[340px] text-[13px] leading-7 tracking-[-0.01em] text-white/58">
+        <span className="max-w-[340px] text-[13px] leading-6 tracking-[-0.01em] text-white/58">
           I give Everleap permission to use what I share to personalize my
           experience, as described in the{" "}
           <a
@@ -375,7 +375,7 @@ function SummaryTransition({
           duration: 0.6,
           ease: "easeOut",
         }}
-        className="mt-8 flex min-h-[220px] flex-col justify-center"
+        className="mt-6 flex min-h-[200px] flex-col justify-center"
       >
         <div className="flex items-center gap-2">
           {[0, 1, 2].map((dot) => (
@@ -404,13 +404,13 @@ function SummaryTransition({
             duration: 0.35,
             ease: "easeOut",
           }}
-          className="mt-8 text-[22px] font-semibold tracking-[-0.035em] text-white"
+          className="mt-6 text-[22px] font-semibold tracking-[-0.035em] text-white"
         >
           {loadingMessages[messageIndex]}
           <span className="text-white/42">...</span>
         </motion.div>
 
-        <p className="mt-5 max-w-[360px] text-[15px] leading-7 tracking-[-0.015em] text-white/46">
+        <p className="mt-4 max-w-[360px] text-[15px] leading-6 tracking-[-0.015em] text-white/46">
           Everleap is comparing your answers against behavioral patterns,
           motivations, interests, and possible directions.
         </p>
@@ -434,19 +434,19 @@ function SummaryTransition({
         duration: 0.7,
         ease: "easeOut",
       }}
-      className="mt-8 flex flex-col gap-8"
+      className="mt-6 flex flex-col gap-6"
     >
       <div>
         <h2 className="max-w-[360px] text-[24px] font-semibold leading-[1.1] tracking-[-0.04em] text-white">
           {synthesis.headline}
         </h2>
 
-        <p className="mt-5 max-w-[370px] text-[16px] leading-8 tracking-[-0.018em] text-white/70">
+        <p className="mt-4 max-w-[370px] text-[16px] leading-7 tracking-[-0.018em] text-white/70">
           {synthesis.body}
         </p>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4">
         {synthesis.signals.map((signal, index) => (
           <motion.div
             key={signal}
@@ -467,14 +467,14 @@ function SummaryTransition({
           >
             <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
 
-            <div className="max-w-[340px] text-[15px] leading-7 tracking-[-0.015em] text-white/82">
+            <div className="max-w-[340px] text-[15px] leading-6 tracking-[-0.015em] text-white/82">
               {signal}
             </div>
           </motion.div>
         ))}
       </div>
 
-      <p className="max-w-[350px] text-[14px] leading-7 tracking-[-0.01em] text-white/50">
+      <p className="max-w-[350px] text-[14px] leading-6 tracking-[-0.01em] text-white/50">
         {synthesis.bridge}
       </p>
     </motion.div>
@@ -496,7 +496,8 @@ export default function IntroScreenRenderer({
 
   const compact = config.tone === "compact";
   const permissionAccepted = answers.permissions_accepted === "yes";
-  const isSummary = node.key === "summary_transition" || node.type === "summary";
+  const isSummary =
+    node.key === "summary_transition" || node.type === "summary";
 
   return (
     <section className="flex w-full justify-center">
@@ -518,16 +519,10 @@ export default function IntroScreenRenderer({
         }}
         className={[
           "w-full max-w-[420px]",
-          "px-1 pt-4",
-          compact ? "pb-4" : "pb-8",
+          "px-1 pt-1",
+          compact ? "pb-3" : "pb-5",
         ].join(" ")}
       >
-        {config.eyebrow ? (
-          <div className="mb-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/46">
-            {config.eyebrow}
-          </div>
-        ) : null}
-
         <OnboardingVisual visualKey={node.key} />
 
         <h1 className="max-w-[360px] text-[30px] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[34px]">
@@ -543,16 +538,21 @@ export default function IntroScreenRenderer({
           <>
             {node.key === "progress" ? <ProgressIcons /> : null}
 
-            {node.key === "what_you_get" ? <WhatYouGetList /> : null}
+            {node.key === "what_you_get" ? (
+              <WhatYouGetList />
+            ) : null}
 
             {config.bodyLines ? (
-              <BodyLines lines={config.bodyLines} answers={answers} />
+              <BodyLines
+                lines={config.bodyLines}
+                answers={answers}
+              />
             ) : null}
 
             {config.body ? (
               <p
                 className={[
-                  "mt-8 max-w-[370px] text-[16px] leading-8 tracking-[-0.018em] text-white/70",
+                  "mt-6 max-w-[370px] text-[16px] leading-7 tracking-[-0.018em] text-white/70",
                   compact ? "text-white/58" : "",
                 ].join(" ")}
               >
@@ -560,9 +560,13 @@ export default function IntroScreenRenderer({
               </p>
             ) : null}
 
-            {config.steps ? <StepList steps={config.steps} /> : null}
+            {config.steps ? (
+              <StepList steps={config.steps} />
+            ) : null}
 
-            {config.bullets ? <BulletList bullets={config.bullets} /> : null}
+            {config.bullets ? (
+              <BulletList bullets={config.bullets} />
+            ) : null}
           </>
         )}
 
@@ -570,7 +574,10 @@ export default function IntroScreenRenderer({
           <PermissionApproval
             accepted={permissionAccepted}
             onChange={(accepted) => {
-              onAnswer?.("permissions_accepted", accepted ? "yes" : "");
+              onAnswer?.(
+                "permissions_accepted",
+                accepted ? "yes" : ""
+              );
             }}
           />
         ) : null}

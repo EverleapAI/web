@@ -143,7 +143,7 @@ function ChoiceRowText({
         selected
           ? "border-cyan-100/36 bg-cyan-300/[0.105] shadow-[0_0_24px_rgba(103,232,249,0.055)]"
           : "border-white/8 bg-white/[0.026] hover:border-white/15 hover:bg-white/[0.045]",
-        compact ? "px-4 py-3" : "px-4 py-3.5",
+        compact ? "px-4 py-2.5" : "px-4 py-3",
       ].join(" ")}
     >
       <div className="flex items-center gap-3">
@@ -166,8 +166,8 @@ function ChoiceRowText({
           className={[
             "min-w-0 flex-1 tracking-[-0.015em]",
             compact
-              ? "text-[14px] leading-[1.35rem]"
-              : "text-[15px] leading-[1.45rem]",
+              ? "text-[14px] leading-[1.25rem]"
+              : "text-[15px] leading-[1.35rem]",
             selected
               ? "font-semibold text-white"
               : "font-medium text-white/80",
@@ -309,8 +309,8 @@ export default function InputRenderer({
     const isName = question.key === "name";
 
     return (
-      <div className="mt-5 w-full max-w-[420px]">
-        <div className="mb-3 text-[12px] leading-5 tracking-[-0.01em] text-white/36">
+      <div className="mt-4 w-full max-w-[400px]">
+        <div className="mb-2 text-[11px] leading-4 tracking-[-0.01em] text-white/32">
           Type your answer or use the microphone to speak.
         </div>
 
@@ -342,11 +342,11 @@ export default function InputRenderer({
             placeholder={question.placeholder ?? ""}
             className={[
               "w-full resize-none rounded-[22px] border border-white/9 bg-white/[0.032]",
-              "px-5 py-4 pr-16 outline-none transition",
-              "text-[16px] leading-7 text-white tracking-[-0.015em]",
+              "px-5 py-3.5 pr-16 outline-none transition",
+              "text-[16px] leading-6 text-white tracking-[-0.015em]",
               "placeholder:text-white/25",
               "focus:border-cyan-100/22 focus:bg-white/[0.05]",
-              isName ? "min-h-[56px]" : "min-h-[124px]",
+              isName ? "min-h-[52px]" : "min-h-[108px]",
             ].join(" ")}
           />
 
@@ -372,7 +372,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-5 w-full max-w-[420px] space-y-2">
+      <div className="mt-4 w-full max-w-[400px] space-y-2">
         {question.options.map((option) => (
           <ChoiceRowText
             key={option.key}
@@ -405,7 +405,7 @@ export default function InputRenderer({
     const maxChoices = getMaxChoices(node);
 
     return (
-      <div className="mt-5 w-full max-w-[420px]">
+      <div className="mt-4 w-full max-w-[400px]">
         <div className="mb-3 flex items-center justify-between">
           <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
             Select all that apply
@@ -418,7 +418,7 @@ export default function InputRenderer({
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {question.options.map((option) => (
             <ChoiceRowText
               key={option.key}
@@ -448,7 +448,7 @@ export default function InputRenderer({
     const selected = getTextAnswer(answers, question.key);
 
     return (
-      <div className="mt-5 grid w-full max-w-[420px] grid-cols-2 gap-3">
+      <div className="mt-4 grid w-full max-w-[400px] grid-cols-2 gap-2.5">
         {question.options.map((option) => {
           const isSelected = selected === option.key;
           const imageUrl = option.image_url ?? option.imageUrl;

@@ -75,7 +75,6 @@ function QuestionProgress({ progress }: { progress: number }) {
 
 function shouldShowPageVisual(nodeKey: string, isIntro: boolean) {
   if (nodeKey === "summary_transition") return false;
-
   if (isIntro) return false;
 
   return true;
@@ -129,12 +128,9 @@ export default function OnboardingPage() {
   const [flow, setFlow] = React.useState<FlowPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
   const [synthesisLoading, setSynthesisLoading] = React.useState(false);
-
   const [synthesis, setSynthesis] =
     React.useState<OnboardingSynthesis | null>(null);
-
   const [synthesisProvider, setSynthesisProvider] =
     React.useState<AiProvider | null>(null);
 
@@ -184,17 +180,8 @@ export default function OnboardingPage() {
         currentNode.key === "summary_transition" ||
         currentNode.type === "summary";
 
-      if (!isSummaryNode) {
-        return;
-      }
-
-      if (!synthesisProvider) {
-        return;
-      }
-
-      if (synthesisRequestedRef.current) {
-        return;
-      }
+      if (!isSummaryNode || !synthesisProvider) return;
+      if (synthesisRequestedRef.current) return;
 
       synthesisRequestedRef.current = true;
 
@@ -242,7 +229,6 @@ export default function OnboardingPage() {
     Boolean(currentNode) && !isIntroScreen(currentNode);
 
   const isMultiChoice = currentQuestion?.inputType === "multi_choice";
-
   const isText = currentQuestion?.inputType === "text";
 
   const permissionAccepted = answers.permissions_accepted === "yes";
@@ -260,12 +246,11 @@ export default function OnboardingPage() {
       );
     } catch {}
 
-    router.push("/regauth/zip");
+    router.push("/regauth");
   }
 
   function handleNext(nextAnswers = answers) {
     if (!currentNode) return;
-
     if (!permissionsSatisfied) return;
 
     if (currentNode.type === "summary") {
@@ -300,21 +285,21 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
-      <main className="relative z-10 flex h-[100svh] flex-col px-5">
+    <div className="relative min-h-[100svh] overflow-hidden bg-slate-950 text-white">
+      <main className="relative z-10 flex min-h-[100svh] flex-col px-5">
         <header
           className={[
             "mx-auto flex w-full max-w-[720px] shrink-0 items-center justify-center transition-all duration-500",
             showProgress
-              ? "h-[44px] pt-4 opacity-100"
-              : "h-[24px] pt-2 opacity-0",
+              ? "h-[30px] pt-2 opacity-100"
+              : "h-[8px] pt-1 opacity-0",
           ].join(" ")}
         >
           {showProgress ? <QuestionProgress progress={progress} /> : null}
         </header>
 
         <section className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col">
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {shouldShowPageVisual(
               currentNode.key,
               isIntroScreen(currentNode)
@@ -322,7 +307,7 @@ export default function OnboardingPage() {
               <OnboardingVisual visualKey={currentNode.key} />
             ) : null}
 
-            <div className="flex min-h-0 flex-1 flex-col justify-start pt-2">
+            <div className="flex min-h-0 flex-1 flex-col justify-start pt-1">
               {isIntroScreen(currentNode) ? (
                 <IntroScreenRenderer
                   node={currentNode}
@@ -354,7 +339,7 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          <div className="shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pb-5">
+          <div className="shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:pb-4">
             {isProviderChoiceNode ? (
               <>
                 <ProviderChoiceButtons

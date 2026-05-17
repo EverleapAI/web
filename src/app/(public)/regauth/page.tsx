@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { sanitizeReturnTo } from "@/regauth/lib/returnTo";
+import RegAuthVisual from "./components/RegAuthVisual";
 
 export default function RegAuthEntryPage(): React.JSX.Element {
   const router = useRouter();
@@ -70,15 +71,17 @@ export default function RegAuthEntryPage(): React.JSX.Element {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 text-white">
-      <div className="w-full max-w-md space-y-6 text-center">
+    <main className="flex min-h-screen justify-center px-4 pb-8 pt-10 text-white">
+      <div className="w-full max-w-md space-y-4 text-center">
+        <RegAuthVisual kind="code" />
+
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Let’s get you in.
+          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+            You’re ready to join Everleap!
           </h1>
 
-          <p className="text-sm text-white/60">
-            Use your email or phone number to receive a sign-in code.
+          <p className="text-[15px] leading-6 text-white/64">
+            Enter your email or phone number and I’ll send you a sign-in code.
           </p>
         </div>
 
@@ -87,18 +90,21 @@ export default function RegAuthEntryPage(): React.JSX.Element {
             value={identifier}
             onChange={(e) => {
               setIdentifier(e.target.value);
-              if (error) setError(null);
+
+              if (error) {
+                setError(null);
+              }
             }}
             placeholder="Email or phone number"
             autoComplete="username"
-            className="h-12 w-full rounded-xl border border-white/10 bg-white/10 px-4 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/25 focus:bg-white/15 focus:ring-2 focus:ring-white/20"
+            className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-white/25 focus:bg-white/[0.09] focus:ring-2 focus:ring-white/20"
           />
 
           <button
             type="button"
             onClick={() => void onContinue()}
             disabled={submitting}
-            className="h-12 w-full rounded-xl bg-white font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 w-full rounded-xl bg-white font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "Sending…" : "Send me a code"}
           </button>
