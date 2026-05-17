@@ -65,7 +65,7 @@ export default function RegAuthEntryPage(): React.JSX.Element {
         `/regauth/verify?returnTo=${encodeURIComponent(returnTo)}`
       );
     } catch {
-      setError("Something went wrong. Try again.");
+      setError("Something went wrong.");
       setSubmitting(false);
     }
   }

@@ -285,8 +285,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden bg-slate-950 text-white">
-      <main className="relative z-10 flex min-h-[100svh] flex-col px-5">
+    <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
+      <main className="relative z-10 flex h-[100svh] flex-col px-5">
         <header
           className={[
             "mx-auto flex w-full max-w-[720px] shrink-0 items-center justify-center transition-all duration-500",
@@ -298,7 +298,7 @@ export default function OnboardingPage() {
           {showProgress ? <QuestionProgress progress={progress} /> : null}
         </header>
 
-        <section className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col">
+        <section className="mx-auto flex h-full min-h-0 w-full max-w-[720px] flex-1 flex-col overflow-hidden">
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {shouldShowPageVisual(
               currentNode.key,
@@ -338,8 +338,8 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
-
-          <div className="shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:pb-4">
+<div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
+          
             {isProviderChoiceNode ? (
               <>
                 <ProviderChoiceButtons
@@ -359,17 +359,18 @@ export default function OnboardingPage() {
             ) : (
               <NavControls
                 canGoBack={canGoBack}
-                showContinue={!currentQuestion || isText || isMultiChoice}
+                showContinue={
+                  currentNode.key === "welcome" ||
+                  !currentQuestion ||
+                  isText ||
+                  isMultiChoice
+                }
                 continueDisabled={
                   !permissionsSatisfied ||
                   (currentNode.key === "summary_transition" &&
                     synthesisLoading)
                 }
-                continueLabel={
-                  currentNode.type === "summary"
-                    ? "Enter Everleap"
-                    : "Continue"
-                }
+                continueLabel="Continue"
                 onBack={goBack}
                 onContinue={() => handleNext()}
               />

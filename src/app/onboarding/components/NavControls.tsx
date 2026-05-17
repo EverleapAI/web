@@ -27,27 +27,17 @@ function NavButton({
   return (
     <motion.button
       type="button"
-      whileTap={disabled ? undefined : { scale: 0.985 }}
+      whileTap={disabled ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex min-h-[56px] items-center justify-center rounded-full px-6 text-[16px] font-semibold tracking-[-0.02em] transition",
-        "sm:min-h-[58px] sm:text-[17px]",
+        "inline-flex items-center text-[15px] font-semibold tracking-[-0.02em] transition",
         disabled
-          ? "cursor-not-allowed border border-white/10 bg-white/[0.02] text-white/22"
-          : isContinue
-            ? "min-w-[156px] bg-cyan-300 text-slate-950 shadow-[0_14px_38px_rgba(34,211,238,0.22)] hover:bg-cyan-200"
-            : "min-w-[136px] border border-white/18 bg-white/[0.015] text-white/86 hover:border-white/32 hover:bg-white/[0.035]",
+          ? "cursor-not-allowed text-white/24"
+          : "text-cyan-200 hover:text-cyan-100",
       ].join(" ")}
     >
-      {isContinue ? (
-        <span>{label}</span>
-      ) : (
-        <span className="flex items-center gap-3">
-          <span className="text-[22px] leading-none">←</span>
-          <span>{label}</span>
-        </span>
-      )}
+      {isContinue ? <span>{label} --&gt;</span> : <span>{label}</span>}
     </motion.button>
   );
 }
@@ -61,17 +51,17 @@ export default function NavControls({
   onContinue,
 }: Props) {
   return (
-    <nav className="w-full translate-y-[-20px] pt-4">
-      <div className="mx-auto flex min-h-[64px] w-full max-w-[420px] items-center justify-between gap-5">
-        <div className="flex-1">
+    <nav className="w-full px-5 py-4">
+      <div className="mx-auto flex h-auto w-full max-w-[420px] items-center justify-between">
+        <div>
           {canGoBack ? (
             <NavButton label="Back" onClick={onBack} variant="back" />
           ) : (
-            <span aria-hidden="true" className="block min-h-[56px] w-full" />
+            <span aria-hidden="true" className="block w-12" />
           )}
         </div>
 
-        <div className="flex-1">
+        <div>
           {showContinue ? (
             <NavButton
               label={continueLabel}
@@ -80,7 +70,7 @@ export default function NavControls({
               variant="continue"
             />
           ) : (
-            <span aria-hidden="true" className="block min-h-[56px] w-full" />
+            <span aria-hidden="true" className="block w-24" />
           )}
         </div>
       </div>

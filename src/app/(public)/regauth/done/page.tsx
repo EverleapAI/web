@@ -1,271 +1,92 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useReducedMotion, motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { APP_ROUTES } from "@/regauth/config";
 import { sanitizeReturnTo } from "@/regauth/lib/returnTo";
-import { getAuthedCached } from "@/regauth/state/session";
 import RegAuthVisual from "../components/RegAuthVisual";
-
-function cx(...classes: Array<string | false | null | undefined>): string {
-  return classes.filter(Boolean).join(" ");
-}
-
-function LegalLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <Link
-      href={href}
-      className={cx(
-        "text-white/40 underline-offset-4",
-        "hover:text-white/70 hover:underline",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12 rounded"
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
 
 export default function RegAuthDonePage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const prefersReducedMotion = useReducedMotion();
 
   const returnTo =
-    sanitizeReturnTo(searchParams?.get("returnTo")) ||
-    APP_ROUTES.home;
-
-  // Only show UI if the redirect takes longer than a blink.
-  const [showFallbackUI, setShowFallbackUI] =
-    React.useState(false);
-
-  React.useEffect(() => {
-    if (!pathname?.startsWith("/regauth")) return;
-
-    let alive = true;
-    let fallbackT: number | null = null;
-
-    // If we haven't navigated away quickly, show a minimal fallback.
-    fallbackT = window.setTimeout(() => {
-      if (!alive) return;
-      setShowFallbackUI(true);
-    }, prefersReducedMotion ? 0 : 260);
-
-    (async () => {
-      const me = await getAuthedCached(0);
-
-      if (!alive) return;
-
-      if (!me.authed) {
-        router.replace(
-          `/regauth?returnTo=${encodeURIComponent(
-            returnTo
-          )}&mode=code`
-        );
-
-        return;
-      }
-
-      // Immediate handoff. No “success screen”.
-      // (Next tick helps avoid occasional layout flashes.)
-      window.setTimeout(() => {
-        if (!alive) return;
-
-        router.replace(returnTo);
-      }, 0);
-    })();
-
-    return () => {
-      alive = false;
-
-      if (fallbackT) {
-        window.clearTimeout(fallbackT);
-      }
-    };
-  }, [
-    router,
-    pathname,
-    returnTo,
-    prefersReducedMotion,
-  ]);
+    sanitizeReturnTo(searchParams?.get("returnTo")) || APP_ROUTES.home;
 
   return (
-    <main className="relative min-h-[100svh] w-full overflow-hidden">
-      {/* Background */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(1200px 720px at 18% 10%, rgba(86,114,255,0.18), transparent 62%)," +
-            "radial-gradient(980px 680px at 78% 18%, rgba(125,211,252,0.12), transparent 64%)," +
-            "radial-gradient(980px 640px at 52% 92%, rgba(255,180,120,0.12), transparent 66%)," +
-            "linear-gradient(to bottom, rgba(7,11,24,1), rgba(5,7,15,1) 74%)",
-        }}
-      />
+    <main className="relative min-h-screen overflow-hidden bg-transparent px-4 pb-8 pt-8 text-white">
+      <div className="relative mx-auto flex w-full max-w-5xl items-center">
+        <Link href="/" className="inline-flex items-center gap-2">
+          <span
+            className="relative block h-8 w-8 overflow-hidden rounded-xl ring-1 ring-white/15"
+            style={{
+              boxShadow: "0 10px 18px rgba(255,120,80,0.16)",
+              background:
+                "radial-gradient(16px 16px at 35% 35%, rgba(255,236,206,1), rgba(255,168,96,0.98) 48%, rgba(255,96,120,0.88) 78%, rgba(22,16,30,0.25) 100%)",
+            }}
+          />
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          boxShadow: "inset 0 0 220px rgba(0,0,0,0.55)",
-        }}
-      />
-
-      {/* Top brand */}
-      <div className="relative mx-auto flex w-full max-w-6xl px-4 py-4 md:px-8 md:py-8">
-        <div className="flex w-full items-start justify-between">
-          <Link
-            href="/"
-            className="group inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12"
-            aria-label="Everleap home"
-          >
-            {/* Orb */}
-            <span
-              className="relative h-7 w-7"
-              aria-hidden="true"
-            >
-              <span
-                className="relative block h-7 w-7 overflow-hidden rounded-xl ring-1 ring-white/15"
-                style={{
-                  boxShadow:
-                    "0 10px 18px rgba(255,120,80,0.16)",
-                  background:
-                    "radial-gradient(16px 16px at 35% 35%, rgba(255,236,206,1), rgba(255,168,96,0.98) 48%, rgba(255,96,120,0.88) 78%, rgba(22,16,30,0.25) 100%)",
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute left-[6px] top-[6px] h-[7px] w-[7px] rounded-full"
-                  style={{
-                    background: "rgba(255,255,255,0.55)",
-                  }}
-                />
-              </span>
-            </span>
-
-            <span
-              className="text-[11px] tracking-[0.26em] antialiased"
-              style={{
-                color: "rgba(255,214,178,0.92)",
-                textShadow: "0 1px 0 rgba(0,0,0,0.25)",
-              }}
-            >
-              EVERLEAP
-            </span>
-          </Link>
-
-          <span className="sr-only">Redirecting…</span>
-        </div>
+          <span className="text-[11px] tracking-[0.26em] text-[#ffd6b2]">
+            EVERLEAP
+          </span>
+        </Link>
       </div>
 
-      {/* Fallback UI */}
-      {showFallbackUI ? (
-        <div className="relative mx-auto flex w-full max-w-6xl px-4 pb-10 md:px-8">
-          <section className="w-full">
-            <div className="mx-auto mt-10 max-w-md">
-              <div
-                className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
-                style={{
-                  boxShadow:
-                    "0 30px 90px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.04)",
-                }}
-              >
-                <div className="space-y-5 text-center">
-                  <RegAuthVisual kind="welcome" />
+      <section className="relative mx-auto flex w-full max-w-md flex-col items-center pt-10 text-center">
+        <RegAuthVisual kind="welcome" />
 
-                  <div className="space-y-2">
-                    <div className="text-2xl font-semibold tracking-tight text-white">
-                      Welcome aboard.
-                    </div>
+        <div className="mt-2 space-y-4">
+          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+            Welcome Aboard!
+          </h1>
 
-                    <div className="text-sm leading-6 text-white/60">
-                      Preparing your Everleap experience…
-                    </div>
-                  </div>
-                </div>
+          <div className="flex flex-col items-center gap-2">
+            <Image
+              src="/onboarding/icons/badges/1_onboard.png"
+              alt="Onboard badge"
+              width={92}
+              height={92}
+              priority
+              className="h-[92px] w-[92px] object-contain"
+            />
+          </div>
 
-                <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                  <motion.div
-                    className="h-full rounded-full"
-                    initial={{ width: "12%" }}
-                    animate={{ width: "92%" }}
-                    transition={{
-                      duration:
-                        prefersReducedMotion ? 0.01 : 0.9,
-                      ease: "easeOut",
-                    }}
-                    style={{
-                      background:
-                        "rgba(165,243,252,0.55)",
-                    }}
-                    aria-hidden
-                  />
-                </div>
+          <div className="space-y-4 text-left text-[15px] leading-6 text-white/72">
+            <p>Congratulations! You're already on your way.</p>
 
-                <div className="mt-4 flex items-center justify-between text-xs">
-                  <button
-                    type="button"
-                    onClick={() => router.replace(returnTo)}
-                    className="text-white/65 hover:text-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12 rounded"
-                  >
-                    Continue
-                  </button>
+            <p>
+              You have answered some important questions about where you are and
+              where you are headed.
+            </p>
 
-                  <Link
-                    href={`/regauth?returnTo=${encodeURIComponent(
-                      returnTo
-                    )}&mode=code`}
-                    className="text-white/45 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/12 rounded"
-                  >
-                    Try again
-                  </Link>
-                </div>
-              </div>
-
-              <div className="mt-4 text-center text-[11px] text-white/36">
-                <LegalLink href="/terms">
-                  Terms
-                </LegalLink>
-
-                <span className="mx-2 text-white/20">
-                  •
-                </span>
-
-                <LegalLink href="/privacy">
-                  Privacy
-                </LegalLink>
-
-                <span className="mx-2 text-white/20">
-                  •
-                </span>
-
-                <LegalLink href="/contact">
-                  Contact
-                </LegalLink>
-
-                <span className="mx-2 text-white/20">
-                  •
-                </span>
-
-                <LegalLink href="/accessibility">
-                  Accessibility
-                </LegalLink>
-              </div>
-            </div>
-          </section>
+            <p>
+              This is the first of many accomplishments ahead. You're ready to
+              enter Everleap.
+            </p>
+          </div>
         </div>
-      ) : null}
+
+        <div className="mt-10 flex w-full items-center justify-between text-[15px] font-semibold tracking-[-0.02em]">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="text-white/32 transition hover:text-white/55"
+          >
+            Back.
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.replace(returnTo)}
+            className="text-cyan-200 transition hover:text-cyan-100"
+          >
+            Enter Everleap --&gt;
+          </button>
+        </div>
+      </section>
     </main>
   );
 }

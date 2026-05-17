@@ -53,7 +53,7 @@ export default function ZipPage(): React.JSX.Element {
       }
     } catch {}
 
-    router.replace(returnTo);
+    router.replace(`/regauth/done?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   return (

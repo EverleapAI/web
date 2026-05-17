@@ -241,10 +241,10 @@ export default function RegAuthVisual({
 }: RegAuthVisualProps): React.JSX.Element {
   return (
     <div
-      className={`relative mx-auto h-[136px] w-full max-w-[260px] overflow-hidden ${className}`}
+      className={`relative mx-auto h-[136px] w-full max-w-[260px] overflow-visible ${className}`}
       aria-hidden="true"
     >
-      <div className="absolute inset-0 animate-[regauthGlow_7s_ease-in-out_infinite] rounded-[2rem] bg-cyan-300/5 blur-2xl" />
+      <div className="pointer-events-none absolute inset-8 animate-[regauthGlow_7s_ease-in-out_infinite] rounded-full bg-cyan-300/5 blur-2xl" />
 
       <svg
         viewBox="0 0 280 280"
