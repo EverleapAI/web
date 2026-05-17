@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import type { Answers, FlowNode } from "../engine/useOnboardingFlow";
 import { firstName } from "../utils/textFormat";
 
+import OnboardingVisual from "./visuals/OnboardingVisual";
+
 type OnboardingSynthesis = {
   headline: string;
   body: string;
@@ -103,46 +105,60 @@ export function isIntroScreen(node: FlowNode | null) {
 }
 
 function Highlight({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="
-        font-semibold
-        text-[#f97352]
-        drop-shadow-[0_0_10px_rgba(249,115,82,0.35)]
-      "
-    >
-      {children}
-    </span>
-  );
+  return <span className="font-semibold text-white">{children}</span>;
 }
 
 function ProgressIcons() {
   const icons = [
-    "/onboarding/icons/compass-white.png",
-    "/onboarding/icons/mirror-white.png",
-    "/onboarding/icons/reflection-white.png",
-    "/onboarding/icons/road-white.png",
-    "/onboarding/icons/rudder-white.png",
-    "/onboarding/icons/stars-white.png",
-    "/onboarding/icons/story-white.png",
-    "/onboarding/icons/ticket-flight-white.png",
+    "/onboarding/icons/badges/1_onboard.png",
+    "/onboarding/icons/badges/2_story.png",
+    "/onboarding/icons/badges/3_reflection.png",
+    "/onboarding/icons/badges/4_explore.png",
+    "/onboarding/icons/badges/5_takeoff.png",
   ];
 
   return (
-    <div className="mt-7 flex items-center gap-2 overflow-x-auto pb-1">
-      {icons.map((src) => (
-        <div
+    <div className="mt-8 flex items-center justify-center gap-3">
+      {icons.map((src, index) => (
+        <motion.div
           key={src}
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full border border-white/28 bg-white/[0.03]"
+          initial={{
+            opacity: 0,
+            y: 8,
+            scale: 0.92,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+          }}
+          transition={{
+            duration: 0.38,
+            ease: "easeOut",
+            delay: 0.08 + index * 0.05,
+          }}
+          className="
+            flex
+            h-[58px]
+            w-[58px]
+            shrink-0
+            items-center
+            justify-center
+            rounded-2xl
+            border
+            border-white/10
+            bg-white/[0.025]
+            backdrop-blur-sm
+          "
         >
           <Image
             src={src}
             alt=""
-            width={30}
-            height={30}
+            width={38}
+            height={38}
             className="opacity-90"
           />
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -250,7 +266,7 @@ function BulletList({ bullets }: { bullets: string[] }) {
           }}
           className="flex gap-4"
         >
-          <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-[#f97352] shadow-[0_0_10px_rgba(249,115,82,0.7)]" />
+          <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.7)]" />
 
           <div className="max-w-[340px] text-[16px] font-medium leading-7 tracking-[-0.02em] text-white/84 sm:text-[17px]">
             {bullet}
@@ -303,7 +319,7 @@ function PermissionApproval({
           type="checkbox"
           checked={accepted}
           onChange={(event) => onChange(event.target.checked)}
-          className="mt-1 h-4 w-4 shrink-0 accent-white"
+          className="mt-1 h-4 w-4 shrink-0 accent-cyan-300"
         />
 
         <span className="max-w-[340px] text-[13px] leading-7 tracking-[-0.01em] text-white/58">
@@ -344,9 +360,7 @@ function SummaryTransition({
 
   React.useEffect(() => {
     const interval = window.setInterval(() => {
-      setMessageIndex((current) => {
-        return (current + 1) % loadingMessages.length;
-      });
+      setMessageIndex((current) => (current + 1) % loadingMessages.length);
     }, 2600);
 
     return () => window.clearInterval(interval);
@@ -361,7 +375,7 @@ function SummaryTransition({
           duration: 0.6,
           ease: "easeOut",
         }}
-        className="mt-10 flex min-h-[220px] flex-col justify-center"
+        className="mt-8 flex min-h-[220px] flex-col justify-center"
       >
         <div className="flex items-center gap-2">
           {[0, 1, 2].map((dot) => (
@@ -377,7 +391,7 @@ function SummaryTransition({
                 ease: "easeInOut",
                 delay: dot * 0.18,
               }}
-              className="h-2 w-2 rounded-full bg-[#f97352]"
+              className="h-2 w-2 rounded-full bg-cyan-300"
             />
           ))}
         </div>
@@ -451,7 +465,7 @@ function SummaryTransition({
             }}
             className="flex gap-4"
           >
-            <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-[#f97352] shadow-[0_0_10px_rgba(249,115,82,0.85)]" />
+            <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
 
             <div className="max-w-[340px] text-[15px] leading-7 tracking-[-0.015em] text-white/82">
               {signal}
@@ -482,6 +496,7 @@ export default function IntroScreenRenderer({
 
   const compact = config.tone === "compact";
   const permissionAccepted = answers.permissions_accepted === "yes";
+  const isSummary = node.key === "summary_transition" || node.type === "summary";
 
   return (
     <section className="flex w-full justify-center">
@@ -513,21 +528,23 @@ export default function IntroScreenRenderer({
           </div>
         ) : null}
 
+        <OnboardingVisual visualKey={node.key} />
+
         <h1 className="max-w-[360px] text-[30px] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[34px]">
           {replaceName(config.title, answers)}
         </h1>
 
-        {node.key === "progress" ? <ProgressIcons /> : null}
-
-        {node.key === "what_you_get" ? <WhatYouGetList /> : null}
-
-        {node.key === "summary_transition" ? (
+        {isSummary ? (
           <SummaryTransition
             synthesis={synthesis}
             loading={synthesisLoading}
           />
         ) : (
           <>
+            {node.key === "progress" ? <ProgressIcons /> : null}
+
+            {node.key === "what_you_get" ? <WhatYouGetList /> : null}
+
             {config.bodyLines ? (
               <BodyLines lines={config.bodyLines} answers={answers} />
             ) : null}

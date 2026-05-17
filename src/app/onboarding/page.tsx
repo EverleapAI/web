@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Conversation from "./components/Conversation";
 import InputRenderer from "./components/InputRenderer";
 import NavControls from "./components/NavControls";
+import OnboardingVisual from "./components/visuals/OnboardingVisual";
 
 import IntroScreenRenderer, {
   isIntroScreen,
@@ -19,65 +20,17 @@ import {
   type FlowPayload,
 } from "./engine/useOnboardingFlow";
 
-import { useAnimationState } from "./animation/useAnimationState";
-import AnimatedCanvas from "./animation/AnimatedCanvas";
-
 function getApiBaseUrl() {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7071/api";
 }
+
+type AiProvider = "openai" | "anthropic";
 
 type OnboardingSynthesis = {
   headline: string;
   body: string;
   signals: string[];
   bridge: string;
-};
-
-type IconKind =
-  | "signature"
-  | "situation"
-  | "branch"
-  | "openCircle"
-  | "singlePath"
-  | "sparkPath"
-  | "plans"
-  | "page"
-  | "constellation"
-  | "mirror"
-  | "strength"
-  | "friction"
-  | "instinct"
-  | "animal"
-  | "future"
-  | "permission"
-  | "fallback";
-
-const ICON_BY_NODE: Record<string, IconKind> = {
-  intro_name: "signature",
-  name: "signature",
-
-  current_situation: "situation",
-
-  certainty: "branch",
-  certainty_response: "openCircle",
-  certainty_idea: "singlePath",
-  idea_response: "sparkPath",
-
-  post_plans: "plans",
-  post_plans_response: "page",
-
-  activities: "constellation",
-  activities_response: "mirror",
-
-  strengths: "strength",
-  challenges: "friction",
-
-  instincts: "instinct",
-  fun_instinct: "animal",
-  instinct_response: "animal",
-
-  future: "future",
-  permissions: "permission",
 };
 
 function QuestionProgress({ progress }: { progress: number }) {
@@ -120,293 +73,54 @@ function QuestionProgress({ progress }: { progress: number }) {
   );
 }
 
-function SymbolIcon({ kind }: { kind: IconKind }) {
-  const common = {
-    fill: "none",
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  };
-
-  return (
-    <svg
-      viewBox="0 0 96 96"
-      aria-hidden="true"
-      className="h-16 w-16 overflow-visible"
-    >
-      <defs>
-        <linearGradient id={`icon-${kind}`} x1="10%" y1="20%" x2="90%" y2="80%">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.92)" />
-          <stop offset="46%" stopColor="rgba(103,232,249,0.92)" />
-          <stop offset="100%" stopColor="rgba(167,139,250,0.86)" />
-        </linearGradient>
-      </defs>
-
-      <g stroke={`url(#icon-${kind})`}>
-        {kind === "signature" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.2"
-              d="M20 56 C30 32 42 76 54 46 C62 28 70 46 78 38"
-            />
-            <path
-              {...common}
-              strokeWidth="1.8"
-              opacity="0.4"
-              d="M30 70 C44 64 58 62 72 60"
-            />
-          </>
-        ) : null}
-
-        {kind === "situation" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M18 62 C30 38 44 68 56 44 C64 30 74 42 80 34"
-            />
-            <path
-              {...common}
-              strokeWidth="1.8"
-              opacity="0.45"
-              d="M20 74 H76"
-            />
-          </>
-        ) : null}
-
-        {kind === "branch" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.4"
-              d="M18 68 C34 62 44 52 50 42"
-            />
-            <path
-              {...common}
-              strokeWidth="2.5"
-              d="M50 42 C60 28 72 24 82 22"
-            />
-            <path
-              {...common}
-              strokeWidth="2"
-              opacity="0.48"
-              d="M50 42 C62 50 70 60 82 62"
-            />
-          </>
-        ) : null}
-
-        {kind === "openCircle" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.2"
-              d="M68 34 C78 48 72 68 56 74 C38 80 20 68 20 48 C20 30 38 18 56 24"
-            />
-          </>
-        ) : null}
-
-        {kind === "singlePath" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.4"
-              d="M16 66 C32 56 44 52 54 40 C62 30 72 26 82 24"
-            />
-            <circle
-              cx="82"
-              cy="24"
-              r="4"
-              fill="rgba(103,232,249,0.8)"
-            />
-          </>
-        ) : null}
-
-        {kind === "sparkPath" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M18 66 C34 52 46 58 58 42 C66 30 74 30 82 26"
-            />
-          </>
-        ) : null}
-
-        {kind === "plans" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M24 26 H70 V70 H24 Z"
-            />
-            <path
-              {...common}
-              strokeWidth="2"
-              opacity="0.5"
-              d="M34 40 H60 M34 52 H54"
-            />
-          </>
-        ) : null}
-
-        {kind === "page" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M28 20 H58 L72 34 V76 H28 Z"
-            />
-          </>
-        ) : null}
-
-        {kind === "constellation" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="1.8"
-              opacity="0.55"
-              d="M24 58 L40 34 L56 52 L74 28"
-            />
-          </>
-        ) : null}
-
-        {kind === "mirror" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M32 20 H64 V62 C64 72 56 78 48 78 C40 78 32 72 32 62 Z"
-            />
-          </>
-        ) : null}
-
-        {kind === "strength" ? (
-          <path
-            {...common}
-            strokeWidth="3.3"
-            d="M48 18 L56 40 L80 40 L60 54 L68 78 L48 64 L28 78 L36 54 L16 40 L40 40 Z"
-          />
-        ) : null}
-
-        {kind === "friction" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.2"
-              d="M18 58 C28 42 42 72 52 54"
-            />
-          </>
-        ) : null}
-
-        {kind === "instinct" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.2"
-              d="M20 66 C34 24 48 76 60 36 C66 18 76 28 82 22"
-            />
-          </>
-        ) : null}
-
-        {kind === "animal" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M22 58 C32 34 52 28 72 38"
-            />
-          </>
-        ) : null}
-
-        {kind === "future" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M16 64 C32 46 50 42 80 46"
-            />
-          </>
-        ) : null}
-
-        {kind === "permission" ? (
-          <>
-            <path
-              {...common}
-              strokeWidth="3.2"
-              d="M48 18 L72 28 V46 C72 62 62 74 48 80 C34 74 24 62 24 46 V28 Z"
-            />
-            <path
-              {...common}
-              strokeWidth="3"
-              d="M36 48 L44 56 L62 38"
-            />
-          </>
-        ) : null}
-
-        {kind === "fallback" ? (
-          <>
-            <circle
-              {...common}
-              strokeWidth="2.8"
-              cx="48"
-              cy="48"
-              r="26"
-            />
-          </>
-        ) : null}
-      </g>
-    </svg>
-  );
-}
-
-function SemanticIconStage({ nodeKey }: { nodeKey: string }) {
-  const kind = ICON_BY_NODE[nodeKey] ?? "fallback";
-
-  return (
-    <div className="flex h-[16svh] min-h-[88px] max-h-[130px] shrink-0 items-center justify-center sm:h-[18svh] sm:min-h-[110px] sm:max-h-[160px]">
-      <div className="relative flex h-[82px] w-[82px] items-center justify-center rounded-full border border-white/10 bg-white/[0.025] shadow-[0_0_42px_rgba(103,232,249,0.08)] sm:h-[96px] sm:w-[96px]">
-        <div className="absolute inset-[-18px] rounded-full bg-cyan-300/[0.025] blur-2xl" />
-        <SymbolIcon kind={kind} />
-      </div>
-    </div>
-  );
-}
-
-function SynthesisVisualStage({
-  animationState,
-}: {
-  animationState: ReturnType<typeof useAnimationState>;
-}) {
-  return (
-    <div className="relative h-[18svh] min-h-[96px] max-h-[150px] shrink-0 overflow-visible sm:h-[22svh] sm:min-h-[130px] sm:max-h-[190px]">
-      <AnimatedCanvas state={animationState} />
-    </div>
-  );
-}
-
-function OnboardingVisualStage({
-  nodeKey,
-  isSynthesisMoment,
-  animationState,
-}: {
-  nodeKey: string;
-  isSynthesisMoment: boolean;
-  animationState: ReturnType<typeof useAnimationState>;
-}) {
-  if (isSynthesisMoment) {
-    return <SynthesisVisualStage animationState={animationState} />;
-  }
-
-  return <SemanticIconStage nodeKey={nodeKey} />;
-}
-
-function shouldShowPageVisual(
-  nodeKey: string,
-  isIntro: boolean
-) {
-  if (nodeKey === "summary_transition") return true;
+function shouldShowPageVisual(nodeKey: string, isIntro: boolean) {
+  if (nodeKey === "summary_transition") return false;
 
   if (isIntro) return false;
 
   return true;
+}
+
+function ProviderChoiceButtons({
+  disabled,
+  onChoose,
+}: {
+  disabled: boolean;
+  onChoose: (provider: AiProvider) => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-col gap-3">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChoose("openai")}
+        className={[
+          "h-12 rounded-full border border-cyan-300/35 bg-cyan-300/12 px-5 text-[15px] font-semibold tracking-[-0.02em] text-cyan-100",
+          "shadow-[0_0_24px_rgba(103,232,249,0.12)] transition",
+          disabled
+            ? "cursor-not-allowed opacity-45"
+            : "active:scale-[0.99] hover:bg-cyan-300/18",
+        ].join(" ")}
+      >
+        Continue with OpenAI
+      </button>
+
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChoose("anthropic")}
+        className={[
+          "h-12 rounded-full border border-white/18 bg-white/[0.045] px-5 text-[15px] font-semibold tracking-[-0.02em] text-white/88",
+          "transition",
+          disabled
+            ? "cursor-not-allowed opacity-45"
+            : "active:scale-[0.99] hover:bg-white/[0.075]",
+        ].join(" ")}
+      >
+        Continue with Claude
+      </button>
+    </div>
+  );
 }
 
 export default function OnboardingPage() {
@@ -416,23 +130,22 @@ export default function OnboardingPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const [synthesisLoading, setSynthesisLoading] =
-    React.useState(false);
+  const [synthesisLoading, setSynthesisLoading] = React.useState(false);
 
   const [synthesis, setSynthesis] =
     React.useState<OnboardingSynthesis | null>(null);
+
+  const [synthesisProvider, setSynthesisProvider] =
+    React.useState<AiProvider | null>(null);
 
   const synthesisRequestedRef = React.useRef(false);
 
   React.useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(
-          `${getApiBaseUrl()}/flows/onboarding_v1`,
-          {
-            cache: "no-store",
-          }
-        );
+        const res = await fetch(`${getApiBaseUrl()}/flows/onboarding_v1`, {
+          cache: "no-store",
+        });
 
         const data = await res.json();
 
@@ -475,6 +188,10 @@ export default function OnboardingPage() {
         return;
       }
 
+      if (!synthesisProvider) {
+        return;
+      }
+
       if (synthesisRequestedRef.current) {
         return;
       }
@@ -484,21 +201,18 @@ export default function OnboardingPage() {
       try {
         setSynthesisLoading(true);
 
-        const res = await fetch(
-          "/api/onboarding/synthesis",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            cache: "no-store",
-            body: JSON.stringify({
-              provider: "anthropic",
-              flowKey: "onboarding_v1",
-              answers,
-            }),
-          }
-        );
+        const res = await fetch("/api/onboarding/synthesis", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+          body: JSON.stringify({
+            provider: synthesisProvider,
+            flowKey: "onboarding_v1",
+            answers,
+          }),
+        });
 
         const data = await res.json();
 
@@ -513,31 +227,30 @@ export default function OnboardingPage() {
     }
 
     generateSynthesis();
-  }, [answers, currentNode]);
+  }, [answers, currentNode, synthesisProvider]);
 
-  const animationState = useAnimationState({
-    currentNode,
-    nodes,
-    answers,
-  });
+  const progress =
+    nodes.length > 0 && currentNode
+      ? Math.max(
+          0,
+          nodes.findIndex((node) => node.id === currentNode.id) /
+            Math.max(1, nodes.length - 1)
+        )
+      : 0;
 
-  const { showProgress } = animationState;
+  const showProgress =
+    Boolean(currentNode) && !isIntroScreen(currentNode);
 
-  const isMultiChoice =
-    currentQuestion?.inputType === "multi_choice";
+  const isMultiChoice = currentQuestion?.inputType === "multi_choice";
 
-  const isText =
-    currentQuestion?.inputType === "text";
+  const isText = currentQuestion?.inputType === "text";
 
-  const permissionAccepted =
-    answers.permissions_accepted === "yes";
+  const permissionAccepted = answers.permissions_accepted === "yes";
 
   const permissionsSatisfied =
-    currentNode?.key !== "permissions" ||
-    permissionAccepted;
+    currentNode?.key !== "permissions" || permissionAccepted;
 
-  const isSynthesisMoment =
-    currentNode?.key === "summary_transition";
+  const isProviderChoiceNode = currentNode?.key === "activities";
 
   function handleComplete() {
     try {
@@ -561,6 +274,13 @@ export default function OnboardingPage() {
     }
 
     goNext(nextAnswers);
+  }
+
+  function handleProviderChoice(provider: AiProvider) {
+    setSynthesis(null);
+    setSynthesisProvider(provider);
+    synthesisRequestedRef.current = false;
+    handleNext();
   }
 
   if (loading) {
@@ -590,11 +310,7 @@ export default function OnboardingPage() {
               : "h-[24px] pt-2 opacity-0",
           ].join(" ")}
         >
-          {showProgress ? (
-            <QuestionProgress
-              progress={animationState.progress}
-            />
-          ) : null}
+          {showProgress ? <QuestionProgress progress={progress} /> : null}
         </header>
 
         <section className="mx-auto flex min-h-0 w-full max-w-[720px] flex-1 flex-col">
@@ -603,11 +319,7 @@ export default function OnboardingPage() {
               currentNode.key,
               isIntroScreen(currentNode)
             ) ? (
-              <OnboardingVisualStage
-                nodeKey={currentNode.key}
-                isSynthesisMoment={isSynthesisMoment}
-                animationState={animationState}
-              />
+              <OnboardingVisual visualKey={currentNode.key} />
             ) : null}
 
             <div className="flex min-h-0 flex-1 flex-col justify-start pt-2">
@@ -617,16 +329,12 @@ export default function OnboardingPage() {
                   answers={answers}
                   synthesis={synthesis}
                   synthesisLoading={synthesisLoading}
-                  onAnswer={(
-                    key: string,
-                    value: string | string[]
-                  ) => updateAnswer(key, value)}
+                  onAnswer={(key: string, value: string | string[]) =>
+                    updateAnswer(key, value)
+                  }
                 />
               ) : (
-                <Conversation
-                  node={currentNode}
-                  answers={answers}
-                />
+                <Conversation node={currentNode} answers={answers} />
               )}
 
               <InputRenderer
@@ -634,10 +342,9 @@ export default function OnboardingPage() {
                 question={currentQuestion}
                 answers={answers}
                 validationMessage={validationMessage}
-                onAnswer={(
-                  key: string,
-                  value: string | string[]
-                ) => updateAnswer(key, value)}
+                onAnswer={(key: string, value: string | string[]) =>
+                  updateAnswer(key, value)
+                }
                 onAutoAdvance={(nextAnswers?: Answers) => {
                   window.setTimeout(() => {
                     handleNext(nextAnswers);
@@ -648,27 +355,40 @@ export default function OnboardingPage() {
           </div>
 
           <div className="shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:pb-5">
-            <NavControls
-              canGoBack={canGoBack}
-              showContinue={
-                !currentQuestion ||
-                isText ||
-                isMultiChoice
-              }
-              continueDisabled={
-                !permissionsSatisfied ||
-                (currentNode.key ===
-                  "summary_transition" &&
-                  synthesisLoading)
-              }
-              continueLabel={
-                currentNode.type === "summary"
-                  ? "Enter Everleap"
-                  : "Continue"
-              }
-              onBack={goBack}
-              onContinue={() => handleNext()}
-            />
+            {isProviderChoiceNode ? (
+              <>
+                <ProviderChoiceButtons
+                  disabled={!permissionsSatisfied}
+                  onChoose={handleProviderChoice}
+                />
+
+                <NavControls
+                  canGoBack={canGoBack}
+                  showContinue={false}
+                  continueDisabled
+                  continueLabel="Continue"
+                  onBack={goBack}
+                  onContinue={() => {}}
+                />
+              </>
+            ) : (
+              <NavControls
+                canGoBack={canGoBack}
+                showContinue={!currentQuestion || isText || isMultiChoice}
+                continueDisabled={
+                  !permissionsSatisfied ||
+                  (currentNode.key === "summary_transition" &&
+                    synthesisLoading)
+                }
+                continueLabel={
+                  currentNode.type === "summary"
+                    ? "Enter Everleap"
+                    : "Continue"
+                }
+                onBack={goBack}
+                onContinue={() => handleNext()}
+              />
+            )}
           </div>
         </section>
       </main>
