@@ -39,7 +39,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
         </div>
 
         <div className="mt-12 space-y-4 text-left text-[15px] font-medium leading-6 text-white/82">
-          <p>Congratulations! You're already on your way.</p>
+          Congratulations! You&apos;re already on your way.
 
           <p>
             You have answered some important questions about where you are and
@@ -47,9 +47,9 @@ export default function RegAuthDonePage(): React.JSX.Element {
           </p>
 
           <p>
-            This is the first of many accomplishments ahead. You're ready to
-            enter Everleap.
-          </p>
+  This is the first of many accomplishments ahead. You&apos;re ready to
+  enter Everleap.
+</p>
         </div>
 
         <div className="mt-10 flex w-full items-center justify-between text-[15px] font-semibold tracking-[-0.02em]">

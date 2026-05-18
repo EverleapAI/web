@@ -517,15 +517,34 @@ export default function AiLabPage() {
   const [completed, setCompleted] = React.useState(false);
   const [showContext, setShowContext] = React.useState(false);
 
-  const [provider, setProvider] = React.useState<Provider>("openai");
-  const [templateKey, setTemplateKey] = React.useState("hybrid");
-  const [customPrompt, setCustomPrompt] = React.useState(
-    "Generate a meaningful Everleap-style retort for this user. Make it specific, concise, and useful."
-  );
-  const [userCharacterLimit, setUserCharacterLimit] = React.useState(700);
-  const [aiRun, setAiRun] = React.useState<AiLabRun | null>(null);
-  const [aiError, setAiError] = React.useState<string | null>(null);
-  const [submitting, setSubmitting] = React.useState(false);
+  const [provider, setProvider] =
+    React.useState<Provider>("openai");
+
+  const [templateKey, setTemplateKey] =
+    React.useState("hybrid");
+
+  const [customPrompt, setCustomPrompt] =
+    React.useState(
+      "Generate a meaningful Everleap-style retort for this user. Make it specific, concise, and useful."
+    );
+
+  const [manualPromptMode, setManualPromptMode] =
+    React.useState(false);
+
+  const [manualPrompt, setManualPrompt] =
+    React.useState("");
+
+  const [userCharacterLimit, setUserCharacterLimit] =
+    React.useState(700);
+
+  const [aiRun, setAiRun] =
+    React.useState<AiLabRun | null>(null);
+
+  const [aiError, setAiError] =
+    React.useState<string | null>(null);
+
+  const [submitting, setSubmitting] =
+    React.useState(false);
 
   React.useEffect(() => {
     async function load() {
@@ -615,10 +634,11 @@ export default function AiLabPage() {
     PROMPT_TEMPLATES.find((template) => template.key === templateKey) ??
     PROMPT_TEMPLATES[0];
 
-  const finalPrompt = React.useMemo(() => {
-    const answerBlock = formatAnswersForPrompt(readableAnswers);
+  const generatedPrompt = React.useMemo(() => {
+  const answerBlock =
+    formatAnswersForPrompt(readableAnswers);
 
-    return `${selectedTemplate.prompt}
+  return `${selectedTemplate.prompt}
 
 ONBOARDING RESPONSES:
 ${answerBlock}
@@ -627,7 +647,15 @@ CUSTOM LAB REQUEST:
 ${customPrompt}
 
 Output should be readable, emotionally intelligent, and useful to the Everleap product team.`;
-  }, [customPrompt, readableAnswers, selectedTemplate]);
+}, [
+  customPrompt,
+  readableAnswers,
+  selectedTemplate,
+]);
+
+const finalPrompt = manualPromptMode
+  ? manualPrompt
+  : generatedPrompt;
 
   const continueDisabled = React.useMemo(() => {
     if (!currentQuestion) return false;
@@ -878,16 +906,48 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
               </label>
 
               <label className="mt-5 block">
+              <div className="mb-3 flex items-center gap-2">
+  <button
+    type="button"
+    onClick={() => {
+      if (!manualPromptMode) {
+        setManualPrompt(generatedPrompt);
+      }
+
+      setManualPromptMode((prev) => !prev);
+    }}
+    className={[
+      "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition",
+      manualPromptMode
+        ? "border-cyan-300 bg-cyan-300 text-slate-950"
+        : "border-white/10 bg-black/30 text-white/60 hover:border-white/25",
+    ].join(" ")}
+  >
+    {manualPromptMode
+      ? "Manual Editing Enabled"
+      : "Enable Manual Prompt Editing"}
+  </button>
+</div>
                 <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
                   Final prompt sent to AI
                 </div>
 
                 <textarea
-                  value={finalPrompt}
-                  readOnly
-                  rows={12}
-                  className="w-full resize-y rounded-2xl border border-white/10 bg-black/40 px-4 py-3 font-mono text-xs leading-5 text-white/70 outline-none sm:rows-14"
-                />
+  value={finalPrompt}
+  onChange={(event) => {
+    if (!manualPromptMode) return;
+
+    setManualPrompt(event.target.value);
+  }}
+  readOnly={!manualPromptMode}
+  rows={12}
+  className={[
+    "w-full resize-y rounded-2xl border bg-black/40 px-4 py-3 font-mono text-xs leading-5 outline-none sm:rows-14",
+    manualPromptMode
+      ? "border-cyan-300 text-white"
+      : "border-white/10 text-white/70",
+  ].join(" ")}
+/>
               </label>
 
               <div className="mt-5 flex justify-end">
