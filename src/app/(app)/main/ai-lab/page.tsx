@@ -50,6 +50,17 @@ type LabQuestionItem = {
   answer: unknown;
 };
 
+type UsageProviderSummary = {
+  requestCount?: number;
+  monthToDateCost?: number;
+  allTimeCost?: number;
+  averageRequestCost?: number;
+};
+
+type UsageSummary = {
+  providers?: Record<string, UsageProviderSummary>;
+};
+
 const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     key: "hybrid",
@@ -283,7 +294,10 @@ function getApiBaseUrl() {
 
 function formatAnswersForPrompt(items: { question: string; answer: string }[]) {
   return items
-    .map((item, index) => `${index + 1}. ${item.question}\nAnswer: ${item.answer}`)
+    .map(
+      (item, index) =>
+        `${index + 1}. ${item.question}\nAnswer: ${item.answer}`
+    )
     .join("\n\n");
 }
 
@@ -314,6 +328,11 @@ function formatCost(value: number | null | undefined) {
   if (value === 0) return "$0.000000";
   if (value < 0.01) return `$${value.toFixed(6)}`;
   return `$${value.toFixed(4)}`;
+}
+
+function formatCount(value: number | null | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "0";
+  return value.toLocaleString();
 }
 
 function isAnswerFilled(value: unknown) {
@@ -370,6 +389,128 @@ function areRequiredVisibleQuestionsAnswered(
     if (!key) return true;
     return isAnswerFilled(answers[key]);
   });
+}
+
+function SpendTile({
+  label,
+  monthToDate,
+  allTime,
+  requestCount,
+  averageRequestCost,
+}: {
+  label: string;
+  monthToDate: number;
+  allTime: number;
+  requestCount: number;
+  averageRequestCost: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+      <div className="text-xs uppercase tracking-[0.18em] text-white/40">
+        {label}
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+            Month to date
+          </div>
+          <div className="mt-1 text-lg font-semibold text-cyan-100">
+            {formatCost(monthToDate)}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+            All time
+          </div>
+          <div className="mt-1 text-lg font-semibold text-white">
+            {formatCost(allTime)}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+            Requests
+          </div>
+          <div className="mt-1 text-sm font-semibold text-white/75">
+            {formatCount(requestCount)}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+            Avg request
+          </div>
+          <div className="mt-1 text-sm font-semibold text-white/75">
+            {formatCost(averageRequestCost)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpendSummaryCard({
+  summary,
+  loading,
+  error,
+  onRefresh,
+}: {
+  summary: UsageSummary | null;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  const openai = summary?.providers?.openai ?? {};
+  const anthropic = summary?.providers?.anthropic ?? {};
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
+            AI Spend
+          </div>
+          <div className="mt-2 text-sm leading-6 text-white/45">
+            Month-to-date and all-time usage from the AI cost audit table.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-sm font-semibold text-white/60 transition hover:border-white/25 hover:text-white sm:w-auto"
+        >
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+
+      {error ? (
+        <div className="rounded-2xl border border-red-400/30 bg-red-950/30 p-4 text-sm text-red-100">
+          {error}
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SpendTile
+            label="OpenAI"
+            monthToDate={Number(openai.monthToDateCost ?? 0)}
+            allTime={Number(openai.allTimeCost ?? 0)}
+            requestCount={Number(openai.requestCount ?? 0)}
+            averageRequestCost={Number(openai.averageRequestCost ?? 0)}
+          />
+
+          <SpendTile
+            label="Claude"
+            monthToDate={Number(anthropic.monthToDateCost ?? 0)}
+            allTime={Number(anthropic.allTimeCost ?? 0)}
+            requestCount={Number(anthropic.requestCount ?? 0)}
+            averageRequestCost={Number(anthropic.averageRequestCost ?? 0)}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ResultPanel({
@@ -517,34 +658,54 @@ export default function AiLabPage() {
   const [completed, setCompleted] = React.useState(false);
   const [showContext, setShowContext] = React.useState(false);
 
-  const [provider, setProvider] =
-    React.useState<Provider>("openai");
+  const [provider, setProvider] = React.useState<Provider>("openai");
+  const [templateKey, setTemplateKey] = React.useState("hybrid");
+  const [customPrompt, setCustomPrompt] = React.useState(
+    "Generate a meaningful Everleap-style retort for this user. Make it specific, concise, and useful."
+  );
 
-  const [templateKey, setTemplateKey] =
-    React.useState("hybrid");
+  const [manualPromptMode, setManualPromptMode] = React.useState(false);
+  const [manualPrompt, setManualPrompt] = React.useState("");
 
-  const [customPrompt, setCustomPrompt] =
-    React.useState(
-      "Generate a meaningful Everleap-style retort for this user. Make it specific, concise, and useful."
-    );
+  const [userCharacterLimit, setUserCharacterLimit] = React.useState(700);
+  const [aiRun, setAiRun] = React.useState<AiLabRun | null>(null);
+  const [aiError, setAiError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const [manualPromptMode, setManualPromptMode] =
-    React.useState(false);
+  const [usageSummary, setUsageSummary] =
+    React.useState<UsageSummary | null>(null);
+  const [usageSummaryLoading, setUsageSummaryLoading] = React.useState(false);
+  const [usageSummaryError, setUsageSummaryError] = React.useState<
+    string | null
+  >(null);
 
-  const [manualPrompt, setManualPrompt] =
-    React.useState("");
+  const loadUsageSummary = React.useCallback(async () => {
+    setUsageSummaryLoading(true);
+    setUsageSummaryError(null);
 
-  const [userCharacterLimit, setUserCharacterLimit] =
-    React.useState(700);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/ai/usage/summary`, {
+        method: "GET",
+        cache: "no-store",
+      });
 
-  const [aiRun, setAiRun] =
-    React.useState<AiLabRun | null>(null);
+      const data = await res.json();
 
-  const [aiError, setAiError] =
-    React.useState<string | null>(null);
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Failed to load AI usage summary.");
+      }
 
-  const [submitting, setSubmitting] =
-    React.useState(false);
+      setUsageSummary({
+        providers: data.providers ?? {},
+      });
+    } catch (err) {
+      setUsageSummaryError(
+        err instanceof Error ? err.message : "Failed to load AI usage summary."
+      );
+    } finally {
+      setUsageSummaryLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     async function load() {
@@ -588,6 +749,12 @@ export default function AiLabPage() {
       setCompleted(true);
     }
   }, [answers, completed, flow, nodes]);
+
+  React.useEffect(() => {
+    if (!completed) return;
+
+    void loadUsageSummary();
+  }, [completed, loadUsageSummary]);
 
   const labQuestionItems = React.useMemo<LabQuestionItem[]>(() => {
     return nodes
@@ -635,10 +802,9 @@ export default function AiLabPage() {
     PROMPT_TEMPLATES[0];
 
   const generatedPrompt = React.useMemo(() => {
-  const answerBlock =
-    formatAnswersForPrompt(readableAnswers);
+    const answerBlock = formatAnswersForPrompt(readableAnswers);
 
-  return `${selectedTemplate.prompt}
+    return `${selectedTemplate.prompt}
 
 ONBOARDING RESPONSES:
 ${answerBlock}
@@ -647,15 +813,9 @@ CUSTOM LAB REQUEST:
 ${customPrompt}
 
 Output should be readable, emotionally intelligent, and useful to the Everleap product team.`;
-}, [
-  customPrompt,
-  readableAnswers,
-  selectedTemplate,
-]);
+  }, [customPrompt, readableAnswers, selectedTemplate]);
 
-const finalPrompt = manualPromptMode
-  ? manualPrompt
-  : generatedPrompt;
+  const finalPrompt = manualPromptMode ? manualPrompt : generatedPrompt;
 
   const continueDisabled = React.useMemo(() => {
     if (!currentQuestion) return false;
@@ -713,6 +873,8 @@ const finalPrompt = manualPromptMode
           prompt: finalPrompt,
           answers: readableAnswers,
           userCharacterLimit,
+          promptMode: manualPromptMode ? "manual" : "auto",
+          templateKey: manualPromptMode ? null : templateKey,
         }),
       });
 
@@ -728,6 +890,8 @@ const finalPrompt = manualPromptMode
           user: data.user,
           total: data.total,
         });
+
+        void loadUsageSummary();
         return;
       }
 
@@ -753,6 +917,8 @@ const finalPrompt = manualPromptMode
           estimatedCostUsd: data.estimatedCostUsd ?? null,
         },
       });
+
+      void loadUsageSummary();
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Unknown AI Lab error.");
     } finally {
@@ -815,6 +981,13 @@ const finalPrompt = manualPromptMode
           </div>
 
           <div className="space-y-6">
+            <SpendSummaryCard
+              summary={usageSummary}
+              loading={usageSummaryLoading}
+              error={usageSummaryError}
+              onRefresh={loadUsageSummary}
+            />
+
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <div className="mb-5 text-sm uppercase tracking-[0.2em] text-cyan-300">
                 Prompt Construction
@@ -828,7 +1001,11 @@ const finalPrompt = manualPromptMode
 
                   <select
                     value={templateKey}
-                    onChange={(event) => setTemplateKey(event.target.value)}
+                    onChange={(event) => {
+                      setTemplateKey(event.target.value);
+                      setAiRun(null);
+                      setAiError(null);
+                    }}
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
                   >
                     {PROMPT_TEMPLATES.map((template) => (
@@ -849,7 +1026,11 @@ const finalPrompt = manualPromptMode
                       <button
                         key={item}
                         type="button"
-                        onClick={() => setProvider(item)}
+                        onClick={() => {
+                          setProvider(item);
+                          setAiRun(null);
+                          setAiError(null);
+                        }}
                         className={[
                           "rounded-2xl border px-4 py-3 text-sm font-semibold transition",
                           provider === item
@@ -886,7 +1067,7 @@ const finalPrompt = manualPromptMode
                   />
 
                   <div className="text-sm leading-6 text-white/45">
-                    Maximum characters allowed in the compressed user-facing
+                    Maximum characters requested in the compressed user-facing
                     response.
                   </div>
                 </div>
@@ -899,62 +1080,75 @@ const finalPrompt = manualPromptMode
 
                 <textarea
                   value={customPrompt}
-                  onChange={(event) => setCustomPrompt(event.target.value)}
+                  onChange={(event) => {
+                    setCustomPrompt(event.target.value);
+                    setAiRun(null);
+                    setAiError(null);
+                  }}
                   rows={5}
                   className="w-full resize-y rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-white/30 focus:border-cyan-300"
                 />
               </label>
 
               <label className="mt-5 block">
-              <div className="mb-3 flex items-center gap-2">
-  <button
-    type="button"
-    onClick={() => {
-      if (!manualPromptMode) {
-        setManualPrompt(generatedPrompt);
-      }
+                <div className="mb-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!manualPromptMode) {
+                        setManualPrompt(generatedPrompt);
+                      }
 
-      setManualPromptMode((prev) => !prev);
-    }}
-    className={[
-      "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition",
-      manualPromptMode
-        ? "border-cyan-300 bg-cyan-300 text-slate-950"
-        : "border-white/10 bg-black/30 text-white/60 hover:border-white/25",
-    ].join(" ")}
-  >
-    {manualPromptMode
-      ? "Manual Editing Enabled"
-      : "Enable Manual Prompt Editing"}
-  </button>
-</div>
+                      setManualPromptMode((prev) => !prev);
+                      setAiRun(null);
+                      setAiError(null);
+                    }}
+                    className={[
+                      "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition",
+                      manualPromptMode
+                        ? "border-cyan-300 bg-cyan-300 text-slate-950"
+                        : "border-white/10 bg-black/30 text-white/60 hover:border-white/25",
+                    ].join(" ")}
+                  >
+                    {manualPromptMode
+                      ? "Manual Editing Enabled"
+                      : "Enable Manual Prompt Editing"}
+                  </button>
+                </div>
+
                 <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
                   Final prompt sent to AI
                 </div>
 
                 <textarea
-  value={finalPrompt}
-  onChange={(event) => {
-    if (!manualPromptMode) return;
+                  value={finalPrompt}
+                  onChange={(event) => {
+                    if (!manualPromptMode) return;
 
-    setManualPrompt(event.target.value);
-  }}
-  readOnly={!manualPromptMode}
-  rows={12}
-  className={[
-    "w-full resize-y rounded-2xl border bg-black/40 px-4 py-3 font-mono text-xs leading-5 outline-none sm:rows-14",
-    manualPromptMode
-      ? "border-cyan-300 text-white"
-      : "border-white/10 text-white/70",
-  ].join(" ")}
-/>
+                    setManualPrompt(event.target.value);
+                    setAiRun(null);
+                    setAiError(null);
+                  }}
+                  readOnly={!manualPromptMode}
+                  rows={12}
+                  className={[
+                    "w-full resize-y rounded-2xl border bg-black/40 px-4 py-3 font-mono text-xs leading-5 outline-none sm:rows-14",
+                    manualPromptMode
+                      ? "border-cyan-300 text-white"
+                      : "border-white/10 text-white/70",
+                  ].join(" ")}
+                />
               </label>
 
               <div className="mt-5 flex justify-end">
                 <button
                   type="button"
                   onClick={runPrompt}
-                  disabled={submitting || readableAnswers.length === 0}
+                  disabled={
+                    submitting ||
+                    readableAnswers.length === 0 ||
+                    !finalPrompt.trim()
+                  }
                   className="w-full rounded-2xl bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {submitting
@@ -1006,7 +1200,7 @@ const finalPrompt = manualPromptMode
 
                   <ResultPanel
                     title="User View"
-                    subtitle={`Compressed user-facing copy capped at ${userCharacterLimit.toLocaleString()} characters.`}
+                    subtitle={`Compressed user-facing copy requested at ${userCharacterLimit.toLocaleString()} characters.`}
                     result={aiRun.user}
                   />
                 </div>
@@ -1083,6 +1277,14 @@ const finalPrompt = manualPromptMode
             answers={answers}
             onAnswer={(key, value) => updateAnswer(key, value)}
             onAutoAdvance={(nextAnswers) => {
+              if (currentQuestion?.inputType === "text") {
+                return;
+              }
+
+              if (currentQuestion?.inputType === "multi_choice") {
+                return;
+              }
+
               handleNext(nextAnswers);
             }}
           />
