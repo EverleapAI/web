@@ -285,10 +285,18 @@ export default function OnboardingPage() {
                   updateAnswer(key, value)
                 }
                 onAutoAdvance={(nextAnswers?: Answers) => {
-                  window.setTimeout(() => {
-                    handleNext(nextAnswers);
-                  }, 180);
-                }}
+  if (currentQuestion?.inputType === "text") {
+    return;
+  }
+
+  if (currentQuestion?.inputType === "multi_choice") {
+    return;
+  }
+
+  window.setTimeout(() => {
+    handleNext(nextAnswers);
+  }, 180);
+}}
               />
             </div>
           </div>
