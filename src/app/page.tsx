@@ -437,11 +437,22 @@ function DesktopHeroCard({
 
       <div className="mt-7 flex flex-col items-center justify-center gap-3 md:mt-8">
         <Link
-          href={ctaHref}
-          className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-sm hover:bg-white/90 active:scale-[0.99]"
-        >
-          {ctaLabel}
-        </Link>
+  href={ctaHref}
+  onClick={() => {
+    if (!authed) {
+      localStorage.removeItem(
+        "everleap_onboarding_answers"
+      );
+
+      localStorage.removeItem(
+        "everleap_ai_lab_answers"
+      );
+    }
+  }}
+  className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-sm active:scale-[0.99]"
+>
+  {ctaLabel}
+</Link>
 
         {!authed ? (
           <Link
@@ -482,11 +493,22 @@ function MobileBottomSheet({
 
       <div className="mt-5 flex flex-col items-center justify-center gap-3">
         <Link
-          href={ctaHref}
-          className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-sm active:scale-[0.99]"
-        >
-          {ctaLabel}
-        </Link>
+  href={ctaHref}
+  onClick={() => {
+    if (!authed) {
+      localStorage.removeItem(
+        "everleap_onboarding_answers"
+      );
+
+      localStorage.removeItem(
+        "everleap_ai_lab_answers"
+      );
+    }
+  }}
+  className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/40 bg-white px-6 py-2.5 text-sm font-semibold text-slate-950 shadow-sm active:scale-[0.99]"
+>
+  {ctaLabel}
+</Link>
 
         {!authed ? (
           <Link
