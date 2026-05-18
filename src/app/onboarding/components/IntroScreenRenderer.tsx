@@ -69,25 +69,25 @@ const INTRO_SCREENS: Record<string, IntroConfig> = {
       "As you move through Everleap, you'll know your progressing because you start seeing things which really related to you. However, to help you along the way, you can earn badges, which guide you and let you know you're moving forward.",
   },
 
-  lets_get_started: {
-    eyebrow: "EVERLEAP",
-    title: "Let's begin discovering your direction.",
-    body:
-      "I'm going to ask you some questions so Everleap can begin understanding who you are and where you may want to go.",
-  },
+lets_get_started: {
+  eyebrow: "EVERLEAP",
+  title: "OK, let's get you going",
+  body:
+    "I'm going to ask you some questions to get you onboard",
+},
 
   permissions: {
-    eyebrow: "EVERLEAP",
-    title: "First, I need your permission.",
-    body:
-      "Everleap uses what you share to personalize guidance, ideas, and next steps.",
-    bullets: [
-      "I store basic account information.",
-      "I use your responses to personalize your experience.",
-      "I protect your data as described in the Privacy Policy.",
-    ],
-    tone: "compact",
-  },
+  eyebrow: "EVERLEAP",
+  title: "We need your permission.",
+  body:
+    "Everleap uses what you share to personalize guidance, ideas, and next steps. We may rely on trusted service providers to help operate Everleap, as described in our Privacy Policy.",
+  bullets: [
+    "We store basic account information.",
+    "We use your responses to personalize your experience.",
+    "We protect your data as described in our Privacy Policy.",
+  ],
+  tone: "compact",
+},
 
   summary_transition: {
     eyebrow: "EVERLEAP",
@@ -138,25 +138,29 @@ function ProgressIcons() {
             delay: 0.08 + index * 0.05,
           }}
           className="
+            relative
             flex
-            h-[58px]
-            w-[58px]
+            h-[60px]
+            w-[60px]
             shrink-0
             items-center
             justify-center
-            rounded-2xl
+            rounded-full
             border
-            border-white/10
-            bg-white/[0.025]
+            border-white/35
+            bg-white/[0.03]
+            shadow-[0_0_18px_rgba(255,255,255,0.05)]
             backdrop-blur-sm
           "
         >
+          <div className="absolute inset-[4px] rounded-full border border-white/8" />
+
           <Image
             src={src}
             alt=""
-            width={38}
-            height={38}
-            className="opacity-90"
+            width={30}
+            height={30}
+            className="relative z-10 object-contain opacity-90"
           />
         </motion.div>
       ))}

@@ -80,48 +80,6 @@ function shouldShowPageVisual(nodeKey: string, isIntro: boolean) {
   return true;
 }
 
-function ProviderChoiceButtons({
-  disabled,
-  onChoose,
-}: {
-  disabled: boolean;
-  onChoose: (provider: AiProvider) => void;
-}) {
-  return (
-    <div className="mb-4 flex flex-col gap-3">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => onChoose("openai")}
-        className={[
-          "h-12 rounded-full border border-cyan-300/35 bg-cyan-300/12 px-5 text-[15px] font-semibold tracking-[-0.02em] text-cyan-100",
-          "shadow-[0_0_24px_rgba(103,232,249,0.12)] transition",
-          disabled
-            ? "cursor-not-allowed opacity-45"
-            : "active:scale-[0.99] hover:bg-cyan-300/18",
-        ].join(" ")}
-      >
-        Continue with OpenAI
-      </button>
-
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => onChoose("anthropic")}
-        className={[
-          "h-12 rounded-full border border-white/18 bg-white/[0.045] px-5 text-[15px] font-semibold tracking-[-0.02em] text-white/88",
-          "transition",
-          disabled
-            ? "cursor-not-allowed opacity-45"
-            : "active:scale-[0.99] hover:bg-white/[0.075]",
-        ].join(" ")}
-      >
-        Continue with Claude
-      </button>
-    </div>
-  );
-}
-
 export default function OnboardingPage() {
   const router = useRouter();
 
@@ -225,8 +183,7 @@ export default function OnboardingPage() {
         )
       : 0;
 
-  const showProgress =
-    Boolean(currentNode) && !isIntroScreen(currentNode);
+  const showProgress = Boolean(currentNode) && !isIntroScreen(currentNode);
 
   const isMultiChoice = currentQuestion?.inputType === "multi_choice";
   const isText = currentQuestion?.inputType === "text";
@@ -235,8 +192,6 @@ export default function OnboardingPage() {
 
   const permissionsSatisfied =
     currentNode?.key !== "permissions" || permissionAccepted;
-
-  const isProviderChoiceNode = currentNode?.key === "activities";
 
   function handleComplete() {
     try {
@@ -253,19 +208,18 @@ export default function OnboardingPage() {
     if (!currentNode) return;
     if (!permissionsSatisfied) return;
 
+    if (currentNode.key === "activities") {
+      setSynthesis(null);
+      setSynthesisProvider("openai");
+      synthesisRequestedRef.current = false;
+    }
+
     if (currentNode.type === "summary") {
       handleComplete();
       return;
     }
 
     goNext(nextAnswers);
-  }
-
-  function handleProviderChoice(provider: AiProvider) {
-    setSynthesis(null);
-    setSynthesisProvider(provider);
-    synthesisRequestedRef.current = false;
-    handleNext();
   }
 
   if (loading) {
@@ -338,43 +292,25 @@ export default function OnboardingPage() {
               />
             </div>
           </div>
-<div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
-          
-            {isProviderChoiceNode ? (
-              <>
-                <ProviderChoiceButtons
-                  disabled={!permissionsSatisfied}
-                  onChoose={handleProviderChoice}
-                />
 
-                <NavControls
-                  canGoBack={canGoBack}
-                  showContinue={false}
-                  continueDisabled
-                  continueLabel="Continue"
-                  onBack={goBack}
-                  onContinue={() => {}}
-                />
-              </>
-            ) : (
-              <NavControls
-                canGoBack={canGoBack}
-                showContinue={
-                  currentNode.key === "welcome" ||
-                  !currentQuestion ||
-                  isText ||
-                  isMultiChoice
-                }
-                continueDisabled={
-                  !permissionsSatisfied ||
-                  (currentNode.key === "summary_transition" &&
-                    synthesisLoading)
-                }
-                continueLabel="Continue"
-                onBack={goBack}
-                onContinue={() => handleNext()}
-              />
-            )}
+          <div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
+            <NavControls
+              canGoBack={canGoBack}
+              showContinue={
+                currentNode.key === "welcome" ||
+                !currentQuestion ||
+                isText ||
+                isMultiChoice
+              }
+              continueDisabled={
+                !permissionsSatisfied ||
+                (currentNode.key === "summary_transition" &&
+                  synthesisLoading)
+              }
+              continueLabel="Continue"
+              onBack={goBack}
+              onContinue={() => handleNext()}
+            />
           </div>
         </section>
       </main>
