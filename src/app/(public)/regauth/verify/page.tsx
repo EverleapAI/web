@@ -63,37 +63,27 @@ export default function VerifyPage(): React.JSX.Element {
     refs[Math.max(0, Math.min(5, i))]?.current?.focus();
   }
 
-  async function claimOnboarding() {
+  function getOnboardingPayload() {
+    let answers: unknown = null;
+
     try {
       const rawAnswers = window.localStorage.getItem(
         "everleap_onboarding_answers"
       );
 
-      const rawZip = window.localStorage.getItem("everleap_zip");
-
-      let answers: unknown = null;
-
-      try {
-        answers = rawAnswers ? JSON.parse(rawAnswers) : null;
-      } catch {
-        answers = null;
-      }
-
-      await fetch("/api/onboarding/claim", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          flowKey: "onboarding_v1",
-          answers,
-          zipCode: rawZip ?? "",
-        }),
-      });
+      answers = rawAnswers ? JSON.parse(rawAnswers) : null;
     } catch {
-      // Non-blocking.
+      answers = null;
     }
+
+    const zipCode =
+      window.localStorage.getItem("everleap_zip") ?? "";
+
+    return {
+      flowKey: "onboarding_v1",
+      answers,
+      zipCode,
+    };
   }
 
   async function submit(nextCode = code) {
@@ -115,6 +105,7 @@ export default function VerifyPage(): React.JSX.Element {
         credentials: "include",
         body: JSON.stringify({
           code: nextCode,
+          onboarding: getOnboardingPayload(),
         }),
       });
 
@@ -132,8 +123,6 @@ export default function VerifyPage(): React.JSX.Element {
 
         return;
       }
-
-      await claimOnboarding();
 
       try {
         window.sessionStorage.removeItem(

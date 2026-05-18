@@ -657,6 +657,11 @@ export default function AiLabPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [completed, setCompleted] = React.useState(false);
   const [showContext, setShowContext] = React.useState(false);
+  const [dbAnswers, setDbAnswers] =
+  React.useState<Answers | null>(null);
+
+const [loadingDbAnswers, setLoadingDbAnswers] =
+  React.useState(true);
 
   const [provider, setProvider] = React.useState<Provider>("openai");
   const [templateKey, setTemplateKey] = React.useState("hybrid");
@@ -731,24 +736,72 @@ export default function AiLabPage() {
     load();
   }, []);
 
+  React.useEffect(() => {
+  let alive = true;
+
+  async function loadDbAnswers() {
+    try {
+      const res = await fetch("/api/regauth/me", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+
+      if (!alive) return;
+
+      if (
+        data?.ok &&
+        data?.authed &&
+        data?.onboardingAnswers
+      ) {
+        setDbAnswers(data.onboardingAnswers);
+      }
+    } catch {
+      // ignore
+    } finally {
+      if (alive) {
+        setLoadingDbAnswers(false);
+      }
+    }
+  }
+
+  loadDbAnswers();
+
+  return () => {
+    alive = false;
+  };
+}, []);
+
   const {
-    nodes,
-    currentNode,
-    currentQuestion,
-    answers,
-    goNext,
-    goBack,
-    updateAnswer,
-    canGoBack,
-  } = useOnboardingFlow(flow, "everleap_ai_lab_answers");
+  nodes,
+  currentNode,
+  currentQuestion,
+  answers: localAnswers,
+  goNext,
+  goBack,
+  updateAnswer,
+  canGoBack,
+} = useOnboardingFlow(flow, "everleap_ai_lab_answers");
+
+const answers = dbAnswers ?? localAnswers;
 
   React.useEffect(() => {
-    if (!flow || completed) return;
+  if (!flow || completed) return;
 
-    if (areRequiredVisibleQuestionsAnswered(nodes, answers)) {
-      setCompleted(true);
-    }
-  }, [answers, completed, flow, nodes]);
+  if (loadingDbAnswers) return;
+
+  if (areRequiredVisibleQuestionsAnswered(nodes, answers)) {
+    setCompleted(true);
+  }
+}, [
+  answers,
+  completed,
+  flow,
+  loadingDbAnswers,
+  nodes,
+]);
 
   React.useEffect(() => {
     if (!completed) return;
@@ -926,7 +979,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
     }
   }
 
-  if (loading) {
+  if (loading || loadingDbAnswers) {
     return (
       <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
         Loading AI Lab…

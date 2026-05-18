@@ -9,6 +9,11 @@ import crypto from "crypto";
 
 type VerifyBody = {
   code?: unknown;
+  onboarding?: {
+    flowKey?: string;
+    answers?: unknown;
+    zipCode?: string;
+  };
 };
 
 type PendingPayload = {
@@ -37,6 +42,9 @@ const VERIFY_EMAIL_URL =
 
 const VERIFY_SMS_URL =
   `${API_BASE}/auth/sms/verify-code`;
+
+const CLAIM_ONBOARDING_URL =
+  `${API_BASE}/onboarding/claim`;
 
 function noStore(res: NextResponse): NextResponse {
   res.headers.set(
@@ -279,21 +287,15 @@ export async function POST(
   let upstream: Response;
 
   try {
-    upstream = await fetch(
-      targetUrl,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-          Accept: "application/json",
-        },
-        cache: "no-store",
-        body: JSON.stringify(
-          requestBody
-        ),
-      }
-    );
+    upstream = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify(requestBody),
+    });
   } catch {
     return jsonError(
       "Couldn’t reach sign-in service.",
@@ -301,9 +303,7 @@ export async function POST(
     );
   }
 
-  const text = await upstream
-    .text()
-    .catch(() => "");
+  const text = await upstream.text().catch(() => "");
 
   let data: unknown = null;
 
@@ -367,9 +367,49 @@ export async function POST(
     );
   }
 
+  let onboardingClaimResult: unknown = null;
+
+  if (body.onboarding?.answers) {
+    try {
+      const claimRes = await fetch(
+        CLAIM_ONBOARDING_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Cookie: `${SESSION_COOKIE}=${sessionToken}`,
+          },
+          cache: "no-store",
+          body: JSON.stringify({
+            flowKey:
+              body.onboarding.flowKey ??
+              "onboarding_v1",
+            answers:
+              body.onboarding.answers,
+            zipCode:
+              body.onboarding.zipCode ??
+              "",
+          }),
+        }
+      );
+
+      onboardingClaimResult = {
+        status: claimRes.status,
+        body: await claimRes.json().catch(() => null),
+      };
+    } catch (err) {
+      onboardingClaimResult = {
+        status: "fetch_failed",
+        error: String(err),
+      };
+    }
+  }
+
   const res = NextResponse.json(
     {
       ok: true,
+      onboardingClaimResult,
       ...(typeof data === "object" &&
       data !== null
         ? data
