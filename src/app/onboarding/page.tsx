@@ -4,6 +4,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 import Conversation from "./components/Conversation";
 import InputRenderer from "./components/InputRenderer";
@@ -91,6 +92,12 @@ export default function OnboardingPage() {
     React.useState<OnboardingSynthesis | null>(null);
   const [synthesisProvider, setSynthesisProvider] =
     React.useState<AiProvider | null>(null);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(
+    null
+  );
+  const [turnstileError, setTurnstileError] = React.useState<string | null>(
+    null
+  );
 
   const synthesisRequestedRef = React.useRef(false);
 
@@ -139,6 +146,7 @@ export default function OnboardingPage() {
         currentNode.type === "summary";
 
       if (!isSummaryNode || !synthesisProvider) return;
+      if (!turnstileToken) return;
       if (synthesisRequestedRef.current) return;
 
       synthesisRequestedRef.current = true;
@@ -156,6 +164,7 @@ export default function OnboardingPage() {
             provider: synthesisProvider,
             flowKey: "onboarding_v1",
             answers,
+            turnstileToken,
           }),
         });
 
@@ -163,16 +172,18 @@ export default function OnboardingPage() {
 
         if (data?.ok && data?.synthesis) {
           setSynthesis(data.synthesis);
+        } else {
+          synthesisRequestedRef.current = false;
         }
       } catch {
-        // silent fallback
+        synthesisRequestedRef.current = false;
       } finally {
         setSynthesisLoading(false);
       }
     }
 
     generateSynthesis();
-  }, [answers, currentNode, synthesisProvider]);
+  }, [answers, currentNode, synthesisProvider, turnstileToken]);
 
   const progress =
     nodes.length > 0 && currentNode
@@ -209,6 +220,8 @@ export default function OnboardingPage() {
     if (!permissionsSatisfied) return;
 
     if (currentNode.key === "activities") {
+      setTurnstileToken(null);
+      setTurnstileError(null);
       setSynthesis(null);
       setSynthesisProvider("openai");
       synthesisRequestedRef.current = false;
@@ -237,6 +250,8 @@ export default function OnboardingPage() {
       </div>
     );
   }
+
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   return (
     <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
@@ -285,23 +300,55 @@ export default function OnboardingPage() {
                   updateAnswer(key, value)
                 }
                 onAutoAdvance={(nextAnswers?: Answers) => {
-  if (currentQuestion?.inputType === "text") {
-    return;
-  }
+                  if (currentQuestion?.inputType === "text") {
+                    return;
+                  }
 
-  if (currentQuestion?.inputType === "multi_choice") {
-    return;
-  }
+                  if (currentQuestion?.inputType === "multi_choice") {
+                    return;
+                  }
 
-  window.setTimeout(() => {
-    handleNext(nextAnswers);
-  }, 180);
-}}
+                  window.setTimeout(() => {
+                    handleNext(nextAnswers);
+                  }, 180);
+                }}
               />
             </div>
           </div>
 
           <div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
+            {currentNode.key === "summary_transition" && turnstileSiteKey ? (
+              <div className="flex justify-center pb-3">
+                <Turnstile
+                  siteKey={turnstileSiteKey}
+                  options={{
+                    appearance: "interaction-only",
+                  }}
+                  onSuccess={(token) => {
+                    setTurnstileError(null);
+                    setTurnstileToken(token);
+                  }}
+                  onError={() => {
+                    setTurnstileToken(null);
+                    setTurnstileError(
+                      "Security verification failed. Please try again."
+                    );
+                    synthesisRequestedRef.current = false;
+                  }}
+                  onExpire={() => {
+                    setTurnstileToken(null);
+                    synthesisRequestedRef.current = false;
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {turnstileError ? (
+              <div className="mx-auto mb-3 max-w-[420px] rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-100">
+                {turnstileError}
+              </div>
+            ) : null}
+
             <NavControls
               canGoBack={canGoBack}
               showContinue={
