@@ -146,7 +146,12 @@ export default function OnboardingPage() {
         currentNode.type === "summary";
 
       if (!isSummaryNode || !synthesisProvider) return;
-      if (!turnstileToken) return;
+      if (
+  process.env.NODE_ENV === "production" &&
+  !turnstileToken
+) {
+  return;
+}
       if (synthesisRequestedRef.current) return;
 
       synthesisRequestedRef.current = true;
