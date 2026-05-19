@@ -317,12 +317,6 @@ export default function OnboardingPage() {
           </div>
 
           <div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
-            {currentNode.key === "summary_transition" &&
-            !turnstileSiteKey ? (
-              <div className="mx-auto mb-3 max-w-[420px] rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-100">
-                Turnstile site key is missing.
-              </div>
-            ) : null}
 
             {currentNode.key === "summary_transition" &&
             turnstileSiteKey ? (
