@@ -138,20 +138,22 @@ export default function OnboardingPage() {
   } = useOnboardingFlow(flow);
 
   React.useEffect(() => {
-    async function generateSynthesis() {
-      if (!currentNode) return;
+  async function generateSynthesis() {
+    if (!currentNode) return;
 
-      const isSummaryNode =
-        currentNode.key === "summary_transition" ||
-        currentNode.type === "summary";
+    const isSummaryNode =
+      currentNode.key === "summary_transition" ||
+      currentNode.type === "summary";
 
-      if (!isSummaryNode || !synthesisProvider) return;
-      if (
-  process.env.NODE_ENV === "production" &&
-  !turnstileToken
-) {
-  return;
-}
+    if (!isSummaryNode || !synthesisProvider) return;
+
+    const isDevHost =
+      typeof window !== "undefined" &&
+      window.location.hostname === "dev.everleap.ai";
+
+    if (!isDevHost && !turnstileToken) {
+      return;
+    }
       if (synthesisRequestedRef.current) return;
 
       synthesisRequestedRef.current = true;
