@@ -3,7 +3,6 @@
 import * as React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { APP_ROUTES } from "@/regauth/config";
@@ -40,15 +39,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
     React.useState<OnboardingSynthesis | null>(null);
 
   const [loading, setLoading] = React.useState(true);
-
-  const [turnstileToken, setTurnstileToken] =
-    React.useState<string | null>(null);
-
-  const [turnstileError, setTurnstileError] =
-    React.useState<string | null>(null);
-
   const [zipCode, setZipCode] = React.useState<string | null>(null);
-
   const [loadingIndex, setLoadingIndex] = React.useState(0);
 
   const synthesisRequestedRef = React.useRef(false);
@@ -79,14 +70,13 @@ export default function RegAuthDonePage(): React.JSX.Element {
 
     const interval = window.setInterval(() => {
       setLoadingIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 2400);
+    }, 2200);
 
     return () => window.clearInterval(interval);
   }, [loading]);
 
   React.useEffect(() => {
     async function generateSynthesis() {
-      if (!turnstileToken) return;
       if (synthesisRequestedRef.current) return;
 
       synthesisRequestedRef.current = true;
@@ -103,9 +93,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
           return;
         }
 
-        const answers = JSON.parse(
-          rawAnswers
-        ) as OnboardingAnswers;
+        const answers = JSON.parse(rawAnswers) as OnboardingAnswers;
 
         const res = await fetch("/api/onboarding/synthesis", {
           method: "POST",
@@ -118,7 +106,6 @@ export default function RegAuthDonePage(): React.JSX.Element {
             flowKey: "onboarding_v1",
             answers,
             zipCode,
-            turnstileToken,
           }),
         });
 
@@ -144,14 +131,15 @@ export default function RegAuthDonePage(): React.JSX.Element {
     }
 
     generateSynthesis();
-  }, [turnstileToken, zipCode]);
+  }, [zipCode]);
 
-  const turnstileSiteKey =
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const progress = loading
+    ? Math.min(92, 18 + loadingIndex * 22)
+    : 100;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-transparent px-5 pb-12 pt-8 text-white">
-      <section className="relative mx-auto flex w-full max-w-[620px] flex-col items-center pt-12 text-center">
+      <section className="relative mx-auto flex w-full max-w-[720px] flex-col items-center pt-10 text-center">
         <motion.div
           initial={{
             opacity: 0,
@@ -183,24 +171,24 @@ export default function RegAuthDonePage(): React.JSX.Element {
             transition={{
               duration: 0.55,
               ease: "easeOut",
-              delay: 0.15,
+              delay: 0.1,
             }}
             className="flex flex-col items-center"
           >
-            <div className="relative flex h-[98px] w-[98px] items-center justify-center rounded-full border border-white/35 bg-white/[0.03] shadow-[0_0_30px_rgba(255,255,255,0.07)]">
+            <div className="relative flex h-[104px] w-[104px] items-center justify-center rounded-full border border-white/35 bg-white/[0.03] shadow-[0_0_34px_rgba(103,232,249,0.08)]">
               <div className="absolute inset-[5px] rounded-full border border-white/10" />
 
               <Image
                 src="/onboarding/icons/badges/1_onboard.png"
                 alt="Onboard badge"
-                width={62}
-                height={62}
+                width={66}
+                height={66}
                 priority
-                className="relative z-10 h-[62px] w-[62px] object-contain"
+                className="relative z-10 h-[66px] w-[66px] object-contain"
               />
             </div>
 
-            <div className="mt-4 text-[19px] font-semibold tracking-[-0.03em] text-white">
+            <div className="mt-4 text-[20px] font-semibold tracking-[-0.035em] text-white">
               Onboard
             </div>
           </motion.div>
@@ -217,9 +205,9 @@ export default function RegAuthDonePage(): React.JSX.Element {
             transition={{
               duration: 0.7,
               ease: "easeOut",
-              delay: 0.3,
+              delay: 0.22,
             }}
-            className="mx-auto mt-10 max-w-[560px] text-[3rem] font-semibold leading-[0.95] tracking-[-0.075em] text-white sm:text-[3.6rem]"
+            className="mx-auto mt-10 max-w-[620px] text-[3.15rem] font-semibold leading-[0.95] tracking-[-0.078em] text-white sm:text-[3.85rem]"
           >
             We&apos;re already seeing some signals.
           </motion.h1>
@@ -234,46 +222,66 @@ export default function RegAuthDonePage(): React.JSX.Element {
               }}
               transition={{
                 duration: 0.5,
-                delay: 0.45,
+                delay: 0.35,
               }}
-              className="mt-16 flex flex-col items-center"
+              className="mt-10 flex flex-col items-center"
             >
-              <div className="flex items-center gap-2">
-                {[0, 1, 2].map((dot) => (
+              <p className="mx-auto max-w-[620px] text-[20px] leading-8 tracking-[-0.025em] text-white/72">
+                I&apos;m putting your answers together so I can get a clearer
+                picture of what motivates you and where you might thrive.
+              </p>
+
+              <div className="mt-10 w-full max-w-[620px]">
+                <div className="relative h-[42px]">
+                  <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/12" />
+
                   <motion.div
-                    key={dot}
                     animate={{
-                      opacity: [0.25, 1, 0.25],
-                      scale: [0.92, 1.12, 0.92],
+                      width: `${progress}%`,
                     }}
                     transition={{
-                      duration: 1.4,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: dot * 0.18,
+                      duration: 0.65,
+                      ease: "easeOut",
                     }}
-                    className="h-2 w-2 rounded-full bg-cyan-300"
+                    className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.65)]"
                   />
-                ))}
-              </div>
 
-              <div className="mt-10 max-w-[560px] text-center">
-                <div className="text-[1.55rem] font-semibold leading-[1.15] tracking-[-0.045em] text-white">
-                  Give us a second, Tom.
+                  <motion.div
+                    animate={{
+                      left: `${progress}%`,
+                    }}
+                    transition={{
+                      duration: 0.65,
+                      ease: "easeOut",
+                    }}
+                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_22px_rgba(103,232,249,0.95)]"
+                  />
+
+                  <div className="absolute left-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-cyan-200/45 bg-cyan-300/12 shadow-[0_0_24px_rgba(103,232,249,0.25)]">
+                    <motion.div
+                      animate={{
+                        scale: [0.9, 1.12, 0.9],
+                        opacity: [0.55, 1, 0.55],
+                      }}
+                      transition={{
+                        duration: 1.6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      className="h-2.5 w-2.5 rounded-full bg-cyan-200"
+                    />
+                  </div>
+
+                  <div className="absolute right-0 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full border border-white/18 bg-white/[0.02]" />
                 </div>
 
-                <div className="mt-5 text-[18px] leading-[2rem] tracking-[-0.02em] text-white/66">
-                  You mentioned volunteering, creativity,
-                  and wanting more direction after high school.
-                </div>
-
-                <div className="mt-10 h-[36px] overflow-hidden">
+                <div className="mt-4 min-h-[28px] text-[17px] tracking-[-0.02em] text-cyan-100/88">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={loadingIndex}
                       initial={{
                         opacity: 0,
-                        y: 14,
+                        y: 12,
                       }}
                       animate={{
                         opacity: 1,
@@ -281,59 +289,56 @@ export default function RegAuthDonePage(): React.JSX.Element {
                       }}
                       exit={{
                         opacity: 0,
-                        y: -14,
+                        y: -12,
                       }}
                       transition={{
-                        duration: 0.45,
+                        duration: 0.42,
                         ease: "easeOut",
                       }}
-                      className="text-[17px] tracking-[-0.02em] text-cyan-100/82"
                     >
                       {loadingMessages[loadingIndex]}
                     </motion.div>
                   </AnimatePresence>
                 </div>
-
-                <div className="mt-8 text-[17px] leading-[1.95rem] tracking-[-0.02em] text-white/52">
-                  Everleap is starting to turn those signals
-                  into ideas, paths, and opportunities that
-                  may fit you personally.
-                </div>
               </div>
 
-              {turnstileSiteKey ? (
-                <div className="mt-10 flex justify-center">
-                  <Turnstile
-                    siteKey={turnstileSiteKey}
-                    options={{
-                      appearance: "interaction-only",
-                    }}
-                    onSuccess={(token) => {
-                      setTurnstileError(null);
-                      setTurnstileToken(token);
-                    }}
-                    onError={() => {
-                      setTurnstileToken(null);
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 12,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  duration: 0.55,
+                  delay: 0.65,
+                  ease: "easeOut",
+                }}
+                className="mt-8 max-w-[560px] rounded-[26px] border border-white/10 bg-white/[0.035] px-6 py-6 text-left shadow-[0_0_30px_rgba(0,0,0,0.18)]"
+              >
+                <div className="flex gap-4">
+                  <div className="mt-1 h-5 w-5 shrink-0 rounded-full bg-gradient-to-br from-orange-300 to-pink-500 shadow-[0_0_18px_rgba(251,146,60,0.35)]" />
 
-                      setTurnstileError(
-                        "Security verification failed. Please try again."
-                      );
+                  <div className="space-y-5 text-[18px] leading-8 tracking-[-0.022em] text-white/78">
+                    <p>
+                      So far, I&apos;m seeing that you care about making a
+                      positive impact and you come alive around creativity,
+                      performing, and expressing yourself.
+                    </p>
 
-                      synthesisRequestedRef.current = false;
-                    }}
-                    onExpire={() => {
-                      setTurnstileToken(null);
-                      synthesisRequestedRef.current = false;
-                    }}
-                  />
+                    <p>
+                      That&apos;s a promising combination. I&apos;m taking a
+                      moment to shape this into something useful.
+                    </p>
+                  </div>
                 </div>
-              ) : null}
+              </motion.div>
 
-              {turnstileError ? (
-                <div className="mt-6 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                  {turnstileError}
-                </div>
-              ) : null}
+              <div className="mt-8 text-[15px] leading-6 tracking-[-0.015em] text-white/38">
+                This usually takes less than 10 seconds.
+              </div>
             </motion.div>
           ) : null}
 
@@ -353,7 +358,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                   ease: "easeOut",
                   delay: 0.22,
                 }}
-                className="max-w-[560px] text-[21px] leading-[2.3rem] tracking-[-0.03em] text-white/82"
+                className="max-w-[620px] text-[22px] leading-[2.35rem] tracking-[-0.032em] text-white/84"
               >
                 {synthesis.body}
               </motion.p>
@@ -400,7 +405,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                   ease: "easeOut",
                   delay: 0.9,
                 }}
-                className="mt-14 max-w-[520px] text-[15px] leading-7 tracking-[-0.015em] text-white/46"
+                className="mt-14 max-w-[560px] text-[15px] leading-7 tracking-[-0.015em] text-white/46"
               >
                 {synthesis.bridge}
               </motion.p>
@@ -422,7 +427,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                 ease: "easeOut",
                 delay: 1,
               }}
-              className="mt-16 flex w-full items-center justify-between text-[15px] font-semibold tracking-[-0.02em]"
+              className="mt-16 flex w-full items-center justify-between text-[16px] font-semibold tracking-[-0.02em]"
             >
               <button
                 type="button"
