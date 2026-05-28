@@ -69,29 +69,31 @@ const INTRO_SCREENS: Record<string, IntroConfig> = {
       "As you move through Everleap, you'll know your progressing because you start seeing things which really related to you. However, to help you along the way, you can earn badges, which guide you and let you know you're moving forward.",
   },
 
-lets_get_started: {
-  eyebrow: "EVERLEAP",
-  title: "OK, let's get you going",
-  body:
-    "I'm going to ask you some questions to get you onboard",
-},
+  lets_get_started: {
+    eyebrow: "EVERLEAP",
+    title: "OK, let's get you going",
+    body:
+      "I'm going to ask you some questions to get you onboard",
+  },
 
   permissions: {
-  eyebrow: "EVERLEAP",
-  title: "We need your permission.",
-  body:
-    "Everleap uses what you share to personalize guidance, ideas, and next steps. We may rely on trusted service providers to help operate Everleap, as described in our Privacy Policy.",
-  bullets: [
-    "We store basic account information.",
-    "We use your responses to personalize your experience.",
-    "We protect your data as described in our Privacy Policy.",
-  ],
-  tone: "compact",
-},
+    eyebrow: "EVERLEAP",
+    title: "We need your permission.",
+    body:
+      "Everleap uses what you share to personalize guidance, ideas, and next steps. We may rely on trusted service providers to help operate Everleap, as described in our Privacy Policy.",
+    bullets: [
+      "We store basic account information.",
+      "We use your responses to personalize your experience.",
+      "We protect your data as described in our Privacy Policy.",
+    ],
+    tone: "compact",
+  },
 
   summary_transition: {
     eyebrow: "EVERLEAP",
-    title: "We're already seeing some signals.",
+    title: "OK — let's get you into Everleap.",
+    body:
+      "We're preparing your first personalized insights now.",
   },
 };
 
@@ -345,141 +347,52 @@ function PermissionApproval({
   );
 }
 
-function SummaryTransition({
-  synthesis,
-  loading,
-}: {
-  synthesis?: OnboardingSynthesis | null;
-  loading?: boolean;
-}) {
-  const loadingMessages = [
-    "Reading your signals",
-    "Looking for patterns",
-    "Connecting your answers",
-    "Mapping possible directions",
-    "Building your first path",
-  ];
-
-  const [messageIndex, setMessageIndex] = React.useState(0);
-
-  React.useEffect(() => {
-    const interval = window.setInterval(() => {
-      setMessageIndex((current) => (current + 1) % loadingMessages.length);
-    }, 2600);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
-  if (loading || !synthesis) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{
-          duration: 0.6,
-          ease: "easeOut",
-        }}
-        className="mt-6 flex min-h-[200px] flex-col justify-center"
-      >
-        <div className="flex items-center gap-2">
-          {[0, 1, 2].map((dot) => (
-            <motion.div
-              key={dot}
-              animate={{
-                opacity: [0.25, 1, 0.25],
-                scale: [0.92, 1.12, 0.92],
-              }}
-              transition={{
-                duration: 1.4,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: dot * 0.18,
-              }}
-              className="h-2 w-2 rounded-full bg-cyan-300"
-            />
-          ))}
-        </div>
-
-        <motion.div
-          key={messageIndex}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.35,
-            ease: "easeOut",
-          }}
-          className="mt-6 text-[22px] font-semibold tracking-[-0.035em] text-white"
-        >
-          {loadingMessages[messageIndex]}
-          <span className="text-white/42">...</span>
-        </motion.div>
-
-        <p className="mt-4 max-w-[360px] text-[15px] leading-6 tracking-[-0.015em] text-white/46">
-          Everleap is comparing your answers against behavioral patterns,
-          motivations, interests, and possible directions.
-        </p>
-      </motion.div>
-    );
-  }
-
+function SummaryTransition() {
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 18,
-        filter: "blur(10px)",
-      }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        filter: "blur(0px)",
-      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{
-        duration: 0.7,
+        duration: 0.6,
         ease: "easeOut",
       }}
-      className="mt-6 flex flex-col gap-6"
+      className="mt-6 flex min-h-[200px] flex-col justify-center"
     >
-      <div>
-        <h2 className="max-w-[360px] text-[24px] font-semibold leading-[1.1] tracking-[-0.04em] text-white">
-          {synthesis.headline}
-        </h2>
-
-        <p className="mt-4 max-w-[370px] text-[16px] leading-7 tracking-[-0.018em] text-white/70">
-          {synthesis.body}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        {synthesis.signals.map((signal, index) => (
+      <div className="flex items-center gap-2">
+        {[0, 1, 2].map((dot) => (
           <motion.div
-            key={signal}
-            initial={{
-              opacity: 0,
-              y: 8,
-            }}
+            key={dot}
             animate={{
-              opacity: 1,
-              y: 0,
+              opacity: [0.25, 1, 0.25],
+              scale: [0.92, 1.12, 0.92],
             }}
             transition={{
-              duration: 0.4,
-              ease: "easeOut",
-              delay: 0.45 + index * 0.12,
+              duration: 1.4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: dot * 0.18,
             }}
-            className="flex gap-4"
-          >
-            <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
-
-            <div className="max-w-[340px] text-[15px] leading-6 tracking-[-0.015em] text-white/82">
-              {signal}
-            </div>
-          </motion.div>
+            className="h-2 w-2 rounded-full bg-cyan-300"
+          />
         ))}
       </div>
 
-      <p className="max-w-[350px] text-[14px] leading-6 tracking-[-0.01em] text-white/50">
-        {synthesis.bridge}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.35,
+          ease: "easeOut",
+        }}
+        className="mt-6 text-[22px] font-semibold tracking-[-0.035em] text-white"
+      >
+        Preparing your first Everleap insights
+        <span className="text-white/42">...</span>
+      </motion.div>
+
+      <p className="mt-4 max-w-[360px] text-[15px] leading-6 tracking-[-0.015em] text-white/46">
+        Your responses are helping Everleap begin understanding your
+        motivations, interests, strengths, and possible directions.
       </p>
     </motion.div>
   );
@@ -534,10 +447,7 @@ export default function IntroScreenRenderer({
         </h1>
 
         {isSummary ? (
-          <SummaryTransition
-            synthesis={synthesis}
-            loading={synthesisLoading}
-          />
+          <SummaryTransition />
         ) : (
           <>
             {node.key === "progress" ? <ProgressIcons /> : null}

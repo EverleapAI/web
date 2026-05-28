@@ -217,7 +217,9 @@ export default function VerifyPage(): React.JSX.Element {
 
         <div className="space-y-2">
           <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
-            Check your email.
+            {pendingIdentifier?.includes("@")
+              ? "Check your email."
+              : "Check your phone."}
           </h1>
 
           <p className="text-[15px] leading-6 text-white/64">

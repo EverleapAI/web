@@ -4,7 +4,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 import Conversation from "./components/Conversation";
 import InputRenderer from "./components/InputRenderer";
@@ -24,15 +23,6 @@ import {
 function getApiBaseUrl() {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7071/api";
 }
-
-type AiProvider = "openai" | "anthropic";
-
-type OnboardingSynthesis = {
-  headline: string;
-  body: string;
-  signals: string[];
-  bridge: string;
-};
 
 function QuestionProgress({ progress }: { progress: number }) {
   const totalDots = 5;
@@ -87,19 +77,6 @@ export default function OnboardingPage() {
   const [flow, setFlow] = React.useState<FlowPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [synthesisLoading, setSynthesisLoading] = React.useState(false);
-  const [synthesis, setSynthesis] =
-    React.useState<OnboardingSynthesis | null>(null);
-  const [synthesisProvider, setSynthesisProvider] =
-    React.useState<AiProvider | null>(null);
-  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(
-    null
-  );
-  const [turnstileError, setTurnstileError] = React.useState<string | null>(
-    null
-  );
-
-  const synthesisRequestedRef = React.useRef(false);
 
   React.useEffect(() => {
     async function load() {
@@ -137,54 +114,6 @@ export default function OnboardingPage() {
     validationMessage,
   } = useOnboardingFlow(flow);
 
-  React.useEffect(() => {
-    async function generateSynthesis() {
-      if (!currentNode) return;
-
-      const isSummaryNode =
-        currentNode.key === "summary_transition" ||
-        currentNode.type === "summary";
-
-      if (!isSummaryNode || !synthesisProvider) return;
-      if (!turnstileToken) return;
-      if (synthesisRequestedRef.current) return;
-
-      synthesisRequestedRef.current = true;
-
-      try {
-        setSynthesisLoading(true);
-
-        const res = await fetch("/api/onboarding/synthesis", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-          body: JSON.stringify({
-            provider: synthesisProvider,
-            flowKey: "onboarding_v1",
-            answers,
-            turnstileToken,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (data?.ok && data?.synthesis) {
-          setSynthesis(data.synthesis);
-        } else {
-          synthesisRequestedRef.current = false;
-        }
-      } catch {
-        synthesisRequestedRef.current = false;
-      } finally {
-        setSynthesisLoading(false);
-      }
-    }
-
-    generateSynthesis();
-  }, [answers, currentNode, synthesisProvider, turnstileToken]);
-
   const progress =
     nodes.length > 0 && currentNode
       ? Math.max(
@@ -219,15 +148,11 @@ export default function OnboardingPage() {
     if (!currentNode) return;
     if (!permissionsSatisfied) return;
 
-    if (currentNode.key === "activities") {
-      setTurnstileToken(null);
-      setTurnstileError(null);
-      setSynthesis(null);
-      setSynthesisProvider("openai");
-      synthesisRequestedRef.current = false;
-    }
+    const isFinalQuestion =
+      currentNode.key === "activities" ||
+      currentNode.type === "summary";
 
-    if (currentNode.type === "summary") {
+    if (isFinalQuestion) {
       handleComplete();
       return;
     }
@@ -250,8 +175,6 @@ export default function OnboardingPage() {
       </div>
     );
   }
-
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   return (
     <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
@@ -281,8 +204,6 @@ export default function OnboardingPage() {
                 <IntroScreenRenderer
                   node={currentNode}
                   answers={answers}
-                  synthesis={synthesis}
-                  synthesisLoading={synthesisLoading}
                   onAnswer={(key: string, value: string | string[]) =>
                     updateAnswer(key, value)
                   }
@@ -300,10 +221,6 @@ export default function OnboardingPage() {
                   updateAnswer(key, value)
                 }
                 onAutoAdvance={(nextAnswers?: Answers) => {
-                  if (currentQuestion?.inputType === "text") {
-                    return;
-                  }
-
                   if (currentQuestion?.inputType === "multi_choice") {
                     return;
                   }
@@ -317,40 +234,6 @@ export default function OnboardingPage() {
           </div>
 
           <div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
-
-            {currentNode.key === "summary_transition" &&
-            turnstileSiteKey ? (
-              <div className="flex justify-center pb-3">
-                <Turnstile
-                  siteKey={turnstileSiteKey}
-                  options={{
-                    appearance: "interaction-only",
-                  }}
-                  onSuccess={(token) => {
-                    setTurnstileError(null);
-                    setTurnstileToken(token);
-                  }}
-                  onError={() => {
-                    setTurnstileToken(null);
-                    setTurnstileError(
-                      "Security verification failed. Please try again."
-                    );
-                    synthesisRequestedRef.current = false;
-                  }}
-                  onExpire={() => {
-                    setTurnstileToken(null);
-                    synthesisRequestedRef.current = false;
-                  }}
-                />
-              </div>
-            ) : null}
-
-            {turnstileError ? (
-              <div className="mx-auto mb-3 max-w-[420px] rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-center text-sm text-red-100">
-                {turnstileError}
-              </div>
-            ) : null}
-
             <NavControls
               canGoBack={canGoBack}
               showContinue={
@@ -359,11 +242,7 @@ export default function OnboardingPage() {
                 isText ||
                 isMultiChoice
               }
-              continueDisabled={
-                !permissionsSatisfied ||
-                (currentNode.key === "summary_transition" &&
-                  synthesisLoading)
-              }
+              continueDisabled={!permissionsSatisfied}
               continueLabel="Continue"
               onBack={goBack}
               onContinue={() => handleNext()}

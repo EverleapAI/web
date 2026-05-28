@@ -311,7 +311,7 @@ export default function InputRenderer({
     return (
       <div className="mt-4 w-full max-w-[400px]">
         <div className="mb-2 text-[11px] leading-4 tracking-[-0.01em] text-white/32">
-          Type your answer or use the microphone to speak.
+          Press Enter to continue or use the microphone to speak.
         </div>
 
         <div className="relative">
@@ -328,13 +328,17 @@ export default function InputRenderer({
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
 
+                const trimmed = draft.trim();
+
+                if (!trimmed) return;
+
                 const nextAnswers = setAnswerLocal(
                   answers,
                   question.key,
-                  draft
+                  trimmed
                 );
 
-                onAnswer(question.key, draft);
+                onAnswer(question.key, trimmed);
                 onAutoAdvance(nextAnswers);
               }
             }}
