@@ -25,10 +25,10 @@ type MeResponse = {
 };
 
 const loadingMessages = [
-  "Looking at the themes across your answers...",
-  "Connecting your interests to possible directions...",
-  "Finding patterns in what motivates you...",
-  "Building your first Everleap insights...",
+  "Tom, I’m looking at the themes across your answers...",
+  "I’m connecting your interests to possible directions...",
+  "I’m noticing what seems to motivate you...",
+  "I’m building your first Everleap insight...",
 ];
 
 export default function RegAuthDonePage(): React.JSX.Element {
@@ -41,6 +41,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
   const [loading, setLoading] = React.useState(true);
   const [zipCode, setZipCode] = React.useState<string | null>(null);
   const [loadingIndex, setLoadingIndex] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
 
   const synthesisRequestedRef = React.useRef(false);
 
@@ -68,11 +69,34 @@ export default function RegAuthDonePage(): React.JSX.Element {
   React.useEffect(() => {
     if (!loading) return;
 
-    const interval = window.setInterval(() => {
-      setLoadingIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 2200);
+    setProgress(0);
 
-    return () => window.clearInterval(interval);
+    const start = window.performance.now();
+    const duration = 10000;
+
+    let frame = 0;
+
+    function tick(now: number) {
+      const elapsed = now - start;
+      const pct = Math.min(92, (elapsed / duration) * 92);
+
+      setProgress(pct);
+
+      const nextIndex = Math.min(
+        loadingMessages.length - 1,
+        Math.floor((elapsed / duration) * loadingMessages.length)
+      );
+
+      setLoadingIndex(nextIndex);
+
+      if (pct < 92 && loading) {
+        frame = window.requestAnimationFrame(tick);
+      }
+    }
+
+    frame = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frame);
   }, [loading]);
 
   React.useEffect(() => {
@@ -112,6 +136,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
         const data = await res.json();
 
         if (data?.ok && data?.synthesis) {
+          setProgress(100);
           setSynthesis(data.synthesis);
 
           try {
@@ -126,16 +151,14 @@ export default function RegAuthDonePage(): React.JSX.Element {
       } catch {
         synthesisRequestedRef.current = false;
       } finally {
-        setLoading(false);
+        window.setTimeout(() => {
+          setLoading(false);
+        }, 350);
       }
     }
 
     generateSynthesis();
   }, [zipCode]);
-
-  const progress = loading
-    ? Math.min(92, 18 + loadingIndex * 22)
-    : 100;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-transparent px-5 pb-12 pt-8 text-white">
@@ -240,8 +263,8 @@ export default function RegAuthDonePage(): React.JSX.Element {
                       width: `${progress}%`,
                     }}
                     transition={{
-                      duration: 0.65,
-                      ease: "easeOut",
+                      duration: 0.2,
+                      ease: "linear",
                     }}
                     className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.65)]"
                   />
@@ -251,8 +274,8 @@ export default function RegAuthDonePage(): React.JSX.Element {
                       left: `${progress}%`,
                     }}
                     transition={{
-                      duration: 0.65,
-                      ease: "easeOut",
+                      duration: 0.2,
+                      ease: "linear",
                     }}
                     className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_22px_rgba(103,232,249,0.95)]"
                   />
@@ -300,44 +323,6 @@ export default function RegAuthDonePage(): React.JSX.Element {
                     </motion.div>
                   </AnimatePresence>
                 </div>
-              </div>
-
-              <motion.div
-                initial={{
-                  opacity: 0,
-                  y: 12,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.55,
-                  delay: 0.65,
-                  ease: "easeOut",
-                }}
-                className="mt-8 max-w-[560px] rounded-[26px] border border-white/10 bg-white/[0.035] px-6 py-6 text-left shadow-[0_0_30px_rgba(0,0,0,0.18)]"
-              >
-                <div className="flex gap-4">
-                  <div className="mt-1 h-5 w-5 shrink-0 rounded-full bg-gradient-to-br from-orange-300 to-pink-500 shadow-[0_0_18px_rgba(251,146,60,0.35)]" />
-
-                  <div className="space-y-5 text-[18px] leading-8 tracking-[-0.022em] text-white/78">
-                    <p>
-                      So far, I&apos;m seeing that you care about making a
-                      positive impact and you come alive around creativity,
-                      performing, and expressing yourself.
-                    </p>
-
-                    <p>
-                      That&apos;s a promising combination. I&apos;m taking a
-                      moment to shape this into something useful.
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <div className="mt-8 text-[15px] leading-6 tracking-[-0.015em] text-white/38">
-                This usually takes less than 10 seconds.
               </div>
             </motion.div>
           ) : null}
