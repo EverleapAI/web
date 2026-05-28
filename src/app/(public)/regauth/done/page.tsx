@@ -72,7 +72,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
     setProgress(0);
 
     const start = window.performance.now();
-    const duration = 10000;
+    const duration = 15000;
 
     let frame = 0;
 
@@ -329,25 +329,6 @@ export default function RegAuthDonePage(): React.JSX.Element {
 
           {synthesis ? (
             <div className="mt-16 text-left">
-              <motion.p
-                initial={{
-                  opacity: 0,
-                  y: 12,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                transition={{
-                  duration: 0.65,
-                  ease: "easeOut",
-                  delay: 0.22,
-                }}
-                className="max-w-[620px] text-[22px] leading-[2.35rem] tracking-[-0.032em] text-white/84"
-              >
-                {synthesis.body}
-              </motion.p>
-
               <div className="mt-12 flex flex-col gap-7">
                 {synthesis.signals.map((signal, index) => (
                   <motion.div
