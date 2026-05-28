@@ -133,11 +133,11 @@ export default function OnboardingPage() {
   const permissionsSatisfied =
     currentNode?.key !== "permissions" || permissionAccepted;
 
-  function handleComplete() {
+  function handleComplete(finalAnswers: Answers) {
     try {
       window.localStorage.setItem(
         "everleap_onboarding_answers",
-        JSON.stringify(answers)
+        JSON.stringify(finalAnswers)
       );
     } catch {}
 
@@ -149,11 +149,15 @@ export default function OnboardingPage() {
     if (!permissionsSatisfied) return;
 
     const isFinalQuestion =
-      currentNode.key === "activities" ||
-      currentNode.type === "summary";
+      currentNode.key === "activities" &&
+      Boolean(
+        Array.isArray(nextAnswers.activities)
+          ? nextAnswers.activities.length
+          : nextAnswers.activities
+      );
 
     if (isFinalQuestion) {
-      handleComplete();
+      handleComplete(nextAnswers);
       return;
     }
 
@@ -242,7 +246,12 @@ export default function OnboardingPage() {
                 isText ||
                 isMultiChoice
               }
-              continueDisabled={!permissionsSatisfied}
+              continueDisabled={
+                !permissionsSatisfied ||
+                (currentNode.key === "activities" &&
+                  (!Array.isArray(answers.activities) ||
+                    answers.activities.length === 0))
+              }
               continueLabel="Continue"
               onBack={goBack}
               onContinue={() => handleNext()}
