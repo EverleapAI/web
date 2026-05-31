@@ -368,56 +368,9 @@ export default function RegAuthDonePage(): React.JSX.Element {
                 {synthesis.body}
               </motion.p>
 
-              {synthesis.signals.length > 0 ? (
-                <div className="mt-10 flex flex-col gap-6">
-                  {synthesis.signals.map((signal, index) => (
-                    <motion.div
-                      key={signal}
-                      initial={{
-                        opacity: 0,
-                        y: 12,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.45,
-                        ease: "easeOut",
-                        delay: 0.38 + index * 0.12,
-                      }}
-                      className="flex gap-5"
-                    >
-                      <div className="mt-[13px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
+              
 
-                      <div className="text-[17px] leading-8 tracking-[-0.02em] text-white/84">
-                        {signal}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : null}
-
-              {synthesis.bridge ? (
-                <motion.p
-                  initial={{
-                    opacity: 0,
-                    y: 10,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    duration: 0.55,
-                    ease: "easeOut",
-                    delay: 0.9,
-                  }}
-                  className="mt-12 text-[15px] leading-7 tracking-[-0.015em] text-white/52"
-                >
-                  {synthesis.bridge}
-                </motion.p>
-              ) : null}
+              
             </motion.div>
           ) : null}
 
