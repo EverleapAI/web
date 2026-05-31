@@ -25,7 +25,7 @@ type MeResponse = {
 };
 
 const loadingMessages = [
-  "Tom, I’m looking at the themes across your answers...",
+  "I’m looking at the themes across your answers...",
   "I’m connecting your interests to possible directions...",
   "I’m noticing what seems to motivate you...",
   "I’m building your first Everleap insight...",
@@ -40,6 +40,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
 
   const [loading, setLoading] = React.useState(true);
   const [zipCode, setZipCode] = React.useState<string | null>(null);
+  const [userLoaded, setUserLoaded] = React.useState(false);
   const [loadingIndex, setLoadingIndex] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
 
@@ -60,7 +61,11 @@ export default function RegAuthDonePage(): React.JSX.Element {
         if (data?.ok && data?.user?.zip_code) {
           setZipCode(data.user.zip_code);
         }
-      } catch {}
+      } catch {
+        // Keep the reveal moving even if zip lookup fails.
+      } finally {
+        setUserLoaded(true);
+      }
     }
 
     loadUser();
@@ -89,7 +94,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
 
       setLoadingIndex(nextIndex);
 
-      if (pct < 92 && loading) {
+      if (pct < 92) {
         frame = window.requestAnimationFrame(tick);
       }
     }
@@ -100,6 +105,8 @@ export default function RegAuthDonePage(): React.JSX.Element {
   }, [loading]);
 
   React.useEffect(() => {
+    if (!userLoaded) return;
+
     async function generateSynthesis() {
       if (synthesisRequestedRef.current) return;
 
@@ -144,7 +151,9 @@ export default function RegAuthDonePage(): React.JSX.Element {
               "everleap_onboarding_synthesis",
               JSON.stringify(data.synthesis)
             );
-          } catch {}
+          } catch {
+            // Non-blocking.
+          }
         } else {
           synthesisRequestedRef.current = false;
         }
@@ -158,11 +167,11 @@ export default function RegAuthDonePage(): React.JSX.Element {
     }
 
     generateSynthesis();
-  }, [zipCode]);
+  }, [userLoaded, zipCode]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-transparent px-5 pb-12 pt-8 text-white">
-      <section className="relative mx-auto flex w-full max-w-[720px] flex-col items-center pt-10 text-center">
+    <main className="relative min-h-screen overflow-hidden bg-transparent px-5 pb-12 pt-6 text-white">
+      <section className="relative mx-auto flex w-full max-w-[720px] flex-col items-center pt-2 text-center">
         <motion.div
           initial={{
             opacity: 0,
@@ -230,7 +239,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
               ease: "easeOut",
               delay: 0.22,
             }}
-            className="mx-auto mt-10 max-w-[620px] text-[3.15rem] font-semibold leading-[0.95] tracking-[-0.078em] text-white sm:text-[3.85rem]"
+            className="mx-auto mt-6 max-w-[620px] text-[3.15rem] font-semibold leading-[0.95] tracking-[-0.078em] text-white sm:text-[3.85rem]"
           >
             We&apos;re already seeing some signals.
           </motion.h1>
@@ -249,12 +258,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
               }}
               className="mt-10 flex flex-col items-center"
             >
-              <p className="mx-auto max-w-[620px] text-[20px] leading-8 tracking-[-0.025em] text-white/72">
-                I&apos;m putting your answers together so I can get a clearer
-                picture of what motivates you and where you might thrive.
-              </p>
-
-              <div className="mt-10 w-full max-w-[620px]">
+              <div className="w-full max-w-[620px]">
                 <div className="relative h-[42px]">
                   <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-white/12" />
 
@@ -327,36 +331,24 @@ export default function RegAuthDonePage(): React.JSX.Element {
             </motion.div>
           ) : null}
 
-          {synthesis ? (
-            <div className="mt-16 text-left">
-              <div className="mt-12 flex flex-col gap-7">
-                {synthesis.signals.map((signal, index) => (
-                  <motion.div
-                    key={signal}
-                    initial={{
-                      opacity: 0,
-                      y: 12,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    transition={{
-                      duration: 0.45,
-                      ease: "easeOut",
-                      delay: 0.42 + index * 0.12,
-                    }}
-                    className="flex gap-5"
-                  >
-                    <div className="mt-[13px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
-
-                    <div className="text-[17px] leading-8 tracking-[-0.02em] text-white/84">
-                      {signal}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
+          {!loading && synthesis ? (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 14,
+                filter: "blur(8px)",
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+              }}
+              transition={{
+                duration: 0.65,
+                ease: "easeOut",
+              }}
+              className="mx-auto mt-12 w-full max-w-[620px] text-left"
+            >
               <motion.p
                 initial={{
                   opacity: 0,
@@ -369,13 +361,64 @@ export default function RegAuthDonePage(): React.JSX.Element {
                 transition={{
                   duration: 0.55,
                   ease: "easeOut",
-                  delay: 0.9,
+                  delay: 0.18,
                 }}
-                className="mt-14 max-w-[560px] text-[15px] leading-7 tracking-[-0.015em] text-white/46"
+                className="text-[22px] leading-9 tracking-[-0.03em] text-white/92"
               >
-                {synthesis.bridge}
+                {synthesis.body}
               </motion.p>
-            </div>
+
+              {synthesis.signals.length > 0 ? (
+                <div className="mt-10 flex flex-col gap-6">
+                  {synthesis.signals.map((signal, index) => (
+                    <motion.div
+                      key={signal}
+                      initial={{
+                        opacity: 0,
+                        y: 12,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        duration: 0.45,
+                        ease: "easeOut",
+                        delay: 0.38 + index * 0.12,
+                      }}
+                      className="flex gap-5"
+                    >
+                      <div className="mt-[13px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.85)]" />
+
+                      <div className="text-[17px] leading-8 tracking-[-0.02em] text-white/84">
+                        {signal}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : null}
+
+              {synthesis.bridge ? (
+                <motion.p
+                  initial={{
+                    opacity: 0,
+                    y: 10,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  transition={{
+                    duration: 0.55,
+                    ease: "easeOut",
+                    delay: 0.9,
+                  }}
+                  className="mt-12 text-[15px] leading-7 tracking-[-0.015em] text-white/52"
+                >
+                  {synthesis.bridge}
+                </motion.p>
+              ) : null}
+            </motion.div>
           ) : null}
 
           {!loading && synthesis ? (
@@ -393,16 +436,8 @@ export default function RegAuthDonePage(): React.JSX.Element {
                 ease: "easeOut",
                 delay: 1,
               }}
-              className="mt-16 flex w-full items-center justify-between text-[16px] font-semibold tracking-[-0.02em]"
+              className="mx-auto mt-14 flex w-full max-w-[620px] justify-end text-[16px] font-semibold tracking-[-0.02em]"
             >
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="text-white/28 transition hover:text-white/50"
-              >
-                Back.
-              </button>
-
               <button
                 type="button"
                 onClick={() => router.replace(returnTo)}
