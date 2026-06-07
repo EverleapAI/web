@@ -1,9 +1,9 @@
-name: Deploy EverleapDevUi to Azure
+name: Deploy EverleapSandboxUi to Azure
 
 on:
   push:
     branches:
-      - main
+      - sandbox
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
       - name: Build app
         run: npm run build
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.SANDBOX_NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
 
       - name: Prepare flat deploy folder
@@ -46,30 +46,18 @@ jobs:
             exit 1
           fi
 
-          echo "Using standalone root: $SERVER_DIR"
-
           rm -rf deploy
           mkdir -p deploy
-
           cp -R "$SERVER_DIR"/. deploy/
-
           rm -rf deploy/.next/static
           mkdir -p deploy/.next
           cp -R .next/static deploy/.next/static
-
           rm -rf deploy/public
           cp -R public deploy/public
-
-          test -f deploy/server.js
-          test -d deploy/.next/static
-          test -d deploy/public
-
-          echo "Deploy folder ready"
-          ls -la deploy
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: EverleapDevUi
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: EverleapSandboxUi
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_SANDBOX }}
           package: deploy
