@@ -46,14 +46,26 @@ jobs:
             exit 1
           fi
 
+          echo "Using standalone root: $SERVER_DIR"
+
           rm -rf deploy
           mkdir -p deploy
+
           cp -R "$SERVER_DIR"/. deploy/
+
           rm -rf deploy/.next/static
           mkdir -p deploy/.next
           cp -R .next/static deploy/.next/static
+
           rm -rf deploy/public
           cp -R public deploy/public
+
+          test -f deploy/server.js
+          test -d deploy/.next/static
+          test -d deploy/public
+
+          echo "Deploy folder ready"
+          ls -la deploy
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
