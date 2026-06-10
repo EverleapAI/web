@@ -1,10 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -13,8 +11,10 @@ import {
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
 import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
+import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
+import { JourneyCard, TodayCard } from "./components/today";
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
@@ -25,26 +25,22 @@ type Category = "motivations" | "strengths" | "skills";
 type Saved = { answer?: string; skipped?: boolean };
 type TodayViewModel = ReturnType<typeof buildTodayViewModel>;
 
+type TodayMicroTask = {
+  id: string;
+  question: string;
+  options: string[];
+  signal_key: string;
+  selected_option?: string | null;
+  selected_option_index?: number | null;
+};
+
 type TodayGuidance = {
   headline: string;
   guidance_text: string;
   next_action_label: string;
   next_action_route: string;
+  tiny_task?: TodayMicroTask | null;
 };
-
-type JourneyBadge = {
-  id: string;
-  label: string;
-  src: string;
-};
-
-const JOURNEY_BADGES: JourneyBadge[] = [
-  { id: "onboard", label: "Onboard", src: "/onboarding/icons/badges/1_onboard.png" },
-  { id: "story", label: "Story", src: "/onboarding/icons/badges/2_story.png" },
-  { id: "reflection", label: "Reflection", src: "/onboarding/icons/badges/3_reflection.png" },
-  { id: "explore", label: "Explore", src: "/onboarding/icons/badges/4_explore.png" },
-  { id: "takeoff", label: "Takeoff", src: "/onboarding/icons/badges/5_takeoff.png" },
-];
 
 function pagePadding() {
   return "pt-2 pb-5";
@@ -104,195 +100,6 @@ function getNextUnansweredTarget(): { cat: Category; questionId: string } {
   }
 
   return { cat: "motivations", questionId: "motivations_1" };
-}
-
-function getEarnedBadgeCount(vm: TodayViewModel | null): number {
-  const progress = vm?.progress;
-  if (!progress) return 1;
-
-  const totalAnswered =
-    (progress.motivationsAnswered ?? 0) +
-    (progress.strengthsAnswered ?? 0) +
-    (progress.skillsAnswered ?? 0);
-
-  const allSignalsComplete =
-    (progress.motivationsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
-    (progress.strengthsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
-    (progress.skillsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT;
-
-  if (allSignalsComplete) return 5;
-  if (totalAnswered >= 10) return 4;
-  if (totalAnswered >= 5) return 3;
-  if (totalAnswered > 0) return 2;
-
-  return 1;
-}
-
-function TodayCard(props: {
-  headline?: string | null;
-  guidanceText?: string | null;
-  ctaLabel: string;
-  onPrimary: () => void;
-}) {
-  return (
-    <div className="relative">
-      <div className="mb-5 flex items-center gap-2">
-        <span className="flex h-4 w-4 items-center justify-center text-white/42">
-          <Sparkles className="h-3.5 w-3.5" />
-        </span>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/54">
-          Today
-        </div>
-      </div>
-
-    <h1 className="text-[20px] font-semibold leading-[1.2] tracking-[-0.025em] text-white">
-  {props.headline ?? "Let's begin."}
-</h1>
-
-      <p className="mt-5 text-[15px] leading-7 tracking-[-0.015em] text-white/84">
-        {props.guidanceText ??
-          "Today let’s keep building your story. I’ll ask a few more questions so Everleap can better understand your motivations, strengths, and skills."}
-      </p>
-
-      <div className="mt-6 flex justify-end">
-        <button
-          type="button"
-          onClick={props.onPrimary}
-          className="group inline-flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em] text-cyan-300 transition hover:text-cyan-100"
-        >
-          <span>{props.ctaLabel === "Start My Story" ? "Begin Story" : props.ctaLabel}</span>
-          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function DiscoveryCard(props: { onPrimary: () => void }) {
-  return (
-    <div>
-      <div className="mb-4 flex items-center gap-2">
-        <span className="text-[18px]">✨</span>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/54">
-          Your Story
-        </div>
-      </div>
-      <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-white">
-        Start building your Story.
-      </h2>
-      <p className="mt-4 text-[15px] leading-7 tracking-[-0.015em] text-white/80">
-        Your Story is where Everleap starts turning your answers into signals,
-        insights, and new possibilities. You can answer a little at a time and watch
-        the picture come into focus.
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
-          What starts opening up
-        </div>
-
-        <div className="mt-3 space-y-2 text-[14px] leading-6 text-white/82">
-          <div>• Story progress</div>
-          <div>• Early signals</div>
-          <div>• Personalized insights</div>
-        </div>
-      </div>
-
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={props.onPrimary}
-          className="group inline-flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em] text-cyan-300 transition hover:text-cyan-100"
-        >
-          <span>Start My Story</span>
-          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function JourneyCard(props: { earnedCount: number }) {
-  return (
-    <div>
-      <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-white">
-        Your Journey
-      </h2>
-
-      <div className="mt-5 grid grid-cols-5 gap-2">
-        {JOURNEY_BADGES.map((badge, index) => {
-          const earned = index < props.earnedCount;
-          const current = index === props.earnedCount;
-
-          return (
-            <div
-              key={badge.id}
-              className="flex flex-col items-center gap-2"
-              title={badge.label}
-            >
-              <div
-                className={[
-                  "relative flex h-[50px] w-[50px] items-center justify-center rounded-full border transition",
-                  earned
-                    ? "border-amber-200/70 bg-white/[0.06] shadow-[0_0_24px_rgba(251,191,36,0.16)]"
-                    : current
-                      ? "border-cyan-200/55 bg-cyan-200/[0.05]"
-                      : "border-white/18 bg-white/[0.025] opacity-55",
-                ].join(" ")}
-              >
-                <Image
-                  src={badge.src}
-                  alt={`${badge.label} badge`}
-                  width={36}
-                  height={36}
-                  className={[
-                    "h-9 w-9 object-contain",
-                    earned ? "opacity-100" : "opacity-45 grayscale",
-                  ].join(" ")}
-                />
-
-                {earned ? (
-                  <div className="absolute -right-0.5 -top-0.5 rounded-full bg-slate-950 text-amber-200">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                ) : null}
-              </div>
-
-              <div
-                className={[
-                  "text-center text-[10px] font-medium leading-tight",
-                  earned
-                    ? "text-white/82"
-                    : current
-                      ? "text-cyan-200"
-                      : "text-white/38",
-                ].join(" ")}
-              >
-                {index === 0
-                  ? "Onboard"
-                  : index === 1
-                    ? "Your Story"
-                    : index === 2
-                      ? "First Insight"
-                      : index === 3
-                        ? "Explore"
-                        : "Action"}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/75">
-          Next unlock
-        </div>
-        <div className="mt-1 text-[14px] font-semibold tracking-[-0.015em] text-white">
-          Begin Your Story
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function MainHomePage() {
@@ -418,8 +225,6 @@ export default function MainHomePage() {
   const ctaLabel = todayGuidance?.next_action_label ?? fallbackCtaLabel;
   const ctaRoute = todayGuidance?.next_action_route ?? null;
 
-  const earnedBadgeCount = getEarnedBadgeCount(vm);
-
   function handlePrimary() {
     if (!mounted) return;
 
@@ -469,31 +274,36 @@ export default function MainHomePage() {
 
             <section className={sectionSpacing()}>
               <SectionCard tone="hero" className="px-4 py-5">
-                <JourneyCard earnedCount={earnedBadgeCount} />
+                <JourneyCard />
               </SectionCard>
             </section>
 
-            <section className={sectionSpacing()}>
-              <SectionCard tone="teal" compact>
+            <section className="mt-5 px-4">
+              {todayGuidance?.tiny_task ? (
+                <TodayTinyTaskCard
+                  dark={dark}
+                  task={todayGuidance.tiny_task}
+                />
+              ) : (
                 <TinyTaskCard
                   dark={dark}
                   useLocal={mounted}
                   definition={nextSteps.tinyTask}
                 />
-              </SectionCard>
+              )}
             </section>
-<section className={sectionSpacing()}>
-  <div className="flex justify-center">
-    <button
-      type="button"
-      onClick={() => router.push("/main/ai-lab")}
-      className="text-[12px] font-medium tracking-[-0.01em] text-white/38 transition hover:text-cyan-200"
-    >
-      AI Lab
-    </button>
-  </div>
-</section>
-            <div className="h-4" />
+
+            <div className="mt-5 flex justify-center">
+  <button
+    type="button"
+    onClick={() => router.push("/main/ai-lab")}
+    className="text-[12px] font-medium text-white/34 transition hover:text-cyan-200"
+  >
+    Open AI Lab
+  </button>
+</div>
+
+<div className="h-4" />
           </div>
         </main>
       </div>
