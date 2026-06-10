@@ -482,7 +482,17 @@ export default function MainHomePage() {
                 />
               </SectionCard>
             </section>
-
+<section className={sectionSpacing()}>
+  <div className="flex justify-center">
+    <button
+      type="button"
+      onClick={() => router.push("/main/ai-lab")}
+      className="text-[12px] font-medium tracking-[-0.01em] text-white/38 transition hover:text-cyan-200"
+    >
+      AI Lab
+    </button>
+  </div>
+</section>
             <div className="h-4" />
           </div>
         </main>
