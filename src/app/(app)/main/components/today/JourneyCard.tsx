@@ -35,7 +35,7 @@ export function JourneyCard() {
         Your Journey
       </h2>
 
-      <div className="mt-7 grid grid-cols-5 gap-2">
+      <div className="mt-7 grid grid-cols-5 gap-1 sm:gap-2">
         {JOURNEY_BADGES.map((badge, index) => {
           const selected = badge.id === activeBadgeId;
           const status = getBadgeStatus(index);
@@ -60,7 +60,9 @@ export function JourneyCard() {
                 <div
                   className={[
                     "relative flex items-center justify-center rounded-full transition",
-                    selected ? "h-[78px] w-[78px]" : "h-[70px] w-[70px]",
+                    selected
+                      ? "h-[64px] w-[64px] sm:h-[78px] sm:w-[78px]"
+                      : "h-[58px] w-[58px] sm:h-[70px] sm:w-[70px]",
                     earned
                       ? "shadow-[0_0_28px_rgba(251,191,36,0.2)]"
                       : selected
@@ -84,7 +86,9 @@ export function JourneyCard() {
                   <div
                     className={[
                       "relative flex items-center justify-center rounded-full border bg-white/[0.035]",
-                      selected ? "h-[63px] w-[63px]" : "h-[56px] w-[56px]",
+                      selected
+                        ? "h-[52px] w-[52px] sm:h-[63px] sm:w-[63px]"
+                        : "h-[46px] w-[46px] sm:h-[56px] sm:w-[56px]",
                       earned
                         ? "border-amber-200/55"
                         : selected
@@ -98,7 +102,9 @@ export function JourneyCard() {
                       width={30}
                       height={30}
                       className={[
-                        selected ? "h-[32px] w-[32px]" : "h-[28px] w-[28px]",
+                        selected
+                          ? "h-[27px] w-[27px] sm:h-[32px] sm:w-[32px]"
+                          : "h-[24px] w-[24px] sm:h-[28px] sm:w-[28px]",
                         "object-contain transition",
                         earned || selected
                           ? "opacity-100"
