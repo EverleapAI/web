@@ -133,17 +133,16 @@ export default function OnboardingPage() {
   const permissionsSatisfied =
     currentNode?.key !== "permissions" || permissionAccepted;
 
-  function handleComplete(finalAnswers: Answers) {
-    try {
-      window.localStorage.setItem(
-        "everleap_onboarding_answers",
-        JSON.stringify(finalAnswers)
-      );
-    } catch {}
+function handleComplete(finalAnswers: Answers) {
+  try {
+    window.localStorage.setItem(
+      "everleap_onboarding_answers",
+      JSON.stringify(finalAnswers)
+    );
+  } catch {}
 
-    router.push("/regauth");
-  }
-
+  router.push("/regauth");
+}
   function handleNext(nextAnswers = answers) {
     if (!currentNode) return;
     if (!permissionsSatisfied) return;

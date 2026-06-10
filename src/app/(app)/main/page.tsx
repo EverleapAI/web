@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle2, ChevronRight, Sparkles } from "lucide-react";
 
 import {
   isDarkTheme,
@@ -10,10 +12,7 @@ import {
 } from "@/theme/everleapVisuals";
 
 import { buildTodayViewModel } from "./app/buildTodayViewModel";
-import { TodayIntro, type RecommendedNext } from "./components/TodayIntro";
-import { SignalsCard } from "./components/SignalsCard";
 import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
-import { ActionCard } from "./components/nextSteps/ActionCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 
@@ -22,9 +21,30 @@ const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 const ONBOARDING_STORAGE_KEY = "everleap_onboarding_answers";
 const ONBOARDING_SNAPSHOT_KEY = "everleapOnboarding_v4_convo_min";
 
-type Category = RecommendedNext;
+type Category = "motivations" | "strengths" | "skills";
 type Saved = { answer?: string; skipped?: boolean };
 type TodayViewModel = ReturnType<typeof buildTodayViewModel>;
+
+type TodayGuidance = {
+  headline: string;
+  guidance_text: string;
+  next_action_label: string;
+  next_action_route: string;
+};
+
+type JourneyBadge = {
+  id: string;
+  label: string;
+  src: string;
+};
+
+const JOURNEY_BADGES: JourneyBadge[] = [
+  { id: "onboard", label: "Onboard", src: "/onboarding/icons/badges/1_onboard.png" },
+  { id: "story", label: "Story", src: "/onboarding/icons/badges/2_story.png" },
+  { id: "reflection", label: "Reflection", src: "/onboarding/icons/badges/3_reflection.png" },
+  { id: "explore", label: "Explore", src: "/onboarding/icons/badges/4_explore.png" },
+  { id: "takeoff", label: "Takeoff", src: "/onboarding/icons/badges/5_takeoff.png" },
+];
 
 function pagePadding() {
   return "pt-2 pb-5";
@@ -69,10 +89,7 @@ function isAnswered(saved: Saved | undefined): boolean {
   return typeof saved.answer === "string" && saved.answer.trim().length > 0;
 }
 
-function getNextUnansweredTarget(): {
-  cat: Category;
-  questionId: string;
-} {
+function getNextUnansweredTarget(): { cat: Category; questionId: string } {
   const saved = loadSaved();
   const order: Category[] = ["motivations", "strengths", "skills"];
 
@@ -89,6 +106,195 @@ function getNextUnansweredTarget(): {
   return { cat: "motivations", questionId: "motivations_1" };
 }
 
+function getEarnedBadgeCount(vm: TodayViewModel | null): number {
+  const progress = vm?.progress;
+  if (!progress) return 1;
+
+  const totalAnswered =
+    (progress.motivationsAnswered ?? 0) +
+    (progress.strengthsAnswered ?? 0) +
+    (progress.skillsAnswered ?? 0);
+
+  const allSignalsComplete =
+    (progress.motivationsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
+    (progress.strengthsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
+    (progress.skillsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT;
+
+  if (allSignalsComplete) return 5;
+  if (totalAnswered >= 10) return 4;
+  if (totalAnswered >= 5) return 3;
+  if (totalAnswered > 0) return 2;
+
+  return 1;
+}
+
+function TodayCard(props: {
+  headline?: string | null;
+  guidanceText?: string | null;
+  ctaLabel: string;
+  onPrimary: () => void;
+}) {
+  return (
+    <div className="relative">
+      <div className="mb-5 flex items-center gap-2">
+        <span className="flex h-4 w-4 items-center justify-center text-white/42">
+          <Sparkles className="h-3.5 w-3.5" />
+        </span>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/54">
+          Today
+        </div>
+      </div>
+
+    <h1 className="text-[20px] font-semibold leading-[1.2] tracking-[-0.025em] text-white">
+  {props.headline ?? "Let's begin."}
+</h1>
+
+      <p className="mt-5 text-[15px] leading-7 tracking-[-0.015em] text-white/84">
+        {props.guidanceText ??
+          "Today let’s keep building your story. I’ll ask a few more questions so Everleap can better understand your motivations, strengths, and skills."}
+      </p>
+
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={props.onPrimary}
+          className="group inline-flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em] text-cyan-300 transition hover:text-cyan-100"
+        >
+          <span>{props.ctaLabel === "Start My Story" ? "Begin Story" : props.ctaLabel}</span>
+          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DiscoveryCard(props: { onPrimary: () => void }) {
+  return (
+    <div>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-[18px]">✨</span>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/54">
+          Your Story
+        </div>
+      </div>
+      <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-white">
+        Start building your Story.
+      </h2>
+      <p className="mt-4 text-[15px] leading-7 tracking-[-0.015em] text-white/80">
+        Your Story is where Everleap starts turning your answers into signals,
+        insights, and new possibilities. You can answer a little at a time and watch
+        the picture come into focus.
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+        <div className="text-[12px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
+          What starts opening up
+        </div>
+
+        <div className="mt-3 space-y-2 text-[14px] leading-6 text-white/82">
+          <div>• Story progress</div>
+          <div>• Early signals</div>
+          <div>• Personalized insights</div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={props.onPrimary}
+          className="group inline-flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em] text-cyan-300 transition hover:text-cyan-100"
+        >
+          <span>Start My Story</span>
+          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function JourneyCard(props: { earnedCount: number }) {
+  return (
+    <div>
+      <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-white">
+        Your Journey
+      </h2>
+
+      <div className="mt-5 grid grid-cols-5 gap-2">
+        {JOURNEY_BADGES.map((badge, index) => {
+          const earned = index < props.earnedCount;
+          const current = index === props.earnedCount;
+
+          return (
+            <div
+              key={badge.id}
+              className="flex flex-col items-center gap-2"
+              title={badge.label}
+            >
+              <div
+                className={[
+                  "relative flex h-[50px] w-[50px] items-center justify-center rounded-full border transition",
+                  earned
+                    ? "border-amber-200/70 bg-white/[0.06] shadow-[0_0_24px_rgba(251,191,36,0.16)]"
+                    : current
+                      ? "border-cyan-200/55 bg-cyan-200/[0.05]"
+                      : "border-white/18 bg-white/[0.025] opacity-55",
+                ].join(" ")}
+              >
+                <Image
+                  src={badge.src}
+                  alt={`${badge.label} badge`}
+                  width={36}
+                  height={36}
+                  className={[
+                    "h-9 w-9 object-contain",
+                    earned ? "opacity-100" : "opacity-45 grayscale",
+                  ].join(" ")}
+                />
+
+                {earned ? (
+                  <div className="absolute -right-0.5 -top-0.5 rounded-full bg-slate-950 text-amber-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                ) : null}
+              </div>
+
+              <div
+                className={[
+                  "text-center text-[10px] font-medium leading-tight",
+                  earned
+                    ? "text-white/82"
+                    : current
+                      ? "text-cyan-200"
+                      : "text-white/38",
+                ].join(" ")}
+              >
+                {index === 0
+                  ? "Onboard"
+                  : index === 1
+                    ? "Your Story"
+                    : index === 2
+                      ? "First Insight"
+                      : index === 3
+                        ? "Explore"
+                        : "Action"}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/75">
+          Next unlock
+        </div>
+        <div className="mt-1 text-[14px] font-semibold tracking-[-0.015em] text-white">
+          Begin Your Story
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MainHomePage() {
   const router = useRouter();
 
@@ -96,6 +302,8 @@ export default function MainHomePage() {
   const dark = isDarkTheme(themeId);
 
   const [vm, setVm] = React.useState<TodayViewModel | null>(null);
+  const [todayGuidance, setTodayGuidance] =
+    React.useState<TodayGuidance | null>(null);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
@@ -121,7 +329,7 @@ export default function MainHomePage() {
           localStorage.removeItem(ONBOARDING_STORAGE_KEY);
         }
       } catch {
-        // retry next load
+        // Retry next load.
       }
     }
 
@@ -133,6 +341,20 @@ export default function MainHomePage() {
       try {
         const res = await fetch("/api/regauth/me", { cache: "no-store" });
         const data = await res.json();
+
+        try {
+          const guidanceRes = await fetch("/api/guidance/today", {
+            cache: "no-store",
+          });
+
+          const guidanceData = await guidanceRes.json();
+
+          if (guidanceData?.ok && guidanceData?.guidance) {
+            setTodayGuidance(guidanceData.guidance);
+          }
+        } catch {
+          // Fall back to existing Today content.
+        }
 
         if (data?.ok) {
           try {
@@ -150,7 +372,7 @@ export default function MainHomePage() {
               );
             }
           } catch {
-            // ignore local snapshot bridge failures
+            // Ignore local snapshot bridge failures.
           }
         }
 
@@ -167,31 +389,6 @@ export default function MainHomePage() {
     load();
   }, []);
 
-  const progress = vm?.progress ?? {
-    motivationsAnswered: 0,
-    strengthsAnswered: 0,
-    skillsAnswered: 0,
-    motivationsTotal: SIGNAL_COMPLETE_COUNT,
-    strengthsTotal: SIGNAL_COMPLETE_COUNT,
-    skillsTotal: SIGNAL_COMPLETE_COUNT,
-  };
-
-  const motAnswered = progress.motivationsAnswered ?? 0;
-  const strAnswered = progress.strengthsAnswered ?? 0;
-  const sklAnswered = progress.skillsAnswered ?? 0;
-
-  const isZeroState =
-    mounted &&
-    motAnswered === 0 &&
-    strAnswered === 0 &&
-    sklAnswered === 0;
-
-  const allSignalsComplete =
-    mounted &&
-    motAnswered >= SIGNAL_COMPLETE_COUNT &&
-    strAnswered >= SIGNAL_COMPLETE_COUNT &&
-    sklAnswered >= SIGNAL_COMPLETE_COUNT;
-
   const nextTarget = React.useMemo(
     () =>
       mounted
@@ -200,42 +397,36 @@ export default function MainHomePage() {
     [mounted]
   );
 
-  const recommendedNext: RecommendedNext = nextTarget.cat;
-  const nextCategoryLabel = labelForCategory(recommendedNext);
+  const nextCategoryLabel = labelForCategory(nextTarget.cat);
 
   const nextSteps = React.useMemo(
     () => getNextStepsDefinition("main.home.need_motivations"),
     []
   );
 
-  const introTitle = React.useMemo(() => {
-    if (isZeroState) return "Let’s start building your direction";
-    if (allSignalsComplete) return "Your direction is starting to take shape";
-    return "We need a bit more to go on";
-  }, [isZeroState, allSignalsComplete]);
+  const progress = vm?.progress;
+  const allSignalsComplete =
+    mounted &&
+    (progress?.motivationsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
+    (progress?.strengthsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
+    (progress?.skillsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT;
 
-  const introBody = React.useMemo(() => {
-    if (isZeroState) {
-      return "You don’t need a clear answer yet — that’s not how this works. Everleap uses a science-based system to turn small signals into clear, usable direction.";
-    }
+  const fallbackCtaLabel = allSignalsComplete
+    ? "Open Insights"
+    : `Continue to ${nextCategoryLabel}`;
 
-    if (allSignalsComplete) {
-      return "You’ve now given Everleap enough signal across motivations, strengths, and skills to start turning those patterns into clearer ideas about what may fit.";
-    }
+  const ctaLabel = todayGuidance?.next_action_label ?? fallbackCtaLabel;
+  const ctaRoute = todayGuidance?.next_action_route ?? null;
 
-    return `You still have a few questions to answer before Everleap can give you ideas that actually fit. Continue ${nextCategoryLabel}.`;
-  }, [isZeroState, allSignalsComplete, nextCategoryLabel]);
-
-  const ctaLabel = !mounted
-    ? ""
-    : isZeroState
-      ? "Start with a few questions"
-      : allSignalsComplete
-        ? "Open Insights"
-        : `Continue to ${nextCategoryLabel}`;
+  const earnedBadgeCount = getEarnedBadgeCount(vm);
 
   function handlePrimary() {
     if (!mounted) return;
+
+    if (ctaRoute) {
+      router.push(ctaRoute);
+      return;
+    }
 
     if (allSignalsComplete) {
       router.push("/main/insights");
@@ -266,26 +457,19 @@ export default function MainHomePage() {
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
             <section>
-              <SectionCard tone="hero" className="px-3 py-4">
-                <TodayIntro
-                  title={introTitle}
-                  dark={dark}
-                  motionEnabled={motionEnabled}
-                  isTransitioning={transitioning}
-                  body={introBody}
-                  primaryCtaLabel={ctaLabel}
+              <SectionCard tone="hero" className="px-4 py-5">
+                <TodayCard
+                  headline={todayGuidance?.headline}
+                  guidanceText={todayGuidance?.guidance_text}
+                  ctaLabel={ctaLabel}
                   onPrimary={handlePrimary}
                 />
               </SectionCard>
             </section>
 
             <section className={sectionSpacing()}>
-              <SectionCard tone="plum" compact>
-                <SignalsCard
-                  dark={dark}
-                  progress={progress}
-                  nextKey={recommendedNext}
-                />
+              <SectionCard tone="hero" className="px-4 py-5">
+                <JourneyCard earnedCount={earnedBadgeCount} />
               </SectionCard>
             </section>
 
@@ -299,35 +483,6 @@ export default function MainHomePage() {
               </SectionCard>
             </section>
 
-            <section className={sectionSpacing()}>
-              <SectionCard tone="amber" compact>
-                <ActionCard
-                  dark={dark}
-                  useLocal={mounted}
-                  definition={nextSteps.action}
-                />
-              </SectionCard>
-            </section>
-<section className={sectionSpacing()}>
-  <button
-    type="button"
-    onClick={() => {
-      const code = window.prompt("Enter AI Lab access code");
-
-      if (code === "101010") {
-        router.push("/main/ai-lab");
-        return;
-      }
-
-      if (code !== null) {
-        window.alert("Invalid code");
-      }
-    }}
-    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.18em] text-white/35 transition hover:border-cyan-300/30 hover:text-cyan-200"
-  >
-    Internal AI Lab
-  </button>
-</section>
             <div className="h-4" />
           </div>
         </main>

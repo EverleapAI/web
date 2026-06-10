@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Compass, ListChecks, User } from "lucide-react";
+import { Home, Lightbulb, Compass, ListTodo, User } from "lucide-react";
 
 import {
   DEFAULT_THEME_ID,
@@ -14,26 +14,14 @@ import {
   type GradientLevel,
 } from "@/theme/everleapVisuals";
 
-/* ============================================================
-   Types
-   ============================================================ */
-
 type NavKey = "home" | "insights" | "explore" | "actions" | "profile";
 
 type BottomNavProps = {
   activeKey?: NavKey | string;
-
-  /** Optional: lets the footer match the page's theme */
   themeId?: SpotlightThemeId;
   gradientLevel?: GradientLevel;
-
-  /**
-   * Legacy props kept for compatibility.
-   * Both are now no-ops.
-   */
   showGuideFab?: boolean;
   showMoreButton?: boolean;
-
   className?: string;
 };
 
@@ -44,10 +32,6 @@ type NavItem = {
   Icon: React.ComponentType<{ className?: string }>;
 };
 
-/* ============================================================
-   Helpers
-   ============================================================ */
-
 function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname === "/main" || pathname.startsWith("/main/home")) return "home";
   if (pathname.startsWith("/main/insights")) return "insights";
@@ -55,22 +39,35 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/actions")) return "actions";
   if (pathname.startsWith("/main/profile")) return "profile";
 
+  if (pathname.startsWith("/main/questions")) return "insights";
+  if (pathname.startsWith("/main/story")) return "insights";
   if (pathname.startsWith("/main/guide")) return "explore";
+
   return undefined;
 }
 
 function normalizeActiveKey(key?: string): NavKey | undefined {
   if (!key) return undefined;
-  if (key === "guide") return "explore";
-  if (key === "carousel") return "insights";
+
   if (key === "main") return "home";
   if (key === "spotlight") return "home";
-
   if (key === "home") return "home";
+  if (key === "today") return "home";
+
   if (key === "insights") return "insights";
+  if (key === "story") return "insights";
+  if (key === "questions") return "insights";
+  if (key === "reflection") return "insights";
+  if (key === "carousel") return "insights";
+
   if (key === "explore") return "explore";
+  if (key === "guide") return "explore";
+
   if (key === "actions") return "actions";
+  if (key === "takeoff") return "actions";
+
   if (key === "profile") return "profile";
+  if (key === "me") return "profile";
 
   return undefined;
 }
@@ -79,10 +76,6 @@ function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
 }
-
-/* ============================================================
-   Component
-   ============================================================ */
 
 export function BottomNav({
   activeKey,
@@ -99,7 +92,8 @@ export function BottomNav({
   const inMainShell = pathname.startsWith("/main");
 
   const resolvedActiveKey =
-    normalizeActiveKey(activeKey as string | undefined) ?? deriveActiveKey(pathname);
+    normalizeActiveKey(activeKey as string | undefined) ??
+    deriveActiveKey(pathname);
 
   const theme = getThemeById(themeId);
   const grad = getGradientConfig(gradientLevel);
@@ -108,10 +102,30 @@ export function BottomNav({
 
   const items: NavItem[] = [
     { key: "home", href: "/main", label: "Today", Icon: Home },
-    { key: "insights", href: "/main/insights", label: "Insights", Icon: Sparkles },
-    { key: "explore", href: "/main/explore", label: "Explore", Icon: Compass },
-    { key: "actions", href: "/main/actions", label: "Actions", Icon: ListChecks },
-    { key: "profile", href: "/main/profile", label: "Me", Icon: User },
+    {
+      key: "insights",
+      href: "/main/insights",
+      label: "Insights",
+      Icon: Lightbulb,
+    },
+    {
+      key: "explore",
+      href: "/main/explore",
+      label: "Explore",
+      Icon: Compass,
+    },
+    {
+      key: "actions",
+      href: "/main/actions",
+      label: "Actions",
+      Icon: ListTodo,
+    },
+    {
+      key: "profile",
+      href: "/main/profile",
+      label: "Me",
+      Icon: User,
+    },
   ];
 
   const [mounted, setMounted] = React.useState(false);
@@ -162,7 +176,7 @@ export function BottomNav({
           aria-hidden
         />
 
-        {ambient > 0 && (
+        {ambient > 0 ? (
           <>
             <div
               aria-hidden="true"
@@ -181,7 +195,7 @@ export function BottomNav({
               style={{ opacity: ambient * 0.22 }}
             />
           </>
-        )}
+        ) : null}
 
         <div className="mx-auto flex w-full items-center justify-between px-2 py-2">
           {items.map(({ key, href, label, Icon }) => {
@@ -199,8 +213,18 @@ export function BottomNav({
                 ].join(" ")}
                 aria-current={active ? "page" : undefined}
               >
-                <Icon className={active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"} />
-                <span className={active ? "text-[11px] text-white" : "text-[11px] text-white/55"}>
+                <Icon
+                  className={
+                    active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"
+                  }
+                />
+                <span
+                  className={
+                    active
+                      ? "text-[11px] text-white"
+                      : "text-[11px] text-white/55"
+                  }
+                >
                   {label}
                 </span>
               </Link>
