@@ -2,157 +2,477 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Dumbbell,
-  Lightbulb,
-  Mic,
-  PenTool,
-  Route,
-} from "lucide-react";
 
-type StorySection = {
-  key: "motivations" | "strengths" | "skills";
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accentClass: string;
+import OnboardingVisual from "@/app/onboarding/components/visuals/OnboardingVisual";
+
+type StoryQuestion = {
+  id: string;
+  family?: string | null;
+  goal?: string | null;
+  question_text?: string | null;
+  text?: string | null;
+  question?: string | null;
+  prompt?: string | null;
+  label?: string | null;
+  input_type?: string | null;
+  answer_type_raw?: string | null;
 };
 
-const STORY_SECTIONS: StorySection[] = [
-  {
-    key: "motivations",
-    title: "Motivations",
-    icon: Dumbbell,
-    accentClass: "border-lime-300/80 bg-lime-300/10 text-lime-100",
-  },
-  {
-    key: "strengths",
-    title: "Strengths",
-    icon: Lightbulb,
-    accentClass: "border-sky-400/80 bg-sky-400/10 text-sky-100",
-  },
-  {
-    key: "skills",
-    title: "Skills",
-    icon: PenTool,
-    accentClass: "border-fuchsia-300/70 bg-fuchsia-300/10 text-fuchsia-100",
-  },
-];
+type StoryNextResponse = {
+  ok: boolean;
+  done: boolean;
+  progress: {
+    answered: number;
+    total: number;
+    current: number;
+    category: string | null;
+    categoryLabel: string;
+    categoryAnswered: number;
+    categoryTotal: number;
+    categoryCurrent: number;
+  };
+  question: StoryQuestion | null;
+};
 
-export default function StoryPage(): React.JSX.Element {
-  const router = useRouter();
-  const [activeKey, setActiveKey] =
-    React.useState<StorySection["key"]>("motivations");
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const activeSection =
-    STORY_SECTIONS.find((section) => section.key === activeKey) ??
-    STORY_SECTIONS[0];
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_BASE_URL is not set");
 
-  function openQuestions(section = activeSection) {
-    router.push(
-      `/main/questions?cat=${section.key}&questionId=${section.key}_1&returnTo=/main/story`
-    );
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API ${path} failed: ${res.status} ${text}`);
   }
 
-  return (
-    <main className="min-h-[100svh] px-5 pb-28 pt-5 text-white">
-      <div className="mx-auto w-full max-w-[520px]">
-        <h1 className="text-[18px] font-semibold tracking-[-0.02em] text-white/92">
-          Discussion
-        </h1>
+  return res.json() as Promise<T>;
+}
 
-        <div className="mt-10 flex justify-center gap-3">
-          {STORY_SECTIONS.map((section) => {
-            const Icon = section.icon;
-            const active = section.key === activeKey;
+function getQuestionText(question: StoryQuestion): string {
+  return (
+    question.question_text ??
+    question.text ??
+    question.question ??
+    question.prompt ??
+    question.label ??
+    ""
+  );
+}
+
+function parseQuestion(question: StoryQuestion): {
+  title: string;
+  helper: string | null;
+  choices: string[];
+} {
+  const raw = getQuestionText(question);
+  const lines = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const isChoice =
+    question.input_type?.includes("select") ||
+    question.answer_type_raw?.toLowerCase().includes("choice");
+
+  if (isChoice && lines.length >= 3) {
+    return {
+      title: lines[0],
+      helper: lines[1] ?? null,
+      choices: lines.slice(2),
+    };
+  }
+
+  return {
+    title: raw,
+    helper: null,
+    choices: [],
+  };
+}
+
+function StoryProgress({
+  current,
+  total,
+}: {
+  current: number;
+  total: number;
+}) {
+  const totalDots = 5;
+  const progress = total > 0 ? current / total : 0;
+  const activeDots = Math.max(
+    1,
+    Math.min(totalDots, Math.ceil(progress * totalDots))
+  );
+
+  return (
+    <div className="flex w-full flex-col items-center">
+      <div className="flex items-center gap-2">
+        <div className="text-[13px] font-medium tracking-[-0.01em] text-white">
+          Story
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalDots }).map((_, index) => {
+            const active = index < activeDots;
 
             return (
-              <button
-                key={section.key}
-                type="button"
-                onClick={() => setActiveKey(section.key)}
+              <div
+                key={index}
                 className={[
-                  "flex h-[74px] w-[108px] flex-col items-center justify-center rounded-xl border text-center transition",
+                  "h-[7px] w-[7px] rounded-full transition-all duration-500",
                   active
-                    ? section.accentClass +
-                      " shadow-[0_0_22px_rgba(190,242,100,0.18)]"
-                    : "border-white/24 bg-white/[0.035] text-white/72 hover:border-white/38 hover:bg-white/[0.055]",
+                    ? "bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.9)]"
+                    : "bg-white/16",
                 ].join(" ")}
-              >
-                <Icon className="h-7 w-7" />
-                <span className="mt-2 text-[13px] font-semibold">
-                  {section.title}
-                </span>
-              </button>
+              />
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="mt-8 flex items-center gap-3 text-[16px] tracking-[-0.02em] text-white/88">
-          <Route className="h-4 w-4 text-white/58" />
-          <span>Phase of your journey:</span>
-          <span className="rounded-full border-2 border-lime-300 px-4 py-1 text-[14px] font-semibold text-lime-100 shadow-[0_0_16px_rgba(190,242,100,0.18)]">
-            Baseline
-          </span>
-        </div>
+export default function StoryPage(): React.JSX.Element {
+  const router = useRouter();
 
-        <section className="mt-9">
-          <h2 className="max-w-[450px] text-[31px] font-semibold leading-[1.14] tracking-[-0.055em] text-white sm:text-[34px]">
-            Now, let&apos;s talk about how you interact with others. Which of
-            these best describes you?
-          </h2>
+  const [data, setData] = React.useState<StoryNextResponse | null>(null);
+  const [selected, setSelected] = React.useState<string[]>([]);
+  const [answer, setAnswer] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [listening, setListening] = React.useState(false);
 
-          <button
-            type="button"
-            onClick={() => openQuestions()}
-            className="mt-8 w-full rounded-[1.1rem] border border-white/18 bg-white/[0.035] px-4 py-4 text-left transition hover:border-lime-200/40 hover:bg-white/[0.055]"
-          >
-            <div className="flex min-h-[88px] items-start justify-between gap-4">
-              <span className="text-[13px] font-semibold text-white/58">
-                Type your answer here...
-              </span>
+  const recognitionRef = React.useRef<any>(null);
 
-              <span className="mt-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-lime-200/35 text-white">
-                <Mic className="h-5 w-5" />
-              </span>
-            </div>
-          </button>
+  async function loadNext(): Promise<void> {
+    setLoading(true);
+    setError(null);
 
-          <div className="mt-4 flex justify-end">
+    try {
+      const next = await apiFetch<StoryNextResponse>("/story/next");
+      setData(next);
+      setSelected([]);
+      setAnswer("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load story.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  React.useEffect(() => {
+    void loadNext();
+
+    return () => {
+      recognitionRef.current?.stop?.();
+    };
+  }, []);
+
+  function exitStory(): void {
+    if (window.history.length > 1) router.back();
+    else router.push("/main/today");
+  }
+
+  function toggleSelected(choice: string): void {
+    const single =
+      data?.question?.input_type === "single_select" ||
+      data?.question?.answer_type_raw === "Multiple Choice";
+
+    setSelected((current) => {
+      if (single) return current.includes(choice) ? [] : [choice];
+
+      return current.includes(choice)
+        ? current.filter((item) => item !== choice)
+        : [...current, choice];
+    });
+  }
+
+  function toggleMic(): void {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError("Microphone dictation is not supported in this browser.");
+      return;
+    }
+
+    if (listening) {
+      recognitionRef.current?.stop?.();
+      setListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript) {
+        setAnswer((current) => `${current}${current ? " " : ""}${transcript}`);
+      }
+    };
+
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
+  }
+
+  async function submitAnswer(): Promise<void> {
+    if (!data?.question) return;
+
+    const finalAnswer = [...selected, answer.trim()].filter(Boolean).join("; ");
+    if (!finalAnswer) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await apiFetch<{ ok: boolean }>("/story/answer", {
+        method: "POST",
+        body: JSON.stringify({
+          question_id: data.question.id,
+          answer_text: finalAnswer,
+        }),
+      });
+
+      await loadNext();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save answer.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
+        Loading…
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
+        {error}
+      </div>
+    );
+  }
+
+  if (!data || data.done || !data.question) {
+    return (
+      <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
+        <main className="relative z-10 flex h-[100svh] flex-col px-5">
+          <header className="mx-auto flex h-[40px] w-full max-w-[720px] items-center justify-between pt-2">
             <button
               type="button"
-              onClick={() => openQuestions()}
-              className="rounded-full border border-white/45 px-9 py-3 text-[16px] font-semibold text-white transition hover:border-lime-200/70 hover:bg-white/[0.06]"
+              onClick={exitStory}
+              className="text-[13px] font-semibold text-cyan-200 hover:text-cyan-100"
             >
-              Continue
+              Exit
             </button>
+          </header>
+
+          <section className="mx-auto flex h-full w-full max-w-[720px] flex-1 flex-col items-center justify-center text-center">
+            <h1 className="text-[2.7rem] font-semibold leading-[1.02] tracking-[-0.05em]">
+              Story complete.
+            </h1>
+            <p className="mt-5 max-w-[420px] text-[17px] leading-7 text-white/64">
+              Nice work. You answered all available Story questions.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  const parsed = parseQuestion(data.question);
+  const canContinue = selected.length > 0 || answer.trim().length > 0;
+
+  return (
+    <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
+      <main className="relative z-10 flex h-[100svh] flex-col px-5">
+        <header className="mx-auto flex h-[38px] w-full max-w-[720px] shrink-0 items-center justify-between pt-2">
+          <button
+            type="button"
+            onClick={exitStory}
+            className="text-[13px] font-semibold text-cyan-200/80 hover:text-cyan-100"
+          >
+            Exit
+          </button>
+
+          <StoryProgress
+            current={data.progress.categoryCurrent}
+            total={data.progress.categoryTotal}
+          />
+
+          <div className="w-10 text-right text-[12px] font-medium text-white/34">
+            {data.progress.categoryCurrent}/{data.progress.categoryTotal}
+          </div>
+        </header>
+
+        <section className="mx-auto flex h-full min-h-0 w-full max-w-[720px] flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pt-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <OnboardingVisual visualKey="activities" />
+
+            <div className="flex w-full justify-center">
+              <div className="w-full max-w-[400px]">
+                <div className="mb-3 text-[11px] uppercase tracking-[0.18em] text-white/34">
+                  {data.progress.categoryLabel}
+                </div>
+
+                <h1 className="text-balance text-[1.9rem] font-semibold leading-[1.03] tracking-[-0.045em] text-white sm:text-[2.25rem]">
+                  {parsed.title}
+                </h1>
+
+                {parsed.helper ? (
+                  <p className="mt-3 text-[15px] leading-6 tracking-[-0.015em] text-white/58">
+                    {parsed.helper}
+                  </p>
+                ) : null}
+
+                {parsed.choices.length > 0 ? (
+                  <div className="mt-5 space-y-1.5">
+                    {parsed.choices.map((choice) => {
+                      const isSelected = selected.includes(choice);
+
+                      return (
+                        <button
+                          key={choice}
+                          type="button"
+                          onClick={() => toggleSelected(choice)}
+                          className={[
+                            "group relative block w-full overflow-hidden rounded-[20px] border px-4 py-3 text-left transition",
+                            isSelected
+                              ? "border-cyan-100/36 bg-cyan-300/[0.105] shadow-[0_0_24px_rgba(103,232,249,0.055)]"
+                              : "border-white/8 bg-white/[0.026] hover:border-white/15 hover:bg-white/[0.045]",
+                          ].join(" ")}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={[
+                                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition",
+                                isSelected
+                                  ? "border-cyan-50/70 bg-cyan-50/12"
+                                  : "border-white/18 bg-white/[0.02]",
+                              ].join(" ")}
+                            >
+                              {isSelected ? (
+                                <div className="h-1.5 w-1.5 rounded-full bg-cyan-50" />
+                              ) : null}
+                            </div>
+
+                            <div
+                              className={[
+                                "min-w-0 flex-1 text-[15px] leading-[1.35rem] tracking-[-0.015em]",
+                                isSelected
+                                  ? "font-semibold text-white"
+                                  : "font-medium text-white/80",
+                              ].join(" ")}
+                            >
+                              {choice}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                <div className="mt-5">
+                  <div className="mb-2 text-[11px] leading-4 tracking-[-0.01em] text-white/32">
+                    Add your own words or use the microphone.
+                  </div>
+
+                  <div className="relative">
+                    <textarea
+                      value={answer}
+                      onChange={(event) => setAnswer(event.target.value)}
+                      rows={3}
+                      placeholder="Write or speak your answer..."
+                      className={[
+                        "w-full resize-none rounded-[22px] border border-white/9 bg-white/[0.032]",
+                        "px-5 py-3.5 pr-16 outline-none transition",
+                        "text-[16px] leading-6 tracking-[-0.015em] text-white",
+                        "placeholder:text-white/25",
+                        "focus:border-cyan-100/22 focus:bg-white/[0.05]",
+                      ].join(" ")}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      className={[
+                        "absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full transition",
+                        listening
+                          ? "bg-cyan-200/14 text-cyan-50"
+                          : "bg-white/[0.045] text-white/46 hover:text-white/76",
+                      ].join(" ")}
+                    >
+                      🎙
+                    </button>
+                  </div>
+
+                  {listening ? (
+                    <div className="mt-2 text-[12px] text-cyan-100/56">
+                      Listening…
+                    </div>
+                  ) : null}
+
+                  {error ? (
+                    <div className="mt-3 text-[13px] leading-5 text-red-200/80">
+                      {error}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="shrink-0 pb-[max(3.5rem,env(safe-area-inset-bottom))] pt-2 sm:pb-16">
+            <nav className="w-full px-5 py-4">
+              <div className="mx-auto flex h-auto w-full max-w-[420px] items-center justify-between">
+                <button
+                  type="button"
+                  onClick={exitStory}
+                  className="text-[15px] font-semibold tracking-[-0.02em] text-cyan-200 hover:text-cyan-100"
+                >
+                  Exit
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void submitAnswer()}
+                  disabled={!canContinue || saving}
+                  className={[
+                    "text-[15px] font-semibold tracking-[-0.02em] transition",
+                    !canContinue || saving
+                      ? "cursor-not-allowed text-white/24"
+                      : "text-cyan-200 hover:text-cyan-100",
+                  ].join(" ")}
+                >
+                  {saving ? "Saving…" : "Continue -->"}
+                </button>
+              </div>
+            </nav>
           </div>
         </section>
-
-        <div className="mt-9 flex items-center justify-between px-4 text-white/60">
-          <button
-            type="button"
-            className="rounded-full p-2 transition hover:bg-white/[0.05] hover:text-white"
-            aria-label="Previous"
-          >
-            <ChevronLeft className="h-7 w-7" />
-          </button>
-
-          <div className="text-[16px] tracking-[-0.02em] text-white/62">
-            1 / 5
-          </div>
-
-          <button
-            type="button"
-            onClick={() => openQuestions()}
-            className="rounded-full p-2 transition hover:bg-white/[0.05] hover:text-white"
-            aria-label="Next"
-          >
-            <ChevronRight className="h-7 w-7" />
-          </button>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
