@@ -41,15 +41,16 @@ function optionBase(dark: boolean, selected: boolean) {
   return [
     "w-full text-left rounded-[16px] px-4 py-3",
     "text-[14px] font-medium leading-5 transition-all duration-200",
+    "border-l-4",
     "focus-visible:outline-none",
     "hover:-translate-y-[1px]",
     dark
       ? selected
-        ? "bg-[linear-gradient(135deg,rgba(22,40,60,0.96)_0%,rgba(14,28,46,0.98)_100%)] text-white shadow-[0_0_18px_rgba(103,232,249,0.08)] ring-1 ring-cyan-300/18"
-        : "bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] text-white/74 ring-1 ring-white/6 hover:bg-[linear-gradient(135deg,rgba(34,56,82,0.84)_0%,rgba(28,50,76,0.88)_100%)] hover:ring-cyan-300/12"
+        ? "border-cyan-300 bg-[linear-gradient(135deg,rgba(28,58,78,0.98)_0%,rgba(16,34,54,0.98)_100%)] text-white shadow-[0_0_24px_rgba(103,232,249,0.14)] ring-1 ring-cyan-300/35"
+        : "border-transparent bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] text-white/74 ring-1 ring-white/6 hover:bg-[linear-gradient(135deg,rgba(34,56,82,0.84)_0%,rgba(28,50,76,0.88)_100%)] hover:ring-cyan-300/12"
       : selected
-        ? "bg-slate-200 text-slate-950 ring-1 ring-slate-300"
-        : "bg-white text-slate-900 ring-1 ring-black/8 hover:bg-slate-50 hover:ring-emerald-500/14",
+        ? "border-emerald-500 bg-slate-200 text-slate-950 ring-1 ring-emerald-500/25"
+        : "border-transparent bg-white text-slate-900 ring-1 ring-black/8 hover:bg-slate-50 hover:ring-emerald-500/14",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-cyan-300/20"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
@@ -75,7 +76,7 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
     setSelectedIndex(index);
 
     try {
-      await fetch(`/api/micro-tasks/${task.id}/answer`, {
+      const res = await fetch(`/api/micro-tasks/${task.id}/answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,8 +85,15 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
           selected_option_index: index,
         }),
       });
-    } catch {
-      // Keep optimistic UI.
+
+      if (!res.ok) {
+        console.error("Failed to save tiny task answer", {
+          status: res.status,
+          body: await res.text(),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to save tiny task answer", error);
     }
   }
 
@@ -123,7 +131,21 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
               className={optionBase(dark, selected)}
               aria-pressed={selected}
             >
-              <span className={labelClass(dark, selected)}>{label}</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className={labelClass(dark, selected)}>{label}</span>
+
+                {selected ? (
+                  <span
+                    className={
+                      dark
+                        ? "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80"
+                        : "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
+                    }
+                  >
+                    Selected
+                  </span>
+                ) : null}
+              </div>
             </button>
           );
         })}
