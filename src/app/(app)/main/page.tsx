@@ -36,7 +36,10 @@ type TodayMicroTask = {
 
 type TodayGuidance = {
   headline: string;
-  guidance_text: string;
+  reflection?: string | null;
+  observation?: string | null;
+  next_step?: string | null;
+  guidance_text?: string | null;
   next_action_label: string;
   next_action_route: string;
   tiny_task?: TodayMicroTask | null;
@@ -111,6 +114,7 @@ export default function MainHomePage() {
   const [vm, setVm] = React.useState<TodayViewModel | null>(null);
   const [todayGuidance, setTodayGuidance] =
     React.useState<TodayGuidance | null>(null);
+  const [guidanceLoaded, setGuidanceLoaded] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
@@ -144,9 +148,14 @@ export default function MainHomePage() {
   }, []);
 
   React.useEffect(() => {
+    let alive = true;
+
     async function load() {
       try {
-        const res = await fetch("/api/regauth/me", { cache: "no-store" });
+        const res = await fetch("/api/regauth/me", {
+          cache: "no-store",
+        });
+
         const data = await res.json();
 
         try {
@@ -156,12 +165,20 @@ export default function MainHomePage() {
 
           const guidanceData = await guidanceRes.json();
 
+          if (!alive) return;
+
           if (guidanceData?.ok && guidanceData?.guidance) {
             setTodayGuidance(guidanceData.guidance);
           }
         } catch {
           // Fall back to existing Today content.
+        } finally {
+          if (alive) {
+            setGuidanceLoaded(true);
+          }
         }
+
+        if (!alive) return;
 
         if (data?.ok) {
           try {
@@ -187,13 +204,20 @@ export default function MainHomePage() {
         setVm(nextVm);
         setMounted(true);
       } catch {
+        if (!alive) return;
+
         const nextVm = buildTodayViewModel();
         setVm(nextVm);
         setMounted(true);
+        setGuidanceLoaded(true);
       }
     }
 
     load();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const nextTarget = React.useMemo(
@@ -212,6 +236,7 @@ export default function MainHomePage() {
   );
 
   const progress = vm?.progress;
+
   const allSignalsComplete =
     mounted &&
     (progress?.motivationsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
@@ -263,23 +288,24 @@ export default function MainHomePage() {
           <div className={pageShell()}>
             <section>
               <SectionCard tone="hero" className="px-4 py-5">
-                <TodayCard
-                  headline={todayGuidance?.headline}
-                  guidanceText={todayGuidance?.guidance_text}
-                  ctaLabel={ctaLabel}
-                  onPrimary={handlePrimary}
-                />
-              </SectionCard>
-            </section>
-
-            <section className={sectionSpacing()}>
-              <SectionCard tone="hero" className="px-4 py-5">
-                <JourneyCard />
+                {guidanceLoaded ? (
+                  <TodayCard
+                    headline={todayGuidance?.headline}
+                    reflection={todayGuidance?.reflection}
+                    observation={todayGuidance?.observation}
+                    nextStep={todayGuidance?.next_step}
+                    guidanceText={todayGuidance?.guidance_text}
+                    ctaLabel={ctaLabel}
+                    onPrimary={handlePrimary}
+                  />
+                ) : (
+                  <div className="min-h-[330px]" />
+                )}
               </SectionCard>
             </section>
 
             <section className="mt-5 px-4">
-              {todayGuidance?.tiny_task ? (
+              {guidanceLoaded && todayGuidance?.tiny_task ? (
                 <TodayTinyTaskCard
                   dark={dark}
                   task={todayGuidance.tiny_task}
@@ -293,17 +319,21 @@ export default function MainHomePage() {
               )}
             </section>
 
-            <div className="mt-5 flex justify-center">
-  <button
-    type="button"
-    onClick={() => router.push("/main/ai-lab")}
-    className="text-[12px] font-medium text-white/34 transition hover:text-cyan-200"
-  >
-    Open AI Lab
-  </button>
-</div>
+            <section className="mt-8 px-4">
+  <JourneyCard />
+</section>
 
-<div className="h-4" />
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => router.push("/main/ai-lab")}
+                className="text-[12px] font-medium text-white/34 transition hover:text-cyan-200"
+              >
+                Open AI Lab
+              </button>
+            </div>
+
+            <div className="h-4" />
           </div>
         </main>
       </div>

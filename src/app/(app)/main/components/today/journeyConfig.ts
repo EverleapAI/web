@@ -17,35 +17,35 @@ export const JOURNEY_BADGES: JourneyBadge[] = [
     id: "onboarding",
     label: "Onboarding",
     description:
-      "Get oriented with Everleap. Share your first signals so Everleap can begin noticing patterns.",
+      "Get started. Share a few signals so we can begin understanding what matters to you.",
     src: "/onboarding/icons/badges/1_onboard.png",
   },
   {
     id: "story",
     label: "Story",
     description:
-      "Answer deeper questions about what drives you, what matters to you, and how you make choices.",
+      "Answer deeper questions about your motivations, strengths, skills, and experiences.",
     src: "/onboarding/icons/badges/2_story.png",
   },
   {
     id: "reflection",
     label: "Reflection",
     description:
-      "Review what Everleap is learning. Notice patterns, tensions, strengths, and possible blind spots.",
+      "See the patterns emerging from your answers and what they may reveal about you.",
     src: "/onboarding/icons/badges/3_reflection.png",
   },
   {
     id: "explore",
     label: "Explore",
     description:
-      "Discover possible paths, environments, careers, and experiences that may fit who you are becoming.",
+      "Discover careers, environments, and opportunities that may fit who you are becoming.",
     src: "/onboarding/icons/badges/4_explore.png",
   },
   {
     id: "takeoff",
     label: "Takeoff",
     description:
-      "Turn insight into motion through small real-world actions, experiments, and next steps.",
+      "Take real-world action through conversations, experiments, and small next steps.",
     src: "/onboarding/icons/badges/5_takeoff.png",
   },
 ];
