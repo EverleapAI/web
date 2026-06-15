@@ -11,7 +11,15 @@ function getBadgeStatus(index: number) {
   return "locked";
 }
 
-export function JourneyCard() {
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(1, value));
+}
+
+export function JourneyCard({
+  storyPercent = 0,
+}: {
+  storyPercent?: number;
+}) {
   const [selectedBadgeId, setSelectedBadgeId] =
     React.useState<JourneyBadgeId>("story");
 
@@ -25,6 +33,8 @@ export function JourneyCard() {
     JOURNEY_BADGES[1] ??
     JOURNEY_BADGES[0];
 
+  const safeStoryPercent = clampPercent(storyPercent);
+
   return (
     <div>
       <div className="grid grid-cols-5 gap-1 sm:gap-2">
@@ -35,6 +45,9 @@ export function JourneyCard() {
 
           const earned = status === "earned";
           const current = status === "current";
+
+          const storyFill =
+            badge.id === "story" ? safeStoryPercent : 0;
 
           return (
             <button
@@ -62,11 +75,16 @@ export function JourneyCard() {
                 <div
                   className="absolute inset-0 rounded-full"
                   style={{
-                    background: earned
-                      ? "rgba(252,211,77,0.9)"
-                      : current || displayed || selected
-                        ? "rgba(103,232,249,0.16)"
-                        : "rgba(255,255,255,0.07)",
+                    background:
+                      badge.id === "story"
+                        ? `conic-gradient(rgba(103,232,249,0.9) ${
+                            storyFill * 360
+                          }deg, rgba(103,232,249,0.12) 0deg)`
+                        : earned
+                          ? "rgba(252,211,77,0.9)"
+                          : current || displayed || selected
+                            ? "rgba(103,232,249,0.16)"
+                            : "rgba(255,255,255,0.07)",
                   }}
                 />
 

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import OnboardingVisual from "@/app/onboarding/components/visuals/OnboardingVisual";
 
@@ -16,6 +16,7 @@ type StoryQuestion = {
   label?: string | null;
   input_type?: string | null;
   answer_type_raw?: string | null;
+  options?: string[];
 };
 
 type StoryNextResponse = {
@@ -56,6 +57,13 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function sanitizeReturnTo(value: string | null): string {
+  if (!value) return "/main";
+  if (!value.startsWith("/")) return "/main";
+  if (value.startsWith("//")) return "/main";
+  return value;
+}
+
 function getQuestionText(question: StoryQuestion): string {
   return (
     question.question_text ??
@@ -78,11 +86,7 @@ function parseQuestion(question: StoryQuestion): {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const isChoice =
-    question.input_type?.includes("select") ||
-    question.answer_type_raw?.toLowerCase().includes("choice");
-
-  if (isChoice && lines.length >= 3) {
+  if (lines.length >= 2) {
     return {
       title: lines[0],
       helper: lines[1] ?? null,
@@ -142,16 +146,24 @@ function StoryProgress({
 
 export default function StoryPage(): React.JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const returnTo = React.useMemo(
+    () => sanitizeReturnTo(searchParams.get("returnTo")),
+    [searchParams]
+  );
 
   const [data, setData] = React.useState<StoryNextResponse | null>(null);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [answer, setAnswer] = React.useState("");
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [finishing, setFinishing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [listening, setListening] = React.useState(false);
 
   const recognitionRef = React.useRef<any>(null);
+  const finishTimerRef = React.useRef<number | null>(null);
 
   async function loadNext(): Promise<void> {
     setLoading(true);
@@ -174,31 +186,57 @@ export default function StoryPage(): React.JSX.Element {
 
     return () => {
       recognitionRef.current?.stop?.();
+
+      if (finishTimerRef.current !== null) {
+        window.clearTimeout(finishTimerRef.current);
+      }
     };
   }, []);
 
-  function exitStory(): void {
-    if (window.history.length > 1) router.back();
-    else router.push("/main/today");
+  async function finishStory(): Promise<void> {
+    setFinishing(true);
+    setError(null);
+
+    try {
+      await apiFetch<{ ok: boolean; status?: string }>("/story/complete", {
+        method: "POST",
+      });
+    } catch {
+      // Do not block return flow.
+    }
+
+    finishTimerRef.current = window.setTimeout(() => {
+      router.push(returnTo);
+    }, 5500);
+  }
+
+  function returnNow(): void {
+    if (finishTimerRef.current !== null) {
+      window.clearTimeout(finishTimerRef.current);
+    }
+
+    router.push(returnTo);
   }
 
   function toggleSelected(choice: string): void {
-    const single =
-      data?.question?.input_type === "single_select" ||
-      data?.question?.answer_type_raw === "Multiple Choice";
+  const single =
+    data?.question?.input_type === "single_select" ||
+    data?.question?.answer_type_raw === "Multiple Choice";
 
-    setSelected((current) => {
-      if (single) return current.includes(choice) ? [] : [choice];
+  setSelected((current) => {
+    if (single) {
+      return current.includes(choice) ? [] : [choice];
+    }
 
-      return current.includes(choice)
-        ? current.filter((item) => item !== choice)
-        : [...current, choice];
-    });
-  }
-
+    return current.includes(choice)
+      ? current.filter((item) => item !== choice)
+      : [...current, choice];
+  });
+}
   function toggleMic(): void {
     const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setError("Microphone dictation is not supported in this browser.");
@@ -258,6 +296,37 @@ export default function StoryPage(): React.JSX.Element {
     }
   }
 
+  if (finishing) {
+    return (
+      <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
+        <main className="relative z-10 flex h-[100svh] flex-col px-5">
+          <section className="mx-auto flex h-full w-full max-w-[720px] flex-1 flex-col items-center justify-center text-center">
+            <div className="mb-4 text-[11px] uppercase tracking-[0.18em] text-white/34">
+              My Story
+            </div>
+
+            <h1 className="max-w-[460px] text-[2.35rem] font-semibold leading-[1.03] tracking-[-0.05em]">
+              Nice. I added that to your Story.
+            </h1>
+
+            <p className="mt-5 max-w-[430px] text-[17px] leading-7 text-white/62">
+              Everleap will use what you shared to make your guidance more
+              personal.
+            </p>
+
+            <button
+              type="button"
+              onClick={returnNow}
+              className="mt-8 text-[15px] font-semibold tracking-[-0.02em] text-cyan-200 hover:text-cyan-100"
+            >
+              Return now
+            </button>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
@@ -281,10 +350,10 @@ export default function StoryPage(): React.JSX.Element {
           <header className="mx-auto flex h-[40px] w-full max-w-[720px] items-center justify-between pt-2">
             <button
               type="button"
-              onClick={exitStory}
+              onClick={() => void finishStory()}
               className="text-[13px] font-semibold text-cyan-200 hover:text-cyan-100"
             >
-              Exit
+              Done for now
             </button>
           </header>
 
@@ -301,8 +370,14 @@ export default function StoryPage(): React.JSX.Element {
     );
   }
 
-  const parsed = parseQuestion(data.question);
-  const canContinue = selected.length > 0 || answer.trim().length > 0;
+const parsed = parseQuestion(data.question);
+
+const choices =
+  data.question.options && data.question.options.length > 0
+    ? data.question.options
+    : parsed.choices;
+
+const canContinue = selected.length > 0 || answer.trim().length > 0;
 
   return (
     <div className="relative h-[100svh] overflow-hidden bg-slate-950 text-white">
@@ -310,10 +385,10 @@ export default function StoryPage(): React.JSX.Element {
         <header className="mx-auto flex h-[38px] w-full max-w-[720px] shrink-0 items-center justify-between pt-2">
           <button
             type="button"
-            onClick={exitStory}
-            className="text-[13px] font-semibold text-cyan-200/80 hover:text-cyan-100"
+            onClick={() => void finishStory()}
+            className="w-20 text-left text-[13px] font-semibold leading-4 text-cyan-200/80 hover:text-cyan-100"
           >
-            Exit
+            Done for now
           </button>
 
           <StoryProgress
@@ -321,7 +396,7 @@ export default function StoryPage(): React.JSX.Element {
             total={data.progress.categoryTotal}
           />
 
-          <div className="w-10 text-right text-[12px] font-medium text-white/34">
+          <div className="w-20 text-right text-[12px] font-medium text-white/34">
             {data.progress.categoryCurrent}/{data.progress.categoryTotal}
           </div>
         </header>
@@ -336,7 +411,7 @@ export default function StoryPage(): React.JSX.Element {
                   {data.progress.categoryLabel}
                 </div>
 
-                <h1 className="text-balance text-[1.9rem] font-semibold leading-[1.03] tracking-[-0.045em] text-white sm:text-[2.25rem]">
+                <h1 className="text-balance text-[1.9rem] font-semibold leading-[1.06] tracking-[-0.045em] text-white sm:text-[2.2rem]">
                   {parsed.title}
                 </h1>
 
@@ -346,9 +421,9 @@ export default function StoryPage(): React.JSX.Element {
                   </p>
                 ) : null}
 
-                {parsed.choices.length > 0 ? (
+                {choices.length > 0 ? (
                   <div className="mt-5 space-y-1.5">
-                    {parsed.choices.map((choice) => {
+                    {choices.map((choice) => {
                       const isSelected = selected.includes(choice);
 
                       return (
@@ -449,10 +524,10 @@ export default function StoryPage(): React.JSX.Element {
               <div className="mx-auto flex h-auto w-full max-w-[420px] items-center justify-between">
                 <button
                   type="button"
-                  onClick={exitStory}
+                  onClick={() => void finishStory()}
                   className="text-[15px] font-semibold tracking-[-0.02em] text-cyan-200 hover:text-cyan-100"
                 >
-                  Exit
+                  Done for now
                 </button>
 
                 <button
@@ -466,7 +541,7 @@ export default function StoryPage(): React.JSX.Element {
                       : "text-cyan-200 hover:text-cyan-100",
                   ].join(" ")}
                 >
-                  {saving ? "Saving…" : "Continue -->"}
+                  {saving ? "Saving…" : "Continue"}
                 </button>
               </div>
             </nav>

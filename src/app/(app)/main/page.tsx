@@ -34,6 +34,12 @@ type TodayMicroTask = {
   selected_option_index?: number | null;
 };
 
+type StoryProgress = {
+  answered: number;
+  total: number;
+  percent: number;
+};
+
 type TodayGuidance = {
   headline: string;
   reflection?: string | null;
@@ -43,6 +49,7 @@ type TodayGuidance = {
   next_action_label: string;
   next_action_route: string;
   tiny_task?: TodayMicroTask | null;
+  story_progress?: StoryProgress | null;
 };
 
 function pagePadding() {
@@ -51,10 +58,6 @@ function pagePadding() {
 
 function pageShell() {
   return "mx-auto w-full max-w-[720px] px-[4px]";
-}
-
-function sectionSpacing() {
-  return "mt-3";
 }
 
 function labelForCategory(cat: Category) {
@@ -250,6 +253,8 @@ export default function MainHomePage() {
   const ctaLabel = todayGuidance?.next_action_label ?? fallbackCtaLabel;
   const ctaRoute = todayGuidance?.next_action_route ?? null;
 
+  const storyPercent = todayGuidance?.story_progress?.percent ?? 0;
+
   function handlePrimary() {
     if (!mounted) return;
 
@@ -320,8 +325,8 @@ export default function MainHomePage() {
             </section>
 
             <section className="mt-8 px-4">
-  <JourneyCard />
-</section>
+              <JourneyCard storyPercent={storyPercent} />
+            </section>
 
             <div className="mt-5 flex justify-center">
               <button
