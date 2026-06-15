@@ -40,7 +40,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   if (!API_BASE) throw new Error("NEXT_PUBLIC_API_BASE_URL is not set");
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`/api${path}`, {
     ...options,
     credentials: "include",
     headers: {

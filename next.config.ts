@@ -3,6 +3,8 @@ import path from "path";
 
 const isCI = process.env.CI === "true";
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const nextConfig: NextConfig = {
   output: isCI ? "standalone" : undefined,
 
@@ -16,6 +18,17 @@ const nextConfig: NextConfig = {
 
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  async rewrites() {
+    if (!apiBaseUrl) return [];
+
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiBaseUrl}/:path*`,
+      },
+    ];
   },
 };
 
