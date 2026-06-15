@@ -341,7 +341,7 @@ export default function MainHomePage() {
 
               <button
                 type="button"
-                onClick={() => router.push("/reset-answers")}
+                onClick={() => router.push("/main/reset-answers")}
                 className="text-[12px] font-medium text-white/30 transition hover:text-cyan-200"
               >
                 Reset Answers
