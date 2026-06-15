@@ -328,13 +328,23 @@ export default function MainHomePage() {
               <JourneyCard storyPercent={storyPercent} />
             </section>
 
-            <div className="mt-5 flex justify-center">
+            <div className="mt-5 flex items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={() => router.push("/main/ai-lab")}
                 className="text-[12px] font-medium text-white/34 transition hover:text-cyan-200"
               >
                 Open AI Lab
+              </button>
+
+              <span className="text-white/16">•</span>
+
+              <button
+                type="button"
+                onClick={() => router.push("/reset-answers")}
+                className="text-[12px] font-medium text-white/30 transition hover:text-cyan-200"
+              >
+                Reset Answers
               </button>
             </div>
 
