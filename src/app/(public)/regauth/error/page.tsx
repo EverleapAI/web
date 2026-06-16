@@ -13,7 +13,7 @@ function messageFor(code: string | null): { title: string; body: string } {
     case "network_error":
       return {
         title: "Connection issue",
-        body: "We couldn’t reach the server. Check your connection and try again.",
+        body: "We couldn’t reach the server. Yikes! Check your connection and try again.",
       };
     case "invalid_code":
       return {
