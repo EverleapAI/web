@@ -110,17 +110,17 @@ const INSIGHT_META: Record<
   { label: string; glowClass: string; dotClass: string }
 > = {
   career: {
-    label: "Recommendations",
+    label: "Recommendations!",
     glowClass: "from-sky-400 via-indigo-500 to-slate-400",
     dotClass: "bg-gradient-to-br from-sky-400 via-indigo-500 to-slate-400",
   },
   motivations: {
-    label: "Motivations",
+    label: "Motivations!",
     glowClass: "from-amber-400 via-orange-500 to-rose-500",
     dotClass: "bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500",
   },
   strengths: {
-    label: "Strengths",
+    label: "Strengths!",
     glowClass: "from-violet-500 via-fuchsia-500 to-sky-400",
     dotClass: "bg-gradient-to-br from-violet-500 via-fuchsia-500 to-sky-400",
   },
