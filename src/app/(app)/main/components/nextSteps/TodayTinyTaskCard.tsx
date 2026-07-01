@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckSquare } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 type TodayMicroTask = {
   id: string;
@@ -102,11 +102,14 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
       <div className="mb-1">
         <div className={headerRow()}>
           <span className={headerIconWrap(dark)}>
-            <CheckSquare className="h-3.5 w-3.5" />
+            <Sparkles className="h-3.5 w-3.5" />
           </span>
 
-          <div className={headerTitleClass(dark)}>Today’s Question</div>
+          <div className={headerTitleClass(dark)}>
+            Something I&apos;m Wondering
+          </div>
         </div>
+
 
         <div
           className={
@@ -142,7 +145,7 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
                         : "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
                     }
                   >
-                    Selected
+                    Helps
                   </span>
                 ) : null}
               </div>
@@ -150,6 +153,19 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
           );
         })}
       </div>
+
+      {selectedIndex !== null ? (
+        <p
+          className={
+            dark
+              ? "pt-1 text-[13px] leading-5 text-white/46"
+              : "pt-1 text-[13px] leading-5 text-slate-500"
+          }
+        >
+          That helps. I&apos;ll keep it in mind as I try to understand what
+          fits you best.
+        </p>
+      ) : null}
     </div>
   );
 }

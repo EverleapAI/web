@@ -14,7 +14,7 @@ import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
 import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
-import { JourneyCard, TodayCard } from "./components/today";
+import { TodayCard } from "./components/today";
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
@@ -121,6 +121,9 @@ export default function MainHomePage() {
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  const [generationGoal, setGenerationGoal] =
+  React.useState<string | null>(null);
 
   React.useEffect(() => {
     async function claimOnboarding() {
@@ -167,6 +170,10 @@ export default function MainHomePage() {
           });
 
           const guidanceData = await guidanceRes.json();
+          setIsUpdating(guidanceData?.is_updating === true);
+          setGenerationGoal(
+         guidanceData?.generation_goal ?? null
+          );
 
           if (!alive) return;
 
@@ -307,6 +314,32 @@ export default function MainHomePage() {
                   <div className="min-h-[330px]" />
                 )}
               </SectionCard>
+              {isUpdating ? (
+  <section className="mt-4 px-4">
+
+    <div className="rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3">
+
+      <div className="flex items-center gap-2">
+
+        <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+
+        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
+          Still looking at this
+        </div>
+
+      </div>
+
+      <p className="mt-2 text-[14px] leading-6 text-white/56">
+
+        {generationGoal ??
+          "Some of your recent answers may change what I think is most useful to explore next."}
+
+      </p>
+
+    </div>
+
+  </section>
+) : null}
             </section>
 
             <section className="mt-5 px-4">
@@ -322,10 +355,6 @@ export default function MainHomePage() {
                   definition={nextSteps.tinyTask}
                 />
               )}
-            </section>
-
-            <section className="mt-8 px-4">
-              <JourneyCard storyPercent={storyPercent} />
             </section>
 
             <div className="mt-5 flex items-center justify-center gap-4">

@@ -34,7 +34,6 @@ import InsightsThemesCard from "./components/sections/InsightsThemesCard";
 import InsightsSuperpowersCard from "./components/sections/InsightsSuperpowersCard";
 import InsightsWatchoutsCard from "./components/sections/InsightsWatchoutsCard";
 import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
-import InsightsActionCard from "./components/sections/InsightsActionCard";
 import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
 
 /* =============================================================================
@@ -49,6 +48,50 @@ type TabDef = {
   label: string;
   blurb?: string;
   accent: RGB;
+};
+
+type GeneratedSummaryPayload = {
+  version?: string;
+  confidence?: {
+    level?: string;
+    whatWeKnow?: string[];
+    whatWeNeed?: string[];
+    nextBestQuestion?: string;
+  };
+  insight?: {
+    headline?: string;
+    body?: string;
+  };
+  signals?: {
+    intro?: string;
+    chips?: string[];
+  };
+  superpowers?: {
+    body?: string;
+    bullets?: string[];
+  };
+  watchouts?: {
+    body?: string;
+    bullets?: string[];
+  };
+  tinyTask?: {
+    question?: string;
+    options?: string[];
+    signal_key?: string;
+  };
+  actions?: {
+    title?: string;
+    bullets?: string[];
+  };
+  quickCheck?: {
+    prompt?: string;
+    options?: string[];
+  };
+};
+
+type GeneratedSummaryResponse = {
+  ok?: boolean;
+  payload?: GeneratedSummaryPayload | null;
 };
 
 const TABS: TabDef[] = [
@@ -959,6 +1002,34 @@ export default function Page() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  const [summaryPayload, setSummaryPayload] =
+    React.useState<GeneratedSummaryPayload | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadGeneratedSummary() {
+      try {
+        const res = await fetch("/api/guidance/insights-summary");
+        const data = (await res.json().catch(() => null)) as
+          | GeneratedSummaryResponse
+          | null;
+
+        if (!cancelled && res.ok && data?.ok && data.payload) {
+          setSummaryPayload(data.payload);
+        }
+      } catch (error) {
+        console.error("Failed to load generated insights summary", error);
+      }
+    }
+
+    loadGeneratedSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [showLeft, setShowLeft] = React.useState(false);
   const [showRight, setShowRight] = React.useState(false);
 
@@ -1262,6 +1333,74 @@ export default function Page() {
     return false;
   }, [mounted, wordCloudDisplay, signals, baseMotivationReceipts]);
 
+  const hasGeneratedSummary = !!summaryPayload;
+  const summaryHasSignal = hasGeneratedSummary || hasAnySignal;
+
+  const summaryHeadline =
+    summaryPayload?.insight?.headline ??
+    vm.summary.headline ??
+    "We’re still building your signal.";
+
+  const summaryParagraph =
+    summaryPayload?.insight?.body ??
+    agenticNote.paragraph;
+
+  const summaryThemeItems = React.useMemo<WordCloudItem[]>(() => {
+    const chips = summaryPayload?.signals?.chips ?? [];
+
+    if (chips.length > 0) {
+      return chips.map((chip, index) => ({
+        term: chip,
+        weight: Math.max(0.35, 1 - index * 0.12),
+      }));
+    }
+
+    return wordCloudDisplay;
+  }, [summaryPayload?.signals?.chips, wordCloudDisplay]);
+
+  const summaryMotivatorsLine =
+    summaryPayload?.signals?.intro ??
+    agenticNote.motivatorsLine;
+
+  const summarySuperpowersBody =
+    summaryPayload?.superpowers?.body ??
+    safeSuper.body ??
+    "What you naturally do well when it matters.";
+
+  const summarySuperpowersBullets =
+    summaryPayload?.superpowers?.bullets?.length
+      ? summaryPayload.superpowers.bullets
+      : superBullets;
+
+  const summaryWatchoutsIntro =
+    summaryPayload?.watchouts?.body ??
+    watchouts.intro;
+
+  const summaryWatchoutsBullets =
+    summaryPayload?.watchouts?.bullets?.length
+      ? summaryPayload.watchouts.bullets
+      : watchouts.bullets;
+
+  const summaryTinyTaskTitle =
+    summaryPayload?.tinyTask?.question ??
+    summaryNext.tinyTask.title;
+
+  const summaryTinyTaskChoices =
+    summaryPayload?.tinyTask?.options?.length
+      ? summaryPayload.tinyTask.options.map((option) => ({
+          label: option,
+        }))
+      : summaryNext.tinyTask.choices;
+
+  const summaryActionTitle =
+    summaryPayload?.actions?.title ??
+    summaryNext.action.title;
+
+  const summaryActionBullets =
+    summaryPayload?.actions?.bullets?.length
+      ? summaryPayload.actions.bullets
+      : summaryNext.action.bullets;
+
   const isSummaryReady = mounted;
 
   const skillsModel = React.useMemo(() => {
@@ -1370,57 +1509,46 @@ export default function Page() {
               <div className="mb-1.5">
                 <InsightsSummaryCard
                   dark={dark}
-                  headline={vm.summary.headline || "We’re still building your signal."}
-                  paragraph={agenticNote.paragraph}
-                  hasStrongSignal={hasAnySignal}
+                  headline={summaryHeadline}
+                  paragraph={summaryParagraph}
+                  hasStrongSignal={summaryHasSignal}
                   startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
                 />
               </div>
 
-              {hasAnySignal ? (
+              {summaryHasSignal ? (
                 <>
                   <InsightsThemesCard
                     dark={dark}
-                    items={wordCloudDisplay}
-                    hasStrongSignal={hasAnySignal}
-                    motivatorsLine={agenticNote.motivatorsLine}
+                    items={summaryThemeItems}
+                    hasStrongSignal={summaryHasSignal}
+                    motivatorsLine={summaryMotivatorsLine}
                   />
 
                   <InsightsSuperpowersCard
                     dark={dark}
-                    body={safeSuper.body || "What you naturally do well when it matters."}
-                    bullets={superBullets}
+                    body={summarySuperpowersBody}
+                    bullets={summarySuperpowersBullets}
                     strengthsLine={agenticNote.strengthsLine}
                     skillsLine={agenticNote.skillsLine}
-                    hasStrongSignal={hasAnySignal}
+                    hasStrongSignal={summaryHasSignal}
                   />
 
                   <InsightsWatchoutsCard
                     dark={dark}
-                    intro={watchouts.intro}
-                    bullets={watchouts.bullets}
-                    hasStrongSignal={hasAnySignal}
+                    intro={summaryWatchoutsIntro}
+                    bullets={summaryWatchoutsBullets}
+                    hasStrongSignal={summaryHasSignal}
                   />
 
                   <InsightsTinyTaskCard
                     dark={dark}
                     useLocal={mounted}
                     eyebrow={summaryNext.tinyTask.eyebrow}
-                    title={summaryNext.tinyTask.title}
+                    title={summaryTinyTaskTitle}
                     body={summaryNext.tinyTask.body}
-                    choices={summaryNext.tinyTask.choices}
-                    hasStrongSignal={hasAnySignal}
-                    pageId="insights.summary"
-                  />
-
-                  <InsightsActionCard
-                    dark={dark}
-                    useLocal={mounted}
-                    eyebrow={summaryNext.action.eyebrow}
-                    title={summaryNext.action.title}
-                    body={summaryNext.action.body}
-                    bullets={summaryNext.action.bullets}
-                    hasStrongSignal={hasAnySignal}
+                    choices={summaryTinyTaskChoices}
+                    hasStrongSignal={summaryHasSignal}
                     pageId="insights.summary"
                   />
 
