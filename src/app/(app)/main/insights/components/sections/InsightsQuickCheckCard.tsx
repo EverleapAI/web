@@ -17,8 +17,6 @@ import {
 
 type QuickRating = "mostly" | "somewhat" | "not_really";
 
-const QUICK_FEEDBACK_STORAGE_KEY = "everleap.insights.quickFeedback.v1";
-
 type Props = {
   dark: boolean;
   contextTag: string;
@@ -80,38 +78,11 @@ export default function InsightsQuickCheckCard({
   dark,
   contextTag,
 }: Props): React.JSX.Element {
-  const storageKey = `${QUICK_FEEDBACK_STORAGE_KEY}:${contextTag}`;
-
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
   const [note, setNote] = React.useState("");
   const [saved, setSaved] = React.useState(false);
-
-  React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as {
-        rating?: QuickRating;
-        note?: string;
-      };
-
-      if (
-        parsed?.rating === "mostly" ||
-        parsed?.rating === "somewhat" ||
-        parsed?.rating === "not_really"
-      ) {
-        setRating(parsed.rating);
-      }
-
-      if (typeof parsed?.note === "string") {
-        setNote(parsed.note);
-      }
-
-      setSaved(true);
-    } catch {}
-  }, [storageKey]);
+  const [saving, setSaving] = React.useState(false);
 
   function onPick(next: QuickRating) {
     setRating(next);
@@ -123,19 +94,36 @@ export default function InsightsQuickCheckCard({
     setOpen(false);
   }
 
-  function onSave() {
+  async function onSave() {
     if (!rating) return;
 
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({ rating, note, savedAt: Date.now(), contextTag })
-    );
+    setSaving(true);
 
-    setSaved(true);
-    setOpen(false);
+    try {
+      const res = await fetch("/api/guidance/insights-summary/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, note, contextTag }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to save quick check feedback", {
+          status: res.status,
+          body: await res.text(),
+        });
+        return;
+      }
+
+      setSaved(true);
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to save quick check feedback", error);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const canSave = !!rating;
+  const canSave = !!rating && !saving;
 
   return (
     <section

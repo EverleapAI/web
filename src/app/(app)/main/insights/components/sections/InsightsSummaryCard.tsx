@@ -15,97 +15,41 @@ import {
   headerRow,
   sectionCard,
 } from "./summaryShared";
+import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
 
 type Props = {
   dark: boolean;
   headline?: string;
   paragraph?: string;
+  detail?: string;
   hasStrongSignal: boolean;
   startHref?: string;
 };
 
-function cleanLine(text: string) {
-  return text.replace(/\s+/g, " ").trim();
-}
-
-function splitIntoSentences(text: string) {
-  return cleanLine(text)
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
+function splitParagraphs(text?: string): string[] {
+  return (text ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
     .filter(Boolean);
-}
-
-function compressSummaryParagraph(paragraph?: string) {
-  const raw = cleanLine(paragraph ?? "");
-  if (!raw) return { lead: "", close: "" };
-
-  const sentences = splitIntoSentences(raw);
-  if (!sentences.length) return { lead: "", close: "" };
-
-  const leadParts: string[] = [];
-  const closeParts: string[] = [];
-
-  for (const sentence of sentences) {
-    const lower = sentence.toLowerCase();
-
-    const isMove =
-      lower.startsWith("so here’s your move") ||
-      lower.startsWith("so here's your move") ||
-      lower.includes("start imperfect") ||
-      lower.includes("finish real");
-
-    const isProof =
-      lower.startsWith("i’m not guessing") ||
-      lower.startsWith("i'm not guessing");
-
-    if (isMove || isProof) {
-      continue;
-    }
-
-    if (leadParts.length < 2) {
-      leadParts.push(sentence);
-      continue;
-    }
-
-    if (closeParts.length < 2) {
-      closeParts.push(sentence);
-    }
-  }
-
-  if (!leadParts.length) {
-    leadParts.push(sentences[0]);
-  }
-
-  let lead = cleanLine(leadParts.join(" "));
-  let close = cleanLine(closeParts.slice(0, 2).join(" "));
-
-  if (lead.length > 260) {
-    lead = cleanLine(splitIntoSentences(lead).slice(0, 2).join(" "));
-  }
-
-  if (close.length > 220) {
-    close = cleanLine(splitIntoSentences(close).slice(0, 2).join(" "));
-  }
-
-  return { lead, close };
 }
 
 export default function InsightsSummaryCard({
   dark,
   headline,
   paragraph,
+  detail,
   hasStrongSignal,
   startHref = "/main/questions?cat=motivations&returnTo=/main/insights?tab=summary",
 }: Props) {
+  const [detailOpen, setDetailOpen] = React.useState(false);
+
   const resolvedHeadline =
     headline?.trim() || "We’re still building your signal.";
 
   const noSignalTitle = "Your insights get sharper once we have more signal.";
 
-  const compressed = React.useMemo(
-    () => compressSummaryParagraph(paragraph),
-    [paragraph]
-  );
+  const paragraphs = React.useMemo(() => splitParagraphs(paragraph), [paragraph]);
+  const hasDetail = !!detail?.trim();
 
   return (
     <section
@@ -151,29 +95,44 @@ export default function InsightsSummaryCard({
 
           {hasStrongSignal ? (
             <>
-              {compressed.lead ? (
+              {paragraphs.map((p, index) => (
                 <p
+                  key={index}
                   className={[
-                    "mt-2.5",
+                    index === 0 ? "mt-2.5" : "mt-1.5",
                     bodyText(dark),
                     "text-[14px] leading-[1.65] sm:text-[14.5px]",
                   ].join(" ")}
                 >
-                  {compressed.lead}
+                  {p}
                 </p>
+              ))}
+
+              {hasDetail ? (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setDetailOpen(true)}
+                    className={[
+                      "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
+                      dark
+                        ? "text-white/82 hover:text-white/94"
+                        : "text-slate-900 hover:text-black",
+                    ].join(" ")}
+                  >
+                    <span>See how I got here</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                </div>
               ) : null}
 
-              {compressed.close ? (
-                <p
-                  className={[
-                    "mt-1.5",
-                    bodyText(dark),
-                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
-                  ].join(" ")}
-                >
-                  {compressed.close}
-                </p>
-              ) : null}
+              <InsightsSummaryDetailModal
+                open={detailOpen}
+                onClose={() => setDetailOpen(false)}
+                dark={dark}
+                headline={resolvedHeadline}
+                detail={detail}
+              />
             </>
           ) : (
             <>

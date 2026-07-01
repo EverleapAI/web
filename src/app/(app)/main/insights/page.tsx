@@ -30,9 +30,7 @@ import SkillsTab from "./components/SkillsTab";
 import FunFactsTab from "./components/FunFactsTab";
 
 import InsightsSummaryCard from "./components/sections/InsightsSummaryCard";
-import InsightsThemesCard from "./components/sections/InsightsThemesCard";
-import InsightsSuperpowersCard from "./components/sections/InsightsSuperpowersCard";
-import InsightsWatchoutsCard from "./components/sections/InsightsWatchoutsCard";
+import InsightsStrengthsCard from "./components/sections/InsightsStrengthsCard";
 import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
 
@@ -61,17 +59,12 @@ type GeneratedSummaryPayload = {
   insight?: {
     headline?: string;
     body?: string;
-  };
-  signals?: {
-    intro?: string;
-    chips?: string[];
+    detail?: string;
   };
   superpowers?: {
-    body?: string;
     bullets?: string[];
   };
   watchouts?: {
-    body?: string;
     bullets?: string[];
   };
   tinyTask?: {
@@ -79,19 +72,25 @@ type GeneratedSummaryPayload = {
     options?: string[];
     signal_key?: string;
   };
-  actions?: {
-    title?: string;
-    bullets?: string[];
-  };
   quickCheck?: {
     prompt?: string;
     options?: string[];
   };
 };
 
+type GeneratedTinyTask = {
+  id: string;
+  question: string;
+  options: string[];
+  signal_key: string;
+  selected_option: string | null;
+  selected_option_index: number | null;
+};
+
 type GeneratedSummaryResponse = {
   ok?: boolean;
   payload?: GeneratedSummaryPayload | null;
+  tiny_task?: GeneratedTinyTask | null;
 };
 
 const TABS: TabDef[] = [
@@ -877,30 +876,6 @@ function textFromUnknown(value: unknown): string {
   return "";
 }
 
-function listFromUnknown(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => {
-      if (typeof item === "string") return cleanOneLine(item);
-      if (isRecord(item)) {
-        const preferred = [
-          "label",
-          "title",
-          "text",
-          "body",
-          "name",
-          "subtitle",
-        ];
-        for (const key of preferred) {
-          const v = item[key];
-          if (typeof v === "string" && cleanOneLine(v)) return cleanOneLine(v);
-        }
-      }
-      return "";
-    })
-    .filter(Boolean);
-}
-
 function firstString(...values: unknown[]) {
   for (const v of values) {
     const out = textFromUnknown(v);
@@ -959,19 +934,6 @@ function normalizeTinyTask(definition: unknown) {
   };
 }
 
-function normalizeAction(definition: unknown) {
-  const rec = isRecord(definition) ? definition : {};
-  const bullets = listFromUnknown(
-    rec.steps ?? rec.bullets ?? rec.items ?? rec.actions
-  );
-  return {
-    eyebrow: firstString(rec.eyebrow, rec.kicker, "Actions"),
-    title: firstString(rec.title, rec.name, "Run one small test this week."),
-    body: firstString(rec.subtitle, rec.body, rec.description),
-    bullets,
-  };
-}
-
 /* =============================================================================
    Page
    ============================================================================= */
@@ -1004,32 +966,67 @@ export default function Page() {
 
   const [summaryPayload, setSummaryPayload] =
     React.useState<GeneratedSummaryPayload | null>(null);
+  const [tinyTask, setTinyTask] =
+    React.useState<GeneratedTinyTask | null>(null);
   const [summaryFetchDone, setSummaryFetchDone] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    async function loadGeneratedSummary() {
+    // The backend generates this off a background queue drained once a
+    // minute, so a user can land here just after answering, before the
+    // payload exists yet. Poll for a bit so it can swap in without a
+    // reload — the local fallback covers the wait in the meantime.
+    const POLL_INTERVAL_MS = 5000;
+    const MAX_POLLS = 12; // ~60s, matching the generation timer's cadence
+
+    async function fetchSummary(): Promise<{
+      payload: GeneratedSummaryPayload;
+      tinyTask: GeneratedTinyTask | null;
+    } | null> {
+      const res = await fetch("/api/guidance/insights-summary");
+      const data = (await res.json().catch(() => null)) as
+        | GeneratedSummaryResponse
+        | null;
+
+      return res.ok && data?.ok && data.payload
+        ? { payload: data.payload, tinyTask: data.tiny_task ?? null }
+        : null;
+    }
+
+    async function loadGeneratedSummary(pollsRemaining: number) {
       try {
-        const res = await fetch("/api/guidance/insights-summary");
-        const data = (await res.json().catch(() => null)) as
-          | GeneratedSummaryResponse
-          | null;
+        const result = await fetchSummary();
 
-        if (!cancelled && res.ok && data?.ok && data.payload) {
-          setSummaryPayload(data.payload);
+        if (cancelled) return;
+
+        if (result) {
+          setSummaryPayload(result.payload);
+          setTinyTask(result.tinyTask);
+          setSummaryFetchDone(true);
+          return;
+        }
+
+        setSummaryFetchDone(true);
+
+        if (pollsRemaining > 0) {
+          timeoutId = setTimeout(
+            () => loadGeneratedSummary(pollsRemaining - 1),
+            POLL_INTERVAL_MS
+          );
         }
       } catch (error) {
         console.error("Failed to load generated insights summary", error);
-      } finally {
         if (!cancelled) setSummaryFetchDone(true);
       }
     }
 
-    loadGeneratedSummary();
+    loadGeneratedSummary(MAX_POLLS);
 
     return () => {
       cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
@@ -1324,7 +1321,6 @@ export default function Page() {
     const rec = (nextStepsSummary ?? {}) as Record<string, unknown>;
     return {
       tinyTask: normalizeTinyTask(rec.tinyTask),
-      action: normalizeAction(rec.action),
     };
   }, [nextStepsSummary]);
 
@@ -1339,6 +1335,12 @@ export default function Page() {
   const hasGeneratedSummary = !!summaryPayload;
   const summaryHasSignal = hasGeneratedSummary || hasAnySignal;
 
+  // Show the teaser state only when there's no generated payload yet at all —
+  // the prompt's own confidence-tier instructions handle honest "not enough
+  // yet" language when needed, so gating on the confidence label itself was
+  // hiding genuinely good content once Claude had enough to say something.
+  const strengthsHasRealContent = hasGeneratedSummary;
+
   const summaryHeadline =
     summaryPayload?.insight?.headline ??
     vm.summary.headline ??
@@ -1348,36 +1350,12 @@ export default function Page() {
     summaryPayload?.insight?.body ??
     agenticNote.paragraph;
 
-  const summaryThemeItems = React.useMemo<WordCloudItem[]>(() => {
-    const chips = summaryPayload?.signals?.chips ?? [];
-
-    if (chips.length > 0) {
-      return chips.map((chip, index) => ({
-        term: chip,
-        weight: Math.max(0.35, 1 - index * 0.12),
-      }));
-    }
-
-    return wordCloudDisplay;
-  }, [summaryPayload?.signals?.chips, wordCloudDisplay]);
-
-  const summaryMotivatorsLine =
-    summaryPayload?.signals?.intro ??
-    agenticNote.motivatorsLine;
-
-  const summarySuperpowersBody =
-    summaryPayload?.superpowers?.body ??
-    safeSuper.body ??
-    "What you naturally do well when it matters.";
+  const summaryDetail = summaryPayload?.insight?.detail;
 
   const summarySuperpowersBullets =
     summaryPayload?.superpowers?.bullets?.length
       ? summaryPayload.superpowers.bullets
       : superBullets;
-
-  const summaryWatchoutsIntro =
-    summaryPayload?.watchouts?.body ??
-    watchouts.intro;
 
   const summaryWatchoutsBullets =
     summaryPayload?.watchouts?.bullets?.length
@@ -1385,24 +1363,18 @@ export default function Page() {
       : watchouts.bullets;
 
   const summaryTinyTaskTitle =
-    summaryPayload?.tinyTask?.question ??
+    tinyTask?.question ??
     summaryNext.tinyTask.title;
 
   const summaryTinyTaskChoices =
-    summaryPayload?.tinyTask?.options?.length
-      ? summaryPayload.tinyTask.options.map((option) => ({
+    tinyTask?.options?.length
+      ? tinyTask.options.map((option) => ({
           label: option,
         }))
       : summaryNext.tinyTask.choices;
 
-  const summaryActionTitle =
-    summaryPayload?.actions?.title ??
-    summaryNext.action.title;
-
-  const summaryActionBullets =
-    summaryPayload?.actions?.bullets?.length
-      ? summaryPayload.actions.bullets
-      : summaryNext.action.bullets;
+  const summaryTinyTaskId = tinyTask?.id ?? null;
+  const summaryTinyTaskSelectedIndex = tinyTask?.selected_option_index ?? null;
 
   const isSummaryReady = mounted && summaryFetchDone;
 
@@ -1514,6 +1486,7 @@ export default function Page() {
                   dark={dark}
                   headline={summaryHeadline}
                   paragraph={summaryParagraph}
+                  detail={summaryDetail}
                   hasStrongSignal={summaryHasSignal}
                   startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
                 />
@@ -1521,38 +1494,22 @@ export default function Page() {
 
               {summaryHasSignal ? (
                 <>
-                  <InsightsThemesCard
+                  <InsightsStrengthsCard
                     dark={dark}
-                    items={summaryThemeItems}
-                    hasStrongSignal={summaryHasSignal}
-                    motivatorsLine={summaryMotivatorsLine}
-                  />
-
-                  <InsightsSuperpowersCard
-                    dark={dark}
-                    body={summarySuperpowersBody}
-                    bullets={summarySuperpowersBullets}
-                    strengthsLine={agenticNote.strengthsLine}
-                    skillsLine={agenticNote.skillsLine}
-                    hasStrongSignal={summaryHasSignal}
-                  />
-
-                  <InsightsWatchoutsCard
-                    dark={dark}
-                    intro={summaryWatchoutsIntro}
-                    bullets={summaryWatchoutsBullets}
-                    hasStrongSignal={summaryHasSignal}
+                    superpowersBullets={summarySuperpowersBullets}
+                    watchoutsBullets={summaryWatchoutsBullets}
+                    hasStrongSignal={strengthsHasRealContent}
                   />
 
                   <InsightsTinyTaskCard
                     dark={dark}
-                    useLocal={mounted}
                     eyebrow={summaryNext.tinyTask.eyebrow}
                     title={summaryTinyTaskTitle}
                     body={summaryNext.tinyTask.body}
                     choices={summaryTinyTaskChoices}
                     hasStrongSignal={summaryHasSignal}
-                    pageId="insights.summary"
+                    taskId={summaryTinyTaskId}
+                    selectedOptionIndex={summaryTinyTaskSelectedIndex}
                   />
 
                   <InsightsQuickCheckCard

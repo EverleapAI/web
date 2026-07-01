@@ -3,13 +3,6 @@
 import * as React from "react";
 import { Check, CheckSquare } from "lucide-react";
 
-import type { TinyTaskResult } from "@/app/(app)/main/domain/tinyTasks";
-import {
-  loadTinyTaskResult,
-  saveTinyTaskResult,
-  makeChoiceResult,
-} from "@/app/(app)/main/domain/tinyTasks";
-
 import {
   bodyText,
   cardBody,
@@ -30,24 +23,14 @@ type Choice = {
 
 type Props = {
   dark: boolean;
-  useLocal: boolean;
   eyebrow?: string;
   title?: string;
   body?: string;
   choices?: Choice[];
   hasStrongSignal: boolean;
-  pageId?: string;
+  taskId?: string | null;
+  selectedOptionIndex?: number | null;
 };
-
-function slugify(input: string) {
-  return (input ?? "")
-    .toLowerCase()
-    .trim()
-    .replace(/['’"]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 60);
-}
 
 function optionBase(dark: boolean, selected: boolean) {
   return [
@@ -92,19 +75,19 @@ function checkWrap(dark: boolean, selected: boolean) {
 
 export default function InsightsTinyTaskCard({
   dark,
-  useLocal,
   eyebrow = "Tiny Task",
   title,
   body,
   choices = [],
   hasStrongSignal,
-  pageId = "insights.summary",
+  taskId,
+  selectedOptionIndex,
 }: Props) {
   const safeChoices = React.useMemo(
     () =>
       choices
         .map((choice, index) => ({
-          id: slugify(choice?.label || "") || `choice_${index + 1}`,
+          originalIndex: index,
           label: (choice?.label ?? "").trim(),
           meta: (choice?.meta ?? "").trim() || undefined,
         }))
@@ -113,22 +96,35 @@ export default function InsightsTinyTaskCard({
     [choices]
   );
 
-  const [result, setResult] = React.useState<TinyTaskResult | null>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(
+    selectedOptionIndex ?? null
+  );
 
   React.useEffect(() => {
-    const r = loadTinyTaskResult(pageId, { useLocal });
-    setResult(r);
-  }, [pageId, useLocal]);
+    setSelectedIndex(selectedOptionIndex ?? null);
+  }, [taskId, selectedOptionIndex]);
 
-  function select(choiceId: string) {
-    const next = makeChoiceResult({
-      id: "insights_tiny_task",
-      pageId,
-      choiceId,
-    });
+  async function select(index: number) {
+    if (!taskId) return;
 
-    setResult(next);
-    saveTinyTaskResult(pageId, next, { useLocal });
+    setSelectedIndex(index);
+
+    try {
+      const res = await fetch(`/api/micro-tasks/${taskId}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selected_option_index: index }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to save tiny task answer", {
+          status: res.status,
+          body: await res.text(),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to save tiny task answer", error);
+    }
   }
 
   return (
@@ -184,14 +180,13 @@ export default function InsightsTinyTaskCard({
               {safeChoices.length ? (
                 <div className="mt-3 space-y-2">
                   {safeChoices.map((choice) => {
-                    const selected =
-                      result?.kind === "choice" && result.choiceId === choice.id;
+                    const selected = selectedIndex === choice.originalIndex;
 
                     return (
                       <button
-                        key={choice.id}
+                        key={choice.originalIndex}
                         type="button"
-                        onClick={() => select(choice.id)}
+                        onClick={() => select(choice.originalIndex)}
                         className={optionBase(dark, selected)}
                         aria-pressed={selected}
                       >
