@@ -75,7 +75,7 @@ function checkWrap(dark: boolean, selected: boolean) {
 
 export default function InsightsTinyTaskCard({
   dark,
-  eyebrow = "Tiny Task",
+  eyebrow = "Something I’m Wondering",
   title,
   body,
   choices = [],

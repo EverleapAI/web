@@ -1503,7 +1503,6 @@ export default function Page() {
 
                   <InsightsTinyTaskCard
                     dark={dark}
-                    eyebrow={summaryNext.tinyTask.eyebrow}
                     title={summaryTinyTaskTitle}
                     body={summaryNext.tinyTask.body}
                     choices={summaryTinyTaskChoices}
