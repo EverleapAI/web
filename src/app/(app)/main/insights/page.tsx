@@ -1004,6 +1004,7 @@ export default function Page() {
 
   const [summaryPayload, setSummaryPayload] =
     React.useState<GeneratedSummaryPayload | null>(null);
+  const [summaryFetchDone, setSummaryFetchDone] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -1020,6 +1021,8 @@ export default function Page() {
         }
       } catch (error) {
         console.error("Failed to load generated insights summary", error);
+      } finally {
+        if (!cancelled) setSummaryFetchDone(true);
       }
     }
 
@@ -1401,7 +1404,7 @@ export default function Page() {
       ? summaryPayload.actions.bullets
       : summaryNext.action.bullets;
 
-  const isSummaryReady = mounted;
+  const isSummaryReady = mounted && summaryFetchDone;
 
   const skillsModel = React.useMemo(() => {
     const anyVm = vm as unknown as Record<string, unknown>;
