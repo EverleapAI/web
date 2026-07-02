@@ -87,6 +87,7 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
         detail={payload?.insight?.detail}
         hasStrongSignal={hasGeneratedPayload}
         startHref={STORY_HREF}
+        confidenceLevel={confidenceLevel}
       />
 
       {showAssist ? (
@@ -127,6 +128,7 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
               detail={motivator.detail}
               iconKey={motivator.iconKey ?? "growth"}
               emphasis={index === 0 ? "primary" : "secondary"}
+              confidenceLevel={confidenceLevel}
             />
           ))}
         </div>

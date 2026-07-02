@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import {
   TrendingUp,
   Search,
@@ -14,6 +15,7 @@ import {
 import {
   bodyText,
   cardBody,
+  confidenceToConstellationDensity,
   constellationOrnament,
   headerCopyStack,
   headerIconWrap,
@@ -56,6 +58,7 @@ type Props = {
   detail: string;
   iconKey: MotivatorIconKey;
   emphasis?: "primary" | "secondary";
+  confidenceLevel?: string | null;
 };
 
 export default function MotivatorCard({
@@ -65,12 +68,14 @@ export default function MotivatorCard({
   detail,
   iconKey,
   emphasis = "secondary",
+  confidenceLevel,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
   const isPrimary = emphasis === "primary";
+  const density = confidenceToConstellationDensity(confidenceLevel);
 
   return (
     <section
@@ -90,8 +95,9 @@ export default function MotivatorCard({
         }}
       />
 
-      <button
+      <motion.button
         type="button"
+        whileTap={{ scale: 0.97 }}
         onClick={() => setDetailOpen(true)}
         className="relative w-full text-left"
       >
@@ -111,7 +117,7 @@ export default function MotivatorCard({
             </div>
           </div>
 
-          {constellationOrnament(dark, cardTone)}
+          {constellationOrnament(dark, cardTone, density)}
         </div>
 
         <div className={cardBody()}>
@@ -146,7 +152,7 @@ export default function MotivatorCard({
             <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
-      </button>
+      </motion.button>
 
       <InsightsSummaryDetailModal
         open={detailOpen}

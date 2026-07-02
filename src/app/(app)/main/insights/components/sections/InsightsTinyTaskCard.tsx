@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { Check, CheckSquare } from "lucide-react";
 
 import {
@@ -183,9 +184,10 @@ export default function InsightsTinyTaskCard({
                     const selected = selectedIndex === choice.originalIndex;
 
                     return (
-                      <button
+                      <motion.button
                         key={choice.originalIndex}
                         type="button"
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => select(choice.originalIndex)}
                         className={optionBase(dark, selected)}
                         aria-pressed={selected}
@@ -221,7 +223,7 @@ export default function InsightsTinyTaskCard({
                             )}
                           </span>
                         </div>
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>

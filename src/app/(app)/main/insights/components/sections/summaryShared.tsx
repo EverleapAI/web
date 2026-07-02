@@ -99,12 +99,19 @@ export function constellationOrnamentWrap() {
   return "pointer-events-none absolute right-0 top-0 h-10 w-10";
 }
 
+// Density represents how much of the constellation is visible - stars are
+// points of evidence, the lines connecting them are the pattern forming
+// between them. Confidence drives this (see confidenceToConstellationDensity)
+// rather than a number ever being shown - "the pattern is becoming visible"
+// made literal instead of stated as a percentage.
 export function constellationOrnament(
   dark: boolean,
-  tone: HeaderTone | CardTone = "neutral"
+  tone: HeaderTone | CardTone = "neutral",
+  density: number = 5
 ) {
   const rgb = toneRgb(tone);
   const c = dark ? rgb.dark : rgb.light;
+  const show = (n: number) => density >= n;
 
   return (
     <div className={constellationOrnamentWrap()} aria-hidden>
@@ -117,66 +124,95 @@ export function constellationOrnament(
             : `0 0 8px rgba(${c}, 0.14)`,
         }}
       />
-      <span
-        className="absolute right-[13px] top-[8px] h-[2px] w-[2px] rounded-full"
-        style={{
-          background: `rgba(${c}, ${dark ? 0.56 : 0.46})`,
-        }}
-      />
-      <span
-        className="absolute right-[5px] top-[16px] h-[2px] w-[2px] rounded-full"
-        style={{
-          background: `rgba(${c}, ${dark ? 0.62 : 0.5})`,
-        }}
-      />
-      <span
-        className="absolute right-[17px] top-[20px] h-[3px] w-[3px] rounded-full"
-        style={{
-          background: `rgba(${c}, ${dark ? 0.78 : 0.62})`,
-          boxShadow: dark
-            ? `0 0 9px rgba(${c}, 0.2)`
-            : `0 0 7px rgba(${c}, 0.1)`,
-        }}
-      />
-      <span
-        className="absolute right-[1px] top-[25px] h-[2px] w-[2px] rounded-full"
-        style={{
-          background: `rgba(${c}, ${dark ? 0.48 : 0.38})`,
-        }}
-      />
+      {show(2) ? (
+        <span
+          className="absolute right-[13px] top-[8px] h-[2px] w-[2px] rounded-full"
+          style={{
+            background: `rgba(${c}, ${dark ? 0.56 : 0.46})`,
+          }}
+        />
+      ) : null}
+      {show(3) ? (
+        <span
+          className="absolute right-[5px] top-[16px] h-[2px] w-[2px] rounded-full"
+          style={{
+            background: `rgba(${c}, ${dark ? 0.62 : 0.5})`,
+          }}
+        />
+      ) : null}
+      {show(4) ? (
+        <span
+          className="absolute right-[17px] top-[20px] h-[3px] w-[3px] rounded-full"
+          style={{
+            background: `rgba(${c}, ${dark ? 0.78 : 0.62})`,
+            boxShadow: dark
+              ? `0 0 9px rgba(${c}, 0.2)`
+              : `0 0 7px rgba(${c}, 0.1)`,
+          }}
+        />
+      ) : null}
+      {show(5) ? (
+        <span
+          className="absolute right-[1px] top-[25px] h-[2px] w-[2px] rounded-full"
+          style={{
+            background: `rgba(${c}, ${dark ? 0.48 : 0.38})`,
+          }}
+        />
+      ) : null}
 
-      <span
-        className="absolute right-[8px] top-[10px] h-px origin-left"
-        style={{
-          width: 12,
-          background: `linear-gradient(90deg, rgba(${c}, ${
-            dark ? 0.16 : 0.1
-          }), rgba(${c}, ${dark ? 0.36 : 0.24}))`,
-          transform: "rotate(-18deg)",
-        }}
-      />
-      <span
-        className="absolute right-[7px] top-[18px] h-px origin-left"
-        style={{
-          width: 10,
-          background: `linear-gradient(90deg, rgba(${c}, ${
-            dark ? 0.1 : 0.08
-          }), rgba(${c}, ${dark ? 0.28 : 0.18}))`,
-          transform: "rotate(18deg)",
-        }}
-      />
-      <span
-        className="absolute right-[14px] top-[22px] h-px origin-left"
-        style={{
-          width: 8,
-          background: `linear-gradient(90deg, rgba(${c}, ${
-            dark ? 0.08 : 0.06
-          }), rgba(${c}, ${dark ? 0.22 : 0.14}))`,
-          transform: "rotate(28deg)",
-        }}
-      />
+      {show(3) ? (
+        <span
+          className="absolute right-[8px] top-[10px] h-px origin-left"
+          style={{
+            width: 12,
+            background: `linear-gradient(90deg, rgba(${c}, ${
+              dark ? 0.16 : 0.1
+            }), rgba(${c}, ${dark ? 0.36 : 0.24}))`,
+            transform: "rotate(-18deg)",
+          }}
+        />
+      ) : null}
+      {show(4) ? (
+        <span
+          className="absolute right-[7px] top-[18px] h-px origin-left"
+          style={{
+            width: 10,
+            background: `linear-gradient(90deg, rgba(${c}, ${
+              dark ? 0.1 : 0.08
+            }), rgba(${c}, ${dark ? 0.28 : 0.18}))`,
+            transform: "rotate(18deg)",
+          }}
+        />
+      ) : null}
+      {show(5) ? (
+        <span
+          className="absolute right-[14px] top-[22px] h-px origin-left"
+          style={{
+            width: 8,
+            background: `linear-gradient(90deg, rgba(${c}, ${
+              dark ? 0.08 : 0.06
+            }), rgba(${c}, ${dark ? 0.22 : 0.14}))`,
+            transform: "rotate(28deg)",
+          }}
+        />
+      ) : null}
     </div>
   );
+}
+
+export function confidenceToConstellationDensity(level?: string | null): number {
+  switch (level) {
+    case "strong":
+      return 5;
+    case "developing":
+      return 4;
+    case "emerging":
+      return 2;
+    case "very_early":
+      return 1;
+    default:
+      return 5;
+  }
 }
 
 export function headerLabel(dark: boolean) {

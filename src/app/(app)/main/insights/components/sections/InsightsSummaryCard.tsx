@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 import {
   bodyText,
   cardBody,
+  confidenceToConstellationDensity,
   constellationOrnament,
   headerCopyStack,
   headerIconWrap,
@@ -24,6 +26,7 @@ type Props = {
   detail?: string;
   hasStrongSignal: boolean;
   startHref?: string;
+  confidenceLevel?: string | null;
 };
 
 function splitParagraphs(text?: string): string[] {
@@ -40,8 +43,10 @@ export default function InsightsSummaryCard({
   detail,
   hasStrongSignal,
   startHref = "/main/questions?cat=motivations&returnTo=/main/insights?tab=summary",
+  confidenceLevel,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
+  const density = confidenceToConstellationDensity(confidenceLevel);
 
   const resolvedHeadline =
     headline?.trim() || "We’re still building your signal.";
@@ -79,7 +84,7 @@ export default function InsightsSummaryCard({
             </div>
           </div>
 
-          {constellationOrnament(dark, "neutral")}
+          {constellationOrnament(dark, "neutral", density)}
         </div>
 
         <div className={cardBody()}>
@@ -110,8 +115,9 @@ export default function InsightsSummaryCard({
 
               {hasDetail ? (
                 <div className="mt-3">
-                  <button
+                  <motion.button
                     type="button"
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setDetailOpen(true)}
                     className={[
                       "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
@@ -122,7 +128,7 @@ export default function InsightsSummaryCard({
                   >
                     <span>See how I got here</span>
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </button>
+                  </motion.button>
                 </div>
               ) : null}
 

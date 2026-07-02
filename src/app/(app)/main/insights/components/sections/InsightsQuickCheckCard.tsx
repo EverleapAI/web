@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 
 import {
@@ -160,29 +161,32 @@ export default function InsightsQuickCheckCard({
 
         <div className={cardBody()}>
           <div className="flex flex-wrap gap-1.5">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               className={quickChip(dark, rating === "mostly", "good")}
               onClick={() => onPick("mostly")}
             >
               👍 Mostly right
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               className={quickChip(dark, rating === "somewhat", "mid")}
               onClick={() => onPick("somewhat")}
             >
               🙂 Somewhat
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               className={quickChip(dark, rating === "not_really", "bad")}
               onClick={() => onPick("not_really")}
             >
               👎 Not really
-            </button>
+            </motion.button>
 
             {saved ? (
               <div
