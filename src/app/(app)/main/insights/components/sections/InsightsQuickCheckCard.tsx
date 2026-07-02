@@ -20,6 +20,7 @@ type QuickRating = "mostly" | "somewhat" | "not_really";
 type Props = {
   dark: boolean;
   contextTag: string;
+  pageKey?: "insights_summary" | "insights_motivations";
 };
 
 function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad") {
@@ -77,6 +78,7 @@ function saveButton(dark: boolean, disabled: boolean) {
 export default function InsightsQuickCheckCard({
   dark,
   contextTag,
+  pageKey = "insights_summary",
 }: Props): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = React.useState<QuickRating | null>(null);
@@ -103,7 +105,7 @@ export default function InsightsQuickCheckCard({
       const res = await fetch("/api/guidance/insights-summary/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, note, contextTag }),
+        body: JSON.stringify({ rating, note, contextTag, page_key: pageKey }),
       });
 
       if (!res.ok) {

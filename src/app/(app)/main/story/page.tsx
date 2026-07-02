@@ -145,6 +145,13 @@ export default function StoryPage(): React.JSX.Element {
     [searchParams]
   );
 
+  const family = React.useMemo(() => {
+    const value = searchParams.get("family");
+    return value && ["motivations", "strengths", "skills", "misc"].includes(value)
+      ? value
+      : null;
+  }, [searchParams]);
+
   const [data, setData] = React.useState<StoryNextResponse | null>(null);
   const [selected, setSelected] = React.useState<string[]>([]);
   const [answer, setAnswer] = React.useState("");
@@ -163,7 +170,8 @@ export default function StoryPage(): React.JSX.Element {
     setError(null);
 
     try {
-      const next = await apiFetch<StoryNextResponse>("/story/next");
+      const query = family ? `?family=${encodeURIComponent(family)}` : "";
+      const next = await apiFetch<StoryNextResponse>(`/story/next${query}`);
       setData(next);
       setSelected([]);
       setAnswer("");

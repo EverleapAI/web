@@ -34,6 +34,8 @@ import InsightsStrengthsCard from "./components/sections/InsightsStrengthsCard";
 import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
 
+import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
+
 /* =============================================================================
    Tabs
    ============================================================================= */
@@ -76,21 +78,6 @@ type GeneratedSummaryPayload = {
     prompt?: string;
     options?: string[];
   };
-};
-
-type GeneratedTinyTask = {
-  id: string;
-  question: string;
-  options: string[];
-  signal_key: string;
-  selected_option: string | null;
-  selected_option_index: number | null;
-};
-
-type GeneratedSummaryResponse = {
-  ok?: boolean;
-  payload?: GeneratedSummaryPayload | null;
-  tiny_task?: GeneratedTinyTask | null;
 };
 
 const TABS: TabDef[] = [
@@ -964,71 +951,11 @@ export default function Page() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const [summaryPayload, setSummaryPayload] =
-    React.useState<GeneratedSummaryPayload | null>(null);
-  const [tinyTask, setTinyTask] =
-    React.useState<GeneratedTinyTask | null>(null);
-  const [summaryFetchDone, setSummaryFetchDone] = React.useState(false);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-    // The backend generates this off a background queue drained once a
-    // minute, so a user can land here just after answering, before the
-    // payload exists yet. Poll for a bit so it can swap in without a
-    // reload — the local fallback covers the wait in the meantime.
-    const POLL_INTERVAL_MS = 5000;
-    const MAX_POLLS = 12; // ~60s, matching the generation timer's cadence
-
-    async function fetchSummary(): Promise<{
-      payload: GeneratedSummaryPayload;
-      tinyTask: GeneratedTinyTask | null;
-    } | null> {
-      const res = await fetch("/api/guidance/insights-summary");
-      const data = (await res.json().catch(() => null)) as
-        | GeneratedSummaryResponse
-        | null;
-
-      return res.ok && data?.ok && data.payload
-        ? { payload: data.payload, tinyTask: data.tiny_task ?? null }
-        : null;
-    }
-
-    async function loadGeneratedSummary(pollsRemaining: number) {
-      try {
-        const result = await fetchSummary();
-
-        if (cancelled) return;
-
-        if (result) {
-          setSummaryPayload(result.payload);
-          setTinyTask(result.tinyTask);
-          setSummaryFetchDone(true);
-          return;
-        }
-
-        setSummaryFetchDone(true);
-
-        if (pollsRemaining > 0) {
-          timeoutId = setTimeout(
-            () => loadGeneratedSummary(pollsRemaining - 1),
-            POLL_INTERVAL_MS
-          );
-        }
-      } catch (error) {
-        console.error("Failed to load generated insights summary", error);
-        if (!cancelled) setSummaryFetchDone(true);
-      }
-    }
-
-    loadGeneratedSummary(MAX_POLLS);
-
-    return () => {
-      cancelled = true;
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, []);
+  const {
+    payload: summaryPayload,
+    tinyTask,
+    fetchDone: summaryFetchDone,
+  } = useGeneratedInsights<GeneratedSummaryPayload>("/api/guidance/insights-summary");
 
   const [showLeft, setShowLeft] = React.useState(false);
   const [showRight, setShowRight] = React.useState(false);
@@ -1520,19 +1447,7 @@ export default function Page() {
             </section>
           ) : null
         ) : tab === "motivations" ? (
-          <MotivationsTab
-            dark={dark}
-            motivationsTop={motivationsTop}
-            openDriver={openDriver}
-            setOpenDriver={setOpenDriver}
-            energyBoosters={energyBoosters}
-            energyDrainers={energyDrainers}
-            motivationReceipts={baseMotivationReceipts}
-            nextStepsMotivations={nextStepsMotivations}
-            mounted={mounted}
-            tab={tab}
-            nameFromHeadline={nameFromHeadline}
-          />
+          <MotivationsTab dark={dark} />
         ) : tab === "strengths" ? (
           <StrengthsTab
             dark={dark}
