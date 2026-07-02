@@ -55,6 +55,7 @@ type Props = {
   shortLine: string;
   detail: string;
   iconKey: MotivatorIconKey;
+  emphasis?: "primary" | "secondary";
 };
 
 export default function MotivatorCard({
@@ -63,24 +64,29 @@ export default function MotivatorCard({
   shortLine,
   detail,
   iconKey,
+  emphasis = "secondary",
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
+  const isPrimary = emphasis === "primary";
 
   return (
     <section
       className={[
         sectionCard(dark, cardTone),
-        "relative overflow-hidden px-3 py-3 sm:px-3.5 sm:py-3.5",
+        "relative overflow-hidden",
+        isPrimary ? "px-3.5 py-4 sm:px-4 sm:py-4.5" : "px-3 py-3 sm:px-3.5 sm:py-3.5",
       ].join(" ")}
     >
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{
-          background: `radial-gradient(circle at 15% 0%, rgba(${rgb}, ${dark ? 0.18 : 0.12}) 0%, transparent 55%)`,
+          background: `radial-gradient(circle at 15% 0%, rgba(${rgb}, ${
+            dark ? (isPrimary ? 0.26 : 0.18) : isPrimary ? 0.18 : 0.12
+          }) 0%, transparent 55%)`,
         }}
       />
 
@@ -90,8 +96,13 @@ export default function MotivatorCard({
         className="relative w-full text-left"
       >
         <div className={headerRow()}>
-          <div className={headerIconWrap(dark, headerTone)}>
-            <Icon className="h-3.5 w-3.5" />
+          <div
+            className={[
+              headerIconWrap(dark, headerTone),
+              isPrimary ? "h-5 w-5" : "",
+            ].join(" ")}
+          >
+            <Icon className={isPrimary ? "h-4 w-4" : "h-3.5 w-3.5"} />
           </div>
 
           <div className={headerMain()}>
@@ -107,7 +118,9 @@ export default function MotivatorCard({
           <h3
             className={[
               dark ? "text-white" : "text-slate-950",
-              "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",
+              isPrimary
+                ? "text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.02em]"
+                : "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",
             ].join(" ")}
           >
             {name}
@@ -117,7 +130,7 @@ export default function MotivatorCard({
             className={[
               "mt-1.5",
               bodyText(dark),
-              "text-[13.5px] leading-[1.55]",
+              isPrimary ? "text-[14.5px] leading-[1.6]" : "text-[13.5px] leading-[1.55]",
             ].join(" ")}
           >
             {shortLine}
