@@ -4,6 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Clock3 } from "lucide-react";
 
+import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
+
 /* =============================================================================
    Types
    ============================================================================= */
@@ -93,11 +95,24 @@ function buildDelightPara(topTerms: string[]) {
    Component
    ============================================================================= */
 
+type TimeTwinTeaserPayload = {
+  primary?: { name?: string; tagline?: string };
+};
+
 export default function FunFactsTab(props: FunFactsTabProps) {
   const { dark, wordCloudDisplay, nameFromHeadline } = props;
   const router = useRouter();
 
   const topTerms = React.useMemo(() => pickTopTerms(wordCloudDisplay, 3), [wordCloudDisplay]);
+
+  const { payload: timeTwinPayload } = useGeneratedInsights<TimeTwinTeaserPayload>(
+    "/api/guidance/insights-time-twin"
+  );
+
+  const timeTwinTeaser =
+    timeTwinPayload?.primary?.name && timeTwinPayload?.primary?.tagline
+      ? `Right now: ${timeTwinPayload.primary.name} — ${timeTwinPayload.primary.tagline}`
+      : "A biography-style mirror — creative + technical + real-world impact.";
 
   return (
     <section className="mb-6">
@@ -178,7 +193,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
                 <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</div>
 
                 <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  A biography-style mirror — creative + technical + real-world impact.
+                  {timeTwinTeaser}
                 </div>
 
                 <div
