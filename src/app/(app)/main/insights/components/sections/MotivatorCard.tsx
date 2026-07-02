@@ -59,6 +59,7 @@ type Props = {
   iconKey: MotivatorIconKey;
   emphasis?: "primary" | "secondary";
   confidenceLevel?: string | null;
+  eyebrow?: string;
 };
 
 export default function MotivatorCard({
@@ -69,6 +70,7 @@ export default function MotivatorCard({
   iconKey,
   emphasis = "secondary",
   confidenceLevel,
+  eyebrow = "Motivator",
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
 
@@ -113,7 +115,7 @@ export default function MotivatorCard({
 
           <div className={headerMain()}>
             <div className={headerCopyStack()}>
-              <div className={headerLabel(dark)}>Motivator</div>
+              <div className={headerLabel(dark)}>{eyebrow}</div>
             </div>
           </div>
 

@@ -1450,23 +1450,9 @@ export default function Page() {
         ) : tab === "motivations" ? (
           <MotivationsTab dark={dark} />
         ) : tab === "strengths" ? (
-          <StrengthsTab
-            dark={dark}
-            model={strengthsModel}
-            nextStepsStrengths={nextStepsStrengths}
-            mounted={mounted}
-            tab={tab}
-            nameFromHeadline={nameFromHeadline}
-          />
+          <StrengthsTab dark={dark} />
         ) : tab === "skills" ? (
-          <SkillsTab
-            dark={dark}
-            model={skillsModel}
-            nextStepsSkills={nextStepsSkills}
-            mounted={mounted}
-            tab={tab}
-            nameFromHeadline={nameFromHeadline}
-          />
+          <SkillsTab dark={dark} />
         ) : tab === "funFacts" ? (
           <FunFactsTab
             dark={dark}

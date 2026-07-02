@@ -21,7 +21,7 @@ type QuickRating = "mostly" | "somewhat" | "not_really";
 type Props = {
   dark: boolean;
   contextTag: string;
-  pageKey?: "insights_summary" | "insights_motivations";
+  pageKey?: "insights_summary" | "insights_motivations" | "insights_strengths" | "insights_skills";
 };
 
 function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad") {
