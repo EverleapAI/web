@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 import InsightsSummaryCard from "./sections/InsightsSummaryCard";
-import MotivatorCard from "./sections/MotivatorCard";
+import MotivatorCard, { type MotivatorIconKey } from "./sections/MotivatorCard";
 import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
 import { sectionCard, bodyText, headerLabel } from "./sections/summaryShared";
@@ -16,6 +16,7 @@ type MotivatorPayload = {
   name?: string;
   shortLine?: string;
   detail?: string;
+  iconKey?: MotivatorIconKey;
 };
 
 type GeneratedMotivationsPayload = {
@@ -30,11 +31,71 @@ type GeneratedMotivationsPayload = {
   motivators?: MotivatorPayload[];
 };
 
-const MOTIVATOR_TONES = ["strengths", "task", "action"] as const;
-
 const STORY_HREF =
   "/main/story?family=motivations&returnTo=" +
   encodeURIComponent("/main/insights?tab=motivations");
+
+function MotivatorCarousel({
+  dark,
+  motivators,
+}: {
+  dark: boolean;
+  motivators: Required<MotivatorPayload>[];
+}): React.JSX.Element {
+  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  function onScroll() {
+    const el = scrollerRef.current;
+    if (!el || !el.children.length) return;
+
+    const cardWidth = el.children[0].getBoundingClientRect().width + 12; // + gap-3
+    const index = Math.round(el.scrollLeft / cardWidth);
+    setActiveIndex(Math.max(0, Math.min(motivators.length - 1, index)));
+  }
+
+  return (
+    <div>
+      <div
+        ref={scrollerRef}
+        onScroll={onScroll}
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {motivators.map((motivator) => (
+          <div key={motivator.name} className="min-w-[82%] shrink-0 snap-center sm:min-w-[320px]">
+            <MotivatorCard
+              dark={dark}
+              name={motivator.name}
+              shortLine={motivator.shortLine}
+              detail={motivator.detail}
+              iconKey={motivator.iconKey ?? "growth"}
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2 flex items-center justify-center gap-1.5">
+        {motivators.map((motivator, index) => (
+          <span
+            key={motivator.name}
+            aria-hidden
+            className={[
+              "h-1.5 rounded-full transition-all",
+              index === activeIndex ? "w-4" : "w-1.5",
+              index === activeIndex
+                ? dark
+                  ? "bg-white/70"
+                  : "bg-slate-800"
+                : dark
+                  ? "bg-white/20"
+                  : "bg-slate-300",
+            ].join(" ")}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
   const { payload, tinyTask } = useGeneratedInsights<GeneratedMotivationsPayload>(
@@ -118,18 +179,7 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
       ) : null}
 
       {motivators.length === 3 ? (
-        <div className="space-y-3">
-          {motivators.map((motivator, index) => (
-            <MotivatorCard
-              key={motivator.name}
-              dark={dark}
-              name={motivator.name}
-              shortLine={motivator.shortLine}
-              detail={motivator.detail}
-              tone={MOTIVATOR_TONES[index]}
-            />
-          ))}
-        </div>
+        <MotivatorCarousel dark={dark} motivators={motivators} />
       ) : null}
 
       <InsightsTinyTaskCard
