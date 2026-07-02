@@ -9,7 +9,7 @@ import {
   Target,
   Palette,
   Shield,
-  ArrowRight,
+  ChevronDown,
 } from "lucide-react";
 
 import {
@@ -24,7 +24,6 @@ import {
   headerRow,
   sectionCard,
 } from "./summaryShared";
-import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
 
 export type MotivatorIconKey =
   | "growth"
@@ -72,7 +71,7 @@ export default function MotivatorCard({
   confidenceLevel,
   eyebrow = "Motivator",
 }: Props) {
-  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
@@ -100,7 +99,8 @@ export default function MotivatorCard({
       <motion.button
         type="button"
         whileTap={{ scale: 0.97 }}
-        onClick={() => setDetailOpen(true)}
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
         className="relative w-full text-left"
       >
         <div className={headerRow()}>
@@ -150,19 +150,34 @@ export default function MotivatorCard({
               dark ? "text-white/56" : "text-slate-600",
             ].join(" ")}
           >
-            <span>See why</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            <span>{expanded ? "Show less" : "See why"}</span>
+            <ChevronDown
+              className={[
+                "h-3.5 w-3.5 transition-transform",
+                expanded ? "rotate-180" : "",
+              ].join(" ")}
+            />
           </div>
         </div>
       </motion.button>
 
-      <InsightsSummaryDetailModal
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        dark={dark}
-        headline={name}
-        detail={detail}
-      />
+      <div
+        className={[
+          "relative overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+          expanded ? "mt-3 max-h-[600px] opacity-100" : "max-h-0 opacity-0",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "border-t pt-3",
+            dark ? "border-white/10" : "border-black/10",
+          ].join(" ")}
+        >
+          <p className={[bodyText(dark), "text-[13.5px] leading-[1.6]"].join(" ")}>
+            {detail}
+          </p>
+        </div>
+      </div>
     </section>
   );
 }
