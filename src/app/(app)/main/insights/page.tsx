@@ -69,11 +69,6 @@ type GeneratedSummaryPayload = {
   watchouts?: {
     bullets?: string[];
   };
-  tinyTask?: {
-    question?: string;
-    options?: string[];
-    signal_key?: string;
-  };
   quickCheck?: {
     prompt?: string;
     options?: string[];
@@ -855,73 +850,6 @@ function normalizeLens(raw: unknown): LensLike {
 }
 
 /* =============================================================================
-   Loose next-step normalization
-   ============================================================================= */
-
-function textFromUnknown(value: unknown): string {
-  if (typeof value === "string") return cleanOneLine(value);
-  return "";
-}
-
-function firstString(...values: unknown[]) {
-  for (const v of values) {
-    const out = textFromUnknown(v);
-    if (out) return out;
-  }
-  return "";
-}
-
-function normalizeChoice(item: unknown): { label: string; meta?: string } | null {
-  if (typeof item === "string") {
-    const label = cleanOneLine(item);
-    return label ? { label } : null;
-  }
-
-  if (!isRecord(item)) return null;
-
-  const label = firstString(
-    item.label,
-    item.title,
-    item.text,
-    item.name,
-    item.prompt
-  );
-  const meta = firstString(
-    item.subtitle,
-    item.helper,
-    item.description,
-    item.body
-  );
-
-  if (!label) return null;
-  return meta ? { label, meta } : { label };
-}
-
-function normalizeChoices(value: unknown) {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => normalizeChoice(item))
-    .filter((item): item is { label: string; meta?: string } => !!item);
-}
-
-function normalizeTinyTask(definition: unknown) {
-  const rec = isRecord(definition) ? definition : {};
-  return {
-    eyebrow: firstString(rec.eyebrow, rec.kicker, "Tiny Task"),
-    title: firstString(
-      rec.title,
-      rec.name,
-      rec.prompt,
-      "Pick the one that’s most true this week."
-    ),
-    body: firstString(rec.subtitle, rec.body, rec.description),
-    choices: normalizeChoices(
-      rec.choices ?? rec.options ?? rec.answers ?? rec.items
-    ),
-  };
-}
-
-/* =============================================================================
    Page
    ============================================================================= */
 
@@ -953,7 +881,7 @@ export default function Page() {
 
   const {
     payload: summaryPayload,
-    tinyTask,
+    tinyTasks,
     fetchDone: summaryFetchDone,
   } = useGeneratedInsights<GeneratedSummaryPayload>("/api/guidance/insights-summary");
 
@@ -980,10 +908,6 @@ export default function Page() {
     () => getNextStepsDefinition("insights.summary"),
     []
   );
-  const nextStepsSummary = React.useMemo(() => {
-    if (!nextStepsBaseSummary) return null;
-    return { ...nextStepsBaseSummary, bridgeLine: "" };
-  }, [nextStepsBaseSummary]);
 
   const nextStepsBaseMotivations = React.useMemo(
     () => getNextStepsDefinition("insights.motivations"),
@@ -1244,13 +1168,6 @@ export default function Page() {
     energyDrainers,
   ]);
 
-  const summaryNext = React.useMemo(() => {
-    const rec = (nextStepsSummary ?? {}) as Record<string, unknown>;
-    return {
-      tinyTask: normalizeTinyTask(rec.tinyTask),
-    };
-  }, [nextStepsSummary]);
-
   const hasAnySignal = React.useMemo(() => {
     if (!mounted) return false;
     if (wordCloudDisplay.length > 0) return true;
@@ -1288,20 +1205,6 @@ export default function Page() {
     summaryPayload?.watchouts?.bullets?.length
       ? summaryPayload.watchouts.bullets
       : watchouts.bullets;
-
-  const summaryTinyTaskTitle =
-    tinyTask?.question ??
-    summaryNext.tinyTask.title;
-
-  const summaryTinyTaskChoices =
-    tinyTask?.options?.length
-      ? tinyTask.options.map((option) => ({
-          label: option,
-        }))
-      : summaryNext.tinyTask.choices;
-
-  const summaryTinyTaskId = tinyTask?.id ?? null;
-  const summaryTinyTaskSelectedIndex = tinyTask?.selected_option_index ?? null;
 
   const isSummaryReady = mounted && summaryFetchDone;
 
@@ -1431,12 +1334,8 @@ export default function Page() {
 
                   <InsightsTinyTaskCard
                     dark={dark}
-                    title={summaryTinyTaskTitle}
-                    body={summaryNext.tinyTask.body}
-                    choices={summaryTinyTaskChoices}
-                    hasStrongSignal={summaryHasSignal}
-                    taskId={summaryTinyTaskId}
-                    selectedOptionIndex={summaryTinyTaskSelectedIndex}
+                    tasks={tinyTasks}
+                    hasStrongSignal={tinyTasks.length > 0}
                   />
 
                   <InsightsQuickCheckCard

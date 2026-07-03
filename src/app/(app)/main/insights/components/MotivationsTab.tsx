@@ -36,7 +36,7 @@ const STORY_HREF =
   encodeURIComponent("/main/insights?tab=motivations");
 
 export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
-  const { payload, tinyTask } = useGeneratedInsights<GeneratedMotivationsPayload>(
+  const { payload, tinyTasks } = useGeneratedInsights<GeneratedMotivationsPayload>(
     "/api/guidance/insights-motivations"
   );
 
@@ -136,11 +136,8 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
 
       <InsightsTinyTaskCard
         dark={dark}
-        title={tinyTask?.question}
-        choices={(tinyTask?.options ?? []).map((label) => ({ label }))}
-        hasStrongSignal={!!tinyTask}
-        taskId={tinyTask?.id ?? null}
-        selectedOptionIndex={tinyTask?.selected_option_index ?? null}
+        tasks={tinyTasks}
+        hasStrongSignal={tinyTasks.length > 0}
       />
 
       <InsightsQuickCheckCard

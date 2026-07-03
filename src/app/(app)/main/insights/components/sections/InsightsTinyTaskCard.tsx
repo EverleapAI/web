@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
-import { Check, CheckSquare } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, ChevronLeft, CheckSquare } from "lucide-react";
 
 import {
   bodyText,
@@ -16,21 +16,16 @@ import {
   sectionCard,
   sectionTitle,
 } from "./summaryShared";
-
-type Choice = {
-  label: string;
-  meta?: string;
-};
+import {
+  useMicroTaskBatch,
+  type MicroTaskBatchItem,
+} from "@/lib/microTasks/useMicroTaskBatch";
 
 type Props = {
   dark: boolean;
   eyebrow?: string;
-  title?: string;
-  body?: string;
-  choices?: Choice[];
+  tasks: MicroTaskBatchItem[];
   hasStrongSignal: boolean;
-  taskId?: string | null;
-  selectedOptionIndex?: number | null;
 };
 
 function optionBase(dark: boolean, selected: boolean) {
@@ -56,11 +51,6 @@ function labelClass(dark: boolean, selected: boolean) {
   return selected ? "text-white/90" : "text-white/78";
 }
 
-function metaClass(dark: boolean, selected: boolean) {
-  if (!dark) return selected ? "text-slate-700" : "text-slate-500";
-  return selected ? "text-white/64" : "text-white/46";
-}
-
 function checkWrap(dark: boolean, selected: boolean) {
   return [
     "flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full transition",
@@ -74,59 +64,23 @@ function checkWrap(dark: boolean, selected: boolean) {
   ].join(" ");
 }
 
+function backButtonClass(dark: boolean) {
+  return [
+    "mb-2 flex items-center gap-1 text-[12px] font-medium",
+    dark
+      ? "text-white/40 hover:text-white/64"
+      : "text-slate-500 hover:text-slate-700",
+  ].join(" ");
+}
+
 export default function InsightsTinyTaskCard({
   dark,
   eyebrow = "Something I’m Wondering",
-  title,
-  body,
-  choices = [],
+  tasks,
   hasStrongSignal,
-  taskId,
-  selectedOptionIndex,
 }: Props) {
-  const safeChoices = React.useMemo(
-    () =>
-      choices
-        .map((choice, index) => ({
-          originalIndex: index,
-          label: (choice?.label ?? "").trim(),
-          meta: (choice?.meta ?? "").trim() || undefined,
-        }))
-        .filter((choice) => choice.label)
-        .slice(0, 3),
-    [choices]
-  );
-
-  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(
-    selectedOptionIndex ?? null
-  );
-
-  React.useEffect(() => {
-    setSelectedIndex(selectedOptionIndex ?? null);
-  }, [taskId, selectedOptionIndex]);
-
-  async function select(index: number) {
-    if (!taskId) return;
-
-    setSelectedIndex(index);
-
-    try {
-      const res = await fetch(`/api/micro-tasks/${taskId}/answer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selected_option_index: index }),
-      });
-
-      if (!res.ok) {
-        console.error("Failed to save tiny task answer", {
-          status: res.status,
-          body: await res.text(),
-        });
-      }
-    } catch (error) {
-      console.error("Failed to save tiny task answer", error);
-    }
-  }
+  const { current, allAnswered, canGoBack, answer, goBack, selectedIndexFor } =
+    useMicroTaskBatch(tasks);
 
   return (
     <section
@@ -160,86 +114,103 @@ export default function InsightsTinyTaskCard({
         </div>
 
         <div className={cardBody()}>
-          <div className={sectionTitle(dark)}>
-            {title?.trim() || "Pick the one that’s most true this week."}
-          </div>
-
-          {hasStrongSignal ? (
+          {!hasStrongSignal ? (
             <>
-              {body ? (
-                <p
+              <div className={sectionTitle(dark)}>
+                Pick the one that’s most true this week.
+              </div>
+              <p
+                className={[
+                  "mt-2.5",
+                  bodyText(dark),
+                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                ].join(" ")}
+              >
+                A Tiny Task is one small experiment. Once we have more signal,
+                this turns into something simple you can actually try this
+                week.
+              </p>
+            </>
+          ) : (
+            <AnimatePresence mode="wait">
+              {current ? (
+                <motion.div
+                  key={current.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {canGoBack ? (
+                    <button
+                      type="button"
+                      onClick={goBack}
+                      className={backButtonClass(dark)}
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      Back
+                    </button>
+                  ) : null}
+
+                  <div className={sectionTitle(dark)}>{current.question}</div>
+
+                  <div className="mt-3 space-y-2">
+                    {current.options.map((label, index) => {
+                      const selected = selectedIndexFor(current) === index;
+
+                      return (
+                        <motion.button
+                          key={index}
+                          type="button"
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => answer(index)}
+                          className={optionBase(dark, selected)}
+                          aria-pressed={selected}
+                        >
+                          <div className="flex items-center justify-between gap-2.5">
+                            <div
+                              className={[
+                                "min-w-0 text-[13.5px] font-medium leading-5 sm:text-[14px]",
+                                labelClass(dark, selected),
+                              ].join(" ")}
+                            >
+                              {label}
+                            </div>
+
+                            <span
+                              className={checkWrap(dark, selected)}
+                              aria-hidden
+                            >
+                              {selected ? (
+                                <Check className="h-3.5 w-3.5" />
+                              ) : (
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                              )}
+                            </span>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.p
+                  key="closing"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
                   className={[
-                    "mt-2.5",
                     bodyText(dark),
                     "text-[14px] leading-[1.65] sm:text-[14.5px]",
                   ].join(" ")}
                 >
-                  {body}
-                </p>
-              ) : null}
-
-              {safeChoices.length ? (
-                <div className="mt-3 space-y-2">
-                  {safeChoices.map((choice) => {
-                    const selected = selectedIndex === choice.originalIndex;
-
-                    return (
-                      <motion.button
-                        key={choice.originalIndex}
-                        type="button"
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => select(choice.originalIndex)}
-                        className={optionBase(dark, selected)}
-                        aria-pressed={selected}
-                      >
-                        <div className="flex items-center justify-between gap-2.5">
-                          <div className="min-w-0">
-                            <div
-                              className={[
-                                "text-[13.5px] font-medium leading-5 sm:text-[14px]",
-                                labelClass(dark, selected),
-                              ].join(" ")}
-                            >
-                              {choice.label}
-                            </div>
-
-                            {choice.meta ? (
-                              <div
-                                className={[
-                                  "mt-0.5 text-[12px] leading-5 sm:text-[12.5px]",
-                                  metaClass(dark, selected),
-                                ].join(" ")}
-                              >
-                                {choice.meta}
-                              </div>
-                            ) : null}
-                          </div>
-
-                          <span className={checkWrap(dark, selected)} aria-hidden>
-                            {selected ? (
-                              <Check className="h-3.5 w-3.5" />
-                            ) : (
-                              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                            )}
-                          </span>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <p
-              className={[
-                "mt-2.5",
-                bodyText(dark),
-                "text-[14px] leading-[1.65] sm:text-[14.5px]",
-              ].join(" ")}
-            >
-              A Tiny Task is one small experiment. Once we have more signal, this
-              turns into something simple you can actually try this week.
-            </p>
+                  {allAnswered
+                    ? "That's all for now."
+                    : "A Tiny Task is one small experiment. Once we have more signal, this turns into something simple you can actually try this week."}
+                </motion.p>
+              )}
+            </AnimatePresence>
           )}
         </div>
       </div>

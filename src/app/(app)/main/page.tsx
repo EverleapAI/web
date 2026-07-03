@@ -30,8 +30,8 @@ type TodayMicroTask = {
   question: string;
   options: string[];
   signal_key: string;
-  selected_option?: string | null;
-  selected_option_index?: number | null;
+  selected_option: string | null;
+  selected_option_index: number | null;
 };
 
 type StoryProgress = {
@@ -48,7 +48,7 @@ type TodayGuidance = {
   guidance_text?: string | null;
   next_action_label: string;
   next_action_route: string;
-  tiny_task?: TodayMicroTask | null;
+  tiny_tasks?: TodayMicroTask[];
   story_progress?: StoryProgress | null;
 };
 
@@ -343,10 +343,10 @@ export default function MainHomePage() {
             </section>
 
             <section className="mt-5 px-4">
-              {guidanceLoaded && todayGuidance?.tiny_task ? (
+              {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
                 <TodayTinyTaskCard
                   dark={dark}
-                  task={todayGuidance.tiny_task}
+                  tasks={todayGuidance.tiny_tasks}
                 />
               ) : (
                 <TinyTaskCard

@@ -1,20 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, Sparkles } from "lucide-react";
 
-type TodayMicroTask = {
-  id: string;
-  question: string;
-  options: string[];
-  signal_key: string;
-  selected_option?: string | null;
-  selected_option_index?: number | null;
-};
+import {
+  useMicroTaskBatch,
+  type MicroTaskBatchItem,
+} from "@/lib/microTasks/useMicroTaskBatch";
 
 type Props = {
   dark: boolean;
-  task: TodayMicroTask;
+  tasks: MicroTaskBatchItem[];
 };
 
 function headerRow() {
@@ -34,6 +31,15 @@ function headerTitleClass(dark: boolean) {
   return [
     "text-[11px] font-semibold uppercase tracking-[0.28em]",
     dark ? "text-white/42" : "text-slate-600",
+  ].join(" ");
+}
+
+function backButtonClass(dark: boolean) {
+  return [
+    "mb-2 flex items-center gap-1 text-[12px] font-medium",
+    dark
+      ? "text-white/40 hover:text-white/64"
+      : "text-slate-500 hover:text-slate-700",
   ].join(" ");
 }
 
@@ -63,39 +69,9 @@ function labelClass(dark: boolean, selected: boolean) {
   return selected ? "text-white" : "text-white/74";
 }
 
-export function TodayTinyTaskCard({ dark, task }: Props) {
-  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(
-    task.selected_option_index ?? null
-  );
-
-  React.useEffect(() => {
-    setSelectedIndex(task.selected_option_index ?? null);
-  }, [task.id, task.selected_option_index]);
-
-  async function select(index: number) {
-    setSelectedIndex(index);
-
-    try {
-      const res = await fetch(`/api/micro-tasks/${task.id}/answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          selected_option_index: index,
-        }),
-      });
-
-      if (!res.ok) {
-        console.error("Failed to save tiny task answer", {
-          status: res.status,
-          body: await res.text(),
-        });
-      }
-    } catch (error) {
-      console.error("Failed to save tiny task answer", error);
-    }
-  }
+export function TodayTinyTaskCard({ dark, tasks }: Props) {
+  const { current, allAnswered, canGoBack, answer, goBack, selectedIndexFor } =
+    useMicroTaskBatch(tasks);
 
   return (
     <div className="space-y-3">
@@ -109,63 +85,89 @@ export function TodayTinyTaskCard({ dark, task }: Props) {
             Something I&apos;m Wondering
           </div>
         </div>
-
-
-        <div
-          className={
-            dark
-              ? "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-white sm:text-[22px]"
-              : "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-slate-950 sm:text-[22px]"
-          }
-        >
-          {task.question}
-        </div>
       </div>
 
-      <div className="space-y-2">
-        {task.options.map((label, index) => {
-          const selected = selectedIndex === index;
+      <AnimatePresence mode="wait">
+        {current ? (
+          <motion.div
+            key={current.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {canGoBack ? (
+              <button
+                type="button"
+                onClick={goBack}
+                className={backButtonClass(dark)}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Back
+              </button>
+            ) : null}
 
-          return (
-            <button
-              key={`${task.id}-${index}`}
-              type="button"
-              onClick={() => select(index)}
-              className={optionBase(dark, selected)}
-              aria-pressed={selected}
+            <div
+              className={
+                dark
+                  ? "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-white sm:text-[22px]"
+                  : "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-slate-950 sm:text-[22px]"
+              }
             >
-              <div className="flex items-center justify-between gap-3">
-                <span className={labelClass(dark, selected)}>{label}</span>
+              {current.question}
+            </div>
 
-                {selected ? (
-                  <span
-                    className={
-                      dark
-                        ? "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80"
-                        : "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
-                    }
+            <div className="space-y-2">
+              {current.options.map((label, index) => {
+                const selected = selectedIndexFor(current) === index;
+
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => answer(index)}
+                    className={optionBase(dark, selected)}
+                    aria-pressed={selected}
                   >
-                    Helps
-                  </span>
-                ) : null}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={labelClass(dark, selected)}>
+                        {label}
+                      </span>
 
-      {selectedIndex !== null ? (
-        <p
-          className={
-            dark
-              ? "pt-1 text-[13px] leading-5 text-white/46"
-              : "pt-1 text-[13px] leading-5 text-slate-500"
-          }
-        >
-          That helps. I&apos;ll keep it in mind as I try to understand what
-          fits you best.
-        </p>
-      ) : null}
+                      {selected ? (
+                        <span
+                          className={
+                            dark
+                              ? "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80"
+                              : "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
+                          }
+                        >
+                          Helps
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.p
+            key="closing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className={
+              dark
+                ? "text-[13px] leading-5 text-white/46"
+                : "text-[13px] leading-5 text-slate-500"
+            }
+          >
+            {allAnswered ? "That's all for now." : ""}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

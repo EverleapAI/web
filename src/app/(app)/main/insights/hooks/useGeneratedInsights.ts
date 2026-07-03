@@ -14,7 +14,7 @@ export type GeneratedTinyTask = {
 type GeneratedResponse<TPayload> = {
   ok?: boolean;
   payload?: TPayload | null;
-  tiny_task?: GeneratedTinyTask | null;
+  tiny_tasks?: GeneratedTinyTask[];
 };
 
 // The backend generates these off a background queue drained once a
@@ -27,7 +27,7 @@ const MAX_POLLS = 12; // ~60s, matching the generation timer's cadence
 
 export function useGeneratedInsights<TPayload>(endpoint: string) {
   const [payload, setPayload] = React.useState<TPayload | null>(null);
-  const [tinyTask, setTinyTask] = React.useState<GeneratedTinyTask | null>(null);
+  const [tinyTasks, setTinyTasks] = React.useState<GeneratedTinyTask[]>([]);
   const [fetchDone, setFetchDone] = React.useState(false);
 
   React.useEffect(() => {
@@ -36,7 +36,7 @@ export function useGeneratedInsights<TPayload>(endpoint: string) {
 
     async function fetchPayload(): Promise<{
       payload: TPayload;
-      tinyTask: GeneratedTinyTask | null;
+      tinyTasks: GeneratedTinyTask[];
     } | null> {
       const res = await fetch(endpoint);
       const data = (await res.json().catch(() => null)) as
@@ -44,7 +44,7 @@ export function useGeneratedInsights<TPayload>(endpoint: string) {
         | null;
 
       return res.ok && data?.ok && data.payload
-        ? { payload: data.payload, tinyTask: data.tiny_task ?? null }
+        ? { payload: data.payload, tinyTasks: data.tiny_tasks ?? [] }
         : null;
     }
 
@@ -56,7 +56,7 @@ export function useGeneratedInsights<TPayload>(endpoint: string) {
 
         if (result) {
           setPayload(result.payload);
-          setTinyTask(result.tinyTask);
+          setTinyTasks(result.tinyTasks);
           setFetchDone(true);
           return;
         }
@@ -83,5 +83,5 @@ export function useGeneratedInsights<TPayload>(endpoint: string) {
     };
   }, [endpoint]);
 
-  return { payload, tinyTask, fetchDone };
+  return { payload, tinyTasks, fetchDone };
 }
