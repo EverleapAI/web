@@ -6,6 +6,7 @@ export const COOKIE = {
   VERIFIED: "everleap_verified",
   SESSION: "everleap_session",
   CONSENT: "everleap_consent",
+  PROMPT_LAB_UNLOCK: "everleap_prompt_lab_unlock",
 } as const;
 
 /** Shared cookie options (HttpOnly, Lax, domain, etc.) */

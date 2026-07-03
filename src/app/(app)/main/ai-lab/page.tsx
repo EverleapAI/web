@@ -5,6 +5,7 @@ import * as React from "react";
 import Conversation from "../../../onboarding/components/Conversation";
 import InputRenderer from "../../../onboarding/components/InputRenderer";
 import NavControls from "../../../onboarding/components/NavControls";
+import { PasscodeStep } from "@/components/promptLab/PromptLabTrigger";
 
 import {
   useOnboardingFlow,
@@ -652,6 +653,15 @@ function EditableAnswer({
 }
 
 export default function AiLabPage() {
+  const [unlocked, setUnlocked] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    fetch("/api/prompt-lab/status", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => setUnlocked(!!data?.unlocked))
+      .catch(() => setUnlocked(false));
+  }, []);
+
   const [flow, setFlow] = React.useState<FlowPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -916,7 +926,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
     setAiRun(null);
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/ai/lab/run`, {
+      const res = await fetch("/api/ai-lab/run", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -977,6 +987,27 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (unlocked === null) {
+    return (
+      <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
+        Checking access…
+      </div>
+    );
+  }
+
+  if (!unlocked) {
+    return (
+      <div className="flex min-h-[100svh] items-center justify-center bg-slate-950 p-10 text-white">
+        <PasscodeStep
+          open
+          dark
+          onClose={() => {}}
+          onUnlocked={() => setUnlocked(true)}
+        />
+      </div>
+    );
   }
 
   if (loading || loadingDbAnswers) {

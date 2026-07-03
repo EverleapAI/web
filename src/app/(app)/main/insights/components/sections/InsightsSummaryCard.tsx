@@ -18,6 +18,8 @@ import {
   sectionCard,
 } from "./summaryShared";
 import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
+import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
+import type { PromptLabPageKey } from "@/components/promptLab/PromptLabModal";
 
 type Props = {
   dark: boolean;
@@ -27,6 +29,7 @@ type Props = {
   hasStrongSignal: boolean;
   startHref?: string;
   confidenceLevel?: string | null;
+  pageKey?: PromptLabPageKey;
 };
 
 function splitParagraphs(text?: string): string[] {
@@ -44,6 +47,7 @@ export default function InsightsSummaryCard({
   hasStrongSignal,
   startHref = "/main/questions?cat=motivations&returnTo=/main/insights?tab=summary",
   confidenceLevel,
+  pageKey,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
   const density = confidenceToConstellationDensity(confidenceLevel);
@@ -73,6 +77,15 @@ export default function InsightsSummaryCard({
       />
 
       <div className="relative">
+        {pageKey ? (
+          <PromptLabTrigger
+            dark={dark}
+            pageKey={pageKey}
+            targetField="main"
+            currentText={paragraph ?? ""}
+          />
+        ) : null}
+
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "neutral")}>
             <Sparkles className="h-3.5 w-3.5" />

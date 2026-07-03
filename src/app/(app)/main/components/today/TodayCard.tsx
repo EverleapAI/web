@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight, Sparkles } from "lucide-react";
+import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 
 type TodayCardProps = {
   headline?: string | null;
@@ -49,6 +50,13 @@ export function TodayCard({
 
   return (
     <div className="relative">
+      <PromptLabTrigger
+        dark
+        pageKey="today"
+        targetField="main"
+        currentText={guidanceText ?? ""}
+      />
+
       <div className="mb-5 flex items-center gap-2">
         <span className="flex h-5 w-5 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
           <Sparkles className="h-3 w-3" />

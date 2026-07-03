@@ -25,6 +25,8 @@ import {
   sectionCard,
 } from "./summaryShared";
 import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
+import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
+import type { PromptLabPageKey } from "@/components/promptLab/PromptLabModal";
 
 export type MotivatorIconKey =
   | "growth"
@@ -60,6 +62,8 @@ type Props = {
   emphasis?: "primary" | "secondary";
   confidenceLevel?: string | null;
   eyebrow?: string;
+  pageKey?: PromptLabPageKey;
+  itemIndex?: 0 | 1 | 2;
 };
 
 export default function MotivatorCard({
@@ -71,6 +75,8 @@ export default function MotivatorCard({
   emphasis = "secondary",
   confidenceLevel,
   eyebrow = "Motivator",
+  pageKey,
+  itemIndex,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
 
@@ -163,6 +169,15 @@ export default function MotivatorCard({
         headline={name}
         detail={detail}
       />
+
+      {pageKey && itemIndex != null ? (
+        <PromptLabTrigger
+          dark={dark}
+          pageKey={pageKey}
+          targetField={`item_${itemIndex}` as `item_${0 | 1 | 2}`}
+          currentText={detail}
+        />
+      ) : null}
     </section>
   );
 }

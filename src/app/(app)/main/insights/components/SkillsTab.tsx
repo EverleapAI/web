@@ -88,6 +88,7 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
         hasStrongSignal={hasGeneratedPayload}
         startHref={STORY_HREF}
         confidenceLevel={confidenceLevel}
+        pageKey="insights_skills"
       />
 
       {showAssist ? (
@@ -130,6 +131,8 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
               emphasis={index === 0 ? "primary" : "secondary"}
               confidenceLevel={confidenceLevel}
               eyebrow="Skill"
+              pageKey="insights_skills"
+              itemIndex={index as 0 | 1 | 2}
             />
           ))}
         </div>
