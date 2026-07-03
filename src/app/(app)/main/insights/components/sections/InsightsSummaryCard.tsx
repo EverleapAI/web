@@ -19,7 +19,10 @@ import {
 } from "./summaryShared";
 import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
-import type { PromptLabPageKey } from "@/components/promptLab/PromptLabModal";
+import type {
+  PromptLabAppliedPreview,
+  PromptLabPageKey,
+} from "@/components/promptLab/PromptLabModal";
 
 type Props = {
   dark: boolean;
@@ -50,21 +53,32 @@ export default function InsightsSummaryCard({
   pageKey,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
+  const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
   const density = confidenceToConstellationDensity(confidenceLevel);
 
+  const previewHeadline = preview?.result.headline as string | undefined;
+  const previewBody = preview?.result.body as string | undefined;
+  const previewDetail = preview?.result.detail as string | undefined;
+
   const resolvedHeadline =
-    headline?.trim() || "We’re still building your signal.";
+    (previewHeadline ?? headline)?.trim() || "We’re still building your signal.";
 
   const noSignalTitle = "Your insights get sharper once we have more signal.";
 
-  const paragraphs = React.useMemo(() => splitParagraphs(paragraph), [paragraph]);
-  const hasDetail = !!detail?.trim();
+  const displayDetail = previewDetail ?? detail;
+
+  const paragraphs = React.useMemo(
+    () => splitParagraphs(previewBody ?? paragraph),
+    [previewBody, paragraph]
+  );
+  const hasDetail = !!displayDetail?.trim();
 
   return (
     <section
       className={[
         sectionCard(dark, "neutral"),
         "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
+        preview ? "ring-1 ring-amber-300/45" : "",
       ].join(" ")}
     >
       <div
@@ -82,7 +96,10 @@ export default function InsightsSummaryCard({
             dark={dark}
             pageKey={pageKey}
             targetField="main"
-            currentText={paragraph ?? ""}
+            currentText={previewBody ?? paragraph ?? ""}
+            onApplied={setPreview}
+            hasActivePreview={!!preview}
+            onReset={() => setPreview(null)}
           />
         ) : null}
 
@@ -150,7 +167,7 @@ export default function InsightsSummaryCard({
                 onClose={() => setDetailOpen(false)}
                 dark={dark}
                 headline={resolvedHeadline}
-                detail={detail}
+                detail={displayDetail}
               />
             </>
           ) : (

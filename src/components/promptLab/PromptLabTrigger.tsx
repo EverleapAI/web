@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import PromptLabModal, {
+  type PromptLabAppliedPreview,
   type PromptLabPageKey,
   type PromptLabTargetField,
 } from "./PromptLabModal";
@@ -14,6 +15,9 @@ type Props = {
   pageKey: PromptLabPageKey;
   targetField: PromptLabTargetField;
   currentText: string;
+  onApplied?: (preview: PromptLabAppliedPreview) => void;
+  hasActivePreview?: boolean;
+  onReset?: () => void;
 };
 
 export function PasscodeStep({
@@ -142,7 +146,15 @@ export function PasscodeStep({
   );
 }
 
-export default function PromptLabTrigger({ dark, pageKey, targetField, currentText }: Props) {
+export default function PromptLabTrigger({
+  dark,
+  pageKey,
+  targetField,
+  currentText,
+  onApplied,
+  hasActivePreview,
+  onReset,
+}: Props) {
   const [passcodeOpen, setPasscodeOpen] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
 
@@ -192,6 +204,9 @@ export default function PromptLabTrigger({ dark, pageKey, targetField, currentTe
         pageKey={pageKey}
         targetField={targetField}
         currentText={currentText}
+        onApplied={onApplied}
+        hasActivePreview={hasActivePreview}
+        onReset={onReset}
       />
     </>
   );

@@ -16,6 +16,14 @@ export type PromptLabPageKey =
 
 export type PromptLabTargetField = "main" | "item_0" | "item_1" | "item_2";
 
+export type PromptLabAppliedPreview = {
+  targetWordCount: number;
+  toneInstruction: string;
+  miscNote: string;
+  targetText: string;
+  result: Record<string, unknown>;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -23,6 +31,9 @@ type Props = {
   pageKey: PromptLabPageKey;
   targetField: PromptLabTargetField;
   currentText: string;
+  onApplied?: (preview: PromptLabAppliedPreview) => void;
+  hasActivePreview?: boolean;
+  onReset?: () => void;
 };
 
 type PreviewResponse = {
@@ -41,6 +52,9 @@ export default function PromptLabModal({
   pageKey,
   targetField,
   currentText,
+  onApplied,
+  hasActivePreview,
+  onReset,
 }: Props) {
   const [mounted, setMounted] = React.useState(false);
   const [targetWordCount, setTargetWordCount] = React.useState(
@@ -99,12 +113,20 @@ export default function PromptLabModal({
 
       const data = (await res.json().catch(() => null)) as PreviewResponse | null;
 
-      if (!res.ok || !data?.ok) {
+      if (!res.ok || !data?.ok || !data.target_text || !data.result) {
         setError(data?.error ?? "Generation failed. Try again.");
         return;
       }
 
       setPreview(data);
+
+      onApplied?.({
+        targetWordCount,
+        toneInstruction,
+        miscNote,
+        targetText: data.target_text,
+        result: data.result,
+      });
     } catch {
       setError("Generation failed. Try again.");
     } finally {
@@ -113,7 +135,14 @@ export default function PromptLabModal({
   }
 
   async function handleCopySettings() {
-    const summary = `Word count: ${targetWordCount}\nTone: ${toneInstruction || "(none)"}\nNote: ${miscNote || "(none)"}`;
+    const summary = [
+      `Word count: ${targetWordCount}`,
+      `Tone: ${toneInstruction || "(none)"}`,
+      `Note: ${miscNote || "(none)"}`,
+      "",
+      "--- Generated content ---",
+      preview?.target_text ?? "",
+    ].join("\n");
 
     try {
       await navigator.clipboard.writeText(summary);
@@ -179,6 +208,34 @@ export default function PromptLabModal({
             </div>
 
             <div className="relative flex-1 overflow-y-auto px-5 pb-6 space-y-4">
+              {hasActivePreview ? (
+                <div
+                  className={[
+                    "flex items-center justify-between gap-3 rounded-[12px] px-3 py-2.5",
+                    dark ? "bg-amber-300/10 ring-1 ring-amber-300/25" : "bg-amber-500/10 ring-1 ring-amber-500/20",
+                  ].join(" ")}
+                >
+                  <p className={[labelBase, "leading-5"].join(" ")}>
+                    This card is showing a live preview, not the saved version.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onReset?.();
+                      onClose();
+                    }}
+                    className={[
+                      "shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-medium transition",
+                      dark
+                        ? "bg-white/10 text-white/82 hover:bg-white/16"
+                        : "bg-black/5 text-slate-800 hover:bg-black/10",
+                    ].join(" ")}
+                  >
+                    Reset to live version
+                  </button>
+                </div>
+              ) : null}
+
               {isItemTarget ? (
                 <p className={[labelBase, "leading-5"].join(" ")}>
                   This regenerates the whole card to keep the voice consistent across
@@ -264,6 +321,8 @@ export default function PromptLabModal({
 
               {preview ? (
                 <div className="space-y-3 border-t border-current/10 pt-4">
+                  <p className={labelBase}>Applied to the card behind this modal.</p>
+
                   <div>
                     <div className={labelBase}>
                       New word count: {countWords(preview.target_text)}
@@ -305,7 +364,7 @@ export default function PromptLabModal({
                         : "bg-black/5 text-slate-700 hover:bg-black/10",
                     ].join(" ")}
                   >
-                    {copied ? "Copied!" : "Copy settings (word count / tone / note)"}
+                    {copied ? "Copied!" : "Copy settings + generated content"}
                   </button>
                 </div>
               ) : null}

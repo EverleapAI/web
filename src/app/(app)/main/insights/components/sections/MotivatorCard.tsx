@@ -26,7 +26,10 @@ import {
 } from "./summaryShared";
 import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
-import type { PromptLabPageKey } from "@/components/promptLab/PromptLabModal";
+import type {
+  PromptLabAppliedPreview,
+  PromptLabPageKey,
+} from "@/components/promptLab/PromptLabModal";
 
 export type MotivatorIconKey =
   | "growth"
@@ -79,6 +82,27 @@ export default function MotivatorCard({
   itemIndex,
 }: Props) {
   const [detailOpen, setDetailOpen] = React.useState(false);
+  const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
+
+  const itemsKey =
+    pageKey === "insights_motivations"
+      ? "motivators"
+      : pageKey === "insights_strengths"
+        ? "strengths"
+        : pageKey === "insights_skills"
+          ? "skills"
+          : null;
+
+  const previewItem = React.useMemo(() => {
+    if (!preview || !itemsKey || itemIndex == null) return null;
+    const items = preview.result[itemsKey];
+    if (!Array.isArray(items)) return null;
+    return (items[itemIndex] as { name?: string; shortLine?: string; detail?: string }) ?? null;
+  }, [preview, itemsKey, itemIndex]);
+
+  const displayName = previewItem?.name ?? name;
+  const displayShortLine = previewItem?.shortLine ?? shortLine;
+  const displayDetail = previewItem?.detail ?? detail;
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
@@ -91,6 +115,7 @@ export default function MotivatorCard({
         sectionCard(dark, cardTone),
         "relative overflow-hidden",
         isPrimary ? "px-3.5 py-4 sm:px-4 sm:py-4.5" : "px-3 py-3 sm:px-3.5 sm:py-3.5",
+        preview ? "ring-1 ring-amber-300/45" : "",
       ].join(" ")}
     >
       <div
@@ -137,7 +162,7 @@ export default function MotivatorCard({
                 : "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",
             ].join(" ")}
           >
-            {name}
+            {displayName}
           </h3>
 
           <p
@@ -147,7 +172,7 @@ export default function MotivatorCard({
               isPrimary ? "text-[14.5px] leading-[1.6]" : "text-[13.5px] leading-[1.55]",
             ].join(" ")}
           >
-            {shortLine}
+            {displayShortLine}
           </p>
 
           <div
@@ -166,8 +191,8 @@ export default function MotivatorCard({
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         dark={dark}
-        headline={name}
-        detail={detail}
+        headline={displayName}
+        detail={displayDetail}
       />
 
       {pageKey && itemIndex != null ? (
@@ -175,7 +200,10 @@ export default function MotivatorCard({
           dark={dark}
           pageKey={pageKey}
           targetField={`item_${itemIndex}` as `item_${0 | 1 | 2}`}
-          currentText={detail}
+          currentText={displayShortLine}
+          onApplied={setPreview}
+          hasActivePreview={!!preview}
+          onReset={() => setPreview(null)}
         />
       ) : null}
     </section>

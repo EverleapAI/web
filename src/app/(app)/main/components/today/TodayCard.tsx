@@ -1,7 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { ChevronRight, Sparkles } from "lucide-react";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
+import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 
 type TodayCardProps = {
   headline?: string | null;
@@ -29,7 +31,15 @@ export function TodayCard({
   ctaLabel,
   onPrimary,
 }: TodayCardProps) {
-  const displayHeadline = headline ?? "One question is emerging.";
+  const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
+
+  const previewHeadline = preview?.result.headline as string | undefined;
+  const previewGuidanceText = preview?.result.guidance_text as string | undefined;
+  const previewParagraphs = previewGuidanceText
+    ? splitGuidanceText(previewGuidanceText)
+    : null;
+
+  const displayHeadline = previewHeadline ?? headline ?? "One question is emerging.";
 
   const fallbackParagraphs = guidanceText
     ? splitGuidanceText(guidanceText)
@@ -37,9 +47,14 @@ export function TodayCard({
         "You’ve shared enough for Everleap to notice a few early clues, but not enough to draw conclusions yet.\n\nOne thing I’m noticing is that your answers are starting to point toward a few possible directions.\n\nYour Story is where we begin testing whether those patterns keep showing up."
       );
 
-  const displayReflection = reflection ?? fallbackParagraphs[0];
-  const displayObservation = observation ?? fallbackParagraphs[1] ?? null;
-  const displayDirection = nextStep ?? fallbackParagraphs[2] ?? null;
+  const displayReflection =
+    previewParagraphs?.[0] ?? reflection ?? fallbackParagraphs[0];
+  const displayObservation = previewParagraphs
+    ? previewParagraphs[1] ?? null
+    : observation ?? fallbackParagraphs[1] ?? null;
+  const displayDirection = previewParagraphs
+    ? previewParagraphs[2] ?? null
+    : nextStep ?? fallbackParagraphs[2] ?? null;
 
   const displayCta =
     ctaLabel === "Start My Story" ||
@@ -49,12 +64,20 @@ export function TodayCard({
       : ctaLabel;
 
   return (
-    <div className="relative">
+    <div
+      className={[
+        "relative rounded-[18px]",
+        preview ? "-m-3 p-3 ring-1 ring-amber-300/45" : "",
+      ].join(" ")}
+    >
       <PromptLabTrigger
         dark
         pageKey="today"
         targetField="main"
-        currentText={guidanceText ?? ""}
+        currentText={previewGuidanceText ?? guidanceText ?? ""}
+        onApplied={setPreview}
+        hasActivePreview={!!preview}
+        onReset={() => setPreview(null)}
       />
 
       <div className="mb-5 flex items-center gap-2">
