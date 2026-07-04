@@ -15,7 +15,7 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
-import { CornerConstellation, LANE_ICON, LANE_WORD, SignalChip, rgba } from "./exploreUi";
+import { CornerConstellation, LANE_ICON, LANE_WORD, rgba } from "./exploreUi";
 
 function getIntro(lane: Lane, profile: UserProfileSignals | null) {
   const laneWord = LANE_WORD[lane];
@@ -37,7 +37,7 @@ function getIntro(lane: Lane, profile: UserProfileSignals | null) {
   };
 }
 
-function PathCard({ path, score }: { path: ExplorePath; score: number }) {
+function PathCard({ path }: { path: ExplorePath }) {
   const accent = laneAccent(path);
   const Icon = LANE_ICON[path.lane];
   const href = `/main/explore/${path.lane}/${path.slug}`;
@@ -55,9 +55,6 @@ function PathCard({ path, score }: { path: ExplorePath; score: number }) {
           <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[22px]">
             {path.card.title}
           </h2>
-          <div className="mt-2">
-            <SignalChip score={score} accent={accent} />
-          </div>
         </div>
       </div>
 
@@ -120,8 +117,8 @@ export function ExploreLanding({ lane, paths }: { lane: Lane; paths: ExplorePath
 
       {showDeck ? (
         <div className="space-y-4">
-          {deck.map(({ path, score }) => (
-            <PathCard key={path.id} path={path} score={score} />
+          {deck.map(({ path }) => (
+            <PathCard key={path.id} path={path} />
           ))}
           {paths.length === 0 ? (
             <SectionCard tone="neutral" compact>

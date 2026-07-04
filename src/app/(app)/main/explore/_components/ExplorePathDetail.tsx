@@ -29,10 +29,8 @@ import {
   type Rgb,
   type TrajectoryTone,
 } from "../_data/exploreSchema";
-import { useExploreProfile } from "../_lib/exploreProfile";
 import { useSavedActions } from "../_lib/exploreActions";
-import { scorePath } from "../_lib/scorePath";
-import { LANE_NOUN, SectionHeader, SignalChip, rgba } from "./exploreUi";
+import { LANE_NOUN, SectionHeader, rgba } from "./exploreUi";
 
 const TONE_COLOR: Record<TrajectoryTone, Rgb> = {
   positive: { r: 87, g: 214, b: 160 },
@@ -130,8 +128,6 @@ function BranchCard({ preview, detail, accent }: { preview: PathBranchPreview; d
 
 export function ExplorePathDetail({ path }: { path: ExplorePath }) {
   const accent = laneAccent(path);
-  const { profile } = useExploreProfile();
-  const score = profile ? scorePath(path, profile) : 67;
   const actions = useSavedActions(path.lane, `${path.lane}:${path.slug}`);
 
   const hasReality = path.reality.moments.length > 0 || Boolean(path.reality.summary);
@@ -169,9 +165,6 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
           <h1 className="mt-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.035em] text-white sm:text-[32px]">
             {path.overview.title}
           </h1>
-          <div className="mt-3">
-            <SignalChip score={score} accent={accent} />
-          </div>
           {path.overview.hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.6] text-white/86">{path.overview.hook}</p>
           ) : null}

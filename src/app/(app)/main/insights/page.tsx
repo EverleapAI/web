@@ -15,6 +15,7 @@ import {
   type InsightsTab,
   type WordCloudItem,
 } from "./app/buildInsightsViewModel";
+import { hydrateProfileSnapshotFromServer } from "../app/hydrateProfileSnapshot";
 import {
   buildMotivationProfile,
   type MotivationProfile,
@@ -877,7 +878,19 @@ export default function Page() {
   }, [initialTabFromUrl]);
 
   const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  React.useEffect(() => {
+    let alive = true;
+    // Refresh the local snapshot from the DB before building the view model, so
+    // Insights shows the real name + signals even on a cold deep-link (without
+    // having hit Today first).
+    (async () => {
+      await hydrateProfileSnapshotFromServer();
+      if (alive) setMounted(true);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const {
     payload: summaryPayload,
