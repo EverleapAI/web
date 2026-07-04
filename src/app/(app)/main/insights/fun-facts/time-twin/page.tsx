@@ -10,10 +10,8 @@ import {
   resolveTimeTwinVisualProfile,
   type TimeTwinVisualProfileKey,
 } from "../content/timeTwinVisualProfiles";
-import {
-  TimeTwinHero,
-  type TimeTwinHeroAlternate,
-} from "../components/TimeTwinHero";
+import { TimeTwinHero } from "../components/TimeTwinHero";
+import { TimeTwinPortrait } from "../components/TimeTwinPortrait";
 import { useGeneratedInsights } from "../../hooks/useGeneratedInsights";
 
 /* =============================================================================
@@ -33,6 +31,7 @@ type TimeTwinPersonPayload = {
   watchout: string;
   tryThisWeek: string;
   learnMoreHref: string;
+  imageSlug?: string;
 };
 
 type GeneratedTimeTwinPayload = {
@@ -44,15 +43,18 @@ type GeneratedTimeTwinPayload = {
    Constants
 ============================================================================= */
 
-const REFLECTION_KEY_PREFIX = "everleap.timeTwin.feedback.";
+const SERIF =
+  '"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif';
+
+const REFLECTION_ENDPOINT = "/api/guidance/time-twin-reflection";
+
+function figureImageUrl(slug?: string): string {
+  return slug ? `/api/guidance/time-twin-figure-image?slug=${encodeURIComponent(slug)}` : "";
+}
 
 /* =============================================================================
    Helpers
 ============================================================================= */
-
-function reflectionStorageKey(twinId: string) {
-  return `${REFLECTION_KEY_PREFIX}${twinId}`;
-}
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -90,7 +92,7 @@ function personToTimeTwin(person: TimeTwinPersonPayload): TimeTwin {
     era: person.era,
     tagline: person.tagline,
     heroImage: "",
-    portraitImage: "",
+    portraitImage: figureImageUrl(person.imageSlug),
     visualTheme: visual.visualTheme,
     portraitArchetype: visual.portraitArchetype,
     heroPattern: visual.heroPattern,
@@ -132,25 +134,15 @@ function readingSurface() {
   ].join(" ");
 }
 
-function sectionTitle(text: string) {
+function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <div className="h-1.5 w-1.5 rounded-full bg-white/70" />
       <h2 className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-white/55">
-        {text}
+        {children}
       </h2>
     </div>
   );
-}
-
-function extractNarrative(twin: TimeTwin) {
-  const beats = twin.storyBeats ?? [];
-
-  return {
-    intro: beats[0]?.body ?? "",
-    connection: beats[1]?.body ?? "",
-    reflection: beats[2]?.body ?? "",
-  };
 }
 
 /* =============================================================================
@@ -164,7 +156,8 @@ export default function TimeTwinPage() {
 
   const [activeTwinId, setActiveTwinId] = React.useState<string>("");
   const [reflection, setReflection] = React.useState("");
-  const [selectionEpoch, setSelectionEpoch] = React.useState(0);
+  const [saveState, setSaveState] = React.useState<"idle" | "saving" | "saved">("idle");
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scoredTwins = React.useMemo<TimeTwin[]>(() => {
     if (!payload?.primary) return [];
@@ -186,45 +179,69 @@ export default function TimeTwinPage() {
     return buildDisplayPool(scoredTwins, activeTwinId);
   }, [activeTwinId, scoredTwins]);
 
-  const heroAlternates = React.useMemo<TimeTwinHeroAlternate[]>(() => {
-    return alternates.map((twin) => ({
-      id: twin.id,
-      name: twin.name,
-      accentRgb: twin.accentRgb,
-    }));
-  }, [alternates]);
-
+  // Load the saved reflection for the active twin from the server.
+  const activeTwinRefId = activeTwin?.id;
   React.useEffect(() => {
-    if (!activeTwin?.id) return;
+    if (!activeTwinRefId) return;
 
-    try {
-      const saved = window.localStorage.getItem(reflectionStorageKey(activeTwin.id)) ?? "";
-      setReflection(saved);
-    } catch {
-      setReflection("");
-    }
-  }, [activeTwin?.id]);
+    let cancelled = false;
+    setReflection("");
+    setSaveState("idle");
+
+    (async () => {
+      try {
+        const res = await fetch(
+          `${REFLECTION_ENDPOINT}?twinId=${encodeURIComponent(activeTwinRefId)}`,
+          { cache: "no-store" }
+        );
+        const data = await res.json().catch(() => null);
+        if (!cancelled && data?.ok) {
+          setReflection(typeof data.reflection === "string" ? data.reflection : "");
+        }
+      } catch {
+        // leave empty on failure
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTwinRefId]);
 
   const handleReflectionChange = React.useCallback(
     (value: string) => {
-      if (!activeTwin?.id) return;
+      if (!activeTwinRefId) return;
       setReflection(value);
+      setSaveState("saving");
 
-      try {
-        window.localStorage.setItem(reflectionStorageKey(activeTwin.id), value);
-      } catch {
-        // no-op
-      }
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(async () => {
+        try {
+          await fetch(REFLECTION_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ twinId: activeTwinRefId, reflection: value }),
+          });
+          setSaveState("saved");
+        } catch {
+          setSaveState("idle");
+        }
+      }, 700);
     },
-    [activeTwin?.id]
+    [activeTwinRefId]
   );
 
+  React.useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, []);
+
   const handleSelectTwin = React.useCallback((twinId: string) => {
-    setActiveTwinId((current) => {
-      if (current === twinId) return current;
-      return twinId;
-    });
-    setSelectionEpoch((value) => value + 1);
+    setActiveTwinId((current) => (current === twinId ? current : twinId));
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, []);
 
   if (fetchDone && !activeTwin) {
@@ -260,8 +277,10 @@ export default function TimeTwinPage() {
     );
   }
 
-  const narrative = extractNarrative(activeTwin);
   const accentRgb = rgbString(activeTwin.accentRgb);
+  const beats = activeTwin.storyBeats ?? [];
+  const whyYou = activeTwin.whyYou ?? [];
+  const facts = activeTwin.tiles ?? [];
 
   return (
     <main className="min-h-screen bg-[#070b17] text-white">
@@ -278,7 +297,7 @@ export default function TimeTwinPage() {
         }}
       />
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/main/insights?tab=funFacts"
@@ -298,7 +317,10 @@ export default function TimeTwinPage() {
           <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white/45">
             Insights → Fun Facts
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl md:text-[2.8rem]">
+          <h1
+            className="text-3xl leading-[1.05] tracking-tight text-white sm:text-4xl md:text-[2.7rem]"
+            style={{ fontFamily: SERIF, fontWeight: 600 }}
+          >
             A mind from another era that rhymes with yours.
           </h1>
           <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/68 sm:text-[16px]">
@@ -307,91 +329,134 @@ export default function TimeTwinPage() {
           </p>
         </header>
 
-        <section
-          className={cn(
-            readingSurface(),
-            "relative overflow-hidden px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6"
-          )}
-        >
-          <div
-            className="pointer-events-none absolute inset-0"
-            aria-hidden="true"
-            style={{
-              background: `
-                radial-gradient(circle at 50% 42%, rgba(${accentRgb}, 0.12), transparent 28%),
-                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))
-              `,
-            }}
-          />
+        {/* Hero — gallery plate */}
+        <TimeTwinHero
+          key={activeTwin.id}
+          name={activeTwin.name}
+          era={activeTwin.era}
+          tagline={activeTwin.tagline ?? ""}
+          mindType={activeTwin.mindType ?? ""}
+          visualTheme={activeTwin.visualTheme}
+          accentRgb={activeTwin.accentRgb ?? { r: 147, g: 197, b: 253 }}
+          imageUrl={activeTwin.portraitImage || undefined}
+        />
 
-          <div className="relative">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-white/44">
-                  Primary resonance
-                </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                  {activeTwin.name}
-                </h2>
-                <p className="mt-1 text-sm text-white/60">
-                  {activeTwin.era}
-                  {activeTwin.tagline ? ` · ${activeTwin.tagline}` : ""}
-                </p>
-              </div>
-
-              <div className="hidden rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[0.72rem] uppercase tracking-[0.22em] text-white/46 sm:inline-flex">
-                Tap the stars to explore alternates
-              </div>
+        {/* Others echoing in your orbit */}
+        {alternates.length > 0 ? (
+          <section>
+            <SectionTitle>Others echoing in your orbit</SectionTitle>
+            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:thin]">
+              {alternates.map((twin) => {
+                const alt = rgbString(twin.accentRgb);
+                return (
+                  <button
+                    key={twin.id}
+                    type="button"
+                    onClick={() => handleSelectTwin(twin.id)}
+                    className={cn(
+                      "group flex w-[150px] flex-shrink-0 flex-col items-center gap-2 rounded-[18px] border px-3 py-3 text-center transition",
+                      "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                    )}
+                    style={{ boxShadow: `inset 0 0 0 1px rgba(${alt}, 0.06)` }}
+                    aria-label={`Switch to ${twin.name}`}
+                  >
+                    <span
+                      className="rounded-[14px] p-1"
+                      style={{ border: `1px solid rgba(${alt}, 0.32)` }}
+                    >
+                      <TimeTwinPortrait
+                        seed={twin.name}
+                        accentRgb={twin.accentRgb}
+                        size={56}
+                        rounded={11}
+                        static
+                        imageUrl={twin.portraitImage || undefined}
+                      />
+                    </span>
+                    <span
+                      className="text-[13px] font-semibold leading-tight text-white/88"
+                      style={{ fontFamily: SERIF }}
+                    >
+                      {twin.name}
+                    </span>
+                    <span className="text-[10.5px] uppercase tracking-[0.12em] text-white/45">
+                      {twin.era}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-
-            <div className="relative z-10">
-              <TimeTwinHero
-                key={`${activeTwin.id}-${selectionEpoch}`}
-                name={activeTwin.name}
-                era={activeTwin.era}
-                tagline={activeTwin.tagline ?? ""}
-                mindType={activeTwin.mindType ?? ""}
-                heroImage={activeTwin.heroImage}
-                portraitImage={activeTwin.portraitImage}
-                visualTheme={activeTwin.visualTheme}
-                portraitArchetype={activeTwin.portraitArchetype}
-                heroPattern={activeTwin.heroPattern}
-                accentRgb={activeTwin.accentRgb ?? { r: 147, g: 197, b: 253 }}
-                alternates={heroAlternates}
-                onSelectAlternate={handleSelectTwin}
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
-            {sectionTitle("Bio + why this fits you")}
+          {/* Left column — the story + why + facts */}
+          <div className="space-y-6">
+            <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
+              <SectionTitle>The story</SectionTitle>
 
-            <div className="space-y-4 text-[15px] leading-7 text-white/76 sm:text-[15.5px]">
-              {narrative.intro ? <p>{narrative.intro}</p> : null}
-              {narrative.connection ? <p>{narrative.connection}</p> : null}
-              {narrative.reflection ? <p>{narrative.reflection}</p> : null}
-            </div>
+              <div className="space-y-4 text-[15px] leading-7 text-white/78 sm:text-[15.5px]">
+                {beats.length > 0 ? (
+                  beats.map((beat, index) => (beat.body ? <p key={index}>{beat.body}</p> : null))
+                ) : (
+                  <p className="text-white/56">The story is still being written.</p>
+                )}
+              </div>
 
-            {activeTwin.learnMore ? (
-              <div className="mt-5">
-                <a
-                  href={activeTwin.learnMore}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-2 text-sm text-white/78 transition hover:border-white/20 hover:bg-white/[0.07]"
-                >
-                  Learn more about {activeTwin.name}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+              {activeTwin.learnMore ? (
+                <div className="mt-5">
+                  <a
+                    href={activeTwin.learnMore}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-2 text-sm text-white/78 transition hover:border-white/20 hover:bg-white/[0.07]"
+                  >
+                    Learn more about {activeTwin.name}
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              ) : null}
+            </section>
+
+            {whyYou.length > 0 ? (
+              <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
+                <SectionTitle>Why this rhymes with you</SectionTitle>
+                <ul className="space-y-3">
+                  {whyYou.map((line, index) => (
+                    <li key={index} className="flex gap-3 text-[15px] leading-7 text-white/78">
+                      <span
+                        className="mt-[10px] h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                        style={{ background: `rgb(${accentRgb})` }}
+                        aria-hidden
+                      />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {facts.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {facts.map((fact, index) => (
+                  <div
+                    key={index}
+                    className={cn(readingSurface(), "px-4 py-4")}
+                  >
+                    <div className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white/44">
+                      {fact.title}
+                    </div>
+                    <p className="mt-1.5 text-[14px] leading-6 text-white/76">{fact.body}</p>
+                  </div>
+                ))}
               </div>
             ) : null}
-          </section>
+          </div>
 
-          <aside className="space-y-6">
+          {/* Right column — reflection */}
+          <aside className="space-y-4">
             <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
-              {sectionTitle("Your reflection")}
+              <SectionTitle>Your reflection</SectionTitle>
 
               <p className="mb-3 text-sm leading-6 text-white/63">
                 What feels familiar here? What feels surprising? You do not have to be the
@@ -403,14 +468,18 @@ export default function TimeTwinPage() {
                 onChange={(event) => handleReflectionChange(event.target.value)}
                 placeholder={`Write a few thoughts about ${activeTwin.name}…`}
                 className={cn(
-                  "min-h-[220px] w-full rounded-[22px] border border-white/12 bg-black/20 px-4 py-3",
+                  "min-h-[160px] w-full rounded-[22px] border border-white/12 bg-black/20 px-4 py-3",
                   "text-[15px] leading-7 text-white placeholder:text-white/28",
                   "outline-none transition focus:border-white/20 focus:bg-black/26"
                 )}
               />
 
               <p className="mt-3 text-xs text-white/42">
-                Saved automatically for this Time Twin.
+                {saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved to your account."
+                    : "Saved automatically to your account."}
               </p>
             </section>
           </aside>
@@ -419,3 +488,4 @@ export default function TimeTwinPage() {
     </main>
   );
 }
+

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Clock3 } from "lucide-react";
+import { Clock3, Sparkles } from "lucide-react";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 
@@ -15,23 +15,46 @@ type WordCloudItem = { term: string; weight: number };
 type FunFactsTabProps = {
   dark: boolean;
   mounted: boolean;
-  tab: string; // kept for parity with other tabs; useful for analytics later
+  tab: string;
   nameFromHeadline?: string;
-  // Optional: pass themes so we can generate playful-but-grounded copy.
-  // This keeps the component robust even if you don't provide anything.
   wordCloudDisplay?: WordCloudItem[];
 };
 
+type TimeTwinTeaserPayload = {
+  primary?: { name?: string; tagline?: string; imageSlug?: string };
+};
+
+function figureImageUrl(slug?: string): string {
+  return slug ? `/api/guidance/time-twin-figure-image?slug=${encodeURIComponent(slug)}` : "";
+}
+
+type FunFactPayload = {
+  observation: string;
+  why: string;
+  domains: string[];
+  emoji?: string;
+};
+
+// A small rotating palette so the feed reads like a set of colorful notes
+// rather than a stack of identical grey cards.
+const FACT_ACCENTS = [
+  "245, 176, 90", // amber
+  "64, 210, 190", // teal
+  "160, 130, 255", // violet
+  "236, 120, 165", // rose
+  "96, 176, 255", // sky
+] as const;
+
+type FunFactsFeedPayload = {
+  facts?: FunFactPayload[];
+};
+
 /* =============================================================================
-   Local UI helpers (mirrors page.tsx styling, but self-contained)
+   Style helpers
    ============================================================================= */
 
 function cleanOneLine(s: string) {
   return (s ?? "").replace(/\s+/g, " ").trim();
-}
-
-function subtleDivider(dark: boolean) {
-  return dark ? "bg-white/10" : "bg-black/10";
 }
 
 function readingSurface(dark: boolean) {
@@ -45,9 +68,7 @@ function readingSurface(dark: boolean) {
 }
 
 function sectionKicker(dark: boolean) {
-  return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(
-    " "
-  );
+  return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(" ");
 }
 
 function sectionTitle(dark: boolean) {
@@ -63,16 +84,13 @@ function mutedText(dark: boolean) {
 }
 
 /* =============================================================================
-   Lightweight "delight" copy (safe fallbacks)
+   Intro copy
    ============================================================================= */
 
 function pickTopTerms(items: WordCloudItem[] | undefined, max = 3) {
   const list = Array.isArray(items) ? items : [];
   const sorted = [...list].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
-  return sorted
-    .map((x) => cleanOneLine(x.term))
-    .filter(Boolean)
-    .slice(0, max);
+  return sorted.map((x) => cleanOneLine(x.term)).filter(Boolean).slice(0, max);
 }
 
 function buildOpenLine(nameFromHeadline?: string) {
@@ -81,23 +99,90 @@ function buildOpenLine(nameFromHeadline?: string) {
   return `A lighter mirror for ${who} — still grounded in how you move through the world.`;
 }
 
-function buildDelightPara(topTerms: string[]) {
-  if (topTerms.length >= 2) {
-    return `This is the “delight” layer — small reflections that help you see yourself from a new angle. Like: why ${topTerms[0]} keeps showing up, or why ${topTerms[1]} feels like a magnet for your attention.`;
-  }
-  if (topTerms.length === 1) {
-    return `This is the “delight” layer — small reflections that help you see yourself from a new angle. If I had to guess, "${topTerms[0]}" is one of your recurring threads.`;
-  }
-  return "This is the “delight” layer — the stuff that helps you see yourself from a new angle without turning life into a quiz.";
+/* =============================================================================
+   Fun fact card
+   ============================================================================= */
+
+function FunFactCard({
+  fact,
+  dark,
+  index,
+}: {
+  fact: FunFactPayload;
+  dark: boolean;
+  index: number;
+}) {
+  const accent = FACT_ACCENTS[index % FACT_ACCENTS.length];
+  const emoji = fact.emoji || "✨";
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-[22px] border px-4 py-4 md:px-5 md:py-5"
+      style={{
+        borderColor: `rgba(${accent}, ${dark ? 0.28 : 0.3})`,
+        background: dark
+          ? `linear-gradient(150deg, rgba(${accent}, 0.12), rgba(${accent}, 0.03) 55%, rgba(255,255,255,0.015))`
+          : `linear-gradient(150deg, rgba(${accent}, 0.14), rgba(255,255,255,0.9) 60%)`,
+      }}
+    >
+      {/* soft corner glow in the card's accent */}
+      <div
+        className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full blur-2xl"
+        aria-hidden
+        style={{ background: `rgba(${accent}, ${dark ? 0.22 : 0.18})` }}
+      />
+
+      <div className="relative flex items-start gap-3">
+        <div
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-[22px] leading-none"
+          style={{
+            background: `rgba(${accent}, ${dark ? 0.16 : 0.18})`,
+            boxShadow: `inset 0 0 0 1px rgba(${accent}, 0.3)`,
+          }}
+          aria-hidden
+        >
+          {emoji}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {fact.domains.length > 0 ? (
+            <div className="mb-1.5 flex flex-wrap gap-1.5">
+              {fact.domains.map((domain, i) => (
+                <span
+                  key={i}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  style={{
+                    background: `rgba(${accent}, ${dark ? 0.16 : 0.14})`,
+                    color: dark ? `rgba(${accent}, 1)` : `rgba(${accent}, 1)`,
+                  }}
+                >
+                  {domain}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <p
+            className={[
+              "text-[16px] font-semibold leading-[1.4] tracking-[-0.01em]",
+              sectionTitle(dark),
+            ].join(" ")}
+          >
+            {fact.observation}
+          </p>
+        </div>
+      </div>
+
+      <p className={["relative mt-3 text-[13.5px] leading-6", mutedText(dark)].join(" ")}>
+        {fact.why}
+      </p>
+    </div>
+  );
 }
 
 /* =============================================================================
    Component
    ============================================================================= */
-
-type TimeTwinTeaserPayload = {
-  primary?: { name?: string; tagline?: string };
-};
 
 export default function FunFactsTab(props: FunFactsTabProps) {
   const { dark, wordCloudDisplay, nameFromHeadline } = props;
@@ -108,14 +193,26 @@ export default function FunFactsTab(props: FunFactsTabProps) {
   const { payload: timeTwinPayload } = useGeneratedInsights<TimeTwinTeaserPayload>(
     "/api/guidance/insights-time-twin"
   );
+  const { payload: funFactsPayload, fetchDone: funFactsDone } =
+    useGeneratedInsights<FunFactsFeedPayload>("/api/guidance/insights-fun-facts");
+
+  const facts = React.useMemo(() => funFactsPayload?.facts ?? [], [funFactsPayload]);
+
+  const twinImageUrl = figureImageUrl(timeTwinPayload?.primary?.imageSlug);
 
   const timeTwinTeaser =
     timeTwinPayload?.primary?.name && timeTwinPayload?.primary?.tagline
       ? `Right now: ${timeTwinPayload.primary.name} — ${timeTwinPayload.primary.tagline}`
-      : "A biography-style mirror — creative + technical + real-world impact.";
+      : "A biography-style mirror — a mind from another era that rhymes with yours.";
+
+  const delightPara =
+    topTerms.length >= 2
+      ? `Small things I've noticed — like why ${topTerms[0]} keeps surfacing, or how it sits next to ${topTerms[1]}. Low stakes, just interesting.`
+      : "Small things I've noticed about how you think — low stakes, just interesting.";
 
   return (
-    <section className="mb-6">
+    <section className="mb-6 space-y-4">
+      {/* Intro */}
       <div className={readingSurface(dark)}>
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <div
@@ -124,95 +221,109 @@ export default function FunFactsTab(props: FunFactsTabProps) {
               dark ? "bg-fuchsia-300/10" : "bg-fuchsia-400/10",
             ].join(" ")}
           />
-          <div
-            className={[
-              "absolute top-12 -left-24 h-[220px] w-[360px] rounded-full blur-3xl",
-              dark ? "bg-violet-300/10" : "bg-violet-400/10",
-            ].join(" ")}
-          />
-          <div
-            className={[
-              "absolute inset-0",
-              dark
-                ? "bg-gradient-to-b from-white/[0.06] via-transparent to-transparent"
-                : "bg-gradient-to-b from-black/[0.04] via-transparent to-transparent",
-            ].join(" ")}
-          />
         </div>
 
         <div className="relative">
           <div className={sectionKicker(dark)}>Fun Facts</div>
-
           <div className={["mt-2 text-[18px] font-semibold tracking-tight", sectionTitle(dark)].join(" ")}>
             {buildOpenLine(nameFromHeadline)}
           </div>
-
-          <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>
-            {buildDelightPara(topTerms)}
-          </div>
-
-          <div className={["my-6 h-px", subtleDivider(dark)].join(" ")} />
-
-          <button
-            type="button"
-            onClick={() => router.push("/main/insights/fun-facts/time-twin")}
-            className={[
-              "w-full text-left",
-              "relative overflow-hidden rounded-[22px] border px-4 py-4",
-              "backdrop-blur-xl transition active:scale-[0.99]",
-              dark ? "border-white/10 bg-white/5 hover:bg-white/8" : "border-black/10 bg-white/85 hover:bg-white",
-            ].join(" ")}
-          >
-            <div className="pointer-events-none absolute inset-0" aria-hidden>
-              <div
-                className={[
-                  "absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl",
-                  dark ? "bg-violet-300/10" : "bg-violet-400/10",
-                ].join(" ")}
-              />
-              <div
-                className={[
-                  "absolute -bottom-16 -left-16 h-64 w-64 rounded-full blur-3xl",
-                  dark ? "bg-fuchsia-300/8" : "bg-fuchsia-400/8",
-                ].join(" ")}
-              />
-            </div>
-
-            <div className="relative flex items-start gap-3">
-              <div
-                className={[
-                  "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border",
-                  dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
-                ].join(" ")}
-                aria-hidden
-              >
-                <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
-              </div>
-
-              <div className="min-w-0">
-                <div className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</div>
-
-                <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>
-                  {timeTwinTeaser}
-                </div>
-
-                <div
-                  className={[
-                    "mt-2 inline-flex items-center gap-2 text-sm font-semibold",
-                    dark ? "text-white/70" : "text-slate-700",
-                  ].join(" ")}
-                >
-                  Open story <span aria-hidden className="opacity-80">↗</span>
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <div className={["mt-5 text-[12px] leading-relaxed", mutedText(dark)].join(" ")}>
-            More Fun Facts will live here over time.
-          </div>
+          <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>{delightPara}</div>
         </div>
       </div>
+
+      {/* Time Twin — hero card */}
+      <button
+        type="button"
+        onClick={() => router.push("/main/insights/fun-facts/time-twin")}
+        className={[
+          "w-full text-left",
+          "relative overflow-hidden rounded-[24px] border px-4 py-4 md:px-5 md:py-5",
+          "backdrop-blur-xl transition active:scale-[0.99]",
+          dark ? "border-white/10 bg-white/5 hover:bg-white/8" : "border-black/10 bg-white/85 hover:bg-white",
+        ].join(" ")}
+      >
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div
+            className={[
+              "absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl",
+              dark ? "bg-violet-300/12" : "bg-violet-400/10",
+            ].join(" ")}
+          />
+        </div>
+
+        <div className="relative flex items-start gap-3">
+          {twinImageUrl ? (
+            <img
+              src={twinImageUrl}
+              alt={timeTwinPayload?.primary?.name ? `Portrait of ${timeTwinPayload.primary.name}` : "Time Twin portrait"}
+              className={[
+                "mt-0.5 h-11 w-11 flex-shrink-0 rounded-full border object-cover",
+                dark ? "border-white/12" : "border-black/10",
+              ].join(" ")}
+            />
+          ) : (
+            <div
+              className={[
+                "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border",
+                dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
+              ].join(" ")}
+              aria-hidden
+            >
+              <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</span>
+              <span
+                className={[
+                  "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                  dark ? "bg-violet-300/12 text-violet-100/80" : "bg-violet-500/10 text-violet-700",
+                ].join(" ")}
+              >
+                Featured
+              </span>
+            </div>
+
+            <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>{timeTwinTeaser}</div>
+
+            <div
+              className={[
+                "mt-2 inline-flex items-center gap-2 text-sm font-semibold",
+                dark ? "text-white/70" : "text-slate-700",
+              ].join(" ")}
+            >
+              Open story <span aria-hidden className="opacity-80">↗</span>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      {/* Fun fact feed */}
+      {facts.length > 0 ? (
+        <div className="space-y-3">
+          <div className={[sectionKicker(dark), "flex items-center gap-2 px-1"].join(" ")}>
+            <Sparkles className="h-3.5 w-3.5" />
+            Things I noticed
+          </div>
+          {facts.map((fact, index) => (
+            <FunFactCard key={index} fact={fact} dark={dark} index={index} />
+          ))}
+        </div>
+      ) : (
+        <div
+          className={[
+            "rounded-[22px] border px-4 py-4 text-[13px] leading-relaxed",
+            dark ? "border-white/10 bg-white/[0.02] text-white/55" : "border-black/10 bg-white/70 text-slate-600",
+          ].join(" ")}
+        >
+          {funFactsDone
+            ? "I'm still noticing — a few more Story answers and small observations will start showing up here."
+            : "Looking for interesting patterns…"}
+        </div>
+      )}
     </section>
   );
 }
