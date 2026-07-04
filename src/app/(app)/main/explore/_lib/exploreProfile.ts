@@ -245,7 +245,22 @@ export function readStoredProfileSignals(): UserProfileSignals {
   };
 }
 
-/** Client hook: reads the stored profile once on mount. */
+type ServerProfileSignals = {
+  firstName: string | null;
+  motivations: string[];
+  strengths: string[];
+  skills: string[];
+  fullText: string;
+  hasSignal: boolean;
+};
+
+/**
+ * Client hook: reads the stored profile immediately (fast first paint), then
+ * overlays the server's truth. Explore's signal used to come only from browser
+ * localStorage, so a logout / new device / cleared storage left every path and
+ * lane at a flat default score. Now, for a logged-in user, the server's own
+ * story answers (name + motivations/strengths/skills) take over when present.
+ */
 export function useExploreProfile(): {
   profile: UserProfileSignals | null;
   isReady: boolean;
@@ -253,6 +268,30 @@ export function useExploreProfile(): {
   const [profile, setProfile] = React.useState<UserProfileSignals | null>(null);
   React.useEffect(() => {
     setProfile(readStoredProfileSignals());
+
+    let active = true;
+    fetch("/api/guidance/explore-profile", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active || !d?.ok || !d.profile) return;
+        const s = d.profile as ServerProfileSignals;
+        setProfile((prev) => {
+          const base = prev ?? EMPTY_PROFILE;
+          return {
+            ...base,
+            firstName: s.firstName ?? base.firstName,
+            motivations: s.motivations?.length ? s.motivations : base.motivations,
+            strengths: s.strengths?.length ? s.strengths : base.strengths,
+            skills: s.skills?.length ? s.skills : base.skills,
+            fullText: s.fullText || base.fullText,
+            hasQuestionSignal: Boolean(s.hasSignal) || base.hasQuestionSignal,
+          };
+        });
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
   return { profile, isReady: profile !== null };
 }

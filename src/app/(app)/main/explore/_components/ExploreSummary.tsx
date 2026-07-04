@@ -1,9 +1,10 @@
 // apps/web/src/app/(app)/main/explore/_components/ExploreSummary.tsx
 //
-// The Explore Summary tab — a destination, not a menu. An agentic "whole-life
-// read" card, then insight-framed supporting cards (the strongest picks across
-// all lanes, and which directions light up most). Navigation lives in the tab
-// rail, so this page is free to actually say something.
+// The Explore Summary tab — a destination, like Insights. One agentic "whole-life
+// read" card carries the page; below it, a single honest card of concrete paths
+// worth a real look, one per direction. No score meters (the Phase-A keyword
+// scorer saturates on a rich profile and the numbers read as meaningless) and no
+// nav duplication (the lanes already live in the tab rail).
 
 "use client";
 
@@ -15,7 +16,7 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { LANE_ACCENT, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
-import { LANE_ICON, SignalChip, rgba } from "./exploreUi";
+import { LANE_ICON, rgba } from "./exploreUi";
 import { ExploreSummaryCard, type SummaryRequest } from "./ExploreSummaryCard";
 
 const LANE_LABEL: Record<Lane, string> = {
@@ -26,6 +27,8 @@ const LANE_LABEL: Record<Lane, string> = {
   play: "Play",
 };
 
+const LANE_ORDER: Lane[] = ["work", "learning", "world", "impact", "play"];
+
 export type SummaryLane = { lane: Lane; paths: ExplorePath[] };
 
 type LaneTop = { lane: Lane; path: ExplorePath; score: number };
@@ -35,7 +38,7 @@ function LaneMark({ lane }: { lane: Lane }) {
   const Icon = LANE_ICON[lane];
   return (
     <span
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px]"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
       style={{ backgroundColor: rgba(accent, 0.12), color: rgba(accent, 0.92) }}
     >
       <Icon className="h-4 w-4" />
@@ -46,22 +49,20 @@ function LaneMark({ lane }: { lane: Lane }) {
 export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
   const { profile, isReady } = useExploreProfile();
 
+  // One strongest pick per lane, kept in a stable direction order (not ranked by
+  // the saturated score — just a real path to start with in each direction).
   const laneTops = React.useMemo<LaneTop[]>(() => {
     if (!profile) return [];
+    const byLane = new Map<Lane, SummaryLane>(lanes.map((l) => [l.lane, l]));
     const tops: LaneTop[] = [];
-    for (const { lane, paths } of lanes) {
-      if (!paths.length) continue;
-      const ranked = rankPaths(paths, profile, 1)[0];
+    for (const lane of LANE_ORDER) {
+      const entry = byLane.get(lane);
+      if (!entry || !entry.paths.length) continue;
+      const ranked = rankPaths(entry.paths, profile, 1)[0];
       if (ranked) tops.push({ lane, path: ranked.path, score: ranked.score });
     }
     return tops;
   }, [lanes, profile]);
-
-  const byScore = React.useMemo(
-    () => [...laneTops].sort((a, b) => b.score - a.score),
-    [laneTops]
-  );
-  const worthALook = byScore.slice(0, 3);
 
   const request = React.useMemo<SummaryRequest>(
     () => ({
@@ -91,13 +92,16 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
         firstName={profile?.firstName ?? null}
       />
 
-      {worthALook.length > 0 ? (
+      {laneTops.length > 0 ? (
         <SectionCard tone="neutral">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
             Worth a real look
           </h2>
-          <div className="mt-3 space-y-2.5">
-            {worthALook.map((t) => (
+          <p className="mt-1 text-[13px] leading-[1.5] text-white/50">
+            One path to actually dig into in each of your five directions.
+          </p>
+          <div className="mt-3 space-y-2">
+            {laneTops.map((t) => (
               <Link
                 key={`${t.lane}:${t.path.slug}`}
                 href={`/main/explore/${t.lane}/${t.path.slug}`}
@@ -111,49 +115,11 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
                       {LANE_LABEL[t.lane]}
                     </span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-[13px] leading-[1.5] text-white/62">
+                  <p className="mt-0.5 line-clamp-2 text-[13px] leading-[1.5] text-white/58">
                     {t.path.card.hook}
                   </p>
-                  <div className="mt-2">
-                    <SignalChip score={t.score} accent={LANE_ACCENT[t.lane]} />
-                  </div>
                 </div>
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
-              </Link>
-            ))}
-          </div>
-        </SectionCard>
-      ) : null}
-
-      {byScore.length > 0 ? (
-        <SectionCard tone="neutral">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
-            Your directions
-          </h2>
-          <div className="mt-3 space-y-2">
-            {byScore.map((t) => (
-              <Link
-                key={t.lane}
-                href={`/main/explore/${t.lane}`}
-                className="group flex items-center gap-3 rounded-xl px-1.5 py-1.5 transition hover:bg-white/[0.03]"
-              >
-                <LaneMark lane={t.lane} />
-                <span className="w-[68px] shrink-0 text-[13.5px] font-semibold text-white">
-                  {LANE_LABEL[t.lane]}
-                </span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.max(8, Math.min(100, t.score))}%`,
-                      backgroundColor: rgba(LANE_ACCENT[t.lane], 0.75),
-                    }}
-                  />
-                </div>
-                <span className="w-8 shrink-0 text-right text-[12.5px] tabular-nums text-white/55">
-                  {t.score}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
               </Link>
             ))}
           </div>
