@@ -3,7 +3,8 @@
 // The Explore entry screen — an Insights-style summary showing the strongest
 // pick from each of the five lanes. Replaces the old redirect to /work.
 
-import { ExploreSummary, type SummaryLane } from "./_components/ExploreSummary";
+import type { SummaryLane } from "./_components/ExploreSummary";
+import { ExploreSummaryLoader } from "./_components/ExploreSummaryLoader";
 
 import { workPathsToExplorePaths } from "./work/_data/workAdapter";
 import { WORK_PATHS } from "./work/_data/workPaths";
@@ -25,5 +26,5 @@ const LANES: SummaryLane[] = [
 ];
 
 export default function ExplorePage() {
-  return <ExploreSummary lanes={LANES} />;
+  return <ExploreSummaryLoader fallbackLanes={LANES} />;
 }
