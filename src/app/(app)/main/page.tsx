@@ -192,19 +192,68 @@ export default function MainHomePage() {
 
         if (data?.ok) {
           try {
-            const existing = localStorage.getItem(ONBOARDING_SNAPSHOT_KEY);
-
-            if (!existing) {
-              const snapshot = {
-                name: data.user?.email?.split("@")[0] ?? null,
-                zip_code: data.user?.zip_code ?? null,
-              };
-
-              localStorage.setItem(
-                ONBOARDING_SNAPSHOT_KEY,
-                JSON.stringify(snapshot)
-              );
+            // Hydrate the local snapshot from the DB — the source of truth —
+            // instead of an email-prefix stub. This is what makes name + signals
+            // survive a logout / new device / cleared storage: the DB always has
+            // them, so every load refreshes the local cache from it.
+            type ServerProfile = {
+              name?: string | null;
+              zip?: string | null;
+              situation?: string | null;
+              certainty?: string | null;
+              certaintyIdea?: string | null;
+              postPlans?: string[];
+              activities?: string[];
+              motivations?: string[];
+              strengths?: string[];
+              skills?: string[];
+              answers?: Record<string, unknown>;
+            };
+            let serverProfile: ServerProfile | null = null;
+            try {
+              const pr = await fetch("/api/guidance/profile", { cache: "no-store" });
+              if (pr.ok) {
+                const pj = await pr.json();
+                if (pj?.ok && pj.profile) serverProfile = pj.profile as ServerProfile;
+              }
+            } catch {
+              // fall through to whatever is already local
             }
+
+            const existingRaw = localStorage.getItem(ONBOARDING_SNAPSHOT_KEY);
+            const merged: Record<string, unknown> = existingRaw
+              ? JSON.parse(existingRaw) || {}
+              : {};
+
+            if (serverProfile) {
+              const put = (key: string, value: unknown) => {
+                if (
+                  value != null &&
+                  value !== "" &&
+                  !(Array.isArray(value) && value.length === 0)
+                ) {
+                  merged[key] = value;
+                }
+              };
+              put("name", serverProfile.name);
+              put("zip_code", serverProfile.zip);
+              put("situation", serverProfile.situation);
+              put("certainty", serverProfile.certainty);
+              put("certaintyIdea", serverProfile.certaintyIdea);
+              put("postPlans", serverProfile.postPlans);
+              put("activities", serverProfile.activities);
+              put("motivations", serverProfile.motivations);
+              put("strengths", serverProfile.strengths);
+              put("skills", serverProfile.skills);
+              put("answers", serverProfile.answers);
+            }
+
+            // Last-resort fallbacks only if the DB genuinely has nothing.
+            if (merged.name == null)
+              merged.name = data.user?.email?.split("@")[0] ?? null;
+            if (merged.zip_code == null) merged.zip_code = data.user?.zip_code ?? null;
+
+            localStorage.setItem(ONBOARDING_SNAPSHOT_KEY, JSON.stringify(merged));
           } catch {
             // Ignore local snapshot bridge failures.
           }
