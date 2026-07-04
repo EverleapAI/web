@@ -665,7 +665,9 @@ export default function AiLabPage() {
   const [flow, setFlow] = React.useState<FlowPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [completed, setCompleted] = React.useState(false);
+  // Internal tool: land directly on the Lab dashboard. The onboarding flow is
+  // optional and reachable via "Walk through questions" in the dashboard.
+  const [completed, setCompleted] = React.useState(true);
   const [showContext, setShowContext] = React.useState(false);
   const [dbAnswers, setDbAnswers] =
   React.useState<Answers | null>(null);
@@ -795,7 +797,10 @@ const [loadingDbAnswers, setLoadingDbAnswers] =
   canGoBack,
 } = useOnboardingFlow(flow, "everleap_ai_lab_answers");
 
-const answers = dbAnswers ?? localAnswers;
+// Merge, don't replace: a partial DB record (e.g. just { name }) must not
+// shadow fuller answers saved locally, or the flow re-opens and the dashboard
+// disappears. DB values win per-key; local fills the gaps.
+const answers = { ...(localAnswers ?? {}), ...(dbAnswers ?? {}) };
 
   React.useEffect(() => {
   if (!flow || completed) return;
@@ -1387,6 +1392,19 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
             onBack={goBack}
             onContinue={() => handleNext()}
           />
+
+          {/* Internal tool: jump straight to the Lab dashboard without walking
+              the whole onboarding demo. "Restart questions" in the dashboard
+              brings the flow back. */}
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setCompleted(true)}
+              className="text-[11px] uppercase tracking-[0.2em] text-white/40 underline-offset-4 transition hover:text-cyan-300 hover:underline"
+            >
+              Skip onboarding — open the Lab dashboard →
+            </button>
+          </div>
         </div>
       </main>
     </div>
