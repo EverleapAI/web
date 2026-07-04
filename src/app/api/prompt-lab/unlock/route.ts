@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   const resp = NextResponse.json({ ok: true }, { status: 200 });
 
-  const maxAge = 2 * 60 * 60; // 2 hours, matches the unlock token's server-side expiry
+  const maxAge = 24 * 60 * 60; // 24 hours, matches the unlock token's server-side expiry
 
   resp.cookies.set(COOKIE.PROMPT_LAB_UNLOCK, parsed.token, {
     ...cookieBase(),
