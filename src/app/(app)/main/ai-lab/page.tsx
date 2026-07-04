@@ -289,10 +289,6 @@ Return:
   },
 ];
 
-function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7071/api";
-}
-
 function formatAnswersForPrompt(items: { question: string; answer: string }[]) {
   return items
     .map(
@@ -701,8 +697,9 @@ const [loadingDbAnswers, setLoadingDbAnswers] =
     setUsageSummaryError(null);
 
     try {
-      const res = await fetch(`${getApiBaseUrl()}/ai/usage/summary`, {
+      const res = await fetch(`/api/ai-lab/usage-summary`, {
         method: "GET",
+        credentials: "include",
         cache: "no-store",
       });
 
@@ -727,7 +724,8 @@ const [loadingDbAnswers, setLoadingDbAnswers] =
   React.useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/flows/onboarding_v1`, {
+        const res = await fetch(`/api/flows/onboarding_v1`, {
+          credentials: "include",
           cache: "no-store",
         });
 
