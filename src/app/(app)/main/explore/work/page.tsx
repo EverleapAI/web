@@ -1,6 +1,6 @@
 "use client";
 
-import { ExploreLanding } from "../_components/ExploreLanding";
+import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
 import { workPathsToExplorePaths } from "./_data/workAdapter";
 import { WORK_PATHS } from "./_data/workPaths";
 
@@ -9,5 +9,5 @@ import { WORK_PATHS } from "./_data/workPaths";
 const WORK_EXPLORE_PATHS = workPathsToExplorePaths(WORK_PATHS);
 
 export default function WorkExplorePage() {
-  return <ExploreLanding lane="work" paths={WORK_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="work" fallback={WORK_EXPLORE_PATHS} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ExploreLanding } from "../_components/ExploreLanding";
+import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
 import { learningPathsToExplorePaths } from "./_data/learningAdapter";
 import { LEARNING_PATHS } from "./_data/learningPaths";
 
@@ -9,5 +9,5 @@ import { LEARNING_PATHS } from "./_data/learningPaths";
 const LEARNING_EXPLORE_PATHS = learningPathsToExplorePaths(LEARNING_PATHS);
 
 export default function LearningExplorePage() {
-  return <ExploreLanding lane="learning" paths={LEARNING_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="learning" fallback={LEARNING_EXPLORE_PATHS} />;
 }

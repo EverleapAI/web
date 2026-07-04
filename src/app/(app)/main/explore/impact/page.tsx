@@ -1,6 +1,6 @@
 "use client";
 
-import { ExploreLanding } from "../_components/ExploreLanding";
+import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
 import { impactPathsToExplorePaths } from "./_data/impactAdapter";
 import { IMPACT_PATHS } from "./_data/impactPaths";
 
@@ -9,5 +9,5 @@ import { IMPACT_PATHS } from "./_data/impactPaths";
 const IMPACT_EXPLORE_PATHS = impactPathsToExplorePaths(IMPACT_PATHS);
 
 export default function ImpactExplorePage() {
-  return <ExploreLanding lane="impact" paths={IMPACT_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="impact" fallback={IMPACT_EXPLORE_PATHS} />;
 }

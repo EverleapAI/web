@@ -1,6 +1,6 @@
 "use client";
 
-import { ExploreLanding } from "../_components/ExploreLanding";
+import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
 import { worldPathsToExplorePaths } from "./_data/worldAdapter";
 import { WORLD_PATHS } from "./_data/worldPaths";
 
@@ -9,5 +9,5 @@ import { WORLD_PATHS } from "./_data/worldPaths";
 const WORLD_EXPLORE_PATHS = worldPathsToExplorePaths(WORLD_PATHS);
 
 export default function WorldExplorePage() {
-  return <ExploreLanding lane="world" paths={WORLD_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} />;
 }
