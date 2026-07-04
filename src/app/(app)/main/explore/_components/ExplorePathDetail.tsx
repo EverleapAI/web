@@ -11,8 +11,11 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  Bookmark,
+  BookmarkCheck,
   ChevronDown,
   ExternalLink,
+  Loader2,
   MapPin,
   Monitor,
 } from "lucide-react";
@@ -27,6 +30,7 @@ import {
   type TrajectoryTone,
 } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
+import { useSavedActions } from "../_lib/exploreActions";
 import { scorePath } from "../_lib/scorePath";
 import { LANE_NOUN, SectionHeader, SignalChip, rgba } from "./exploreUi";
 
@@ -128,6 +132,7 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
   const accent = laneAccent(path);
   const { profile } = useExploreProfile();
   const score = profile ? scorePath(path, profile) : 67;
+  const actions = useSavedActions(path.lane, `${path.lane}:${path.slug}`);
 
   const hasReality = path.reality.moments.length > 0 || Boolean(path.reality.summary);
   const hasTrajectory =
@@ -322,21 +327,46 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
                   <span>{s.title}</span>
                 </div>
                 <div className="space-y-2">
-                  {s.items.map((it) => (
-                    <a
-                      key={it.id}
-                      href={it.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group flex items-start justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3 transition hover:bg-white/[0.05]"
-                    >
-                      <span className="min-w-0">
-                        <span className="text-[14px] font-medium text-white/88">{it.title}</span>
-                        {it.note ? <span className="mt-0.5 block text-[12.5px] leading-[1.5] text-white/55">{it.note}</span> : null}
-                      </span>
-                      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
-                    </a>
-                  ))}
+                  {s.items.map((it) => {
+                    const saved = actions.isSaved(it.title);
+                    const saving = actions.savingTitle === it.title;
+                    return (
+                      <div
+                        key={it.id}
+                        className="group flex items-stretch gap-0 overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02] transition hover:bg-white/[0.04]"
+                      >
+                        <a
+                          href={it.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex min-w-0 flex-1 items-start justify-between gap-3 px-4 py-3"
+                        >
+                          <span className="min-w-0">
+                            <span className="text-[14px] font-medium text-white/88">{it.title}</span>
+                            {it.note ? <span className="mt-0.5 block text-[12.5px] leading-[1.5] text-white/55">{it.note}</span> : null}
+                          </span>
+                          <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => actions.save({ title: it.title, description: it.note, href: it.href })}
+                          disabled={saved || saving}
+                          aria-label={saved ? "Saved to Actions" : "Save to Actions"}
+                          title={saved ? "Saved to Actions" : "Save to Actions"}
+                          className="flex w-11 shrink-0 items-center justify-center border-l border-white/8 text-white/45 transition hover:bg-white/[0.04] hover:text-white/85 disabled:cursor-default"
+                          style={saved ? { color: rgba(accent, 0.95) } : undefined}
+                        >
+                          {saving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : saved ? (
+                            <BookmarkCheck className="h-4 w-4" />
+                          ) : (
+                            <Bookmark className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
