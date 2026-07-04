@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 
-import { ExplorePathDetail } from "../../_components/ExplorePathDetail";
+import { ExplorePathDetailLoader } from "../../_components/ExplorePathDetailLoader";
 import { playActivityToExplorePath } from "../_data/playAdapter";
 import { getPlayActivity } from "../_data/playPaths";
 
@@ -14,5 +14,11 @@ export default function PlayPathDetailPage() {
   const activity = pathId ? getPlayActivity(pathId) : null;
   if (!activity) notFound();
 
-  return <ExplorePathDetail path={playActivityToExplorePath(activity)} />;
+  return (
+    <ExplorePathDetailLoader
+      lane="play"
+      slug={pathId}
+      fallback={playActivityToExplorePath(activity)}
+    />
+  );
 }

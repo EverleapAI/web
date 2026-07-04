@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 
-import { ExplorePathDetail } from "../../_components/ExplorePathDetail";
+import { ExplorePathDetailLoader } from "../../_components/ExplorePathDetailLoader";
 import { impactPathToExplorePath } from "../_data/impactAdapter";
 import { requireImpactPath } from "../_data/impactPaths";
 
@@ -19,5 +19,11 @@ export default function ImpactPathDetailPage() {
   }
   if (!item) notFound();
 
-  return <ExplorePathDetail path={impactPathToExplorePath(item)} />;
+  return (
+    <ExplorePathDetailLoader
+      lane="impact"
+      slug={pathId}
+      fallback={impactPathToExplorePath(item)}
+    />
+  );
 }

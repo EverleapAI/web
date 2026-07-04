@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 
-import { ExplorePathDetail } from "../../_components/ExplorePathDetail";
+import { ExplorePathDetailLoader } from "../../_components/ExplorePathDetailLoader";
 import { learningPathToExplorePath } from "../_data/learningAdapter";
 import { getLearningPath } from "../_data/learningPaths";
 
@@ -14,5 +14,11 @@ export default function LearningPathDetailPage() {
   const learning = pathId ? getLearningPath(pathId) : null;
   if (!learning) notFound();
 
-  return <ExplorePathDetail path={learningPathToExplorePath(learning)} />;
+  return (
+    <ExplorePathDetailLoader
+      lane="learning"
+      slug={pathId}
+      fallback={learningPathToExplorePath(learning)}
+    />
+  );
 }

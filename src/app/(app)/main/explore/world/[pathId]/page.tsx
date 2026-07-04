@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 
-import { ExplorePathDetail } from "../../_components/ExplorePathDetail";
+import { ExplorePathDetailLoader } from "../../_components/ExplorePathDetailLoader";
 import { worldPathToExplorePath } from "../_data/worldAdapter";
 import { getWorldPath } from "../_data/worldPaths";
 
@@ -14,5 +14,11 @@ export default function WorldPathDetailPage() {
   const world = pathId ? getWorldPath(pathId) : null;
   if (!world) notFound();
 
-  return <ExplorePathDetail path={worldPathToExplorePath(world)} />;
+  return (
+    <ExplorePathDetailLoader
+      lane="world"
+      slug={pathId}
+      fallback={worldPathToExplorePath(world)}
+    />
+  );
 }

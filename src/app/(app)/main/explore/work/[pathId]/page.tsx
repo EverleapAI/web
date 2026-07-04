@@ -2,7 +2,7 @@
 
 import { notFound, useParams } from "next/navigation";
 
-import { ExplorePathDetail } from "../../_components/ExplorePathDetail";
+import { ExplorePathDetailLoader } from "../../_components/ExplorePathDetailLoader";
 import { workPathToExplorePath } from "../_data/workAdapter";
 import { getWorkPath } from "../_data/workPaths";
 
@@ -14,5 +14,11 @@ export default function WorkPathDetailPage() {
   const work = pathId ? getWorkPath(pathId) : null;
   if (!work) notFound();
 
-  return <ExplorePathDetail path={workPathToExplorePath(work)} />;
+  return (
+    <ExplorePathDetailLoader
+      lane="work"
+      slug={pathId}
+      fallback={workPathToExplorePath(work)}
+    />
+  );
 }
