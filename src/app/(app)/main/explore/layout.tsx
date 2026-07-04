@@ -8,9 +8,11 @@ type Lane = {
   href: string;
   label: string;
   dotClass: string;
+  exact?: boolean;
 };
 
 const LANES: Lane[] = [
+  { href: "/main/explore", label: "Summary", dotClass: "bg-white/70", exact: true },
   { href: "/main/explore/work", label: "Work", dotClass: "bg-sky-300" },
   { href: "/main/explore/learning", label: "Learning", dotClass: "bg-violet-300" },
   { href: "/main/explore/world", label: "World", dotClass: "bg-amber-300" },
@@ -18,7 +20,8 @@ const LANES: Lane[] = [
   { href: "/main/explore/play", label: "Play", dotClass: "bg-pink-300" },
 ];
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string, href: string, exact?: boolean) {
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -57,7 +60,7 @@ export default function ExploreLayout({
     <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-0.5">
       <div className="mb-2 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {LANES.map((lane) => {
-          const active = isActive(pathname ?? "", lane.href);
+          const active = isActive(pathname ?? "", lane.href, lane.exact);
 
           return (
             <Link
