@@ -1023,7 +1023,10 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
     );
   }
 
-  if (error || !flow || !currentNode) {
+  // The dashboard is the landing page and does not depend on the onboarding
+  // flow. Only block on a flow-load error when the user actually enters the
+  // walkthrough (completed === false); otherwise fall through to the dashboard.
+  if (!completed && (error || !flow || !currentNode)) {
     return (
       <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
         Error loading AI Lab onboarding flow
