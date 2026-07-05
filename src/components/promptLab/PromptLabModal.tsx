@@ -12,7 +12,8 @@ export type PromptLabPageKey =
   | "insights_summary"
   | "insights_motivations"
   | "insights_strengths"
-  | "insights_skills";
+  | "insights_skills"
+  | "explore_summary";
 
 export type PromptLabTargetField = "main" | "item_0" | "item_1" | "item_2";
 

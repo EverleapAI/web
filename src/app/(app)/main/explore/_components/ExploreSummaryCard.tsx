@@ -12,6 +12,8 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { CornerConstellation } from "./exploreUi";
+import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
+import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 
 export type SummaryRequest = {
   firstName?: string | null;
@@ -36,6 +38,13 @@ export function ExploreSummaryCard({
   const [payload, setPayload] = React.useState<Payload | null>(null);
   const [loading, setLoading] = React.useState(hasSignal);
   const [failed, setFailed] = React.useState(false);
+  const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
+
+  // Prompt Lab preview (founder-only) overrides the generated narrative live.
+  const resolvedHeadline = (preview?.result.headline as string | undefined) ?? payload?.headline;
+  const resolvedBody = (preview?.result.body as string | undefined) ?? payload?.body;
+  const resolvedThreads =
+    (preview?.result.threads as string[] | undefined) ?? payload?.threads ?? [];
 
   // stable key so we only refetch when the meaningful inputs change
   const key = React.useMemo(
@@ -82,6 +91,17 @@ export function ExploreSummaryCard({
   return (
     <SectionCard tone="hero">
       <CornerConstellation />
+      {hasSignal ? (
+        <PromptLabTrigger
+          dark
+          pageKey="explore_summary"
+          targetField="main"
+          currentText={resolvedBody ?? ""}
+          onApplied={setPreview}
+          hasActivePreview={!!preview}
+          onReset={() => setPreview(null)}
+        />
+      ) : null}
       <div className="relative max-w-2xl">
         <div className="mb-2 flex items-center gap-2">
           <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">
@@ -120,21 +140,21 @@ export function ExploreSummaryCard({
             </div>
             <p className="mt-4 text-[12.5px] text-white/40">Reading your signals…</p>
           </div>
-        ) : payload ? (
+        ) : payload || preview ? (
           <>
             <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[27px]">
-              {payload.headline}
+              {resolvedHeadline}
             </h1>
             <div className="mt-3 space-y-3">
-              {payload.body.split(/\n\s*\n/).map((para, i) => (
+              {(resolvedBody ?? "").split(/\n\s*\n/).map((para, i) => (
                 <p key={i} className="text-[14px] leading-[1.7] text-white/76 sm:text-[15px]">
                   {para}
                 </p>
               ))}
             </div>
-            {payload.threads.length > 0 ? (
+            {resolvedThreads.length > 0 ? (
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {payload.threads.map((t) => (
+                {resolvedThreads.map((t) => (
                   <span
                     key={t}
                     className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11.5px] font-medium text-white/70"
