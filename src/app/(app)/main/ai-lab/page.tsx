@@ -58,8 +58,15 @@ type UsageProviderSummary = {
   averageRequestCost?: number;
 };
 
+type UsageSourceSummary = {
+  requestCount?: number;
+  monthToDateCost?: number;
+  allTimeCost?: number;
+};
+
 type UsageSummary = {
   providers?: Record<string, UsageProviderSummary>;
+  sources?: Record<string, UsageSourceSummary>;
 };
 
 const PROMPT_TEMPLATES: PromptTemplate[] = [
@@ -488,24 +495,111 @@ function SpendSummaryCard({
           {error}
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <SpendTile
-            label="OpenAI"
-            monthToDate={Number(openai.monthToDateCost ?? 0)}
-            allTime={Number(openai.allTimeCost ?? 0)}
-            requestCount={Number(openai.requestCount ?? 0)}
-            averageRequestCost={Number(openai.averageRequestCost ?? 0)}
-          />
+        <div className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <SpendTile
+              label="OpenAI"
+              monthToDate={Number(openai.monthToDateCost ?? 0)}
+              allTime={Number(openai.allTimeCost ?? 0)}
+              requestCount={Number(openai.requestCount ?? 0)}
+              averageRequestCost={Number(openai.averageRequestCost ?? 0)}
+            />
 
-          <SpendTile
-            label="Claude"
-            monthToDate={Number(anthropic.monthToDateCost ?? 0)}
-            allTime={Number(anthropic.allTimeCost ?? 0)}
-            requestCount={Number(anthropic.requestCount ?? 0)}
-            averageRequestCost={Number(anthropic.averageRequestCost ?? 0)}
-          />
+            <SpendTile
+              label="Claude"
+              monthToDate={Number(anthropic.monthToDateCost ?? 0)}
+              allTime={Number(anthropic.allTimeCost ?? 0)}
+              requestCount={Number(anthropic.requestCount ?? 0)}
+              averageRequestCost={Number(anthropic.averageRequestCost ?? 0)}
+            />
+          </div>
+
+          <SpendBreakdown sources={summary?.sources ?? {}} />
         </div>
       )}
+    </div>
+  );
+}
+
+function SpendBreakdown({
+  sources,
+}: {
+  sources: Record<string, UsageSourceSummary>;
+}) {
+  const rows = [
+    {
+      key: "app",
+      label: "App — real user spend",
+      note: "What your users actually cost",
+      accent: true,
+    },
+    {
+      key: "ai_lab",
+      label: "AI Lab",
+      note: "Internal tuning tool",
+      accent: false,
+    },
+    {
+      key: "prompt_lab",
+      label: "Prompt Lab previews",
+      note: "Internal tuning tool",
+      accent: false,
+    },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+      <div className="text-xs uppercase tracking-[0.18em] text-white/40">
+        Where it&apos;s going
+      </div>
+      <div className="mb-3 mt-1 text-[12px] leading-5 text-white/35">
+        Real user generation vs. the two internal tuning tools. AI Lab and Prompt
+        Lab share the models but are tracked under their own source, so they
+        don&apos;t inflate the user number.
+      </div>
+
+      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 text-[11px] uppercase tracking-[0.14em] text-white/30">
+        <div>Source</div>
+        <div className="text-right">Month</div>
+        <div className="text-right">All time</div>
+        <div className="text-right">Reqs</div>
+      </div>
+
+      <div className="mt-1 divide-y divide-white/[0.06]">
+        {rows.map((row) => {
+          const d = sources[row.key] ?? {};
+          return (
+            <div
+              key={row.key}
+              className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 py-2.5"
+            >
+              <div>
+                <div
+                  className={`text-sm font-semibold ${
+                    row.accent ? "text-cyan-100" : "text-white/80"
+                  }`}
+                >
+                  {row.label}
+                </div>
+                <div className="text-[11px] text-white/35">{row.note}</div>
+              </div>
+              <div
+                className={`text-right text-sm font-semibold tabular-nums ${
+                  row.accent ? "text-cyan-100" : "text-white/75"
+                }`}
+              >
+                {formatCost(Number(d.monthToDateCost ?? 0))}
+              </div>
+              <div className="text-right text-sm font-semibold tabular-nums text-white/75">
+                {formatCost(Number(d.allTimeCost ?? 0))}
+              </div>
+              <div className="text-right text-sm tabular-nums text-white/45">
+                {formatCount(Number(d.requestCount ?? 0))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
