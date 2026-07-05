@@ -219,6 +219,13 @@ export default function ActionsPage() {
     loadActions();
   }, [loadActions]);
 
+  // Tracks background-warm polling so a cold cache shows the skeleton and fills
+  // in when ready, instead of the page blocking on a live generation.
+  const pollRef = React.useRef<{ attempts: number; timer: ReturnType<typeof setTimeout> | null }>({
+    attempts: 0,
+    timer: null,
+  });
+
   const fetchSuggestions = React.useCallback(async (force: boolean) => {
     try {
       const r = await fetch("/api/guidance/action-suggestions", {
@@ -230,6 +237,17 @@ export default function ActionsPage() {
       if (!r.ok) throw new Error();
       const d = await r.json();
       const list = d?.ok && d.payload && Array.isArray(d.payload.suggestions) ? d.payload.suggestions : [];
+
+      // Cold cache: the backend is warming suggestions in the background and has
+      // nothing yet. Keep the skeleton and poll (~90s max) rather than flashing
+      // an empty state or waiting on a synchronous AI call.
+      if (d?.generating && list.length === 0 && pollRef.current.attempts < 18) {
+        pollRef.current.attempts += 1;
+        setSuggestions(null);
+        pollRef.current.timer = setTimeout(() => fetchSuggestions(false), 5000);
+        return;
+      }
+      pollRef.current.attempts = 0;
       setSuggestions(list);
     } catch {
       setSuggestions([]);
@@ -238,6 +256,9 @@ export default function ActionsPage() {
 
   React.useEffect(() => {
     fetchSuggestions(false);
+    return () => {
+      if (pollRef.current.timer) clearTimeout(pollRef.current.timer);
+    };
   }, [fetchSuggestions]);
 
   const setStatus = React.useCallback(
