@@ -30,7 +30,7 @@ import {
   type TrajectoryTone,
 } from "../_data/exploreSchema";
 import { useSavedActions } from "../_lib/exploreActions";
-import { LANE_NOUN, SectionHeader, rgba } from "./exploreUi";
+import { LANE_NOUN, rgba } from "./exploreUi";
 
 const TONE_COLOR: Record<TrajectoryTone, Rgb> = {
   positive: { r: 87, g: 214, b: 160 },
@@ -38,6 +38,52 @@ const TONE_COLOR: Record<TrajectoryTone, Rgb> = {
   mixed: { r: 92, g: 180, b: 255 },
   neutral: { r: 210, g: 218, b: 235 },
 };
+
+// A deep section, collapsed by default so the page stays short and scannable on
+// a phone. The title + a one-line teaser read as a menu; tapping reveals the
+// full section. (Was: every section fully expanded on one long scroll.)
+function Collapsible({
+  title,
+  teaser,
+  accent,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  teaser?: string;
+  accent: Rgb;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(defaultOpen);
+  return (
+    <SectionCard tone="neutral">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="flex items-center gap-2">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: rgba(accent, 0.9) }}
+            />
+            <span className="text-[16px] font-semibold tracking-[-0.01em] text-white">{title}</span>
+          </span>
+          {!open && teaser ? (
+            <span className="mt-1 block pl-3.5 text-[13px] leading-[1.5] text-white/50">{teaser}</span>
+          ) : null}
+        </span>
+        <ChevronDown
+          className={`mt-0.5 h-5 w-5 shrink-0 text-white/45 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? <div className="mt-4">{children}</div> : null}
+    </SectionCard>
+  );
+}
 
 function Bullets({ items, accent }: { items: string[]; accent: Rgb }) {
   return (
@@ -138,16 +184,32 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
   const hasNextSteps = path.nextSteps.sections.some((s) => s.items.length > 0);
   const hasBranches = Boolean(path.branches && path.branches.previews.length > 0);
 
-  const nav = [
-    { id: "overview", label: "Overview" },
-    hasReality ? { id: "reality", label: "What it's like" } : null,
-    hasTrajectory ? { id: "trajectory", label: "Where it leads" } : null,
-    hasNextSteps ? { id: "nextsteps", label: "Try it" } : null,
-    hasBranches ? { id: "branches", label: path.branches!.label } : null,
-  ].filter(Boolean) as { id: string; label: string }[];
+  const payMedian = path.trajectory.salaryBand?.median;
+  const fitCount = path.overview.fitSignals.length;
+  const stepCount = path.nextSteps.sections.reduce((n, s) => n + s.items.length, 0);
+  // Teaser = a snippet of what it's like, not the section's own generic title
+  // (generated paths often set reality.title to "What it's really like").
+  const genericRealityTitle = (t?: string) =>
+    !t || t.trim().toLowerCase().replace(/[.!]+$/, "") === "what it's really like";
+  const realityTeaser =
+    path.reality.summary?.trim().slice(0, 96) ||
+    path.reality.pulse?.trim().slice(0, 96) ||
+    (genericRealityTitle(path.reality.title) ? "What a real day actually looks like" : path.reality.title);
+  const trajTeaser =
+    [path.trajectory.outlookLabel, payMedian ? `typically ${payMedian}` : null]
+      .filter(Boolean)
+      .join(" · ") || "Where this can take you";
+  const stepsTeaser = stepCount
+    ? `${stepCount} way${stepCount > 1 ? "s" : ""} to try it for real`
+    : "Ways to try it yourself";
+  const branchTeaser = path.branches?.intro
+    ? path.branches.intro
+    : path.branches
+      ? `${path.branches.previews.length} directions this can go`
+      : undefined;
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-3 pb-24">
       <Link
         href={`/main/explore/${path.lane}`}
         className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
@@ -156,7 +218,7 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
         <span>Back to {path.lane[0].toUpperCase() + path.lane.slice(1)}</span>
       </Link>
 
-      {/* Hero */}
+      {/* Hero — compact: hook + who it fits + one concrete fact */}
       <SectionCard tone="hero">
         <div className="max-w-2xl">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
@@ -168,43 +230,39 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
           {path.overview.hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.6] text-white/86">{path.overview.hook}</p>
           ) : null}
-          {path.overview.summary ? (
-            <p className="mt-2.5 text-[14px] leading-[1.68] text-white/70">{path.overview.summary}</p>
+          {path.overview.traitChips.length || payMedian ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {path.overview.traitChips.slice(0, 4).map((c) => (
+                <span
+                  key={c.id}
+                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[12.5px] text-white/78"
+                >
+                  {c.label}
+                </span>
+              ))}
+              {payMedian ? (
+                <span
+                  className="rounded-full px-3 py-1 text-[12.5px] font-medium"
+                  style={{ backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }}
+                >
+                  Typically {payMedian}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </SectionCard>
 
-      {/* Sticky section sub-nav */}
-      {nav.length > 1 ? (
-        <div className="sticky top-2 z-20 -mx-1 flex gap-2 overflow-x-auto px-1 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {nav.map((n) => (
-            <a
-              key={n.id}
-              href={`#${n.id}`}
-              className="shrink-0 whitespace-nowrap rounded-full border border-white/10 bg-slate-950/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-white/70 backdrop-blur-xl transition hover:text-white"
-            >
-              {n.label}
-            </a>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Overview — why it fits */}
-      <SectionCard tone="neutral" className="scroll-mt-16" >
-        <div id="overview" />
-        <SectionHeader accent={accent}>Why this could fit you</SectionHeader>
-        {path.overview.traitChips.length ? (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {path.overview.traitChips.map((c) => (
-              <span key={c.id} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[12.5px] text-white/74">
-                {c.label}
-              </span>
-            ))}
-          </div>
-        ) : null}
+      {/* Why it fits */}
+      <Collapsible
+        title="Why this could fit you"
+        accent={accent}
+        defaultOpen
+        teaser={fitCount ? `${fitCount} sign${fitCount > 1 ? "s" : ""} this could be your thing` : undefined}
+      >
         {path.overview.fitSignals.length ? (
           <div className="space-y-2">
-            {path.overview.fitSignals.slice(0, 5).map((s) => (
+            {path.overview.fitSignals.slice(0, 3).map((s) => (
               <FitSignalRow key={s.id} signal={s} accent={accent} />
             ))}
           </div>
@@ -212,17 +270,17 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
         {path.overview.whyItPullsYouIn.length ? (
           <div className="mt-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Why it pulls people in</div>
-            <Bullets items={path.overview.whyItPullsYouIn} accent={accent} />
+            <Bullets items={path.overview.whyItPullsYouIn.slice(0, 3)} accent={accent} />
           </div>
         ) : null}
-      </SectionCard>
+      </Collapsible>
 
       {/* Reality */}
       {hasReality ? (
-        <SectionCard tone="plum" className="scroll-mt-16">
-          <div id="reality" />
-          <SectionHeader accent={accent}>What it's really like</SectionHeader>
-          <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{path.reality.title}</h2>
+        <Collapsible title="What it's really like" accent={accent} teaser={realityTeaser}>
+          {genericRealityTitle(path.reality.title) ? null : (
+            <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{path.reality.title}</h2>
+          )}
           {path.reality.summary ? <p className="mt-2 text-[14px] leading-[1.66] text-white/74">{path.reality.summary}</p> : null}
           {path.reality.pulse ? (
             <p className="mt-3 border-l-2 pl-3 text-[14px] italic leading-[1.6] text-white/78" style={{ borderColor: rgba(accent, 0.5) }}>
@@ -242,14 +300,12 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
               ))}
             </ol>
           ) : null}
-        </SectionCard>
+        </Collapsible>
       ) : null}
 
       {/* Trajectory */}
       {hasTrajectory ? (
-        <SectionCard tone="teal" className="scroll-mt-16">
-          <div id="trajectory" />
-          <SectionHeader accent={accent}>Where it leads</SectionHeader>
+        <Collapsible title="Where it leads" accent={accent} teaser={trajTeaser}>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{path.trajectory.outlookLabel}</h2>
           </div>
@@ -270,7 +326,7 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
             </div>
           ) : null}
 
-          {path.trajectory.salaryBand ? (
+          {path.trajectory.salaryBand?.median ? (
             <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Typical pay</div>
               <div className="mt-1.5 flex items-baseline gap-3 text-white">
@@ -297,20 +353,18 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
             ) : null}
           </div>
 
-          {path.trajectory.aiImpact ? (
+          {path.trajectory.aiImpact?.summary ? (
             <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
               <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">AI impact</div>
               <p className="mt-1.5 text-[13.5px] leading-[1.6] text-white/72">{path.trajectory.aiImpact.summary}</p>
             </div>
           ) : null}
-        </SectionCard>
+        </Collapsible>
       ) : null}
 
       {/* Next steps */}
       {hasNextSteps ? (
-        <SectionCard tone="neutral" className="scroll-mt-16">
-          <div id="nextsteps" />
-          <SectionHeader accent={accent}>Try it for real</SectionHeader>
+        <Collapsible title="Try it for real" accent={accent} teaser={stepsTeaser}>
           {path.nextSteps.heroSummary ? <p className="mb-3 text-[14px] leading-[1.66] text-white/72">{path.nextSteps.heroSummary}</p> : null}
           <div className="space-y-4">
             {path.nextSteps.sections.filter((s) => s.items.length).map((s) => (
@@ -364,17 +418,16 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
               </div>
             ))}
           </div>
-        </SectionCard>
+        </Collapsible>
       ) : null}
 
       {/* Branches */}
       {hasBranches && path.branches ? (
-        <SectionCard tone="neutral" className="scroll-mt-16">
-          <div id="branches" />
-          <SectionHeader accent={accent}>
-            {path.branches.label[0].toUpperCase() + path.branches.label.slice(1)}
-          </SectionHeader>
-          {path.branches.intro ? <p className="mb-3 text-[14px] leading-[1.66] text-white/72">{path.branches.intro}</p> : null}
+        <Collapsible
+          title={path.branches.label[0].toUpperCase() + path.branches.label.slice(1)}
+          accent={accent}
+          teaser={branchTeaser}
+        >
           <div className="grid gap-3">
             {path.branches.previews.map((p) => (
               <BranchCard
@@ -385,7 +438,7 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
               />
             ))}
           </div>
-        </SectionCard>
+        </Collapsible>
       ) : null}
     </div>
   );
