@@ -11,14 +11,14 @@ export default function PlayPathDetailPage() {
   const raw = params?.pathId;
   const pathId = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
 
-  const activity = pathId ? getPlayActivity(pathId) : null;
-  if (!activity) notFound();
+  if (!pathId) notFound();
+  const activity = getPlayActivity(pathId);
 
   return (
     <ExplorePathDetailLoader
       lane="play"
       slug={pathId}
-      fallback={playActivityToExplorePath(activity)}
+      fallback={activity ? playActivityToExplorePath(activity) : null}
     />
   );
 }

@@ -11,14 +11,14 @@ export default function WorldPathDetailPage() {
   const raw = params?.pathId;
   const pathId = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
 
-  const world = pathId ? getWorldPath(pathId) : null;
-  if (!world) notFound();
+  if (!pathId) notFound();
+  const world = getWorldPath(pathId);
 
   return (
     <ExplorePathDetailLoader
       lane="world"
       slug={pathId}
-      fallback={worldPathToExplorePath(world)}
+      fallback={world ? worldPathToExplorePath(world) : null}
     />
   );
 }

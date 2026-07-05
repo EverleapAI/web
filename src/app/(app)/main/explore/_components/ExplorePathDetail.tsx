@@ -258,7 +258,7 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
           {path.trajectory.metrics.length ? (
             <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
               {path.trajectory.metrics.map((m) => {
-                const tone = TONE_COLOR[m.tone ?? "neutral"];
+                const tone = TONE_COLOR[m.tone ?? "neutral"] ?? TONE_COLOR.neutral;
                 return (
                   <div key={m.id} className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
                     <div className="text-[11px] uppercase tracking-[0.12em] text-white/42">{m.label}</div>

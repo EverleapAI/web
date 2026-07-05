@@ -18,7 +18,12 @@ import {
 import type { Lane, Rgb } from "../_data/exploreSchema";
 import { signalLabel } from "../_lib/scorePath";
 
-export const rgba = (c: Rgb, a: number) => `rgba(${c.r}, ${c.g}, ${c.b}, ${a})`;
+// Defensive: AI-generated catalog content can carry enum values (e.g. a metric
+// `tone`) outside the mock's palette, which resolve to an undefined color. A
+// single bad field must not crash a whole detail page, so fall back to
+// transparent instead of throwing.
+export const rgba = (c: Rgb | undefined | null, a: number) =>
+  c ? `rgba(${c.r}, ${c.g}, ${c.b}, ${a})` : "transparent";
 
 export const LANE_ICON: Record<Lane, LucideIcon> = {
   work: BriefcaseBusiness,

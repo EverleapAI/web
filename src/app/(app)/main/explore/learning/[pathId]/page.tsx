@@ -11,14 +11,14 @@ export default function LearningPathDetailPage() {
   const raw = params?.pathId;
   const pathId = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
 
-  const learning = pathId ? getLearningPath(pathId) : null;
-  if (!learning) notFound();
+  if (!pathId) notFound();
+  const learning = getLearningPath(pathId);
 
   return (
     <ExplorePathDetailLoader
       lane="learning"
       slug={pathId}
-      fallback={learningPathToExplorePath(learning)}
+      fallback={learning ? learningPathToExplorePath(learning) : null}
     />
   );
 }

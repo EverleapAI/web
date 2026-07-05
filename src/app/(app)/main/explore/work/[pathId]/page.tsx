@@ -11,14 +11,14 @@ export default function WorkPathDetailPage() {
   const raw = params?.pathId;
   const pathId = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
 
-  const work = pathId ? getWorkPath(pathId) : null;
-  if (!work) notFound();
+  if (!pathId) notFound();
+  const work = getWorkPath(pathId);
 
   return (
     <ExplorePathDetailLoader
       lane="work"
       slug={pathId}
-      fallback={workPathToExplorePath(work)}
+      fallback={work ? workPathToExplorePath(work) : null}
     />
   );
 }

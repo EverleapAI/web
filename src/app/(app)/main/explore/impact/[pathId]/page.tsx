@@ -11,19 +11,19 @@ export default function ImpactPathDetailPage() {
   const raw = params?.pathId;
   const pathId = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : "";
 
+  if (!pathId) notFound();
   let item = null;
   try {
-    item = pathId ? requireImpactPath(pathId) : null;
+    item = requireImpactPath(pathId);
   } catch {
     item = null;
   }
-  if (!item) notFound();
 
   return (
     <ExplorePathDetailLoader
       lane="impact"
       slug={pathId}
-      fallback={impactPathToExplorePath(item)}
+      fallback={item ? impactPathToExplorePath(item) : null}
     />
   );
 }
