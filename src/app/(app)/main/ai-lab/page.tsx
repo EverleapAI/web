@@ -805,6 +805,7 @@ const [loadingDbAnswers, setLoadingDbAnswers] =
 
       setUsageSummary({
         providers: data.providers ?? {},
+        sources: data.sources ?? {},
       });
     } catch (err) {
       setUsageSummaryError(
