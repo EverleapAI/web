@@ -20,7 +20,6 @@ import {
   MapPin,
   NotebookPen,
   Pencil,
-  RotateCcw,
   Route,
   ShieldCheck,
   Sparkles,
@@ -165,7 +164,6 @@ function HubCard({
 const ACCOUNT_LINKS = [
   { href: "/main/notifications", label: "Notifications", desc: "How and when Everleap reaches you", Icon: Bell },
   { href: "/main/secure-device", label: "Secure this device", desc: "Add a lock to keep this private", Icon: ShieldCheck },
-  { href: "/main/reset-answers", label: "Reset my answers", desc: "Clear your story and start fresh", Icon: RotateCcw },
   { href: "/main/profile/data", label: "Your data", desc: "Download everything, or delete your account", Icon: Database },
 ];
 
