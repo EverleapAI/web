@@ -18,6 +18,7 @@ import {
   MapPin,
   NotebookPen,
   RotateCcw,
+  Route,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -76,6 +77,85 @@ function InfoRow({
         </span>
       ) : null}
     </div>
+  );
+}
+
+// A quiet momentum snapshot — the shape of what you've done, not a scoreboard.
+// Hidden entirely until there's something real to show.
+function MomentumSnapshot() {
+  const [stats, setStats] = React.useState<{ saved: number; tried: number; reflected: number } | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    fetch("/api/guidance/actions", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!alive) return;
+        const list: { status?: string; reflection?: string | null }[] = Array.isArray(d?.actions) ? d.actions : [];
+        const tried = list.filter((a) => a.status === "doing" || a.status === "done").length;
+        const reflected = list.filter((a) => a.status === "done" && a.reflection?.trim()).length;
+        setStats({ saved: list.length, tried, reflected });
+      })
+      .catch(() => {
+        if (alive) setStats({ saved: 0, tried: 0, reflected: 0 });
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (!stats || (stats.saved === 0 && stats.tried === 0)) return null;
+
+  const tiles = [
+    { n: stats.saved, label: "Saved" },
+    { n: stats.tried, label: "Tried" },
+    { n: stats.reflected, label: "Reflected" },
+  ];
+
+  return (
+    <SectionCard tone="neutral">
+      <div className="grid grid-cols-3 gap-2">
+        {tiles.map((t) => (
+          <div key={t.label} className="flex flex-col items-center gap-0.5 py-1">
+            <span className="text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-white">{t.n}</span>
+            <span className="text-[11px] uppercase tracking-[0.12em] text-white/45">{t.label}</span>
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  );
+}
+
+// A prominent nav card into one of the "seeing yourself" Me sections.
+function HubCard({
+  href,
+  Icon,
+  title,
+  desc,
+}: {
+  href: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Link href={href} className="block">
+      <SectionCard tone="neutral">
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+            style={{ background: `linear-gradient(140deg, ${rgba(0.28)}, ${rgba(0.1)})`, color: "#fff" }}
+          >
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold text-white">{title}</div>
+            <div className="truncate text-[12.5px] text-white/55">{desc}</div>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-white/35" />
+        </div>
+      </SectionCard>
+    </Link>
   );
 }
 
@@ -176,6 +256,8 @@ export default function ProfilePage() {
         </div>
       ) : authed ? (
         <div className="mt-3 space-y-3">
+          <MomentumSnapshot />
+
           {/* Basics */}
           <SectionCard tone="neutral">
             <div className="space-y-3.5">
@@ -191,26 +273,19 @@ export default function ProfilePage() {
             </div>
           </SectionCard>
 
-          {/* Reflections journal — a place you want to visit, not just settings */}
-          <Link href="/main/profile/reflections" className="block">
-            <SectionCard tone="neutral">
-              <div className="flex items-center gap-3">
-                <span
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-                  style={{ background: `linear-gradient(140deg, ${rgba(0.28)}, ${rgba(0.1)})`, color: "#fff" }}
-                >
-                  <NotebookPen className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-semibold text-white">Your reflections</div>
-                  <div className="truncate text-[12.5px] text-white/55">
-                    A diary of what you’ve tried, and what you noticed
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-white/35" />
-              </div>
-            </SectionCard>
-          </Link>
+          {/* Places you want to visit, not just settings */}
+          <HubCard
+            href="/main/profile/reflections"
+            Icon={NotebookPen}
+            title="Your reflections"
+            desc="A diary of what you’ve tried, and what you noticed"
+          />
+          <HubCard
+            href="/main/profile/journey"
+            Icon={Route}
+            title="Your journey"
+            desc="The story of everything you’ve explored so far"
+          />
 
           {/* Account hub */}
           <SectionCard tone="neutral">
