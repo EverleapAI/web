@@ -20,10 +20,6 @@ import {
   type FlowPayload,
 } from "./engine/useOnboardingFlow";
 
-function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:7071/api";
-}
-
 function QuestionProgress({ progress }: { progress: number }) {
   const totalDots = 5;
 
@@ -81,7 +77,9 @@ export default function OnboardingPage() {
   React.useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/flows/onboarding_v1`, {
+        // Use the same-origin proxy (like every other API call in the app) so
+        // onboarding never depends on cross-origin CORS to the API host.
+        const res = await fetch(`/api/flows/onboarding_v1`, {
           cache: "no-store",
         });
 
