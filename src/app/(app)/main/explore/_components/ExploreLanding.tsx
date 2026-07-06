@@ -17,7 +17,10 @@ import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfi
 import { rankPaths } from "../_lib/scorePath";
 import { CornerConstellation, LANE_ICON, LANE_WORD, rgba } from "./exploreUi";
 
-function getIntro(lane: Lane, profile: UserProfileSignals | null) {
+function getIntro(
+  lane: Lane,
+  profile: Pick<UserProfileSignals, "firstName" | "hasQuestionSignal"> | null
+) {
   const laneWord = LANE_WORD[lane];
   if (!profile || !profile.hasQuestionSignal) {
     return {
@@ -73,18 +76,33 @@ function PathCard({ path }: { path: ExplorePath }) {
   );
 }
 
-export function ExploreLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[] }) {
+export function ExploreLanding({
+  lane,
+  paths,
+  serverRanked = false,
+}: {
+  lane: Lane;
+  paths: ExplorePath[];
+  // When true, `paths` are already ranked and personalized server-side (the Work
+  // career-match layer) — render them in order and skip the client keyword scorer.
+  serverRanked?: boolean;
+}) {
   const { profile, isReady } = useExploreProfile();
 
   const deck = React.useMemo(() => {
+    if (serverRanked) return paths.slice(0, 8).map((path) => ({ path }));
     if (!profile) return [];
     return rankPaths(paths, profile, 4);
-  }, [paths, profile]);
+  }, [paths, profile, serverRanked]);
 
   if (!isReady) return null;
 
-  const intro = getIntro(lane, profile);
-  const showDeck = Boolean(profile?.hasQuestionSignal);
+  const hasServerDeck = serverRanked && paths.length > 0;
+  const introProfile = hasServerDeck
+    ? { firstName: profile?.firstName ?? null, hasQuestionSignal: true }
+    : profile;
+  const intro = getIntro(lane, introProfile);
+  const showDeck = hasServerDeck || (!serverRanked && Boolean(profile?.hasQuestionSignal));
 
   return (
     <div className="space-y-4">
