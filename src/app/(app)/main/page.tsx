@@ -16,7 +16,20 @@ import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
 import { InProgressMissionNudge } from "./components/InProgressMissionNudge";
-import { TodayCard, TodayCardSkeleton } from "./components/today";
+import {
+  TodayCard,
+  TodayCardSkeleton,
+  TodayHeart,
+  type TodayHeartData,
+} from "./components/today";
+
+// Atmosphere accent (the ConstellationAnchor tint) follows the dispatch type.
+const HEART_ACCENT_RGB: Record<string, { r: number; g: number; b: number }> = {
+  learn: { r: 182, g: 160, b: 255 },
+  look: { r: 92, g: 180, b: 255 },
+  do: { r: 246, g: 178, b: 60 },
+  close: { r: 55, g: 211, b: 160 },
+};
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
@@ -119,6 +132,7 @@ export default function MainHomePage() {
   const [vm, setVm] = React.useState<TodayViewModel | null>(null);
   const [todayGuidance, setTodayGuidance] =
     React.useState<TodayGuidance | null>(null);
+  const [heart, setHeart] = React.useState<TodayHeartData | null>(null);
   const [guidanceLoaded, setGuidanceLoaded] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
@@ -155,6 +169,40 @@ export default function MainHomePage() {
     claimOnboarding();
   }, []);
 
+  // Light regen poll: while Today is regenerating, re-fetch the dispatch so a
+  // returning user sees fresh content land without a manual reload.
+  React.useEffect(() => {
+    if (!isUpdating) return;
+    let alive = true;
+    let tries = 0;
+    const id = window.setInterval(async () => {
+      tries += 1;
+      try {
+        const r = await fetch("/api/guidance/today", { cache: "no-store" });
+        const g = await r.json();
+        if (!alive) return;
+        setIsUpdating(g?.is_updating === true);
+        if (g?.ok && g?.guidance) setTodayGuidance(g.guidance);
+        if (g?.ok && g?.dispatch && g?.coverage && g?.rhythm && g?.welcome) {
+          setHeart({
+            dispatch: g.dispatch,
+            coverage: g.coverage,
+            rhythm: g.rhythm,
+            welcome: g.welcome,
+            synthesis: g.synthesis ?? null,
+          });
+        }
+      } catch {
+        // keep the existing content
+      }
+      if (tries >= 6) window.clearInterval(id);
+    }, 3000);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
+  }, [isUpdating]);
+
   React.useEffect(() => {
     let alive = true;
 
@@ -181,6 +229,24 @@ export default function MainHomePage() {
 
           if (guidanceData?.ok && guidanceData?.guidance) {
             setTodayGuidance(guidanceData.guidance);
+          }
+
+          // The "beating heart" payload — present even for brand-new users
+          // (no guidance row), since it's computed live from current state.
+          if (
+            guidanceData?.ok &&
+            guidanceData?.dispatch &&
+            guidanceData?.coverage &&
+            guidanceData?.rhythm &&
+            guidanceData?.welcome
+          ) {
+            setHeart({
+              dispatch: guidanceData.dispatch,
+              coverage: guidanceData.coverage,
+              rhythm: guidanceData.rhythm,
+              welcome: guidanceData.welcome,
+              synthesis: guidanceData.synthesis ?? null,
+            });
           }
         } catch {
           // Fall back to existing Today content.
@@ -309,7 +375,14 @@ export default function MainHomePage() {
     : `Continue to ${nextCategoryLabel}`;
 
   const ctaLabel = todayGuidance?.next_action_label ?? fallbackCtaLabel;
-  const ctaRoute = todayGuidance?.next_action_route ?? null;
+  const ctaRoute =
+    heart?.dispatch.destination.route ??
+    todayGuidance?.next_action_route ??
+    null;
+
+  const heartAccent = heart
+    ? HEART_ACCENT_RGB[heart.dispatch.type] ?? HEART_ACCENT_RGB.learn
+    : { r: 92, g: 180, b: 255 };
 
   const storyPercent = todayGuidance?.story_progress?.percent ?? 0;
 
@@ -356,20 +429,24 @@ export default function MainHomePage() {
                 backdrop={
                   <ConstellationAnchor
                     seed={`today:${new Date().toISOString().slice(0, 10)}`}
-                    accent={{ r: 92, g: 180, b: 255 }}
+                    accent={heartAccent}
                   />
                 }
               >
                 {guidanceLoaded ? (
-                  <TodayCard
-                    headline={todayGuidance?.headline}
-                    reflection={todayGuidance?.reflection}
-                    observation={todayGuidance?.observation}
-                    nextStep={todayGuidance?.next_step}
-                    guidanceText={todayGuidance?.guidance_text}
-                    ctaLabel={ctaLabel}
-                    onPrimary={handlePrimary}
-                  />
+                  heart ? (
+                    <TodayHeart data={heart} onPrimary={handlePrimary} />
+                  ) : (
+                    <TodayCard
+                      headline={todayGuidance?.headline}
+                      reflection={todayGuidance?.reflection}
+                      observation={todayGuidance?.observation}
+                      nextStep={todayGuidance?.next_step}
+                      guidanceText={todayGuidance?.guidance_text}
+                      ctaLabel={ctaLabel}
+                      onPrimary={handlePrimary}
+                    />
+                  )
                 ) : (
                   <TodayCardSkeleton />
                 )}

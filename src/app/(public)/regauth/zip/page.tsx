@@ -53,7 +53,9 @@ export default function ZipPage(): React.JSX.Element {
       }
     } catch {}
 
-    router.replace(returnTo);
+    // The default onboarding landing goes through the narrated intro (which runs
+    // the claim + reveals the first read). Explicit deep-link returnTos are honored.
+    router.replace(returnTo === "/main" ? "/main/intro" : returnTo);
   }
 
   return (

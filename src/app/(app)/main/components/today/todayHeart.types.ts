@@ -1,0 +1,99 @@
+// Shapes for the "beating heart" Today card, mirroring the API's
+// getTodayGuidance payload (dispatch / coverage / rhythm / welcome).
+
+export type CoverageKey =
+  | "motivations"
+  | "strengths"
+  | "skills"
+  | "story"
+  | "direction"
+  | "experience";
+
+export type CoverageArea = {
+  key: CoverageKey;
+  label: string;
+  filled: boolean;
+};
+
+export type Coverage = {
+  areas: CoverageArea[];
+  filledCount: number;
+  total: number;
+  nextGapKey: CoverageKey | null;
+  nextGapLabel: string | null;
+};
+
+export type RhythmDay = {
+  date: string;
+  count: number;
+};
+
+export type Rhythm = {
+  days: RhythmDay[];
+  total7d: number;
+  firstBeat: boolean;
+};
+
+export type DispatchType = "learn" | "look" | "do" | "close";
+
+export type DispatchDestination = {
+  label: string;
+  route: string;
+};
+
+export type DispatchAlternate = {
+  label: string;
+  route: string;
+};
+
+// Extra content carried only by the "do" beat.
+export type DoMeta = { when: string; duration: string; outcome: string };
+export type DispatchSave = { label: string; actionTitle: string };
+
+export type TodayDispatch = {
+  type: DispatchType;
+  glyph: DispatchType;
+  orient: string;
+  move: string;
+  why: string;
+  firstStep: string;
+  return: string;
+  destination: DispatchDestination;
+  alternates: DispatchAlternate[];
+  seedQuestion?: string;
+  gapKey?: CoverageKey | null;
+  meta?: DoMeta | null;
+  steps?: string[];
+  save?: DispatchSave | null;
+};
+
+export type Welcome = {
+  firstName: string | null;
+  isNewUser: boolean;
+};
+
+export type OnboardingSynthesis = {
+  headline: string;
+  body: string;
+  signals: string[];
+  bridge: string;
+};
+
+export type TodayHeartData = {
+  dispatch: TodayDispatch;
+  coverage: Coverage;
+  rhythm: Rhythm;
+  welcome: Welcome;
+  synthesis?: OnboardingSynthesis | null;
+};
+
+// Per-type accent (rgb string for inline rgba) + label + glyph mark.
+export const DISPATCH_ACCENT: Record<
+  DispatchType,
+  { rgb: string; label: string; glyph: string }
+> = {
+  learn: { rgb: "182,160,255", label: "Learn you", glyph: "◐" },
+  look: { rgb: "92,180,255", label: "Look", glyph: "→" },
+  do: { rgb: "246,178,60", label: "Do · in the world", glyph: "◆" },
+  close: { rgb: "55,211,160", label: "Close the loop", glyph: "✓" },
+};
