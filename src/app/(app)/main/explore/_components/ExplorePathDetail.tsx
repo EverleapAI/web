@@ -13,6 +13,7 @@ import Link from "next/link";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
+import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, rgba } from "./exploreUi";
 import { WhyFitsSection, getSectionMenu } from "./detailSections";
@@ -67,6 +68,7 @@ export function ExplorePathDetail({
 
       {/* Hero — compact: personalized why + who it fits + one concrete fact */}
       <SectionCard tone="hero">
+        <ConstellationAnchor seed={path.id} accent={accent} />
         <div className="max-w-2xl">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
             {ov?.eyebrow ?? LANE_NOUN[path.lane]}

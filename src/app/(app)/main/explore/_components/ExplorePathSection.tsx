@@ -13,6 +13,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
+import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath } from "../_data/exploreSchema";
 import { ExplorePathDetail } from "./ExplorePathDetail";
 import { SectionBody, getSectionMenu, type SectionKey } from "./detailSections";
@@ -43,6 +44,7 @@ export function ExplorePathSection({
       </Link>
 
       <SectionCard tone="hero">
+        <ConstellationAnchor seed={`${path.id}:${section}`} accent={accent} />
         <div className="max-w-2xl">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">{title}</div>
           <h1 className="mt-2 text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-[28px]">
