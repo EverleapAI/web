@@ -17,6 +17,7 @@ import {
   Mail,
   MapPin,
   NotebookPen,
+  Pencil,
   RotateCcw,
   Route,
   ShieldCheck,
@@ -216,28 +217,39 @@ export default function ProfilePage() {
     <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
       {/* Hero — who you are */}
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={user?.id ?? "me"} accent={ACCENT} />}>
-        <div className="flex items-center gap-4">
-          <span
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-[26px] font-semibold text-white"
-            style={{
-              background: `linear-gradient(140deg, ${rgba(0.5)}, ${rgba(0.16)})`,
-              border: `1px solid ${rgba(0.4)}`,
-            }}
-          >
-            {initial}
-          </span>
-          <div className="min-w-0">
-            <div className="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
-              <Sparkles className="h-3 w-3" /> Me
-            </div>
-            <h1 className="truncate text-[24px] font-semibold tracking-[-0.02em] text-white">{name}</h1>
-            {user?.email ? (
-              <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/62">
-                <span className="truncate">{user.email}</span>
-                {user.email_verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-300/90" /> : null}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-4">
+            <span
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-[26px] font-semibold text-white"
+              style={{
+                background: `linear-gradient(140deg, ${rgba(0.5)}, ${rgba(0.16)})`,
+                border: `1px solid ${rgba(0.4)}`,
+              }}
+            >
+              {initial}
+            </span>
+            <div className="min-w-0">
+              <div className="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+                <Sparkles className="h-3 w-3" /> Me
               </div>
-            ) : null}
+              <h1 className="truncate text-[24px] font-semibold tracking-[-0.02em] text-white">{name}</h1>
+              {user?.email ? (
+                <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/62">
+                  <span className="truncate">{user.email}</span>
+                  {user.email_verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-300/90" /> : null}
+                </div>
+              ) : null}
+            </div>
           </div>
+          {authed ? (
+            <Link
+              href="/main/profile/edit"
+              aria-label="Edit your basics"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white/70 transition hover:bg-white/[0.12] hover:text-white"
+            >
+              <Pencil className="h-[15px] w-[15px]" />
+            </Link>
+          ) : null}
         </div>
       </SectionCard>
 
