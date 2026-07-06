@@ -1,224 +1,239 @@
+// src/app/(app)/main/profile/page.tsx
+//
+// The "Me" section — the user's home for seeing themselves. Starts with the
+// basics (who you are + account) on the app's cosmic surface, and a clean log
+// out. Built to expand (see the account hub + room for richer "you" sections).
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  BadgeCheck,
+  Bell,
   ChevronRight,
-  LogIn,
   LogOut,
-  User,
+  Mail,
+  MapPin,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
-import {
-  DEFAULT_THEME_ID,
-  isDarkTheme,
-  type SpotlightThemeId,
-} from "@/theme/everleapVisuals";
+import { SectionCard } from "../components/ui/SectionCard";
+import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 
-function pagePadding() {
-  return "pb-24 pt-2 sm:pt-3 lg:pt-5";
-}
-
-function pageShell() {
-  return "mx-auto w-full max-w-5xl px-2 sm:px-4 md:px-6 lg:px-8 xl:px-10";
-}
-
-function ring(dark: boolean) {
-  return dark ? "ring-1 ring-white/10" : "ring-1 ring-black/8";
-}
-
-function surface(dark: boolean) {
-  return dark ? "bg-white/5" : "bg-white/80";
-}
-
-function muted(dark: boolean) {
-  return dark ? "text-white/60" : "text-slate-600";
-}
-
-function text(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
-}
-
-function softText(dark: boolean) {
-  return dark ? "text-white/78" : "text-slate-700";
-}
-
-function iconChip(dark: boolean) {
-  return dark
-    ? "border-white/12 bg-white/8 text-white/85"
-    : "border-black/10 bg-white/85 text-slate-900";
-}
-
-function primaryButton(dark: boolean) {
-  return [
-    "inline-flex items-center justify-center gap-2",
-    "rounded-full border px-5 py-2.5",
-    "text-sm font-semibold transition active:scale-[0.98]",
-    "backdrop-blur-xl",
-    dark
-      ? "border-emerald-300/18 bg-emerald-300/12 text-emerald-50 hover:bg-emerald-300/16"
-      : "border-emerald-500/18 bg-emerald-500/10 text-emerald-900 hover:bg-emerald-500/14",
-  ].join(" ");
-}
-
-function quietButton(dark: boolean) {
-  return [
-    "inline-flex items-center justify-center gap-2",
-    "rounded-full border px-4 py-2",
-    "text-sm font-semibold transition active:scale-[0.99]",
-    dark
-      ? "border-white/12 bg-white/6 text-white/80 hover:bg-white/10"
-      : "border-black/10 bg-white/75 text-slate-900 hover:bg-white",
-  ].join(" ");
-}
-
-type AuthState = {
-  isAuthed: boolean;
+type MeUser = {
+  id: string;
   email?: string;
-  displayName?: string;
+  email_verified?: boolean;
+  first_name?: string | null;
+  zip_code?: string | null;
+  created_at?: string;
 };
 
-async function readAuthState(): Promise<AuthState> {
-  try {
-    const res = await fetch("/api/regauth/me", {
-      method: "GET",
-      credentials: "include",
-      cache: "no-store",
-    });
+const ACCENT = { r: 182, g: 160, b: 255 };
+const rgba = (a: number) => `rgba(${ACCENT.r},${ACCENT.g},${ACCENT.b},${a})`;
 
-    const data = await res.json().catch(() => null);
-
-    if (!data?.ok || !data?.user) {
-      return { isAuthed: false };
-    }
-
-    const email =
-      typeof data.user.email === "string" ? data.user.email : undefined;
-
-    return {
-      isAuthed: true,
-      email,
-      displayName: email ?? "You",
-    };
-  } catch {
-    return { isAuthed: false };
-  }
+function memberSince(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-function clearLocalAuthState() {
-  try {
-    localStorage.removeItem("everleap.user.profile");
-    localStorage.removeItem("everleapOnboarding_v4_convo_min");
-    localStorage.removeItem("everleap.explore.work.reactions.v1");
-    localStorage.removeItem("everleap.explore.learning.reactions.v1");
-  } catch {}
+function InfoRow({
+  Icon,
+  label,
+  value,
+  badge,
+  badgeGood,
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  badge?: string;
+  badgeGood?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/60">
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] uppercase tracking-[0.1em] text-white/40">{label}</div>
+        <div className="truncate text-[14px] text-white/85">{value}</div>
+      </div>
+      {badge ? (
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+            badgeGood ? "bg-emerald-400/15 text-emerald-300/90" : "bg-white/[0.06] text-white/55"
+          }`}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
 }
+
+const ACCOUNT_LINKS = [
+  { href: "/main/notifications", label: "Notifications", desc: "How and when Everleap reaches you", Icon: Bell },
+  { href: "/main/secure-device", label: "Secure this device", desc: "Add a lock to keep this private", Icon: ShieldCheck },
+  { href: "/main/reset-answers", label: "Reset my answers", desc: "Clear your story and start fresh", Icon: RotateCcw },
+];
 
 export default function ProfilePage() {
   const router = useRouter();
-
-  const themeId = DEFAULT_THEME_ID as SpotlightThemeId;
-  const dark = isDarkTheme(themeId);
-
-  const [auth, setAuth] = React.useState<AuthState>({
-    isAuthed: false,
-  });
+  const [user, setUser] = React.useState<MeUser | null>(null);
+  const [authed, setAuthed] = React.useState<boolean | null>(null);
+  const [loggingOut, setLoggingOut] = React.useState(false);
 
   React.useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      const next = await readAuthState();
-      if (!cancelled) setAuth(next);
-    }
-
-    void load();
-
-    const refresh = () => void load();
-
-    window.addEventListener("focus", refresh);
-
+    let alive = true;
+    fetch("/api/regauth/me", { credentials: "include", cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        if (d?.authed && d.user) {
+          setUser(d.user as MeUser);
+          setAuthed(true);
+        } else {
+          setAuthed(false);
+        }
+      })
+      .catch(() => {
+        if (alive) setAuthed(false);
+      });
     return () => {
-      cancelled = true;
-      window.removeEventListener("focus", refresh);
+      alive = false;
     };
   }, []);
 
-  async function goLogout() {
+  const goLogout = async () => {
+    setLoggingOut(true);
     try {
-      await fetch("/api/regauth/logout", {
-        method: "POST",
-        credentials: "include",
-        cache: "no-store",
-      });
-    } catch {}
-
-    clearLocalAuthState();
-
+      await fetch("/api/regauth/logout", { method: "POST", credentials: "include", cache: "no-store" });
+    } catch {
+      /* proceed to clear locally anyway */
+    }
+    try {
+      localStorage.removeItem("everleap.user.profile");
+      localStorage.removeItem("everleapOnboarding_v4_convo_min");
+    } catch {
+      /* ignore */
+    }
     window.location.replace("/");
-  }
+  };
 
-  function goSignIn() {
-    router.push("/regauth");
-  }
+  const name = user?.first_name?.trim() || "You";
+  const initial = (user?.first_name?.trim()?.[0] || user?.email?.[0] || "Y").toUpperCase();
+  const since = memberSince(user?.created_at);
 
   return (
-    <main className={`relative z-10 ${pagePadding()}`}>
-      <div className={pageShell()}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${iconChip(
-                dark
-              )}`}
-            >
-              <User className="h-5 w-5" />
-            </span>
-
-            <div>
-              <h1 className="text-xl font-semibold">Me</h1>
-              <div className={`text-xs ${muted(dark)}`}>
-                Account + support.
+    <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
+      {/* Hero — who you are */}
+      <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={user?.id ?? "me"} accent={ACCENT} />}>
+        <div className="flex items-center gap-4">
+          <span
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-[26px] font-semibold text-white"
+            style={{
+              background: `linear-gradient(140deg, ${rgba(0.5)}, ${rgba(0.16)})`,
+              border: `1px solid ${rgba(0.4)}`,
+            }}
+          >
+            {initial}
+          </span>
+          <div className="min-w-0">
+            <div className="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+              <Sparkles className="h-3 w-3" /> Me
+            </div>
+            <h1 className="truncate text-[24px] font-semibold tracking-[-0.02em] text-white">{name}</h1>
+            {user?.email ? (
+              <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/62">
+                <span className="truncate">{user.email}</span>
+                {user.email_verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-300/90" /> : null}
               </div>
-            </div>
-          </div>
-
-          <Link href="/main" className={quietButton(dark)}>
-            Back <ChevronRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className={`mt-4 rounded-3xl p-5 ${surface(dark)} ${ring(dark)}`}>
-          <div className="flex items-center justify-between">
-            <div className={`text-lg font-semibold ${text(dark)}`}>
-              {auth.displayName ?? "You"}
-            </div>
-          </div>
-
-          <div className={`mt-1 text-sm ${softText(dark)}`}>
-            {auth.isAuthed ? "Signed in on this device." : "Not signed in yet."}
-          </div>
-
-          {auth.email ? (
-            <div className={`mt-1 text-xs ${muted(dark)}`}>
-              {auth.email}
-            </div>
-          ) : null}
-
-          <div className="mt-4">
-            {auth.isAuthed ? (
-              <button onClick={goLogout} className={primaryButton(dark)}>
-                <LogOut className="h-4 w-4" /> Log out
-              </button>
-            ) : (
-              <button onClick={goSignIn} className={primaryButton(dark)}>
-                <LogIn className="h-4 w-4" /> Sign in
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
-      </div>
-    </main>
+      </SectionCard>
+
+      {authed === false ? (
+        <div className="mt-3">
+          <SectionCard tone="neutral">
+            <p className="text-[14px] text-white/64">You’re not signed in.</p>
+            <button
+              type="button"
+              onClick={() => router.push("/regauth")}
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-white/[0.12]"
+            >
+              Sign in
+            </button>
+          </SectionCard>
+        </div>
+      ) : authed ? (
+        <div className="mt-3 space-y-3">
+          {/* Basics */}
+          <SectionCard tone="neutral">
+            <div className="space-y-3.5">
+              <InfoRow
+                Icon={Mail}
+                label="Email"
+                value={user?.email ?? "—"}
+                badge={user?.email_verified ? "Verified" : "Unverified"}
+                badgeGood={user?.email_verified}
+              />
+              {since ? <InfoRow Icon={Sparkles} label="Member since" value={since} /> : null}
+              {user?.zip_code ? <InfoRow Icon={MapPin} label="Location" value={user.zip_code} /> : null}
+            </div>
+          </SectionCard>
+
+          {/* Account hub */}
+          <SectionCard tone="neutral">
+            <h2 className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">Account</h2>
+            <div className="space-y-1">
+              {ACCOUNT_LINKS.map(({ href, label, desc, Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-white/[0.04]"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/70">
+                    <Icon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-medium text-white">{label}</span>
+                    <span className="block truncate text-[12.5px] text-white/50">{desc}</span>
+                  </span>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
+                </Link>
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Log out */}
+          <button
+            type="button"
+            onClick={goLogout}
+            disabled={loggingOut}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[14px] font-semibold text-white/80 transition hover:bg-white/[0.06] disabled:opacity-60"
+          >
+            <LogOut className="h-4 w-4" /> {loggingOut ? "Logging out…" : "Log out"}
+          </button>
+        </div>
+      ) : (
+        // loading
+        <div className="mt-3">
+          <SectionCard tone="neutral">
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 w-1/2 rounded bg-white/10" />
+              <div className="h-4 w-2/3 rounded bg-white/[0.07]" />
+            </div>
+          </SectionCard>
+        </div>
+      )}
+    </div>
   );
 }
