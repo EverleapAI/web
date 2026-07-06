@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { SectionCard } from "../components/ui/SectionCard";
+import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { emitActionAdded, emitActionsChanged, emitCelebrate } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
@@ -429,25 +430,30 @@ export default function ActionsPage() {
 
         {/* Committed actions */}
         {pageEmpty ? (
-          <SectionCard tone="neutral">
-            <div className="flex flex-col items-start gap-3 py-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-white/60">
+          <SectionCard
+            tone="hero"
+            backdrop={<ConstellationAnchor seed="actions-empty" accent={{ r: 92, g: 180, b: 255 }} />}
+          >
+            <div className="flex flex-col items-start gap-3 py-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.08] text-cyan-200/85">
                 <Compass className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-[17px] font-semibold text-white">Nothing saved yet</h2>
-                <p className="mt-1 max-w-md text-[13.5px] leading-[1.6] text-white/62">
+                <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-white">
+                  {failed ? "Couldn't load your actions" : "Your next moves live here"}
+                </h2>
+                <p className="mt-1.5 max-w-md text-[14px] leading-[1.6] text-white/70">
                   {failed
-                    ? "Couldn't load your actions right now. Try refreshing."
-                    : "When you find a next-step worth trying in Explore, hit its bookmark to save it here."}
+                    ? "Something went wrong loading your list — try refreshing."
+                    : "As you explore, tap “Add to my Actions” on anything worth trying and it lands here. Then check it off and watch it light up."}
                 </p>
               </div>
               <Link
                 href="/main/explore"
-                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-[13.5px] font-medium text-white/85 transition hover:bg-white/[0.1]"
+                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:bg-white/[0.12]"
               >
                 <Compass className="h-4 w-4" />
-                Explore paths
+                Find something to try
               </Link>
             </div>
           </SectionCard>
