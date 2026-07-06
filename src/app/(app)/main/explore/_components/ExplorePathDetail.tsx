@@ -10,13 +10,15 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, ChevronRight, Loader2, Wand2 } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, rgba } from "./exploreUi";
 import { WhyFitsSection, getSectionMenu } from "./detailSections";
+import { emitActionsChanged } from "@/lib/actionsBus";
 
 function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
   const items = getSectionMenu(path);
@@ -55,6 +57,40 @@ export function ExplorePathDetail({
   const payMedian = path.trajectory?.salaryBand?.median;
   const laneLabel = path.lane[0].toUpperCase() + path.lane.slice(1);
   const hasWhyFits = Boolean(ov?.fitSignals?.length || ov?.whyItPullsYouIn?.length);
+  const title = ov?.title ?? path.card.title;
+
+  const router = useRouter();
+  const [creating, setCreating] = React.useState(false);
+
+  // Turn a path you're curious about straight into a runnable mission: create
+  // (idempotent) an action for exploring it, then drop into its mission screen.
+  const startMission = async () => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/guidance/actions", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sourceType: "explore_path",
+          sourceRef: `${path.lane}:${path.slug}`,
+          lane: path.lane,
+          title: `Explore ${title}`,
+          description: `Get a first-hand feel for what ${title} is really like — from the inside.`,
+        }),
+      });
+      const d = await res.json().catch(() => null);
+      if (d?.ok && d.action?.id) {
+        emitActionsChanged();
+        router.push(`/main/actions/${d.action.id}`);
+      } else {
+        setCreating(false);
+      }
+    } catch {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="space-y-3 pb-24">
@@ -114,6 +150,35 @@ export function ExplorePathDetail({
           ) : null}
         </div>
       </SectionCard>
+
+      {/* Turn curiosity into doing — start a real mission to explore this path */}
+      <button
+        type="button"
+        onClick={startMission}
+        disabled={creating}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110 disabled:opacity-70"
+        style={{ borderColor: rgba(accent, 0.35), backgroundColor: rgba(accent, 0.12) }}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            style={{ backgroundColor: rgba(accent, 0.2), color: "#fff" }}
+          >
+            <Wand2 className="h-[18px] w-[18px]" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[15px] font-semibold text-white">Try this for real</span>
+            <span className="mt-0.5 block text-[13px] leading-[1.45] text-white/72">
+              Turn it into a mission — a few concrete steps to actually go explore it.
+            </span>
+          </span>
+        </span>
+        {creating ? (
+          <Loader2 className="h-5 w-5 shrink-0 animate-spin text-white/85" />
+        ) : (
+          <ArrowRight className="h-5 w-5 shrink-0 text-white/85" />
+        )}
+      </button>
 
       {/* Why this could fit you — the essence, always open on essentials */}
       {hasWhyFits ? (
