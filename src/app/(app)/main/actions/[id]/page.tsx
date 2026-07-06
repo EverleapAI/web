@@ -26,7 +26,7 @@ import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { emitActionsChanged, emitCelebrate } from "@/lib/actionsBus";
 
 type MissionStep = { text: string; done: boolean };
-type Mission = { why: string; steps: MissionStep[]; generatedAt: string };
+type Mission = { why: string; steps: MissionStep[]; generatedAt: string; echo?: string };
 type MissionAction = {
   id: string;
   title: string;
@@ -85,6 +85,9 @@ export default function MissionPage() {
   const [reflection, setReflection] = React.useState("");
   const [felt, setFelt] = React.useState<"energized" | "neutral" | "drained" | null>(null);
   const [finishing, setFinishing] = React.useState(false);
+  const [echo, setEcho] = React.useState<string | null>(null);
+  const [echoLoading, setEchoLoading] = React.useState(false);
+  const echoRequested = React.useRef(false);
 
   React.useEffect(() => {
     let alive = true;
@@ -98,6 +101,23 @@ export default function MissionPage() {
       alive = false;
     };
   }, [id]);
+
+  // Once complete, ask Everleap to reflect back on what you noticed (the visible
+  // end of the feedback loop). Generated once, then cached on the mission.
+  React.useEffect(() => {
+    if (action?.status !== "done") return;
+    if (action.mission?.echo) {
+      setEcho(action.mission.echo);
+      return;
+    }
+    if (echoRequested.current) return;
+    echoRequested.current = true;
+    setEchoLoading(true);
+    missionOp({ id, op: "echo" }).then((a) => {
+      if (a?.mission?.echo) setEcho(a.mission.echo);
+      setEchoLoading(false);
+    });
+  }, [action?.status, action?.mission?.echo, id]);
 
   const accent = LANE_ACCENT[action?.lane ?? ""] ?? { r: 92, g: 180, b: 255 };
   const steps = action?.mission?.steps ?? [];
@@ -204,9 +224,25 @@ export default function MissionPage() {
               {action.reflection ? (
                 <p className="mt-2 text-[14px] leading-[1.6] text-white/72">“{action.reflection}”</p>
               ) : null}
-              <p className="mt-3 text-[13px] leading-[1.6] text-white/50">
-                Nice — finishing this fed back into what Everleap is learning about you.
-              </p>
+              <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
+                <div
+                  className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                  style={{ color: rgba(accent, 0.9) }}
+                >
+                  <Sparkles className="h-3 w-3" /> What I’m taking from this
+                </div>
+                {echoLoading ? (
+                  <div className="flex items-center gap-2 text-[13.5px] text-white/50">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading what you noticed…
+                  </div>
+                ) : echo ? (
+                  <p className="text-[14px] leading-[1.6] text-white/82">{echo}</p>
+                ) : (
+                  <p className="text-[13.5px] leading-[1.6] text-white/55">
+                    Finishing this fed back into what Everleap is learning about you.
+                  </p>
+                )}
+              </div>
             </SectionCard>
           ) : !action.mission ? (
             /* Not started — offer to build the mission */
