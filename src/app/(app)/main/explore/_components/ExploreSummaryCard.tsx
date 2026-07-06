@@ -89,8 +89,10 @@ export function ExploreSummaryCard({
   }, [key, hasSignal]);
 
   return (
-    <SectionCard tone="hero">
-      <ConstellationAnchor seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />
+    <SectionCard
+      tone="hero"
+      backdrop={<ConstellationAnchor seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />}
+    >
       {hasSignal ? (
         <PromptLabTrigger
           dark

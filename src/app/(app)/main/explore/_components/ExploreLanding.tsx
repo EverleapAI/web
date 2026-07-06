@@ -107,8 +107,7 @@ export function ExploreLanding({
 
   return (
     <div className="space-y-4">
-      <SectionCard tone="hero">
-        <ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />
+      <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
         <div className="relative max-w-2xl">
           <div className="mb-2 flex items-center gap-2">
             <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">

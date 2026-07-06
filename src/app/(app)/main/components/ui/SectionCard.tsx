@@ -9,6 +9,10 @@ type Props = {
   className?: string;
   tone?: SectionCardTone;
   compact?: boolean;
+  // Full-bleed decorative layer rendered behind the (padded) content, at the
+  // card level — so it fills the whole rounded card, not the inset content box.
+  // Use for background atmospherics like the ConstellationAnchor.
+  backdrop?: React.ReactNode;
 };
 
 type SectionCardHeaderProps = {
@@ -92,6 +96,7 @@ export function SectionCard({
   className = "",
   tone = "neutral",
   compact = false,
+  backdrop,
 }: Props) {
   const t = toneClasses(tone);
 
@@ -110,6 +115,7 @@ export function SectionCard({
         aria-hidden="true"
         className={["pointer-events-none absolute inset-0", t.sheen].join(" ")}
       />
+      {backdrop}
       <div className="relative z-10">{children}</div>
     </section>
   );

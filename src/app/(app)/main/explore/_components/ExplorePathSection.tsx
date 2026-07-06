@@ -43,8 +43,7 @@ export function ExplorePathSection({
         <span>Back to {title}</span>
       </Link>
 
-      <SectionCard tone="hero">
-        <ConstellationAnchor seed={`${path.id}:${section}`} accent={accent} />
+      <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`${path.id}:${section}`} accent={accent} />}>
         <div className="max-w-2xl">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">{title}</div>
           <h1 className="mt-2 text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-[28px]">

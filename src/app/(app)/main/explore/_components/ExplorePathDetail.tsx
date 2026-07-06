@@ -67,8 +67,7 @@ export function ExplorePathDetail({
       </Link>
 
       {/* Hero — compact: personalized why + who it fits + one concrete fact */}
-      <SectionCard tone="hero">
-        <ConstellationAnchor seed={path.id} accent={accent} />
+      <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={path.id} accent={accent} />}>
         <div className="max-w-2xl">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
             {ov?.eyebrow ?? LANE_NOUN[path.lane]}

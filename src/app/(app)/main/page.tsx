@@ -349,11 +349,16 @@ export default function MainHomePage() {
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
             <section>
-              <SectionCard tone="hero" className="px-4 py-5">
-                <ConstellationAnchor
-                  seed={`today:${new Date().toISOString().slice(0, 10)}`}
-                  accent={{ r: 92, g: 180, b: 255 }}
-                />
+              <SectionCard
+                tone="hero"
+                className="px-4 py-5"
+                backdrop={
+                  <ConstellationAnchor
+                    seed={`today:${new Date().toISOString().slice(0, 10)}`}
+                    accent={{ r: 92, g: 180, b: 255 }}
+                  />
+                }
+              >
                 {guidanceLoaded ? (
                   <TodayCard
                     headline={todayGuidance?.headline}
