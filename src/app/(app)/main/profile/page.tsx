@@ -16,6 +16,7 @@ import {
   LogOut,
   Mail,
   MapPin,
+  NotebookPen,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -189,6 +190,27 @@ export default function ProfilePage() {
               {user?.zip_code ? <InfoRow Icon={MapPin} label="Location" value={user.zip_code} /> : null}
             </div>
           </SectionCard>
+
+          {/* Reflections journal — a place you want to visit, not just settings */}
+          <Link href="/main/profile/reflections" className="block">
+            <SectionCard tone="neutral">
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                  style={{ background: `linear-gradient(140deg, ${rgba(0.28)}, ${rgba(0.1)})`, color: "#fff" }}
+                >
+                  <NotebookPen className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-semibold text-white">Your reflections</div>
+                  <div className="truncate text-[12.5px] text-white/55">
+                    A diary of what you’ve tried, and what you noticed
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-white/35" />
+              </div>
+            </SectionCard>
+          </Link>
 
           {/* Account hub */}
           <SectionCard tone="neutral">
