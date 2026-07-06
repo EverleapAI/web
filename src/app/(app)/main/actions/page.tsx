@@ -13,18 +13,18 @@ import Link from "next/link";
 import {
   Check,
   Circle,
-  CircleDot,
   Compass,
   ExternalLink,
   ListChecks,
   Loader2,
+  MoreHorizontal,
   Plus,
   RefreshCw,
   Sparkles,
-  X,
 } from "lucide-react";
 
 import { SectionCard } from "../components/ui/SectionCard";
+import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
 
@@ -77,22 +77,26 @@ function ActionRow({
   pending: boolean;
 }) {
   const done = action.status === "done";
-  const doing = action.status === "doing";
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  const menuItem =
+    "flex w-full items-center rounded-lg px-3 py-2 text-left text-[13px] transition hover:bg-white/[0.06]";
 
   return (
-    <div className="group flex items-start gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-3.5 py-3 transition hover:bg-white/[0.04]">
+    <div className="flex items-start gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-3.5 py-3 transition hover:bg-white/[0.04]">
+      {/* Done checkbox — one clear control: tap to complete */}
       <button
         type="button"
         aria-label={done ? "Mark not done" : "Mark done"}
         disabled={pending}
         onClick={() => onStatus(action.id, done ? "saved" : "done")}
-        className="mt-0.5 shrink-0 text-white/40 transition hover:text-emerald-300 disabled:opacity-50"
+        className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${
+          done
+            ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
+            : "border-white/25 text-transparent hover:border-emerald-300/70 hover:text-emerald-300/50"
+        }`}
       >
-        {done ? (
-          <Check className="h-[18px] w-[18px] text-emerald-300" />
-        ) : (
-          <Circle className="h-[18px] w-[18px]" />
-        )}
+        <Check className="h-[13px] w-[13px]" strokeWidth={3} />
       </button>
 
       <div className="min-w-0 flex-1">
@@ -119,29 +123,44 @@ function ActionRow({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {!done ? (
-          <button
-            type="button"
-            aria-label={doing ? "Working on it" : "Mark working on it"}
-            disabled={pending}
-            onClick={() => onStatus(action.id, doing ? "saved" : "doing")}
-            title={doing ? "Working on it" : "Mark working on it"}
-            className={`rounded-full p-1.5 transition disabled:opacity-50 ${doing ? "text-amber-300" : "text-white/35 hover:text-white/70"}`}
-          >
-            <CircleDot className="h-4 w-4" />
-          </button>
-        ) : null}
+      {/* Overflow menu — always visible (works on touch, unlike a hover-only X) */}
+      <div className="relative shrink-0">
         <button
           type="button"
-          aria-label="Dismiss"
+          aria-label="More options"
           disabled={pending}
-          onClick={() => onStatus(action.id, "dismissed")}
-          title="Remove"
-          className="rounded-full p-1.5 text-white/30 opacity-0 transition hover:text-white/70 group-hover:opacity-100 disabled:opacity-50"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="rounded-full p-1.5 text-white/40 transition hover:bg-white/[0.06] hover:text-white/80 disabled:opacity-50"
         >
-          <X className="h-4 w-4" />
+          <MoreHorizontal className="h-4 w-4" />
         </button>
+        {menuOpen ? (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 z-20 mt-1 w-44 rounded-xl border border-white/10 bg-[#0c1226] p-1 text-white/85 shadow-[0_16px_44px_rgba(3,7,20,0.6)]">
+              <button
+                type="button"
+                className={menuItem}
+                onClick={() => {
+                  onStatus(action.id, done ? "saved" : "done");
+                  setMenuOpen(false);
+                }}
+              >
+                {done ? "Move back to try" : "Mark done"}
+              </button>
+              <button
+                type="button"
+                className={`${menuItem} text-rose-300/85`}
+                onClick={() => {
+                  onStatus(action.id, "dismissed");
+                  setMenuOpen(false);
+                }}
+              >
+                Remove from list
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );
@@ -274,6 +293,7 @@ export default function ActionsPage() {
           body: JSON.stringify({ id, status }),
         });
         if (!res.ok) throw new Error();
+        emitActionsChanged();
       } catch {
         setActions(prev ?? null);
       } finally {
@@ -306,7 +326,10 @@ export default function ActionsPage() {
         });
         if (!res.ok) throw new Error();
         setSuggestions((cur) => (cur ? cur.filter((x) => x.id !== s.id) : cur));
-        if (status === "saved") await loadActions();
+        if (status === "saved") {
+          emitActionAdded(s.title);
+          await loadActions();
+        }
       } catch {
         // leave the suggestion in place so the user can retry
       } finally {

@@ -8,6 +8,8 @@
 
 import * as React from "react";
 
+import { emitActionAdded } from "@/lib/actionsBus";
+
 export type SaveActionPayload = {
   title: string;
   description?: string | null;
@@ -53,7 +55,10 @@ export function useSavedActions(lane: string, sourceRef: string) {
             href: item.href ?? null,
           }),
         });
-        if (res.ok) setSaved((prev) => new Set(prev).add(item.title));
+        if (res.ok) {
+          setSaved((prev) => new Set(prev).add(item.title));
+          emitActionAdded(item.title);
+        }
       } catch {
         // leave unsaved; user can retry
       } finally {

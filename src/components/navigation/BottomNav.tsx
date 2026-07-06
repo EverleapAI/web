@@ -13,6 +13,7 @@ import {
   type SpotlightThemeId,
   type GradientLevel,
 } from "@/theme/everleapVisuals";
+import { useActionsCount } from "@/app/(app)/main/components/ActionsFeedback";
 
 type NavKey = "home" | "insights" | "explore" | "actions" | "profile";
 
@@ -90,6 +91,7 @@ export function BottomNav({
 
   const pathname = usePathname();
   const inMainShell = pathname.startsWith("/main");
+  const actionsCount = useActionsCount();
 
   const resolvedActiveKey =
     normalizeActiveKey(activeKey as string | undefined) ??
@@ -213,11 +215,21 @@ export function BottomNav({
                 ].join(" ")}
                 aria-current={active ? "page" : undefined}
               >
-                <Icon
-                  className={
-                    active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"
-                  }
-                />
+                <span className="relative">
+                  <Icon
+                    className={
+                      active ? "h-5 w-5 text-white" : "h-5 w-5 text-white/55"
+                    }
+                  />
+                  {key === "actions" && actionsCount > 0 ? (
+                    <span
+                      className="absolute -right-2.5 -top-2 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-bold leading-none text-[#06210f] shadow-[0_2px_8px_rgba(16,185,129,0.5)]"
+                      aria-label={`${actionsCount} actions to do`}
+                    >
+                      {actionsCount > 99 ? "99+" : actionsCount}
+                    </span>
+                  ) : null}
+                </span>
                 <span
                   className={
                     active

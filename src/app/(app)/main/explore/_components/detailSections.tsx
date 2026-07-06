@@ -11,13 +11,13 @@
 
 import * as React from "react";
 import {
-  Bookmark,
   BookmarkCheck,
   ChevronDown,
   ExternalLink,
   Loader2,
   MapPin,
   Monitor,
+  Plus,
 } from "lucide-react";
 
 import {
@@ -269,13 +269,13 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                 return (
                   <div
                     key={it.id}
-                    className="group flex items-stretch gap-0 overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02] transition hover:bg-white/[0.04]"
+                    className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02]"
                   >
                     <a
                       href={it.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex min-w-0 flex-1 items-start justify-between gap-3 px-4 py-3"
+                      className="group flex items-start justify-between gap-3 px-4 pb-2 pt-3 transition hover:bg-white/[0.03]"
                     >
                       <span className="min-w-0">
                         <span className="text-[14px] font-medium text-white/88">{it.title}</span>
@@ -283,23 +283,29 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                       </span>
                       <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => actions.save({ title: it.title, description: it.note, href: it.href })}
-                      disabled={saved || saving}
-                      aria-label={saved ? "Saved to Actions" : "Save to Actions"}
-                      title={saved ? "Saved to Actions" : "Save to Actions"}
-                      className="flex w-11 shrink-0 items-center justify-center border-l border-white/8 text-white/45 transition hover:bg-white/[0.04] hover:text-white/85 disabled:cursor-default"
-                      style={saved ? { color: rgba(accent, 0.95) } : undefined}
-                    >
-                      {saving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : saved ? (
-                        <BookmarkCheck className="h-4 w-4" />
-                      ) : (
-                        <Bookmark className="h-4 w-4" />
-                      )}
-                    </button>
+                    <div className="border-t border-white/[0.06] px-3 py-2">
+                      <button
+                        type="button"
+                        onClick={() => actions.save({ title: it.title, description: it.note, href: it.href })}
+                        disabled={saved || saving}
+                        aria-label={saved ? "Added to your Actions" : "Add to my Actions"}
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition hover:brightness-110 disabled:cursor-default disabled:hover:brightness-100"
+                        style={
+                          saved
+                            ? { backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }
+                            : { backgroundColor: rgba(accent, 0.18), color: "#fff" }
+                        }
+                      >
+                        {saving ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : saved ? (
+                          <BookmarkCheck className="h-3.5 w-3.5" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5" />
+                        )}
+                        {saving ? "Adding…" : saved ? "Added to Actions" : "Add to my Actions"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}

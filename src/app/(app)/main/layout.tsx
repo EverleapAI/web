@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import AppChrome from "@/components/site/AppChrome";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { ToastHost } from "./components/ActionsFeedback";
 
 const INSIGHTS_TAB_KEYS: Record<string, string> = {
   motivations: "motivations",
@@ -99,6 +100,7 @@ export default function MainLayout({
         </div>
 
         {!isQuestions ? <BottomNav /> : null}
+        <ToastHost />
       </div>
     </AppChrome>
   );
