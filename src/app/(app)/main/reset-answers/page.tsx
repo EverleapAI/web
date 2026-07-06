@@ -4,9 +4,19 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 const RESET_CODE = "101010";
-const STORY_STORAGE_KEY = "everleap.story.answers.v3";
+// Local caches to clear so the replayed intro + Today hydrate from the fresh DB
+// state. Onboarding answers are preserved server-side (and regenerated from), so
+// clearing the local copy just stops the intro from re-claiming them.
+const LOCAL_KEYS_TO_CLEAR = [
+  "everleap_onboarding_answers",
+  "everleap_zip",
+  "everleap.story.answers.v3",
+  "everleap_onboarding_synthesis",
+  "everleapOnboarding_v4_convo_min",
+  "everleap_ai_lab_answers",
+];
 
-type Step = "enter-code" | "confirm" | "processing" | "done";
+type Step = "enter-code" | "confirm" | "processing";
 
 export default function ResetAnswersPage(): React.JSX.Element {
   const router = useRouter();
@@ -31,8 +41,6 @@ export default function ResetAnswersPage(): React.JSX.Element {
     setStep("processing");
 
     try {
-      window.localStorage.removeItem(STORY_STORAGE_KEY);
-
       const res = await fetch("/api/story/reset", {
         method: "POST",
         credentials: "include",
@@ -50,18 +58,17 @@ export default function ResetAnswersPage(): React.JSX.Element {
         throw new Error(text || "Reset failed.");
       }
 
-      await new Promise((resolve) => window.setTimeout(resolve, 10000));
+      try {
+        for (const k of LOCAL_KEYS_TO_CLEAR) window.localStorage.removeItem(k);
+      } catch {}
 
-      setStep("done");
+      // Straight into the narrated intro — it polls the freshly kicked-off
+      // synthesis, reveals it, then hands to a rebuilt Today.
+      router.replace("/main/intro");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reset failed.");
       setStep("confirm");
     }
-  }
-
-  function continueToToday() {
-    router.push("/main");
-    router.refresh();
   }
 
   return (
@@ -124,16 +131,17 @@ export default function ResetAnswersPage(): React.JSX.Element {
             </div>
 
             <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Reset your answers?
+              Reset your account?
             </h1>
 
             <p className="mt-5 text-white/60">
-              This will remove your Story answers and Today guidance generated
-              from them.
+              This wipes everything except your onboarding answers — Story,
+              actions, matches, activity, and all generated guidance.
             </p>
 
             <p className="mt-3 text-white/45">
-              Your onboarding answers, account, and login will remain.
+              You stay logged in. We replay the intro and rebuild Today from your
+              onboarding answers.
             </p>
 
             {error ? (
@@ -167,37 +175,13 @@ export default function ResetAnswersPage(): React.JSX.Element {
             </div>
 
             <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Rebuilding Today
+              Resetting your account
             </h1>
 
             <p className="mt-5 text-white/60">
-              Clearing Story answers and rebuilding guidance from onboarding.
+              Clearing everything and replaying the intro from your onboarding
+              answers…
             </p>
-          </>
-        ) : null}
-
-        {step === "done" ? (
-          <>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
-              Complete
-            </div>
-
-            <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Done
-            </h1>
-
-            <p className="mt-5 text-white/60">
-              Your Story answers were removed. Today is ready to start again
-              from onboarding.
-            </p>
-
-            <button
-              type="button"
-              onClick={continueToToday}
-              className="mt-8 rounded-full bg-cyan-300/15 px-6 py-3 font-semibold text-cyan-100"
-            >
-              Continue
-            </button>
           </>
         ) : null}
       </main>
