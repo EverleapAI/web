@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 
 import { SectionCard } from "../components/ui/SectionCard";
-import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
+import { emitActionAdded, emitActionsChanged, emitCelebrate } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
 
@@ -79,6 +79,12 @@ function ActionRow({
   const done = action.status === "done";
   const [menuOpen, setMenuOpen] = React.useState(false);
 
+  // Celebrate the moment of completion from the control the user just tapped.
+  const fireCelebrate = (el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    emitCelebrate(r.left + r.width / 2, r.top + r.height / 2);
+  };
+
   const menuItem =
     "flex w-full items-center rounded-lg px-3 py-2 text-left text-[13px] transition hover:bg-white/[0.06]";
 
@@ -89,7 +95,10 @@ function ActionRow({
         type="button"
         aria-label={done ? "Mark not done" : "Mark done"}
         disabled={pending}
-        onClick={() => onStatus(action.id, done ? "saved" : "done")}
+        onClick={(e) => {
+          if (!done) fireCelebrate(e.currentTarget);
+          onStatus(action.id, done ? "saved" : "done");
+        }}
         className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${
           done
             ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
@@ -141,7 +150,8 @@ function ActionRow({
               <button
                 type="button"
                 className={menuItem}
-                onClick={() => {
+                onClick={(e) => {
+                  if (!done) fireCelebrate(e.currentTarget);
                   onStatus(action.id, done ? "saved" : "done");
                   setMenuOpen(false);
                 }}
