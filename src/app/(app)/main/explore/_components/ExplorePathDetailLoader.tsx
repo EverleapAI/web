@@ -16,7 +16,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { ExplorePathDetail } from "./ExplorePathDetail";
+import { ExplorePathSection } from "./ExplorePathSection";
 import { SectionCard } from "../../components/ui/SectionCard";
+import type { SectionKey } from "./detailSections";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 
 type CatalogPath = { path: ExplorePath; whyYou: string | null };
@@ -102,10 +104,13 @@ export function ExplorePathDetailLoader({
   lane,
   slug,
   fallback,
+  section,
 }: {
   lane: Lane;
   slug: string;
   fallback: ExplorePath | null;
+  // When set, render that deep section as its own screen instead of essentials.
+  section?: SectionKey;
 }) {
   const [path, setPath] = React.useState<ExplorePath | null>(fallback);
   const [whyYou, setWhyYou] = React.useState<string | null>(null);
@@ -126,7 +131,13 @@ export function ExplorePathDetailLoader({
     return () => controller.abort();
   }, [lane, slug, fallback]);
 
-  if (path) return <ExplorePathDetail path={path} whyYou={whyYou} />;
+  if (path) {
+    return section ? (
+      <ExplorePathSection path={path} section={section} />
+    ) : (
+      <ExplorePathDetail path={path} whyYou={whyYou} />
+    );
+  }
   if (missing) return <DetailMissing lane={lane} />;
   return <DetailLoading lane={lane} />;
 }
