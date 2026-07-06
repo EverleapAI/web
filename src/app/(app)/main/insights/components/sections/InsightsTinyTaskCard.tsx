@@ -31,14 +31,15 @@ type Props = {
 function optionBase(dark: boolean, selected: boolean) {
   return [
     "w-full rounded-[14px] px-3 py-2.5 text-left transition",
+    "border-l-[3px]",
     "focus-visible:outline-none",
     dark
       ? selected
-        ? "bg-[linear-gradient(135deg,rgba(56,189,248,0.18)_0%,rgba(14,165,233,0.12)_100%)] ring-1 ring-sky-300/30"
-        : "bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] hover:bg-[linear-gradient(135deg,rgba(56,189,248,0.12)_0%,rgba(14,165,233,0.08)_100%)] ring-1 ring-white/6"
+        ? "border-sky-300/80 bg-[linear-gradient(135deg,rgba(56,189,248,0.18)_0%,rgba(14,165,233,0.12)_100%)] ring-1 ring-sky-300/30"
+        : "border-transparent bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] hover:-translate-y-[1px] hover:bg-[linear-gradient(135deg,rgba(56,189,248,0.12)_0%,rgba(14,165,233,0.08)_100%)] ring-1 ring-white/6"
       : selected
-        ? "bg-sky-100 ring-1 ring-sky-300"
-        : "bg-white hover:bg-sky-50 ring-1 ring-black/8",
+        ? "border-sky-500 bg-sky-100 ring-1 ring-sky-300"
+        : "border-transparent bg-white hover:bg-sky-50 ring-1 ring-black/8",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-sky-300/30"
       : "focus-visible:ring-2 focus-visible:ring-sky-500/30",
@@ -177,16 +178,11 @@ export default function InsightsTinyTaskCard({
                               {label}
                             </div>
 
-                            <span
-                              className={checkWrap(dark, selected)}
-                              aria-hidden
-                            >
-                              {selected ? (
+                            {selected ? (
+                              <span className={checkWrap(dark, true)} aria-hidden>
                                 <Check className="h-3.5 w-3.5" />
-                              ) : (
-                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                              )}
-                            </span>
+                              </span>
+                            ) : null}
                           </div>
                         </motion.button>
                       );

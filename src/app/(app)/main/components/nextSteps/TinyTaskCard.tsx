@@ -66,14 +66,15 @@ function optionBase(dark: boolean, selected: boolean) {
   return [
     "w-full text-left rounded-[16px] px-4 py-3.5",
     "text-[14px] font-medium leading-5 transition",
+    "border-l-[3px]",
     "focus-visible:outline-none",
     dark
       ? selected
-        ? "bg-[linear-gradient(135deg,rgba(18,30,46,0.94)_0%,rgba(12,22,38,0.98)_100%)] text-white/82 ring-1 ring-white/8"
-        : "bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] hover:bg-[linear-gradient(135deg,rgba(32,54,78,0.82)_0%,rgba(28,50,72,0.86)_100%)] text-white/72 ring-1 ring-white/6"
+        ? "border-teal-300/70 bg-[linear-gradient(135deg,rgba(20,42,52,0.95)_0%,rgba(13,30,40,0.98)_100%)] text-white ring-1 ring-teal-300/25"
+        : "border-transparent bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] hover:-translate-y-[1px] hover:bg-[linear-gradient(135deg,rgba(32,54,78,0.82)_0%,rgba(28,50,72,0.86)_100%)] text-white/72 ring-1 ring-white/6"
       : selected
-        ? "bg-slate-200 text-slate-950 ring-1 ring-slate-300"
-        : "bg-white text-slate-900 hover:bg-slate-50 ring-1 ring-black/8",
+        ? "border-emerald-500 bg-slate-100 text-slate-950 ring-1 ring-emerald-500/25"
+        : "border-transparent bg-white text-slate-900 hover:bg-slate-50 ring-1 ring-black/8",
     dark
       ? "focus-visible:ring-2 focus-visible:ring-teal-300/18"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
@@ -161,13 +162,11 @@ export function TinyTaskCard({ dark, useLocal, definition }: Props) {
                   {opt.label}
                 </span>
 
-                <span className={checkWrap(dark, selected)} aria-hidden>
-                  {selected ? (
+                {selected ? (
+                  <span className={checkWrap(dark, true)} aria-hidden>
                     <Check className="h-3.5 w-3.5" />
-                  ) : (
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                  )}
-                </span>
+                  </span>
+                ) : null}
               </div>
             </button>
           );

@@ -16,7 +16,7 @@ import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
 import { InProgressMissionNudge } from "./components/InProgressMissionNudge";
-import { TodayCard } from "./components/today";
+import { TodayCard, TodayCardSkeleton } from "./components/today";
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
@@ -371,7 +371,7 @@ export default function MainHomePage() {
                     onPrimary={handlePrimary}
                   />
                 ) : (
-                  <div className="min-h-[330px]" />
+                  <TodayCardSkeleton />
                 )}
               </SectionCard>
               {isUpdating ? (
