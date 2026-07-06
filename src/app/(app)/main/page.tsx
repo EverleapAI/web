@@ -14,6 +14,7 @@ import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
 import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
+import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
 import { TodayCard } from "./components/today";
 
 const SIGNAL_COMPLETE_COUNT = 5;
@@ -349,6 +350,10 @@ export default function MainHomePage() {
           <div className={pageShell()}>
             <section>
               <SectionCard tone="hero" className="px-4 py-5">
+                <ConstellationAnchor
+                  seed={`today:${new Date().toISOString().slice(0, 10)}`}
+                  accent={{ r: 92, g: 180, b: 255 }}
+                />
                 {guidanceLoaded ? (
                   <TodayCard
                     headline={todayGuidance?.headline}

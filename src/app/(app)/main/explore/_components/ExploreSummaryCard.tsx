@@ -11,7 +11,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
-import { CornerConstellation } from "./exploreUi";
+import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 
@@ -90,7 +90,7 @@ export function ExploreSummaryCard({
 
   return (
     <SectionCard tone="hero">
-      <CornerConstellation />
+      <ConstellationAnchor seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />
       {hasSignal ? (
         <PromptLabTrigger
           dark

@@ -12,10 +12,11 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
-import { laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
+import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
+import { LANE_ACCENT, laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
-import { CornerConstellation, LANE_ICON, LANE_WORD, rgba } from "./exploreUi";
+import { LANE_ICON, LANE_WORD, rgba } from "./exploreUi";
 
 function getIntro(
   lane: Lane,
@@ -107,7 +108,7 @@ export function ExploreLanding({
   return (
     <div className="space-y-4">
       <SectionCard tone="hero">
-        <CornerConstellation />
+        <ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />
         <div className="relative max-w-2xl">
           <div className="mb-2 flex items-center gap-2">
             <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">
