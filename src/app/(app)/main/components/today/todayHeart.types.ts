@@ -79,12 +79,28 @@ export type OnboardingSynthesis = {
   bridge: string;
 };
 
+// A short, rationed "we heard you" echo — one line of what we've read about the
+// user, shown occasionally (not every visit) to reinforce that Today knows them.
+export type Reinforcement = {
+  eyebrow: string;
+  line: string;
+};
+
+// A finished-but-unreflected action, surfaced as a quiet secondary nudge rather
+// than the whole hero.
+export type LooseThread = {
+  title: string;
+  route: string;
+};
+
 export type TodayHeartData = {
   dispatch: TodayDispatch;
   coverage: Coverage;
   rhythm: Rhythm;
   welcome: Welcome;
   synthesis?: OnboardingSynthesis | null;
+  reinforcement?: Reinforcement | null;
+  looseThread?: LooseThread | null;
 };
 
 // Per-type accent (rgb string for inline rgba) + label + glyph mark.

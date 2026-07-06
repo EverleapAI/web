@@ -1,13 +1,14 @@
 "use client";
 
 // TodayHeart — the "beating heart" home card. One template that flexes by
-// dispatch type. Slice 1 renders the learn beat: welcome (new users) + the
-// move + coverage meter + first step + pulse + return + quiet alternate lanes.
-// Meaning stays in words; state/identity/rhythm are carried by the visuals.
+// dispatch type. Deliberately sparse: an optional "we heard you" reinforcement
+// line, ONE line of substance (the move), the living visuals (coverage +
+// pulse), a luminous CTA, and — only when relevant — a quiet loose-thread nudge.
+// Meaning stays in a few words; state/identity/rhythm are carried by the art.
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Check } from "lucide-react";
+import { ChevronRight, Check, RotateCcw } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
@@ -93,36 +94,33 @@ export function TodayHeart({
         <WelcomeName firstName={welcome.firstName} accentRgb={rgb} />
       ) : null}
 
-      {welcome.isNewUser && data.synthesis?.body ? (
-        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5">
-          <div
-            className="text-[9.5px] font-bold uppercase tracking-[0.16em]"
-            style={{ color: `rgb(${rgb})` }}
-          >
-            What I'm already noticing
+      {/* Rationed "we heard you" echo — one line, not the whole read. */}
+      {data.reinforcement?.line ? (
+        <div className="mt-4 flex gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
+          <span
+            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: `rgb(${rgb})` }}
+          />
+          <div>
+            <div
+              className="text-[9px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: `rgb(${rgb})` }}
+            >
+              {data.reinforcement.eyebrow}
+            </div>
+            <p className="mt-1 text-[14px] leading-snug text-white/85">
+              {data.reinforcement.line}
+            </p>
           </div>
-          <p className="mt-2 text-[13.5px] leading-relaxed text-white/80">
-            {data.synthesis.body}
-          </p>
         </div>
       ) : null}
 
-      {dispatch.orient ? (
-        <p className="mt-3 text-[12.5px] leading-relaxed text-white/55">
-          {dispatch.orient}
-        </p>
-      ) : null}
-
-      <h1 className="mt-1.5 max-w-[560px] text-[22px] font-semibold leading-[1.16] tracking-[-0.03em] text-white">
+      {/* The single line of substance — the move. */}
+      <h1 className="mt-4 max-w-[560px] text-[22px] font-semibold leading-[1.16] tracking-[-0.03em] text-white">
         {dispatch.move}
       </h1>
 
-      {dispatch.why ? (
-        <p className="mt-2.5 max-w-[560px] text-[14px] leading-relaxed text-white/72">
-          {dispatch.why}
-        </p>
-      ) : null}
-
+      {/* Do beats carry a compact when/time strip; other beats stay wordless. */}
       {dispatch.meta ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[
@@ -149,71 +147,25 @@ export function TodayHeart({
         </div>
       ) : null}
 
+      {/* Living visuals carry the state — no labels needed. */}
       <CoverageMeter coverage={coverage} accentRgb={rgb} />
-
-      {dispatch.steps && dispatch.steps.length ? (
-        <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3">
-          <div
-            className="text-[9.5px] font-bold uppercase tracking-[0.16em]"
-            style={{ color: `rgb(${rgb})` }}
-          >
-            The steps
-          </div>
-          <ol className="mt-2 flex flex-col gap-2">
-            {dispatch.steps.map((step, i) => (
-              <li key={i} className="flex gap-2.5">
-                <span
-                  className="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                  style={{ color: `rgb(${rgb})`, background: `rgba(${rgb},0.14)` }}
-                >
-                  {i + 1}
-                </span>
-                <span className="text-[13.5px] leading-snug text-white/85">
-                  {step}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : dispatch.firstStep ? (
-        <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-3">
-          <div
-            className="text-[9.5px] font-bold uppercase tracking-[0.16em]"
-            style={{ color: `rgb(${rgb})` }}
-          >
-            First step
-          </div>
-          <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/85">
-            {dispatch.firstStep}
-          </p>
-        </div>
-      ) : null}
-
       <PulseTrace rhythm={rhythm} accentRgb={rgb} />
-
-      {dispatch.return ? (
-        <div className="mt-3">
-          <div className="text-[9.5px] font-bold uppercase tracking-[0.16em] text-white/40">
-            Comes back as
-          </div>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">
-            {dispatch.return}
-          </p>
-        </div>
-      ) : null}
 
       <button
         type="button"
         onClick={dispatch.save ? handleSaveAction : onPrimary}
         disabled={saving || saved}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-[14px] font-semibold transition hover:brightness-110 disabled:opacity-80"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[14px] font-semibold transition hover:brightness-[1.08] disabled:opacity-80"
         style={{
-          color: `rgb(${rgb})`,
-          background: `rgba(${rgb},0.14)`,
-          border: `1px solid rgba(${rgb},0.34)`,
+          color: "rgba(255,255,255,0.97)",
+          background: `linear-gradient(135deg, rgba(${rgb},0.34), rgba(${rgb},0.15))`,
+          border: `1px solid rgba(${rgb},0.5)`,
+          boxShadow: `0 10px 30px rgba(${rgb},0.26), inset 0 1px 0 rgba(255,255,255,0.16)`,
         }}
       >
-        <span>{primaryLabel}</span>
+        <span style={{ textShadow: `0 0 18px rgba(${rgb},0.5)` }}>
+          {primaryLabel}
+        </span>
         {saved ? (
           <Check className="h-4 w-4" />
         ) : (
@@ -221,28 +173,22 @@ export function TodayHeart({
         )}
       </button>
 
-      {dispatch.alternates?.length ? (
-        <div className="mt-3 border-t border-white/[0.08] pt-3">
-          <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-white/35">
-            Other lanes open
-          </div>
-          <div className="flex flex-col">
-            {dispatch.alternates.map((alt) => (
-              <button
-                key={alt.route}
-                type="button"
-                onClick={() => router.push(alt.route)}
-                className="group flex items-center gap-2.5 rounded-lg px-1 py-2 text-left transition hover:bg-white/[0.035]"
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/30" />
-                <span className="flex-1 text-[12.5px] text-white/60 transition group-hover:text-white/90">
-                  {alt.label}
-                </span>
-                <ChevronRight className="h-3.5 w-3.5 text-white/30" />
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* A finished-but-unreflected action: a whisper, not the room. */}
+      {data.looseThread?.title ? (
+        <button
+          type="button"
+          onClick={() => router.push(data.looseThread!.route)}
+          className="group mt-4 flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left transition hover:bg-white/[0.03]"
+        >
+          <RotateCcw
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: "rgba(55,211,160,0.75)" }}
+          />
+          <span className="flex-1 text-[12px] leading-snug text-white/45 transition group-hover:text-white/70">
+            Still open · reflect on “{data.looseThread.title}”
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-white/25" />
+        </button>
       ) : null}
     </div>
   );

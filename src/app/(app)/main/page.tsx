@@ -184,13 +184,18 @@ export default function MainHomePage() {
         setIsUpdating(g?.is_updating === true);
         if (g?.ok && g?.guidance) setTodayGuidance(g.guidance);
         if (g?.ok && g?.dispatch && g?.coverage && g?.rhythm && g?.welcome) {
-          setHeart({
+          // The reinforcement is rationed server-side (shown once, then held
+          // back), so a poll re-fetch legitimately returns null for it — keep the
+          // line already on screen instead of letting it flicker away mid-view.
+          setHeart((prev) => ({
             dispatch: g.dispatch,
             coverage: g.coverage,
             rhythm: g.rhythm,
             welcome: g.welcome,
             synthesis: g.synthesis ?? null,
-          });
+            reinforcement: g.reinforcement ?? prev?.reinforcement ?? null,
+            looseThread: g.looseThread ?? null,
+          }));
         }
       } catch {
         // keep the existing content
@@ -246,6 +251,8 @@ export default function MainHomePage() {
               rhythm: guidanceData.rhythm,
               welcome: guidanceData.welcome,
               synthesis: guidanceData.synthesis ?? null,
+              reinforcement: guidanceData.reinforcement ?? null,
+              looseThread: guidanceData.looseThread ?? null,
             });
           }
         } catch {
