@@ -18,6 +18,7 @@ import {
   sectionCard,
 } from "./summaryShared";
 import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
+import { ConstellationAnchor } from "../../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
   PromptLabAppliedPreview,
@@ -81,6 +82,7 @@ export default function InsightsSummaryCard({
         preview ? "ring-1 ring-amber-300/45" : "",
       ].join(" ")}
     >
+      {dark ? <ConstellationAnchor seed="insights-summary" accent={{ r: 120, g: 200, b: 255 }} /> : null}
       <div
         className="pointer-events-none absolute inset-0"
         aria-hidden
