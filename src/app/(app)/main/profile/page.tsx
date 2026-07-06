@@ -10,6 +10,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Aperture,
   BadgeCheck,
   Bell,
   ChevronRight,
@@ -286,6 +287,12 @@ export default function ProfilePage() {
           </SectionCard>
 
           {/* Places you want to visit, not just settings */}
+          <HubCard
+            href="/main/profile/portrait"
+            Icon={Aperture}
+            title="How Everleap sees you"
+            desc="The picture forming from everything you’ve shared"
+          />
           <HubCard
             href="/main/profile/reflections"
             Icon={NotebookPen}
