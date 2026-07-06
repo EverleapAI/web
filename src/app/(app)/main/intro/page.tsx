@@ -18,8 +18,8 @@ const LINE_MS = 2300;
 const CRAWL_LINES = [
   "You just told me a few true things about yourself.",
   "Not a test. Not a score.",
-  "I'm reading them the way a good mentor would —",
-  "for what moves you, what you're drawn to, where you might go.",
+  "I'm going to use them to help build what comes next —",
+  "starting with what moves you, and where it could lead.",
   "Give me a moment. Here's what I'm already noticing…",
 ];
 
