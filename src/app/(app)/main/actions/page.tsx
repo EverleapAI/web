@@ -153,6 +153,14 @@ function ActionRow({
             </a>
           ) : null}
         </div>
+        {missionSteps.length > 0 && !done ? (
+          <div className="mt-2 h-1 w-full max-w-[240px] overflow-hidden rounded-full bg-white/[0.08]">
+            <div
+              className="h-full rounded-full bg-emerald-400/70 transition-all"
+              style={{ width: `${Math.round((missionDone / missionSteps.length) * 100)}%` }}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Overflow menu — always visible (works on touch, unlike a hover-only X) */}
@@ -383,7 +391,9 @@ export default function ActionsPage() {
     setRefreshing(false);
   }, [fetchSuggestions]);
 
-  const active = (actions ?? []).filter((a) => a.status === "saved" || a.status === "doing");
+  const inProgress = (actions ?? []).filter((a) => a.status === "doing");
+  const toTry = (actions ?? []).filter((a) => a.status === "saved");
+  const active = [...inProgress, ...toTry];
   const done = (actions ?? []).filter((a) => a.status === "done");
   const hasSuggestions = (suggestions?.length ?? 0) > 0;
   const pageEmpty =
@@ -481,13 +491,27 @@ export default function ActionsPage() {
           </SectionCard>
         ) : (
           <>
-            {active.length > 0 ? (
+            {inProgress.length > 0 ? (
               <SectionCard tone="neutral">
-                <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
-                  To try ({active.length})
+                <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  In progress ({inProgress.length})
                 </h2>
                 <div className="space-y-2">
-                  {active.map((a) => (
+                  {inProgress.map((a) => (
+                    <ActionRow key={a.id} action={a} onStatus={setStatus} pending={pendingIds.has(a.id)} />
+                  ))}
+                </div>
+              </SectionCard>
+            ) : null}
+
+            {toTry.length > 0 ? (
+              <SectionCard tone="neutral">
+                <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                  To try ({toTry.length})
+                </h2>
+                <div className="space-y-2">
+                  {toTry.map((a) => (
                     <ActionRow key={a.id} action={a} onStatus={setStatus} pending={pendingIds.has(a.id)} />
                   ))}
                 </div>

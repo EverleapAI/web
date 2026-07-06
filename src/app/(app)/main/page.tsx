@@ -15,6 +15,7 @@ import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
+import { InProgressMissionNudge } from "./components/InProgressMissionNudge";
 import { TodayCard } from "./components/today";
 
 const SIGNAL_COMPLETE_COUNT = 5;
@@ -400,6 +401,8 @@ export default function MainHomePage() {
   </section>
 ) : null}
             </section>
+
+            <InProgressMissionNudge />
 
             <section className="mt-5 px-4">
               {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
