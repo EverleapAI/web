@@ -172,7 +172,15 @@ function BranchCard({ preview, detail, accent }: { preview: PathBranchPreview; d
   );
 }
 
-export function ExplorePathDetail({ path }: { path: ExplorePath }) {
+export function ExplorePathDetail({
+  path,
+  whyYou = null,
+}: {
+  path: ExplorePath;
+  // The user's personalized "why this fits you" from the Work match layer, if
+  // any — overlaid on the hero. The rest of the page is shared catalog content.
+  whyYou?: string | null;
+}) {
   const accent = laneAccent(path);
   const actions = useSavedActions(path.lane, `${path.lane}:${path.slug}`);
 
@@ -227,6 +235,20 @@ export function ExplorePathDetail({ path }: { path: ExplorePath }) {
           <h1 className="mt-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.035em] text-white sm:text-[32px]">
             {path.overview.title}
           </h1>
+          {whyYou ? (
+            <div
+              className="mt-4 rounded-2xl border px-4 py-3"
+              style={{ borderColor: rgba(accent, 0.28), backgroundColor: rgba(accent, 0.08) }}
+            >
+              <div
+                className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+                style={{ color: rgba(accent, 0.92) }}
+              >
+                Why this fits you
+              </div>
+              <p className="mt-1 text-[15px] font-medium leading-[1.6] text-white/90">{whyYou}</p>
+            </div>
+          ) : null}
           {path.overview.hook ? (
             <p className="mt-4 text-[15px] font-medium leading-[1.6] text-white/86">{path.overview.hook}</p>
           ) : null}

@@ -19,19 +19,26 @@ import { ExplorePathDetail } from "./ExplorePathDetail";
 import { SectionCard } from "../../components/ui/SectionCard";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 
+type CatalogPath = { path: ExplorePath; whyYou: string | null };
+
 async function fetchCatalogPath(
   lane: Lane,
   slug: string,
   signal: AbortSignal
-): Promise<ExplorePath | null> {
+): Promise<CatalogPath | null> {
   try {
     const res = await fetch(
       `/api/explore/path?lane=${encodeURIComponent(lane)}&slug=${encodeURIComponent(slug)}`,
       { credentials: "include", signal }
     );
     if (!res.ok) return null;
-    const data = (await res.json()) as { ok?: boolean; path?: ExplorePath };
-    return data?.ok && data.path ? data.path : null;
+    const data = (await res.json()) as {
+      ok?: boolean;
+      path?: ExplorePath;
+      match?: { whyYou?: string };
+    };
+    if (!data?.ok || !data.path) return null;
+    return { path: data.path, whyYou: data.match?.whyYou?.trim() || null };
   } catch {
     return null;
   }
@@ -101,6 +108,7 @@ export function ExplorePathDetailLoader({
   fallback: ExplorePath | null;
 }) {
   const [path, setPath] = React.useState<ExplorePath | null>(fallback);
+  const [whyYou, setWhyYou] = React.useState<string | null>(null);
   const [missing, setMissing] = React.useState(false);
 
   React.useEffect(() => {
@@ -108,7 +116,8 @@ export function ExplorePathDetailLoader({
     setMissing(false);
     fetchCatalogPath(lane, slug, controller.signal).then((catalog) => {
       if (catalog) {
-        setPath(catalog);
+        setPath(catalog.path);
+        setWhyYou(catalog.whyYou);
       } else if (!fallback) {
         // No mock and the catalog returned nothing — genuinely unavailable.
         setMissing(true);
@@ -117,7 +126,7 @@ export function ExplorePathDetailLoader({
     return () => controller.abort();
   }, [lane, slug, fallback]);
 
-  if (path) return <ExplorePathDetail path={path} />;
+  if (path) return <ExplorePathDetail path={path} whyYou={whyYou} />;
   if (missing) return <DetailMissing lane={lane} />;
   return <DetailLoading lane={lane} />;
 }

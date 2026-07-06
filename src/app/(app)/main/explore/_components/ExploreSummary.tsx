@@ -58,6 +58,15 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
     for (const lane of LANE_ORDER) {
       const entry = byLane.get(lane);
       if (!entry || !entry.paths.length) continue;
+      // Work is ranked server-side (the career-match layer): its deck already
+      // arrives in fit order with each card's personalized "why", so take the
+      // top match as-is rather than re-scoring it with the client keyword
+      // scorer (which would scramble the order and drop the why). Other lanes
+      // stay client-scored until their phase.
+      if (lane === "work") {
+        tops.push({ lane, path: entry.paths[0], score: 0 });
+        continue;
+      }
       const ranked = rankPaths(entry.paths, profile, 1)[0];
       if (ranked) tops.push({ lane, path: ranked.path, score: ranked.score });
     }
