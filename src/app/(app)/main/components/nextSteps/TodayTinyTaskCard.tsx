@@ -22,7 +22,7 @@ function headerIconWrap(dark: boolean) {
   return [
     "flex h-4 w-4 items-center justify-center rounded-[5px]",
     dark
-      ? "bg-teal-300/10 text-teal-200/70"
+      ? "bg-[rgba(182,160,255,0.12)] text-[rgb(182,160,255)]"
       : "bg-teal-500/10 text-teal-600/70",
   ].join(" ");
 }
@@ -45,22 +45,19 @@ function backButtonClass(dark: boolean) {
 
 function optionBase(dark: boolean, selected: boolean) {
   return [
-    "w-full text-left rounded-[16px] px-4 py-3",
+    "w-full text-left rounded-2xl px-4 py-3.5",
     "text-[14px] font-medium leading-5 transition-all duration-200",
-    "border-l-4",
-    "focus-visible:outline-none",
-    "hover:-translate-y-[1px]",
+    "border focus-visible:outline-none hover:-translate-y-[1px]",
     dark
       ? selected
-        ? "border-cyan-300 bg-[linear-gradient(135deg,rgba(28,58,78,0.98)_0%,rgba(16,34,54,0.98)_100%)] text-white shadow-[0_0_24px_rgba(103,232,249,0.14)] ring-1 ring-cyan-300/35"
-        : "border-transparent bg-[linear-gradient(135deg,rgba(28,48,70,0.78)_0%,rgba(24,44,68,0.82)_100%)] text-white/74 ring-1 ring-white/6 hover:bg-[linear-gradient(135deg,rgba(34,56,82,0.84)_0%,rgba(28,50,76,0.88)_100%)] hover:ring-cyan-300/12"
+        ? "border-[rgba(182,160,255,0.55)] bg-[rgba(182,160,255,0.14)] text-white ring-1 ring-[rgba(182,160,255,0.3)] shadow-[0_8px_26px_rgba(182,160,255,0.16)]"
+        : "border-white/[0.08] bg-white/[0.035] text-white/78 hover:bg-white/[0.06] hover:border-white/[0.16]"
       : selected
         ? "border-emerald-500 bg-slate-200 text-slate-950 ring-1 ring-emerald-500/25"
-        : "border-transparent bg-white text-slate-900 ring-1 ring-black/8 hover:bg-slate-50 hover:ring-emerald-500/14",
+        : "border-black/8 bg-white text-slate-900 hover:bg-slate-50 hover:border-emerald-500/20",
     dark
-      ? "focus-visible:ring-2 focus-visible:ring-cyan-300/20"
+      ? "focus-visible:ring-2 focus-visible:ring-[rgba(182,160,255,0.25)]"
       : "focus-visible:ring-2 focus-visible:ring-emerald-500/20",
-    "shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]",
   ].join(" ");
 }
 
@@ -138,7 +135,7 @@ export function TodayTinyTaskCard({ dark, tasks }: Props) {
                         <span
                           className={
                             dark
-                              ? "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80"
+                              ? "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgba(182,160,255,0.85)]"
                               : "shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
                           }
                         >
