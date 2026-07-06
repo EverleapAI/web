@@ -12,6 +12,7 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Check,
+  ChevronRight,
   Circle,
   Compass,
   ExternalLink,
@@ -29,6 +30,9 @@ import { emitActionAdded, emitActionsChanged, emitCelebrate } from "@/lib/action
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
 
+type MissionStep = { text: string; done: boolean };
+type Mission = { why: string; steps: MissionStep[]; generatedAt: string };
+
 type Action = {
   id: string;
   sourceType: string;
@@ -38,6 +42,7 @@ type Action = {
   description: string | null;
   href: string | null;
   status: ActionStatus;
+  mission?: Mission | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -79,6 +84,8 @@ function ActionRow({
 }) {
   const done = action.status === "done";
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const missionSteps = action.mission?.steps ?? [];
+  const missionDone = missionSteps.filter((s) => s.done).length;
 
   // Celebrate the moment of completion from the control the user just tapped.
   const fireCelebrate = (el: HTMLElement) => {
@@ -110,15 +117,30 @@ function ActionRow({
       </button>
 
       <div className="min-w-0 flex-1">
-        <span className={`text-[14.5px] font-semibold ${done ? "text-white/45 line-through" : "text-white"}`}>
+        <Link
+          href={`/main/actions/${action.id}`}
+          className={`text-[14.5px] font-semibold transition hover:underline ${done ? "text-white/45 line-through" : "text-white"}`}
+        >
           {action.title}
-        </span>
+        </Link>
         {action.description ? (
           <p className={`mt-0.5 line-clamp-2 text-[12.5px] leading-[1.5] ${done ? "text-white/35" : "text-white/58"}`}>
             {action.description}
           </p>
         ) : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          {missionSteps.length > 0 ? (
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/50">
+              {missionDone}/{missionSteps.length} steps
+            </span>
+          ) : !done ? (
+            <Link
+              href={`/main/actions/${action.id}`}
+              className="inline-flex items-center gap-0.5 text-[12px] font-medium text-white/55 transition hover:text-white/90"
+            >
+              Open mission <ChevronRight className="h-3 w-3" />
+            </Link>
+          ) : null}
           <span className="text-[11px] uppercase tracking-[0.13em] text-white/38">{sourceLabel(action)}</span>
           {action.href ? (
             <a
