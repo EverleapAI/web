@@ -11,15 +11,19 @@ import {
 } from "./exploreProfile";
 
 function buildPathKeywordSet(path: ExplorePath): string[] {
+  // Tolerate lite/partial paths: personalized decks (e.g. the server-ranked Work
+  // match cards) carry only `card`, no `overview` spine. Never assume full
+  // ExplorePath fields here or the whole page throws.
+  const ov = path.overview;
   const parts = [
     path.title,
-    path.card.title,
-    path.card.hook,
-    path.card.description,
-    path.overview.summary,
-    path.overview.traitChips.map((c) => c.label).join(" "),
-    path.overview.fitSignals.map((s) => s.label).join(" "),
-  ];
+    path.card?.title,
+    path.card?.hook,
+    path.card?.description,
+    ov?.summary,
+    ov?.traitChips?.map((c) => c.label).join(" "),
+    ov?.fitSignals?.map((s) => s.label).join(" "),
+  ].filter((p): p is string => Boolean(p));
   return Array.from(new Set(splitIntoUsefulTokens(parts.join(" "))));
 }
 
