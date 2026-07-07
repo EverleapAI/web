@@ -80,18 +80,24 @@ export function TodayHeart({
       : dispatch.destination.label;
 
   const isNew = welcome.isNewUser;
+  const hasCoverage = coverage.filledCount > 0;
 
-  // The agentic opening for a brand-new user: a real, specific read pulled from
-  // the synthesis body (a full couple of sentences), not the comma-joined tag.
-  // Falls back to the rationed one-liner if a body isn't available.
-  const openingRead = isNew
-    ? firstSentences(data.synthesis?.body, 2) || data.reinforcement?.line || ""
-    : "";
+  // Every Today opens with an agentic lead — a real "we know you" read, never a
+  // bare move. Early on (no coverage yet) it's the fuller establishing read from
+  // the synthesis body; once we actually know them it's the grounded, rotating
+  // one-liner reinforcement. Present in every state.
+  const bigRead = !hasCoverage;
+  const leadEyebrow = hasCoverage
+    ? data.reinforcement?.eyebrow ?? "What I keep noticing about you"
+    : "What I'm already seeing in you";
+  const leadLine = hasCoverage
+    ? data.reinforcement?.line || firstSentences(data.synthesis?.body, 1)
+    : firstSentences(data.synthesis?.body, 2) || data.reinforcement?.line || "";
 
-  // Empty progress art says nothing — only show the meter/pulse once there's
-  // something real to render (any coverage; a rhythm beyond the very first).
-  const showMeter = coverage.filledCount > 0;
-  const showPulse = !rhythm.firstBeat;
+  // Empty progress art says nothing — the meter/pulse only earn their space once
+  // there's real coverage to carry (and, for the pulse, an actual rhythm).
+  const showMeter = hasCoverage;
+  const showPulse = hasCoverage && !rhythm.firstBeat;
 
   return (
     <div className="relative">
@@ -119,24 +125,23 @@ export function TodayHeart({
         <WelcomeName firstName={welcome.firstName} accentRgb={rgb} />
       ) : null}
 
-      {isNew ? (
-        /* Agentic opening — lead with the read itself, in the app's own voice. */
-        openingRead ? (
+      {/* The agentic lead — present in EVERY state. A fuller establishing read
+          while we're still learning them; a grounded, rotating one-liner once we
+          know them. Never a bare move. */}
+      {leadLine ? (
+        bigRead ? (
           <div className="mt-5">
             <div
               className="text-[10px] font-bold uppercase tracking-[0.18em]"
               style={{ color: `rgb(${rgb})` }}
             >
-              What I&apos;m already seeing in you
+              {leadEyebrow}
             </div>
             <p className="mt-2.5 max-w-[560px] text-[17px] leading-[1.5] text-white/90">
-              {openingRead}
+              {leadLine}
             </p>
           </div>
-        ) : null
-      ) : (
-        /* Returning user: rationed "we heard you" echo — one line, not the read. */
-        data.reinforcement?.line ? (
+        ) : (
           <div className="mt-4 flex gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
             <span
               className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
@@ -147,21 +152,21 @@ export function TodayHeart({
                 className="text-[9px] font-bold uppercase tracking-[0.16em]"
                 style={{ color: `rgb(${rgb})` }}
               >
-                {data.reinforcement.eyebrow}
+                {leadEyebrow}
               </div>
               <p className="mt-1 text-[14px] leading-snug text-white/85">
-                {data.reinforcement.line}
+                {leadLine}
               </p>
             </div>
           </div>
-        ) : null
-      )}
+        )
+      ) : null}
 
-      {/* The forward move. For a new user it's the next step after the read; for
-          a returning user it's the hero line itself. */}
+      {/* The forward move. Under the establishing read it's the next step;
+          otherwise it's the hero line itself. */}
       <h1
         className={`${
-          isNew ? "mt-6 text-[19px] text-white/95" : "mt-4 text-[22px] text-white"
+          bigRead ? "mt-6 text-[19px] text-white/95" : "mt-4 text-[22px] text-white"
         } max-w-[560px] font-semibold leading-[1.16] tracking-[-0.03em]`}
       >
         {dispatch.move}
