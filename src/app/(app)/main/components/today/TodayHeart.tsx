@@ -122,22 +122,22 @@ export function TodayHeart({
   // bare move. Early on (no coverage yet) it's the fuller establishing read from
   // the synthesis body; once we actually know them it's the grounded, rotating
   // one-liner reinforcement. Present in every state.
-  const bigRead = !hasCoverage;
   const leadEyebrow = hasCoverage
     ? data.reinforcement?.eyebrow ?? "What I keep noticing about you"
     : "What I'm already seeing in you";
-  const leadLine = hasCoverage
-    ? data.reinforcement?.line || firstSentences(data.synthesis?.body, 1)
-    : establishingRead({
-        body: data.synthesis?.body,
-        reads: data.reads,
-        fallback: data.reinforcement?.line ?? "",
-      });
+  const leadLine = establishingRead({
+    body: data.synthesis?.body,
+    reads: data.reads,
+    fallback: data.reinforcement?.line ?? "",
+  });
 
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
   const showMeter = hasCoverage;
   const showPulse = hasCoverage && !rhythm.firstBeat;
+  // A do/look move isn't itself the story step, so invite it explicitly under
+  // the progress meter. A learn move already IS "continue your story".
+  const showStoryNudge = showMeter && dispatch.type !== "learn";
 
   return (
     <div className="relative">
@@ -172,102 +172,98 @@ export function TodayHeart({
           while we're still learning them; a grounded, rotating one-liner once we
           know them. Never a bare move. */}
       {leadLine ? (
-        bigRead ? (
-          <div className="mt-5">
-            <div
-              className="text-[10px] font-bold uppercase tracking-[0.18em]"
-              style={{ color: `rgb(${rgb})` }}
-            >
-              {leadEyebrow}
-            </div>
-            <p className="mt-2.5 max-w-[560px] text-[17px] leading-[1.5] text-white/90">
-              {leadLine}
-            </p>
+        <div className="mt-5">
+          <div
+            className="text-[10px] font-bold uppercase tracking-[0.18em]"
+            style={{ color: `rgb(${rgb})` }}
+          >
+            {leadEyebrow}
           </div>
-        ) : (
-          <div className="mt-4 flex gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
-            <span
-              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ background: `rgb(${rgb})` }}
-            />
-            <div>
-              <div
-                className="text-[9px] font-bold uppercase tracking-[0.16em]"
-                style={{ color: `rgb(${rgb})` }}
-              >
-                {leadEyebrow}
-              </div>
-              <p className="mt-1 text-[14px] leading-snug text-white/85">
-                {leadLine}
-              </p>
-            </div>
-          </div>
-        )
-      ) : null}
-
-      {/* The forward move. Under the establishing read it's the next step;
-          otherwise it's the hero line itself. */}
-      <h1
-        className={`${
-          bigRead ? "mt-6 text-[19px] text-white/95" : "mt-4 text-[22px] text-white"
-        } max-w-[560px] font-semibold leading-[1.16] tracking-[-0.03em]`}
-      >
-        {dispatch.move}
-      </h1>
-
-      {/* Do beats carry a compact when/time strip; other beats stay wordless. */}
-      {dispatch.meta ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {[
-            { k: "When", v: dispatch.meta.when },
-            { k: "Time", v: dispatch.meta.duration },
-          ].map((m) => (
-            <span
-              key={m.k}
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
-              style={{
-                background: `rgba(${rgb},0.10)`,
-                border: `1px solid rgba(${rgb},0.24)`,
-              }}
-            >
-              <span
-                className="font-bold uppercase tracking-wide"
-                style={{ color: `rgba(${rgb},0.9)` }}
-              >
-                {m.k}
-              </span>
-              <span className="text-white/70">{m.v}</span>
-            </span>
-          ))}
+          <p className="mt-2.5 max-w-[560px] text-[18px] leading-[1.55] text-white/90">
+            {leadLine}
+          </p>
         </div>
       ) : null}
 
-      {/* Living visuals carry the state — but only once there's state to carry;
-          empty progress art on a first visit is just noise. */}
-      {showMeter ? <CoverageMeter coverage={coverage} accentRgb={rgb} /> : null}
-      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+      {/* The action — the move, its when/time, and the one bright CTA, grouped
+          so the button clearly belongs to the move it acts on. Sits below the
+          read, at a lighter weight, so the read stays the hero. */}
+      <div className="mt-6">
+        <h1 className="max-w-[520px] text-[17px] font-semibold leading-[1.25] tracking-[-0.02em] text-white">
+          {dispatch.move}
+        </h1>
 
-      <button
-        type="button"
-        onClick={dispatch.save ? handleSaveAction : onPrimary}
-        disabled={saving || saved}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[14px] font-semibold transition hover:brightness-[1.08] disabled:opacity-80"
-        style={{
-          color: "rgba(255,255,255,0.97)",
-          background: `linear-gradient(135deg, rgba(${rgb},0.34), rgba(${rgb},0.15))`,
-          border: `1px solid rgba(${rgb},0.5)`,
-          boxShadow: `0 10px 30px rgba(${rgb},0.26), inset 0 1px 0 rgba(255,255,255,0.16)`,
-        }}
-      >
-        <span style={{ textShadow: `0 0 18px rgba(${rgb},0.5)` }}>
-          {primaryLabel}
-        </span>
-        {saved ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-      </button>
+        {dispatch.meta ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {[
+              { k: "When", v: dispatch.meta.when },
+              { k: "Time", v: dispatch.meta.duration },
+            ].map((m) => (
+              <span
+                key={m.k}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
+                style={{
+                  background: `rgba(${rgb},0.10)`,
+                  border: `1px solid rgba(${rgb},0.24)`,
+                }}
+              >
+                <span
+                  className="font-bold uppercase tracking-wide"
+                  style={{ color: `rgba(${rgb},0.9)` }}
+                >
+                  {m.k}
+                </span>
+                <span className="text-white/70">{m.v}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={dispatch.save ? handleSaveAction : onPrimary}
+          disabled={saving || saved}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[14px] font-semibold transition hover:brightness-[1.08] disabled:opacity-80"
+          style={{
+            color: "rgba(255,255,255,0.97)",
+            background: `linear-gradient(135deg, rgba(${rgb},0.34), rgba(${rgb},0.15))`,
+            border: `1px solid rgba(${rgb},0.5)`,
+            boxShadow: `0 10px 30px rgba(${rgb},0.26), inset 0 1px 0 rgba(255,255,255,0.16)`,
+          }}
+        >
+          <span style={{ textShadow: `0 0 18px rgba(${rgb},0.5)` }}>
+            {primaryLabel}
+          </span>
+          {saved ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+
+      {/* Progress — the picture forming, plus an explicit invite to keep building
+          the story that fills it. Ambient rhythm sits below the progress. */}
+      {showMeter ? <CoverageMeter coverage={coverage} accentRgb={rgb} /> : null}
+      {showStoryNudge ? (
+        <button
+          type="button"
+          onClick={() => router.push("/main/story")}
+          className="group mt-2.5 flex w-full items-center gap-1.5 px-1 text-left"
+        >
+          <span
+            className="text-[12.5px] font-medium"
+            style={{ color: `rgba(${rgb},0.92)` }}
+          >
+            Continue your story
+          </span>
+          <ChevronRight
+            className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
+            style={{ color: `rgba(${rgb},0.7)` }}
+          />
+        </button>
+      ) : null}
+      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
 
       {/* A finished-but-unreflected action: a whisper, not the room. */}
       {data.looseThread?.title ? (
