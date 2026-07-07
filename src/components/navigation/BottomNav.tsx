@@ -3,7 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Lightbulb, Compass, ListTodo, User } from "lucide-react";
+import { Home, Lightbulb, Compass, ListTodo, User, Trophy } from "lucide-react";
+
+import { emitOpenAchievements } from "@/lib/actionsBus";
 
 import {
   DEFAULT_THEME_ID,
@@ -242,6 +244,17 @@ export function BottomNav({
               </Link>
             );
           })}
+
+          {/* Achievements — opens the global pyramid modal, not a route. */}
+          <button
+            type="button"
+            onClick={() => emitOpenAchievements()}
+            aria-label="Achievements"
+            className="flex w-full flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04]"
+          >
+            <Trophy className="h-5 w-5 text-white/55" />
+            <span className="text-[11px] text-white/55">Awards</span>
+          </button>
         </div>
       </div>
     </nav>

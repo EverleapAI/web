@@ -8,6 +8,8 @@
 export const ACTION_ADDED = "everleap:action-added";
 export const ACTIONS_CHANGED = "everleap:actions-changed";
 export const CELEBRATE = "everleap:celebrate";
+export const OPEN_ACHIEVEMENTS = "everleap:open-achievements";
+export const BADGE_EARNED = "everleap:badge-earned";
 
 /** A doable was committed to the user's Actions list (shows a toast + bumps the badge). */
 export function emitActionAdded(title?: string): void {
@@ -25,4 +27,18 @@ export function emitActionsChanged(): void {
 export function emitCelebrate(x: number, y: number): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(CELEBRATE, { detail: { x, y } }));
+}
+
+/** Open the global Achievements modal (from the footer, a progress rail, anywhere). */
+export function emitOpenAchievements(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(OPEN_ACHIEVEMENTS));
+}
+
+export type EarnedBadge = { slug: string; name: string; glyph?: string; accent?: string };
+
+/** A badge was just unlocked — fires the earn toast + celebration. */
+export function emitBadgeEarned(badge: EarnedBadge): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(BADGE_EARNED, { detail: badge }));
 }
