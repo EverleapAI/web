@@ -5,6 +5,26 @@
 // diving into content. First visit reads as a welcome; every visit after reads
 // as being greeted by name (the weekday keeps it feeling like "today").
 
+// A small rotation of warm returning greetings so the masthead doesn't say the
+// exact same thing every visit. Deterministic by day (stable across refreshes,
+// changes across days). `{name}` is dropped cleanly when we don't have one.
+const RETURNING_GREETINGS = [
+  "Welcome back, {name}.",
+  "Good to see you, {name}.",
+  "You're back, {name}.",
+  "Right where you left off, {name}.",
+  "Let's keep going, {name}.",
+  "Glad you're here, {name}.",
+];
+
+function returningGreeting(name: string | undefined): string {
+  const dayIndex = Math.floor(Date.now() / 86_400_000);
+  const template = RETURNING_GREETINGS[dayIndex % RETURNING_GREETINGS.length];
+  return name
+    ? template.replace("{name}", name)
+    : template.replace(/,?\s*\{name\}/, "");
+}
+
 export function WelcomeName({
   firstName,
   accentRgb,
@@ -24,9 +44,7 @@ export function WelcomeName({
     ? name
       ? `You're in, ${name}.`
       : "You're in."
-    : name
-      ? `Welcome back, ${name}.`
-      : "Welcome back.";
+    : returningGreeting(name);
 
   return (
     <div className="mt-3 flex flex-col items-center gap-1 py-2 text-center">
