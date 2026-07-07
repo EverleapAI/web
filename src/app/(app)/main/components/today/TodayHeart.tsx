@@ -155,6 +155,14 @@ export function TodayHeart({
   // A do/look move isn't itself the story step, so invite it explicitly under
   // the progress meter. A learn move already IS "continue your story".
   const showStoryNudge = showMeter && dispatch.type !== "learn";
+  // Point the nudge at whatever actually fills the NEXT gap. Most gaps
+  // (motivations, strengths, skills, story, direction) are story-fed; the
+  // "experience" gap is only filled by doing and reflecting on an action, so
+  // sending someone to Story there would be a dead end.
+  const gapNudge =
+    coverage.nextGapKey === "experience"
+      ? { label: "Reflect on what you've tried", route: "/main/actions" }
+      : { label: "Continue your story", route: "/main/story" };
 
   return (
     <div className="relative">
@@ -265,14 +273,14 @@ export function TodayHeart({
       {showStoryNudge ? (
         <button
           type="button"
-          onClick={() => router.push("/main/story")}
+          onClick={() => router.push(gapNudge.route)}
           className="group mt-2.5 flex w-full items-center gap-1.5 px-1 text-left"
         >
           <span
             className="text-[12.5px] font-medium"
             style={{ color: `rgba(${rgb},0.92)` }}
           >
-            Continue your story
+            {gapNudge.label}
           </span>
           <ChevronRight
             className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
