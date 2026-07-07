@@ -100,6 +100,9 @@ export type TodayHeartData = {
   welcome: Welcome;
   synthesis?: OnboardingSynthesis | null;
   reinforcement?: Reinforcement | null;
+  // Pool of grounded, standalone reads to rotate the establishing lead across
+  // visits, so a new/early user doesn't see the same paragraph every day.
+  reads?: string[] | null;
   looseThread?: LooseThread | null;
 };
 

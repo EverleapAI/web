@@ -29,6 +29,43 @@ function firstSentences(text: string | null | undefined, n: number): string {
   return (parts.length ? parts : [text.trim()]).slice(0, n).join(" ");
 }
 
+function ensureStop(s: string): string {
+  const t = s.trim();
+  return /[.!?]$/.test(t) ? t : `${t}.`;
+}
+
+// The establishing read, rotated across visits so an early user doesn't see the
+// exact same paragraph every day. Options: the synthesis body paragraph, plus
+// grounded reinforcement lines paired into ~2-sentence reads (so the weight
+// stays roughly even). Deterministic by day; falls back to the one-liner.
+function establishingRead(input: {
+  body: string | null | undefined;
+  reads: string[] | null | undefined;
+  fallback: string;
+}): string {
+  const options: string[] = [];
+
+  const bodyPara = firstSentences(input.body, 2);
+  if (bodyPara) options.push(bodyPara);
+
+  const pool = (input.reads ?? [])
+    .map((r) => (r ?? "").trim())
+    .filter(Boolean)
+    .map(ensureStop);
+
+  if (pool.length === 1) {
+    options.push(pool[0]);
+  } else {
+    for (let i = 0; i < pool.length; i++) {
+      options.push(`${pool[i]} ${pool[(i + 1) % pool.length]}`);
+    }
+  }
+
+  if (options.length === 0) return input.fallback;
+  const dayIndex = Math.floor(Date.now() / 86_400_000);
+  return options[dayIndex % options.length];
+}
+
 export function TodayHeart({
   data,
   onPrimary,
@@ -91,7 +128,11 @@ export function TodayHeart({
     : "What I'm already seeing in you";
   const leadLine = hasCoverage
     ? data.reinforcement?.line || firstSentences(data.synthesis?.body, 1)
-    : firstSentences(data.synthesis?.body, 2) || data.reinforcement?.line || "";
+    : establishingRead({
+        body: data.synthesis?.body,
+        reads: data.reads,
+        fallback: data.reinforcement?.line ?? "",
+      });
 
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
