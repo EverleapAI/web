@@ -15,8 +15,11 @@ import {
   ArrowLeft,
   Check,
   Circle,
+  Copy,
   ExternalLink,
+  Eye,
   Loader2,
+  MessageSquare,
   Sparkles,
   Wand2,
 } from "lucide-react";
@@ -26,7 +29,14 @@ import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { emitActionsChanged, emitCelebrate } from "@/lib/actionsBus";
 
 type MissionStep = { text: string; done: boolean };
-type Mission = { why: string; steps: MissionStep[]; generatedAt: string; echo?: string };
+type Mission = {
+  why: string;
+  steps: MissionStep[];
+  generatedAt: string;
+  echo?: string;
+  script?: string;
+  watchFor?: string[];
+};
 type MissionAction = {
   id: string;
   title: string;
@@ -88,6 +98,17 @@ export default function MissionPage() {
   const [echo, setEcho] = React.useState<string | null>(null);
   const [echoLoading, setEchoLoading] = React.useState(false);
   const echoRequested = React.useRef(false);
+  const [copied, setCopied] = React.useState(false);
+
+  const copyScript = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked — no-op */
+    }
+  };
 
   React.useEffect(() => {
     let alive = true;
@@ -292,6 +313,32 @@ export default function MissionPage() {
                 </SectionCard>
               ) : null}
 
+              {/* The "how": a message you can actually send — removes the hardest
+                  part (knowing what to say). Only present when the action means
+                  reaching out to someone. */}
+              {action.mission.script ? (
+                <SectionCard tone="neutral">
+                  <div
+                    className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                    style={{ color: rgba(accent, 0.9) }}
+                  >
+                    <MessageSquare className="h-3 w-3" /> A message you could send
+                  </div>
+                  <p className="rounded-2xl border border-white/8 bg-white/[0.03] p-3.5 text-[14px] leading-[1.6] text-white/88">
+                    “{action.mission.script}”
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => copyScript(action.mission!.script ?? "")}
+                    className="mt-2.5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold transition hover:brightness-110"
+                    style={{ backgroundColor: rgba(accent, 0.16), color: rgba(accent, 0.95) }}
+                  >
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? "Copied" : "Copy this message"}
+                  </button>
+                </SectionCard>
+              ) : null}
+
               <SectionCard tone="neutral">
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">Your steps</h2>
@@ -345,6 +392,27 @@ export default function MissionPage() {
                   </button>
                 ) : null}
               </SectionCard>
+
+              {/* What to watch for — gives the doing a point, and seeds the
+                  reflection you'll write afterward. */}
+              {action.mission.watchFor && action.mission.watchFor.length ? (
+                <SectionCard tone="neutral">
+                  <div
+                    className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                    style={{ color: rgba(accent, 0.9) }}
+                  >
+                    <Eye className="h-3 w-3" /> While you’re doing it, notice
+                  </div>
+                  <ul className="space-y-2">
+                    {action.mission.watchFor.map((w, i) => (
+                      <li key={i} className="flex gap-2.5 text-[14px] leading-[1.5] text-white/78">
+                        <span className="mt-2 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.8) }} />
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                </SectionCard>
+              ) : null}
 
               {/* Reflection */}
               {reflectOpen ? (
