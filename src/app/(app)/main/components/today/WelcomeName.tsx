@@ -6,23 +6,37 @@
 // as being greeted by name (the weekday keeps it feeling like "today").
 
 // A small rotation of warm returning greetings so the masthead doesn't say the
-// exact same thing every visit. Deterministic by day (stable across refreshes,
-// changes across days). `{name}` is dropped cleanly when we don't have one.
-const RETURNING_GREETINGS = [
+// exact same thing every visit. The name lands in different places — leading,
+// trailing, mid-sentence — the way a person actually varies it. Deterministic
+// by day (stable across refreshes, changes across days). Separate clean list for
+// the rare no-name case so we never leave a dangling comma.
+const RETURNING_WITH_NAME = [
   "Welcome back, {name}.",
-  "Good to see you, {name}.",
-  "You're back, {name}.",
+  "{name}, good to see you again.",
+  "Hey {name} — you're back.",
   "Right where you left off, {name}.",
-  "Let's keep going, {name}.",
-  "Glad you're here, {name}.",
+  "{name}, let's pick up where we left off.",
+  "Good to have you back, {name}.",
+  "You made it back, {name}.",
+  "{name}, glad you're here.",
+];
+
+const RETURNING_NO_NAME = [
+  "Welcome back.",
+  "Good to see you again.",
+  "You're back.",
+  "Right where you left off.",
+  "Let's pick up where we left off.",
+  "Glad you're here.",
 ];
 
 function returningGreeting(name: string | undefined): string {
   const dayIndex = Math.floor(Date.now() / 86_400_000);
-  const template = RETURNING_GREETINGS[dayIndex % RETURNING_GREETINGS.length];
-  return name
-    ? template.replace("{name}", name)
-    : template.replace(/,?\s*\{name\}/, "");
+  if (name) {
+    const t = RETURNING_WITH_NAME[dayIndex % RETURNING_WITH_NAME.length];
+    return t.replace("{name}", name);
+  }
+  return RETURNING_NO_NAME[dayIndex % RETURNING_NO_NAME.length];
 }
 
 export function WelcomeName({
