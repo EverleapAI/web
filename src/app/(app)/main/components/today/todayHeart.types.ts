@@ -91,6 +91,9 @@ export type Reinforcement = {
 export type LooseThread = {
   title: string;
   route: string;
+  // "reflect" = finished but not reflected on; "due" = started a while ago and
+  // gone quiet ("how's it going?").
+  kind?: "reflect" | "due";
 };
 
 export type TodayHeartData = {

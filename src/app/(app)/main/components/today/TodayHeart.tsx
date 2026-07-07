@@ -95,6 +95,37 @@ export function TodayHeart({
 
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [howLoading, setHowLoading] = React.useState(false);
+
+  // "How would I even do this?" — saves the action and opens its playbook,
+  // auto-generating the how (who to ask, what to say, what to watch for). A move
+  // a teen can't picture starting is just anxiety; this makes it walkable.
+  async function handleHowTo() {
+    if (!dispatch.save || howLoading) return;
+    setHowLoading(true);
+    try {
+      const res = await fetch("/api/guidance/actions", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceType: "today",
+          lane: "today",
+          title: dispatch.save.actionTitle,
+          description: dispatch.why,
+        }),
+      });
+      const d = await res.json().catch(() => null);
+      if (res.ok && d?.action?.id) {
+        emitActionAdded(dispatch.save.actionTitle);
+        router.push(`/main/actions/${d.action.id}?start=1`);
+        return;
+      }
+    } catch {
+      // fall through — leave the button enabled to retry
+    }
+    setHowLoading(false);
+  }
 
   // "Do" beats save the move into Actions (matching the app-wide pattern:
   // POST /api/guidance/actions then emit the toast), then step over to Actions.
@@ -211,6 +242,21 @@ export function TodayHeart({
           </div>
         ) : null}
 
+        {/* One tap to the "how" — for a real-world do move, reassurance that
+            you'll know exactly how to start is a click away. */}
+        {dispatch.save ? (
+          <button
+            type="button"
+            onClick={handleHowTo}
+            disabled={howLoading}
+            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium transition hover:brightness-110 disabled:opacity-70"
+            style={{ color: `rgba(${rgb},0.85)` }}
+          >
+            {howLoading ? "Opening…" : "How would I even do this?"}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+
         {/* A calm spot-colour pill, not a full-width flood. Prominence is
             rationed — the read is the hero, this is the commit. */}
         <button
@@ -251,7 +297,9 @@ export function TodayHeart({
             style={{ color: "rgba(55,211,160,0.85)" }}
           />
           <span className="flex-1 text-[12.5px] font-medium text-[rgb(55,211,160)] transition group-hover:brightness-110">
-            Reflect on “{data.looseThread.title}”
+            {data.looseThread.kind === "due"
+              ? `You started “${data.looseThread.title}” — how's it going?`
+              : `Reflect on “${data.looseThread.title}”`}
           </span>
           <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(55,211,160,0.7)" }} />
         </button>

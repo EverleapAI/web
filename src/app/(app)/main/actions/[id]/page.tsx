@@ -10,7 +10,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -85,7 +85,10 @@ async function missionOp(body: Record<string, unknown>): Promise<MissionAction |
 
 export default function MissionPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = String(params?.id ?? "");
+  const autoStart = searchParams?.get("start") === "1";
+  const autoStarted = React.useRef(false);
 
   const [action, setAction] = React.useState<MissionAction | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -153,6 +156,16 @@ export default function MissionPage() {
     setStarting(false);
     emitActionsChanged();
   };
+
+  // Arriving from the card's "How would I even do this?" — build the playbook
+  // right away so the how is there, no extra tap.
+  React.useEffect(() => {
+    if (!autoStart || autoStarted.current) return;
+    if (!action || action.status !== "saved" || action.mission) return;
+    autoStarted.current = true;
+    void start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, action]);
 
   const toggle = async (index: number) => {
     if (!action?.mission) return;
