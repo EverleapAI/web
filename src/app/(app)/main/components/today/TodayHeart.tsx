@@ -18,6 +18,17 @@ import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { DISPATCH_ACCENT, type TodayHeartData } from "./todayHeart.types";
 
+// Keep the read tight — the first couple of sentences carry the "I get you"
+// weight; more than that turns an opening into an essay.
+function firstSentences(text: string | null | undefined, n: number): string {
+  if (!text) return "";
+  const parts = text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return (parts.length ? parts : [text.trim()]).slice(0, n).join(" ");
+}
+
 export function TodayHeart({
   data,
   onPrimary,
@@ -68,6 +79,20 @@ export function TodayHeart({
       ? "Adding…"
       : dispatch.destination.label;
 
+  const isNew = welcome.isNewUser;
+
+  // The agentic opening for a brand-new user: a real, specific read pulled from
+  // the synthesis body (a full couple of sentences), not the comma-joined tag.
+  // Falls back to the rationed one-liner if a body isn't available.
+  const openingRead = isNew
+    ? firstSentences(data.synthesis?.body, 2) || data.reinforcement?.line || ""
+    : "";
+
+  // Empty progress art says nothing — only show the meter/pulse once there's
+  // something real to render (any coverage; a rhythm beyond the very first).
+  const showMeter = coverage.filledCount > 0;
+  const showPulse = !rhythm.firstBeat;
+
   return (
     <div className="relative">
       {/* top row: dispatch identity + the beating "Today" pulse */}
@@ -90,33 +115,55 @@ export function TodayHeart({
         </div>
       </div>
 
-      {welcome.isNewUser ? (
+      {isNew ? (
         <WelcomeName firstName={welcome.firstName} accentRgb={rgb} />
       ) : null}
 
-      {/* Rationed "we heard you" echo — one line, not the whole read. */}
-      {data.reinforcement?.line ? (
-        <div className="mt-4 flex gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
-          <span
-            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
-            style={{ background: `rgb(${rgb})` }}
-          />
-          <div>
+      {isNew ? (
+        /* Agentic opening — lead with the read itself, in the app's own voice. */
+        openingRead ? (
+          <div className="mt-5">
             <div
-              className="text-[9px] font-bold uppercase tracking-[0.16em]"
+              className="text-[10px] font-bold uppercase tracking-[0.18em]"
               style={{ color: `rgb(${rgb})` }}
             >
-              {data.reinforcement.eyebrow}
+              What I&apos;m already seeing in you
             </div>
-            <p className="mt-1 text-[14px] leading-snug text-white/85">
-              {data.reinforcement.line}
+            <p className="mt-2.5 max-w-[560px] text-[17px] leading-[1.5] text-white/90">
+              {openingRead}
             </p>
           </div>
-        </div>
-      ) : null}
+        ) : null
+      ) : (
+        /* Returning user: rationed "we heard you" echo — one line, not the read. */
+        data.reinforcement?.line ? (
+          <div className="mt-4 flex gap-2.5 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-3">
+            <span
+              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ background: `rgb(${rgb})` }}
+            />
+            <div>
+              <div
+                className="text-[9px] font-bold uppercase tracking-[0.16em]"
+                style={{ color: `rgb(${rgb})` }}
+              >
+                {data.reinforcement.eyebrow}
+              </div>
+              <p className="mt-1 text-[14px] leading-snug text-white/85">
+                {data.reinforcement.line}
+              </p>
+            </div>
+          </div>
+        ) : null
+      )}
 
-      {/* The single line of substance — the move. */}
-      <h1 className="mt-4 max-w-[560px] text-[22px] font-semibold leading-[1.16] tracking-[-0.03em] text-white">
+      {/* The forward move. For a new user it's the next step after the read; for
+          a returning user it's the hero line itself. */}
+      <h1
+        className={`${
+          isNew ? "mt-6 text-[19px] text-white/95" : "mt-4 text-[22px] text-white"
+        } max-w-[560px] font-semibold leading-[1.16] tracking-[-0.03em]`}
+      >
         {dispatch.move}
       </h1>
 
@@ -147,9 +194,10 @@ export function TodayHeart({
         </div>
       ) : null}
 
-      {/* Living visuals carry the state — no labels needed. */}
-      <CoverageMeter coverage={coverage} accentRgb={rgb} />
-      <PulseTrace rhythm={rhythm} accentRgb={rgb} />
+      {/* Living visuals carry the state — but only once there's state to carry;
+          empty progress art on a first visit is just noise. */}
+      {showMeter ? <CoverageMeter coverage={coverage} accentRgb={rgb} /> : null}
+      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
 
       <button
         type="button"
