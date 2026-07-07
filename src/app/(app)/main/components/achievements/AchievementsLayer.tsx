@@ -7,9 +7,49 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X } from "lucide-react";
+import {
+  X,
+  Sparkles,
+  BookOpen,
+  RefreshCw,
+  Compass,
+  Footprints,
+  Library,
+  Flame,
+  Anchor,
+  Search,
+  Hammer,
+  Map as MapIcon,
+  Shield,
+  Globe,
+  Zap,
+  Crown,
+  Star,
+  type LucideIcon,
+} from "lucide-react";
 
 import ConstellationAnchor from "../ui/ConstellationAnchor";
+
+// Placeholder badge art — a distinct line-icon per badge so the pyramid reads as
+// a real collection, not fifteen identical diamonds. Stand-ins until real badge
+// illustrations land; keyed by slug, falls back to a star.
+const PLACEHOLDER_ICONS: Record<string, LucideIcon> = {
+  first_light: Sparkles,
+  story_told: BookOpen,
+  first_reflection: RefreshCw,
+  explorer: Compass,
+  showed_up: Footprints,
+  open_book: Library,
+  committed: Flame,
+  deep_diver: Anchor,
+  curious: Search,
+  craftsman: Hammer,
+  pathfinder: MapIcon,
+  steadfast: Shield,
+  cartographer: Globe,
+  relentless: Zap,
+  everleaper: Crown,
+};
 
 import {
   OPEN_ACHIEVEMENTS,
@@ -51,61 +91,59 @@ function Medal({
   badge,
   onClick,
   selected,
-  starRef,
 }: {
   badge: Badge;
   onClick: () => void;
   selected: boolean;
-  starRef?: (el: HTMLElement | null) => void;
 }) {
   const c = rgb(badge.accent);
   const isGradient = badge.accent === "gradient";
   const earned = badge.earned;
+  const Icon = PLACEHOLDER_ICONS[badge.slug] ?? Star;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex w-[58px] flex-col items-center gap-1.5 outline-none"
+      className="group relative flex w-[64px] flex-col items-center gap-1.5 outline-none"
       aria-label={`${badge.name}${earned ? ", earned" : ", locked"}`}
     >
       {/* a soft, twinkling halo — this star is lit */}
       {earned ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-[23px] h-[52px] w-[52px] -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-[elTwinkle_3.8s_ease-in-out_infinite]"
-          style={{ background: `radial-gradient(circle, rgba(${c},.55), transparent 68%)`, filter: "blur(5px)" }}
+          className="pointer-events-none absolute left-1/2 top-[27px] h-[60px] w-[60px] -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-[elTwinkle_3.8s_ease-in-out_infinite]"
+          style={{ background: `radial-gradient(circle, rgba(${c},.6), transparent 68%)`, filter: "blur(5px)" }}
         />
       ) : null}
       <span
-        ref={starRef}
-        className="relative flex h-[46px] w-[46px] items-center justify-center rounded-full text-[17px] transition"
+        className="relative flex h-[54px] w-[54px] items-center justify-center rounded-full transition"
         style={
           earned
             ? {
                 color: isGradient ? "#fff" : `rgb(${c})`,
                 background: isGradient
-                  ? "linear-gradient(135deg, rgba(246,178,60,.24), rgba(182,160,255,.24))"
-                  : `rgba(${c},.16)`,
-                border: `1px solid rgba(${c},.7)`,
-                boxShadow: `0 0 18px rgba(${c},.5), inset 0 0 10px rgba(${c},.22)${
-                  selected ? `, 0 0 0 3px rgba(${c},.35)` : ""
+                  ? "linear-gradient(135deg, rgba(246,178,60,.28), rgba(182,160,255,.28))"
+                  : `rgba(${c},.2)`,
+                border: `1px solid rgba(${c},.75)`,
+                boxShadow: `0 0 20px rgba(${c},.55), inset 0 0 12px rgba(${c},.25)${
+                  selected ? `, 0 0 0 3px rgba(${c},.4)` : ""
                 }`,
               }
             : {
-                color: "rgba(238,241,251,.32)",
-                background: "rgba(255,255,255,.025)",
+                color: "rgba(238,241,251,.42)",
+                background: "rgba(255,255,255,.05)",
                 border: `1px ${selected ? "solid" : "dashed"} rgba(255,255,255,${
-                  selected ? ".28" : ".13"
+                  selected ? ".32" : ".18"
                 })`,
               }
         }
       >
-        {earned ? badge.glyph : "◇"}
+        <Icon className="h-[22px] w-[22px]" strokeWidth={1.6} />
       </span>
       <span
-        className="text-center text-[8.5px] leading-tight"
-        style={{ color: earned ? "rgba(238,241,251,.68)" : "rgba(238,241,251,.3)" }}
+        className="text-center text-[9px] leading-tight"
+        style={{ color: earned ? "rgba(238,241,251,.72)" : "rgba(238,241,251,.38)" }}
       >
         {badge.name}
       </span>
@@ -188,79 +226,6 @@ function AchievementsModal() {
 
   const total = badges?.length ?? 0;
 
-  // Measure the laid-out medals and connect each to its 1-2 nearest neighbours
-  // in the row above — the pyramid becomes a real constellation. Earned-to-earned
-  // links glow; the rest are faint. Re-measures on resize.
-  const pyramidRef = React.useRef<HTMLDivElement | null>(null);
-  const medalEls = React.useRef<Map<string, HTMLElement>>(new Map());
-  const [edges, setEdges] = React.useState<
-    Array<{ x1: number; y1: number; x2: number; y2: number; strong: boolean }>
-  >([]);
-  const [box, setBox] = React.useState<{ w: number; h: number }>({ w: 0, h: 0 });
-
-  React.useLayoutEffect(() => {
-    if (!open || !badges || badges.length === 0) return;
-    const measure = () => {
-      const cont = pyramidRef.current;
-      if (!cont) return;
-      const cb = cont.getBoundingClientRect();
-      if (cb.width === 0) return;
-      const centers = new Map<string, { x: number; y: number; earned: boolean }>();
-      for (const b of badges) {
-        const el = medalEls.current.get(b.slug);
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        centers.set(b.slug, {
-          x: r.left + r.width / 2 - cb.left,
-          y: r.top + r.height / 2 - cb.top,
-          earned: b.earned,
-        });
-      }
-      const es: Array<{ x1: number; y1: number; x2: number; y2: number; strong: boolean }> = [];
-      // Vertical lattice: each star to its 1-2 nearest in the row above.
-      for (let k = 1; k < rows.length; k++) {
-        const above = rows[k - 1].items;
-        for (const item of rows[k].items) {
-          const p = centers.get(item.slug);
-          if (!p) continue;
-          const cand = above
-            .map((a) => ({ a, q: centers.get(a.slug) }))
-            .filter(
-              (o): o is { a: Badge; q: { x: number; y: number; earned: boolean } } => !!o.q
-            )
-            .sort((u, v) => Math.abs(u.q.x - p.x) - Math.abs(v.q.x - p.x));
-          const links = Math.min(2, cand.length);
-          for (let i = 0; i < links; i++) {
-            const q = cand[i].q;
-            es.push({ x1: p.x, y1: p.y, x2: q.x, y2: q.y, strong: p.earned && cand[i].a.earned });
-          }
-        }
-      }
-      // Horizontal links: adjacent stars in the same row, so a lit tier reads as
-      // a connected chain, not five separate points.
-      for (const row of rows) {
-        for (let i = 0; i < row.items.length - 1; i++) {
-          const a = centers.get(row.items[i].slug);
-          const b2 = centers.get(row.items[i + 1].slug);
-          if (!a || !b2) continue;
-          es.push({ x1: a.x, y1: a.y, x2: b2.x, y2: b2.y, strong: a.earned && b2.earned });
-        }
-      }
-      setBox({ w: cb.width, h: cb.height });
-      setEdges(es);
-    };
-    const raf = requestAnimationFrame(measure);
-    const cont = pyramidRef.current;
-    const ro = new ResizeObserver(measure);
-    if (cont) ro.observe(cont);
-    window.addEventListener("resize", measure);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [open, badges, rows]);
-
   return (
     <AnimatePresence>
       {open ? (
@@ -277,22 +242,22 @@ function AchievementsModal() {
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "radial-gradient(125% 82% at 50% -8%, #172150 0%, #0b1230 34%, #060a1c 62%, #03040e 100%)",
+                "radial-gradient(125% 88% at 50% -4%, #313a7a 0%, #1d2556 30%, #131a3e 56%, #0c1128 82%, #080b1e 100%)",
             }}
           />
-          <div className="pointer-events-none absolute inset-0 opacity-[0.6]">
-            <ConstellationAnchor seed="your-constellation" accent={{ r: 182, g: 160, b: 255 }} />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.9]">
+            <ConstellationAnchor seed="your-constellation" accent={{ r: 198, g: 182, b: 255 }} />
           </div>
           <div
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                "radial-gradient(72% 44% at 50% 4%, rgba(182,160,255,0.16), transparent 62%), radial-gradient(96% 40% at 50% 114%, rgba(246,178,60,0.14), transparent 60%)",
+                "radial-gradient(74% 48% at 50% 2%, rgba(182,160,255,0.28), transparent 62%), radial-gradient(100% 44% at 50% 114%, rgba(246,178,60,0.22), transparent 60%)",
             }}
           />
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-36"
-            style={{ background: "linear-gradient(to top, rgba(246,138,60,0.11), transparent)" }}
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+            style={{ background: "linear-gradient(to top, rgba(246,146,66,0.16), transparent)" }}
           />
           <style>{`@keyframes elTwinkle{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.9)}50%{opacity:.95;transform:translate(-50%,-50%) scale(1.1)}}`}</style>
 
@@ -328,49 +293,19 @@ function AchievementsModal() {
                 {loading && !badges ? (
                   <div className="text-[13px] text-white/40">Reading your sky…</div>
                 ) : (
-                  <div ref={pyramidRef} className="relative">
-                    <svg
-                      className="pointer-events-none absolute inset-0 overflow-visible"
-                      width={box.w}
-                      height={box.h}
-                      aria-hidden="true"
-                    >
-                      {edges.map((e, i) => (
-                        <line
-                          key={i}
-                          x1={e.x1}
-                          y1={e.y1}
-                          x2={e.x2}
-                          y2={e.y2}
-                          strokeLinecap="round"
-                          stroke={e.strong ? "rgba(191,175,255,0.55)" : "rgba(255,255,255,0.07)"}
-                          strokeWidth={e.strong ? 1.3 : 1}
-                          style={
-                            e.strong
-                              ? { filter: "drop-shadow(0 0 3px rgba(182,160,255,0.55))" }
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </svg>
-                    <div className="relative flex flex-col items-center gap-5">
-                      {rows.map((row) => (
-                        <div key={row.n} className="flex justify-center gap-3.5">
-                          {row.items.map((b) => (
-                            <Medal
-                              key={b.slug}
-                              badge={b}
-                              selected={selected?.slug === b.slug}
-                              onClick={() => setSelected(b)}
-                              starRef={(el) => {
-                                if (el) medalEls.current.set(b.slug, el);
-                                else medalEls.current.delete(b.slug);
-                              }}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
+                  <div className="relative flex flex-col items-center gap-5">
+                    {rows.map((row) => (
+                      <div key={row.n} className="flex justify-center gap-3.5">
+                        {row.items.map((b) => (
+                          <Medal
+                            key={b.slug}
+                            badge={b}
+                            selected={selected?.slug === b.slug}
+                            onClick={() => setSelected(b)}
+                          />
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
