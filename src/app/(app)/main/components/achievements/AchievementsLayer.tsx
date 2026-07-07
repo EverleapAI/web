@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import ConstellationAnchor from "../ui/ConstellationAnchor";
+import { JourneyProgressPM } from "./JourneyProgressPM";
 
 // Placeholder badge art — a distinct line-icon per badge so the pyramid reads as
 // a real collection, not fifteen identical diamonds. Stand-ins until real badge
@@ -474,10 +475,66 @@ function BadgeSync() {
   return null;
 }
 
+// ---------- the PM "Journey Progress" modal ----------
+// A thin fullscreen shell around the PM's embedded module, opened by the same
+// Awards trophy. Flip USE_JOURNEY to swap between this and the constellation
+// while we're comparing the two directions.
+function JourneyModal() {
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_ACHIEVEMENTS, onOpen);
+    return () => window.removeEventListener(OPEN_ACHIEVEMENTS, onOpen);
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          key="journey"
+          className="fixed inset-0 z-[120] overflow-y-auto bg-[#0b0f18]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
+        >
+          <div className="mx-auto max-w-[460px] px-4 py-6">
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-white/55 transition hover:text-white"
+                aria-label="Close achievements"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <JourneyProgressPM />
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+// While the two directions are being compared, the Awards trophy opens the
+// Journey grid. Set to false to restore the constellation modal.
+const USE_JOURNEY = true;
+
 export default function AchievementsLayer() {
   return (
     <>
-      <AchievementsModal />
+      {USE_JOURNEY ? <JourneyModal /> : <AchievementsModal />}
       <BadgeEarnToast />
       <BadgeSync />
     </>
