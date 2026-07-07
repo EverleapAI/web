@@ -200,7 +200,7 @@ export default function IntroPage(): React.JSX.Element {
                 </h1>
               ) : null}
 
-              <p className="mt-4 text-[15px] leading-[1.62] text-white/78">
+              <p className="mt-4 text-left text-[15px] leading-[1.62] text-white/78">
                 {synth?.body ?? FALLBACK_LINE}
               </p>
 

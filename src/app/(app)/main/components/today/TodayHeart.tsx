@@ -34,6 +34,21 @@ function ensureStop(s: string): string {
   return /[.!?]$/.test(t) ? t : `${t}.`;
 }
 
+// Keep a read to roughly four lines: if it runs long, drop whole trailing
+// sentences until it fits (never a mid-sentence chop).
+function capRead(text: string, maxChars: number): string {
+  const t = text.trim();
+  if (t.length <= maxChars) return t;
+  const sentences = t.split(/(?<=[.!?])\s+/);
+  let out = "";
+  for (const s of sentences) {
+    const next = out ? `${out} ${s}` : s;
+    if (next.length > maxChars && out) break;
+    out = next;
+  }
+  return out || t.slice(0, maxChars).replace(/\s+\S*$/, "").trim();
+}
+
 // The establishing read, rotated across visits so an early user doesn't see the
 // exact same paragraph every day. Options: the synthesis body paragraph, plus
 // grounded reinforcement lines paired into ~2-sentence reads (so the weight
@@ -63,7 +78,7 @@ function establishingRead(input: {
 
   if (options.length === 0) return input.fallback;
   const dayIndex = Math.floor(Date.now() / 86_400_000);
-  return options[dayIndex % options.length];
+  return capRead(options[dayIndex % options.length], 220);
 }
 
 export function TodayHeart({
@@ -134,7 +149,9 @@ export function TodayHeart({
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
   const showMeter = hasCoverage;
-  const showPulse = hasCoverage && !rhythm.firstBeat;
+  // Show the rhythm only when there's an actual beat this week — an empty "0
+  // beats" chart reads as a scolding, not a signal.
+  const showPulse = hasCoverage && !rhythm.firstBeat && rhythm.total7d > 0;
   // A do/look move isn't itself the story step, so invite it explicitly under
   // the progress meter. A learn move already IS "continue your story".
   const showStoryNudge = showMeter && dispatch.type !== "learn";
