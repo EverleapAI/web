@@ -488,19 +488,21 @@ export default function MainHomePage() {
 
             <InProgressMissionNudge />
 
-            <section className="mt-5 px-4">
-              {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
-                <TodayTinyTaskCard
-                  dark={dark}
-                  tasks={todayGuidance.tiny_tasks}
-                />
-              ) : (
-                <TinyTaskCard
-                  dark={dark}
-                  useLocal={mounted}
-                  definition={nextSteps.tinyTask}
-                />
-              )}
+            <section className="mt-5">
+              <SectionCard tone="neutral" className="px-4 py-5">
+                {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
+                  <TodayTinyTaskCard
+                    dark={dark}
+                    tasks={todayGuidance.tiny_tasks}
+                  />
+                ) : (
+                  <TinyTaskCard
+                    dark={dark}
+                    useLocal={mounted}
+                    definition={nextSteps.tinyTask}
+                  />
+                )}
+              </SectionCard>
             </section>
 
             <div className="mt-5 flex items-center justify-center gap-4">

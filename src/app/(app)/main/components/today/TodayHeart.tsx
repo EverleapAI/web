@@ -120,9 +120,12 @@ export function TodayHeart({
         </div>
       </div>
 
-      {bigRead ? (
-        <WelcomeName firstName={welcome.firstName} accentRgb={rgb} />
-      ) : null}
+      {/* The arrival masthead — the centered anchor in every state. */}
+      <WelcomeName
+        firstName={welcome.firstName}
+        accentRgb={rgb}
+        isNewUser={welcome.isNewUser}
+      />
 
       {/* The agentic lead — present in EVERY state. A fuller establishing read
           while we're still learning them; a grounded, rotating one-liner once we
