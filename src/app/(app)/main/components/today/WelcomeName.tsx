@@ -1,7 +1,8 @@
 "use client";
 
-// First-view arrival moment — shown only for a brand-new user's very first
-// Today. Welcome + their name, so it reads like being greeted, not booted up.
+// Arrival moment — shown through the establishing phase (before any coverage
+// exists), alongside the agentic read. Welcome + their name, so it reads like
+// being greeted, not booted up.
 
 export function WelcomeName({
   firstName,

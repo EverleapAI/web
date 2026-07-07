@@ -79,7 +79,6 @@ export function TodayHeart({
       ? "Adding…"
       : dispatch.destination.label;
 
-  const isNew = welcome.isNewUser;
   const hasCoverage = coverage.filledCount > 0;
 
   // Every Today opens with an agentic lead — a real "we know you" read, never a
@@ -121,7 +120,7 @@ export function TodayHeart({
         </div>
       </div>
 
-      {isNew ? (
+      {bigRead ? (
         <WelcomeName firstName={welcome.firstName} accentRgb={rgb} />
       ) : null}
 
