@@ -12,7 +12,7 @@ import { ChevronRight, Check, RotateCcw } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
-import { CoverageMeter } from "./CoverageMeter";
+import { StoryRail } from "./StoryRail";
 import { PulseTrace } from "./PulseTrace";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
@@ -134,12 +134,7 @@ export function TodayHeart({
   const hasCoverage = coverage.filledCount > 0;
 
   // Every Today opens with an agentic lead — a real "we know you" read, never a
-  // bare move. Early on (no coverage yet) it's the fuller establishing read from
-  // the synthesis body; once we actually know them it's the grounded, rotating
-  // one-liner reinforcement. Present in every state.
-  const leadEyebrow = hasCoverage
-    ? data.reinforcement?.eyebrow ?? "What I keep noticing about you"
-    : "What I'm already seeing in you";
+  // bare move. Voice over chrome: no eyebrow label, the prose just speaks.
   const leadLine = establishingRead({
     body: data.synthesis?.body,
     reads: data.reads,
@@ -166,24 +161,21 @@ export function TodayHeart({
 
   return (
     <div className="relative">
-      {/* top row: dispatch identity + the beating "Today" pulse */}
+      {/* top row: just the dispatch mark + a live pulse. Voice over chrome —
+          the type glyph is the only signal; no "Do · in the world", no "Today"
+          (you're on the Today tab already). */}
       <div className="flex items-center justify-between">
-        <DispatchGlyph type={dispatch.type} />
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span
-              className="absolute inline-flex h-full w-full rounded-full opacity-60 motion-safe:animate-ping"
-              style={{ background: `rgb(${rgb})` }}
-            />
-            <span
-              className="relative inline-flex h-2 w-2 rounded-full"
-              style={{ background: `rgb(${rgb})` }}
-            />
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45">
-            Today
-          </span>
-        </div>
+        <DispatchGlyph type={dispatch.type} showLabel={false} />
+        <span className="relative flex h-2 w-2" aria-hidden="true">
+          <span
+            className="absolute inline-flex h-full w-full rounded-full opacity-60 motion-safe:animate-ping"
+            style={{ background: `rgb(${rgb})` }}
+          />
+          <span
+            className="relative inline-flex h-2 w-2 rounded-full"
+            style={{ background: `rgb(${rgb})` }}
+          />
+        </span>
       </div>
 
       {/* The arrival masthead — the centered anchor in every state. */}
@@ -193,21 +185,12 @@ export function TodayHeart({
         isNewUser={welcome.isNewUser}
       />
 
-      {/* The agentic lead — present in EVERY state. A fuller establishing read
-          while we're still learning them; a grounded, rotating one-liner once we
-          know them. Never a bare move. */}
+      {/* The agentic lead — the hero. A "we know you" read in every state,
+          neutral prose so the accent stays a spot, never a bare move. */}
       {leadLine ? (
-        <div className="mt-5">
-          <div
-            className="text-[10px] font-bold uppercase tracking-[0.18em]"
-            style={{ color: `rgb(${rgb})` }}
-          >
-            {leadEyebrow}
-          </div>
-          <p className="mt-2.5 max-w-[560px] text-[18px] leading-[1.55] text-white/90">
-            {leadLine}
-          </p>
-        </div>
+        <p className="mt-5 max-w-[560px] text-[18px] leading-[1.55] text-white/90">
+          {leadLine}
+        </p>
       ) : null}
 
       {/* The action — the move, its when/time, and the one bright CTA, grouped
@@ -219,46 +202,26 @@ export function TodayHeart({
         </h1>
 
         {dispatch.meta ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {[
-              { k: "When", v: dispatch.meta.when },
-              { k: "Time", v: dispatch.meta.duration },
-            ].map((m) => (
-              <span
-                key={m.k}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px]"
-                style={{
-                  background: `rgba(${rgb},0.10)`,
-                  border: `1px solid rgba(${rgb},0.24)`,
-                }}
-              >
-                <span
-                  className="font-bold uppercase tracking-wide"
-                  style={{ color: `rgba(${rgb},0.9)` }}
-                >
-                  {m.k}
-                </span>
-                <span className="text-white/70">{m.v}</span>
-              </span>
-            ))}
+          <div className="mt-2 text-[12px] tabular-nums text-white/40">
+            {dispatch.meta.duration} · {dispatch.meta.when}
           </div>
         ) : null}
 
+        {/* A calm spot-colour pill, not a full-width flood. Prominence is
+            rationed — the read is the hero, this is the commit. */}
         <button
           type="button"
           onClick={dispatch.save ? handleSaveAction : onPrimary}
           disabled={saving || saved}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-[14px] font-semibold transition hover:brightness-[1.08] disabled:opacity-80"
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 disabled:opacity-70"
           style={{
-            color: "rgba(255,255,255,0.97)",
-            background: `linear-gradient(135deg, rgba(${rgb},0.34), rgba(${rgb},0.15))`,
-            border: `1px solid rgba(${rgb},0.5)`,
-            boxShadow: `0 10px 30px rgba(${rgb},0.26), inset 0 1px 0 rgba(255,255,255,0.16)`,
+            color: `rgb(${rgb})`,
+            background: `rgba(${rgb},0.12)`,
+            border: `1px solid rgba(${rgb},0.42)`,
+            boxShadow: `0 4px 16px rgba(${rgb},0.12)`,
           }}
         >
-          <span style={{ textShadow: `0 0 18px rgba(${rgb},0.5)` }}>
-            {primaryLabel}
-          </span>
+          <span>{primaryLabel}</span>
           {saved ? (
             <Check className="h-4 w-4" />
           ) : (
@@ -267,14 +230,32 @@ export function TodayHeart({
         </button>
       </div>
 
-      {/* Progress — the picture forming, plus an explicit invite to keep building
-          the story that fills it. Ambient rhythm sits below the progress. */}
-      {showMeter ? <CoverageMeter coverage={coverage} accentRgb={rgb} /> : null}
-      {showStoryNudge ? (
+      {/* Progress — "your story is forming", which also opens achievements. */}
+      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
+
+      {/* ONE adaptive secondary nudge — a single named loose thread if there is
+          one, otherwise the invitation to fill the next gap. Never both, never
+          a growing stack. */}
+      {data.looseThread?.title ? (
+        <button
+          type="button"
+          onClick={() => router.push(data.looseThread!.route)}
+          className="group mt-3 flex w-full items-center gap-2 px-1 text-left"
+        >
+          <RotateCcw
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: "rgba(55,211,160,0.85)" }}
+          />
+          <span className="flex-1 text-[12.5px] font-medium text-[rgb(55,211,160)] transition group-hover:brightness-110">
+            Reflect on “{data.looseThread.title}”
+          </span>
+          <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(55,211,160,0.7)" }} />
+        </button>
+      ) : showStoryNudge ? (
         <button
           type="button"
           onClick={() => router.push(gapNudge.route)}
-          className="group mt-2.5 flex w-full items-center gap-1.5 px-1 text-left"
+          className="group mt-3 flex w-full items-center gap-1.5 px-1 text-left"
         >
           <span
             className="text-[12.5px] font-medium"
@@ -288,25 +269,9 @@ export function TodayHeart({
           />
         </button>
       ) : null}
-      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
 
-      {/* A finished-but-unreflected action: a whisper, not the room. */}
-      {data.looseThread?.title ? (
-        <button
-          type="button"
-          onClick={() => router.push(data.looseThread!.route)}
-          className="group mt-4 flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left transition hover:bg-white/[0.03]"
-        >
-          <RotateCcw
-            className="h-3.5 w-3.5 shrink-0"
-            style={{ color: "rgba(55,211,160,0.75)" }}
-          />
-          <span className="flex-1 text-[12px] leading-snug text-white/45 transition group-hover:text-white/70">
-            Still open · reflect on “{data.looseThread.title}”
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 text-white/25" />
-        </button>
-      ) : null}
+      {/* Ambient rhythm — only when there's an actual beat this week. */}
+      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
     </div>
   );
 }
