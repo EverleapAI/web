@@ -135,11 +135,15 @@ export function TodayHeart({
 
   // Every Today opens with an agentic lead — a real "we know you" read, never a
   // bare move. Voice over chrome: no eyebrow label, the prose just speaks.
-  const leadLine = establishingRead({
-    body: data.synthesis?.body,
-    reads: data.reads,
-    fallback: data.reinforcement?.line ?? "",
-  });
+  // Prefer the woven briefing (who you are → what you've done here → what's
+  // next); fall back to the rotating establishing read for older packs.
+  const leadLine =
+    data.lead?.trim() ||
+    establishingRead({
+      body: data.synthesis?.body,
+      reads: data.reads,
+      fallback: data.reinforcement?.line ?? "",
+    });
 
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).

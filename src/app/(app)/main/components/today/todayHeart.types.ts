@@ -103,6 +103,9 @@ export type TodayHeartData = {
   // Pool of grounded, standalone reads to rotate the establishing lead across
   // visits, so a new/early user doesn't see the same paragraph every day.
   reads?: string[] | null;
+  // The woven briefing read (who you are → what you've done here → what's next),
+  // generated per state. Preferred hero read when present; refreshes on drift.
+  lead?: string | null;
   looseThread?: LooseThread | null;
 };
 

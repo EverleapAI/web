@@ -195,6 +195,7 @@ export default function MainHomePage() {
             synthesis: g.synthesis ?? null,
             reinforcement: g.reinforcement ?? prev?.reinforcement ?? null,
             reads: g.reads ?? prev?.reads ?? null,
+            lead: g.lead ?? prev?.lead ?? null,
             looseThread: g.looseThread ?? null,
           }));
         }
@@ -254,6 +255,7 @@ export default function MainHomePage() {
               synthesis: guidanceData.synthesis ?? null,
               reinforcement: guidanceData.reinforcement ?? null,
               reads: guidanceData.reads ?? null,
+              lead: guidanceData.lead ?? null,
               looseThread: guidanceData.looseThread ?? null,
             });
           }

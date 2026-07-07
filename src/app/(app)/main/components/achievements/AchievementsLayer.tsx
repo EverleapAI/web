@@ -209,7 +209,7 @@ function AchievementsModal() {
             </div>
 
             {/* pyramid */}
-            <div className="flex flex-1 flex-col items-center justify-center py-8">
+            <div className="flex flex-1 flex-col items-center justify-start pb-8 pt-10">
               {loading && !badges ? (
                 <div className="text-[13px] text-white/40">Loading…</div>
               ) : (
