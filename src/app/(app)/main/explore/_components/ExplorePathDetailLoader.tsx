@@ -68,19 +68,50 @@ function BackToLane({ lane }: { lane: Lane }) {
   );
 }
 
+// When a path isn't cached yet, generating it takes a few seconds — so instead
+// of a bare skeleton, we narrate what's happening (like the post-RegAuth reveal)
+// so the user is never left staring at a blank screen.
+const GENERATING_MESSAGES = [
+  "Pulling together what this path is really like…",
+  "Checking real-world data from the U.S. Department of Labor…",
+  "Looking at the day-to-day, the outlook, and how people get there…",
+  "Shaping it around what we already know about you…",
+];
+
 function DetailLoading({ lane }: { lane: Lane }) {
+  const [i, setI] = React.useState(0);
+  React.useEffect(() => {
+    const id = window.setInterval(
+      () => setI((n) => (n + 1) % GENERATING_MESSAGES.length),
+      2600
+    );
+    return () => window.clearInterval(id);
+  }, []);
+
   return (
     <div className="space-y-4 pb-24">
       <BackToLane lane={lane} />
       <SectionCard tone="hero">
-        <div className="max-w-2xl animate-pulse">
-          <div className="h-3 w-28 rounded bg-white/10" />
-          <div className="mt-4 h-8 w-3/4 rounded-lg bg-white/10" />
-          <div className="mt-5 space-y-2.5">
-            <div className="h-3.5 w-full rounded bg-white/[0.07]" />
-            <div className="h-3.5 w-[92%] rounded bg-white/[0.07]" />
-            <div className="h-3.5 w-[80%] rounded bg-white/[0.07]" />
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">
+            <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/25 border-t-white/70" />
+            Putting this together
           </div>
+          <p
+            key={i}
+            className="mt-4 text-[17px] font-medium leading-[1.5] text-white/85 [animation:fadeIn_.5s_ease]"
+          >
+            {GENERATING_MESSAGES[i]}
+          </p>
+          <p className="mt-2 text-[13px] text-white/45">
+            This one&rsquo;s new, so it takes a few seconds. It&rsquo;ll be instant next time.
+          </p>
+          <div className="mt-5 space-y-2.5 animate-pulse">
+            <div className="h-3.5 w-full rounded bg-white/[0.06]" />
+            <div className="h-3.5 w-[92%] rounded bg-white/[0.06]" />
+            <div className="h-3.5 w-[80%] rounded bg-white/[0.06]" />
+          </div>
+          <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}`}</style>
         </div>
       </SectionCard>
     </div>
