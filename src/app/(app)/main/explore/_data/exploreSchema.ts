@@ -210,6 +210,8 @@ export type ExplorePath = {
   title: string;
   /** O*NET / cause / activity code used for dedup + canonicalization. */
   taxonomyCode?: string;
+  /** O*NET Bright Outlook (rapid growth / many openings) — Work deck cards. */
+  brightOutlook?: boolean;
 
   theme?: PathTheme;
 

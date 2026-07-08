@@ -9,7 +9,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
@@ -60,6 +60,19 @@ function PathCard({ path }: { path: ExplorePath }) {
           <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[22px]">
             {path.card.title}
           </h2>
+          {path.brightOutlook ? (
+            <span
+              className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+              style={{
+                color: "rgb(120,220,170)",
+                backgroundColor: "rgba(55,211,160,0.12)",
+                border: "1px solid rgba(55,211,160,0.4)",
+              }}
+            >
+              <TrendingUp className="h-3 w-3" />
+              Bright Outlook
+            </span>
+          ) : null}
         </div>
       </div>
 
