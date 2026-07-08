@@ -18,6 +18,7 @@ import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, rgba } from "./exploreUi";
 import { WhyFitsSection, getSectionMenu } from "./detailSections";
+import { ExploreAttribution } from "./ExploreAttribution";
 import { emitActionsChanged } from "@/lib/actionsBus";
 
 function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
@@ -192,6 +193,9 @@ export function ExplorePathDetail({
 
       {/* Menu into the deep sections (each its own screen) */}
       <SectionMenu path={path} accent={accent} />
+
+      {/* Source citations + required O*NET/DOL attribution */}
+      <ExploreAttribution path={path} />
     </div>
   );
 }

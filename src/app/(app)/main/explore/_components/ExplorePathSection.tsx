@@ -16,6 +16,7 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath } from "../_data/exploreSchema";
 import { ExplorePathDetail } from "./ExplorePathDetail";
+import { ExploreAttribution } from "./ExploreAttribution";
 import { SectionBody, getSectionMenu, type SectionKey } from "./detailSections";
 
 export function ExplorePathSection({
@@ -54,6 +55,7 @@ export function ExplorePathSection({
 
       <SectionCard tone="neutral">
         <SectionBody path={path} section={section} accent={accent} />
+        <ExploreAttribution path={path} />
       </SectionCard>
     </div>
   );

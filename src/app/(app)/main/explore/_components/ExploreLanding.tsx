@@ -17,6 +17,7 @@ import { LANE_ACCENT, laneAccent, type ExplorePath, type Lane } from "../_data/e
 import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
 import { LANE_ICON, LANE_WORD, rgba } from "./exploreUi";
+import { OnetNotice } from "./ExploreAttribution";
 
 function getIntro(
   lane: Lane,
@@ -145,6 +146,9 @@ export function ExploreLanding({
           ) : null}
         </div>
       ) : null}
+
+      {/* Career data on this lane is grounded in U.S. Dept. of Labor sources. */}
+      {lane === "work" ? <OnetNotice className="px-1 pt-2" /> : null}
     </div>
   );
 }
