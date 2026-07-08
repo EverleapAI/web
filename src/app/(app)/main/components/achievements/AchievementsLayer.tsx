@@ -376,7 +376,7 @@ function AchievementsModal() {
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-[16px]"
+                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[16px]"
                       style={{
                         color: selected.earned
                           ? `rgb(${rgb(selected.accent)})`
@@ -394,31 +394,46 @@ function AchievementsModal() {
                     >
                       {selected.earned ? selected.glyph : "◇"}
                     </span>
-                    <div className="text-[15px] font-semibold text-white">
-                      {selected.name}
+                    <div>
+                      <div className="text-[15px] font-semibold text-white">
+                        {selected.name}
+                      </div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/40">
+                        {selected.highSignal
+                          ? "High Signal"
+                          : selected.earned
+                          ? "Earned"
+                          : "Not yet earned"}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Two-tier state: Complete, then the optional High Signal depth. */}
-                  <div className="mt-4 space-y-3.5">
-                    <TierRow
-                      done={selected.earned}
-                      accentRgb="55,211,160"
-                      label="Complete"
-                      sub={
-                        selected.earned
-                          ? selected.description
-                          : selected.hint ?? selected.description
-                      }
-                    />
-                    {selected.hasHighSignal ? (
+                  {/* the badge's own story — what this one means */}
+                  <p className="mt-3.5 text-[12.5px] leading-[1.5] text-white/70">
+                    {selected.description}
+                  </p>
+
+                  {/* How you earn it: the two real tiers, each with its own path. */}
+                  <div className="mt-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                      How you earn it
+                    </div>
+                    <div className="mt-3 space-y-3.5">
                       <TierRow
-                        done={!!selected.highSignal}
-                        accentRgb={rgb(selected.accent)}
-                        label="High Signal"
-                        sub={selected.highSignalHint ?? "Go deeper on this one."}
+                        done={selected.earned}
+                        accentRgb="55,211,160"
+                        label="Complete"
+                        sub={selected.hint ?? selected.description}
                       />
-                    ) : null}
+                      {selected.hasHighSignal ? (
+                        <TierRow
+                          done={!!selected.highSignal}
+                          accentRgb={rgb(selected.accent)}
+                          label="High Signal"
+                          sub={selected.highSignalHint ?? "Go deeper on this one."}
+                        />
+                      ) : null}
+                    </div>
                   </div>
                 </motion.div>
               ) : (
