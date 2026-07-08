@@ -19,9 +19,10 @@ import { ExplorePathDetail } from "./ExplorePathDetail";
 import { ExplorePathSection } from "./ExplorePathSection";
 import { SectionCard } from "../../components/ui/SectionCard";
 import type { SectionKey } from "./detailSections";
+import type { OnetDetail } from "./OnetFacts";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 
-type CatalogPath = { path: ExplorePath; whyYou: string | null };
+type CatalogPath = { path: ExplorePath; whyYou: string | null; onet: OnetDetail | null };
 
 async function fetchCatalogPath(
   lane: Lane,
@@ -38,9 +39,14 @@ async function fetchCatalogPath(
       ok?: boolean;
       path?: ExplorePath;
       match?: { whyYou?: string };
+      onet?: OnetDetail;
     };
     if (!data?.ok || !data.path) return null;
-    return { path: data.path, whyYou: data.match?.whyYou?.trim() || null };
+    return {
+      path: data.path,
+      whyYou: data.match?.whyYou?.trim() || null,
+      onet: data.onet ?? null,
+    };
   } catch {
     return null;
   }
@@ -114,6 +120,7 @@ export function ExplorePathDetailLoader({
 }) {
   const [path, setPath] = React.useState<ExplorePath | null>(fallback);
   const [whyYou, setWhyYou] = React.useState<string | null>(null);
+  const [onet, setOnet] = React.useState<OnetDetail | null>(null);
   const [missing, setMissing] = React.useState(false);
 
   React.useEffect(() => {
@@ -123,6 +130,7 @@ export function ExplorePathDetailLoader({
       if (catalog) {
         setPath(catalog.path);
         setWhyYou(catalog.whyYou);
+        setOnet(catalog.onet);
       } else if (!fallback) {
         // No mock and the catalog returned nothing — genuinely unavailable.
         setMissing(true);
@@ -135,7 +143,7 @@ export function ExplorePathDetailLoader({
     return section ? (
       <ExplorePathSection path={path} section={section} />
     ) : (
-      <ExplorePathDetail path={path} whyYou={whyYou} />
+      <ExplorePathDetail path={path} whyYou={whyYou} onet={onet} />
     );
   }
   if (missing) return <DetailMissing lane={lane} />;

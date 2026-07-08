@@ -19,6 +19,7 @@ import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, rgba } from "./exploreUi";
 import { WhyFitsSection, getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
+import { OnetFacts, type OnetDetail } from "./OnetFacts";
 import { emitActionsChanged } from "@/lib/actionsBus";
 
 function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
@@ -47,11 +48,14 @@ function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
 export function ExplorePathDetail({
   path,
   whyYou = null,
+  onet = null,
 }: {
   path: ExplorePath;
   // The user's personalized "why this fits you" from the Work match layer, if
   // any — overlaid on the hero. The rest of the page is shared catalog content.
   whyYou?: string | null;
+  // Real, source-grounded O*NET facts for a Work occupation, if resolved.
+  onet?: OnetDetail | null;
 }) {
   const accent = laneAccent(path);
   const ov = path.overview;
@@ -190,6 +194,9 @@ export function ExplorePathDetail({
           </div>
         </SectionCard>
       ) : null}
+
+      {/* Real, source-grounded O*NET occupation data (Work only) */}
+      {onet ? <OnetFacts onet={onet} accent={accent} /> : null}
 
       {/* Menu into the deep sections (each its own screen) */}
       <SectionMenu path={path} accent={accent} />
