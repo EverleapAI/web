@@ -84,7 +84,15 @@ function computeScene(w: number, h: number, seed: string): Scene {
   return { gx, gy, stars, edges, arc };
 }
 
-function render(ctx: CanvasRenderingContext2D, w: number, h: number, accent: Rgb, scene: Scene, t: number) {
+function render(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  accent: Rgb,
+  scene: Scene,
+  t: number,
+  showLinks: boolean
+) {
   const { r, g, b } = accent;
   const rgba = (a: number) => `rgba(${r},${g},${b},${a})`;
 
@@ -98,26 +106,28 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, accent: Rgb
   ctx.fillStyle = bloom;
   ctx.fillRect(0, 0, w, h);
 
-  // Constellation edges.
-  ctx.lineWidth = 1;
-  for (const e of scene.edges) {
-    ctx.strokeStyle = rgba(e.alpha);
-    ctx.beginPath();
-    ctx.moveTo(e.ax, e.ay);
-    ctx.lineTo(e.bx, e.by);
-    ctx.stroke();
-  }
+  // Constellation edges + orbital arc — the "lines". Skippable: some surfaces
+  // (e.g. the achievements sky) want drifting dots and glow only.
+  if (showLinks) {
+    ctx.lineWidth = 1;
+    for (const e of scene.edges) {
+      ctx.strokeStyle = rgba(e.alpha);
+      ctx.beginPath();
+      ctx.moveTo(e.ax, e.ay);
+      ctx.lineTo(e.bx, e.by);
+      ctx.stroke();
+    }
 
-  // Soft orbital arc for a sense of journey.
-  ctx.save();
-  ctx.translate(scene.arc.cx, scene.arc.cy);
-  ctx.rotate(scene.arc.rot);
-  ctx.strokeStyle = rgba(0.1);
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, scene.arc.rx, scene.arc.ry, 0, 0, TAU);
-  ctx.stroke();
-  ctx.restore();
+    ctx.save();
+    ctx.translate(scene.arc.cx, scene.arc.cy);
+    ctx.rotate(scene.arc.rot);
+    ctx.strokeStyle = rgba(0.1);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, scene.arc.rx, scene.arc.ry, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // Stars, each twinkling on its own gentle phase.
   for (const s of scene.stars) {
@@ -142,10 +152,12 @@ export function ConstellationAnchor({
   seed,
   accent,
   className = "",
+  showLinks = true,
 }: {
   seed: string;
   accent: Rgb;
   className?: string;
+  showLinks?: boolean;
 }) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -181,7 +193,7 @@ export function ConstellationAnchor({
     const paint = (t: number) => {
       if (!scene) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      render(ctx, w, h, accent, scene, t);
+      render(ctx, w, h, accent, scene, t, showLinks);
     };
 
     let raf = 0;
@@ -231,7 +243,7 @@ export function ConstellationAnchor({
       io.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed, accent.r, accent.g, accent.b]);
+  }, [seed, accent.r, accent.g, accent.b, showLinks]);
 
   return (
     <div

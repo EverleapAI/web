@@ -9,6 +9,7 @@ import * as React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,
+  Check,
   Sparkles,
   BookOpen,
   RefreshCw,
@@ -72,6 +73,11 @@ type Badge = {
   glyph: string;
   earned: boolean;
   earnedAt: string | null;
+  // Tier 2 — the optional "High Signal" depth.
+  hasHighSignal?: boolean;
+  highSignal?: boolean;
+  highSignalHint?: string | null;
+  highSignalAt?: string | null;
 };
 
 const ACCENT_RGB: Record<string, string> = {
@@ -100,6 +106,8 @@ function Medal({
   const c = rgb(badge.accent);
   const isGradient = badge.accent === "gradient";
   const earned = badge.earned;
+  // A cleared High Signal tier reads as a brighter, double-ringed star.
+  const highSignal = !!badge.highSignal && earned;
   const Icon = PLACEHOLDER_ICONS[badge.slug] ?? Star;
 
   return (
@@ -125,11 +133,13 @@ function Medal({
                 color: isGradient ? "#fff" : `rgb(${c})`,
                 background: isGradient
                   ? "linear-gradient(135deg, rgba(246,178,60,.28), rgba(182,160,255,.28))"
-                  : `rgba(${c},.2)`,
-                border: `1px solid rgba(${c},.75)`,
-                boxShadow: `0 0 20px rgba(${c},.55), inset 0 0 12px rgba(${c},.25)${
-                  selected ? `, 0 0 0 3px rgba(${c},.4)` : ""
-                }`,
+                  : `rgba(${c},${highSignal ? ".26" : ".2"})`,
+                border: `1px solid rgba(${c},${highSignal ? ".95" : ".75"})`,
+                boxShadow: `0 0 ${highSignal ? 26 : 20}px rgba(${c},${
+                  highSignal ? ".7" : ".55"
+                }), inset 0 0 12px rgba(${c},.25)${
+                  highSignal ? `, 0 0 0 2px rgba(${c},.85)` : ""
+                }${selected ? `, 0 0 0 ${highSignal ? 4 : 3}px rgba(${c},.4)` : ""}`,
               }
             : {
                 color: "rgba(238,241,251,.42)",
@@ -149,6 +159,44 @@ function Medal({
         {badge.name}
       </span>
     </button>
+  );
+}
+
+// ---------- one tier row in the detail (Complete / High Signal) ----------
+
+function TierRow({
+  done,
+  accentRgb,
+  label,
+  sub,
+}: {
+  done: boolean;
+  accentRgb: string;
+  label: string;
+  sub: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span
+        className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full"
+        style={
+          done
+            ? { background: `rgb(${accentRgb})`, color: "#04150f" }
+            : { border: `2px solid rgba(${accentRgb},0.7)` }
+        }
+      >
+        {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+      </span>
+      <div className="flex-1">
+        <div
+          className="text-[13.5px] font-semibold"
+          style={{ color: done ? "#fff" : "rgba(238,241,251,.82)" }}
+        >
+          {label}
+        </div>
+        <div className="mt-0.5 text-[12.5px] leading-[1.45] text-white/60">{sub}</div>
+      </div>
+    </div>
   );
 }
 
@@ -247,7 +295,11 @@ function AchievementsModal() {
             }}
           />
           <div className="pointer-events-none absolute inset-0 opacity-[0.9]">
-            <ConstellationAnchor seed="your-constellation" accent={{ r: 198, g: 182, b: 255 }} />
+            <ConstellationAnchor
+              seed="your-constellation"
+              accent={{ r: 198, g: 182, b: 255 }}
+              showLinks={false}
+            />
           </div>
           <div
             className="pointer-events-none absolute inset-0"
@@ -324,42 +376,50 @@ function AchievementsModal() {
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-[15px]"
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-[16px]"
                       style={{
                         color: selected.earned
                           ? `rgb(${rgb(selected.accent)})`
                           : "rgba(238,241,251,.35)",
                         background: `rgba(${rgb(selected.accent)},${
-                          selected.earned ? ".14" : ".06"
+                          selected.earned ? ".16" : ".06"
                         })`,
                         border: `1px solid rgba(${rgb(selected.accent)},${
-                          selected.earned ? ".5" : ".2"
+                          selected.earned ? ".65" : ".2"
                         })`,
+                        boxShadow: selected.earned
+                          ? `0 0 16px rgba(${rgb(selected.accent)},.45)`
+                          : "none",
                       }}
                     >
                       {selected.earned ? selected.glyph : "◇"}
                     </span>
-                    <div className="flex-1">
-                      <div className="text-[14.5px] font-semibold text-white">
-                        {selected.name}
-                      </div>
-                      <div
-                        className="text-[10.5px] font-semibold uppercase tracking-[0.1em]"
-                        style={{
-                          color: selected.earned
-                            ? `rgba(${rgb(selected.accent)},.9)`
-                            : "rgba(238,241,251,.35)",
-                        }}
-                      >
-                        {selected.earned ? "Earned" : "Locked"}
-                      </div>
+                    <div className="text-[15px] font-semibold text-white">
+                      {selected.name}
                     </div>
                   </div>
-                  <p className="mt-3 text-[13px] leading-[1.5] text-white/70">
-                    {selected.earned
-                      ? selected.description
-                      : selected.hint ?? selected.description}
-                  </p>
+
+                  {/* Two-tier state: Complete, then the optional High Signal depth. */}
+                  <div className="mt-4 space-y-3.5">
+                    <TierRow
+                      done={selected.earned}
+                      accentRgb="55,211,160"
+                      label="Complete"
+                      sub={
+                        selected.earned
+                          ? selected.description
+                          : selected.hint ?? selected.description
+                      }
+                    />
+                    {selected.hasHighSignal ? (
+                      <TierRow
+                        done={!!selected.highSignal}
+                        accentRgb={rgb(selected.accent)}
+                        label="High Signal"
+                        sub={selected.highSignalHint ?? "Go deeper on this one."}
+                      />
+                    ) : null}
+                  </div>
                 </motion.div>
               ) : (
                 <div className="text-center text-[11.5px] text-white/30">
@@ -527,9 +587,9 @@ function JourneyModal() {
   );
 }
 
-// While the two directions are being compared, the Awards trophy opens the
-// Journey grid. Set to false to restore the constellation modal.
-const USE_JOURNEY = true;
+// The Awards trophy opens the constellation (the shipped direction). Set to true
+// to preview the PM's Journey grid instead — kept for reference.
+const USE_JOURNEY = false;
 
 export default function AchievementsLayer() {
   return (
