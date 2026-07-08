@@ -59,6 +59,7 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
   const hasBody =
     onet.brightOutlook ||
     onet.jobZone ||
+    onet.interests.length ||
     onet.tasks.length ||
     onet.skills.length ||
     onet.knowledge.length ||
@@ -102,6 +103,12 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
               </div>
             </div>
           </div>
+        ) : null}
+
+        {onet.interests.length ? (
+          <Block label="Who tends to thrive here">
+            <Chips items={onet.interests.slice(0, 3)} accent={accent} />
+          </Block>
         ) : null}
 
         {onet.tasks.length ? (
