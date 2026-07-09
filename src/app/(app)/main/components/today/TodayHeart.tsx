@@ -256,8 +256,11 @@ export function TodayHeart({
       {heroRetort ? (
         <div className="mt-5 max-w-[560px]">
           <p
-            className="text-[19px] font-medium leading-[1.6] text-white/90"
-            style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}
+            className="text-[20px] font-medium leading-[1.6] text-white/[0.82]"
+            style={{
+              textShadow: "0 1px 3px rgba(0,0,0,0.32)",
+              WebkitFontSmoothing: "antialiased",
+            }}
           >
             {heroRetort}
           </p>
@@ -305,8 +308,11 @@ export function TodayHeart({
           read, at a lighter weight, so the read stays the hero. */}
       <div className="mt-6">
         <h1
-          className="max-w-[520px] text-[17px] font-semibold leading-[1.25] tracking-[-0.02em] text-white/90"
-          style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}
+          className="max-w-[520px] text-[18px] font-semibold leading-[1.3] tracking-[-0.02em] text-white/[0.82]"
+          style={{
+            textShadow: "0 1px 3px rgba(0,0,0,0.32)",
+            WebkitFontSmoothing: "antialiased",
+          }}
         >
           {dispatch.move}
         </h1>
