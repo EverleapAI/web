@@ -445,9 +445,21 @@ export default function MainHomePage() {
                 className="px-4 py-5"
                 backdrop={
                   <>
-                    {/* Muted so overlaid copy stays legible — the stars are
-                        atmosphere, not competition (Today only). */}
-                    <div className="pointer-events-none absolute inset-0 opacity-[0.6]">
+                    {/* The Oura move: the atmosphere lives up top behind the
+                        masthead as a soft, out-of-focus haze and DISSOLVES before
+                        the reading copy — so text sits on a clean field and never
+                        on sharp star points. Blurred, not just dimmed (Today only). */}
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        opacity: 0.5,
+                        filter: "blur(1.2px)",
+                        WebkitMaskImage:
+                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%)",
+                        maskImage:
+                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%)",
+                      }}
+                    >
                       <ConstellationAnchor
                         seed={`today:${new Date().toISOString().slice(0, 10)}`}
                         accent={heartAccent}
