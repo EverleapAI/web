@@ -36,10 +36,10 @@ export function StoryRail({
       className="mt-6 w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5 text-left transition hover:border-white/[0.06]"
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
           {complete ? "Your story's told" : "Your story is forming"}
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] tabular-nums text-white/45">
+        <span className="flex items-center gap-1.5 text-[12px] tabular-nums text-white/45">
           {complete ? (
             <Trophy className="h-3.5 w-3.5" style={{ color: `rgb(${accentRgb})` }} />
           ) : (
@@ -55,7 +55,7 @@ export function StoryRail({
         {areas.map((a) => (
           <span
             key={a.key}
-            className="h-[5px] rounded-full transition-colors"
+            className="h-[7px] rounded-full transition-colors"
             style={
               a.filled
                 ? {
@@ -68,7 +68,7 @@ export function StoryRail({
         ))}
       </div>
 
-      <div className="mt-2 flex justify-between text-[10px]">
+      <div className="mt-2.5 flex justify-between text-[11px]">
         {areas.map((a) => (
           <span
             key={a.key}

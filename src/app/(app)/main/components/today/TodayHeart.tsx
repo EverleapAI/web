@@ -16,6 +16,7 @@ import { StoryRail } from "./StoryRail";
 import { PulseTrace } from "./PulseTrace";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
+import { ConstellationAnchor } from "../ui/ConstellationAnchor";
 import { DISPATCH_ACCENT, type TodayHeartData } from "./todayHeart.types";
 
 // Keep the read tight — the first couple of sentences carry the "I get you"
@@ -100,6 +101,9 @@ export function TodayHeart({
   const { dispatch, coverage, rhythm, welcome } = data;
   const accent = DISPATCH_ACCENT[dispatch.type] ?? DISPATCH_ACCENT.learn;
   const rgb = accent.rgb;
+  // Parse the accent string into the {r,g,b} the ConstellationAnchor wants.
+  const [ar, ag, ab] = rgb.split(",").map((n) => Number(n.trim()));
+  const accentObj = { r: ar || 182, g: ag || 160, b: ab || 255 };
 
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
@@ -326,9 +330,9 @@ export function TodayHeart({
           <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(55,211,160,0.7)" }} />
         </button>
       ) : showStoryNudge ? (
-        <div className="mt-3">
+        <div className="mt-3.5">
           <p
-            className="max-w-[520px] text-[14px] leading-[1.5]"
+            className="text-[16px] leading-[1.5]"
             style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
           >
             {gapNudge.lead}
@@ -336,16 +340,16 @@ export function TodayHeart({
           <button
             type="button"
             onClick={() => router.push(gapNudge.route)}
-            className="group mt-2 inline-flex items-center gap-1.5 text-left"
+            className="group mt-2.5 inline-flex items-center gap-1.5 text-left"
           >
             <span
-              className="text-[13.5px] font-semibold"
+              className="text-[15px] font-semibold"
               style={{ color: `rgb(${rgb})` }}
             >
               {gapNudge.label}
             </span>
             <ChevronRight
-              className="h-4 w-4 transition group-hover:translate-x-0.5"
+              className="h-5 w-5 transition group-hover:translate-x-0.5"
               style={{ color: `rgba(${rgb},0.75)` }}
             />
           </button>
@@ -360,37 +364,45 @@ export function TodayHeart({
         className="my-5 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent"
       />
 
-      {/* ACTION — the dispatched move, wrapped in agentic prose (orient → move →
-          the payoff) so it reads as a considered step, not a bare CTA. A
-          contained accent bloom keeps the closing section from feeling flat. */}
-      <div className="relative overflow-hidden rounded-2xl">
+      {/* ACTION — the dispatched move, spoken to you: the orienting line and the
+          move are merged into one agentic statement, then the payoff. Given a
+          real cosmic anchor — a right-weighted constellation (fades left, off the
+          prose) that drifts up from the bottom, plus a warm accent bloom — so the
+          closing section has life instead of a flat panel. */}
+      <div className="relative overflow-hidden rounded-3xl">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.65]"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 42%, #000 82%)",
+            maskImage:
+              "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 42%, #000 82%)",
+          }}
+        >
+          <ConstellationAnchor
+            seed={`today-action:${dispatch.type}`}
+            accent={accentObj}
+          />
+        </div>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `radial-gradient(115% 95% at 88% 108%, rgba(${rgb},0.16), transparent 60%)`,
+            background: `radial-gradient(120% 100% at 88% 106%, rgba(${rgb},0.2), transparent 60%)`,
           }}
         />
-        <div className="relative z-10 px-1 py-1">
-          {dispatch.orient ? (
-            <p
-              className="max-w-[520px] text-[14px] leading-[1.5]"
-              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
-            >
-              {dispatch.orient}
-            </p>
-          ) : null}
-
+        <div className="relative z-10 px-1 py-2">
           <h1
-            className="mt-2 max-w-[520px] text-[19px] font-semibold leading-[1.35] tracking-[-0.02em]"
+            className="text-[20px] font-semibold leading-[1.4] tracking-[-0.015em]"
             style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
           >
+            {dispatch.orient ? `${dispatch.orient} ` : ""}
             {dispatch.move}
           </h1>
 
           {dispatch.return ? (
             <p
-              className="mt-2 max-w-[520px] text-[14px] leading-[1.5]"
+              className="mt-3 text-[16px] leading-[1.5]"
               style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
             >
               {dispatch.return}
@@ -398,7 +410,7 @@ export function TodayHeart({
           ) : null}
 
           {dispatch.meta ? (
-            <div className="mt-2 text-[12px] tabular-nums text-white/40">
+            <div className="mt-3 text-[13px] tabular-nums text-white/45">
               {dispatch.meta.duration} · {dispatch.meta.when}
             </div>
           ) : null}
@@ -410,10 +422,10 @@ export function TodayHeart({
               type="button"
               onClick={handleHowTo}
               disabled={howLoading}
-              className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
+              className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
             >
               {howLoading ? "Opening…" : "How would I even do this?"}
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           ) : null}
 
@@ -423,12 +435,12 @@ export function TodayHeart({
               type="button"
               onClick={dispatch.save ? handleSaveAction : onPrimary}
               disabled={saving || saved}
-              className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 disabled:opacity-70"
+              className="mt-4 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 disabled:opacity-70"
               style={{
                 color: `rgb(${rgb})`,
-                background: `rgba(${rgb},0.12)`,
-                border: `1px solid rgba(${rgb},0.42)`,
-                boxShadow: `0 4px 16px rgba(${rgb},0.12)`,
+                background: `rgba(${rgb},0.14)`,
+                border: `1px solid rgba(${rgb},0.45)`,
+                boxShadow: `0 6px 20px rgba(${rgb},0.16)`,
               }}
             >
               <span>{primaryLabel}</span>
