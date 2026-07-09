@@ -30,25 +30,25 @@ export function StoryRail({
   const complete = filled === areas.length;
 
   return (
-    <button
-      type="button"
-      onClick={() => emitOpenAchievements()}
-      className="mt-6 w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5 text-left transition hover:border-white/[0.06]"
-    >
-      <div className="flex items-center justify-between">
+    <div className="mt-6 w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
+      {/* Only the small control on the right navigates — the strip itself is no
+          longer a tap target (it was too easy to hit by accident). */}
+      <div className="flex items-center justify-between gap-2">
         <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
           {complete ? "Your story's told" : "Your story is forming"}
         </span>
-        <span className="flex items-center gap-1.5 text-[13px] tabular-nums text-white/70">
-          {complete ? (
-            <Trophy className="h-3.5 w-3.5" style={{ color: `rgb(${accentRgb})` }} />
-          ) : (
-            <span>
-              {filled} / {areas.length}
-            </span>
-          )}
-          <ChevronRight className="h-3.5 w-3.5 text-white/30" />
-        </span>
+        <button
+          type="button"
+          onClick={() => emitOpenAchievements()}
+          aria-label="Open your Awards"
+          className="group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold text-white/65 transition hover:bg-white/[0.05] hover:text-white/90 active:opacity-70"
+        >
+          <Trophy className="h-3.5 w-3.5" style={{ color: `rgb(${accentRgb})` }} />
+          <span className="tabular-nums">
+            {complete ? "View" : `${filled}/${areas.length}`}
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
+        </button>
       </div>
 
       <div className="mt-2.5 grid grid-cols-3 gap-1.5">
@@ -80,6 +80,6 @@ export function StoryRail({
           </span>
         ))}
       </div>
-    </button>
+    </div>
   );
 }

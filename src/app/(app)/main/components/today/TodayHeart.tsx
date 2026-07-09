@@ -103,6 +103,14 @@ function splitIntoParagraphs(text: string): string[] {
   return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
 }
 
+// The eyebrow header for the merged "next" block, by dispatch type.
+const NEXT_HEADER: Record<string, string> = {
+  learn: "Keep building",
+  look: "Worth a look",
+  do: "A real step",
+  close: "Close the loop",
+};
+
 // One shared link treatment so every tappable link on the card reads the same:
 // underlined, its own semantic colour, with a trailing chevron.
 const LINK_CLASS =
@@ -389,59 +397,15 @@ export function TodayHeart({
 
       <SectionDivider rgb={rgb} />
 
-      {/* PROGRESS — "your story is forming" (bars share the action accent so the
-          progress reads as the same thread as the move), the single adaptive
-          next-step with a line of agentic direction, and the week's rhythm. */}
-      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
-
-      {data.looseThread?.title ? (
-        <button
-          type="button"
-          onClick={() => router.push(data.looseThread!.route)}
-          className={`${LINK_CLASS} mt-4 max-w-[520px] text-left text-[15px] font-semibold`}
-          style={{ color: "rgb(55,211,160)" }}
-        >
-          {data.looseThread.kind === "due"
-            ? `You started “${data.looseThread.title}” — how's it going?`
-            : `Reflect on “${data.looseThread.title}”`}
-          <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
-        </button>
-      ) : showStoryNudge ? (
-        <div className="mt-4">
-          <p
-            className="text-[16px] leading-[1.55]"
-            style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
-          >
-            {gapNudge.lead}
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push(gapNudge.route)}
-            className={`${LINK_CLASS} mt-3 text-[16px] font-semibold`}
-            style={{ color: `rgb(${rgb})` }}
-          >
-            {gapNudge.label}
-            <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-          </button>
-        </div>
-      ) : null}
-
-      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
-
-      <SectionDivider rgb={rgb} />
-
-      {/* ACTION — the dispatched move, spoken to you: the orienting line and the
-          move are merged into one agentic statement, then the payoff. Given a
-          real cosmic anchor — a right-weighted constellation (fades left, off the
-          prose) that drifts up from the bottom, plus a warm accent bloom — so the
-          closing section has life instead of a flat panel. */}
+      {/* NEXT — one merged block: what to do now (header → agentic sentence →
+          the one bright button + lighter links) and where your story stands (a
+          readout, NOT a giant tap target — only the small Awards control inside
+          it navigates). A right-weighted constellation + accent bloom give the
+          block life on wider canvases; hidden on phones so the copy stays clean. */}
       <div className="relative overflow-hidden rounded-3xl">
-        {/* The constellation fills the empty space beside the left-aligned prose
-            (it's weighted right and fades out on the left, so the copy stays
-            clean while the whitespace comes alive). */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.6]">
+        <div className="pointer-events-none absolute hidden inset-0 opacity-[0.55] sm:block">
           <ConstellationAnchor
-            seed={`today-action:${dispatch.type}`}
+            seed={`today-next:${dispatch.type}`}
             accent={accentObj}
           />
         </div>
@@ -449,32 +413,37 @@ export function TodayHeart({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `radial-gradient(120% 100% at 88% 106%, rgba(${rgb},0.2), transparent 60%)`,
+            background: `radial-gradient(120% 100% at 90% 4%, rgba(${rgb},0.08), transparent 60%)`,
           }}
         />
+
         <div className="relative z-10 px-1 py-2">
+          <div
+            className="text-[11px] font-bold uppercase tracking-[0.2em]"
+            style={{ color: "#B5BAC4" }}
+          >
+            {NEXT_HEADER[dispatch.type] ?? "Your next move"}
+          </div>
+
           {actionPitch ? (
-            // Preferred: one purpose-written agentic paragraph for this move.
             <p
-              className="max-w-[560px] text-[18px] font-medium leading-[1.55]"
-              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+              className="mt-2.5 max-w-[560px] text-[18px] leading-[1.55]"
+              style={{ color: "#C9CDD6", fontWeight: 450, WebkitFontSmoothing: "antialiased" }}
             >
               {actionPitch}
             </p>
           ) : (
-            // Fallback for older packs: stitch the orient + move, then the payoff.
             <>
               <h1
-                className="text-[20px] font-semibold leading-[1.4] tracking-[-0.015em]"
-                style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+                className="mt-2.5 text-[19px] font-semibold leading-[1.4] tracking-[-0.015em]"
+                style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
               >
                 {dispatch.orient ? `${dispatch.orient} ` : ""}
                 {dispatch.move}
               </h1>
-
               {dispatch.return ? (
                 <p
-                  className="mt-3 text-[16px] leading-[1.5]"
+                  className="mt-2 max-w-[560px] text-[15px] leading-[1.5]"
                   style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
                 >
                   {dispatch.return}
@@ -489,28 +458,13 @@ export function TodayHeart({
             </div>
           ) : null}
 
-          {/* One tap to the "how" — reassurance that you'll know exactly how to
-              start is a click away. */}
-          {dispatch.save ? (
-            <button
-              type="button"
-              onClick={handleHowTo}
-              disabled={howLoading}
-              className={`${LINK_CLASS} mt-3 text-[14px] disabled:opacity-70`}
-              style={{ color: "#B5BAC4" }}
-            >
-              {howLoading ? "Opening…" : "How would I even do this?"}
-              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-            </button>
-          ) : null}
-
-          {/* The one bright commit. */}
-          <div>
+          {/* The one bright commit — a real button. */}
+          <div className="mt-4">
             <button
               type="button"
               onClick={dispatch.save ? handleSaveAction : onPrimary}
               disabled={saving || saved}
-              className="mt-4 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
               style={{
                 color: `rgb(${rgb})`,
                 background: `rgba(${rgb},0.14)`,
@@ -526,6 +480,54 @@ export function TodayHeart({
               )}
             </button>
           </div>
+
+          {/* Lighter links: the "how", plus a secondary path — a loose end to
+              reflect on, or (off the learn beat) keep building your story. */}
+          {dispatch.save ? (
+            <button
+              type="button"
+              onClick={handleHowTo}
+              disabled={howLoading}
+              className={`${LINK_CLASS} mt-3.5 text-[14px] disabled:opacity-70`}
+              style={{ color: "#B5BAC4" }}
+            >
+              {howLoading ? "Opening…" : "How would I even do this?"}
+              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+            </button>
+          ) : null}
+
+          {data.looseThread?.title ? (
+            <div className="mt-3.5">
+              <button
+                type="button"
+                onClick={() => router.push(data.looseThread!.route)}
+                className={`${LINK_CLASS} max-w-[520px] text-left text-[14px]`}
+                style={{ color: "rgb(55,211,160)" }}
+              >
+                {data.looseThread.kind === "due"
+                  ? `You started “${data.looseThread.title}” — how's it going?`
+                  : `Reflect on “${data.looseThread.title}”`}
+                <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          ) : showStoryNudge ? (
+            <div className="mt-3.5">
+              <button
+                type="button"
+                onClick={() => router.push(gapNudge.route)}
+                className={`${LINK_CLASS} text-[14px]`}
+                style={{ color: "#B5BAC4" }}
+              >
+                {gapNudge.label}
+                <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          ) : null}
+
+          {/* Where your story stands — a readout, not a giant button. */}
+          {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
+
+          {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
         </div>
       </div>
 
