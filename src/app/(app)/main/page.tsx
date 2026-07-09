@@ -445,19 +445,22 @@ export default function MainHomePage() {
                 className="px-4 py-5"
                 backdrop={
                   <>
-                    <ConstellationAnchor
-                      seed={`today:${new Date().toISOString().slice(0, 10)}`}
-                      accent={heartAccent}
-                    />
-                    {/* Legibility scrim — a soft dark bed weighted to the top
-                        (where the hero read sits) so the readable copy holds up
-                        over the constellation without dimming the art. */}
+                    {/* Dimmed so the readable hero copy sits calmly on top —
+                        the stars stay as atmosphere, not competition (Today only). */}
+                    <div className="pointer-events-none absolute inset-0 opacity-[0.5]">
+                      <ConstellationAnchor
+                        seed={`today:${new Date().toISOString().slice(0, 10)}`}
+                        accent={heartAccent}
+                      />
+                    </div>
+                    {/* Legibility scrim — a soft dark bed under the hero copy so
+                        the type holds up over the constellation across tones. */}
                     <div
                       aria-hidden="true"
                       className="pointer-events-none absolute inset-0 z-[1]"
                       style={{
                         background:
-                          "linear-gradient(180deg, rgba(2,6,23,0.66) 0%, rgba(2,6,23,0.44) 34%, rgba(2,6,23,0.12) 62%, transparent 82%), radial-gradient(120% 90% at 24% 30%, rgba(2,6,23,0.5), transparent 70%)",
+                          "linear-gradient(180deg, rgba(2,6,23,0.72) 0%, rgba(2,6,23,0.58) 38%, rgba(2,6,23,0.36) 64%, rgba(2,6,23,0.14) 84%, transparent 96%), radial-gradient(120% 82% at 22% 26%, rgba(2,6,23,0.45), transparent 72%)",
                       }}
                     />
                   </>

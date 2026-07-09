@@ -255,10 +255,18 @@ export function TodayHeart({
           below and "Why" opening the reasoning. */}
       {heroRetort ? (
         <div className="mt-5 max-w-[560px]">
-          <p className="text-[18px] leading-[1.55] text-white/90">{heroRetort}</p>
+          <p
+            className="text-[18px] leading-[1.55] text-white/90"
+            style={{ textShadow: "0 1px 2px rgba(2,6,23,0.7), 0 2px 18px rgba(2,6,23,0.45)" }}
+          >
+            {heroRetort}
+          </p>
 
           {expanded && heroBody ? (
-            <p className="mt-3 text-[15.5px] leading-[1.6] text-white/[0.78]">
+            <p
+              className="mt-3 text-[15.5px] leading-[1.6] text-white/[0.78]"
+              style={{ textShadow: "0 1px 2px rgba(2,6,23,0.6)" }}
+            >
               {heroBody}
             </p>
           ) : null}
@@ -296,7 +304,10 @@ export function TodayHeart({
           so the button clearly belongs to the move it acts on. Sits below the
           read, at a lighter weight, so the read stays the hero. */}
       <div className="mt-6">
-        <h1 className="max-w-[520px] text-[17px] font-semibold leading-[1.25] tracking-[-0.02em] text-white">
+        <h1
+          className="max-w-[520px] text-[17px] font-semibold leading-[1.25] tracking-[-0.02em] text-white"
+          style={{ textShadow: "0 1px 2px rgba(2,6,23,0.7), 0 2px 16px rgba(2,6,23,0.4)" }}
+        >
           {dispatch.move}
         </h1>
 
