@@ -258,8 +258,8 @@ export function TodayHeart({
       {heroRetort ? (
         <div className="mt-5 max-w-[560px]">
           <p
-            className="text-[21px] font-semibold leading-[1.7] tracking-[-0.005em]"
-            style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
+            className="text-[21px] font-semibold leading-[1.5] tracking-[-0.005em]"
+            style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
           >
             {heroRetort}
           </p>
@@ -270,7 +270,7 @@ export function TodayHeart({
                 <button
                   type="button"
                   onClick={() => setMoreOpen(true)}
-                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#CDD0D9]"
+                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#BFC3CD]"
                 >
                   See more
                 </button>
@@ -279,7 +279,7 @@ export function TodayHeart({
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#CDD0D9]"
+                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#BFC3CD]"
                 >
                   Why
                 </button>
@@ -295,7 +295,7 @@ export function TodayHeart({
       <div className="mt-6">
         <h1
           className="max-w-[520px] text-[18px] font-semibold leading-[1.35] tracking-[-0.02em]"
-          style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
+          style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
         >
           {dispatch.move}
         </h1>
@@ -313,7 +313,7 @@ export function TodayHeart({
             type="button"
             onClick={handleHowTo}
             disabled={howLoading}
-            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#CDD0D9] disabled:opacity-70"
+            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
           >
             {howLoading ? "Opening…" : "How would I even do this?"}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -411,15 +411,15 @@ export function TodayHeart({
               The whole picture
             </div>
             <p
-              className="text-[15.5px] leading-[1.7]"
-              style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
+              className="text-[15.5px] leading-[1.5]"
+              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
             >
               {heroBody}
             </p>
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#CDD0D9] transition hover:border-white/[0.16]"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#BFC3CD] transition hover:border-white/[0.16]"
             >
               Close
             </button>

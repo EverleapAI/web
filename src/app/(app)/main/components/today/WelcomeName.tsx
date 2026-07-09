@@ -59,7 +59,7 @@ export function WelcomeName({
     : returningGreeting(name);
 
   return (
-    <div className="mt-3 flex flex-col items-center gap-1 py-2 text-center">
+    <div className="-mt-1 flex flex-col items-center gap-0.5 text-center">
       <span
         className="text-[9.5px] font-bold uppercase tracking-[0.22em]"
         style={{ color: "#B5BAC4" }}
@@ -68,7 +68,7 @@ export function WelcomeName({
       </span>
       <span
         className="text-[26px] font-semibold tracking-[-0.02em]"
-        style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
+        style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
       >
         {title}
       </span>
