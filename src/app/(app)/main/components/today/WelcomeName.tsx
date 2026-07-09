@@ -69,7 +69,7 @@ export function WelcomeName({
         {eyebrow}
       </span>
       <span
-        className="text-[20px] font-semibold tracking-[-0.02em] text-white/90"
+        className="text-[23px] font-semibold tracking-[-0.02em] text-white/90"
         style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}
       >
         {title}

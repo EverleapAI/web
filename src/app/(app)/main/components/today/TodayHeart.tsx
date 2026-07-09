@@ -256,7 +256,7 @@ export function TodayHeart({
       {heroRetort ? (
         <div className="mt-5 max-w-[560px]">
           <p
-            className="text-[18px] leading-[1.55] text-white/90"
+            className="text-[19px] font-medium leading-[1.6] text-white/90"
             style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}
           >
             {heroRetort}
