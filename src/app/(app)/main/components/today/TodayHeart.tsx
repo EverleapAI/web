@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Check, RotateCcw } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
@@ -88,6 +88,27 @@ function establishingRead(input: {
   if (options.length === 0) return input.fallback;
   const dayIndex = Math.floor(Date.now() / 86_400_000);
   return capRead(options[dayIndex % options.length], 220);
+}
+
+// One shared link treatment so every tappable link on the card reads the same:
+// underlined, its own semantic colour, with a trailing chevron.
+const LINK_CLASS =
+  "group inline-flex items-center gap-1 font-medium underline underline-offset-[5px] decoration-1 transition hover:brightness-110";
+
+// An artistic divider — a hairline that fades in from both edges to a single
+// glowing accent node at the centre, echoing the constellation. One consistent
+// piece of separation between every section.
+function SectionDivider({ rgb }: { rgb: string }) {
+  return (
+    <div aria-hidden="true" className="my-6 flex items-center gap-3">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.10]" />
+      <span
+        className="h-[3px] w-[3px] rounded-full"
+        style={{ background: `rgb(${rgb})`, boxShadow: `0 0 6px rgba(${rgb},0.8)` }}
+      />
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.10]" />
+    </div>
+  );
 }
 
 export function TodayHeart({
@@ -268,7 +289,7 @@ export function TodayHeart({
           prose so the accent stays a spot), with "See more" opening a panel
           below and "Why" opening the reasoning. */}
       {heroRetort ? (
-        <div className="mt-5 max-w-[560px]">
+        <div className="mt-4 max-w-[560px]">
           <p
             className="text-[21px] font-semibold leading-[1.5] tracking-[-0.005em]"
             style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
@@ -277,23 +298,27 @@ export function TodayHeart({
           </p>
 
           {heroBody || heroWhy ? (
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-5">
               {heroBody ? (
                 <button
                   type="button"
                   onClick={() => setMoreOpen(true)}
-                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-4 py-2 text-[18px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#BFC3CD]"
+                  className={`${LINK_CLASS} text-[18px]`}
+                  style={{ color: "#B5BAC4" }}
                 >
                   See more
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               ) : null}
               {heroWhy ? (
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className="inline-flex items-center px-2 py-2 text-[18px] font-medium text-[#B5BAC4]/70 transition hover:text-[#BFC3CD]"
+                  className={`${LINK_CLASS} text-[18px]`}
+                  style={{ color: "#B5BAC4" }}
                 >
                   Why
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               ) : null}
             </div>
@@ -301,11 +326,7 @@ export function TodayHeart({
         </div>
       ) : null}
 
-      {/* ── mild separator ── */}
-      <div
-        aria-hidden="true"
-        className="my-5 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent"
-      />
+      <SectionDivider rgb={rgb} />
 
       {/* PROGRESS — "your story is forming" (bars share the action accent so the
           progress reads as the same thread as the move), the single adaptive
@@ -316,23 +337,18 @@ export function TodayHeart({
         <button
           type="button"
           onClick={() => router.push(data.looseThread!.route)}
-          className="group mt-3 flex w-full items-center gap-2 px-1 text-left"
+          className={`${LINK_CLASS} mt-4 max-w-[520px] text-left text-[15px] font-semibold`}
+          style={{ color: "rgb(55,211,160)" }}
         >
-          <RotateCcw
-            className="h-3.5 w-3.5 shrink-0"
-            style={{ color: "rgba(55,211,160,0.85)" }}
-          />
-          <span className="flex-1 text-[13px] font-medium text-[rgb(55,211,160)] transition group-hover:brightness-110">
-            {data.looseThread.kind === "due"
-              ? `You started “${data.looseThread.title}” — how's it going?`
-              : `Reflect on “${data.looseThread.title}”`}
-          </span>
-          <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(55,211,160,0.7)" }} />
+          {data.looseThread.kind === "due"
+            ? `You started “${data.looseThread.title}” — how's it going?`
+            : `Reflect on “${data.looseThread.title}”`}
+          <ChevronRight className="h-4 w-4 shrink-0" />
         </button>
       ) : showStoryNudge ? (
-        <div className="mt-3.5">
+        <div className="mt-4">
           <p
-            className="text-[16px] leading-[1.5]"
+            className="text-[16px] leading-[1.55]"
             style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
           >
             {gapNudge.lead}
@@ -340,29 +356,18 @@ export function TodayHeart({
           <button
             type="button"
             onClick={() => router.push(gapNudge.route)}
-            className="group mt-2.5 inline-flex items-center gap-1.5 text-left"
+            className={`${LINK_CLASS} mt-3 text-[16px] font-semibold`}
+            style={{ color: `rgb(${rgb})` }}
           >
-            <span
-              className="text-[15px] font-semibold"
-              style={{ color: `rgb(${rgb})` }}
-            >
-              {gapNudge.label}
-            </span>
-            <ChevronRight
-              className="h-5 w-5 transition group-hover:translate-x-0.5"
-              style={{ color: `rgba(${rgb},0.75)` }}
-            />
+            {gapNudge.label}
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       ) : null}
 
       {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
 
-      {/* ── mild separator ── */}
-      <div
-        aria-hidden="true"
-        className="my-5 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent"
-      />
+      <SectionDivider rgb={rgb} />
 
       {/* ACTION — the dispatched move, spoken to you: the orienting line and the
           move are merged into one agentic statement, then the payoff. Given a
@@ -370,15 +375,10 @@ export function TodayHeart({
           prose) that drifts up from the bottom, plus a warm accent bloom — so the
           closing section has life instead of a flat panel. */}
       <div className="relative overflow-hidden rounded-3xl">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.65]"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 42%, #000 82%)",
-            maskImage:
-              "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 42%, #000 82%)",
-          }}
-        >
+        {/* The constellation fills the empty space beside the left-aligned prose
+            (it's weighted right and fades out on the left, so the copy stays
+            clean while the whitespace comes alive). */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.6]">
           <ConstellationAnchor
             seed={`today-action:${dispatch.type}`}
             accent={accentObj}
@@ -422,7 +422,8 @@ export function TodayHeart({
               type="button"
               onClick={handleHowTo}
               disabled={howLoading}
-              className="mt-3 inline-flex items-center gap-1 text-[14px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
+              className={`${LINK_CLASS} mt-3 text-[14px] disabled:opacity-70`}
+              style={{ color: "#B5BAC4" }}
             >
               {howLoading ? "Opening…" : "How would I even do this?"}
               <ChevronRight className="h-4 w-4" />

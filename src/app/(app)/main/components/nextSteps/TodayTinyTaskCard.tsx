@@ -29,8 +29,8 @@ function headerIconWrap(dark: boolean) {
 
 function headerTitleClass(dark: boolean) {
   return [
-    "text-[11px] font-semibold uppercase tracking-[0.28em]",
-    dark ? "text-white/42" : "text-slate-600",
+    "text-[12px] font-semibold uppercase tracking-[0.22em]",
+    dark ? "text-white/70" : "text-slate-600",
   ].join(" ");
 }
 
