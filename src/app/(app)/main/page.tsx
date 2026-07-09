@@ -445,22 +445,30 @@ export default function MainHomePage() {
                 className="px-4 py-5"
                 backdrop={
                   <>
-                    {/* Dimmed so the readable hero copy sits calmly on top —
-                        the stars stay as atmosphere, not competition (Today only). */}
-                    <div className="pointer-events-none absolute inset-0 opacity-[0.55]">
+                    {/* Constellation at full strength — the stars are the
+                        atmosphere, not something to fight. Legibility is handled
+                        locally (below), not by dimming the whole sky (Today only). */}
+                    <div className="pointer-events-none absolute inset-0">
                       <ConstellationAnchor
                         seed={`today:${new Date().toISOString().slice(0, 10)}`}
                         accent={heartAccent}
                       />
                     </div>
-                    {/* Legibility scrim — a soft dark bed under the hero copy so
-                        the type holds up over the constellation across tones. */}
+                    {/* Legibility — a soft, heavily-feathered dark bed under the
+                        hero copy ONLY (not a full-card scrim), so the warm
+                        parchment-grey type reads without glare while the
+                        constellation stays bright everywhere else. */}
                     <div
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 z-[1]"
+                      className="pointer-events-none absolute z-[1]"
                       style={{
+                        left: "-8%",
+                        right: "-8%",
+                        top: 0,
+                        height: "66%",
                         background:
-                          "linear-gradient(180deg, rgba(2,6,23,0.72) 0%, rgba(2,6,23,0.58) 38%, rgba(2,6,23,0.36) 64%, rgba(2,6,23,0.14) 84%, transparent 96%), radial-gradient(120% 82% at 22% 26%, rgba(2,6,23,0.45), transparent 72%)",
+                          "radial-gradient(130% 100% at 42% 40%, rgba(3,7,18,0.58) 0%, rgba(3,7,18,0.38) 46%, rgba(3,7,18,0.16) 70%, transparent 86%)",
+                        filter: "blur(22px)",
                       }}
                     />
                   </>
