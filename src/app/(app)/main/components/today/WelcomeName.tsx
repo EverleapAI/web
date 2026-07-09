@@ -41,11 +41,9 @@ function returningGreeting(name: string | undefined): string {
 
 export function WelcomeName({
   firstName,
-  accentRgb,
   isNewUser,
 }: {
   firstName: string | null;
-  accentRgb: string;
   isNewUser: boolean;
 }) {
   const name = firstName?.trim();
@@ -64,16 +62,13 @@ export function WelcomeName({
     <div className="mt-3 flex flex-col items-center gap-1 py-2 text-center">
       <span
         className="text-[9.5px] font-bold uppercase tracking-[0.22em]"
-        style={{ color: `rgb(${accentRgb})` }}
+        style={{ color: "#B5BAC4" }}
       >
         {eyebrow}
       </span>
       <span
-        className="text-[25px] font-semibold tracking-[-0.02em] text-white/[0.82]"
-        style={{
-          textShadow: "0 1px 3px rgba(0,0,0,0.4)",
-          WebkitFontSmoothing: "antialiased",
-        }}
+        className="text-[26px] font-semibold tracking-[-0.02em]"
+        style={{ color: "#E6E6E8", WebkitFontSmoothing: "antialiased" }}
       >
         {title}
       </span>

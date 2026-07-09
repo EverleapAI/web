@@ -33,7 +33,7 @@ export function StoryRail({
     <button
       type="button"
       onClick={() => emitOpenAchievements()}
-      className="mt-6 w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3.5 text-left transition hover:border-white/[0.16]"
+      className="mt-6 w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5 text-left transition hover:border-white/[0.06]"
     >
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">

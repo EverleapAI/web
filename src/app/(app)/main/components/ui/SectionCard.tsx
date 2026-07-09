@@ -32,9 +32,9 @@ function toneClasses(tone: SectionCardTone) {
     case "hero":
       return {
         shell: [
-          "border border-white/10",
-          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.08)_0%,rgba(90,108,255,0.035)_22%,transparent_42%),radial-gradient(70%_60%_at_100%_0%,rgba(76,201,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(10,16,40,0.995)_0%,rgba(4,8,24,0.998)_44%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_22px_72px_rgba(5,10,28,0.52)]",
+          "border border-white/[0.03]",
+          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.045)_0%,rgba(90,108,255,0.02)_22%,transparent_42%),radial-gradient(70%_60%_at_100%_0%,rgba(76,201,255,0.02)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
@@ -43,9 +43,9 @@ function toneClasses(tone: SectionCardTone) {
     case "plum":
       return {
         shell: [
-          "border border-white/10",
-          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.08)_0%,rgba(120,88,255,0.03)_22%,transparent_42%),radial-gradient(72%_58%_at_100%_0%,rgba(88,144,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(10,16,40,0.995)_0%,rgba(4,8,24,0.998)_44%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_22px_72px_rgba(7,10,28,0.52)]",
+          "border border-white/[0.03]",
+          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.08)_0%,rgba(120,88,255,0.03)_22%,transparent_42%),radial-gradient(72%_58%_at_100%_0%,rgba(88,144,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
@@ -54,9 +54,9 @@ function toneClasses(tone: SectionCardTone) {
     case "teal":
       return {
         shell: [
-          "border border-white/10",
-          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.09)_0%,rgba(42,196,170,0.035)_20%,transparent_40%),radial-gradient(72%_58%_at_100%_0%,rgba(90,188,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(10,16,40,0.995)_0%,rgba(4,8,24,0.998)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_22px_72px_rgba(5,18,24,0.54)]",
+          "border border-white/[0.03]",
+          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.09)_0%,rgba(42,196,170,0.035)_20%,transparent_40%),radial-gradient(72%_58%_at_100%_0%,rgba(90,188,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
@@ -65,9 +65,9 @@ function toneClasses(tone: SectionCardTone) {
     case "amber":
       return {
         shell: [
-          "border border-white/10",
-          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.08)_0%,rgba(90,152,255,0.03)_22%,transparent_42%),radial-gradient(70%_56%_at_100%_0%,rgba(96,220,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(10,16,40,0.995)_0%,rgba(4,8,24,0.998)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_22px_72px_rgba(5,16,24,0.54)]",
+          "border border-white/[0.03]",
+          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.08)_0%,rgba(90,152,255,0.03)_22%,transparent_42%),radial-gradient(70%_56%_at_100%_0%,rgba(96,220,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
@@ -77,9 +77,9 @@ function toneClasses(tone: SectionCardTone) {
     default:
       return {
         shell: [
-          "border border-white/10",
-          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),linear-gradient(180deg,rgba(10,16,40,0.995)_0%,rgba(4,8,24,0.998)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_20px_68px_rgba(5,10,24,0.52)]",
+          "border border-white/[0.03]",
+          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.03)_0%,rgba(90,108,255,0.015)_20%,transparent_40%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
+          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
           "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",

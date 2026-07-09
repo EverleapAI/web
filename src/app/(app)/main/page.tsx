@@ -489,7 +489,7 @@ export default function MainHomePage() {
               {isUpdating ? (
   <section className="mt-4 px-4">
 
-    <div className="rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3">
+    <div className="rounded-2xl border border-white/[0.02] bg-white/[0.015] px-4 py-3">
 
       <div className="flex items-center gap-2">
 

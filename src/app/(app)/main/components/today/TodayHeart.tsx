@@ -233,12 +233,12 @@ export function TodayHeart({
         <DispatchGlyph type={dispatch.type} showLabel={false} />
         <span className="relative flex h-2 w-2" aria-hidden="true">
           <span
-            className="absolute inline-flex h-full w-full rounded-full opacity-60 motion-safe:animate-ping"
-            style={{ background: `rgb(${rgb})` }}
+            className="absolute inline-flex h-full w-full rounded-full opacity-50 motion-safe:animate-ping"
+            style={{ background: "rgba(181,186,196,0.5)" }}
           />
           <span
             className="relative inline-flex h-2 w-2 rounded-full"
-            style={{ background: `rgb(${rgb})` }}
+            style={{ background: "rgba(181,186,196,0.5)" }}
           />
         </span>
       </div>
@@ -246,7 +246,6 @@ export function TodayHeart({
       {/* The arrival masthead — the centered anchor in every state. */}
       <WelcomeName
         firstName={welcome.firstName}
-        accentRgb={rgb}
         isNewUser={welcome.isNewUser}
       />
 
@@ -256,19 +255,16 @@ export function TodayHeart({
       {heroRetort ? (
         <div className="mt-5 max-w-[560px]">
           <p
-            className="text-[20px] font-medium leading-[1.6] text-white/[0.82]"
-            style={{
-              textShadow: "0 1px 3px rgba(0,0,0,0.32)",
-              WebkitFontSmoothing: "antialiased",
-            }}
+            className="text-[21px] font-semibold leading-[1.7] tracking-[-0.005em]"
+            style={{ color: "#E6E6E8", WebkitFontSmoothing: "antialiased" }}
           >
             {heroRetort}
           </p>
 
           {expanded && heroBody ? (
             <p
-              className="mt-3 text-[15.5px] leading-[1.6] text-white/[0.78]"
-              style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}
+              className="mt-3 text-[15.5px] leading-[1.7]"
+              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
             >
               {heroBody}
             </p>
@@ -281,7 +277,7 @@ export function TodayHeart({
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
                   aria-expanded={expanded}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[12.5px] font-medium text-white/70 transition hover:border-white/20 hover:text-white/90"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#E6E6E8]"
                 >
                   {expanded ? "See less" : "See more"}
                   <ChevronDown
@@ -293,7 +289,7 @@ export function TodayHeart({
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-white/55 transition hover:text-white/80"
+                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#E6E6E8]"
                 >
                   Why
                 </button>
@@ -308,11 +304,8 @@ export function TodayHeart({
           read, at a lighter weight, so the read stays the hero. */}
       <div className="mt-6">
         <h1
-          className="max-w-[520px] text-[18px] font-semibold leading-[1.3] tracking-[-0.02em] text-white/[0.82]"
-          style={{
-            textShadow: "0 1px 3px rgba(0,0,0,0.32)",
-            WebkitFontSmoothing: "antialiased",
-          }}
+          className="max-w-[520px] text-[18px] font-semibold leading-[1.35] tracking-[-0.02em]"
+          style={{ color: "#E6E6E8", WebkitFontSmoothing: "antialiased" }}
         >
           {dispatch.move}
         </h1>
@@ -330,8 +323,7 @@ export function TodayHeart({
             type="button"
             onClick={handleHowTo}
             disabled={howLoading}
-            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium transition hover:brightness-110 disabled:opacity-70"
-            style={{ color: `rgba(${rgb},0.85)` }}
+            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#E6E6E8] disabled:opacity-70"
           >
             {howLoading ? "Opening…" : "How would I even do this?"}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -362,7 +354,9 @@ export function TodayHeart({
       </div>
 
       {/* Progress — "your story is forming", which also opens achievements. */}
-      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
+      {showMeter ? (
+        <StoryRail coverage={coverage} accentRgb="181,186,196" />
+      ) : null}
 
       {/* ONE adaptive secondary nudge — a single named loose thread if there is
           one, otherwise the invitation to fill the next gap. Never both, never
@@ -392,13 +386,13 @@ export function TodayHeart({
         >
           <span
             className="text-[12.5px] font-medium"
-            style={{ color: `rgba(${rgb},0.92)` }}
+            style={{ color: "#B5BAC4" }}
           >
             {gapNudge.label}
           </span>
           <ChevronRight
             className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
-            style={{ color: `rgba(${rgb},0.7)` }}
+            style={{ color: "rgba(181,186,196,0.7)" }}
           />
         </button>
       ) : null}

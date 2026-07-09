@@ -14,14 +14,19 @@ export function DispatchGlyph({
 }) {
   const a = DISPATCH_ACCENT[type] ?? DISPATCH_ACCENT.learn;
 
+  // The mark keeps its per-type shape but sits in a quiet neutral — gold is
+  // rationed to a single element per card (the CTA), so the glyph doesn't
+  // compete for that one accent.
+  const neutral = "181,186,196"; // --text-secondary
+
   return (
     <span className="inline-flex items-center gap-1.5">
       <span
         className="flex h-[26px] w-[26px] items-center justify-center rounded-lg text-[13px] leading-none"
         style={{
-          color: `rgb(${a.rgb})`,
-          background: `rgba(${a.rgb},0.12)`,
-          border: `1px solid rgba(${a.rgb},0.3)`,
+          color: `rgba(${neutral},0.72)`,
+          background: `rgba(${neutral},0.05)`,
+          border: `1px solid rgba(${neutral},0.12)`,
         }}
       >
         {a.glyph}
@@ -29,7 +34,7 @@ export function DispatchGlyph({
       {showLabel ? (
         <span
           className="text-[10px] font-bold uppercase tracking-[0.16em]"
-          style={{ color: `rgba(${a.rgb},0.85)` }}
+          style={{ color: `rgba(${neutral},0.72)` }}
         >
           {a.label}
         </span>
