@@ -234,6 +234,10 @@ export function TodayHeart({
     (leadLine && leadLine !== heroRetort ? leadLine : null);
   const heroWhy = data.why?.trim() || dispatch.why?.trim() || null;
 
+  // The action zone prefers the purpose-written agentic paragraph; older packs
+  // fall back to stitching orient + move + payoff.
+  const actionPitch = dispatch.pitch?.trim() || null;
+
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
   const showMeter = hasCoverage;
@@ -392,22 +396,35 @@ export function TodayHeart({
           }}
         />
         <div className="relative z-10 px-1 py-2">
-          <h1
-            className="text-[20px] font-semibold leading-[1.4] tracking-[-0.015em]"
-            style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
-          >
-            {dispatch.orient ? `${dispatch.orient} ` : ""}
-            {dispatch.move}
-          </h1>
-
-          {dispatch.return ? (
+          {actionPitch ? (
+            // Preferred: one purpose-written agentic paragraph for this move.
             <p
-              className="mt-3 text-[16px] leading-[1.5]"
-              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
+              className="max-w-[560px] text-[18px] font-medium leading-[1.55]"
+              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
             >
-              {dispatch.return}
+              {actionPitch}
             </p>
-          ) : null}
+          ) : (
+            // Fallback for older packs: stitch the orient + move, then the payoff.
+            <>
+              <h1
+                className="text-[20px] font-semibold leading-[1.4] tracking-[-0.015em]"
+                style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+              >
+                {dispatch.orient ? `${dispatch.orient} ` : ""}
+                {dispatch.move}
+              </h1>
+
+              {dispatch.return ? (
+                <p
+                  className="mt-3 text-[16px] leading-[1.5]"
+                  style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
+                >
+                  {dispatch.return}
+                </p>
+              ) : null}
+            </>
+          )}
 
           {dispatch.meta ? (
             <div className="mt-3 text-[13px] tabular-nums text-white/45">

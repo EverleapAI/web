@@ -58,6 +58,9 @@ export type TodayDispatch = {
   why: string;
   firstStep: string;
   return: string;
+  // The action zone's single agentic paragraph (orient + move + payoff woven
+  // into one spoken read). Preferred over stitching orient/move/return.
+  pitch?: string | null;
   destination: DispatchDestination;
   alternates: DispatchAlternate[];
   seedQuestion?: string;
