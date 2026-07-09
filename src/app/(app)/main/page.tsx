@@ -447,7 +447,7 @@ export default function MainHomePage() {
                   <>
                     {/* Dimmed so the readable hero copy sits calmly on top —
                         the stars stay as atmosphere, not competition (Today only). */}
-                    <div className="pointer-events-none absolute inset-0 opacity-[0.3]">
+                    <div className="pointer-events-none absolute inset-0 opacity-[0.55]">
                       <ConstellationAnchor
                         seed={`today:${new Date().toISOString().slice(0, 10)}`}
                         accent={heartAccent}
