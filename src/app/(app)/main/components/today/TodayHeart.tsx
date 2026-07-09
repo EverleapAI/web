@@ -106,7 +106,7 @@ function splitIntoParagraphs(text: string): string[] {
 // One shared link treatment so every tappable link on the card reads the same:
 // underlined, its own semantic colour, with a trailing chevron.
 const LINK_CLASS =
-  "group inline-flex items-center gap-1 font-medium underline underline-offset-[5px] decoration-1 transition hover:brightness-110";
+  "group inline-flex items-center gap-1.5 font-semibold tracking-[0.01em] transition duration-150 hover:brightness-125 active:opacity-70";
 
 // An artistic divider — a hairline that fades in from both edges to a single
 // glowing accent node at the centre, echoing the constellation. One consistent
@@ -345,8 +345,12 @@ export function TodayHeart({
               {heroParagraphs.map((para, i) => (
                 <p
                   key={i}
-                  className="text-[21px] font-normal leading-[1.6] tracking-[-0.005em]"
-                  style={{ color: "#D6DAE2", WebkitFontSmoothing: "antialiased" }}
+                  className="text-[20px] leading-[1.6] tracking-[-0.005em]"
+                  style={{
+                    color: "#D6D9DF",
+                    fontWeight: 450,
+                    WebkitFontSmoothing: "antialiased",
+                  }}
                 >
                   {para}
                 </p>
@@ -363,7 +367,7 @@ export function TodayHeart({
                     style={{ color: "#B5BAC4" }}
                   >
                     See more
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
                   </button>
                 ) : null}
                 {heroWhy ? (
@@ -374,7 +378,7 @@ export function TodayHeart({
                     style={{ color: "#B5BAC4" }}
                   >
                     Why
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
                   </button>
                 ) : null}
               </div>
@@ -400,7 +404,7 @@ export function TodayHeart({
           {data.looseThread.kind === "due"
             ? `You started “${data.looseThread.title}” — how's it going?`
             : `Reflect on “${data.looseThread.title}”`}
-          <ChevronRight className="h-4 w-4 shrink-0" />
+          <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
         </button>
       ) : showStoryNudge ? (
         <div className="mt-4">
@@ -417,7 +421,7 @@ export function TodayHeart({
             style={{ color: `rgb(${rgb})` }}
           >
             {gapNudge.label}
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
           </button>
         </div>
       ) : null}
@@ -496,7 +500,7 @@ export function TodayHeart({
               style={{ color: "#B5BAC4" }}
             >
               {howLoading ? "Opening…" : "How would I even do this?"}
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
             </button>
           ) : null}
 
