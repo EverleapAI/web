@@ -224,8 +224,16 @@ export function TodayHeart({
   // sending someone to Story there would be a dead end.
   const gapNudge =
     coverage.nextGapKey === "experience"
-      ? { label: "Reflect on what you've tried", route: "/main/actions" }
-      : { label: "Continue your story", route: "/main/story" };
+      ? {
+          lead: "You've tried a couple of things — telling me how they actually landed is what sharpens everything else.",
+          label: "Reflect on what you've tried",
+          route: "/main/actions",
+        }
+      : {
+          lead: "The picture above is still forming. A few more pieces of your story and the guidance gets a lot sharper.",
+          label: "Continue your story",
+          route: "/main/story",
+        };
 
   return (
     <div className="relative">
@@ -265,12 +273,12 @@ export function TodayHeart({
           </p>
 
           {heroBody || heroWhy ? (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               {heroBody ? (
                 <button
                   type="button"
                   onClick={() => setMoreOpen(true)}
-                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#BFC3CD]"
+                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-4 py-2 text-[18px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#BFC3CD]"
                 >
                   See more
                 </button>
@@ -279,7 +287,7 @@ export function TodayHeart({
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#BFC3CD]"
+                  className="inline-flex items-center px-2 py-2 text-[18px] font-medium text-[#B5BAC4]/70 transition hover:text-[#BFC3CD]"
                 >
                   Why
                 </button>
@@ -289,68 +297,17 @@ export function TodayHeart({
         </div>
       ) : null}
 
-      {/* The action — the move, its when/time, and the one bright CTA, grouped
-          so the button clearly belongs to the move it acts on. Sits below the
-          read, at a lighter weight, so the read stays the hero. */}
-      <div className="mt-6">
-        <h1
-          className="max-w-[520px] text-[18px] font-semibold leading-[1.35] tracking-[-0.02em]"
-          style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
-        >
-          {dispatch.move}
-        </h1>
+      {/* ── mild separator ── */}
+      <div
+        aria-hidden="true"
+        className="my-5 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent"
+      />
 
-        {dispatch.meta ? (
-          <div className="mt-2 text-[12px] tabular-nums text-white/40">
-            {dispatch.meta.duration} · {dispatch.meta.when}
-          </div>
-        ) : null}
+      {/* PROGRESS — "your story is forming" (bars share the action accent so the
+          progress reads as the same thread as the move), the single adaptive
+          next-step with a line of agentic direction, and the week's rhythm. */}
+      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
 
-        {/* One tap to the "how" — for a real-world do move, reassurance that
-            you'll know exactly how to start is a click away. */}
-        {dispatch.save ? (
-          <button
-            type="button"
-            onClick={handleHowTo}
-            disabled={howLoading}
-            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
-          >
-            {howLoading ? "Opening…" : "How would I even do this?"}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        ) : null}
-
-        {/* A calm spot-colour pill, not a full-width flood. Prominence is
-            rationed — the read is the hero, this is the commit. */}
-        <button
-          type="button"
-          onClick={dispatch.save ? handleSaveAction : onPrimary}
-          disabled={saving || saved}
-          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 disabled:opacity-70"
-          style={{
-            color: `rgb(${rgb})`,
-            background: `rgba(${rgb},0.12)`,
-            border: `1px solid rgba(${rgb},0.42)`,
-            boxShadow: `0 4px 16px rgba(${rgb},0.12)`,
-          }}
-        >
-          <span>{primaryLabel}</span>
-          {saved ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-
-      {/* Progress — "your story is forming", which also opens achievements. */}
-      {showMeter ? (
-        <StoryRail coverage={coverage} accentRgb="181,186,196" />
-      ) : null}
-
-      {/* ONE adaptive secondary nudge — a single named loose thread if there is
-          one, otherwise the invitation to fill the next gap. Never both, never
-          a growing stack. */}
       {data.looseThread?.title ? (
         <button
           type="button"
@@ -361,7 +318,7 @@ export function TodayHeart({
             className="h-3.5 w-3.5 shrink-0"
             style={{ color: "rgba(55,211,160,0.85)" }}
           />
-          <span className="flex-1 text-[12.5px] font-medium text-[rgb(55,211,160)] transition group-hover:brightness-110">
+          <span className="flex-1 text-[13px] font-medium text-[rgb(55,211,160)] transition group-hover:brightness-110">
             {data.looseThread.kind === "due"
               ? `You started “${data.looseThread.title}” — how's it going?`
               : `Reflect on “${data.looseThread.title}”`}
@@ -369,26 +326,121 @@ export function TodayHeart({
           <ChevronRight className="h-3.5 w-3.5" style={{ color: "rgba(55,211,160,0.7)" }} />
         </button>
       ) : showStoryNudge ? (
-        <button
-          type="button"
-          onClick={() => router.push(gapNudge.route)}
-          className="group mt-3 flex w-full items-center gap-1.5 px-1 text-left"
-        >
-          <span
-            className="text-[12.5px] font-medium"
-            style={{ color: "#B5BAC4" }}
+        <div className="mt-3">
+          <p
+            className="max-w-[520px] text-[14px] leading-[1.5]"
+            style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
           >
-            {gapNudge.label}
-          </span>
-          <ChevronRight
-            className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
-            style={{ color: "rgba(181,186,196,0.7)" }}
-          />
-        </button>
+            {gapNudge.lead}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push(gapNudge.route)}
+            className="group mt-2 inline-flex items-center gap-1.5 text-left"
+          >
+            <span
+              className="text-[13.5px] font-semibold"
+              style={{ color: `rgb(${rgb})` }}
+            >
+              {gapNudge.label}
+            </span>
+            <ChevronRight
+              className="h-4 w-4 transition group-hover:translate-x-0.5"
+              style={{ color: `rgba(${rgb},0.75)` }}
+            />
+          </button>
+        </div>
       ) : null}
 
-      {/* Ambient rhythm — only when there's an actual beat this week. */}
       {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+
+      {/* ── mild separator ── */}
+      <div
+        aria-hidden="true"
+        className="my-5 h-px bg-gradient-to-r from-transparent via-white/[0.07] to-transparent"
+      />
+
+      {/* ACTION — the dispatched move, wrapped in agentic prose (orient → move →
+          the payoff) so it reads as a considered step, not a bare CTA. A
+          contained accent bloom keeps the closing section from feeling flat. */}
+      <div className="relative overflow-hidden rounded-2xl">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(115% 95% at 88% 108%, rgba(${rgb},0.16), transparent 60%)`,
+          }}
+        />
+        <div className="relative z-10 px-1 py-1">
+          {dispatch.orient ? (
+            <p
+              className="max-w-[520px] text-[14px] leading-[1.5]"
+              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
+            >
+              {dispatch.orient}
+            </p>
+          ) : null}
+
+          <h1
+            className="mt-2 max-w-[520px] text-[19px] font-semibold leading-[1.35] tracking-[-0.02em]"
+            style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+          >
+            {dispatch.move}
+          </h1>
+
+          {dispatch.return ? (
+            <p
+              className="mt-2 max-w-[520px] text-[14px] leading-[1.5]"
+              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
+            >
+              {dispatch.return}
+            </p>
+          ) : null}
+
+          {dispatch.meta ? (
+            <div className="mt-2 text-[12px] tabular-nums text-white/40">
+              {dispatch.meta.duration} · {dispatch.meta.when}
+            </div>
+          ) : null}
+
+          {/* One tap to the "how" — reassurance that you'll know exactly how to
+              start is a click away. */}
+          {dispatch.save ? (
+            <button
+              type="button"
+              onClick={handleHowTo}
+              disabled={howLoading}
+              className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#BFC3CD] disabled:opacity-70"
+            >
+              {howLoading ? "Opening…" : "How would I even do this?"}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+
+          {/* The one bright commit. */}
+          <div>
+            <button
+              type="button"
+              onClick={dispatch.save ? handleSaveAction : onPrimary}
+              disabled={saving || saved}
+              className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 disabled:opacity-70"
+              style={{
+                color: `rgb(${rgb})`,
+                background: `rgba(${rgb},0.12)`,
+                border: `1px solid rgba(${rgb},0.42)`,
+                boxShadow: `0 4px 16px rgba(${rgb},0.12)`,
+              }}
+            >
+              <span>{primaryLabel}</span>
+              {saved ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* "See more" — the fuller read, in a focused modal (not an inline
           expand), matching the Why overlay. */}
