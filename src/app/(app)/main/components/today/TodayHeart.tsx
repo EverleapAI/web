@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ChevronDown, Check, RotateCcw } from "lucide-react";
+import { ChevronRight, Check, RotateCcw } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
@@ -104,18 +104,21 @@ export function TodayHeart({
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [howLoading, setHowLoading] = React.useState(false);
-  const [expanded, setExpanded] = React.useState(false);
+  const [moreOpen, setMoreOpen] = React.useState(false);
   const [whyOpen, setWhyOpen] = React.useState(false);
 
-  // Close the "Why" modal on Escape.
+  // Close either modal on Escape.
   React.useEffect(() => {
-    if (!whyOpen) return;
+    if (!whyOpen && !moreOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setWhyOpen(false);
+      if (e.key === "Escape") {
+        setWhyOpen(false);
+        setMoreOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [whyOpen]);
+  }, [whyOpen, moreOpen]);
 
   // "How would I even do this?" — saves the action and opens its playbook,
   // auto-generating the how (who to ask, what to say, what to watch for). A move
@@ -256,40 +259,27 @@ export function TodayHeart({
         <div className="mt-5 max-w-[560px]">
           <p
             className="text-[21px] font-semibold leading-[1.7] tracking-[-0.005em]"
-            style={{ color: "#E6E6E8", WebkitFontSmoothing: "antialiased" }}
+            style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
           >
             {heroRetort}
           </p>
-
-          {expanded && heroBody ? (
-            <p
-              className="mt-3 text-[15.5px] leading-[1.7]"
-              style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
-            >
-              {heroBody}
-            </p>
-          ) : null}
 
           {heroBody || heroWhy ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {heroBody ? (
                 <button
                   type="button"
-                  onClick={() => setExpanded((v) => !v)}
-                  aria-expanded={expanded}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#E6E6E8]"
+                  onClick={() => setMoreOpen(true)}
+                  className="inline-flex items-center rounded-full border border-white/[0.04] bg-white/[0.03] px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4] transition hover:border-white/[0.08] hover:text-[#CDD0D9]"
                 >
-                  {expanded ? "See less" : "See more"}
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition ${expanded ? "rotate-180" : ""}`}
-                  />
+                  See more
                 </button>
               ) : null}
               {heroWhy ? (
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#E6E6E8]"
+                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-[#B5BAC4]/70 transition hover:text-[#CDD0D9]"
                 >
                   Why
                 </button>
@@ -305,7 +295,7 @@ export function TodayHeart({
       <div className="mt-6">
         <h1
           className="max-w-[520px] text-[18px] font-semibold leading-[1.35] tracking-[-0.02em]"
-          style={{ color: "#E6E6E8", WebkitFontSmoothing: "antialiased" }}
+          style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
         >
           {dispatch.move}
         </h1>
@@ -323,7 +313,7 @@ export function TodayHeart({
             type="button"
             onClick={handleHowTo}
             disabled={howLoading}
-            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#E6E6E8] disabled:opacity-70"
+            className="mt-2.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-[#B5BAC4] transition hover:text-[#CDD0D9] disabled:opacity-70"
           >
             {howLoading ? "Opening…" : "How would I even do this?"}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -399,6 +389,43 @@ export function TodayHeart({
 
       {/* Ambient rhythm — only when there's an actual beat this week. */}
       {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+
+      {/* "See more" — the fuller read, in a focused modal (not an inline
+          expand), matching the Why overlay. */}
+      {moreOpen && heroBody ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="The fuller read"
+          onClick={() => setMoreOpen(false)}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[440px] rounded-3xl border border-white/[0.06] bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
+          >
+            <div
+              className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: "#B5BAC4" }}
+            >
+              The whole picture
+            </div>
+            <p
+              className="text-[15.5px] leading-[1.7]"
+              style={{ color: "#CDD0D9", WebkitFontSmoothing: "antialiased" }}
+            >
+              {heroBody}
+            </p>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(false)}
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#CDD0D9] transition hover:border-white/[0.16]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {/* "Why" — the reasoning behind today's read, one tap away. */}
       {whyOpen && heroWhy ? (

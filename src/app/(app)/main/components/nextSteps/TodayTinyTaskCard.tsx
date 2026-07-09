@@ -107,8 +107,8 @@ export function TodayTinyTaskCard({ dark, tasks }: Props) {
             <div
               className={
                 dark
-                  ? "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-white sm:text-[22px]"
-                  : "mb-4 text-[21px] font-semibold leading-[1.2] tracking-[-0.025em] text-slate-950 sm:text-[22px]"
+                  ? "mb-3 text-[15px] font-semibold leading-[1.35] tracking-[-0.01em] text-[#CDD0D9] sm:text-[15px]"
+                  : "mb-3 text-[15px] font-semibold leading-[1.35] tracking-[-0.01em] text-slate-800 sm:text-[15px]"
               }
             >
               {current.question}
