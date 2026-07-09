@@ -90,6 +90,19 @@ function establishingRead(input: {
   return capRead(options[dayIndex % options.length], 220);
 }
 
+// Break the retort into 2-3 short paragraphs (by sentence) so the hero read
+// breathes instead of landing as one dense block — far easier on the eyes on a
+// phone. Caps at 3: extra sentences fold into the last paragraph.
+function splitIntoParagraphs(text: string): string[] {
+  const sentences = text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (sentences.length <= 1) return [text.trim()];
+  if (sentences.length <= 3) return sentences;
+  return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+}
+
 // One shared link treatment so every tappable link on the card reads the same:
 // underlined, its own semantic colour, with a trailing chevron.
 const LINK_CLASS =
@@ -238,6 +251,9 @@ export function TodayHeart({
   // fall back to stitching orient + move + payoff.
   const actionPitch = dispatch.pitch?.trim() || null;
 
+  // The hero read, broken into short paragraphs for calmer mobile reading.
+  const heroParagraphs = heroRetort ? splitIntoParagraphs(heroRetort) : [];
+
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
   const showMeter = hasCoverage;
@@ -300,7 +316,7 @@ export function TodayHeart({
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
-              background: `radial-gradient(80% 90% at 100% 6%, rgba(${rgb},0.10), transparent 60%)`,
+              background: `radial-gradient(70% 80% at 100% 4%, rgba(${rgb},0.05), transparent 60%)`,
             }}
           />
           {/* Corner-anchored constellation that grows with the canvas: on wider
@@ -325,15 +341,20 @@ export function TodayHeart({
           </div>
 
           <div className="relative z-10 max-w-[560px]">
-            <p
-              className="text-[21px] font-semibold leading-[1.5] tracking-[-0.005em]"
-              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
-            >
-              {heroRetort}
-            </p>
+            <div className="space-y-3.5">
+              {heroParagraphs.map((para, i) => (
+                <p
+                  key={i}
+                  className="text-[21px] font-normal leading-[1.6] tracking-[-0.005em]"
+                  style={{ color: "#D6DAE2", WebkitFontSmoothing: "antialiased" }}
+                >
+                  {para}
+                </p>
+              ))}
+            </div>
 
             {heroBody || heroWhy ? (
-              <div className="mt-4 flex flex-wrap items-center gap-5">
+              <div className="mt-5 flex flex-wrap items-center gap-5">
                 {heroBody ? (
                   <button
                     type="button"
