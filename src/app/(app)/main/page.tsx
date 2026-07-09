@@ -138,8 +138,6 @@ export default function MainHomePage() {
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
-  const [generationGoal, setGenerationGoal] =
-  React.useState<string | null>(null);
 
   React.useEffect(() => {
     async function claimOnboarding() {
@@ -231,9 +229,6 @@ export default function MainHomePage() {
 
           const guidanceData = await guidanceRes.json();
           setIsUpdating(guidanceData?.is_updating === true);
-          setGenerationGoal(
-         guidanceData?.generation_goal ?? null
-          );
 
           if (!alive) return;
 
@@ -486,32 +481,6 @@ export default function MainHomePage() {
                   <TodayCardSkeleton />
                 )}
               </SectionCard>
-              {isUpdating ? (
-  <section className="mt-4 px-4">
-
-    <div className="rounded-2xl border border-white/[0.02] bg-white/[0.015] px-4 py-3">
-
-      <div className="flex items-center gap-2">
-
-        <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
-
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/70">
-          Still looking at this
-        </div>
-
-      </div>
-
-      <p className="mt-2 text-[14px] leading-6 text-white/56">
-
-        {generationGoal ??
-          "Some of your recent answers may change what I think is most useful to explore next."}
-
-      </p>
-
-    </div>
-
-  </section>
-) : null}
             </section>
 
             <InProgressMissionNudge />

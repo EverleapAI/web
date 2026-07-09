@@ -311,6 +311,7 @@ export function TodayHeart({
       <WelcomeName
         firstName={welcome.firstName}
         isNewUser={welcome.isNewUser}
+        accentRgb={rgb}
       />
 
       {/* The agentic lead — the hero. A ≤50-word retort in every state (neutral
@@ -366,13 +367,17 @@ export function TodayHeart({
             </div>
 
             {heroBody || heroWhy ? (
-              <div className="mt-5 flex flex-wrap items-center gap-5">
+              <div className="mt-5 flex flex-wrap items-center gap-4">
                 {heroBody ? (
                   <button
                     type="button"
                     onClick={() => setMoreOpen(true)}
-                    className={`${LINK_CLASS} text-[18px]`}
-                    style={{ color: "#B5BAC4" }}
+                    className="group inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[15px] font-semibold tracking-[0.01em] transition duration-150 hover:brightness-110 active:opacity-80"
+                    style={{
+                      color: `rgb(${rgb})`,
+                      background: `rgba(${rgb},0.10)`,
+                      border: `1px solid rgba(${rgb},0.28)`,
+                    }}
                   >
                     See more
                     <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -382,8 +387,8 @@ export function TodayHeart({
                   <button
                     type="button"
                     onClick={() => setWhyOpen(true)}
-                    className={`${LINK_CLASS} text-[18px]`}
-                    style={{ color: "#B5BAC4" }}
+                    className={`${LINK_CLASS} text-[15px]`}
+                    style={{ color: `rgb(${rgb})`, opacity: 0.9 }}
                   >
                     Why
                     <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -397,15 +402,21 @@ export function TodayHeart({
 
       <SectionDivider rgb={rgb} />
 
-      {/* NEXT — one merged block: what to do now (header → agentic sentence →
-          the one bright button + lighter links) and where your story stands (a
-          readout, NOT a giant tap target — only the small Awards control inside
-          it navigates). A right-weighted constellation + accent bloom give the
-          block life on wider canvases; hidden on phones so the copy stays clean. */}
+      {/* PROGRESS — where your story stands, first and on its own. A readout;
+          only the small Awards control inside it navigates. */}
+      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
+      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+
+      <SectionDivider rgb={rgb} />
+
+      {/* ACTION — the dispatched move on its own: a balanced accent header, the
+          agentic sentence, the one bright button, and lighter links. A
+          right-weighted constellation + accent bloom give it life on wider
+          canvases; hidden on phones so the copy stays clean. */}
       <div className="relative overflow-hidden rounded-3xl">
         <div className="pointer-events-none absolute hidden inset-0 opacity-[0.55] sm:block">
           <ConstellationAnchor
-            seed={`today-next:${dispatch.type}`}
+            seed={`today-action:${dispatch.type}`}
             accent={accentObj}
           />
         </div>
@@ -413,21 +424,35 @@ export function TodayHeart({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `radial-gradient(120% 100% at 90% 4%, rgba(${rgb},0.08), transparent 60%)`,
+            background: `radial-gradient(120% 100% at 90% 4%, rgba(${rgb},0.10), transparent 60%)`,
           }}
         />
 
         <div className="relative z-10 px-1 py-2">
-          <div
-            className="text-[11px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: "#B5BAC4" }}
-          >
-            {NEXT_HEADER[dispatch.type] ?? "Your next move"}
+          {/* Balanced header — an accent glyph anchor + a real label (not a tiny
+              eyebrow), sized to hold its own against the copy without shouting. */}
+          <div className="flex items-center gap-2.5">
+            <span
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
+              style={{
+                color: `rgb(${rgb})`,
+                background: `rgba(${rgb},0.12)`,
+                border: `1px solid rgba(${rgb},0.28)`,
+              }}
+            >
+              {accent.glyph}
+            </span>
+            <span
+              className="text-[15px] font-semibold tracking-[0.005em]"
+              style={{ color: `rgb(${rgb})` }}
+            >
+              {NEXT_HEADER[dispatch.type] ?? "Your next move"}
+            </span>
           </div>
 
           {actionPitch ? (
             <p
-              className="mt-2.5 max-w-[560px] text-[18px] leading-[1.55]"
+              className="mt-3 max-w-[560px] text-[17px] leading-[1.55]"
               style={{ color: "#C9CDD6", fontWeight: 450, WebkitFontSmoothing: "antialiased" }}
             >
               {actionPitch}
@@ -435,7 +460,7 @@ export function TodayHeart({
           ) : (
             <>
               <h1
-                className="mt-2.5 text-[19px] font-semibold leading-[1.4] tracking-[-0.015em]"
+                className="mt-3 text-[18px] font-semibold leading-[1.4] tracking-[-0.015em]"
                 style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
               >
                 {dispatch.orient ? `${dispatch.orient} ` : ""}
@@ -524,10 +549,6 @@ export function TodayHeart({
             </div>
           ) : null}
 
-          {/* Where your story stands — a readout, not a giant button. */}
-          {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
-
-          {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
         </div>
       </div>
 
