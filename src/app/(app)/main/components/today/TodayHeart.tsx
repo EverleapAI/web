@@ -293,40 +293,72 @@ export function TodayHeart({
           prose so the accent stays a spot), with "See more" opening a panel
           below and "Why" opening the reasoning. */}
       {heroRetort ? (
-        <div className="mt-4 max-w-[560px]">
-          <p
-            className="text-[21px] font-semibold leading-[1.5] tracking-[-0.005em]"
-            style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+        <div className="relative mt-4">
+          {/* A soft accent glow warms the top-right at every size (diffuse, no
+              points, safe behind text). */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(80% 90% at 100% 6%, rgba(${rgb},0.10), transparent 60%)`,
+            }}
+          />
+          {/* Corner-anchored constellation that grows with the canvas: on wider
+              screens it fills the right gutter beyond the readable text column.
+              Hidden on phones — there the retort fills the width and the hero
+              read must stay pristine. Masked to the top-right so it fades toward
+              the text, never sitting behind it. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 hidden opacity-[0.5] sm:block"
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%)",
+              maskImage:
+                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%)",
+            }}
           >
-            {heroRetort}
-          </p>
+            <ConstellationAnchor
+              seed={`today-read:${dispatch.type}`}
+              accent={accentObj}
+            />
+          </div>
 
-          {heroBody || heroWhy ? (
-            <div className="mt-4 flex flex-wrap items-center gap-5">
-              {heroBody ? (
-                <button
-                  type="button"
-                  onClick={() => setMoreOpen(true)}
-                  className={`${LINK_CLASS} text-[18px]`}
-                  style={{ color: "#B5BAC4" }}
-                >
-                  See more
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : null}
-              {heroWhy ? (
-                <button
-                  type="button"
-                  onClick={() => setWhyOpen(true)}
-                  className={`${LINK_CLASS} text-[18px]`}
-                  style={{ color: "#B5BAC4" }}
-                >
-                  Why
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="relative z-10 max-w-[560px]">
+            <p
+              className="text-[21px] font-semibold leading-[1.5] tracking-[-0.005em]"
+              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
+            >
+              {heroRetort}
+            </p>
+
+            {heroBody || heroWhy ? (
+              <div className="mt-4 flex flex-wrap items-center gap-5">
+                {heroBody ? (
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen(true)}
+                    className={`${LINK_CLASS} text-[18px]`}
+                    style={{ color: "#B5BAC4" }}
+                  >
+                    See more
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : null}
+                {heroWhy ? (
+                  <button
+                    type="button"
+                    onClick={() => setWhyOpen(true)}
+                    className={`${LINK_CLASS} text-[18px]`}
+                    style={{ color: "#B5BAC4" }}
+                  >
+                    Why
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
