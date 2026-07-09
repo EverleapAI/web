@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Check, RotateCcw } from "lucide-react";
+import { ChevronRight, ChevronDown, Check, RotateCcw } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
@@ -32,6 +32,14 @@ function firstSentences(text: string | null | undefined, n: number): string {
 function ensureStop(s: string): string {
   const t = s.trim();
   return /[.!?]$/.test(t) ? t : `${t}.`;
+}
+
+// Fallback only: trim a longer read down to roughly retort length when the
+// backend pack hasn't supplied a dedicated retort yet.
+function capWords(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return text.trim();
+  return `${words.slice(0, maxWords).join(" ").replace(/[,;:—-]$/, "")}…`;
 }
 
 // Keep a read to roughly four lines: if it runs long, drop whole trailing
@@ -96,6 +104,18 @@ export function TodayHeart({
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [howLoading, setHowLoading] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState(false);
+
+  // Close the "Why" modal on Escape.
+  React.useEffect(() => {
+    if (!whyOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setWhyOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [whyOpen]);
 
   // "How would I even do this?" — saves the action and opens its playbook,
   // auto-generating the how (who to ask, what to say, what to watch for). A move
@@ -176,6 +196,16 @@ export function TodayHeart({
       fallback: data.reinforcement?.line ?? "",
     });
 
+  // Progressive-disclosure hero: a ≤50-word retort shown by default, an optional
+  // "See more" panel (below, not a modal) with the fuller read, and a "Why"
+  // modal with the reasoning. Prefer the generated fields; fall back so older
+  // packs still render cleanly.
+  const heroRetort = data.retort?.trim() || capWords(leadLine, 48);
+  const heroBody =
+    data.body?.trim() ||
+    (leadLine && leadLine !== heroRetort ? leadLine : null);
+  const heroWhy = data.why?.trim() || dispatch.why?.trim() || null;
+
   // Empty progress art says nothing — the meter/pulse only earn their space once
   // there's real coverage to carry (and, for the pulse, an actual rhythm).
   const showMeter = hasCoverage;
@@ -220,12 +250,46 @@ export function TodayHeart({
         isNewUser={welcome.isNewUser}
       />
 
-      {/* The agentic lead — the hero. A "we know you" read in every state,
-          neutral prose so the accent stays a spot, never a bare move. */}
-      {leadLine ? (
-        <p className="mt-5 max-w-[560px] text-[18px] leading-[1.55] text-white/90">
-          {leadLine}
-        </p>
+      {/* The agentic lead — the hero. A ≤50-word retort in every state (neutral
+          prose so the accent stays a spot), with "See more" opening a panel
+          below and "Why" opening the reasoning. */}
+      {heroRetort ? (
+        <div className="mt-5 max-w-[560px]">
+          <p className="text-[18px] leading-[1.55] text-white/90">{heroRetort}</p>
+
+          {expanded && heroBody ? (
+            <p className="mt-3 text-[15.5px] leading-[1.6] text-white/[0.78]">
+              {heroBody}
+            </p>
+          ) : null}
+
+          {heroBody || heroWhy ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {heroBody ? (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[12.5px] font-medium text-white/70 transition hover:border-white/20 hover:text-white/90"
+                >
+                  {expanded ? "See less" : "See more"}
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition ${expanded ? "rotate-180" : ""}`}
+                  />
+                </button>
+              ) : null}
+              {heroWhy ? (
+                <button
+                  type="button"
+                  onClick={() => setWhyOpen(true)}
+                  className="inline-flex items-center rounded-full px-3 py-1.5 text-[12.5px] font-medium text-white/55 transition hover:text-white/80"
+                >
+                  Why
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {/* The action — the move, its when/time, and the one bright CTA, grouped
@@ -324,6 +388,42 @@ export function TodayHeart({
 
       {/* Ambient rhythm — only when there's an actual beat this week. */}
       {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+
+      {/* "Why" — the reasoning behind today's read, one tap away. */}
+      {whyOpen && heroWhy ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Why you're seeing this"
+          onClick={() => setWhyOpen(false)}
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[420px] rounded-3xl border border-white/10 bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
+          >
+            <div
+              className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: `rgb(${rgb})` }}
+            >
+              Why this
+            </div>
+            <p className="text-[15.5px] leading-[1.6] text-white/85">{heroWhy}</p>
+            <button
+              type="button"
+              onClick={() => setWhyOpen(false)}
+              className="mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition hover:brightness-110"
+              style={{
+                color: `rgb(${rgb})`,
+                background: `rgba(${rgb},0.12)`,
+                border: `1px solid rgba(${rgb},0.42)`,
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

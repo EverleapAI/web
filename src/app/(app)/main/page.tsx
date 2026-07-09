@@ -196,6 +196,9 @@ export default function MainHomePage() {
             reinforcement: g.reinforcement ?? prev?.reinforcement ?? null,
             reads: g.reads ?? prev?.reads ?? null,
             lead: g.lead ?? prev?.lead ?? null,
+            retort: g.retort ?? prev?.retort ?? null,
+            body: g.body ?? prev?.body ?? null,
+            why: g.why ?? prev?.why ?? null,
             looseThread: g.looseThread ?? null,
           }));
         }
@@ -256,6 +259,9 @@ export default function MainHomePage() {
               reinforcement: guidanceData.reinforcement ?? null,
               reads: guidanceData.reads ?? null,
               lead: guidanceData.lead ?? null,
+              retort: guidanceData.retort ?? null,
+              body: guidanceData.body ?? null,
+              why: guidanceData.why ?? null,
               looseThread: guidanceData.looseThread ?? null,
             });
           }
@@ -438,10 +444,23 @@ export default function MainHomePage() {
                 tone="hero"
                 className="px-4 py-5"
                 backdrop={
-                  <ConstellationAnchor
-                    seed={`today:${new Date().toISOString().slice(0, 10)}`}
-                    accent={heartAccent}
-                  />
+                  <>
+                    <ConstellationAnchor
+                      seed={`today:${new Date().toISOString().slice(0, 10)}`}
+                      accent={heartAccent}
+                    />
+                    {/* Legibility scrim — a soft dark bed weighted to the top
+                        (where the hero read sits) so the readable copy holds up
+                        over the constellation without dimming the art. */}
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 z-[1]"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, rgba(2,6,23,0.66) 0%, rgba(2,6,23,0.44) 34%, rgba(2,6,23,0.12) 62%, transparent 82%), radial-gradient(120% 90% at 24% 30%, rgba(2,6,23,0.5), transparent 70%)",
+                      }}
+                    />
+                  </>
                 }
               >
                 {guidanceLoaded ? (

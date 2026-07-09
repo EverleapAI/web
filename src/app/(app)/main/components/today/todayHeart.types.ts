@@ -109,6 +109,13 @@ export type TodayHeartData = {
   // The woven briefing read (who you are → what you've done here → what's next),
   // generated per state. Preferred hero read when present; refreshes on drift.
   lead?: string | null;
+  // Progressive-disclosure hero (retort → see more → why). When present these are
+  // preferred over `lead`: `retort` is the ≤50-word punchy read shown by default,
+  // `body` is the ~200-word "See more" expansion (a panel below, not a modal),
+  // and `why` is the reasoning shown in the "Why" modal. All fall back gracefully.
+  retort?: string | null;
+  body?: string | null;
+  why?: string | null;
   looseThread?: LooseThread | null;
 };
 
