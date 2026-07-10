@@ -17,7 +17,11 @@ import { PulseTrace } from "./PulseTrace";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
-import { DISPATCH_ACCENT, type TodayHeartData } from "./todayHeart.types";
+import {
+  DISPATCH_ACCENT,
+  type CoverageKey,
+  type TodayHeartData,
+} from "./todayHeart.types";
 
 // Keep the read tight — the first couple of sentences carry the "I get you"
 // weight; more than that turns an opening into an essay.
@@ -268,9 +272,13 @@ export function TodayHeart({
   // Show the rhythm only when there's an actual beat this week — an empty "0
   // beats" chart reads as a scolding, not a signal.
   const showPulse = hasCoverage && !rhythm.firstBeat && rhythm.total7d > 0;
-  // A do/look move isn't itself the story step, so invite it explicitly under
-  // the progress meter. A learn move already IS "continue your story".
-  const showStoryNudge = showMeter && dispatch.type !== "learn";
+  // Always offer the path to keep building the story when a gap remains —
+  // including on the learn beat, where an explicit link to the specific area
+  // (e.g. Skills) is more useful than only the generic primary CTA.
+  const showStoryNudge = showMeter && coverage.nextGapKey != null;
+  // The story flow can be deep-linked to one family via ?family=. These are the
+  // gaps it can fill directly; others fall back to the generic entry.
+  const STORY_FAMILIES: CoverageKey[] = ["motivations", "strengths", "skills"];
   // Point the nudge at whatever actually fills the NEXT gap. Most gaps
   // (motivations, strengths, skills, story, direction) are story-fed; the
   // "experience" gap is only filled by doing and reflecting on an action, so
@@ -285,7 +293,12 @@ export function TodayHeart({
       : {
           lead: "The picture above is still forming. A few more pieces of your story and the guidance gets a lot sharper.",
           label: "Continue your story",
-          route: "/main/story",
+          // Land straight on the next gap's area (Skills / Motivations /
+          // Strengths) rather than the generic story entry.
+          route:
+            coverage.nextGapKey && STORY_FAMILIES.includes(coverage.nextGapKey)
+              ? `/main/story?family=${coverage.nextGapKey}`
+              : "/main/story",
         };
 
   return (
@@ -375,8 +388,8 @@ export function TodayHeart({
                     className="group inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[15px] font-semibold tracking-[0.01em] transition duration-150 hover:brightness-110 active:opacity-80"
                     style={{
                       color: `rgb(${rgb})`,
-                      background: `rgba(${rgb},0.10)`,
-                      border: `1px solid rgba(${rgb},0.28)`,
+                      background: `rgba(${rgb},0.055)`,
+                      border: `1px solid rgba(${rgb},0.16)`,
                     }}
                   >
                     See more
@@ -388,7 +401,7 @@ export function TodayHeart({
                     type="button"
                     onClick={() => setWhyOpen(true)}
                     className={`${LINK_CLASS} text-[15px]`}
-                    style={{ color: `rgb(${rgb})`, opacity: 0.9 }}
+                    style={{ color: "#B5BAC4" }}
                   >
                     Why
                     <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -436,15 +449,15 @@ export function TodayHeart({
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
               style={{
                 color: `rgb(${rgb})`,
-                background: `rgba(${rgb},0.12)`,
-                border: `1px solid rgba(${rgb},0.28)`,
+                background: `rgba(${rgb},0.08)`,
+                border: `1px solid rgba(${rgb},0.18)`,
               }}
             >
               {accent.glyph}
             </span>
             <span
-              className="text-[15px] font-semibold tracking-[0.005em]"
-              style={{ color: `rgb(${rgb})` }}
+              className="text-[14px] font-semibold tracking-[0.005em]"
+              style={{ color: "#D6D9DF" }}
             >
               {NEXT_HEADER[dispatch.type] ?? "Your next move"}
             </span>
@@ -535,7 +548,9 @@ export function TodayHeart({
                 <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
               </button>
             </div>
-          ) : showStoryNudge ? (
+          ) : null}
+
+          {showStoryNudge ? (
             <div className="mt-3.5">
               <button
                 type="button"

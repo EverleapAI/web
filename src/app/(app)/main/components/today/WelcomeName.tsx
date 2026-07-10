@@ -64,7 +64,7 @@ export function WelcomeName({
     <div className="-mt-1 flex flex-col items-center gap-0.5 text-center">
       <span
         className="text-[9.5px] font-bold uppercase tracking-[0.24em]"
-        style={{ color: `rgb(${accentRgb})`, opacity: 0.85 }}
+        style={{ color: `rgb(${accentRgb})`, opacity: 0.55 }}
       >
         {eyebrow}
       </span>
