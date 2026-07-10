@@ -113,7 +113,7 @@ function splitIntoParagraphs(text: string): string[] {
 // and the "A Real Step" pitch: a light weight in a dimmed off-white. Only the
 // size steps down by role — hero largest, everything else a notch under.
 const PROSE_STYLE: React.CSSProperties = {
-  color: "#C8CCD4",
+  color: "#BFC3CD",
   fontWeight: 500,
 };
 const PROSE_CLASS = "leading-[1.6] tracking-[0.4px]";
@@ -426,7 +426,7 @@ export function TodayHeart({
           <div className="relative z-10 max-w-[560px]">
             <div className="space-y-3.5">
               {heroParagraphs.map((para, i) => (
-                <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                <p key={i} className={`text-[19px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
                   {para}
                 </p>
               ))}
@@ -542,7 +542,7 @@ export function TodayHeart({
 
           {actionPitch ? (
             <p
-              className={`mt-3 max-w-[560px] text-[18px] ${PROSE_CLASS}`}
+              className={`mt-3 max-w-[560px] text-[16px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               {actionPitch}
@@ -650,7 +650,7 @@ export function TodayHeart({
             >
               The whole picture
             </div>
-            <p className={`text-[19px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            <p className={`text-[17px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {heroBody}
             </p>
             <button
@@ -683,7 +683,7 @@ export function TodayHeart({
             >
               Why this
             </div>
-            <p className={`text-[19px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
+            <p className={`text-[17px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
             <button
               type="button"
               onClick={() => setWhyOpen(false)}
