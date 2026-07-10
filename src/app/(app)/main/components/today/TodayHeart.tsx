@@ -426,14 +426,14 @@ export function TodayHeart({
           <div className="relative z-10 max-w-[560px]">
             <div className="space-y-3.5">
               {heroParagraphs.map((para, i) => (
-                <p key={i} className={`text-[19px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                <p key={i} className={`text-[17px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
                   {para}
                 </p>
               ))}
             </div>
 
             {heroBody || heroWhy ? (
-              <div className="mt-5 flex flex-wrap items-center gap-4">
+              <div className="mt-7 flex flex-wrap items-center gap-4">
                 {heroBody ? (
                   <button
                     type="button"
@@ -542,7 +542,7 @@ export function TodayHeart({
 
           {actionPitch ? (
             <p
-              className={`mt-3 max-w-[560px] text-[16px] ${PROSE_CLASS}`}
+              className={`mt-3 max-w-[560px] text-[14px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               {actionPitch}
@@ -650,7 +650,7 @@ export function TodayHeart({
             >
               The whole picture
             </div>
-            <p className={`text-[17px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            <p className={`text-[15px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {heroBody}
             </p>
             <button
@@ -683,7 +683,7 @@ export function TodayHeart({
             >
               Why this
             </div>
-            <p className={`text-[17px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
+            <p className={`text-[15px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
             <button
               type="button"
               onClick={() => setWhyOpen(false)}
