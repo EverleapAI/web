@@ -147,7 +147,7 @@ const LINK_CLASS =
 // piece of separation between every section.
 function SectionDivider({ rgb }: { rgb: string }) {
   return (
-    <div aria-hidden="true" className="my-6 flex items-center gap-3">
+    <div aria-hidden="true" className="my-5 flex items-center gap-3">
       <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.10]" />
       <span
         className="h-[3px] w-[3px] rounded-full"
@@ -474,7 +474,7 @@ export function TodayHeart({
           the progress bars (a readout; only the small Awards control taps), then
           the "Continue your story" link deep-linked to the next area. */}
       {showMeter ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Lead + CTA on ONE line: the tail of the sentence is the link. */}
           <p
             className="max-w-[560px] text-[15px] leading-[1.55]"

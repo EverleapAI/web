@@ -117,7 +117,7 @@ export function StoryRail({
   const complete = filled === areas.length;
 
   return (
-    <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
+    <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3">
       {showHeadline ? (
         <div className="mb-2.5">
           <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
@@ -143,7 +143,7 @@ export function StoryRail({
         ))}
       </div>
 
-      <div className="mt-2.5 flex justify-between text-[12.5px] font-medium">
+      <div className="mt-2 flex justify-between text-[12.5px] font-medium">
         {areas.map((a) => (
           <span
             key={a.key}
@@ -159,7 +159,7 @@ export function StoryRail({
       {/* The trophy meter — badge progress + the only tap target (opens Awards).
           Sits at the bottom as the closing footer, filling from the left like a
           meter. */}
-      <div className="mt-3">
+      <div className="mt-2">
         <TrophyMeter stats={badges} accentRgb={accentRgb} />
       </div>
     </div>
