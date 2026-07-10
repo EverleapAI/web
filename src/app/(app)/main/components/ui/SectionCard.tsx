@@ -33,7 +33,7 @@ function toneClasses(tone: SectionCardTone) {
       return {
         shell: [
           "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.045)_0%,rgba(90,108,255,0.02)_22%,transparent_42%),radial-gradient(70%_60%_at_100%_0%,rgba(76,201,255,0.02)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
+          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.045)_0%,rgba(90,108,255,0.02)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.02)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
           "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
@@ -44,7 +44,7 @@ function toneClasses(tone: SectionCardTone) {
       return {
         shell: [
           "border border-white/[0.03]",
-          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.08)_0%,rgba(120,88,255,0.03)_22%,transparent_42%),radial-gradient(72%_58%_at_100%_0%,rgba(88,144,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
+          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.08)_0%,rgba(120,88,255,0.03)_22%,transparent_42%),radial-gradient(72%_58%_at_82%_-8%,rgba(88,144,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
           "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
@@ -55,7 +55,7 @@ function toneClasses(tone: SectionCardTone) {
       return {
         shell: [
           "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.09)_0%,rgba(42,196,170,0.035)_20%,transparent_40%),radial-gradient(72%_58%_at_100%_0%,rgba(90,188,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
+          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.09)_0%,rgba(42,196,170,0.035)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
           "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
@@ -66,7 +66,7 @@ function toneClasses(tone: SectionCardTone) {
       return {
         shell: [
           "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.08)_0%,rgba(90,152,255,0.03)_22%,transparent_42%),radial-gradient(70%_56%_at_100%_0%,rgba(96,220,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
+          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.08)_0%,rgba(90,152,255,0.03)_22%,transparent_42%),radial-gradient(70%_56%_at_82%_-8%,rgba(96,220,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
           "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
         ].join(" "),
         sheen:
