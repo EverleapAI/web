@@ -403,12 +403,16 @@ export function TodayHeart({
             onReset={() => setLabPreview(null)}
           />
           {/* A soft accent glow warms the top-right at every size (diffuse, no
-              points, safe behind text). */}
+              points, safe behind text). The bright point is pulled just inside
+              the edge and the layer is faded to zero along the right edge with a
+              mask, so the glow dissolves instead of hard-clipping at the box. */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
-              background: `radial-gradient(70% 80% at 100% 4%, rgba(${rgb},0.05), transparent 60%)`,
+              background: `radial-gradient(72% 78% at 85% 2%, rgba(${rgb},0.06), transparent 62%)`,
+              WebkitMaskImage: "linear-gradient(to left, transparent 0%, #000 22%)",
+              maskImage: "linear-gradient(to left, transparent 0%, #000 22%)",
             }}
           />
           {/* Corner-anchored constellation that grows with the canvas: on wider
@@ -523,7 +527,9 @@ export function TodayHeart({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `radial-gradient(120% 100% at 90% 4%, rgba(${rgb},0.10), transparent 60%)`,
+            background: `radial-gradient(120% 100% at 82% 2%, rgba(${rgb},0.11), transparent 62%)`,
+            WebkitMaskImage: "linear-gradient(to left, transparent 0%, #000 20%)",
+            maskImage: "linear-gradient(to left, transparent 0%, #000 20%)",
           }}
         />
 

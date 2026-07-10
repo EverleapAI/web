@@ -448,10 +448,16 @@ export default function MainHomePage() {
                       style={{
                         opacity: 0.5,
                         filter: "blur(1.2px)",
+                        // Fade the atmosphere DOWN (top note only) AND pinch both
+                        // side edges to zero, so the right-weighted star bloom
+                        // dissolves before the card edge instead of hard-clipping
+                        // there. Two mask layers intersected.
                         WebkitMaskImage:
-                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%)",
+                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+                        WebkitMaskComposite: "source-in",
                         maskImage:
-                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%)",
+                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+                        maskComposite: "intersect",
                       }}
                     >
                       <ConstellationAnchor
