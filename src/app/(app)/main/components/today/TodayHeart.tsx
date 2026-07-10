@@ -603,7 +603,7 @@ export function TodayHeart({
               type="button"
               onClick={handleHowTo}
               disabled={howLoading}
-              className={`${LINK_CLASS} mt-3.5 text-[14px] disabled:opacity-70`}
+              className={`${LINK_CLASS} mt-3.5 text-[16px] disabled:opacity-70`}
               style={{ color: "#B5BAC4" }}
             >
               {howLoading ? "Opening…" : "How would I even do this?"}
@@ -616,7 +616,7 @@ export function TodayHeart({
               <button
                 type="button"
                 onClick={() => router.push(data.looseThread!.route)}
-                className={`${LINK_CLASS} max-w-[520px] text-left text-[14px]`}
+                className={`${LINK_CLASS} max-w-[520px] text-left text-[16px]`}
                 style={{ color: "rgb(55,211,160)" }}
               >
                 {data.looseThread.kind === "due"
