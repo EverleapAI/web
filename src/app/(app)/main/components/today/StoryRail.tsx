@@ -12,7 +12,10 @@ import { emitOpenAchievements } from "@/lib/actionsBus";
 import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
 import type { Coverage } from "./todayHeart.types";
 
-const STORY_KEYS = ["motivations", "skills", "strengths"] as const;
+// Order must match the story's canonical family order (motivations → strengths
+// → skills, as in TodayHeart's STORY_FAMILIES) so the bar reads in the same
+// sequence as the story itself.
+const STORY_KEYS = ["motivations", "strengths", "skills"] as const;
 
 // How many trophy slots represent 100% of badges earned.
 const TROPHY_SLOTS = 10;
