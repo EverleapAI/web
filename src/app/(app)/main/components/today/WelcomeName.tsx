@@ -41,18 +41,14 @@ function returningGreeting(name: string | undefined): string {
 export function WelcomeName({
   firstName,
   isNewUser,
-  accentRgb = "182,160,255",
 }: {
   firstName: string | null;
   isNewUser: boolean;
-  accentRgb?: string;
 }) {
   const name = firstName?.trim();
 
-  const eyebrow = isNewUser
-    ? "Welcome to Everleap"
-    : new Date().toLocaleDateString(undefined, { weekday: "long" });
-
+  // The day/eyebrow now lives in TodayHeart's top row (saves a line); this is
+  // just the greeting title.
   const title = isNewUser
     ? name
       ? `You're in, ${name}.`
@@ -60,13 +56,7 @@ export function WelcomeName({
     : returningGreeting(name);
 
   return (
-    <div className="-mt-1 flex flex-col items-center gap-0.5 text-center">
-      <span
-        className="text-[9.5px] font-bold uppercase tracking-[0.24em]"
-        style={{ color: `rgb(${accentRgb})`, opacity: 0.55 }}
-      >
-        {eyebrow}
-      </span>
+    <div className="flex flex-col items-center text-center">
       <span
         className="text-[26px] font-semibold tracking-[-0.02em]"
         style={{ color: "#ABAFB9" }}

@@ -362,11 +362,19 @@ export function TodayHeart({
 
   return (
     <div className="relative">
-      {/* top row: just the dispatch mark + a live pulse. Voice over chrome —
-          the type glyph is the only signal; no "Do · in the world", no "Today"
-          (you're on the Today tab already). */}
-      <div className="flex items-center justify-between">
+      {/* top row: dispatch mark (left), the day/eyebrow centered up here to save
+          a line, and a live pulse (right). Voice over chrome — no "Do · in the
+          world", no "Today" (you're on the Today tab already). */}
+      <div className="relative flex items-center justify-between">
         <DispatchGlyph type={dispatch.type} showLabel={false} />
+        <span
+          className="absolute left-1/2 -translate-x-1/2 text-[9.5px] font-bold uppercase tracking-[0.24em]"
+          style={{ color: `rgb(${rgb})`, opacity: 0.55 }}
+        >
+          {welcome.isNewUser
+            ? "Welcome to Everleap"
+            : new Date().toLocaleDateString(undefined, { weekday: "long" })}
+        </span>
         <span className="relative flex h-2 w-2" aria-hidden="true">
           <span
             className="absolute inline-flex h-full w-full rounded-full opacity-50 motion-safe:animate-ping"
@@ -383,7 +391,6 @@ export function TodayHeart({
       <WelcomeName
         firstName={welcome.firstName}
         isNewUser={welcome.isNewUser}
-        accentRgb={rgb}
       />
 
       {/* The agentic lead — the hero. A ≤50-word retort in every state (neutral
@@ -426,10 +433,14 @@ export function TodayHeart({
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 hidden opacity-[0.5] sm:block"
             style={{
+              // Directional top-right falloff (keeps it off the left text)
+              // INTERSECTED with an all-edge fade, so it never clips at a border.
               WebkitMaskImage:
-                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%)",
+                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+              WebkitMaskComposite: "source-in, source-in",
               maskImage:
-                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%)",
+                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+              maskComposite: "intersect, intersect",
             }}
           >
             <ConstellationAnchor
@@ -519,7 +530,19 @@ export function TodayHeart({
           right-weighted constellation + accent bloom give it life on wider
           canvases; hidden on phones so the copy stays clean. */}
       <div className="relative overflow-hidden rounded-3xl">
-        <div className="pointer-events-none absolute hidden inset-0 opacity-[0.55] sm:block">
+        <div
+          className="pointer-events-none absolute hidden inset-0 opacity-[0.55] sm:block"
+          style={{
+            // Fade the constellation to zero before every edge so its bloom never
+            // hard-clips into a line at the card border.
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+            WebkitMaskComposite: "source-in",
+            maskImage:
+              "linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+            maskComposite: "intersect",
+          }}
+        >
           <ConstellationAnchor
             seed={`today-action:${dispatch.type}`}
             accent={accentObj}
