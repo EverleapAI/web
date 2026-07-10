@@ -476,8 +476,8 @@ export function TodayHeart({
         <div className="space-y-2">
           {/* Lead + CTA on ONE line: the tail of the sentence is the link. */}
           <p
-            className="max-w-[560px] text-[15px] leading-[1.55]"
-            style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
+            className={`max-w-[560px] text-[21px] ${PROSE_CLASS}`}
+            style={PROSE_STYLE}
           >
             {storyPrefix}
             {storyLinkText ? (
@@ -550,16 +550,16 @@ export function TodayHeart({
           ) : (
             <>
               <h1
-                className="mt-3 text-[18px] font-semibold leading-[1.4] tracking-[-0.015em]"
-                style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
+                className={`mt-3 max-w-[560px] text-[21px] ${PROSE_CLASS}`}
+                style={PROSE_STYLE}
               >
                 {dispatch.orient ? `${dispatch.orient} ` : ""}
                 {dispatch.move}
               </h1>
               {dispatch.return ? (
                 <p
-                  className="mt-2 max-w-[560px] text-[15px] leading-[1.5]"
-                  style={{ color: "#B5BAC4", WebkitFontSmoothing: "antialiased" }}
+                  className={`mt-2 max-w-[560px] text-[21px] ${PROSE_CLASS}`}
+                  style={PROSE_STYLE}
                 >
                   {dispatch.return}
                 </p>
