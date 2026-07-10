@@ -10,12 +10,13 @@
 // trailing, mid-sentence — the way a person actually varies it. Deterministic
 // by day (stable across refreshes, changes across days). Separate clean list for
 // the rare no-name case so we never leave a dangling comma.
+// A pure warm hello — no "resume / pick up where you left off" language, so the
+// masthead never overlaps with the action header ("A real step" etc.), which is
+// the one place we frame the actual move.
 const RETURNING_WITH_NAME = [
   "Welcome back, {name}.",
   "{name}, good to see you again.",
   "Hey {name} — you're back.",
-  "Right where you left off, {name}.",
-  "{name}, let's pick up where we left off.",
   "Good to have you back, {name}.",
   "You made it back, {name}.",
   "{name}, glad you're here.",
@@ -25,8 +26,6 @@ const RETURNING_NO_NAME = [
   "Welcome back.",
   "Good to see you again.",
   "You're back.",
-  "Right where you left off.",
-  "Let's pick up where we left off.",
   "Glad you're here.",
 ];
 
