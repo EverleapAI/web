@@ -617,11 +617,11 @@ export function TodayHeart({
           aria-modal="true"
           aria-label="The fuller read"
           onClick={() => setMoreOpen(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[max(1.25rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:pt-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[440px] rounded-3xl border border-white/[0.06] bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
+            className="max-h-[85vh] w-full max-w-[440px] overflow-y-auto rounded-3xl border border-white/[0.06] bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
           >
             <div
               className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
@@ -650,11 +650,11 @@ export function TodayHeart({
           aria-modal="true"
           aria-label="Why you're seeing this"
           onClick={() => setWhyOpen(false)}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[max(1.25rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:pt-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[420px] rounded-3xl border border-white/10 bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
+            className="max-h-[85vh] w-full max-w-[420px] overflow-y-auto rounded-3xl border border-white/10 bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
           >
             <div
               className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
