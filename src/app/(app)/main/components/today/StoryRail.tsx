@@ -118,20 +118,15 @@ export function StoryRail({
 
   return (
     <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
-      {/* The trophy meter is the only tap target — the strip itself is a readout
-          (it was too easy to open the modal by accident). */}
-      <div
-        className={`flex items-center gap-2 ${showHeadline ? "justify-between" : "justify-end"}`}
-      >
-        {showHeadline ? (
+      {showHeadline ? (
+        <div className="mb-2.5">
           <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
             {complete ? "Your story's told" : "Your story is forming"}
           </span>
-        ) : null}
-        <TrophyMeter stats={badges} accentRgb={accentRgb} />
-      </div>
+        </div>
+      ) : null}
 
-      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1.5">
         {areas.map((a) => (
           <span
             key={a.key}
@@ -159,6 +154,13 @@ export function StoryRail({
             {a.label}
           </span>
         ))}
+      </div>
+
+      {/* The trophy meter — badge progress + the only tap target (opens Awards).
+          Sits at the bottom as the closing footer, filling from the left like a
+          meter. */}
+      <div className="mt-3">
+        <TrophyMeter stats={badges} accentRgb={accentRgb} />
       </div>
     </div>
   );

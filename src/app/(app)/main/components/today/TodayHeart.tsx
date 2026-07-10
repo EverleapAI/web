@@ -283,15 +283,9 @@ export function TodayHeart({
   // Show the rhythm only when there's an actual beat this week — an empty "0
   // beats" chart reads as a scolding, not a signal.
   const showPulse = hasCoverage && !rhythm.firstBeat && rhythm.total7d > 0;
-  // Always offer the path to keep building the story when a gap remains —
-  // including on the learn beat, where an explicit link to the specific area
-  // (e.g. Skills) is more useful than only the generic primary CTA.
-  const showStoryNudge = showMeter && coverage.nextGapKey != null;
-
-  // A conversational lead in over the progress strip: name what's already in,
-  // then invite the next piece. "You've done your Motivations — now let's
-  // continue your story." This is the line that sits BEFORE the bars; the
-  // "Continue your story" link sits after them.
+  // The story lead is one line with an INLINE call to action — the tail of the
+  // sentence is itself the link, so context and action share a line instead of
+  // sandwiching the bars with a separate "Continue your story" row.
   const storyAreas = STORY_ORDER.map((k) =>
     coverage.areas.find((a) => a.key === k)
   ).filter((a): a is CoverageArea => Boolean(a));
@@ -299,11 +293,23 @@ export function TodayHeart({
     .filter((a) => a.filled)
     .map((a) => a.label);
   const nextStoryArea = storyAreas.find((a) => !a.filled) ?? null;
-  const storyIntro = !nextStoryArea
-    ? "You've told me your whole story — the picture's complete."
-    : filledStoryLabels.length === 0
-      ? "Let's start telling your story."
-      : `You've done your ${joinLabels(filledStoryLabels)} — now let's continue your story.`;
+  let storyPrefix: string;
+  let storyLinkText: string | null;
+  if (nextStoryArea) {
+    if (filledStoryLabels.length === 0) {
+      storyPrefix = "Let's ";
+      storyLinkText = "start telling your story";
+    } else {
+      storyPrefix = `You've done your ${joinLabels(filledStoryLabels)} — now let's `;
+      storyLinkText = "continue your story";
+    }
+  } else if (coverage.nextGapKey === "experience") {
+    storyPrefix = "You've told me your whole story — now ";
+    storyLinkText = "reflect on what you've tried";
+  } else {
+    storyPrefix = "You've told me your whole story — the picture's complete.";
+    storyLinkText = null;
+  }
   // The story flow can be deep-linked to one family via ?family=. These are the
   // gaps it can fill directly; others fall back to the generic entry.
   const STORY_FAMILIES: CoverageKey[] = ["motivations", "strengths", "skills"];
@@ -449,26 +455,26 @@ export function TodayHeart({
           the "Continue your story" link deep-linked to the next area. */}
       {showMeter ? (
         <div className="space-y-3">
+          {/* Lead + CTA on ONE line: the tail of the sentence is the link. */}
           <p
             className="max-w-[560px] text-[15px] leading-[1.55]"
             style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
           >
-            {storyIntro}
+            {storyPrefix}
+            {storyLinkText ? (
+              <button
+                type="button"
+                onClick={() => router.push(gapNudge.route)}
+                className="font-semibold transition hover:brightness-110 active:opacity-70"
+                style={{ color: `rgb(${rgb})` }}
+              >
+                {storyLinkText} →
+              </button>
+            ) : null}
           </p>
 
+          {/* Bars, then the trophy meter as the closing footer. */}
           <StoryRail coverage={coverage} accentRgb={rgb} showHeadline={false} />
-
-          {showStoryNudge ? (
-            <button
-              type="button"
-              onClick={() => router.push(gapNudge.route)}
-              className={`${LINK_CLASS} text-[14px]`}
-              style={{ color: "#B5BAC4" }}
-            >
-              {gapNudge.label}
-              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-            </button>
-          ) : null}
         </div>
       ) : null}
       {showPulse ? (
