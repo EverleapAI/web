@@ -16,6 +16,8 @@ import { StoryRail } from "./StoryRail";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
+import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
+import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 import {
   DISPATCH_ACCENT,
   type CoverageArea,
@@ -176,6 +178,10 @@ export function TodayHeart({
   const [howLoading, setHowLoading] = React.useState(false);
   const [moreOpen, setMoreOpen] = React.useState(false);
   const [whyOpen, setWhyOpen] = React.useState(false);
+  // Prompt Lab (internal, passcode-gated) can preview a re-toned/re-sized retort
+  // in place — live only, never saved.
+  const [labPreview, setLabPreview] =
+    React.useState<PromptLabAppliedPreview | null>(null);
 
   // Close either modal on Escape.
   React.useEffect(() => {
@@ -283,8 +289,11 @@ export function TodayHeart({
   // fall back to stitching orient + move + payoff.
   const actionPitch = dispatch.pitch?.trim() || null;
 
-  // The hero read, broken into short paragraphs for calmer mobile reading.
-  const heroParagraphs = heroRetort ? splitIntoParagraphs(heroRetort) : [];
+  // The hero read, broken into short paragraphs for calmer mobile reading. A
+  // live Prompt Lab preview (if any) stands in for the saved retort.
+  const previewRetort = labPreview?.targetText?.trim() || null;
+  const displayRetort = previewRetort ?? heroRetort;
+  const heroParagraphs = displayRetort ? splitIntoParagraphs(displayRetort) : [];
 
   // Empty progress art says nothing — the meter only earns its space once
   // there's real coverage to carry.
@@ -371,7 +380,20 @@ export function TodayHeart({
           prose so the accent stays a spot), with "See more" opening a panel
           below and "Why" opening the reasoning. */}
       {heroRetort ? (
-        <div className="relative mt-4">
+        <div
+          className={`relative mt-4 ${previewRetort ? "rounded-2xl p-3 ring-1 ring-amber-300/45" : ""}`}
+        >
+          {/* Hidden, passcode-gated internal tuning dot (top-right of the read it
+              tunes). Previews are live-only and never saved. */}
+          <PromptLabTrigger
+            dark
+            pageKey="today"
+            targetField="main"
+            currentText={heroRetort}
+            onApplied={setLabPreview}
+            hasActivePreview={!!labPreview}
+            onReset={() => setLabPreview(null)}
+          />
           {/* A soft accent glow warms the top-right at every size (diffuse, no
               points, safe behind text). */}
           <div
