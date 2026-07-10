@@ -24,7 +24,7 @@ function backButtonClass(dark: boolean) {
   return [
     "mb-2 flex items-center gap-1 text-[12px] font-medium",
     dark
-      ? "text-white/40 hover:text-white/64"
+      ? "text-white/30 hover:text-white/50"
       : "text-slate-500 hover:text-slate-700",
   ].join(" ");
 }
@@ -68,7 +68,7 @@ function tickClass(dark: boolean, selected: boolean) {
 
 function labelClass(dark: boolean, selected: boolean) {
   if (!dark) return "text-slate-900";
-  return selected ? "text-white" : "text-white/78";
+  return selected ? "text-white/88" : "text-white/56";
 }
 
 export function TodayTinyTaskCard({ dark, tasks }: Props) {
@@ -132,11 +132,13 @@ export function TodayTinyTaskCard({ dark, tasks }: Props) {
             ) : null}
 
             <div
-              className="mb-4 w-full text-[20px] leading-[1.4] tracking-[-0.015em]"
+              className="mb-4 w-full text-[21px] leading-[1.4] tracking-[-0.015em]"
               style={{
-                color: dark ? "#eceef4" : "#1e293b",
+                // Dark side joins the low-glare ramp (TEXT_PRIMARY). Its heavier
+                // 550 weight — not extra brightness — gives the question its
+                // "ask" presence. Light theme is unchanged.
+                color: dark ? "#A2A6B0" : "#1e293b",
                 fontWeight: 550,
-                WebkitFontSmoothing: "antialiased",
               }}
             >
               {current.question}
@@ -184,7 +186,7 @@ export function TodayTinyTaskCard({ dark, tasks }: Props) {
             transition={{ duration: 0.25 }}
             className={
               dark
-                ? "text-[13px] leading-5 text-white/46"
+                ? "text-[13px] leading-5 text-white/32"
                 : "text-[13px] leading-5 text-slate-500"
             }
           >
