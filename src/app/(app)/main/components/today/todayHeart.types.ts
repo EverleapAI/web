@@ -48,7 +48,24 @@ export type DispatchAlternate = {
 
 // Extra content carried only by the "do" beat.
 export type DoMeta = { when: string; duration: string; outcome: string };
-export type DispatchSave = { label: string; actionTitle: string };
+
+// A pre-generated action mission, mirroring the API's ActionMission shape. When
+// present on a "do" dispatch's save, it's posted through at action creation so
+// the action playbook is instant (the "start" generation becomes a no-op).
+export type ActionMission = {
+  why: string;
+  steps: { text: string; done: boolean }[];
+  generatedAt: string;
+  script?: string;
+  watchFor?: string[];
+  echo?: string;
+};
+
+export type DispatchSave = {
+  label: string;
+  actionTitle: string;
+  mission?: ActionMission | null;
+};
 
 export type TodayDispatch = {
   type: DispatchType;

@@ -220,6 +220,7 @@ export function TodayHeart({
           lane: "today",
           title: dispatch.save.actionTitle,
           description: dispatch.why,
+          mission: dispatch.save.mission ?? undefined,
         }),
       });
       const d = await res.json().catch(() => null);
@@ -249,6 +250,7 @@ export function TodayHeart({
           lane: "today",
           title: dispatch.save.actionTitle,
           description: dispatch.why,
+          mission: dispatch.save.mission ?? undefined,
         }),
       });
       if (res.ok) {
