@@ -16,9 +16,14 @@ const STORY_KEYS = ["motivations", "skills", "strengths"] as const;
 export function StoryRail({
   coverage,
   accentRgb,
+  showHeadline = true,
 }: {
   coverage: Coverage;
   accentRgb: string;
+  // When a lead sentence already introduces the strip (as on Today), hide the
+  // built-in "Your story is forming" label so the two don't echo each other —
+  // the small Awards control stays, pinned to the right.
+  showHeadline?: boolean;
 }) {
   const areas = STORY_KEYS.map((k) =>
     coverage.areas.find((a) => a.key === k)
@@ -30,13 +35,17 @@ export function StoryRail({
   const complete = filled === areas.length;
 
   return (
-    <div className="mt-6 w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
+    <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
       {/* Only the small control on the right navigates — the strip itself is no
           longer a tap target (it was too easy to hit by accident). */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
-          {complete ? "Your story's told" : "Your story is forming"}
-        </span>
+      <div
+        className={`flex items-center gap-2 ${showHeadline ? "justify-between" : "justify-end"}`}
+      >
+        {showHeadline ? (
+          <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
+            {complete ? "Your story's told" : "Your story is forming"}
+          </span>
+        ) : null}
         <button
           type="button"
           onClick={() => emitOpenAchievements()}

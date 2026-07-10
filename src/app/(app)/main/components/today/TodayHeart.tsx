@@ -19,6 +19,7 @@ import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
 import {
   DISPATCH_ACCENT,
+  type CoverageArea,
   type CoverageKey,
   type TodayHeartData,
 } from "./todayHeart.types";
@@ -114,6 +115,16 @@ const NEXT_HEADER: Record<string, string> = {
   do: "A real step",
   close: "Close the loop",
 };
+
+// The three story areas, in the order the strip shows them.
+const STORY_ORDER: CoverageKey[] = ["motivations", "skills", "strengths"];
+
+// "Motivations", "Motivations and Skills", "Motivations, Skills, and Strengths".
+function joinLabels(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
 
 // One shared link treatment so every tappable link on the card reads the same:
 // underlined, its own semantic colour, with a trailing chevron.
@@ -276,6 +287,23 @@ export function TodayHeart({
   // including on the learn beat, where an explicit link to the specific area
   // (e.g. Skills) is more useful than only the generic primary CTA.
   const showStoryNudge = showMeter && coverage.nextGapKey != null;
+
+  // A conversational lead in over the progress strip: name what's already in,
+  // then invite the next piece. "You've done your Motivations — now let's
+  // continue your story." This is the line that sits BEFORE the bars; the
+  // "Continue your story" link sits after them.
+  const storyAreas = STORY_ORDER.map((k) =>
+    coverage.areas.find((a) => a.key === k)
+  ).filter((a): a is CoverageArea => Boolean(a));
+  const filledStoryLabels = storyAreas
+    .filter((a) => a.filled)
+    .map((a) => a.label);
+  const nextStoryArea = storyAreas.find((a) => !a.filled) ?? null;
+  const storyIntro = !nextStoryArea
+    ? "You've told me your whole story — the picture's complete."
+    : filledStoryLabels.length === 0
+      ? "Let's start telling your story."
+      : `You've done your ${joinLabels(filledStoryLabels)} — now let's continue your story.`;
   // The story flow can be deep-linked to one family via ?family=. These are the
   // gaps it can fill directly; others fall back to the generic entry.
   const STORY_FAMILIES: CoverageKey[] = ["motivations", "strengths", "skills"];
@@ -415,10 +443,39 @@ export function TodayHeart({
 
       <SectionDivider rgb={rgb} />
 
-      {/* PROGRESS — where your story stands, first and on its own. A readout;
-          only the small Awards control inside it navigates. */}
-      {showMeter ? <StoryRail coverage={coverage} accentRgb={rgb} /> : null}
-      {showPulse ? <PulseTrace rhythm={rhythm} accentRgb={rgb} /> : null}
+      {/* PROGRESS — the story cluster, first and on its own: a conversational
+          lead ("You've done your Motivations — now let's continue your story"),
+          the progress bars (a readout; only the small Awards control taps), then
+          the "Continue your story" link deep-linked to the next area. */}
+      {showMeter ? (
+        <div className="space-y-3">
+          <p
+            className="max-w-[560px] text-[15px] leading-[1.55]"
+            style={{ color: "#C9CDD6", WebkitFontSmoothing: "antialiased" }}
+          >
+            {storyIntro}
+          </p>
+
+          <StoryRail coverage={coverage} accentRgb={rgb} showHeadline={false} />
+
+          {showStoryNudge ? (
+            <button
+              type="button"
+              onClick={() => router.push(gapNudge.route)}
+              className={`${LINK_CLASS} text-[14px]`}
+              style={{ color: "#B5BAC4" }}
+            >
+              {gapNudge.label}
+              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {showPulse ? (
+        <div className="mt-4">
+          <PulseTrace rhythm={rhythm} accentRgb={rgb} />
+        </div>
+      ) : null}
 
       <SectionDivider rgb={rgb} />
 
@@ -546,20 +603,6 @@ export function TodayHeart({
                   ? `You started “${data.looseThread.title}” — how's it going?`
                   : `Reflect on “${data.looseThread.title}”`}
                 <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          ) : null}
-
-          {showStoryNudge ? (
-            <div className="mt-3.5">
-              <button
-                type="button"
-                onClick={() => router.push(gapNudge.route)}
-                className={`${LINK_CLASS} text-[14px]`}
-                style={{ color: "#B5BAC4" }}
-              >
-                {gapNudge.label}
-                <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
               </button>
             </div>
           ) : null}
