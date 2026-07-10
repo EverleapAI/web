@@ -401,9 +401,9 @@ export function TodayHeart({
               {heroParagraphs.map((para, i) => (
                 <p
                   key={i}
-                  className="text-[20px] leading-[1.6] tracking-[-0.005em]"
+                  className="text-[21px] leading-[1.62] tracking-[-0.005em]"
                   style={{
-                    color: "#D6D9DF",
+                    color: "#C3C7D1",
                     fontWeight: 450,
                     WebkitFontSmoothing: "antialiased",
                   }}

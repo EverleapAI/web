@@ -15,7 +15,6 @@ import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
-import { InProgressMissionNudge } from "./components/InProgressMissionNudge";
 import {
   TodayCard,
   TodayCardSkeleton,
@@ -482,8 +481,6 @@ export default function MainHomePage() {
                 )}
               </SectionCard>
             </section>
-
-            <InProgressMissionNudge />
 
             <section className="mt-5">
               <SectionCard tone="neutral" className="px-4 py-5">
