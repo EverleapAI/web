@@ -1,17 +1,97 @@
 "use client";
 
 // The shared progress motif: "Your story is forming" — the three self-knowledge
-// families (motivations / skills / strengths) you've told us about. Tapping it
-// opens the achievements pyramid, so progress and reward share one surface.
-// When all three are in, it flips to a "story's told" state that points at the
-// badge you earned. This is the component we reuse on every main page.
+// families (motivations / skills / strengths) you've told us about. The Awards
+// control opens the achievements pyramid, so progress and reward share one
+// surface. When all three are in, it flips to a "story's told" state.
 
+import * as React from "react";
 import { Trophy, ChevronRight } from "lucide-react";
 
 import { emitOpenAchievements } from "@/lib/actionsBus";
+import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
 import type { Coverage } from "./todayHeart.types";
 
 const STORY_KEYS = ["motivations", "skills", "strengths"] as const;
+
+// How many trophy slots represent 100% of badges earned.
+const TROPHY_SLOTS = 10;
+
+// Half a trophy: a dim outline with an accent-filled left half laid over it.
+function HalfTrophy({ accentRgb }: { accentRgb: string }) {
+  return (
+    <span className="relative inline-flex h-3.5 w-3.5 shrink-0">
+      <Trophy
+        className="absolute inset-0 h-3.5 w-3.5"
+        style={{ color: "rgba(238,241,251,0.16)" }}
+      />
+      <span
+        className="absolute inset-0 overflow-hidden"
+        style={{ width: "50%" }}
+      >
+        <Trophy className="h-3.5 w-3.5" style={{ color: `rgb(${accentRgb})` }} />
+      </span>
+    </span>
+  );
+}
+
+// A row of trophies that fills to the share of badges earned — e.g. 10 of 20
+// badges → 5 trophies, 19 of 20 → 9½. The whole row opens the Awards modal.
+function TrophyMeter({
+  stats,
+  accentRgb,
+}: {
+  stats: BadgeStats | null;
+  accentRgb: string;
+}) {
+  const total = stats?.totalCount ?? 0;
+  const earned = stats?.earnedCount ?? 0;
+
+  // Loaded, but the system has no badges to speak of — show nothing.
+  if (stats && total <= 0) return null;
+
+  const ratio = total > 0 ? Math.min(1, earned / total) : 0;
+  // Scale to the slot count, snap to the nearest half-trophy.
+  const halves = Math.round(ratio * TROPHY_SLOTS * 2) / 2;
+  const full = Math.floor(halves);
+  const hasHalf = halves - full === 0.5;
+
+  return (
+    <button
+      type="button"
+      onClick={() => emitOpenAchievements()}
+      aria-label={
+        stats
+          ? `${earned} of ${total} badges earned — open your Awards`
+          : "Open your Awards"
+      }
+      className="group inline-flex items-center gap-[3px] rounded-full px-1.5 py-1 transition hover:bg-white/[0.04] active:opacity-70"
+    >
+      {Array.from({ length: TROPHY_SLOTS }).map((_, i) => {
+        if (i < full) {
+          return (
+            <Trophy
+              key={i}
+              className="h-3.5 w-3.5 shrink-0"
+              style={{ color: `rgb(${accentRgb})` }}
+            />
+          );
+        }
+        if (i === full && hasHalf) {
+          return <HalfTrophy key={i} accentRgb={accentRgb} />;
+        }
+        return (
+          <Trophy
+            key={i}
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: "rgba(238,241,251,0.16)" }}
+          />
+        );
+      })}
+      <ChevronRight className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/30 transition-transform duration-150 group-hover:translate-x-0.5" />
+    </button>
+  );
+}
 
 export function StoryRail({
   coverage,
@@ -22,9 +102,11 @@ export function StoryRail({
   accentRgb: string;
   // When a lead sentence already introduces the strip (as on Today), hide the
   // built-in "Your story is forming" label so the two don't echo each other —
-  // the small Awards control stays, pinned to the right.
+  // the trophy meter stays, pinned to the right.
   showHeadline?: boolean;
 }) {
+  const badges = useBadgeStats();
+
   const areas = STORY_KEYS.map((k) =>
     coverage.areas.find((a) => a.key === k)
   ).filter((a): a is Coverage["areas"][number] => Boolean(a));
@@ -36,8 +118,8 @@ export function StoryRail({
 
   return (
     <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] p-3.5">
-      {/* Only the small control on the right navigates — the strip itself is no
-          longer a tap target (it was too easy to hit by accident). */}
+      {/* The trophy meter is the only tap target — the strip itself is a readout
+          (it was too easy to open the modal by accident). */}
       <div
         className={`flex items-center gap-2 ${showHeadline ? "justify-between" : "justify-end"}`}
       >
@@ -46,18 +128,7 @@ export function StoryRail({
             {complete ? "Your story's told" : "Your story is forming"}
           </span>
         ) : null}
-        <button
-          type="button"
-          onClick={() => emitOpenAchievements()}
-          aria-label="Open your Awards"
-          className="group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold text-white/65 transition hover:bg-white/[0.05] hover:text-white/90 active:opacity-70"
-        >
-          <Trophy className="h-3.5 w-3.5" style={{ color: `rgb(${accentRgb})` }} />
-          <span className="tabular-nums">
-            {complete ? "View" : `${filled}/${areas.length}`}
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 transition-transform duration-150 group-hover:translate-x-0.5" />
-        </button>
+        <TrophyMeter stats={badges} accentRgb={accentRgb} />
       </div>
 
       <div className="mt-2.5 grid grid-cols-3 gap-1.5">
