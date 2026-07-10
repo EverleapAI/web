@@ -26,7 +26,7 @@ import {
 
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
-import { emitActionAdded, emitActionsChanged, emitCelebrate } from "@/lib/actionsBus";
+import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
 
@@ -87,34 +87,33 @@ function ActionRow({
   const missionSteps = action.mission?.steps ?? [];
   const missionDone = missionSteps.filter((s) => s.done).length;
 
-  // Celebrate the moment of completion from the control the user just tapped.
-  const fireCelebrate = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    emitCelebrate(r.left + r.width / 2, r.top + r.height / 2);
-  };
-
   const menuItem =
     "flex w-full items-center rounded-lg px-3 py-2 text-left text-[13px] transition hover:bg-white/[0.06]";
+  const circleClass = `mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${
+    done
+      ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
+      : "border-white/25 text-transparent hover:border-emerald-300/70 hover:text-emerald-300/50"
+  }`;
 
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-3.5 py-3 transition hover:bg-white/[0.04]">
-      {/* Done checkbox — one clear control: tap to complete */}
-      <button
-        type="button"
-        aria-label={done ? "Mark not done" : "Mark done"}
-        disabled={pending}
-        onClick={(e) => {
-          if (!done) fireCelebrate(e.currentTarget);
-          onStatus(action.id, done ? "saved" : "done");
-        }}
-        className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${
-          done
-            ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
-            : "border-white/25 text-transparent hover:border-emerald-300/70 hover:text-emerald-300/50"
-        }`}
-      >
-        <Check className="h-[13px] w-[13px]" strokeWidth={3} />
-      </button>
+      {/* Completion control. Finishing routes through the mission's Finish flow so
+          a feeling is always captured; only un-completing is a one-tap toggle. */}
+      {done ? (
+        <button
+          type="button"
+          aria-label="Mark not done"
+          disabled={pending}
+          onClick={() => onStatus(action.id, "saved")}
+          className={circleClass}
+        >
+          <Check className="h-[13px] w-[13px]" strokeWidth={3} />
+        </button>
+      ) : (
+        <Link href={`/main/actions/${action.id}`} aria-label="Finish this mission" className={circleClass}>
+          <Check className="h-[13px] w-[13px]" strokeWidth={3} />
+        </Link>
+      )}
 
       <div className="min-w-0 flex-1">
         <Link
@@ -178,17 +177,26 @@ function ActionRow({
           <>
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 z-20 mt-1 w-44 rounded-xl border border-white/10 bg-[#0c1226] p-1 text-white/85 shadow-[0_16px_44px_rgba(3,7,20,0.6)]">
-              <button
-                type="button"
-                className={menuItem}
-                onClick={(e) => {
-                  if (!done) fireCelebrate(e.currentTarget);
-                  onStatus(action.id, done ? "saved" : "done");
-                  setMenuOpen(false);
-                }}
-              >
-                {done ? "Move back to try" : "Mark done"}
-              </button>
+              {done ? (
+                <button
+                  type="button"
+                  className={menuItem}
+                  onClick={() => {
+                    onStatus(action.id, "saved");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Move back to try
+                </button>
+              ) : (
+                <Link
+                  href={`/main/actions/${action.id}`}
+                  className={menuItem}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Finish this mission…
+                </Link>
+              )}
               <button
                 type="button"
                 className={`${menuItem} text-rose-300/85`}
