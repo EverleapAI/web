@@ -562,9 +562,9 @@ export function TodayHeart({
               className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
               style={{
                 color: `rgb(${rgb})`,
-                background: `rgba(${rgb},0.14)`,
-                border: `1px solid rgba(${rgb},0.45)`,
-                boxShadow: `0 6px 20px rgba(${rgb},0.16)`,
+                background: `rgba(${rgb},0.08)`,
+                border: `1px solid rgba(${rgb},0.28)`,
+                boxShadow: `0 2px 10px rgba(${rgb},0.08)`,
               }}
             >
               <span>{primaryLabel}</span>
