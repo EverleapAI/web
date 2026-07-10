@@ -29,7 +29,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import ConstellationAnchor from "../ui/ConstellationAnchor";
 import { JourneyProgressPM } from "./JourneyProgressPM";
 
 // Placeholder badge art — a distinct line-icon per badge so the pyramid reads as
@@ -60,6 +59,7 @@ import {
   emitCelebrate,
   emitBadgeEarned,
   type EarnedBadge,
+  type BadgeTier,
 } from "@/lib/actionsBus";
 
 type Badge = {
@@ -71,28 +71,46 @@ type Badge = {
   sort: number;
   accent: string;
   glyph: string;
+  // Four-state tier: nothing | bronze | silver | gold (the highest reached).
+  tier: BadgeTier;
   earned: boolean;
   earnedAt: string | null;
-  // Tier 2 — the optional "High Signal" depth.
-  hasHighSignal?: boolean;
-  highSignal?: boolean;
-  highSignalHint?: string | null;
-  highSignalAt?: string | null;
+  // The tier ladder — hints + reached state for each rung.
+  bronzeHint?: string | null;
+  silverHint?: string | null;
+  goldHint?: string | null;
+  bronzeReached?: boolean;
+  silverReached?: boolean;
+  goldReached?: boolean;
 };
 
-const ACCENT_RGB: Record<string, string> = {
-  amber: "246,178,60",
-  violet: "182,160,255",
-  cyan: "92,180,255",
-  green: "55,211,160",
-  gradient: "246,178,60",
+// Medal color comes from the TIER, not the per-badge accent. "nothing" is a
+// dim, locked grey. Flat colors — no glow anywhere on this screen.
+const TIER_COLOR: Record<BadgeTier, string> = {
+  nothing: "#3a3f4a",
+  bronze: "#c17f43",
+  silver: "#b8c0cc",
+  gold: "#e8b93a",
 };
 
-function rgb(accent: string): string {
-  return ACCENT_RGB[accent] ?? ACCENT_RGB.amber;
-}
+const TIER_LABEL: Record<BadgeTier, string> = {
+  nothing: "Not yet earned",
+  bronze: "Bronze",
+  silver: "Silver",
+  gold: "Gold",
+};
 
 // ---------- one medal ----------
+
+// Convert a #rrggbb hex to "r,g,b" so we can build low-alpha fills from the
+// tier color without hardcoding a second palette.
+function hexRgb(hex: string): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
 
 function Medal({
   badge,
@@ -103,11 +121,9 @@ function Medal({
   onClick: () => void;
   selected: boolean;
 }) {
-  const c = rgb(badge.accent);
-  const isGradient = badge.accent === "gradient";
   const earned = badge.earned;
-  // A cleared High Signal tier reads as a brighter, double-ringed star.
-  const highSignal = !!badge.highSignal && earned;
+  const tint = TIER_COLOR[badge.tier];
+  const c = hexRgb(tint);
   const Icon = PLACEHOLDER_ICONS[badge.slug] ?? Star;
 
   return (
@@ -115,38 +131,26 @@ function Medal({
       type="button"
       onClick={onClick}
       className="group relative flex w-[64px] flex-col items-center gap-1.5 outline-none"
-      aria-label={`${badge.name}${earned ? ", earned" : ", locked"}`}
+      aria-label={`${badge.name}${earned ? `, ${TIER_LABEL[badge.tier]}` : ", locked"}`}
     >
-      {/* a soft, twinkling halo — this star is lit */}
-      {earned ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-[27px] h-[60px] w-[60px] -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-[elTwinkle_3.8s_ease-in-out_infinite]"
-          style={{ background: `radial-gradient(circle, rgba(${c},.6), transparent 68%)`, filter: "blur(5px)" }}
-        />
-      ) : null}
+      {/* Flat, tier-colored medal. No glow — a thin ring in the tier color. */}
       <span
         className="relative flex h-[54px] w-[54px] items-center justify-center rounded-full transition"
         style={
           earned
             ? {
-                color: isGradient ? "#fff" : `rgb(${c})`,
-                background: isGradient
-                  ? "linear-gradient(135deg, rgba(246,178,60,.28), rgba(182,160,255,.28))"
-                  : `rgba(${c},${highSignal ? ".26" : ".2"})`,
-                border: `1px solid rgba(${c},${highSignal ? ".95" : ".75"})`,
-                boxShadow: `0 0 ${highSignal ? 26 : 20}px rgba(${c},${
-                  highSignal ? ".7" : ".55"
-                }), inset 0 0 12px rgba(${c},.25)${
-                  highSignal ? `, 0 0 0 2px rgba(${c},.85)` : ""
-                }${selected ? `, 0 0 0 ${highSignal ? 4 : 3}px rgba(${c},.4)` : ""}`,
+                color: tint,
+                background: `rgba(${c},.16)`,
+                border: `1px solid ${tint}`,
+                boxShadow: selected ? `0 0 0 2px rgba(${c},.55)` : "none",
               }
             : {
-                color: "rgba(238,241,251,.42)",
-                background: "rgba(255,255,255,.05)",
-                border: `1px ${selected ? "solid" : "dashed"} rgba(255,255,255,${
-                  selected ? ".32" : ".18"
-                })`,
+                color: "rgba(238,241,251,.32)",
+                background: "rgba(255,255,255,.04)",
+                border: `1px ${selected ? "solid" : "dashed"} ${
+                  selected ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.16)"
+                }`,
+                boxShadow: "none",
               }
         }
       >
@@ -162,37 +166,37 @@ function Medal({
   );
 }
 
-// ---------- one tier row in the detail (Complete / High Signal) ----------
+// ---------- one rung in the detail ladder (Bronze / Silver / Gold) ----------
 
-function TierRow({
-  done,
-  accentRgb,
-  label,
+function TierRung({
+  tier,
+  reached,
   sub,
 }: {
-  done: boolean;
-  accentRgb: string;
-  label: string;
+  tier: "bronze" | "silver" | "gold";
+  reached: boolean;
   sub: string;
 }) {
+  const tint = TIER_COLOR[tier];
+  const c = hexRgb(tint);
   return (
     <div className="flex items-start gap-3">
       <span
         className="mt-0.5 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full"
         style={
-          done
-            ? { background: `rgb(${accentRgb})`, color: "#04150f" }
-            : { border: `2px solid rgba(${accentRgb},0.7)` }
+          reached
+            ? { background: tint, color: "#0a0f1c" }
+            : { border: `1.5px solid rgba(${c},0.45)` }
         }
       >
-        {done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+        {reached ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
       </span>
       <div className="flex-1">
         <div
           className="text-[13.5px] font-semibold"
-          style={{ color: done ? "#fff" : "rgba(238,241,251,.82)" }}
+          style={{ color: reached ? tint : "rgba(238,241,251,.6)" }}
         >
-          {label}
+          {TIER_LABEL[tier]}
         </div>
         <div className="mt-0.5 text-[12.5px] leading-[1.45] text-white/60">{sub}</div>
       </div>
@@ -286,35 +290,13 @@ function AchievementsModal() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.24 }}
         >
-          {/* cosmic ground: deep gradient → drifting starfield → nebula tints → ember horizon */}
+          {/* Flat solid ground — no radial glow, no starfield, no twinkle. */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(125% 88% at 50% -4%, #313a7a 0%, #1d2556 30%, #131a3e 56%, #0c1128 82%, #080b1e 100%)",
-            }}
+            style={{ background: "#0a0f1c" }}
           />
-          <div className="pointer-events-none absolute inset-0 opacity-[0.9]">
-            <ConstellationAnchor
-              seed="your-constellation"
-              accent={{ r: 198, g: 182, b: 255 }}
-              showLinks={false}
-            />
-          </div>
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(74% 48% at 50% 2%, rgba(182,160,255,0.28), transparent 62%), radial-gradient(100% 44% at 50% 114%, rgba(246,178,60,0.22), transparent 60%)",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
-            style={{ background: "linear-gradient(to top, rgba(246,146,66,0.16), transparent)" }}
-          />
-          <style>{`@keyframes elTwinkle{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.9)}50%{opacity:.95;transform:translate(-50%,-50%) scale(1.1)}}`}</style>
 
-          {/* scrolling content over the fixed sky */}
+          {/* scrolling content over the fixed background */}
           <div className="relative h-full overflow-y-auto">
             <div className="mx-auto flex min-h-full max-w-[460px] flex-col px-5 py-7">
               {/* header */}
@@ -334,7 +316,7 @@ function AchievementsModal() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-white/55 backdrop-blur-sm transition hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.03] text-white/55 transition hover:text-white"
                   aria-label="Close achievements"
                 >
                   <X className="h-4 w-4" />
@@ -379,17 +361,17 @@ function AchievementsModal() {
                       className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[16px]"
                       style={{
                         color: selected.earned
-                          ? `rgb(${rgb(selected.accent)})`
+                          ? TIER_COLOR[selected.tier]
                           : "rgba(238,241,251,.35)",
-                        background: `rgba(${rgb(selected.accent)},${
+                        background: `rgba(${hexRgb(TIER_COLOR[selected.tier])},${
                           selected.earned ? ".16" : ".06"
                         })`,
-                        border: `1px solid rgba(${rgb(selected.accent)},${
-                          selected.earned ? ".65" : ".2"
-                        })`,
-                        boxShadow: selected.earned
-                          ? `0 0 16px rgba(${rgb(selected.accent)},.45)`
-                          : "none",
+                        border: `1px solid ${
+                          selected.earned
+                            ? TIER_COLOR[selected.tier]
+                            : "rgba(238,241,251,.2)"
+                        }`,
+                        boxShadow: "none",
                       }}
                     >
                       {selected.earned ? selected.glyph : "◇"}
@@ -398,12 +380,15 @@ function AchievementsModal() {
                       <div className="text-[15px] font-semibold text-white">
                         {selected.name}
                       </div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/40">
-                        {selected.highSignal
-                          ? "High Signal"
-                          : selected.earned
-                          ? "Earned"
-                          : "Not yet earned"}
+                      <div
+                        className="text-[11px] font-semibold uppercase tracking-[0.12em]"
+                        style={{
+                          color: selected.earned
+                            ? TIER_COLOR[selected.tier]
+                            : "rgba(238,241,251,.4)",
+                        }}
+                      >
+                        {TIER_LABEL[selected.tier]}
                       </div>
                     </div>
                   </div>
@@ -413,24 +398,32 @@ function AchievementsModal() {
                     {selected.description}
                   </p>
 
-                  {/* How you earn it: the two real tiers, each with its own path. */}
+                  {/* How you earn it: the three real rungs, each with its own path.
+                      Rungs with no hint are skipped for this badge. */}
                   <div className="mt-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">
                       How you earn it
                     </div>
                     <div className="mt-3 space-y-3.5">
-                      <TierRow
-                        done={selected.earned}
-                        accentRgb="55,211,160"
-                        label="Complete"
-                        sub={selected.hint ?? selected.description}
-                      />
-                      {selected.hasHighSignal ? (
-                        <TierRow
-                          done={!!selected.highSignal}
-                          accentRgb={rgb(selected.accent)}
-                          label="High Signal"
-                          sub={selected.highSignalHint ?? "Go deeper on this one."}
+                      {selected.bronzeHint ? (
+                        <TierRung
+                          tier="bronze"
+                          reached={!!selected.bronzeReached}
+                          sub={selected.bronzeHint}
+                        />
+                      ) : null}
+                      {selected.silverHint ? (
+                        <TierRung
+                          tier="silver"
+                          reached={!!selected.silverReached}
+                          sub={selected.silverHint}
+                        />
+                      ) : null}
+                      {selected.goldHint ? (
+                        <TierRung
+                          tier="gold"
+                          reached={!!selected.goldReached}
+                          sub={selected.goldHint}
                         />
                       ) : null}
                     </div>
@@ -479,29 +472,34 @@ function BadgeEarnToast() {
       style={{ top: "calc(env(safe-area-inset-top) + 20px)" }}
     >
       {queue.map((b) => {
-        const c = rgb(b.accent ?? "amber");
+        const tier: BadgeTier = b.tier ?? "bronze";
+        const tint = TIER_COLOR[tier];
+        const c = hexRgb(tint);
         return (
           <motion.div
             key={b.slug}
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: -14, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="pointer-events-auto flex items-center gap-3 rounded-full border px-4 py-2.5 backdrop-blur-xl"
+            className="pointer-events-auto flex items-center gap-3 rounded-full border px-4 py-2.5"
             style={{
-              background: "rgba(12,18,38,.95)",
-              borderColor: `rgba(${c},.4)`,
-              boxShadow: `0 14px 44px rgba(3,7,20,.6), 0 0 26px rgba(${c},.25)`,
+              background: "#0a0f1c",
+              borderColor: `rgba(${c},.5)`,
+              boxShadow: "none",
             }}
           >
             <span
               className="flex h-7 w-7 items-center justify-center rounded-full text-[14px]"
-              style={{ color: `rgb(${c})`, background: `rgba(${c},.16)` }}
+              style={{ color: tint, background: `rgba(${c},.16)` }}
             >
               {b.glyph ?? "◆"}
             </span>
             <div className="pr-1">
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: `rgb(${c})` }}>
-                Badge unlocked
+              <div
+                className="text-[10px] font-bold uppercase tracking-[0.14em]"
+                style={{ color: tint }}
+              >
+                {TIER_LABEL[tier]} unlocked
               </div>
               <div className="text-[13.5px] font-semibold text-white">{b.name}</div>
             </div>
@@ -527,12 +525,15 @@ function BadgeSync() {
         });
         const d = await r.json();
         if (!alive || !d?.ok || !Array.isArray(d.newlyEarned)) return;
-        for (const b of d.newlyEarned as Badge[]) {
+        for (const b of d.newlyEarned as {
+          slug: string;
+          name: string;
+          tier?: BadgeTier;
+        }[]) {
           emitBadgeEarned({
             slug: b.slug,
             name: b.name,
-            glyph: b.glyph,
-            accent: b.accent,
+            tier: b.tier,
           });
         }
       } catch {

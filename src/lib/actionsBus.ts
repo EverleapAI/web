@@ -35,7 +35,14 @@ export function emitOpenAchievements(): void {
   window.dispatchEvent(new Event(OPEN_ACHIEVEMENTS));
 }
 
-export type EarnedBadge = { slug: string; name: string; glyph?: string; accent?: string };
+export type BadgeTier = "nothing" | "bronze" | "silver" | "gold";
+export type EarnedBadge = {
+  slug: string;
+  name: string;
+  glyph?: string;
+  accent?: string;
+  tier?: BadgeTier;
+};
 
 /** A badge was just unlocked — fires the earn toast + celebration. */
 export function emitBadgeEarned(badge: EarnedBadge): void {
