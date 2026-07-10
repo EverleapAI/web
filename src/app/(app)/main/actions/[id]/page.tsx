@@ -176,6 +176,7 @@ export default function MissionPage() {
   };
 
   const finish = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!felt) return; // a feeling is required to close the loop
     const rect = e.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -466,8 +467,8 @@ export default function MissionPage() {
                       <button
                         type="button"
                         onClick={finish}
-                        disabled={finishing}
-                        className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
+                        disabled={finishing || !felt}
+                        className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
                         style={{ backgroundColor: rgba(accent, 0.24) }}
                       >
                         {finishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -481,6 +482,11 @@ export default function MissionPage() {
                         Not yet
                       </button>
                     </div>
+                    {!felt ? (
+                      <p className="mt-2 text-[12px] leading-[1.5] text-white/40">
+                        Pick how it felt to finish — that one tap is what teaches Everleap.
+                      </p>
+                    ) : null}
                   </div>
                 </SectionCard>
               ) : null}
