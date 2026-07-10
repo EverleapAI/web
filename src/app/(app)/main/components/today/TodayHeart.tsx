@@ -13,7 +13,6 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import { StoryRail } from "./StoryRail";
-import { PulseTrace } from "./PulseTrace";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -108,6 +107,16 @@ function splitIntoParagraphs(text: string): string[] {
   return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
 }
 
+// The calm reading treatment shared by the hero retort, the More/Why modals,
+// and the "A Real Step" pitch: a light weight in a dimmed off-white. Only the
+// size steps down by role — hero largest, everything else a notch under.
+const PROSE_STYLE: React.CSSProperties = {
+  color: "#C3C7D1",
+  fontWeight: 450,
+  WebkitFontSmoothing: "antialiased",
+};
+const PROSE_CLASS = "leading-[1.6] tracking-[-0.005em]";
+
 // The eyebrow header for the merged "next" block, by dispatch type.
 const NEXT_HEADER: Record<string, string> = {
   learn: "Keep building",
@@ -155,7 +164,7 @@ export function TodayHeart({
   onPrimary: () => void;
 }) {
   const router = useRouter();
-  const { dispatch, coverage, rhythm, welcome } = data;
+  const { dispatch, coverage, welcome } = data;
   const accent = DISPATCH_ACCENT[dispatch.type] ?? DISPATCH_ACCENT.learn;
   const rgb = accent.rgb;
   // Parse the accent string into the {r,g,b} the ConstellationAnchor wants.
@@ -277,12 +286,9 @@ export function TodayHeart({
   // The hero read, broken into short paragraphs for calmer mobile reading.
   const heroParagraphs = heroRetort ? splitIntoParagraphs(heroRetort) : [];
 
-  // Empty progress art says nothing — the meter/pulse only earn their space once
-  // there's real coverage to carry (and, for the pulse, an actual rhythm).
+  // Empty progress art says nothing — the meter only earns its space once
+  // there's real coverage to carry.
   const showMeter = hasCoverage;
-  // Show the rhythm only when there's an actual beat this week — an empty "0
-  // beats" chart reads as a scolding, not a signal.
-  const showPulse = hasCoverage && !rhythm.firstBeat && rhythm.total7d > 0;
   // The story lead is one line with an INLINE call to action — the tail of the
   // sentence is itself the link, so context and action share a line instead of
   // sandwiching the bars with a separate "Continue your story" row.
@@ -399,15 +405,7 @@ export function TodayHeart({
           <div className="relative z-10 max-w-[560px]">
             <div className="space-y-3.5">
               {heroParagraphs.map((para, i) => (
-                <p
-                  key={i}
-                  className="text-[21px] leading-[1.62] tracking-[-0.005em]"
-                  style={{
-                    color: "#C3C7D1",
-                    fontWeight: 450,
-                    WebkitFontSmoothing: "antialiased",
-                  }}
-                >
+                <p key={i} className={`text-[23px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
                   {para}
                 </p>
               ))}
@@ -477,11 +475,6 @@ export function TodayHeart({
           <StoryRail coverage={coverage} accentRgb={rgb} showHeadline={false} />
         </div>
       ) : null}
-      {showPulse ? (
-        <div className="mt-4">
-          <PulseTrace rhythm={rhythm} accentRgb={rgb} />
-        </div>
-      ) : null}
 
       <SectionDivider rgb={rgb} />
 
@@ -528,8 +521,8 @@ export function TodayHeart({
 
           {actionPitch ? (
             <p
-              className="mt-3 max-w-[560px] text-[17px] leading-[1.55]"
-              style={{ color: "#C9CDD6", fontWeight: 450, WebkitFontSmoothing: "antialiased" }}
+              className={`mt-3 max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              style={PROSE_STYLE}
             >
               {actionPitch}
             </p>
@@ -636,10 +629,7 @@ export function TodayHeart({
             >
               The whole picture
             </div>
-            <p
-              className="text-[15.5px] leading-[1.5]"
-              style={{ color: "#BFC3CD", WebkitFontSmoothing: "antialiased" }}
-            >
+            <p className={`text-[20px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {heroBody}
             </p>
             <button
@@ -672,7 +662,7 @@ export function TodayHeart({
             >
               Why this
             </div>
-            <p className="text-[15.5px] leading-[1.6] text-white/85">{heroWhy}</p>
+            <p className={`text-[20px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
             <button
               type="button"
               onClick={() => setWhyOpen(false)}
