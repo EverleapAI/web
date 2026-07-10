@@ -436,7 +436,7 @@ export default function MainHomePage() {
             <section>
               <SectionCard
                 tone="hero"
-                className="!px-2 !py-2.5"
+                className="!px-3 !py-3.5"
                 backdrop={
                   <>
                     {/* The Oura move: the atmosphere lives up top behind the
