@@ -69,7 +69,7 @@ export function WelcomeName({
       </span>
       <span
         className="text-[26px] font-semibold tracking-[-0.02em]"
-        style={{ color: "#E3E6EC", WebkitFontSmoothing: "antialiased" }}
+        style={{ color: "#ABAFB9" }}
       >
         {title}
       </span>

@@ -88,7 +88,7 @@ function TrophyMeter({
           />
         );
       })}
-      <ChevronRight className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/30 transition-transform duration-150 group-hover:translate-x-0.5" />
+      <ChevronRight className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/20 transition-transform duration-150 group-hover:translate-x-0.5" />
     </button>
   );
 }
@@ -120,7 +120,7 @@ export function StoryRail({
     <div className="w-full rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3">
       {showHeadline ? (
         <div className="mb-2.5">
-          <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/70">
+          <span className="text-[13px] font-semibold uppercase tracking-[0.12em] text-white/50">
             {complete ? "Your story's told" : "Your story is forming"}
           </span>
         </div>
@@ -148,7 +148,7 @@ export function StoryRail({
           <span
             key={a.key}
             style={{
-              color: a.filled ? `rgba(${accentRgb},0.95)` : "rgba(238,241,251,0.5)",
+              color: a.filled ? `rgba(${accentRgb},0.95)` : "rgba(238,241,251,0.34)",
             }}
           >
             {a.label}

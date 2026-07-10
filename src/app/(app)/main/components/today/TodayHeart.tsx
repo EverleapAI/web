@@ -112,8 +112,17 @@ function splitIntoParagraphs(text: string): string[] {
 // The calm reading treatment shared by the hero retort, the More/Why modals,
 // and the "A Real Step" pitch: a light weight in a dimmed off-white. Only the
 // size steps down by role — hero largest, everything else a notch under.
+// Dark-mode text ramp — tuned for low glare (the soft, low-luminance feel of
+// Oura / Apple Health / Notion dark mode). The values sit in a deliberately
+// NARROW luminance band: hierarchy is carried by size, weight and spacing, not
+// by making higher levels brighter. All pulled ~30% down off a naive
+// light-on-dark so nothing on the card shouts.
+const TEXT_PRIMARY = "#A2A6B0"; // body prose, the move, the story sentence, masthead
+const TEXT_SECONDARY = "#878B95"; // quiet labels + secondary links — a notch down, not a jump
+const TEXT_MUTED = "#63666F"; // meta / timestamps — the quietest chrome
+
 const PROSE_STYLE: React.CSSProperties = {
-  color: "#BFC3CD",
+  color: TEXT_PRIMARY,
   fontWeight: 500,
 };
 const PROSE_CLASS = "leading-[1.6] tracking-[0.4px]";
@@ -454,7 +463,7 @@ export function TodayHeart({
                     type="button"
                     onClick={() => setWhyOpen(true)}
                     className={`${LINK_CLASS} text-[15px]`}
-                    style={{ color: "#B5BAC4" }}
+                    style={{ color: TEXT_SECONDARY }}
                   >
                     Why
                     <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -534,7 +543,7 @@ export function TodayHeart({
             </span>
             <span
               className="text-[14px] font-semibold tracking-[0.005em]"
-              style={{ color: "#D6D9DF" }}
+              style={{ color: TEXT_SECONDARY }}
             >
               {NEXT_HEADER[dispatch.type] ?? "Your next move"}
             </span>
@@ -568,7 +577,7 @@ export function TodayHeart({
           )}
 
           {dispatch.meta ? (
-            <div className="mt-3 text-[13px] tabular-nums text-white/45">
+            <div className="mt-3 text-[13px] tabular-nums" style={{ color: TEXT_MUTED }}>
               {dispatch.meta.duration} · {dispatch.meta.when}
             </div>
           ) : null}
@@ -603,8 +612,8 @@ export function TodayHeart({
               type="button"
               onClick={handleHowTo}
               disabled={howLoading}
-              className={`${LINK_CLASS} mt-3.5 text-[16px] disabled:opacity-70`}
-              style={{ color: "#B5BAC4" }}
+              className={`${LINK_CLASS} mt-3.5 text-[18px] disabled:opacity-70`}
+              style={{ color: TEXT_SECONDARY }}
             >
               {howLoading ? "Opening…" : "How would I even do this?"}
               <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
@@ -616,8 +625,8 @@ export function TodayHeart({
               <button
                 type="button"
                 onClick={() => router.push(data.looseThread!.route)}
-                className={`${LINK_CLASS} max-w-[520px] text-left text-[16px]`}
-                style={{ color: "rgb(55,211,160)" }}
+                className={`${LINK_CLASS} max-w-[520px] text-left text-[18px]`}
+                style={{ color: "rgb(45,170,130)" }}
               >
                 {data.looseThread.kind === "due"
                   ? `You started “${data.looseThread.title}” — how's it going?`
@@ -646,7 +655,7 @@ export function TodayHeart({
           >
             <div
               className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
-              style={{ color: "#B5BAC4" }}
+              style={{ color: TEXT_SECONDARY }}
             >
               The whole picture
             </div>
@@ -656,7 +665,7 @@ export function TodayHeart({
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#BFC3CD] transition hover:border-white/[0.16]"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#878B95] transition hover:border-white/[0.16]"
             >
               Close
             </button>
