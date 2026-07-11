@@ -27,3 +27,37 @@ export const EYEBROW_CLASS = "text-[10.5px] font-bold uppercase tracking-[0.22em
 // own semantic colour, brightening on hover, with a trailing chevron.
 export const LINK_CLASS =
   "group inline-flex items-center gap-1.5 font-semibold tracking-[0.01em] transition duration-150 hover:brightness-125 active:opacity-70";
+
+// ── Read trimming ────────────────────────────────────────────────────────────
+// The visible "read" everywhere is trimmed to Today's length so the treatment
+// matches: a tight opening, with the whole picture one tap away in a "More"
+// modal. Mirrors TodayHeart's firstSentences/capRead.
+
+/** First n sentences of a block (keeps sentence boundaries — never a mid chop). */
+export function firstSentences(text: string | null | undefined, n: number): string {
+  if (!text) return "";
+  const parts = text
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return (parts.length ? parts : [String(text).trim()]).slice(0, n).join(" ");
+}
+
+/** Trim to ~maxChars by dropping whole trailing sentences (never mid-sentence). */
+export function capRead(text: string | null | undefined, maxChars: number): string {
+  const t = (text ?? "").trim();
+  if (t.length <= maxChars) return t;
+  const sentences = t.split(/(?<=[.!?])\s+/);
+  let out = "";
+  for (const s of sentences) {
+    const next = out ? `${out} ${s}` : s;
+    if (next.length > maxChars && out) break;
+    out = next;
+  }
+  return out || t.slice(0, maxChars).replace(/\s+\S*$/, "").trim();
+}
+
+/** The canonical visible read: first 2 sentences, capped ~220 chars — Today's target. */
+export function leadRead(text: string | null | undefined): string {
+  return capRead(firstSentences(text, 2), 220);
+}
