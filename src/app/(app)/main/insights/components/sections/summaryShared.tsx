@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { EYEBROW_CLASS } from "@/lib/ui/prose";
+
 type HeaderTone = "neutral" | "teal" | "violet" | "amber" | "sky";
 type CardTone =
   | "neutral"
@@ -215,11 +217,10 @@ export function confidenceToConstellationDensity(level?: string | null): number 
   }
 }
 
+// Every card eyebrow on Insights rides Today's eyebrow rung — same size, weight
+// and letter-spacing — so the two pages don't read as two different type systems.
 export function headerLabel(dark: boolean) {
-  return [
-    "text-[11px] font-semibold uppercase tracking-[0.28em]",
-    dark ? "text-white/44" : "text-slate-600",
-  ].join(" ");
+  return [EYEBROW_CLASS, dark ? "text-white/44" : "text-slate-600"].join(" ");
 }
 
 // Dark branches below carry the shared low-glare treatment (see @/lib/ui/prose):

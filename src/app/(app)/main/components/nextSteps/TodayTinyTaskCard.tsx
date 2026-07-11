@@ -12,6 +12,8 @@ import {
 type Props = {
   dark: boolean;
   tasks: MicroTaskBatchItem[];
+  /** Insights reuses this card verbatim and only ever relabels the eyebrow. */
+  eyebrow?: string;
 };
 
 // One spot of color per theme: the app's "learn you" purple on dark, teal on
@@ -71,7 +73,11 @@ function labelClass(dark: boolean, selected: boolean) {
   return selected ? "text-white/88" : "text-white/56";
 }
 
-export function TodayTinyTaskCard({ dark, tasks }: Props) {
+export function TodayTinyTaskCard({
+  dark,
+  tasks,
+  eyebrow = "Something I’m wondering",
+}: Props) {
   const { current, allAnswered, canGoBack, answer, goBack, selectedIndexFor } =
     useMicroTaskBatch(tasks);
 
@@ -107,7 +113,7 @@ export function TodayTinyTaskCard({ dark, tasks }: Props) {
           className="text-[11px] font-bold uppercase tracking-[0.2em]"
           style={{ color: `rgb(${accent})` }}
         >
-          Something I&apos;m wondering
+          {eyebrow}
         </span>
       </div>
 

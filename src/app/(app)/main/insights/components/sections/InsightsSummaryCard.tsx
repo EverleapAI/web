@@ -17,7 +17,15 @@ import {
   sectionCard,
 } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
-import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
+import {
+  LINK_CLASS,
+  LINK_SIZE,
+  PROSE_CLASS,
+  PROSE_SIZE,
+  PROSE_STYLE,
+  TEXT_HEADING,
+  TEXT_SECONDARY,
+} from "@/lib/ui/prose";
 import { ConstellationAnchor } from "../../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
@@ -69,9 +77,12 @@ export default function InsightsSummaryCard({
 
   const noSignalTitle = "Your insights get sharper once we have more signal.";
 
-  // Visible read is trimmed to Today's length; the whole picture sits behind "More".
+  // The body is generated at Today's length already (35-50 words) and its LAST
+  // sentence is the nudge toward a tab + an unearned badge — so it is shown
+  // whole. Trimming to the first two sentences would drop exactly that nudge.
+  // The verbose version lives behind "The whole picture".
   const fullBody = (previewBody ?? paragraph ?? "").trim();
-  const readText = leadRead(fullBody);
+  const readText = fullBody;
   const displayWhy = (previewWhy ?? why ?? previewDetail ?? detail ?? "").trim();
   const displayMore = ((previewMore ?? more ?? "").trim() || fullBody).trim();
 
@@ -121,12 +132,12 @@ export default function InsightsSummaryCard({
         </div>
 
         <div className={cardBody()}>
+          {/* Today's rule: hierarchy comes from weight + spacing, not from a
+              bigger size or a brighter colour. Heading sits on the same 21px
+              rung as the prose it heads, one weight above it. */}
           <h2
-            className={[
-              dark ? "text-[#ABAFB9]" : "text-slate-950",
-              "mt-0.5 text-[1.5rem] font-semibold leading-[1.07] tracking-[-0.03em]",
-              "sm:text-[1.68rem]",
-            ].join(" ")}
+            className={["mt-0.5", PROSE_SIZE, PROSE_CLASS].join(" ")}
+            style={{ color: TEXT_HEADING, fontWeight: 600 }}
           >
             {hasStrongSignal ? resolvedHeadline : noSignalTitle}
           </h2>
@@ -134,23 +145,19 @@ export default function InsightsSummaryCard({
           {hasStrongSignal ? (
             <>
               <p
-                className={
-                  dark
-                    ? `mt-3 text-[21px] ${PROSE_CLASS}`
-                    : `mt-3 ${bodyText(false)} text-[16px] leading-[1.6]`
-                }
-                style={dark ? PROSE_STYLE : undefined}
+                className={["mt-3", PROSE_SIZE, PROSE_CLASS].join(" ")}
+                style={PROSE_STYLE}
               >
                 {readText}
               </p>
 
               {displayMore || displayWhy ? (
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-1.5">
                   {displayMore ? (
                     <button
                       type="button"
                       onClick={() => setMoreOpen(true)}
-                      className={`${LINK_CLASS} text-[18px]`}
+                      className={[LINK_CLASS, LINK_SIZE].join(" ")}
                       style={{ color: dark ? TEXT_SECONDARY : "#475569" }}
                     >
                       The whole picture
@@ -161,7 +168,7 @@ export default function InsightsSummaryCard({
                     <button
                       type="button"
                       onClick={() => setWhyOpen(true)}
-                      className={`${LINK_CLASS} text-[18px]`}
+                      className={[LINK_CLASS, LINK_SIZE].join(" ")}
                       style={{ color: dark ? "rgb(120,200,255)" : "#2563eb" }}
                     >
                       Why this
