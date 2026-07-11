@@ -134,6 +134,9 @@ export default function MissionPage() {
       setEcho(action.mission.echo);
       return;
     }
+    // Nothing to reflect back until there's a feeling or a note — otherwise the
+    // done view shows the reflect form (finish() owns echo once they reflect).
+    if (!action.felt && !action.reflection) return;
     if (echoRequested.current) return;
     echoRequested.current = true;
     setEchoLoading(true);
@@ -141,7 +144,7 @@ export default function MissionPage() {
       if (a?.mission?.echo) setEcho(a.mission.echo);
       setEchoLoading(false);
     });
-  }, [action?.status, action?.mission?.echo, id]);
+  }, [action?.status, action?.mission?.echo, action?.felt, action?.reflection, id]);
 
   const accent = LANE_ACCENT[action?.lane ?? ""] ?? { r: 92, g: 180, b: 255 };
   const steps = action?.mission?.steps ?? [];
@@ -182,13 +185,27 @@ export default function MissionPage() {
     const cy = rect.top + rect.height / 2;
     setFinishing(true);
     const a = await missionOp({ id, op: "complete", reflection: reflection.trim(), felt });
-    setFinishing(false);
     if (a) {
       setAction(a);
       setReflectOpen(false);
       emitActionsChanged();
       emitCelebrate(cx, cy);
+      // There's now a feeling to respond to — (re)generate the echo. Own it here
+      // (rather than let the status effect race) so it also fires when reflecting
+      // on an action that was already marked done with no feeling.
+      echoRequested.current = true;
+      setEcho(a.mission?.echo ?? null);
+      if (!a.mission?.echo) {
+        setEchoLoading(true);
+        const withEcho = await missionOp({ id, op: "echo" });
+        if (withEcho?.mission?.echo) {
+          setAction(withEcho);
+          setEcho(withEcho.mission.echo);
+        }
+        setEchoLoading(false);
+      }
     }
+    setFinishing(false);
   };
 
   return (
@@ -246,38 +263,91 @@ export default function MissionPage() {
           </SectionCard>
 
           {isDone ? (
-            /* Completed look-back */
+            /* Completed look-back — or, when no feeling was ever captured
+               (e.g. marked done before the gate, or arrived here via Today's
+               "reflect on this"), a way to still reflect and close the loop. */
             <SectionCard tone="neutral">
               <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-emerald-300/85">
                 <Check className="h-4 w-4" /> Done
               </div>
-              {action.felt ? (
-                <p className="mt-2 text-[14px] text-white/72">
-                  Afterward you felt <span className="font-semibold text-white">{action.felt}</span>.
-                </p>
-              ) : null}
-              {action.reflection ? (
-                <p className="mt-2 text-[14px] leading-[1.6] text-white/72">“{action.reflection}”</p>
-              ) : null}
-              <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
-                <div
-                  className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
-                  style={{ color: rgba(accent, 0.9) }}
-                >
-                  <Sparkles className="h-3 w-3" /> What I’m taking from this
-                </div>
-                {echoLoading ? (
-                  <div className="flex items-center gap-2 text-[13.5px] text-white/50">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading what you noticed…
-                  </div>
-                ) : echo ? (
-                  <p className="text-[14px] leading-[1.6] text-white/82">{echo}</p>
-                ) : (
-                  <p className="text-[13.5px] leading-[1.6] text-white/55">
-                    Finishing this fed back into what Everleap is learning about you.
+
+              {!action.felt ? (
+                <div className="mt-3">
+                  <h2 className="text-[16px] font-semibold text-white">How did it go?</h2>
+                  <p className="mt-1 text-[13.5px] leading-[1.6] text-white/64">
+                    You finished this — one tap on how it felt is what teaches Everleap.
                   </p>
-                )}
-              </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {FELT_OPTIONS.map((o) => (
+                      <button
+                        key={o.key}
+                        type="button"
+                        onClick={() => setFelt(o.key)}
+                        className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition ${
+                          felt === o.key
+                            ? "border-transparent text-white"
+                            : "border-white/14 text-white/62 hover:text-white/85"
+                        }`}
+                        style={felt === o.key ? { backgroundColor: rgba(accent, 0.24) } : undefined}
+                      >
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reflection}
+                    onChange={(e) => setReflection(e.target.value)}
+                    placeholder="What did you notice? (optional)"
+                    rows={3}
+                    className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-[14px] leading-[1.55] text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
+                  />
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={finish}
+                      disabled={finishing || !felt}
+                      className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
+                      style={{ backgroundColor: rgba(accent, 0.24) }}
+                    >
+                      {finishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      Save reflection
+                    </button>
+                  </div>
+                  {!felt ? (
+                    <p className="mt-2 text-[12px] leading-[1.5] text-white/40">
+                      Pick how it felt — that one tap is what teaches Everleap.
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <>
+                  <p className="mt-2 text-[14px] text-white/72">
+                    Afterward you felt <span className="font-semibold text-white">{action.felt}</span>.
+                  </p>
+                  {action.reflection ? (
+                    <p className="mt-2 text-[14px] leading-[1.6] text-white/72">“{action.reflection}”</p>
+                  ) : null}
+                  <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
+                    <div
+                      className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                      style={{ color: rgba(accent, 0.9) }}
+                    >
+                      <Sparkles className="h-3 w-3" /> What I’m taking from this
+                    </div>
+                    {echoLoading ? (
+                      <div className="flex items-center gap-2 text-[13.5px] text-white/50">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading what you noticed…
+                      </div>
+                    ) : echo ? (
+                      <p className="text-[14px] leading-[1.6] text-white/82">{echo}</p>
+                    ) : (
+                      <p className="text-[13.5px] leading-[1.6] text-white/55">
+                        Finishing this fed back into what Everleap is learning about you.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </SectionCard>
           ) : !action.mission ? (
             /* Not started — offer to build the mission */
