@@ -12,6 +12,7 @@ import { ChevronRight, Check } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
+import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_MUTED, TEXT_SECONDARY } from "@/lib/ui/prose";
 import { StoryRail } from "./StoryRail";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
@@ -117,15 +118,8 @@ function splitIntoParagraphs(text: string): string[] {
 // NARROW luminance band: hierarchy is carried by size, weight and spacing, not
 // by making higher levels brighter. All pulled ~30% down off a naive
 // light-on-dark so nothing on the card shouts.
-const TEXT_PRIMARY = "#A2A6B0"; // body prose, the move, the story sentence, masthead
-const TEXT_SECONDARY = "#878B95"; // quiet labels + secondary links — a notch down, not a jump
-const TEXT_MUTED = "#63666F"; // meta / timestamps — the quietest chrome
-
-const PROSE_STYLE: React.CSSProperties = {
-  color: TEXT_PRIMARY,
-  fontWeight: 500,
-};
-const PROSE_CLASS = "leading-[1.6] tracking-[0.4px]";
+// Text ramp + prose recipe now live in @/lib/ui/prose (shared across Today /
+// Insights / Explore). Imported above.
 
 // The eyebrow header for the merged "next" block, by dispatch type.
 const NEXT_HEADER: Record<string, string> = {
@@ -145,10 +139,8 @@ function joinLabels(names: string[]): string {
   return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }
 
-// One shared link treatment so every tappable link on the card reads the same:
-// underlined, its own semantic colour, with a trailing chevron.
-const LINK_CLASS =
-  "group inline-flex items-center gap-1.5 font-semibold tracking-[0.01em] transition duration-150 hover:brightness-125 active:opacity-70";
+// LINK_CLASS now lives in @/lib/ui/prose (imported above) — one shared link
+// treatment: own semantic colour, brightening on hover, with a trailing chevron.
 
 // An artistic divider — a hairline that fades in from both edges to a single
 // glowing accent node at the centre, echoing the constellation. One consistent

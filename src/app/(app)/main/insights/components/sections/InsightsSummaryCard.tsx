@@ -122,7 +122,7 @@ export default function InsightsSummaryCard({
         <div className={cardBody()}>
           <h2
             className={[
-              dark ? "text-white" : "text-slate-950",
+              dark ? "text-[#ABAFB9]" : "text-slate-950",
               "mt-0.5 text-[1.5rem] font-semibold leading-[1.07] tracking-[-0.03em]",
               "sm:text-[1.68rem]",
             ].join(" ")}
@@ -136,9 +136,10 @@ export default function InsightsSummaryCard({
                 <p
                   key={index}
                   className={[
-                    index === 0 ? "mt-2.5" : "mt-1.5",
+                    index === 0 ? "mt-3" : "mt-2",
                     bodyText(dark),
-                    "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                    // Hero read for the Insights Summary tab — Today's 21px prose size.
+                    "text-[21px]",
                   ].join(" ")}
                 >
                   {p}
