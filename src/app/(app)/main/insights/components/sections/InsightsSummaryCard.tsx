@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 import {
@@ -17,7 +16,8 @@ import {
   headerRow,
   sectionCard,
 } from "./summaryShared";
-import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
+import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
 import { ConstellationAnchor } from "../../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
@@ -29,6 +29,11 @@ type Props = {
   dark: boolean;
   headline?: string;
   paragraph?: string;
+  /** Reasoning behind this read — the "Why" modal. Falls back to legacy `detail`. */
+  why?: string;
+  /** The whole picture — the "More" modal. Falls back to the full body. */
+  more?: string;
+  /** Legacy pre-regen reasoning field; used as a `why` fallback. */
   detail?: string;
   hasStrongSignal: boolean;
   startHref?: string;
@@ -36,29 +41,27 @@ type Props = {
   pageKey?: PromptLabPageKey;
 };
 
-function splitParagraphs(text?: string): string[] {
-  return (text ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-}
-
 export default function InsightsSummaryCard({
   dark,
   headline,
   paragraph,
+  why,
+  more,
   detail,
   hasStrongSignal,
   startHref = "/main/questions?cat=motivations&returnTo=/main/insights?tab=summary",
   confidenceLevel,
   pageKey,
 }: Props) {
-  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState(false);
   const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
   const density = confidenceToConstellationDensity(confidenceLevel);
 
   const previewHeadline = preview?.result.headline as string | undefined;
   const previewBody = preview?.result.body as string | undefined;
+  const previewWhy = preview?.result.why as string | undefined;
+  const previewMore = preview?.result.more as string | undefined;
   const previewDetail = preview?.result.detail as string | undefined;
 
   const resolvedHeadline =
@@ -66,13 +69,11 @@ export default function InsightsSummaryCard({
 
   const noSignalTitle = "Your insights get sharper once we have more signal.";
 
-  const displayDetail = previewDetail ?? detail;
-
-  const paragraphs = React.useMemo(
-    () => splitParagraphs(previewBody ?? paragraph),
-    [previewBody, paragraph]
-  );
-  const hasDetail = !!displayDetail?.trim();
+  // Visible read is trimmed to Today's length; the whole picture sits behind "More".
+  const fullBody = (previewBody ?? paragraph ?? "").trim();
+  const readText = leadRead(fullBody);
+  const displayWhy = (previewWhy ?? why ?? previewDetail ?? detail ?? "").trim();
+  const displayMore = ((previewMore ?? more ?? "").trim() || fullBody).trim();
 
   return (
     <section
@@ -132,45 +133,56 @@ export default function InsightsSummaryCard({
 
           {hasStrongSignal ? (
             <>
-              {paragraphs.map((p, index) => (
-                <p
-                  key={index}
-                  className={[
-                    index === 0 ? "mt-3" : "mt-2",
-                    bodyText(dark),
-                    // Hero read for the Insights Summary tab — Today's 21px prose size.
-                    "text-[21px]",
-                  ].join(" ")}
-                >
-                  {p}
-                </p>
-              ))}
+              <p
+                className={
+                  dark
+                    ? `mt-3 text-[21px] ${PROSE_CLASS}`
+                    : `mt-3 ${bodyText(false)} text-[16px] leading-[1.6]`
+                }
+                style={dark ? PROSE_STYLE : undefined}
+              >
+                {readText}
+              </p>
 
-              {hasDetail ? (
-                <div className="mt-3">
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setDetailOpen(true)}
-                    className={[
-                      "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
-                      dark
-                        ? "text-white/82 hover:text-white/94"
-                        : "text-slate-900 hover:text-black",
-                    ].join(" ")}
-                  >
-                    <span>See how I got here</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </motion.button>
+              {displayMore || displayWhy ? (
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  {displayMore ? (
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen(true)}
+                      className={`${LINK_CLASS} text-[18px]`}
+                      style={{ color: dark ? TEXT_SECONDARY : "#475569" }}
+                    >
+                      The whole picture
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  ) : null}
+                  {displayWhy ? (
+                    <button
+                      type="button"
+                      onClick={() => setWhyOpen(true)}
+                      className={`${LINK_CLASS} text-[18px]`}
+                      style={{ color: dark ? "rgb(120,200,255)" : "#2563eb" }}
+                    >
+                      Why this
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
 
-              <InsightsSummaryDetailModal
-                open={detailOpen}
-                onClose={() => setDetailOpen(false)}
-                dark={dark}
-                headline={resolvedHeadline}
-                detail={displayDetail}
+              <AgenticDetailModal
+                open={moreOpen}
+                onClose={() => setMoreOpen(false)}
+                eyebrow="The whole picture"
+                body={displayMore}
+              />
+              <AgenticDetailModal
+                open={whyOpen}
+                onClose={() => setWhyOpen(false)}
+                eyebrow="Why this"
+                body={displayWhy}
+                accentRgb="120,200,255"
               />
             </>
           ) : (

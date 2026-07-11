@@ -62,6 +62,8 @@ type GeneratedSummaryPayload = {
   insight?: {
     headline?: string;
     body?: string;
+    why?: string;
+    more?: string;
     detail?: string;
   };
   superpowers?: {
@@ -1208,6 +1210,8 @@ export default function Page() {
     agenticNote.paragraph;
 
   const summaryDetail = summaryPayload?.insight?.detail;
+  const summaryWhy = summaryPayload?.insight?.why;
+  const summaryMore = summaryPayload?.insight?.more;
 
   const summarySuperpowersBullets =
     summaryPayload?.superpowers?.bullets?.length
@@ -1329,6 +1333,8 @@ export default function Page() {
                   dark={dark}
                   headline={summaryHeadline}
                   paragraph={summaryParagraph}
+                  why={summaryWhy}
+                  more={summaryMore}
                   detail={summaryDetail}
                   hasStrongSignal={summaryHasSignal}
                   startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"

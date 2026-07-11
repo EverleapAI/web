@@ -15,7 +15,9 @@ import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 type MotivatorPayload = {
   name?: string;
   shortLine?: string;
-  detail?: string;
+  why?: string;
+  more?: string;
+  detail?: string; // legacy pre-regen reasoning; used as a `why` fallback
   iconKey?: MotivatorIconKey;
 };
 
@@ -26,6 +28,8 @@ type GeneratedMotivationsPayload = {
   insight?: {
     headline?: string;
     body?: string;
+    why?: string;
+    more?: string;
     detail?: string;
   };
   motivators?: MotivatorPayload[];
@@ -69,7 +73,10 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
   const hasGeneratedPayload = !!payload;
 
   const motivators = (payload?.motivators ?? [])
-    .filter((m): m is Required<MotivatorPayload> => !!(m?.name && m?.shortLine && m?.detail))
+    .filter(
+      (m): m is MotivatorPayload & { name: string; shortLine: string } =>
+        !!(m?.name && m?.shortLine && (m?.why || m?.detail))
+    )
     .slice(0, 3);
 
   const confidenceLevel = payload?.confidence?.level;
@@ -84,6 +91,8 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
         dark={dark}
         headline={payload?.insight?.headline}
         paragraph={payload?.insight?.body}
+        why={payload?.insight?.why}
+        more={payload?.insight?.more}
         detail={payload?.insight?.detail}
         hasStrongSignal={hasGeneratedPayload}
         startHref={STORY_HREF}
@@ -126,6 +135,8 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
               dark={dark}
               name={motivator.name}
               shortLine={motivator.shortLine}
+              why={motivator.why}
+              more={motivator.more}
               detail={motivator.detail}
               iconKey={motivator.iconKey ?? "growth"}
               emphasis={index === 0 ? "primary" : "secondary"}

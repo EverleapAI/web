@@ -58,6 +58,9 @@ export type PathOverview = {
   title: string;
   hook: string;
   summary: string;
+  // The "whole picture" behind summary (the read), shown in the "More" modal.
+  // Optional: seed/mock catalog paths may not carry it.
+  more?: string;
   whyItPullsYouIn: string[];
   traitChips: TraitChip[];
   fitSignals: FitSignal[];

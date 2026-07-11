@@ -15,7 +15,9 @@ import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 type SkillPayload = {
   name?: string;
   shortLine?: string;
-  detail?: string;
+  why?: string;
+  more?: string;
+  detail?: string; // legacy pre-regen reasoning; used as a `why` fallback
   iconKey?: MotivatorIconKey;
 };
 
@@ -26,6 +28,8 @@ type GeneratedSkillsPayload = {
   insight?: {
     headline?: string;
     body?: string;
+    why?: string;
+    more?: string;
     detail?: string;
   };
   skills?: SkillPayload[];
@@ -69,7 +73,10 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
   const hasGeneratedPayload = !!payload;
 
   const skills = (payload?.skills ?? [])
-    .filter((s): s is Required<SkillPayload> => !!(s?.name && s?.shortLine && s?.detail))
+    .filter(
+      (s): s is SkillPayload & { name: string; shortLine: string } =>
+        !!(s?.name && s?.shortLine && (s?.why || s?.detail))
+    )
     .slice(0, 3);
 
   const confidenceLevel = payload?.confidence?.level;
@@ -84,6 +91,8 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
         dark={dark}
         headline={payload?.insight?.headline}
         paragraph={payload?.insight?.body}
+        why={payload?.insight?.why}
+        more={payload?.insight?.more}
         detail={payload?.insight?.detail}
         hasStrongSignal={hasGeneratedPayload}
         startHref={STORY_HREF}
@@ -126,6 +135,8 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
               dark={dark}
               name={skill.name}
               shortLine={skill.shortLine}
+              why={skill.why}
+              more={skill.more}
               detail={skill.detail}
               iconKey={skill.iconKey ?? "growth"}
               emphasis={index === 0 ? "primary" : "secondary"}

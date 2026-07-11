@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
 import {
   TrendingUp,
   Search,
@@ -24,7 +23,8 @@ import {
   headerRow,
   sectionCard,
 } from "./summaryShared";
-import InsightsSummaryDetailModal from "./InsightsSummaryDetailModal";
+import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { LINK_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
   PromptLabAppliedPreview,
@@ -60,7 +60,12 @@ type Props = {
   dark: boolean;
   name: string;
   shortLine: string;
-  detail: string;
+  /** Reasoning behind this item — the "Why" modal. Falls back to legacy `detail`. */
+  why?: string;
+  /** The whole picture — the "More" modal. */
+  more?: string;
+  /** Legacy pre-regen reasoning field; used as a `why` fallback. */
+  detail?: string;
   iconKey: MotivatorIconKey;
   emphasis?: "primary" | "secondary";
   confidenceLevel?: string | null;
@@ -73,6 +78,8 @@ export default function MotivatorCard({
   dark,
   name,
   shortLine,
+  why,
+  more,
   detail,
   iconKey,
   emphasis = "secondary",
@@ -81,7 +88,8 @@ export default function MotivatorCard({
   pageKey,
   itemIndex,
 }: Props) {
-  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState(false);
+  const [moreOpen, setMoreOpen] = React.useState(false);
   const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
 
   const itemsKey =
@@ -97,12 +105,21 @@ export default function MotivatorCard({
     if (!preview || !itemsKey || itemIndex == null) return null;
     const items = preview.result[itemsKey];
     if (!Array.isArray(items)) return null;
-    return (items[itemIndex] as { name?: string; shortLine?: string; detail?: string }) ?? null;
+    return (
+      (items[itemIndex] as {
+        name?: string;
+        shortLine?: string;
+        why?: string;
+        more?: string;
+        detail?: string;
+      }) ?? null
+    );
   }, [preview, itemsKey, itemIndex]);
 
   const displayName = previewItem?.name ?? name;
   const displayShortLine = previewItem?.shortLine ?? shortLine;
-  const displayDetail = previewItem?.detail ?? detail;
+  const displayWhy = (previewItem?.why ?? why ?? previewItem?.detail ?? detail ?? "").trim();
+  const displayMore = (previewItem?.more ?? more ?? "").trim();
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
@@ -128,12 +145,7 @@ export default function MotivatorCard({
         }}
       />
 
-      <motion.button
-        type="button"
-        whileTap={{ scale: 0.97 }}
-        onClick={() => setDetailOpen(true)}
-        className="relative w-full text-left"
-      >
+      <div className="relative w-full text-left">
         <div className={headerRow()}>
           <div
             className={[
@@ -156,7 +168,7 @@ export default function MotivatorCard({
         <div className={cardBody()}>
           <h3
             className={[
-              dark ? "text-white" : "text-slate-950",
+              dark ? "text-[#ABAFB9]" : "text-slate-950",
               isPrimary
                 ? "text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.02em]"
                 : "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",
@@ -175,24 +187,47 @@ export default function MotivatorCard({
             {displayShortLine}
           </p>
 
-          <div
-            className={[
-              "mt-2 inline-flex items-center gap-1 text-[12.5px] font-medium",
-              dark ? "text-white/56" : "text-slate-600",
-            ].join(" ")}
-          >
-            <span>See why</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </div>
+          {displayMore || displayWhy ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              {displayMore ? (
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  className={`${LINK_CLASS} text-[13px]`}
+                  style={{ color: TEXT_SECONDARY }}
+                >
+                  The whole picture
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              ) : null}
+              {displayWhy ? (
+                <button
+                  type="button"
+                  onClick={() => setWhyOpen(true)}
+                  className={`${LINK_CLASS} text-[13px]`}
+                  style={{ color: `rgb(${rgb})` }}
+                >
+                  Why this
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      </motion.button>
+      </div>
 
-      <InsightsSummaryDetailModal
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        dark={dark}
-        headline={displayName}
-        detail={displayDetail}
+      <AgenticDetailModal
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        eyebrow="The whole picture"
+        body={displayMore}
+      />
+      <AgenticDetailModal
+        open={whyOpen}
+        onClose={() => setWhyOpen(false)}
+        eyebrow="Why this"
+        body={displayWhy}
+        accentRgb={rgb}
       />
 
       {pageKey && itemIndex != null ? (
