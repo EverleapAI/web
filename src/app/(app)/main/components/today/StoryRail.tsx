@@ -70,6 +70,9 @@ function TrophyMeter({
       }
       className="group inline-flex items-center gap-[3px] rounded-full px-1.5 py-1 transition hover:bg-white/[0.04] active:opacity-70"
     >
+      <span className="mr-2 text-[12px] font-medium tracking-[0.2px] text-white/45">
+        Your achievements
+      </span>
       {Array.from({ length: TROPHY_SLOTS }).map((_, i) => {
         if (i < full) {
           return (
