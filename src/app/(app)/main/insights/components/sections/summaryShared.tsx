@@ -222,33 +222,37 @@ export function headerLabel(dark: boolean) {
   ].join(" ");
 }
 
+// Dark branches below carry the shared low-glare treatment (see @/lib/ui/prose):
+// soft ramp colours, weight 500, leading 1.6, tracking 0.4px. Sizes are kept so
+// existing per-site size overrides still win; hero reads are bumped to 21px at
+// their own sites. Light branches are unchanged.
 export function titleText(dark: boolean) {
   return dark
-    ? "text-[20px] font-semibold tracking-tight text-white/84"
+    ? "text-[20px] font-semibold tracking-tight text-[#ABAFB9]"
     : "text-[20px] font-semibold tracking-tight text-slate-950";
 }
 
 export function sectionTitle(dark: boolean) {
   return dark
-    ? "text-[16px] font-semibold tracking-[-0.02em] text-white/82"
+    ? "text-[16px] font-semibold tracking-[-0.02em] text-[#ABAFB9]"
     : "text-[16px] font-semibold tracking-[-0.02em] text-slate-950";
 }
 
 export function bodyText(dark: boolean) {
   return dark
-    ? "text-[15px] leading-relaxed text-white/62"
+    ? "text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]"
     : "text-[15px] leading-relaxed text-slate-700";
 }
 
 export function mutedText(dark: boolean) {
   return dark
-    ? "text-[14px] leading-relaxed text-white/46"
+    ? "text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]"
     : "text-[14px] leading-relaxed text-slate-600";
 }
 
 export function bulletText(dark: boolean) {
   return dark
-    ? "text-[15px] leading-relaxed text-white/64"
+    ? "text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]"
     : "text-[15px] leading-relaxed text-slate-700";
 }
 

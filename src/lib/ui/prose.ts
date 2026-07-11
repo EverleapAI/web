@@ -9,6 +9,7 @@ import type { CSSProperties } from "react";
 // re-declaring their own colours/sizes so the whole app stays in sync.
 
 // ── Colour ramp ──────────────────────────────────────────────────────────────
+export const TEXT_HEADING = "#ABAFB9"; // titles / masthead — a hair brighter than prose
 export const TEXT_PRIMARY = "#A2A6B0"; // body prose, the read, headline-as-prose
 export const TEXT_SECONDARY = "#878B95"; // quiet labels + secondary links — a notch down
 export const TEXT_MUTED = "#63666F"; // meta / timestamps — the quietest chrome
