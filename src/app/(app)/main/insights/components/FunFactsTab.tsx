@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Clock3, Sparkles } from "lucide-react";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
+import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { LINK_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 /* =============================================================================
    Types
@@ -33,6 +35,7 @@ type FunFactPayload = {
   why: string;
   domains: string[];
   emoji?: string;
+  more?: string;
 };
 
 // A small rotating palette so the feed reads like a set of colorful notes
@@ -72,15 +75,15 @@ function sectionKicker(dark: boolean) {
 }
 
 function sectionTitle(dark: boolean) {
-  return dark ? "text-white" : "text-slate-900";
+  return dark ? "text-[#ABAFB9]" : "text-slate-900";
 }
 
 function bodyText(dark: boolean) {
-  return dark ? "text-slate-200/90" : "text-slate-700";
+  return dark ? "font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]" : "text-slate-700";
 }
 
 function mutedText(dark: boolean) {
-  return dark ? "text-white/65" : "text-slate-600";
+  return dark ? "font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]" : "text-slate-600";
 }
 
 /* =============================================================================
@@ -114,6 +117,8 @@ function FunFactCard({
 }) {
   const accent = FACT_ACCENTS[index % FACT_ACCENTS.length];
   const emoji = fact.emoji || "✨";
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState(false);
 
   return (
     <div
@@ -173,9 +178,44 @@ function FunFactCard({
         </div>
       </div>
 
-      <p className={["relative mt-3 text-[13.5px] leading-6", mutedText(dark)].join(" ")}>
-        {fact.why}
-      </p>
+      {/* Read (observation) above; the why + whole picture are one tap away,
+          matching the Today pattern. */}
+      <div className="relative mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+        {fact.more ? (
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className={`${LINK_CLASS} ${LINK_SIZE}`}
+            style={{ color: TEXT_SECONDARY }}
+          >
+            See more
+          </button>
+        ) : null}
+        {fact.why ? (
+          <button
+            type="button"
+            onClick={() => setWhyOpen(true)}
+            className={`${LINK_CLASS} ${LINK_SIZE}`}
+            style={{ color: TEXT_SECONDARY }}
+          >
+            Why this
+          </button>
+        ) : null}
+      </div>
+
+      <AgenticDetailModal
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        eyebrow="The whole picture"
+        body={fact.more ?? ""}
+      />
+      <AgenticDetailModal
+        open={whyOpen}
+        onClose={() => setWhyOpen(false)}
+        eyebrow="Why this"
+        body={fact.why ?? ""}
+        accentRgb={accent}
+      />
     </div>
   );
 }

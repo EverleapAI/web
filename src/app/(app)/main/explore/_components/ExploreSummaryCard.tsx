@@ -14,6 +14,8 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
+import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
 
 export type SummaryRequest = {
   firstName?: string | null;
@@ -24,7 +26,9 @@ export type SummaryRequest = {
   topPicks?: { lane: string; title: string; hook?: string; score?: number }[];
 };
 
-type Payload = { headline: string; body: string; threads: string[] };
+type Payload = { headline: string; body: string; threads: string[]; why?: string; more?: string };
+
+const SUMMARY_ACCENT = "92,180,255";
 
 export function ExploreSummaryCard({
   request,
@@ -39,12 +43,19 @@ export function ExploreSummaryCard({
   const [loading, setLoading] = React.useState(hasSignal);
   const [failed, setFailed] = React.useState(false);
   const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState(false);
 
   // Prompt Lab preview (founder-only) overrides the generated narrative live.
   const resolvedHeadline = (preview?.result.headline as string | undefined) ?? payload?.headline;
   const resolvedBody = (preview?.result.body as string | undefined) ?? payload?.body;
   const resolvedThreads =
     (preview?.result.threads as string[] | undefined) ?? payload?.threads ?? [];
+  const resolvedWhy = (preview?.result.why as string | undefined) ?? payload?.why;
+  // The whole picture behind the trimmed read: an explicit `more`, else the full body.
+  const resolvedMore = (preview?.result.more as string | undefined) ?? payload?.more ?? resolvedBody;
+  const leadBody = leadRead(resolvedBody);
+  const hasMore = Boolean((resolvedMore ?? "").trim() && (resolvedMore ?? "").trim() !== leadBody);
 
   // stable key so we only refetch when the meaningful inputs change
   const key = React.useMemo(
@@ -116,7 +127,7 @@ export function ExploreSummaryCard({
 
         {!hasSignal ? (
           <>
-            <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-[28px]">
+            <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#ABAFB9] sm:text-[28px]">
               {firstName ? `${firstName}, let's find your directions.` : "Let's find your directions."}
             </h1>
             <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">
@@ -144,16 +155,38 @@ export function ExploreSummaryCard({
           </div>
         ) : payload || preview ? (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[27px]">
+            <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-[#ABAFB9] sm:text-[27px]">
               {resolvedHeadline}
             </h1>
-            <div className="mt-3 space-y-3">
-              {(resolvedBody ?? "").split(/\n\s*\n/).map((para, i) => (
-                <p key={i} className="text-[14px] leading-[1.7] text-white/76 sm:text-[15px]">
-                  {para}
-                </p>
-              ))}
-            </div>
+            {/* The read, trimmed to Today's length — the whole picture is one tap away. */}
+            <p className={`mt-3 text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+              {leadBody}
+            </p>
+            {(hasMore || resolvedWhy) ? (
+              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {hasMore ? (
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen(true)}
+                    className={`${LINK_CLASS} ${LINK_SIZE}`}
+                    style={{ color: TEXT_SECONDARY }}
+                  >
+                    See more
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                ) : null}
+                {resolvedWhy ? (
+                  <button
+                    type="button"
+                    onClick={() => setWhyOpen(true)}
+                    className={`${LINK_CLASS} ${LINK_SIZE}`}
+                    style={{ color: TEXT_SECONDARY }}
+                  >
+                    Why this
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             {resolvedThreads.length > 0 ? (
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {resolvedThreads.map((t) => (
@@ -169,7 +202,7 @@ export function ExploreSummaryCard({
           </>
         ) : (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[27px]">
+            <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#ABAFB9] sm:text-[27px]">
               {firstName ? `${firstName}, here's your whole-life view.` : "Your whole-life view."}
             </h1>
             <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">
@@ -180,6 +213,20 @@ export function ExploreSummaryCard({
           </>
         )}
       </div>
+
+      <AgenticDetailModal
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        eyebrow="The whole picture"
+        body={resolvedMore ?? ""}
+      />
+      <AgenticDetailModal
+        open={whyOpen}
+        onClose={() => setWhyOpen(false)}
+        eyebrow="Why this"
+        body={resolvedWhy ?? ""}
+        accentRgb={SUMMARY_ACCENT}
+      />
     </SectionCard>
   );
 }

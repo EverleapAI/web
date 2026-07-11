@@ -41,7 +41,7 @@ export function Bullets({ items, accent }: { items: string[]; accent: Rgb }) {
   return (
     <ul className="mt-2 space-y-2">
       {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 text-[14px] leading-[1.6] text-white/78">
+        <li key={i} className="flex gap-2.5 text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">
           <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.85) }} />
           <span>{item}</span>
         </li>
@@ -69,7 +69,7 @@ function FitSignalRow({ signal, accent }: { signal: FitSignal; accent: Rgb }) {
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${rgba(accent, 0.9)}, ${rgba(accent, 0.5)})` }} />
       </div>
-      {open ? <p className="mt-2.5 text-[13px] leading-[1.6] text-white/66">{signal.explanation}</p> : null}
+      {open ? <p className="mt-2.5 text-[13px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]">{signal.explanation}</p> : null}
     </button>
   );
 }
@@ -88,8 +88,8 @@ function BranchCard({
     <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h4 className="text-[15px] font-semibold text-white">{preview.title}</h4>
-          <p className="mt-1 text-[13px] leading-[1.55] text-white/64">{preview.oneLiner}</p>
+          <h4 className="text-[15px] font-semibold text-[#ABAFB9]">{preview.title}</h4>
+          <p className="mt-1 text-[13px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]">{preview.oneLiner}</p>
         </div>
         {detail ? (
           <button
@@ -102,8 +102,8 @@ function BranchCard({
           </button>
         ) : null}
       </div>
-      <p className="mt-2 text-[13px] leading-[1.55] text-white/58">
-        <span className="font-medium text-white/72">Could fit you if: </span>
+      <p className="mt-2 text-[13px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]">
+        <span className="font-semibold text-[#ABAFB9]">Could fit you if: </span>
         {preview.whyItCouldFit}
       </p>
       {open && detail ? (
@@ -163,7 +163,7 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
       {genericRealityTitle(r.title) ? null : (
         <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{r.title}</h2>
       )}
-      {r.summary ? <p className="mt-2 text-[14px] leading-[1.66] text-white/74">{r.summary}</p> : null}
+      {r.summary ? <p className="mt-2 text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{r.summary}</p> : null}
       {r.pulse ? (
         <p className="mt-3 border-l-2 pl-3 text-[14px] italic leading-[1.6] text-white/78" style={{ borderColor: rgba(accent, 0.5) }}>
           {r.pulse}
@@ -177,7 +177,7 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
                 <div className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: rgba(accent, 0.85) }}>{m.timeLabel}</div>
               ) : null}
               <div className="mt-0.5 text-[14px] font-semibold text-white">{m.title}</div>
-              <p className="mt-1 text-[13.5px] leading-[1.6] text-white/68">{m.body}</p>
+              <p className="mt-1 text-[13.5px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{m.body}</p>
             </li>
           ))}
         </ol>
@@ -194,7 +194,7 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{t.outlookLabel}</h2>
       </div>
-      {t.outlookSummary ? <p className="mt-2 text-[14px] leading-[1.66] text-white/74">{t.outlookSummary}</p> : null}
+      {t.outlookSummary ? <p className="mt-2 text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{t.outlookSummary}</p> : null}
 
       {t.metrics?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -241,7 +241,7 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
       {t.aiImpact?.summary ? (
         <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">AI impact</div>
-          <p className="mt-1.5 text-[13.5px] leading-[1.6] text-white/72">{t.aiImpact.summary}</p>
+          <p className="mt-1.5 text-[13.5px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{t.aiImpact.summary}</p>
         </div>
       ) : null}
     </>
@@ -254,7 +254,7 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
   if (!ns) return null;
   return (
     <>
-      {ns.heroSummary ? <p className="mb-3 text-[14px] leading-[1.66] text-white/72">{ns.heroSummary}</p> : null}
+      {ns.heroSummary ? <p className="mb-3 text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{ns.heroSummary}</p> : null}
       <div className="space-y-4">
         {ns.sections.filter((s) => s.items.length).map((s) => (
           <div key={s.id}>
