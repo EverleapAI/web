@@ -12,7 +12,33 @@ import * as React from "react";
 
 import { BADGE_EARNED } from "@/lib/actionsBus";
 
-export type BadgeStats = { earnedCount: number; totalCount: number };
+export type Surface = "today" | "insights" | "explore" | "actions";
+
+/** The badge you're closest to advancing on a given screen. */
+export type SurfaceNearest = {
+  slug: string;
+  name: string;
+  glyph: string;
+  accent: string;
+  tier: "nothing" | "bronze" | "silver" | "gold";
+  nextTier: "bronze" | "silver" | "gold" | null;
+  hint: string | null;
+  current: number;
+  target: number;
+};
+
+export type SurfaceProgress = {
+  nearest: SurfaceNearest | null;
+  earnedCount: number;
+  totalCount: number;
+};
+
+export type BadgeStats = {
+  earnedCount: number;
+  totalCount: number;
+  /** Per-screen progress, rides along on the same request. */
+  surfaces: Partial<Record<Surface, SurfaceProgress>>;
+};
 
 export function useBadgeStats(): BadgeStats | null {
   const [stats, setStats] = React.useState<BadgeStats | null>(null);
@@ -31,6 +57,7 @@ export function useBadgeStats(): BadgeStats | null {
         setStats({
           earnedCount: Number(data.earnedCount ?? 0),
           totalCount: Number(data.total ?? data.badges?.length ?? 0),
+          surfaces: (data.surfaces ?? {}) as BadgeStats["surfaces"],
         });
       } catch {
         // Keep whatever we last had.

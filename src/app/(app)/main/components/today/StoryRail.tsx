@@ -10,6 +10,7 @@ import { Trophy, ChevronRight } from "lucide-react";
 
 import { emitOpenAchievements } from "@/lib/actionsBus";
 import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
+import { NearestBadgeLine } from "../achievements/NearestBadgeLine";
 import type { Coverage } from "./todayHeart.types";
 
 // Order must match the story's canonical family order (motivations → strengths
@@ -70,8 +71,10 @@ function TrophyMeter({
       }
       className="group inline-flex items-center gap-[3px] rounded-full px-1.5 py-1 transition hover:bg-white/[0.04] active:opacity-70"
     >
-      <span className="mr-2 text-[12px] font-medium tracking-[0.2px] text-white/45">
-        Your achievements
+      {/* Ten trophies plus a label is tight at 390px — without nowrap this wraps
+          to "Your / achievements" and the row loses its line. */}
+      <span className="mr-2 whitespace-nowrap text-[12px] font-medium tracking-[0.2px] text-white/45">
+        Awards
       </span>
       {Array.from({ length: TROPHY_SLOTS }).map((_, i) => {
         if (i < full) {
@@ -168,6 +171,15 @@ export function StoryRail({
       <div className="mt-2">
         <TrophyMeter stats={badges} accentRgb={accentRgb} />
       </div>
+
+      {/* ...and directly beneath it, the one badge you're closest to earning from
+          this screen. Today is the only page where this costs no new real estate:
+          the rail already existed, so the line lands inside furniture the user has
+          already learned. */}
+      <NearestBadgeLine
+        nearest={badges?.surfaces?.today?.nearest ?? null}
+        accentRgb={accentRgb}
+      />
     </div>
   );
 }
