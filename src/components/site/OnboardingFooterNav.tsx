@@ -50,7 +50,10 @@ export function OnboardingFooterNav({
   return (
     <div
       className={cx("fixed left-0 right-0 z-50", className)}
-      style={{ bottom: `calc(env(safe-area-inset-bottom) + ${LIFT_PX}px)` }}
+      style={{
+        // Clear of iOS Safari's toolbar band — a tap in it hits the toolbar, not us.
+        bottom: `calc(max(env(safe-area-inset-bottom), 10px) + ${LIFT_PX}px)`,
+      }}
       aria-label="Onboarding footer navigation"
     >
       <div

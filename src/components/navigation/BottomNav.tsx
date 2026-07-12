@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Lightbulb, Compass, ListTodo, User, Trophy } from "lucide-react";
 
@@ -80,6 +80,24 @@ function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
+/**
+ * A tap answers immediately, even when the route behind it doesn't.
+ *
+ * These routes are static, so a navigation still has to pull the page's JS chunk;
+ * on a phone that's a real wait, and until now nothing on screen acknowledged the
+ * tap, so it read as "the nav is broken" rather than "the page is coming".
+ */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-0 animate-pulse rounded-xl bg-white/[0.09]"
+    />
+  );
+}
+
 export function BottomNav({
   activeKey,
   themeId = DEFAULT_THEME_ID,
@@ -146,13 +164,20 @@ export function BottomNav({
   const chromeShadow = "var(--el-chrome-shadow, 0 18px 60px rgba(0,0,0,0.22))";
   const chromeBlur = "var(--el-chrome-blur, 24px)";
 
+  // Clear of the bottom edge on every device. iOS Safari treats the last few
+  // millimetres of the viewport as its own toolbar zone: with the toolbar
+  // collapsed, a tap there expands the toolbar and never reaches the button —
+  // which is why the footer felt dead or slow on a phone and fine on a laptop.
+  // The `max()` keeps a real gap even where the inset is 0.
   const LIFT_PX = 12;
 
   return (
     <nav
       aria-label="Bottom navigation"
       className={["fixed left-0 right-0 z-50", className ?? ""].join(" ")}
-      style={{ bottom: `calc(env(safe-area-inset-bottom) + ${LIFT_PX}px)` }}
+      style={{
+        bottom: `calc(max(env(safe-area-inset-bottom), 10px) + ${LIFT_PX}px)`,
+      }}
     >
       <div
         className="relative backdrop-blur-2xl"
@@ -210,13 +235,14 @@ export function BottomNav({
                 key={key}
                 href={href}
                 className={[
-                  "flex w-full flex-col items-center justify-center gap-1 rounded-xl",
+                  "relative flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl",
                   "px-1.5 py-2",
-                  "transition hover:bg-white/[0.04]",
+                  "transition hover:bg-white/[0.04] active:bg-white/[0.09]",
                   active ? "bg-white/[0.06]" : "",
                 ].join(" ")}
                 aria-current={active ? "page" : undefined}
               >
+                <NavPending />
                 <span className="relative">
                   <Icon
                     className={
@@ -250,7 +276,7 @@ export function BottomNav({
             type="button"
             onClick={() => emitOpenAchievements()}
             aria-label="Achievements"
-            className="flex w-full flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04]"
+            className="flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04] active:bg-white/[0.09]"
           >
             <Trophy className="h-5 w-5 text-white/55" />
             <span className="text-[11px] text-white/55">Awards</span>

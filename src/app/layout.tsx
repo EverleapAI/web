@@ -34,7 +34,16 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* viewport-fit=cover is what makes env(safe-area-inset-*) resolve to a
+            real number on iPhone. Without it every inset is 0 — so the bottom nav,
+            which lifts itself by that inset, was sitting in the band iOS Safari
+            reserves for its own toolbar, where the first tap expands the toolbar
+            instead of reaching the button. The whole app already reads these
+            insets (nav, toasts, modals, story footer); they just never had values. */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <script dangerouslySetInnerHTML={{ __html: prepaint }} />
       </head>
       <body>
