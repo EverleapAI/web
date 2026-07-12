@@ -52,6 +52,8 @@ export type SurfaceProgress = {
   block: SurfaceBlock;
   earnedCount: number;
   totalCount: number;
+  /** Every badge this screen can move — Awards opens scoped to these. */
+  slugs: string[];
 };
 
 export type BadgeStats = {

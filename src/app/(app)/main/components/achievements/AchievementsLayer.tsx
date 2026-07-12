@@ -85,7 +85,16 @@ import {
   emitBadgeEarned,
   type EarnedBadge,
   type BadgeTier,
+  type BadgeSurface,
 } from "@/lib/actionsBus";
+
+// What each screen is called when Awards opens scoped to it.
+const SURFACE_LABEL: Record<BadgeSurface, string> = {
+  today: "On Today",
+  insights: "On Insights",
+  explore: "On Explore",
+  actions: "On Actions",
+};
 
 type Badge = {
   slug: string;
@@ -239,6 +248,12 @@ function AchievementsModal() {
   const [selected, setSelected] = React.useState<Badge | null>(null);
   const [loading, setLoading] = React.useState(false);
 
+  // The screen Awards was opened FROM, if any. Scopes the grid; null from the footer.
+  const [surface, setSurface] = React.useState<BadgeSurface | null>(null);
+  const [surfaceSlugs, setSurfaceSlugs] = React.useState<
+    Partial<Record<BadgeSurface, string[]>>
+  >({});
+
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -250,6 +265,19 @@ function AchievementsModal() {
       if (d?.ok && Array.isArray(d.badges)) {
         setBadges(d.badges as Badge[]);
         setEarnedCount(Number(d.earnedCount ?? 0));
+
+        // `surfaces` rides along on this same response — the block on each page
+        // is drawn from it, so scoping costs no extra request.
+        const surfaces = (d.surfaces ?? {}) as Partial<
+          Record<BadgeSurface, { slugs?: string[] }>
+        >;
+        const slugs: Partial<Record<BadgeSurface, string[]>> = {};
+        for (const [key, value] of Object.entries(surfaces)) {
+          if (Array.isArray(value?.slugs)) {
+            slugs[key as BadgeSurface] = value.slugs;
+          }
+        }
+        setSurfaceSlugs(slugs);
       }
     } catch {
       /* leave prior */
@@ -267,7 +295,9 @@ function AchievementsModal() {
   }, [open, load]);
 
   React.useEffect(() => {
-    const onOpen = () => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<{ surface?: BadgeSurface } | null>).detail;
+      setSurface(detail?.surface ?? null);
       setSelected(null);
       setOpen(true);
       void load();
@@ -296,16 +326,36 @@ function AchievementsModal() {
   // along.
   const PER_ROW = 4;
 
-  const rows = React.useMemo(() => {
+  // Opened from a page, Awards leads with the badges THAT page can move, under
+  // its own heading, and the rest of the collection follows. Opened from the
+  // footer, it's one unlabelled grid — the whole sky, as before.
+  const sections = React.useMemo(() => {
     const ordered = [...(badges ?? [])].sort(
       (a, b) => a.row - b.row || a.sort - b.sort
     );
-    const out: { n: number; items: Badge[] }[] = [];
-    for (let i = 0; i < ordered.length; i += PER_ROW) {
-      out.push({ n: i / PER_ROW, items: ordered.slice(i, i + PER_ROW) });
+
+    const toRows = (items: Badge[]) => {
+      const out: { n: number; items: Badge[] }[] = [];
+      for (let i = 0; i < items.length; i += PER_ROW) {
+        out.push({ n: i / PER_ROW, items: items.slice(i, i + PER_ROW) });
+      }
+      return out;
+    };
+
+    const scoped = surface ? surfaceSlugs[surface] : undefined;
+    if (!scoped || scoped.length === 0) {
+      return [{ key: "all", label: null, rows: toRows(ordered) }];
     }
-    return out;
-  }, [badges]);
+
+    const here = new Set(scoped);
+    const onScreen = ordered.filter((b) => here.has(b.slug));
+    const elsewhere = ordered.filter((b) => !here.has(b.slug));
+
+    return [
+      { key: "here", label: SURFACE_LABEL[surface!], rows: toRows(onScreen) },
+      { key: "rest", label: "Everything else", rows: toRows(elsewhere) },
+    ].filter((s) => s.rows.length > 0);
+  }, [badges, surface, surfaceSlugs]);
 
   const total = badges?.length ?? 0;
 
@@ -359,16 +409,29 @@ function AchievementsModal() {
                 {loading && !badges ? (
                   <div className="text-[13px] text-white/40">Reading your sky…</div>
                 ) : (
-                  <div className="relative flex flex-col items-center gap-5">
-                    {rows.map((row) => (
-                      <div key={row.n} className="flex justify-center gap-3.5">
-                        {row.items.map((b) => (
-                          <Medal
-                            key={b.slug}
-                            badge={b}
-                            selected={selected?.slug === b.slug}
-                            onClick={() => setSelected(b)}
-                          />
+                  <div className="relative flex w-full flex-col items-center gap-7">
+                    {sections.map((section) => (
+                      <div
+                        key={section.key}
+                        className="flex w-full flex-col items-center gap-5"
+                      >
+                        {section.label ? (
+                          <div className="w-full text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">
+                            {section.label}
+                          </div>
+                        ) : null}
+
+                        {section.rows.map((row) => (
+                          <div key={row.n} className="flex justify-center gap-3.5">
+                            {row.items.map((b) => (
+                              <Medal
+                                key={b.slug}
+                                badge={b}
+                                selected={selected?.slug === b.slug}
+                                onClick={() => setSelected(b)}
+                              />
+                            ))}
+                          </div>
                         ))}
                       </div>
                     ))}

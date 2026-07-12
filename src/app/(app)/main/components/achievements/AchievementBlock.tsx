@@ -14,7 +14,7 @@
 
 import * as React from "react";
 
-import { emitOpenAchievements } from "@/lib/actionsBus";
+import { emitOpenAchievements, type BadgeSurface } from "@/lib/actionsBus";
 import type { SurfaceBlock, BlockItem } from "@/lib/achievements/useBadgeStats";
 
 // Metal lives on the MEDAL only — never on the bars.
@@ -183,13 +183,20 @@ function Single({
   );
 }
 
-export function AchievementBlock({ block }: { block: SurfaceBlock }) {
+export function AchievementBlock({
+  block,
+  surface,
+}: {
+  block: SurfaceBlock;
+  /** The screen this block is on — Awards opens scoped to it. */
+  surface?: BadgeSurface;
+}) {
   if (!block) return null;
 
   return (
     <button
       type="button"
-      onClick={() => emitOpenAchievements()}
+      onClick={() => emitOpenAchievements(surface)}
       aria-label="Your achievements — open your Awards"
       className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3 text-left transition hover:bg-white/[0.03] active:opacity-80"
     >

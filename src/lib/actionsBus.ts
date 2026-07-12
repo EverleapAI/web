@@ -29,11 +29,21 @@ export function emitCelebrate(x: number, y: number): void {
   window.dispatchEvent(new CustomEvent(CELEBRATE, { detail: { x, y } }));
 }
 
-/** Open the global Achievements modal (from the footer, a progress rail, anywhere). */
-export function emitOpenAchievements(): void {
+/**
+ * Open the global Achievements modal (from the footer, a progress rail, anywhere).
+ *
+ * Pass the surface you opened it FROM and Awards leads with the badges that
+ * screen can actually move, under their own heading, before the rest of the
+ * collection. Opened with no surface (the footer) it just shows everything.
+ */
+export function emitOpenAchievements(surface?: BadgeSurface): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event(OPEN_ACHIEVEMENTS));
+  window.dispatchEvent(
+    new CustomEvent(OPEN_ACHIEVEMENTS, { detail: surface ? { surface } : null })
+  );
 }
+
+export type BadgeSurface = "today" | "insights" | "explore" | "actions";
 
 export type BadgeTier = "nothing" | "bronze" | "silver" | "gold";
 export type EarnedBadge = {

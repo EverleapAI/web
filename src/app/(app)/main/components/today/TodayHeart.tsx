@@ -532,7 +532,10 @@ export function TodayHeart({
           {/* One meter, one goal, one reward. The three story sections are badges
               now, so this IS the badge block — not a bar widget with a badge line
               bolted underneath it. */}
-          <AchievementBlock block={badges?.surfaces?.today?.block ?? null} />
+          <AchievementBlock
+          block={badges?.surfaces?.today?.block ?? null}
+          surface="today"
+        />
         </div>
       ) : null}
 

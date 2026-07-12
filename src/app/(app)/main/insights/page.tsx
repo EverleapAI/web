@@ -37,6 +37,9 @@ import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard
 
 import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
 
+import { AchievementBlock } from "@/app/(app)/main/components/achievements/AchievementBlock";
+import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
+
 /* =============================================================================
    Tabs
    ============================================================================= */
@@ -866,6 +869,8 @@ export default function Page() {
 
   const dark = isDarkTheme(themeId);
 
+  const badges = useBadgeStats();
+
   const railRef = React.useRef<HTMLDivElement | null>(null);
 
   const initialTabFromUrl = React.useMemo<LocalTab>(() => {
@@ -1322,6 +1327,17 @@ export default function Page() {
                 ? "bg-gradient-to-l from-[#0b1220] to-transparent"
                 : "bg-gradient-to-l from-white to-transparent",
             ].join(" ")}
+          />
+        </div>
+
+        {/* The achievement block. Page-level, not per-tab: the badges it tracks
+            (feedback, notes, tiny tasks) are earned across the whole surface, and
+            it sits directly under the rail so it's seen without scrolling — at the
+            bottom of a long mobile page it would be furniture nobody meets. */}
+        <div className="mb-3">
+          <AchievementBlock
+            block={badges?.surfaces?.insights?.block ?? null}
+            surface="insights"
           />
         </div>
 
