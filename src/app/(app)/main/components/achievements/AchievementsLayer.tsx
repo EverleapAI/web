@@ -85,16 +85,7 @@ import {
   emitBadgeEarned,
   type EarnedBadge,
   type BadgeTier,
-  type BadgeSurface,
 } from "@/lib/actionsBus";
-
-// What each screen is called when Awards opens scoped to it.
-const SURFACE_LABEL: Record<BadgeSurface, string> = {
-  today: "On Today",
-  insights: "On Insights",
-  explore: "On Explore",
-  actions: "On Actions",
-};
 
 type Badge = {
   slug: string;
@@ -152,7 +143,8 @@ function Medal({
   selected,
 }: {
   badge: Badge;
-  onClick: () => void;
+  /** Carries the medal's own element so the detail can open over it. */
+  onClick: (el: HTMLElement) => void;
   selected: boolean;
 }) {
   const earned = badge.earned;
@@ -163,7 +155,7 @@ function Medal({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => onClick(e.currentTarget)}
       className="group relative flex w-[64px] flex-col items-center gap-1.5 outline-none"
       aria-label={`${badge.name}${earned ? `, ${TIER_LABEL[badge.tier]}` : ", locked"}`}
     >
@@ -248,11 +240,53 @@ function AchievementsModal() {
   const [selected, setSelected] = React.useState<Badge | null>(null);
   const [loading, setLoading] = React.useState(false);
 
-  // The screen Awards was opened FROM, if any. Scopes the grid; null from the footer.
-  const [surface, setSurface] = React.useState<BadgeSurface | null>(null);
-  const [surfaceSlugs, setSurfaceSlugs] = React.useState<
-    Partial<Record<BadgeSurface, string[]>>
-  >({});
+  // The detail opens OVER the badge you tapped. It used to render below the grid,
+  // where the answer to "what is this one?" sat off-screen and had to be scrolled
+  // to — the tap looked like it did nothing.
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
+  const cardRef = React.useRef<HTMLDivElement | null>(null);
+  const [anchor, setAnchor] = React.useState<{ top: number; left: number } | null>(
+    null
+  );
+  const [pos, setPos] = React.useState<{ top: number; left: number } | null>(null);
+
+  const pick = React.useCallback(
+    (badge: Badge, el: HTMLElement) => {
+      // Same badge again closes it.
+      if (selected?.slug === badge.slug) {
+        setSelected(null);
+        return;
+      }
+      const grid = gridRef.current;
+      if (grid) {
+        const g = grid.getBoundingClientRect();
+        const b = el.getBoundingClientRect();
+        setAnchor({ top: b.top - g.top, left: b.left - g.left + b.width / 2 });
+      }
+      setPos(null);
+      setSelected(badge);
+    },
+    [selected]
+  );
+
+  // Place the card centred on the medal, then pull it back inside the grid on
+  // every edge — a badge in the last column or bottom row must not push it off.
+  React.useLayoutEffect(() => {
+    if (!selected || !anchor) return;
+    const grid = gridRef.current;
+    const card = cardRef.current;
+    if (!grid || !card) return;
+
+    const left = Math.max(
+      0,
+      Math.min(anchor.left - card.offsetWidth / 2, grid.offsetWidth - card.offsetWidth)
+    );
+    const top = Math.max(
+      0,
+      Math.min(anchor.top - 12, grid.offsetHeight - card.offsetHeight)
+    );
+    setPos({ top, left });
+  }, [selected, anchor]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -265,19 +299,6 @@ function AchievementsModal() {
       if (d?.ok && Array.isArray(d.badges)) {
         setBadges(d.badges as Badge[]);
         setEarnedCount(Number(d.earnedCount ?? 0));
-
-        // `surfaces` rides along on this same response — the block on each page
-        // is drawn from it, so scoping costs no extra request.
-        const surfaces = (d.surfaces ?? {}) as Partial<
-          Record<BadgeSurface, { slugs?: string[] }>
-        >;
-        const slugs: Partial<Record<BadgeSurface, string[]>> = {};
-        for (const [key, value] of Object.entries(surfaces)) {
-          if (Array.isArray(value?.slugs)) {
-            slugs[key as BadgeSurface] = value.slugs;
-          }
-        }
-        setSurfaceSlugs(slugs);
       }
     } catch {
       /* leave prior */
@@ -294,10 +315,11 @@ function AchievementsModal() {
     return () => window.removeEventListener(BADGE_EARNED, onEarn);
   }, [open, load]);
 
+  // Awards is one collection, however you got here. It used to split the grid into
+  // "On Today" / "Everything else" depending on the page you opened it from, which
+  // made the same badge move around and read as several different sets.
   React.useEffect(() => {
-    const onOpen = (e: Event) => {
-      const detail = (e as CustomEvent<{ surface?: BadgeSurface } | null>).detail;
-      setSurface(detail?.surface ?? null);
+    const onOpen = () => {
       setSelected(null);
       setOpen(true);
       void load();
@@ -326,36 +348,16 @@ function AchievementsModal() {
   // along.
   const PER_ROW = 4;
 
-  // Opened from a page, Awards leads with the badges THAT page can move, under
-  // its own heading, and the rest of the collection follows. Opened from the
-  // footer, it's one unlabelled grid — the whole sky, as before.
-  const sections = React.useMemo(() => {
+  const rows = React.useMemo(() => {
     const ordered = [...(badges ?? [])].sort(
       (a, b) => a.row - b.row || a.sort - b.sort
     );
-
-    const toRows = (items: Badge[]) => {
-      const out: { n: number; items: Badge[] }[] = [];
-      for (let i = 0; i < items.length; i += PER_ROW) {
-        out.push({ n: i / PER_ROW, items: items.slice(i, i + PER_ROW) });
-      }
-      return out;
-    };
-
-    const scoped = surface ? surfaceSlugs[surface] : undefined;
-    if (!scoped || scoped.length === 0) {
-      return [{ key: "all", label: null, rows: toRows(ordered) }];
+    const out: { n: number; items: Badge[] }[] = [];
+    for (let i = 0; i < ordered.length; i += PER_ROW) {
+      out.push({ n: i / PER_ROW, items: ordered.slice(i, i + PER_ROW) });
     }
-
-    const here = new Set(scoped);
-    const onScreen = ordered.filter((b) => here.has(b.slug));
-    const elsewhere = ordered.filter((b) => !here.has(b.slug));
-
-    return [
-      { key: "here", label: SURFACE_LABEL[surface!], rows: toRows(onScreen) },
-      { key: "rest", label: "Everything else", rows: toRows(elsewhere) },
-    ].filter((s) => s.rows.length > 0);
-  }, [badges, surface, surfaceSlugs]);
+    return out;
+  }, [badges]);
 
   const total = badges?.length ?? 0;
 
@@ -409,48 +411,59 @@ function AchievementsModal() {
                 {loading && !badges ? (
                   <div className="text-[13px] text-white/40">Reading your sky…</div>
                 ) : (
-                  <div className="relative flex w-full flex-col items-center gap-7">
-                    {sections.map((section) => (
-                      <div
-                        key={section.key}
-                        className="flex w-full flex-col items-center gap-5"
-                      >
-                        {section.label ? (
-                          <div className="w-full text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">
-                            {section.label}
-                          </div>
-                        ) : null}
-
-                        {section.rows.map((row) => (
-                          <div key={row.n} className="flex justify-center gap-3.5">
-                            {row.items.map((b) => (
-                              <Medal
-                                key={b.slug}
-                                badge={b}
-                                selected={selected?.slug === b.slug}
-                                onClick={() => setSelected(b)}
-                              />
-                            ))}
-                          </div>
+                  <div
+                    ref={gridRef}
+                    className="relative flex w-full flex-col items-center gap-5"
+                  >
+                    {rows.map((row) => (
+                      <div key={row.n} className="flex justify-center gap-3.5">
+                        {row.items.map((b) => (
+                          <Medal
+                            key={b.slug}
+                            badge={b}
+                            selected={selected?.slug === b.slug}
+                            onClick={(el) => pick(b, el)}
+                          />
                         ))}
                       </div>
                     ))}
-                  </div>
-                )}
-              </div>
 
-            {/* selected detail */}
-            <AnimatePresence mode="wait">
-              {selected ? (
-                <motion.div
-                  key={selected.slug}
-                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-                >
+                    {/* Tapping the sky behind the card puts it away. */}
+                    {selected ? (
+                      <button
+                        type="button"
+                        aria-label="Close badge details"
+                        onClick={() => setSelected(null)}
+                        className="absolute inset-0 z-10 cursor-default"
+                      />
+                    ) : null}
+
+                    {/* The detail, opened OVER the badge you tapped. */}
+                    <AnimatePresence mode="wait">
+                      {selected ? (
+                        <motion.div
+                          key={selected.slug}
+                          ref={cardRef}
+                          initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                          animate={{ opacity: pos ? 1 : 0, scale: 1 }}
+                          exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+                          transition={{ duration: 0.16 }}
+                          className="absolute z-20 w-[min(320px,100%)] rounded-2xl border border-white/12 p-4 shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
+                          style={{
+                            top: pos?.top ?? 0,
+                            left: pos?.left ?? 0,
+                            background: "#111726",
+                          }}
+                        >
                   <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(null)}
+                      aria-label="Close badge details"
+                      className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full text-white/40 transition hover:bg-white/[0.06] hover:text-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                     <span
                       className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[16px]"
                       style={{
@@ -522,13 +535,18 @@ function AchievementsModal() {
                       ) : null}
                     </div>
                   </div>
-                </motion.div>
-              ) : (
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+
+              {!selected ? (
                 <div className="text-center text-[11.5px] text-white/30">
                   Tap a badge to see how it&apos;s earned.
                 </div>
-              )}
-              </AnimatePresence>
+              ) : null}
             </div>
           </div>
         </motion.div>
