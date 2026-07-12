@@ -1338,6 +1338,7 @@ export default function Page() {
           <AchievementBlock
             block={badges?.surfaces?.insights?.block ?? null}
             surface="insights"
+            stats={badges}
           />
         </div>
 

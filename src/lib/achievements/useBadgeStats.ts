@@ -63,10 +63,15 @@ export type BadgeStats = {
   surfaces: Partial<Record<Surface, SurfaceProgress>>;
 };
 
-export function useBadgeStats(): BadgeStats | null {
+/**
+ * @param enabled pass false when the caller already has stats from a parent —
+ * this endpoint re-evaluates badges server-side, so a second call is real work.
+ */
+export function useBadgeStats(enabled = true): BadgeStats | null {
   const [stats, setStats] = React.useState<BadgeStats | null>(null);
 
   React.useEffect(() => {
+    if (!enabled) return;
     let alive = true;
 
     async function load() {
@@ -94,7 +99,7 @@ export function useBadgeStats(): BadgeStats | null {
       alive = false;
       window.removeEventListener(BADGE_EARNED, onEarned);
     };
-  }, []);
+  }, [enabled]);
 
   return stats;
 }

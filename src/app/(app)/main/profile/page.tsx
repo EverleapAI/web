@@ -27,6 +27,7 @@ import {
 
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
+import { AwardsMeter } from "../components/achievements/AwardsMeter";
 
 type MeUser = {
   id: string;
@@ -269,6 +270,10 @@ export default function ProfilePage() {
         </div>
       ) : authed ? (
         <div className="mt-3 space-y-3">
+          {/* The same awards door as every other main page — unscoped here,
+              because Me is where you look at all of yourself. */}
+          <AwardsMeter />
+
           <MomentumSnapshot />
 
           {/* Basics */}

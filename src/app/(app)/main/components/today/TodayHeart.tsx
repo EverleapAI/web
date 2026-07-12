@@ -15,7 +15,6 @@ import { emitActionAdded } from "@/lib/actionsBus";
 import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_MUTED, TEXT_SECONDARY } from "@/lib/ui/prose";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock } from "../achievements/AchievementBlock";
-import { AwardsChip } from "../achievements/AwardsChip";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -419,12 +418,10 @@ export function TodayHeart({
             ? "Welcome to Everleap"
             : new Date().toLocaleDateString(undefined, { weekday: "long" })}
         </span>
-        {/* The awards counter lives up here now, not inside the story block. It's
-            global — "all my badges" — so it never belonged inside a block about one
-            specific goal, and having it there is what made that area read as a
-            dashboard. It replaces a purely decorative pulse dot: same corner, but
-            it does a job. */}
-        <AwardsChip stats={badges} />
+        {/* Awards has one door now — the labelled trophy meter under the story
+            bars, the same control on every main page. A second, unlabelled 13/24
+            chip up here was just a rival entry point saying the same thing. */}
+        <span aria-hidden />
       </div>
 
       {/* The arrival masthead — the centered anchor in every state. */}
@@ -562,9 +559,10 @@ export function TodayHeart({
               now, so this IS the badge block — not a bar widget with a badge line
               bolted underneath it. */}
           <AchievementBlock
-          block={badges?.surfaces?.today?.block ?? null}
-          surface="today"
-        />
+            block={badges?.surfaces?.today?.block ?? null}
+            surface="today"
+            stats={badges}
+          />
         </div>
       ) : null}
 

@@ -90,6 +90,7 @@ export default function ExploreLayout({
         <AchievementBlock
           block={badges?.surfaces?.explore?.block ?? null}
           surface="explore"
+          stats={badges}
         />
       </div>
 

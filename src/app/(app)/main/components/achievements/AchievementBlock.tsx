@@ -11,11 +11,21 @@
 // It never expires. The story runs out in a week; badges don't. Once the sections
 // are all gold the block re-points at whatever is next, so the same furniture keeps
 // working long after the story is told.
+//
+// Two objects, two jobs: the bars READ OUT this screen's progress and tap nowhere;
+// the AwardsMeter underneath is the labelled door to the badges. They were one
+// button once, which meant tapping a progress bar teleported you to Awards.
 
 import * as React from "react";
 
-import { emitOpenAchievements, type BadgeSurface } from "@/lib/actionsBus";
-import type { SurfaceBlock, BlockItem } from "@/lib/achievements/useBadgeStats";
+import { type BadgeSurface } from "@/lib/actionsBus";
+import type {
+  SurfaceBlock,
+  BlockItem,
+  BadgeStats,
+} from "@/lib/achievements/useBadgeStats";
+
+import { AwardsMeter } from "./AwardsMeter";
 
 // Metal lives on the MEDAL only — never on the bars.
 //
@@ -186,40 +196,45 @@ function Single({
 export function AchievementBlock({
   block,
   surface,
+  stats,
 }: {
   block: SurfaceBlock;
   /** The screen this block is on — Awards opens scoped to it. */
   surface?: BadgeSurface;
+  /** Feeds the awards meter without a second /api/achievements call. */
+  stats?: BadgeStats | null;
 }) {
-  if (!block) return null;
-
   return (
-    <button
-      type="button"
-      onClick={() => emitOpenAchievements(surface)}
-      aria-label="Your achievements — open your Awards"
-      className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3 text-left transition hover:bg-white/[0.03] active:opacity-80"
-    >
-      {block.kind === "group" ? (
-        <Group items={block.items} />
-      ) : (
-        <Single badge={block.badge} />
-      )}
+    <div className="space-y-2">
+      {/* The readout. It shows where you stand on this screen's badges and taps
+          nowhere — a progress bar is a fact, not a link. */}
+      {block ? (
+        <div className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3">
+          {block.kind === "group" ? (
+            <Group items={block.items} />
+          ) : (
+            <Single badge={block.badge} />
+          )}
 
-      <Medal
-        item={
-          block.kind === "group"
-            ? block.medal
-            : {
-                slug: block.badge.slug,
-                name: block.badge.name,
-                glyph: block.badge.glyph,
-                tier: block.badge.tier,
-                current: block.badge.current,
-                target: block.badge.target,
-              }
-        }
-      />
-    </button>
+          <Medal
+            item={
+              block.kind === "group"
+                ? block.medal
+                : {
+                    slug: block.badge.slug,
+                    name: block.badge.name,
+                    glyph: block.badge.glyph,
+                    tier: block.badge.tier,
+                    current: block.badge.current,
+                    target: block.badge.target,
+                  }
+            }
+          />
+        </div>
+      ) : null}
+
+      {/* The door to the badges — labelled, so it says what it is. */}
+      <AwardsMeter stats={stats} surface={surface} />
+    </div>
   );
 }

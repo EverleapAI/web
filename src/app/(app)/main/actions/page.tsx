@@ -26,6 +26,7 @@ import {
 
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
+import { AwardsMeter } from "../components/achievements/AwardsMeter";
 import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
@@ -422,6 +423,10 @@ export default function ActionsPage() {
         <p className="mt-1.5 text-[14px] leading-[1.5] text-white/60">
           Real next-steps you bookmarked while exploring — plus a few ideas from your guide.
         </p>
+
+        {/* The same awards door as every other main page. Actions has no badge
+            block of its own yet, so the meter stands alone here. */}
+        <AwardsMeter surface="actions" className="mt-3.5" />
       </div>
 
       <div className="space-y-4">
