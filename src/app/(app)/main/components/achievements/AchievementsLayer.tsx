@@ -26,6 +26,15 @@ import {
   Zap,
   Crown,
   Star,
+  Heart,
+  Mountain,
+  Wrench,
+  MessageCircle,
+  PenLine,
+  Lightbulb,
+  Route,
+  Layers,
+  CheckCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,6 +59,22 @@ const PLACEHOLDER_ICONS: Record<string, LucideIcon> = {
   cartographer: Globe,
   relentless: Zap,
   everleaper: Crown,
+
+  // The story sections. Each is now a badge in its own right — finishing
+  // Motivations used to pay out nothing on its own.
+  motivations: Heart,
+  strengths: Mountain,
+  skills: Wrench,
+
+  // Insights.
+  sounding_board: MessageCircle,
+  straight_talker: PenLine,
+  open_mind: Lightbulb,
+
+  // Explore + Actions.
+  wayfinder: Route,
+  wide_net: Layers,
+  follow_through: CheckCheck,
 };
 
 import {
@@ -261,20 +286,25 @@ function AchievementsModal() {
     };
   }, [open]);
 
-  // Group into pyramid rows: apex (row 1) at the top, foundational (row 5) at the base.
+  // A grid, not a pyramid. The old layout hard-coded rows 1-5, so every badge
+  // added beyond the original fifteen was silently invisible here — earned, but
+  // never shown. It also meant the badge set could only ever grow by a whole
+  // triangular row, which is the shape dictating the product.
+  //
+  // Badges now flow four per row in their defined order (row_index, then sort),
+  // with a ragged last row. Same as the PM's own prototype, which was a grid all
+  // along.
+  const PER_ROW = 4;
+
   const rows = React.useMemo(() => {
-    const map = new Map<number, Badge[]>();
-    for (const b of badges ?? []) {
-      const arr = map.get(b.row) ?? [];
-      arr.push(b);
-      map.set(b.row, arr);
+    const ordered = [...(badges ?? [])].sort(
+      (a, b) => a.row - b.row || a.sort - b.sort
+    );
+    const out: { n: number; items: Badge[] }[] = [];
+    for (let i = 0; i < ordered.length; i += PER_ROW) {
+      out.push({ n: i / PER_ROW, items: ordered.slice(i, i + PER_ROW) });
     }
-    return [1, 2, 3, 4, 5]
-      .map((n) => ({
-        n,
-        items: (map.get(n) ?? []).sort((a, b) => a.sort - b.sort),
-      }))
-      .filter((r) => r.items.length > 0);
+    return out;
   }, [badges]);
 
   const total = badges?.length ?? 0;
@@ -323,8 +353,9 @@ function AchievementsModal() {
                 </button>
               </div>
 
-              {/* pyramid + constellation lattice */}
-              <div className="flex flex-1 flex-col items-center justify-center py-10">
+              {/* The badge grid. Scrollable: the set is no longer capped at a
+                  triangle, so it can outgrow a phone screen. */}
+              <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto py-10">
                 {loading && !badges ? (
                   <div className="text-[13px] text-white/40">Reading your sky…</div>
                 ) : (
