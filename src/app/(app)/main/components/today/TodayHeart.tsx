@@ -131,8 +131,12 @@ const NEXT_HEADER: Record<string, string> = {
   close: "Close the loop",
 };
 
-// The three story areas, in the order the strip shows them.
-const STORY_ORDER: CoverageKey[] = ["motivations", "skills", "strengths"];
+// The three story areas, in the order the BARS show them — this list decides
+// which one is "next", so if it disagrees with the block the link walks you past
+// the bar you were looking at. It read motivations/skills/strengths while the
+// bars read motivations/strengths/skills, which is why a half-empty Strengths
+// got skipped for Skills.
+const STORY_ORDER: CoverageKey[] = ["motivations", "strengths", "skills"];
 
 // "Motivations", "Motivations and Skills", "Motivations, Skills, and Strengths".
 function joinLabels(names: string[]): string {
@@ -329,16 +333,40 @@ export function TodayHeart({
     return item.tier === "silver" || item.tier === "gold";
   };
 
+  // Started ≠ done. A section with one answer of seven is under way, and telling
+  // someone to "start telling your story" when they already have is the app
+  // failing to notice them.
+  const storyStarted = badgeSections
+    ? badgeSections.some((i) => i.current > 0)
+    : storyAreas.some((a) => a.filled);
+
   const filledStoryLabels = storyAreas
     .filter((a) => sectionDone(a.key))
     .map((a) => a.label);
   const nextStoryArea = storyAreas.find((a) => !sectionDone(a.key)) ?? null;
+
+  // The story flow can be deep-linked to one family via ?family=. These are the
+  // gaps it can fill directly; others fall back to the generic entry.
+  const STORY_FAMILIES: CoverageKey[] = ["motivations", "strengths", "skills"];
+
+  // The sentence and the link it carries are decided TOGETHER, from one source.
+  // They used to be computed apart — the words from the badges, the destination
+  // from coverage's next gap — so the line could read "continue your story" and
+  // then drop you on Actions, or skip you past a section whose bar was still
+  // half empty. A link that doesn't go where the sentence says is worse than no
+  // link.
   let storyPrefix: string;
   let storyLinkText: string | null;
+  let storyRoute: string;
   if (nextStoryArea) {
+    storyRoute = STORY_FAMILIES.includes(nextStoryArea.key)
+      ? `/main/story?family=${nextStoryArea.key}`
+      : "/main/story";
     if (filledStoryLabels.length === 0) {
       storyPrefix = "Let's ";
-      storyLinkText = "start telling your story";
+      storyLinkText = storyStarted
+        ? "keep telling your story"
+        : "start telling your story";
     } else {
       storyPrefix = `You've done your ${joinLabels(filledStoryLabels)} — now let's `;
       storyLinkText = "continue your story";
@@ -346,13 +374,12 @@ export function TodayHeart({
   } else if (coverage.nextGapKey === "experience") {
     storyPrefix = "You've told me your whole story — now ";
     storyLinkText = "reflect on what you've tried";
+    storyRoute = "/main/actions";
   } else {
     storyPrefix = "You've told me your whole story — the picture's complete.";
     storyLinkText = null;
+    storyRoute = "/main/story";
   }
-  // The story flow can be deep-linked to one family via ?family=. These are the
-  // gaps it can fill directly; others fall back to the generic entry.
-  const STORY_FAMILIES: CoverageKey[] = ["motivations", "strengths", "skills"];
   // Point the nudge at whatever actually fills the NEXT gap. Most gaps
   // (motivations, strengths, skills, story, direction) are story-fed; the
   // "experience" gap is only filled by doing and reflecting on an action, so
@@ -367,11 +394,13 @@ export function TodayHeart({
       : {
           lead: "The picture above is still forming. A few more pieces of your story and the guidance gets a lot sharper.",
           label: "Continue your story",
-          // Land straight on the next gap's area (Skills / Motivations /
-          // Strengths) rather than the generic story entry.
+          // Land on the section the BARS say is unfinished, not the one coverage
+          // has decided is done — coverage counts a family filled once a science
+          // memo exists, and memos generate from a single answer, so it walked
+          // people past a bar reading 1 of 7.
           route:
-            coverage.nextGapKey && STORY_FAMILIES.includes(coverage.nextGapKey)
-              ? `/main/story?family=${coverage.nextGapKey}`
+            nextStoryArea && STORY_FAMILIES.includes(nextStoryArea.key)
+              ? `/main/story?family=${nextStoryArea.key}`
               : "/main/story",
         };
 
@@ -520,7 +549,7 @@ export function TodayHeart({
             {storyLinkText ? (
               <button
                 type="button"
-                onClick={() => router.push(gapNudge.route)}
+                onClick={() => router.push(storyRoute)}
                 className="font-semibold transition hover:brightness-110 active:opacity-70"
                 style={{ color: `rgb(${rgb})` }}
               >
