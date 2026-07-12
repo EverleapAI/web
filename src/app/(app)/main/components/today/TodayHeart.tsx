@@ -306,13 +306,33 @@ export function TodayHeart({
   // The story lead is one line with an INLINE call to action — the tail of the
   // sentence is itself the link, so context and action share a line instead of
   // sandwiching the bars with a separate "Continue your story" row.
+  // The headline MUST agree with the bars underneath it, so both are driven by the
+  // badges. `coverage.filled` cannot be used here: it counts a family as filled if
+  // 7+ answers OR a science memo exists — and memos are generated from as little as
+  // one answer. That is why the card was saying "You've done your Motivations" over
+  // a bar reading 3 of 7. Coverage is still right for what it's for (do we have
+  // enough signal to say something?); it is not the same question as "did you
+  // answer the questions", and only the second one belongs above a progress bar.
+  const storyBlock = badges?.surfaces?.today?.block ?? null;
+  const badgeSections =
+    storyBlock?.kind === "group" ? storyBlock.items : null;
+
   const storyAreas = STORY_ORDER.map((k) =>
     coverage.areas.find((a) => a.key === k)
   ).filter((a): a is CoverageArea => Boolean(a));
+
+  // A section is done when its badge has actually been filled in (silver = the
+  // 7-answer threshold the bars are drawn against).
+  const sectionDone = (key: string): boolean => {
+    const item = badgeSections?.find((i) => i.slug === key);
+    if (!item) return storyAreas.find((a) => a.key === key)?.filled ?? false;
+    return item.tier === "silver" || item.tier === "gold";
+  };
+
   const filledStoryLabels = storyAreas
-    .filter((a) => a.filled)
+    .filter((a) => sectionDone(a.key))
     .map((a) => a.label);
-  const nextStoryArea = storyAreas.find((a) => !a.filled) ?? null;
+  const nextStoryArea = storyAreas.find((a) => !sectionDone(a.key)) ?? null;
   let storyPrefix: string;
   let storyLinkText: string | null;
   if (nextStoryArea) {

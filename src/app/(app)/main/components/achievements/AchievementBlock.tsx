@@ -17,7 +17,17 @@ import * as React from "react";
 import { emitOpenAchievements } from "@/lib/actionsBus";
 import type { SurfaceBlock, BlockItem } from "@/lib/achievements/useBadgeStats";
 
-// Bronze / silver / gold — the reward a teen reads without being taught it.
+// Metal lives on the MEDAL only — never on the bars.
+//
+// A first-time user has no idea what bronze means. It's a concept, and a coloured
+// bar can't teach one: they just see an orange bar and two grey ones. Metal works
+// in the Awards modal, where the badge is named and explained; it does not work as
+// an unlabelled colour on a progress meter.
+//
+// Colouring the bars by tier also meant they were filled SOLID regardless of
+// progress — one answer of seven rendered as a complete bar. The bar was showing
+// what you'd earned, not how far you'd got, which is the one thing a progress bar
+// exists to say.
 const METAL: Record<string, { line: string; ink: string; fill: string }> = {
   bronze: { line: "#C08457", ink: "#E8B98F", fill: "rgba(192,132,87,0.14)" },
   silver: { line: "#C6CBD6", ink: "#E3E7EF", fill: "rgba(198,203,214,0.14)" },
@@ -25,9 +35,14 @@ const METAL: Record<string, { line: string; ink: string; fill: string }> = {
 };
 
 const DIM_BAR = "rgba(255,255,255,0.09)";
+const ACCENT = "rgb(182,160,255)";
+const ACCENT_GLOW = "0 0 8px rgba(182,160,255,0.5)";
 
-function barColor(tier: string): string {
-  return METAL[tier]?.line ?? DIM_BAR;
+/** How full this badge is, as a percentage of its next rung. Gold = done = full. */
+function pctOf(item: { tier: string; current: number; target: number }): number {
+  if (item.tier === "gold") return 100;
+  if (item.target <= 0) return 0;
+  return Math.max(0, Math.min(100, (item.current / item.target) * 100));
 }
 
 /** The medal at the end of the row — the thing the whole block adds up to. */
@@ -59,26 +74,31 @@ function Medal({ item }: { item: BlockItem }) {
   );
 }
 
-/** Sibling badges side by side — the three story sections. */
+/** Sibling badges side by side — the three story sections, each filling as you go. */
 function Group({ items }: { items: BlockItem[] }) {
   return (
     <div className="min-w-0 flex-1">
       <div className="flex gap-1.5">
-        {items.map((item) => (
-          <span
-            key={item.slug}
-            className="h-[7px] flex-1 rounded-full transition-colors"
-            style={{
-              background: barColor(item.tier),
-              boxShadow:
-                item.tier === "gold"
-                  ? "0 0 9px rgba(232,199,126,0.45)"
-                  : item.tier !== "nothing"
-                    ? `0 0 8px ${barColor(item.tier)}55`
-                    : undefined,
-            }}
-          />
-        ))}
+        {items.map((item) => {
+          const pct = pctOf(item);
+
+          return (
+            <span
+              key={item.slug}
+              className="h-[7px] flex-1 overflow-hidden rounded-full"
+              style={{ background: DIM_BAR }}
+            >
+              <span
+                className="block h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${pct}%`,
+                  background: ACCENT,
+                  boxShadow: pct > 0 ? ACCENT_GLOW : undefined,
+                }}
+              />
+            </span>
+          );
+        })}
       </div>
 
       <div className="mt-2 flex justify-between text-[12px] font-medium">
@@ -87,7 +107,10 @@ function Group({ items }: { items: BlockItem[] }) {
             key={item.slug}
             className="flex-1 last:text-right [&:nth-child(2)]:text-center"
             style={{
-              color: METAL[item.tier]?.ink ?? "rgba(238,241,251,0.32)",
+              color:
+                item.tier === "nothing"
+                  ? "rgba(238,241,251,0.32)"
+                  : "rgba(182,160,255,0.95)",
             }}
           >
             {item.name}
@@ -126,10 +149,7 @@ function Single({
               className="h-[7px] flex-1 rounded-full"
               style={
                 i < badge.current
-                  ? {
-                      background: "rgb(182,160,255)",
-                      boxShadow: "0 0 8px rgba(182,160,255,0.5)",
-                    }
+                  ? { background: ACCENT, boxShadow: ACCENT_GLOW }
                   : { background: DIM_BAR }
               }
             />
@@ -144,8 +164,8 @@ function Single({
             className="block h-full rounded-full transition-[width] duration-500"
             style={{
               width: `${pct}%`,
-              background: "rgb(182,160,255)",
-              boxShadow: "0 0 8px rgba(182,160,255,0.5)",
+              background: ACCENT,
+              boxShadow: ACCENT_GLOW,
             }}
           />
         </div>
