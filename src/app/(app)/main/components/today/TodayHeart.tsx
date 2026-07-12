@@ -13,7 +13,9 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_MUTED, TEXT_SECONDARY } from "@/lib/ui/prose";
-import { StoryRail } from "./StoryRail";
+import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
+import { AchievementBlock } from "../achievements/AchievementBlock";
+import { AwardsChip } from "../achievements/AwardsChip";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -166,6 +168,7 @@ export function TodayHeart({
   onPrimary: () => void;
 }) {
   const router = useRouter();
+  const badges = useBadgeStats();
   const { dispatch, coverage, welcome } = data;
   const accent = DISPATCH_ACCENT[dispatch.type] ?? DISPATCH_ACCENT.learn;
   const rgb = accent.rgb;
@@ -367,16 +370,12 @@ export function TodayHeart({
             ? "Welcome to Everleap"
             : new Date().toLocaleDateString(undefined, { weekday: "long" })}
         </span>
-        <span className="relative flex h-2 w-2" aria-hidden="true">
-          <span
-            className="absolute inline-flex h-full w-full rounded-full opacity-50 motion-safe:animate-ping"
-            style={{ background: "rgba(181,186,196,0.5)" }}
-          />
-          <span
-            className="relative inline-flex h-2 w-2 rounded-full"
-            style={{ background: "rgba(181,186,196,0.5)" }}
-          />
-        </span>
+        {/* The awards counter lives up here now, not inside the story block. It's
+            global — "all my badges" — so it never belonged inside a block about one
+            specific goal, and having it there is what made that area read as a
+            dashboard. It replaces a purely decorative pulse dot: same corner, but
+            it does a job. */}
+        <AwardsChip stats={badges} />
       </div>
 
       {/* The arrival masthead — the centered anchor in every state. */}
@@ -510,8 +509,10 @@ export function TodayHeart({
             ) : null}
           </p>
 
-          {/* Bars, then the trophy meter as the closing footer. */}
-          <StoryRail coverage={coverage} accentRgb={rgb} showHeadline={false} />
+          {/* One meter, one goal, one reward. The three story sections are badges
+              now, so this IS the badge block — not a bar widget with a badge line
+              bolted underneath it. */}
+          <AchievementBlock block={badges?.surfaces?.today?.block ?? null} />
         </div>
       ) : null}
 

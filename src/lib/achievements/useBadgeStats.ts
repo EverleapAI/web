@@ -27,8 +27,29 @@ export type SurfaceNearest = {
   target: number;
 };
 
+/** One badge inside a group, with where it currently stands. */
+export type BlockItem = {
+  slug: string;
+  name: string;
+  glyph: string;
+  tier: "nothing" | "bronze" | "silver" | "gold";
+  current: number;
+  target: number;
+};
+
+/**
+ * What this screen's achievement block should render. "group" = sibling badges
+ * with a medal that lights when they all land (the three story sections under
+ * Story Told). "single" = one badge working toward its next rung.
+ */
+export type SurfaceBlock =
+  | { kind: "group"; items: BlockItem[]; medal: BlockItem }
+  | { kind: "single"; badge: SurfaceNearest }
+  | null;
+
 export type SurfaceProgress = {
   nearest: SurfaceNearest | null;
+  block: SurfaceBlock;
   earnedCount: number;
   totalCount: number;
 };
