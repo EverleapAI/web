@@ -234,6 +234,9 @@ export function BottomNav({
               <Link
                 key={key}
                 href={href}
+                // The five destinations are the whole app and the nav is on screen
+                // the entire time — warm them all, so a tap costs no download.
+                prefetch
                 className={[
                   "relative flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl",
                   "px-1.5 py-2",
