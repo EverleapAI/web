@@ -18,8 +18,9 @@
 // first thing the app said to you was a scoreboard.
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
+
+import { emitOpenAchievements } from "@/lib/actionsBus";
 
 import type {
   SurfaceBlock,
@@ -41,6 +42,7 @@ const METAL: Record<string, { line: string; ink: string; fill: string }> = {
 };
 
 type NextUp = {
+  slug: string;
   name: string;
   detail: string;
   glyph: string;
@@ -65,6 +67,7 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
     const left = Math.max(0, b.target - b.current);
 
     return {
+      slug: b.slug,
       name: b.name,
       detail: b.hint?.trim() || `${left} to go.`,
       glyph: b.glyph,
@@ -81,6 +84,7 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
   // Every section is gold — the medal is the whole point of the group, so say so.
   if (!unfinished) {
     return {
+      slug: block.medal.slug,
       name: block.medal.name,
       detail: "Earned.",
       glyph: block.medal.glyph,
@@ -93,6 +97,7 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
   const left = Math.max(0, unfinished.target - unfinished.current);
 
   return {
+    slug: unfinished.slug,
     name: unfinished.name,
     detail:
       left > 0
@@ -159,18 +164,6 @@ export function achievementsLead(stats: BadgeStats | null | undefined): string |
   return `${standing} The rest move when you explore, try things, and tell me how they went.`;
 }
 
-/**
- * The section a route lands in: "/main/actions/abc-123" -> "/main/actions".
- * Query strings are part of the destination but not of the place.
- */
-function sectionOf(route: string | null | undefined): string | null {
-  if (!route) return null;
-  const path = route.split("?")[0].split("#")[0];
-  const parts = path.split("/").filter(Boolean); // ["main", "actions", "abc"]
-  if (parts.length < 2) return path || null;
-  return `/${parts[0]}/${parts[1]}`;
-}
-
 function Medal({ glyph, tier }: { glyph: string; tier: string }) {
   const m = METAL[tier];
 
@@ -200,74 +193,43 @@ function Medal({ glyph, tier }: { glyph: string; tier: string }) {
 export function AchievementBlock({
   block,
   stats,
-  doorsAlreadyOpen,
 }: {
   block: SurfaceBlock;
   /** Feeds the awards meter without a second /api/achievements call. */
   stats?: BadgeStats | null;
-  /**
-   * Routes this screen ALREADY offers a button for. The badge pill is dropped when
-   * it would land in the same place as one of them.
-   *
-   * Today showed "Reflect on an action" (from Everleaper, whose blocking metric is
-   * actions_reflected) directly above a card called "Reflect on your actions" with
-   * a button reading "Reflect on it" — two pills, one meaning, stacked. The other
-   * one wins every time: it names the actual action and says why. A badge is a
-   * reason to go somewhere, and it stops being one the moment the screen is
-   * already pointing at the door.
-   */
-  doorsAlreadyOpen?: (string | null | undefined)[];
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
   const next = nextUp(block);
-
-  // Don't offer a door that is already open — either because another button on
-  // this screen goes there, or because you are standing in the room.
-  const taken = new Set(
-    [...(doorsAlreadyOpen ?? []), pathname]
-      .map(sectionOf)
-      .filter((s): s is string => Boolean(s))
-  );
-  const showCta = Boolean(
-    next?.route && next.cta && !taken.has(sectionOf(next.route) ?? "")
-  );
 
   return (
     <div className="space-y-2.5">
-      {/* The trophies — how far, and the labelled door to the collection. */}
-      <AwardsMeter stats={stats} />
+      {/* The trophies — a readout. They used to be the door to Awards as well,
+          which made two doors to the same room from one card. */}
+      <AwardsMeter stats={stats} interactive={false} />
 
-      {/* The naming — what the trophies structurally cannot say. */}
+      {/* The one door, and the only one.
+          "Next up: Steadfast" opens Steadfast — not the collection, the badge —
+          and the badge is where the power now lives: it shows the rung you are on,
+          what the next one wants, and a button that goes and earns it. A pill here
+          would only ever know the category; the badge knows the whole story. */}
       {next ? (
-        <div className="flex items-center gap-2.5 px-1">
+        <button
+          type="button"
+          onClick={() => emitOpenAchievements(next.slug)}
+          className="group flex w-full items-center gap-2.5 rounded-xl px-1 py-1 text-left transition hover:bg-white/[0.03] active:opacity-80"
+          aria-label={`Next up: ${next.name}. ${next.detail} Open this award.`}
+        >
           <Medal glyph={next.glyph} tier={next.tier} />
-          <p className="min-w-0 text-[12.5px] leading-[1.45] text-white/44">
+          <p className="min-w-0 flex-1 text-[12.5px] leading-[1.45] text-white/44">
             <span className="font-semibold" style={{ color: GOLD }}>
               Next up: {next.name}
             </span>{" "}
             — {next.detail}
           </p>
-        </div>
-      ) : null}
-
-      {/* The door — unless the screen is already holding it open somewhere else. */}
-      {showCta && next ? (
-        <div className="pt-1.5">
-          <button
-            type="button"
-            onClick={() => router.push(next.route!)}
-            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-semibold transition hover:brightness-110 active:opacity-80"
-            style={{
-              color: GOLD,
-              background: `rgba(${GOLD_RGB},0.08)`,
-              border: `1px solid rgba(${GOLD_RGB},0.28)`,
-            }}
-          >
-            <span>{next.cta}</span>
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+          <ChevronRight
+            className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+            style={{ color: `rgba(${GOLD_RGB},0.55)` }}
+          />
+        </button>
       ) : null}
     </div>
   );
@@ -282,15 +244,12 @@ export function WhereYouAre({
   stats,
   lead,
   className,
-  doorsAlreadyOpen,
 }: {
   block: SurfaceBlock;
   stats?: BadgeStats | null;
   /** Optional line above the trophies. Today uses this for the story sentence. */
   lead?: React.ReactNode;
   className?: string;
-  /** Routes this screen already has a button for — see AchievementBlock. */
-  doorsAlreadyOpen?: (string | null | undefined)[];
 }) {
   // Nothing earned and nothing to chase — an empty trophy rack is not a section.
   if (!stats || stats.totalCount <= 0) return null;
@@ -328,11 +287,7 @@ export function WhereYouAre({
         </div>
       ) : null}
 
-      <AchievementBlock
-        block={block}
-        stats={stats}
-        doorsAlreadyOpen={doorsAlreadyOpen}
-      />
+      <AchievementBlock block={block} stats={stats} />
     </SectionCard>
   );
 }

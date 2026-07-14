@@ -55,10 +55,21 @@ function MeterTrophy({ fill }: { fill: number }) {
 export function AwardsMeter({
   stats,
   className,
+  interactive = true,
 }: {
   /** Pass the page's existing stats to avoid a second /api/achievements call. */
   stats?: BadgeStats | null;
   className?: string;
+  /**
+   * Inside "Where you are" the trophies are a READOUT, not a door.
+   *
+   * They used to be a button to Awards, sitting directly above "Next up: X" which
+   * is now also a button to Awards — two doors to the same room, from one small
+   * card, one of which lands you nowhere in particular. The named one wins: it
+   * opens the badge you are actually working on. Elsewhere (the Me page, the
+   * footer) the meter is still the way in, because there is nothing else there.
+   */
+  interactive?: boolean;
 }) {
   // Only fetch when the page didn't already have the numbers (Actions, Me).
   const own = useBadgeStats(stats === undefined);
@@ -74,37 +85,51 @@ export function AwardsMeter({
       : litCount(s.earnedCount, s.totalCount);
   const gold = s.goldCount ?? 0;
 
+  const shell = [
+    "flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 text-left",
+    interactive
+      ? "group transition hover:bg-white/[0.045] active:opacity-80"
+      : "cursor-default",
+    className ?? "",
+  ].join(" ");
+
+  const body = (
+    <span className="min-w-0 flex-1">
+      <span aria-hidden className="flex items-center gap-[5px]">
+        {Array.from({ length: TROPHIES }).map((_, i) => (
+          <MeterTrophy key={i} fill={Math.max(0, Math.min(1, lit - i))} />
+        ))}
+      </span>
+
+      <span className="mt-1.5 block text-[12.5px] leading-[1.4]">
+        <span className="font-semibold" style={{ color: LIT }}>
+          Awards
+        </span>
+        <span className="text-white/40">
+          {" · "}
+          {gold} of {s.totalCount} at gold
+        </span>
+      </span>
+    </span>
+  );
+
+  // A readout. No chevron, because there is nothing to tap.
+  if (!interactive) {
+    return (
+      <div className={shell} aria-label={`${gold} of ${s.totalCount} awards at gold.`}>
+        {body}
+      </div>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={() => emitOpenAchievements()}
       aria-label={`Awards — ${gold} of ${s.totalCount} awards at gold. Open your badges.`}
-      className={[
-        "group flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 text-left transition hover:bg-white/[0.045] active:opacity-80",
-        className ?? "",
-      ].join(" ")}
+      className={shell}
     >
-      <span className="min-w-0 flex-1">
-        <span aria-hidden className="flex items-center gap-[5px]">
-          {Array.from({ length: TROPHIES }).map((_, i) => (
-            <MeterTrophy
-              key={i}
-              fill={Math.max(0, Math.min(1, lit - i))}
-            />
-          ))}
-        </span>
-
-        <span className="mt-1.5 block text-[12.5px] leading-[1.4]">
-          <span className="font-semibold" style={{ color: LIT }}>
-            Awards
-          </span>
-          <span className="text-white/40">
-            {" · "}
-            {gold} of {s.totalCount} at gold
-          </span>
-        </span>
-      </span>
-
+      {body}
       <ChevronRight className="h-4 w-4 shrink-0 text-white/28 transition-transform duration-150 group-hover:translate-x-0.5" />
     </button>
   );

@@ -649,17 +649,6 @@ export function TodayHeart({
             <AchievementBlock
               block={badges?.surfaces?.today?.block ?? null}
               stats={badges}
-              // Today already has two buttons: the dispatch's commit up top, and
-              // the reflect card below. Both are more specific than a badge nudge
-              // — they name the actual thing — so the badge pill stands down when
-              // it would land in the same place as either.
-              doorsAlreadyOpen={[
-                dispatch.destination.route,
-                data.looseThread?.route,
-                // The story link is the tail of the sentence right above the
-                // trophies, so a pill to the same place is the third one.
-                storyLinkText ? storyRoute : null,
-              ]}
             />
           </div>
         </SectionCard>

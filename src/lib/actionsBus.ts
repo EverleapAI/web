@@ -32,13 +32,21 @@ export function emitCelebrate(x: number, y: number): void {
 /**
  * Open the global Achievements modal (from the footer, a progress rail, anywhere).
  *
- * Awards is one collection however you got here. It used to open scoped to the
- * screen you came from, which made the same badge move around and read as several
- * different sets — so it takes no surface, and there is nothing to pass.
+ * Awards is one collection however you got here. It once opened SCOPED to the
+ * screen you came from, splitting the grid, which made the same badge move around
+ * and read as several different sets. That is not what `slug` does: the grid is
+ * always the whole collection, and the slug simply opens that badge's card on top
+ * of it — the same thing a tap on the badge does.
+ *
+ * That is what makes "Next up: Steadfast" a door instead of a caption. It lands
+ * you on Steadfast, which then tells you what its next rung wants and hands you a
+ * button to go and do it.
  */
-export function emitOpenAchievements(): void {
+export function emitOpenAchievements(slug?: string): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(OPEN_ACHIEVEMENTS));
+  window.dispatchEvent(
+    new CustomEvent(OPEN_ACHIEVEMENTS, { detail: slug ? { slug } : null })
+  );
 }
 
 export type BadgeSurface = "today" | "insights" | "explore" | "actions";

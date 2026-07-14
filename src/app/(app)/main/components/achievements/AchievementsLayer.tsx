@@ -6,10 +6,12 @@
 // badge system is tuned in data, not here. Mounted once in the main layout.
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,
   Check,
+  ChevronRight,
   Sparkles,
   BookOpen,
   RefreshCw,
@@ -107,10 +109,18 @@ type Badge = {
   bronzeReached?: boolean;
   silverReached?: boolean;
   goldReached?: boolean;
+  // Where the next rung is actually earned. Null on gold — nothing left to do.
+  nextTier?: BadgeTier | null;
+  nextRoute?: string | null;
+  nextCta?: string | null;
+  nextCurrent?: number | null;
+  nextTarget?: number | null;
 };
 
 // Medal color comes from the TIER, not the per-badge accent. "nothing" is a
 // dim, locked grey. Flat colors — no glow anywhere on this screen.
+const GOLD_INK = "rgba(232,199,126,0.92)";
+
 const TIER_COLOR: Record<BadgeTier, string> = {
   nothing: "#3a3f4a",
   bronze: "#c17f43",
@@ -233,12 +243,17 @@ function TierRung({
 // ---------- the modal ----------
 
 function AchievementsModal() {
+  const router = useRouter();
   const reduce = useReducedMotion();
   const [open, setOpen] = React.useState(false);
   const [badges, setBadges] = React.useState<Badge[] | null>(null);
   const [earnedCount, setEarnedCount] = React.useState(0);
   const [selected, setSelected] = React.useState<Badge | null>(null);
   const [loading, setLoading] = React.useState(false);
+  // A badge asked for by slug ("Next up: Steadfast" was tapped). The badges are
+  // fetched on open, so the one we want does not exist yet when the event fires —
+  // we hold the slug and select it the moment the list lands.
+  const [wantSlug, setWantSlug] = React.useState<string | null>(null);
 
   // The detail opens OVER the badge you tapped. It used to render below the grid,
   // where the answer to "what is this one?" sat off-screen and had to be scrolled
@@ -319,14 +334,25 @@ function AchievementsModal() {
   // "On Today" / "Everything else" depending on the page you opened it from, which
   // made the same badge move around and read as several different sets.
   React.useEffect(() => {
-    const onOpen = () => {
+    const onOpen = (e: Event) => {
+      const slug =
+        (e as CustomEvent<{ slug?: string } | null>).detail?.slug ?? null;
       setSelected(null);
+      setWantSlug(slug);
       setOpen(true);
       void load();
     };
     window.addEventListener(OPEN_ACHIEVEMENTS, onOpen);
     return () => window.removeEventListener(OPEN_ACHIEVEMENTS, onOpen);
   }, [load]);
+
+  // The list has landed — open the badge we were asked for.
+  React.useEffect(() => {
+    if (!wantSlug || !badges) return;
+    const b = badges.find((x) => x.slug === wantSlug);
+    if (b) setSelected(b);
+    setWantSlug(null);
+  }, [wantSlug, badges]);
 
   // Lock body scroll while open.
   React.useEffect(() => {
@@ -535,6 +561,60 @@ function AchievementsModal() {
                       ) : null}
                     </div>
                   </div>
+
+                  {/* The door out of the badge.
+                      The ladder tells you what the next rung wants; on its own that
+                      is a scoreboard, and the user is left to work out which of five
+                      screens will move it. The badge knows: the condition blocking
+                      the rung IS the destination. So the card ends with the one
+                      thing it was missing — a way to go and earn it.
+
+                      Gold has no button, because gold has nothing left to do. */}
+                  {selected.nextTier ? (
+                    <div className="mt-5 border-t border-white/[0.06] pt-4">
+                      {typeof selected.nextCurrent === "number" &&
+                      typeof selected.nextTarget === "number" &&
+                      selected.nextTarget > 0 ? (
+                        <div className="mb-3 text-[12px] tabular-nums text-white/45">
+                          {selected.nextCurrent} of {selected.nextTarget} toward{" "}
+                          <span className="font-semibold text-white/65">
+                            {TIER_LABEL[selected.nextTier]}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {selected.nextRoute && selected.nextCta ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            setSelected(null);
+                            router.push(selected.nextRoute!);
+                          }}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-semibold transition hover:brightness-110 active:opacity-80"
+                          style={{
+                            color: GOLD_INK,
+                            background: "rgba(232,199,126,0.10)",
+                            border: "1px solid rgba(232,199,126,0.30)",
+                          }}
+                        >
+                          <span>{selected.nextCta}</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        // Some badges have no door, and pretending otherwise would be
+                        // worse than saying so. Steadfast and Showed Up are earned by
+                        // COMING BACK — there is no button anywhere in the app that
+                        // makes a day pass. The only instruction we could give is
+                        // "leave and return tomorrow", which is not advice, so we say
+                        // the true thing instead of inventing a destination.
+                        <p className="text-[12.5px] leading-[1.5] text-white/45">
+                          There&apos;s nothing to tap for this one. It moves on its
+                          own when you come back another day.
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
                         </motion.div>
                       ) : null}
                     </AnimatePresence>
