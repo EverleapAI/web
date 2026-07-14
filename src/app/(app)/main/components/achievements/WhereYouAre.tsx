@@ -27,12 +27,7 @@ import type {
   BlockItem,
   BadgeStats,
 } from "@/lib/achievements/useBadgeStats";
-import {
-  PROSE_CLASS,
-  PROSE_MEASURE,
-  PROSE_STYLE,
-  TEXT_SECONDARY,
-} from "@/lib/ui/prose";
+import { PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 import { SectionCard } from "../ui/SectionCard";
 import { AwardsMeter } from "./AwardsMeter";
@@ -285,7 +280,7 @@ export function WhereYouAre({
           story is still worth nudging. */}
       {lead ?? achievementsLead(stats) ? (
         <div
-          className={`mb-4 ${PROSE_MEASURE} text-[19px] md:text-[20px] ${PROSE_CLASS}`}
+          className={`mb-4 max-w-[560px] text-[19px] ${PROSE_CLASS}`}
           style={PROSE_STYLE}
         >
           {lead ?? achievementsLead(stats)}

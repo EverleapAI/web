@@ -15,46 +15,11 @@ export const TEXT_SECONDARY = "#878B95"; // quiet labels + secondary links — a
 export const TEXT_MUTED = "#63666F"; // meta / timestamps — the quietest chrome
 
 // ── Prose recipe ─────────────────────────────────────────────────────────────
-//
-// The read is set in the reading face (Source Serif 4, wired up in layout.tsx as
-// --font-read). The chrome around it — labels, buttons, counts, nav — stays in
-// the UI sans, which is what it is. The split is the point: when the agent talks
-// it should not look like a status bar.
-//
-// Weight 440, not the 425 the refresh doc asks for. 425 is now a REAL weight
-// (the face is variable, so it no longer rounds to 400) — but a serif carries
-// thinner strokes than the sans it replaces, and thin strokes on a dark ground
-// are what produce halation. 440 lands the doc's intent rather than its number.
-//
-// Tracking goes to 0. The old +0.4px existed to stop the sans from tightening up
-// at low brightness; the serif already has the sidebearings for it, and holding
-// the sans's tracking on a serif just makes it look loose.
-export const PROSE_STYLE: CSSProperties = {
-  color: TEXT_PRIMARY,
-  fontFamily: "var(--font-read), Georgia, Cambria, serif",
-  fontWeight: 440,
-  fontOpticalSizing: "auto",
-};
-export const PROSE_CLASS = "leading-[1.52] md:leading-[1.55] tracking-normal";
-
-// ── Measure ──────────────────────────────────────────────────────────────────
-//
-// The single biggest thing wrong with the old read, and the one the refresh doc
-// gets exactly right. Every agentic surface was capped at `max-w-[560px]`, which
-// at 21px is about 53 characters — well past the point where the eye starts
-// losing its place on the return sweep.
-//
-// This was always a DESKTOP problem. On a phone the viewport already clamped the
-// line to ~33ch, so mobile was accidentally compliant and desktop was the thing
-// that read like a dashboard. In `ch`, not px, so it stays honest if the size or
-// the face ever changes.
-export const PROSE_MEASURE = "max-w-[32ch] md:max-w-[42ch]";
-
-/** 28px between paragraphs. Was 14px — the read had no room to breathe. */
-export const PROSE_GAP = "space-y-7";
+export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 500 };
+export const PROSE_CLASS = "leading-[1.6] tracking-[0.4px]";
 
 // ── Size ladder (the "full ladder", identical to Today) ──────────────────────
-export const PROSE_SIZE = "text-[21px] md:text-[22px]"; // hero / body agentic prose
+export const PROSE_SIZE = "text-[21px]"; // hero / body agentic prose
 export const LINK_SIZE = "text-[18px]"; // secondary links
 export const EYEBROW_CLASS = "text-[10.5px] font-bold uppercase tracking-[0.22em]"; // modal / section eyebrow
 
