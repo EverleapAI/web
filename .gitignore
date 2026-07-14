@@ -31,3 +31,6 @@ Thumbs.db
 # clerk configuration (can include secrets)
 /.clerk/
 .claude/
+
+# TypeScript incremental build cache (machine-specific, never commit)
+*.tsbuildinfo
