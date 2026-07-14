@@ -41,14 +41,9 @@ function returningGreeting(name: string | undefined): string {
 export function WelcomeName({
   firstName,
   isNewUser,
-  align = "center",
 }: {
   firstName: string | null;
   isNewUser: boolean;
-  // The masthead is a centered anchor by design. But centred over left-aligned
-  // prose with no card around it reads as half-finished rather than as CNN — so
-  // the bare chrome mode left-aligns it, and the two travel together.
-  align?: "center" | "left";
 }) {
   const name = firstName?.trim();
 
@@ -60,14 +55,13 @@ export function WelcomeName({
       : "You're in."
     : returningGreeting(name);
 
+  // Left-aligned, not centred. The masthead used to be a centred anchor, but
+  // centred display type over left-aligned prose is the most un-newspaper thing
+  // on the page — it reads as a product surface announcing itself rather than as
+  // something written to be read. Left-aligning it was the one change in the CNN
+  // exercise that survived contact with actual eyes.
   return (
-    <div
-      className={
-        align === "left"
-          ? "flex flex-col items-start text-left"
-          : "flex flex-col items-center text-center"
-      }
-    >
+    <div className="flex flex-col items-start text-left">
       <span className="text-title font-semibold tracking-tight text-ink-strong">
         {title}
       </span>

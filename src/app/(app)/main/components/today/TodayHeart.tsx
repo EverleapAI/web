@@ -23,8 +23,6 @@ import {
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
-import { ChromeToggle } from "../ui/ChromeToggle";
-import { useChromeMode, useReadFace } from "@/lib/ui/chrome";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -226,11 +224,6 @@ export function TodayHeart({
   const [whyOpen, setWhyOpen] = React.useState(false);
   // Prompt Lab (internal, passcode-gated) can preview a re-toned/re-sized retort
   // in place — live only, never saved.
-  // The CNN A/B. Defaults to today's design; flip with the dev toggle, or
-  // ?chrome=bare / ?face=serif. See lib/ui/chrome.ts.
-  const [chromeMode, setChromeMode] = useChromeMode();
-  const [readFace, setReadFace] = useReadFace();
-
   const [labPreview, setLabPreview] =
     React.useState<PromptLabAppliedPreview | null>(null);
 
@@ -449,16 +442,7 @@ export function TodayHeart({
         };
 
   return (
-    <div
-      className={`relative space-y-4 ${readFace === "serif" ? "face-serif" : ""}`}
-    >
-      <ChromeToggle
-        mode={chromeMode}
-        onChange={setChromeMode}
-        face={readFace}
-        onFaceChange={setReadFace}
-      />
-
+    <div className="relative space-y-4">
       {/* ─── 1 · THE READ ────────────────────────────────────────────────────
           The agent's read, and the one specific move it wants from you. That move
           used to live in a second block below this ("Worth a look") which restated
@@ -508,7 +492,6 @@ export function TodayHeart({
         <WelcomeName
           firstName={welcome.firstName}
           isNewUser={welcome.isNewUser}
-          align={chromeMode === "bare" ? "left" : "center"}
         />
 
         {heroRetort ? (

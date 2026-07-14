@@ -87,26 +87,14 @@
   --radius-sm: 10px; /* chips, small controls */
   --radius-md: 18px; /* inner cards, inputs */
   --radius-card: 28px; /* section cards — the dominant existing value */
-
-  /* ---- Reading face --------------------------------------------------------
-     Georgia is on Windows and iOS already, so this costs zero bytes and shows no
-     load flash. It was drawn for screen reading: sturdy, low stroke contrast,
-     large x-height. High-contrast editorial serifs (Source Serif, Didones) halate
-     on a dark ground — which is likely part of why the last serif looked cheap. */
-  --font-read-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
 }
 
-/* Serif reading face — prose ONLY.
-   Scoped to .el-prose (see lib/ui/prose.ts) so it can never reach a button, a
-   label or an eyebrow: those stay sans. Toggle the .face-serif class on a screen
-   root to flip that screen's prose. See useReadFace() in lib/ui/chrome.ts. */
-.face-serif .el-prose {
-  font-family: var(--font-read-serif);
-  /* Georgia's larger x-height reads bigger at the same px than SF/Segoe, and its
-     word-shapes want to close up — so no tracking, and a hair more line. */
-  letter-spacing: 0;
-  line-height: 1.6;
-}
+/* No --font-* token here on purpose. The reading face is the SYSTEM SANS, and
+   that is now a decision rather than an accident: a serif was built, set
+   properly (Georgia at 400, bright, 1.78 leading — CNN's own arrangement of sans
+   furniture around serif prose) and rejected on the screen. Sans read as more
+   modern and cleaner for a product aimed at teenagers, which an editorial serif
+   fights no matter how well it is set. Do not re-propose one. */
 
 /* ========== 1) Semantic Design Tokens (CSS variables) ========== */
 @layer base {
