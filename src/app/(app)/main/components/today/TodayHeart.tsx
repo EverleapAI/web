@@ -24,7 +24,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
 import { ChromeToggle } from "../ui/ChromeToggle";
-import { useChromeMode } from "@/lib/ui/chrome";
+import { useChromeMode, useReadFace } from "@/lib/ui/chrome";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -226,9 +226,10 @@ export function TodayHeart({
   const [whyOpen, setWhyOpen] = React.useState(false);
   // Prompt Lab (internal, passcode-gated) can preview a re-toned/re-sized retort
   // in place — live only, never saved.
-  // Card vs bare — the CNN A/B. Defaults to "card" (today's design); flip with
-  // the dev toggle or ?chrome=bare. See lib/ui/chrome.ts.
+  // The CNN A/B. Defaults to today's design; flip with the dev toggle, or
+  // ?chrome=bare / ?face=serif. See lib/ui/chrome.ts.
   const [chromeMode, setChromeMode] = useChromeMode();
+  const [readFace, setReadFace] = useReadFace();
 
   const [labPreview, setLabPreview] =
     React.useState<PromptLabAppliedPreview | null>(null);
@@ -448,8 +449,15 @@ export function TodayHeart({
         };
 
   return (
-    <div className="relative space-y-4">
-      <ChromeToggle mode={chromeMode} onChange={setChromeMode} />
+    <div
+      className={`relative space-y-4 ${readFace === "serif" ? "face-serif" : ""}`}
+    >
+      <ChromeToggle
+        mode={chromeMode}
+        onChange={setChromeMode}
+        face={readFace}
+        onFaceChange={setReadFace}
+      />
 
       {/* ─── 1 · THE READ ────────────────────────────────────────────────────
           The agent's read, and the one specific move it wants from you. That move

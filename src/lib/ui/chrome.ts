@@ -21,10 +21,66 @@ import * as React from "react";
 
 export type ChromeMode = "card" | "bare";
 
+/**
+ * The reading face for prose (NOT for UI — buttons and labels stay sans).
+ *
+ * A serif was shipped and reverted on sight yesterday ("revert it looks
+ * terrible"), but that test was invalid: it was rendered in the old recipe —
+ * dim #A2A6B0, weight 500, +0.4px tracking. That is how you set a UI label, and
+ * a serif set that way looks awful. The thickened strokes clog the counters, the
+ * letter-spacing breaks the very word-shapes a serif exists to build, and the
+ * dimness kills the stroke contrast that makes it readable at all. The face was
+ * never actually judged.
+ *
+ * Georgia, not Source Serif 4: it ships on Windows AND iOS (zero bytes, no load
+ * flash), it was drawn for screen reading with sturdy low-contrast strokes that
+ * survive a dark ground — high-contrast editorial serifs halate badly on dark —
+ * and it is a news serif, which is the register we're actually chasing.
+ */
+export type ReadFace = "sans" | "serif";
+
 const KEY = "el:chrome";
+const FACE_KEY = "el:face";
 
 function isMode(v: string | null): v is ChromeMode {
   return v === "card" || v === "bare";
+}
+
+function isFace(v: string | null): v is ReadFace {
+  return v === "sans" || v === "serif";
+}
+
+/** Reads `?face=serif|sans`, else localStorage, else "sans". */
+export function useReadFace(): [ReadFace, (f: ReadFace) => void] {
+  const [face, setFace] = React.useState<ReadFace>("sans");
+
+  React.useEffect(() => {
+    let next: ReadFace = "sans";
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("face");
+      const fromStore = window.localStorage.getItem(FACE_KEY);
+      if (isFace(fromUrl)) {
+        next = fromUrl;
+        window.localStorage.setItem(FACE_KEY, fromUrl);
+      } else if (isFace(fromStore)) {
+        next = fromStore;
+      }
+    } catch {
+      /* private mode — stay on the default */
+    }
+    setFace(next);
+  }, []);
+
+  const set = React.useCallback((f: ReadFace) => {
+    setFace(f);
+    try {
+      window.localStorage.setItem(FACE_KEY, f);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  return [face, set];
 }
 
 /**

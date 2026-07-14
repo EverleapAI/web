@@ -25,7 +25,10 @@ export const TEXT_MUTED = "#7E838E"; // meta / timestamps — the quietest chrom
 // 400, not 500: the system UI stack (Segoe UI / SF — there is no next/font here)
 // has no 425, so anything above 400 rounds to a semibold-looking face.
 export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 400 };
-export const PROSE_CLASS = "leading-[1.65] tracking-[0]";
+// `el-prose` is the hook the serif reading face hangs off (globals.css). It marks
+// "this is the read" — never a button, label or eyebrow — so a face swap cannot
+// leak into the UI the way the last one did.
+export const PROSE_CLASS = "el-prose leading-[1.65] tracking-[0]";
 
 // ── Size ladder (the "full ladder", identical to Today) ──────────────────────
 export const PROSE_SIZE = "text-[21px]"; // hero / body agentic prose
