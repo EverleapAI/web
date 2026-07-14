@@ -203,13 +203,13 @@ export function AiGuideHost() {
       <div
         className="
           relative z-10 w-full max-w-3xl mx-4
-          rounded-[36px] border border-slate-700/80
+          rounded-card border border-slate-700/80
           bg-slate-950/95 shadow-[0_40px_120px_rgba(0,0,0,0.95)]
           px-6 py-6 sm:px-9 sm:py-7
         "
       >
         {/* Glow behind card */}
-        <div className="pointer-events-none absolute inset-0 rounded-[36px] bg-gradient-to-br from-sky-500/30 via-fuchsia-500/22 to-amber-400/24 blur-3xl opacity-80" />
+        <div className="pointer-events-none absolute inset-0 rounded-card bg-gradient-to-br from-sky-500/30 via-fuchsia-500/22 to-amber-400/24 blur-3xl opacity-80" />
 
         <div className="relative flex flex-col gap-4">
           {/* Header */}
@@ -225,7 +225,7 @@ export function AiGuideHost() {
                 </div>
               </div>
 
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300">
                 Everleap guide
               </p>
             </div>
@@ -257,8 +257,8 @@ export function AiGuideHost() {
 
           {/* Input bubble */}
           <form onSubmit={handleSubmit} className="mt-1 space-y-2">
-            <div className="relative rounded-[32px] bg-gradient-to-br from-sky-500/60 via-fuchsia-500/60 to-amber-400/60 p-[1px]">
-              <div className="relative flex items-end gap-3 rounded-[32px] bg-slate-950/85 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="relative rounded-card bg-gradient-to-br from-sky-500/60 via-fuchsia-500/60 to-amber-400/60 p-[1px]">
+              <div className="relative flex items-end gap-3 rounded-card bg-slate-950/85 px-4 py-3 sm:px-5 sm:py-4">
                 <textarea
                   ref={textareaRef}
                   value={input}

@@ -22,7 +22,7 @@ export function DispatchGlyph({
   return (
     <span className="inline-flex items-center gap-1.5">
       <span
-        className="flex h-[26px] w-[26px] items-center justify-center rounded-lg text-[13px] leading-none"
+        className="flex h-[26px] w-[26px] items-center justify-center rounded-lg text-meta leading-none"
         style={{
           color: `rgba(${neutral},0.72)`,
           background: `rgba(${neutral},0.05)`,
@@ -33,7 +33,7 @@ export function DispatchGlyph({
       </span>
       {showLabel ? (
         <span
-          className="text-[10px] font-bold uppercase tracking-[0.16em]"
+          className="text-micro font-bold uppercase tracking-eyebrow"
           style={{ color: `rgba(${neutral},0.72)` }}
         >
           {a.label}

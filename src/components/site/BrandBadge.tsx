@@ -54,7 +54,7 @@ export default function BrandBadge({
           aria-hidden="true"
           className="
             inline-flex size-6 items-center justify-center rounded-md
-            bg-white text-slate-900 text-[11px] font-bold
+            bg-white text-slate-900 text-micro font-bold
           "
         >
           EL

@@ -216,13 +216,13 @@ export default function VerifyPage(): React.JSX.Element {
         <RegAuthVisual kind="verify" />
 
         <div className="space-y-2">
-          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+          <h1 className="text-[2rem] font-semibold tracking-display text-white">
             {pendingIdentifier?.includes("@")
               ? "Check your email."
               : "Check your phone."}
           </h1>
 
-          <p className="text-[15px] leading-6 text-white/64">
+          <p className="text-label leading-6 text-white/64">
             Enter the 6-digit code
             {pendingIdentifier ? (
               <>

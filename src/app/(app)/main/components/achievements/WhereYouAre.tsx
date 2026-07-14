@@ -170,7 +170,7 @@ function Medal({ glyph, tier }: { glyph: string; tier: string }) {
   return (
     <span
       aria-hidden
-      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] leading-none"
+      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-meta leading-none"
       style={
         m
           ? { border: `1.5px solid ${m.line}`, background: m.fill, color: m.ink }
@@ -219,7 +219,7 @@ export function AchievementBlock({
           aria-label={`Next up: ${next.name}. ${next.detail} Open this award.`}
         >
           <Medal glyph={next.glyph} tier={next.tier} />
-          <p className="min-w-0 flex-1 text-[12.5px] leading-[1.45] text-white/44">
+          <p className="min-w-0 flex-1 text-meta leading-body text-white/44">
             <span className="font-semibold" style={{ color: GOLD }}>
               Next up: {next.name}
             </span>{" "}
@@ -258,7 +258,7 @@ export function WhereYouAre({
     <SectionCard tone="amber" className={`!px-5 !py-4 ${className ?? ""}`}>
       <div className="mb-3 flex items-center gap-2.5">
         <span
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-label leading-none"
           style={{
             color: `rgb(${GOLD_RGB})`,
             background: `rgba(${GOLD_RGB},0.08)`,
@@ -268,7 +268,7 @@ export function WhereYouAre({
           ◆
         </span>
         <span
-          className="text-[14px] font-semibold tracking-[0.005em]"
+          className="text-label font-semibold tracking-normal"
           style={{ color: TEXT_SECONDARY }}
         >
           Where you are
@@ -280,7 +280,7 @@ export function WhereYouAre({
           story is still worth nudging. */}
       {lead ?? achievementsLead(stats) ? (
         <div
-          className={`mb-4 max-w-[640px] text-[19px] ${PROSE_CLASS}`}
+          className={`mb-4 max-w-[640px] text-lede ${PROSE_CLASS}`}
           style={PROSE_STYLE}
         >
           {lead ?? achievementsLead(stats)}

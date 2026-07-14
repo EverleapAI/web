@@ -41,7 +41,7 @@ export function Bullets({ items, accent }: { items: string[]; accent: Rgb }) {
   return (
     <ul className="mt-2 space-y-2">
       {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">
+        <li key={i} className="flex gap-2.5 text-label font-normal leading-read tracking-normal text-ink">
           <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.85) }} />
           <span>{item}</span>
         </li>
@@ -60,16 +60,16 @@ function FitSignalRow({ signal, accent }: { signal: FitSignal; accent: Rgb }) {
       className="w-full rounded-2xl border border-white/6 bg-white/[0.02] px-3.5 py-3 text-left transition hover:bg-white/[0.04]"
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[14px] font-medium text-white/88">{signal.label}</span>
+        <span className="text-label font-medium text-white/88">{signal.label}</span>
         <span className="flex items-center gap-2">
-          <span className="text-[12px] font-semibold tabular-nums text-white/55">{signal.score}</span>
+          <span className="text-meta font-semibold tabular-nums text-white/55">{signal.score}</span>
           <ChevronDown className={`h-4 w-4 text-white/45 transition-transform ${open ? "rotate-180" : ""}`} />
         </span>
       </div>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${rgba(accent, 0.9)}, ${rgba(accent, 0.5)})` }} />
       </div>
-      {open ? <p className="mt-2.5 text-[13px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">{signal.explanation}</p> : null}
+      {open ? <p className="mt-2.5 text-meta font-normal leading-read tracking-normal text-ink-quiet">{signal.explanation}</p> : null}
     </button>
   );
 }
@@ -88,8 +88,8 @@ function BranchCard({
     <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h4 className="text-[15px] font-semibold text-[#F7F9FC]">{preview.title}</h4>
-          <p className="mt-1 text-[13px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">{preview.oneLiner}</p>
+          <h4 className="text-label font-semibold text-ink-strong">{preview.title}</h4>
+          <p className="mt-1 text-meta font-normal leading-read tracking-normal text-ink-quiet">{preview.oneLiner}</p>
         </div>
         {detail ? (
           <button
@@ -102,27 +102,27 @@ function BranchCard({
           </button>
         ) : null}
       </div>
-      <p className="mt-2 text-[13px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">
-        <span className="font-semibold text-[#F7F9FC]">Could fit you if: </span>
+      <p className="mt-2 text-meta font-normal leading-read tracking-normal text-ink-quiet">
+        <span className="font-semibold text-ink-strong">Could fit you if: </span>
         {preview.whyItCouldFit}
       </p>
       {open && detail ? (
         <div className="mt-3 space-y-3 border-t border-white/8 pt-3">
           {detail.whatYouActuallyDo.length ? (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">What you actually do</div>
+              <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">What you actually do</div>
               <Bullets items={detail.whatYouActuallyDo} accent={accent} />
             </div>
           ) : null}
           {detail.skillsThatGrowHere.length ? (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Skills that grow here</div>
+              <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">Skills that grow here</div>
               <Bullets items={detail.skillsThatGrowHere} accent={accent} />
             </div>
           ) : null}
           {detail.starterProjects.length ? (
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Starter projects</div>
+              <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">Starter projects</div>
               <Bullets items={detail.starterProjects} accent={accent} />
             </div>
           ) : null}
@@ -147,7 +147,7 @@ export function WhyFitsSection({ path, accent }: { path: ExplorePath; accent: Rg
       ) : null}
       {ov?.whyItPullsYouIn?.length ? (
         <div className="mt-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Why it pulls people in</div>
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">Why it pulls people in</div>
           <Bullets items={ov.whyItPullsYouIn.slice(0, 3)} accent={accent} />
         </div>
       ) : null}
@@ -161,11 +161,11 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
   return (
     <>
       {genericRealityTitle(r.title) ? null : (
-        <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{r.title}</h2>
+        <h2 className="text-lede font-semibold tracking-title text-white">{r.title}</h2>
       )}
-      {r.summary ? <p className="mt-2 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{r.summary}</p> : null}
+      {r.summary ? <p className="mt-2 text-label font-normal leading-read tracking-normal text-ink">{r.summary}</p> : null}
       {r.pulse ? (
-        <p className="mt-3 border-l-2 pl-3 text-[14px] italic leading-[1.6] text-white/78" style={{ borderColor: rgba(accent, 0.5) }}>
+        <p className="mt-3 border-l-2 pl-3 text-label italic leading-read text-white/78" style={{ borderColor: rgba(accent, 0.5) }}>
           {r.pulse}
         </p>
       ) : null}
@@ -174,10 +174,10 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
           {r.moments.map((m) => (
             <li key={m.id} className="rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3">
               {m.timeLabel ? (
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: rgba(accent, 0.85) }}>{m.timeLabel}</div>
+                <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: rgba(accent, 0.85) }}>{m.timeLabel}</div>
               ) : null}
-              <div className="mt-0.5 text-[14px] font-semibold text-white">{m.title}</div>
-              <p className="mt-1 text-[13.5px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{m.body}</p>
+              <div className="mt-0.5 text-label font-semibold text-white">{m.title}</div>
+              <p className="mt-1 text-meta font-normal leading-read tracking-normal text-ink">{m.body}</p>
             </li>
           ))}
         </ol>
@@ -192,9 +192,9 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">{t.outlookLabel}</h2>
+        <h2 className="text-lede font-semibold tracking-title text-white">{t.outlookLabel}</h2>
       </div>
-      {t.outlookSummary ? <p className="mt-2 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{t.outlookSummary}</p> : null}
+      {t.outlookSummary ? <p className="mt-2 text-label font-normal leading-read tracking-normal text-ink">{t.outlookSummary}</p> : null}
 
       {t.metrics?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -202,9 +202,9 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
             const tone = TONE_COLOR[m.tone ?? "neutral"] ?? TONE_COLOR.neutral;
             return (
               <div key={m.id} className="rounded-2xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
-                <div className="text-[11px] uppercase tracking-[0.12em] text-white/42">{m.label}</div>
-                <div className="mt-1 text-[16px] font-semibold tracking-[-0.02em]" style={{ color: rgba(tone, 0.95) }}>{m.value}</div>
-                {m.note ? <div className="mt-0.5 text-[11.5px] leading-[1.4] text-white/50">{m.note}</div> : null}
+                <div className="text-micro uppercase tracking-eyebrow text-white/42">{m.label}</div>
+                <div className="mt-1 text-body font-semibold tracking-title" style={{ color: rgba(tone, 0.95) }}>{m.value}</div>
+                {m.note ? <div className="mt-0.5 text-micro leading-body text-white/50">{m.note}</div> : null}
               </div>
             );
           })}
@@ -213,26 +213,26 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
 
       {t.salaryBand?.median ? (
         <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">Typical pay</div>
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">Typical pay</div>
           <div className="mt-1.5 flex items-baseline gap-3 text-white">
-            <span className="text-[13px] text-white/55">{t.salaryBand.low}</span>
-            <span className="text-[19px] font-semibold tracking-[-0.02em]">{t.salaryBand.median}</span>
-            <span className="text-[13px] text-white/55">{t.salaryBand.high}</span>
+            <span className="text-meta text-white/55">{t.salaryBand.low}</span>
+            <span className="text-lede font-semibold tracking-title">{t.salaryBand.median}</span>
+            <span className="text-meta text-white/55">{t.salaryBand.high}</span>
           </div>
-          {t.salaryBand.note ? <div className="mt-1 text-[12px] text-white/50">{t.salaryBand.note}</div> : null}
+          {t.salaryBand.note ? <div className="mt-1 text-meta text-white/50">{t.salaryBand.note}</div> : null}
         </div>
       ) : null}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {t.whatIsGrowing?.length ? (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: rgba(TONE_COLOR.positive, 0.85) }}>What&apos;s growing</div>
+            <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: rgba(TONE_COLOR.positive, 0.85) }}>What&apos;s growing</div>
             <Bullets items={t.whatIsGrowing} accent={TONE_COLOR.positive} />
           </div>
         ) : null}
         {t.whatIsUnderPressure?.length ? (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em]" style={{ color: rgba(TONE_COLOR.warning, 0.85) }}>Under pressure</div>
+            <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: rgba(TONE_COLOR.warning, 0.85) }}>Under pressure</div>
             <Bullets items={t.whatIsUnderPressure} accent={TONE_COLOR.warning} />
           </div>
         ) : null}
@@ -240,8 +240,8 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
 
       {t.aiImpact?.summary ? (
         <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">AI impact</div>
-          <p className="mt-1.5 text-[13.5px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{t.aiImpact.summary}</p>
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">AI impact</div>
+          <p className="mt-1.5 text-meta font-normal leading-read tracking-normal text-ink">{t.aiImpact.summary}</p>
         </div>
       ) : null}
     </>
@@ -254,11 +254,11 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
   if (!ns) return null;
   return (
     <>
-      {ns.heroSummary ? <p className="mb-3 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{ns.heroSummary}</p> : null}
+      {ns.heroSummary ? <p className="mb-3 text-label font-normal leading-read tracking-normal text-ink">{ns.heroSummary}</p> : null}
       <div className="space-y-4">
         {ns.sections.filter((s) => s.items.length).map((s) => (
           <div key={s.id}>
-            <div className="mb-2 flex items-center gap-2 text-[12.5px] font-semibold text-white/80">
+            <div className="mb-2 flex items-center gap-2 text-meta font-semibold text-white/80">
               {s.mode === "local" ? <MapPin className="h-4 w-4 text-white/55" /> : <Monitor className="h-4 w-4 text-white/55" />}
               <span>{s.title}</span>
             </div>
@@ -278,8 +278,8 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                       className="group flex items-start justify-between gap-3 px-4 pb-2 pt-3 transition hover:bg-white/[0.03]"
                     >
                       <span className="min-w-0">
-                        <span className="text-[14px] font-medium text-white/88">{it.title}</span>
-                        {it.note ? <span className="mt-0.5 block text-[12.5px] leading-[1.5] text-white/55">{it.note}</span> : null}
+                        <span className="text-label font-medium text-white/88">{it.title}</span>
+                        {it.note ? <span className="mt-0.5 block text-meta leading-body text-white/55">{it.note}</span> : null}
                       </span>
                       <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
                     </a>
@@ -289,7 +289,7 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                         onClick={() => actions.save({ title: it.title, description: it.note, href: it.href })}
                         disabled={saved || saving}
                         aria-label={saved ? "Added to your Actions" : "Add to my Actions"}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition hover:brightness-110 disabled:cursor-default disabled:hover:brightness-100"
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-meta font-semibold transition hover:brightness-110 disabled:cursor-default disabled:hover:brightness-100"
                         style={
                           saved
                             ? { backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }

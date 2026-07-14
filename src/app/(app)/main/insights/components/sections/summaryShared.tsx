@@ -92,7 +92,7 @@ export function headerIconWrap(dark: boolean, tone?: HeaderTone) {
   const t = tone ?? "neutral";
 
   return [
-    "mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px]",
+    "mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-chip",
     toneMap[t],
   ].join(" ");
 }
@@ -229,32 +229,32 @@ export function headerLabel(dark: boolean) {
 // their own sites. Light branches are unchanged.
 export function titleText(dark: boolean) {
   return dark
-    ? "text-[20px] font-semibold tracking-tight text-[#F7F9FC]"
-    : "text-[20px] font-semibold tracking-tight text-slate-950";
+    ? "text-lede font-semibold tracking-tight text-ink-strong"
+    : "text-lede font-semibold tracking-tight text-slate-950";
 }
 
 export function sectionTitle(dark: boolean) {
   return dark
-    ? "text-[16px] font-semibold tracking-[-0.02em] text-[#F7F9FC]"
-    : "text-[16px] font-semibold tracking-[-0.02em] text-slate-950";
+    ? "text-body font-semibold tracking-title text-ink-strong"
+    : "text-body font-semibold tracking-title text-slate-950";
 }
 
 export function bodyText(dark: boolean) {
   return dark
-    ? "text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]"
-    : "text-[15px] leading-relaxed text-slate-700";
+    ? "text-label font-normal leading-read tracking-normal text-ink"
+    : "text-label leading-relaxed text-slate-700";
 }
 
 export function mutedText(dark: boolean) {
   return dark
-    ? "text-[14px] font-normal leading-[1.65] tracking-[0] text-[#878B95]"
-    : "text-[14px] leading-relaxed text-slate-600";
+    ? "text-label font-normal leading-read tracking-normal text-ink-quiet"
+    : "text-label leading-relaxed text-slate-600";
 }
 
 export function bulletText(dark: boolean) {
   return dark
-    ? "text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]"
-    : "text-[15px] leading-relaxed text-slate-700";
+    ? "text-label font-normal leading-read tracking-normal text-ink"
+    : "text-label leading-relaxed text-slate-700";
 }
 
 export function sectionCard(dark: boolean, tone: CardTone = "neutral") {
@@ -285,7 +285,7 @@ export function sectionCard(dark: boolean, tone: CardTone = "neutral") {
   } as const;
 
   return [
-    "relative overflow-hidden rounded-[24px] border",
+    "relative overflow-hidden rounded-card border",
     "backdrop-blur-xl",
     dark
       ? "shadow-[0_14px_40px_rgba(0,0,0,0.24)]"

@@ -6,6 +6,113 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ============================================================================
+   0) THE DESIGN SYSTEM — single source of truth
+   ============================================================================
+   Tailwind v4 is CSS-first: this @theme block IS the config. Declaring
+   --color-ink here generates `text-ink` / `bg-ink` / `border-ink` AND leaves
+   --color-ink readable from an inline style. One declaration, one truth.
+
+   It exists because the app had drifted to 86 hex colours, 267 rgba() values,
+   30 font sizes (615 uses), 28 letter-spacings, 26 line-heights and 24 radii —
+   with four config files each claiming to define the styles and none of them
+   actually running. Anything not expressible in these tokens is a bug, not a
+   special case. Add a token; don't type a number.
+
+   NAMING: colours are `ink-*` / `surface-*`, sizes are `text-*`. They must not
+   collide — in v4, --color-read and --text-read would both try to own the
+   `text-read` utility.
+   ============================================================================ */
+@theme {
+  /* ---- Text colour ---------------------------------------------------------
+     Prose is the BRIGHTEST thing on the page; chrome steps down from it. The
+     old "low-glare" ramp (dim + semibold) set the read like a UI label, which
+     is why it read as dashboard rather than article. */
+  --color-ink: #e3e7ef; /* body prose — THE read */
+  --color-ink-strong: #f7f9fc; /* titles, masthead — reads as white */
+  --color-ink-quiet: #aeb3bf; /* secondary labels, quiet links */
+  --color-ink-faint: #7e838e; /* meta, timestamps — quietest chrome */
+
+  /* ---- Surfaces ------------------------------------------------------------
+     Replaces 21 near-identical near-black navies (#0B1220, #070B16, #070B17,
+     #0A0F1C, #040817 …) that nobody could tell apart, because they were never
+     distinguishable decisions. */
+  --color-surface: #020617; /* the page */
+  --color-surface-card: #070d1c; /* section cards */
+  --color-surface-raised: #0c1428; /* modals, popovers */
+
+  /* ---- Lines & scrims ------------------------------------------------------
+     Absorbs the long tail of the 267 rgba() values — white alphas .004→.26 and
+     black alphas .05→.9, which were all hand-tuned one at a time. */
+  --color-hairline: rgb(255 255 255 / 0.06); /* card edges, dividers */
+  --color-line: rgb(255 255 255 / 0.16); /* stronger borders, focus */
+  --color-scrim: rgb(0 0 0 / 0.55); /* modal backdrop */
+
+  /* ---- Type scale ----------------------------------------------------------
+     30 sizes → 8 steps. There is no world in which 13px, 13.5px and 14px were
+     three separate decisions. Leading is baked in so the two can't drift apart
+     again. */
+  --text-micro: 11px; /* eyebrows, badge pills, tab labels */
+  --text-micro--line-height: 1.35;
+  --text-meta: 13px; /* timestamps, captions, footnotes */
+  --text-meta--line-height: 1.5;
+  --text-label: 15px; /* buttons, list items, UI labels */
+  --text-label--line-height: 1.5;
+  --text-body: 17px; /* supporting prose inside cards */
+  --text-body--line-height: 1.6;
+  --text-lede: 19px; /* the SECONDARY read + section headings — a notch under the hero */
+  --text-lede--line-height: 1.6;
+  --text-read: 21px; /* THE agentic read — Today / Insights / Explore */
+  --text-read--line-height: 1.65;
+  --text-title: 26px; /* card titles, the Today masthead */
+  --text-title--line-height: 1.2;
+  --text-display: 32px; /* page heroes */
+  --text-display--line-height: 1.1;
+
+  /* ---- Letter-spacing ------------------------------------------------------
+     28 values → 5. The old set included -0.078em, -0.055em and 0.005em, which
+     are not perceptible and were not choices. Prose is 0: positive tracking on
+     body text is a UI-label tic and part of why the read looked like chrome.
+     `display` is separate from `title` on purpose — big type genuinely needs to
+     close up, and one "tight" cannot serve both a 15px label and a 50px hero. */
+  --tracking-display: -0.05em; /* 30px+ heroes */
+  --tracking-title: -0.02em; /* card titles, the masthead */
+  --tracking-eyebrow: 0.18em; /* uppercase eyebrows only */
+  --tracking-label: 0.02em; /* small caps-ish labels */
+
+  /* ---- Line-height (standalone) -------------------------------------------- */
+  --leading-display: 1.1;
+  --leading-title: 1.35;
+  --leading-body: 1.5;
+  --leading-read: 1.65;
+
+  /* ---- Radius --------------------------------------------------------------
+     24 values → 4 + pill. 23px, 25px and 27px were not design decisions; 5px is,
+     because it lives on 16×16 tick boxes where a 10px radius would round them
+     into circles. */
+  --radius-chip: 5px; /* 16px tick boxes, tiny chips */
+  --radius-control: 10px; /* pills, small controls */
+  --radius-panel: 18px; /* inner cards, inputs */
+  --radius-card: 28px; /* section cards — the dominant existing value */
+}
+
+/* NAMES ARE CHOSEN NOT TO COLLIDE WITH TAILWIND'S BUILT-INS, and that is
+   load-bearing, not fussiness. An earlier pass named these --radius-sm / --md and
+   --leading-tight, which does not add tokens — it REDEFINES Tailwind's own
+   `rounded-md` (6px → 18px) and `leading-tight` (1.25 → 1.1) at every existing
+   call site. That turned the 24px and 28px badge squares in BrandBadge and
+   SiteHeader — the logo mark, on every page — into near-circles, without either
+   file appearing in the diff. Anything named display/title/lede/read/chip/control/
+   panel/card is ours; sm/md/tight/snug are Tailwind's and still mean what
+   Tailwind says. */
+
+/* No --font-* token here on purpose. The reading face is the SYSTEM SANS, and
+   that is now a decision rather than an accident: a serif was built, set properly
+   (Georgia at 400, bright, 1.78 leading — CNN's own arrangement of sans furniture
+   around serif prose) and rejected on the screen. Sans read as more modern and
+   cleaner for a product aimed at teenagers, which an editorial serif fights no
+   matter how well it is set. Do not re-propose one. */
+
 /* ========== 1) Semantic Design Tokens (CSS variables) ========== */
 @layer base {
   :root {

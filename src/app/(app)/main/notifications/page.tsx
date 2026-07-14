@@ -78,8 +78,8 @@ const mockNotifications: NotificationItem[] = [
 
 function sectionLabelClass(dark: boolean) {
   return dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
-    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500";
+    ? "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300/70"
+    : "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-500";
 }
 
 function mutedTextClass(dark: boolean) {
@@ -151,10 +151,10 @@ export default function NotificationsPage() {
           {/* =========================
               HEADER
              ========================= */}
-          <section className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+          <section className={`relative rounded-card border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
             {gradientLevel > 0 && (
               <div
-                className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
+                className="pointer-events-none absolute inset-0 rounded-card bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
                 style={{ opacity: 0.18 }}
               />
             )}
@@ -245,7 +245,7 @@ export default function NotificationsPage() {
             </div>
 
             {items.length === 0 ? (
-              <div className={`rounded-[28px] border px-5 py-6 text-center ${surface}`}>
+              <div className={`rounded-card border px-5 py-6 text-center ${surface}`}>
                 <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
                   <Bell className="h-5 w-5 opacity-80" />
                 </div>
@@ -271,7 +271,7 @@ export default function NotificationsPage() {
                 </div>
               </div>
             ) : (
-              <div className={`overflow-hidden rounded-[28px] border ${surface}`}>
+              <div className={`overflow-hidden rounded-card border ${surface}`}>
                 <div className="divide-y divide-white/10">
                   {items.map((n) => (
                     <NotificationRow
@@ -338,7 +338,7 @@ function NotificationRow({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${badgeTone(
+                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-eyebrow ${badgeTone(
                   item.type,
                   dark
                 )}`}

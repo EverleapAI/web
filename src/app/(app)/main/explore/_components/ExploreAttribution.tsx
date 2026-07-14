@@ -17,7 +17,7 @@ const ONET_NOTICE_URL = "https://services.onetcenter.org/";
 /** The DOL-required O*NET attribution line. Always shown where DOL data is used. */
 export function OnetNotice({ className = "" }: { className?: string }) {
   return (
-    <p className={`text-[10.5px] leading-[1.5] text-white/35 ${className}`}>
+    <p className={`text-micro leading-body text-white/35 ${className}`}>
       Incorporates information from{" "}
       <a
         href={ONET_NOTICE_URL}
@@ -51,7 +51,7 @@ export function ExploreAttribution({ path }: { path: ExplorePath }) {
     <div className="mt-2 border-t border-white/[0.06] pt-4">
       {sources.length > 0 ? (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/30">
+          <span className="text-micro font-medium uppercase tracking-eyebrow text-white/30">
             Sources
           </span>
           {sources.map((s, i) => {
@@ -62,14 +62,14 @@ export function ExploreAttribution({ path }: { path: ExplorePath }) {
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-[11px] text-white/55 transition hover:text-white/80"
+                className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-micro text-white/55 transition hover:text-white/80"
               >
                 {text}
               </a>
             ) : (
               <span
                 key={`${s.source}-${i}`}
-                className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-[11px] text-white/45"
+                className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-micro text-white/45"
               >
                 {text}
               </span>

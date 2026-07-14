@@ -49,7 +49,7 @@ export default function RegAuthErrorPage() {
       className="w-full"
     >
       <div className="mb-8">
-        <div className="text-xs uppercase tracking-[0.18em] text-neutral-400">
+        <div className="text-xs uppercase tracking-eyebrow text-neutral-400">
           RegAuth
         </div>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{title}</h1>

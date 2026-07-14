@@ -31,7 +31,7 @@ function NavButton({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex items-center text-[15px] font-semibold tracking-[-0.02em] transition",
+        "inline-flex items-center text-label font-semibold tracking-title transition",
         disabled
           ? "cursor-not-allowed text-white/24"
           : "text-cyan-200 hover:text-cyan-100",

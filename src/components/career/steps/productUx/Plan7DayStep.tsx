@@ -105,15 +105,15 @@ function TaskCard({
       type="button"
       onClick={onToggle}
       className={`
-        relative w-full text-left rounded-[26px] border p-[1px] transition active:scale-[0.99]
+        relative w-full text-left rounded-card border p-[1px] transition active:scale-[0.99]
         ${on ? "border-emerald-400/35" : "border-white/10 hover:border-white/15"}
       `}
       aria-pressed={on}
     >
-      <div className={`pointer-events-none absolute inset-0 rounded-[26px] bg-gradient-to-br ${halo} opacity-60`} />
+      <div className={`pointer-events-none absolute inset-0 rounded-card bg-gradient-to-br ${halo} opacity-60`} />
       <div
         className={`
-          relative rounded-[25px] p-4 backdrop-blur-xl
+          relative rounded-card p-4 backdrop-blur-xl
           ${
             on
               ? "bg-emerald-400/10"
@@ -199,7 +199,7 @@ export function Plan7DayStep({ step, progress, setProgress }: Props) {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Dive deeper · {step.title}
       </div>
 
@@ -213,7 +213,7 @@ export function Plan7DayStep({ step, progress, setProgress }: Props) {
         </p>
       </div>
 
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-card border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-16 -left-14 h-60 w-60 rounded-full bg-gradient-to-br from-sky-500/16 via-cyan-400/9 to-indigo-500/10 blur-3xl opacity-70" />
           <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-amber-500/14 via-orange-400/8 to-rose-500/9 blur-3xl opacity-60" />
@@ -242,12 +242,12 @@ export function Plan7DayStep({ step, progress, setProgress }: Props) {
       </div>
 
       {/* “If you only do one thing…” */}
-      <div className="relative overflow-hidden rounded-[26px] border border-sky-200/15 bg-sky-300/10 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-card border border-sky-200/15 bg-sky-300/10 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-10 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
         </div>
         <div className="relative">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-50/80">
+          <div className="text-xs font-semibold uppercase tracking-eyebrow text-sky-50/80">
             If you only do one thing…
           </div>
           <div className="mt-2 text-sm text-sky-50/90">
@@ -263,13 +263,13 @@ export function Plan7DayStep({ step, progress, setProgress }: Props) {
 
       {/* Satisfying “done for today” moment */}
       <div
-        className={`rounded-[26px] border p-5 backdrop-blur-xl ${
+        className={`rounded-card border p-5 backdrop-blur-xl ${
           doneToday
             ? "border-emerald-200/20 bg-emerald-300/10"
             : "border-white/10 bg-white/5"
         }`}
       >
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+        <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
           Coach note
         </div>
         <div

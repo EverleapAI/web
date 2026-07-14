@@ -24,7 +24,7 @@ export function CarouselHeader({ activeCard, userName }: CarouselHeaderProps) {
   return (
     <header className="flex items-center justify-between gap-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <div className="text-xs font-medium uppercase tracking-[0.14em] text-slate-300/80">
+        <div className="text-xs font-medium uppercase tracking-eyebrow text-slate-300/80">
           Hey {displayName},
         </div>
         <h1 className="truncate text-xl font-semibold text-slate-50 md:text-2xl">
@@ -72,7 +72,7 @@ export function CarouselHeader({ activeCard, userName }: CarouselHeaderProps) {
               ease: "easeInOut",
             }}
           >
-            <span className="text-[0.7rem] font-medium uppercase tracking-[0.16em] text-slate-200/80">
+            <span className="text-[0.7rem] font-medium uppercase tracking-eyebrow text-slate-200/80">
               AI
             </span>
           </motion.div>

@@ -27,15 +27,15 @@ export function EverleapMark({
   className,
 }: EverleapMarkProps) {
   const orbBox =
-    variant === "hero" ? "h-8 w-8 rounded-[14px]" : "h-7 w-7 rounded-xl";
-  const titleSize = variant === "hero" ? "text-[11.5px]" : "text-[11px]";
-  const subSize = variant === "hero" ? "text-[12.5px]" : "text-[12px]";
+    variant === "hero" ? "h-8 w-8 rounded-control" : "h-7 w-7 rounded-xl";
+  const titleSize = variant === "hero" ? "text-micro" : "text-micro";
+  const subSize = variant === "hero" ? "text-meta" : "text-meta";
 
   return (
     <div className={cx("flex items-center gap-2.5", className)}>
       <span className={cx("relative", variant === "hero" ? "h-8 w-8" : "h-7 w-7")}>
         <span
-          className="absolute inset-[-12px] rounded-[18px]"
+          className="absolute inset-[-12px] rounded-panel"
           style={{
             background:
               "radial-gradient(18px 18px at 42% 38%, rgba(255,240,210,0.75), rgba(255,170,110,0.32) 55%, rgba(255,110,140,0.16) 80%, transparent 100%)",
@@ -62,7 +62,7 @@ export function EverleapMark({
       <div>
         <div
           className={cx(
-            "font-semibold uppercase tracking-[0.26em] antialiased",
+            "font-semibold uppercase tracking-eyebrow antialiased",
             titleSize
           )}
           style={{ color: markWordColor() }}

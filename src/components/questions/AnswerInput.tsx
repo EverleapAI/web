@@ -19,8 +19,8 @@ export function AnswerInput({ onSubmit }: Props) {
 
   return (
     <div className="mt-10">
-      <div className="relative rounded-[28px] bg-gradient-to-br from-sky-500/50 via-indigo-500/40 to-fuchsia-500/50 p-[1px]">
-        <div className="flex items-end gap-3 rounded-[28px] bg-slate-950/90 px-4 py-4">
+      <div className="relative rounded-card bg-gradient-to-br from-sky-500/50 via-indigo-500/40 to-fuchsia-500/50 p-[1px]">
+        <div className="flex items-end gap-3 rounded-card bg-slate-950/90 px-4 py-4">
           <textarea
             ref={textareaRef}
             value={value}

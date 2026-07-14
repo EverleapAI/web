@@ -104,10 +104,10 @@ export default function Conversation({ node, answers }: Props) {
               ease: "easeOut",
             }}
             className={[
-              "text-balance font-semibold tracking-[-0.045em] text-white",
+              "text-balance font-semibold tracking-display text-white",
               isTransition
-                ? "mx-auto max-w-[620px] text-[2rem] leading-[1.02] sm:text-[2.7rem]"
-                : "max-w-[400px] text-[1.68rem] leading-[1.03] sm:text-[2.05rem]",
+                ? "mx-auto max-w-[620px] text-[2rem] leading-display sm:text-[2.7rem]"
+                : "max-w-[400px] text-[1.68rem] leading-display sm:text-[2.05rem]",
             ].join(" ")}
           >
             {renderHighlightedText(title)}
@@ -143,10 +143,10 @@ export default function Conversation({ node, answers }: Props) {
                     : index * pacing.bodyStepDelay,
                 }}
                 className={[
-                  "text-pretty tracking-[-0.015em]",
+                  "text-pretty tracking-title",
                   isTransition
-                    ? "text-[17px] leading-[1.72] text-white/74 sm:text-[19px]"
-                    : "text-[15px] leading-[1.55] text-white/70 sm:text-[16px]",
+                    ? "text-body leading-read text-white/74 sm:text-lede"
+                    : "text-label leading-body text-white/70 sm:text-body",
                 ].join(" ")}
               >
                 {renderHighlightedText(line)}

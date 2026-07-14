@@ -64,7 +64,7 @@ function ValidationNote({ message }: { message?: string | null }) {
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
-      className="mt-3 text-[13px] leading-5 text-cyan-100/62"
+      className="mt-3 text-meta leading-5 text-cyan-100/62"
     >
       {message}
     </motion.div>
@@ -139,7 +139,7 @@ function ChoiceRowText({
         opacity: dimmed ? 0.46 : 1,
       }}
       className={[
-        "group relative block w-full overflow-hidden rounded-[20px] border text-left transition",
+        "group relative block w-full overflow-hidden rounded-panel border text-left transition",
         selected
           ? "border-cyan-100/36 bg-cyan-300/[0.105] shadow-[0_0_24px_rgba(103,232,249,0.055)]"
           : "border-white/8 bg-white/[0.026] hover:border-white/15 hover:bg-white/[0.045]",
@@ -164,10 +164,10 @@ function ChoiceRowText({
 
         <div
           className={[
-            "min-w-0 flex-1 tracking-[-0.015em]",
+            "min-w-0 flex-1 tracking-title",
             compact
-              ? "text-[14px] leading-[1.25rem]"
-              : "text-[15px] leading-[1.35rem]",
+              ? "text-label leading-[1.25rem]"
+              : "text-label leading-[1.35rem]",
             selected
               ? "font-semibold text-white"
               : "font-medium text-white/80",
@@ -310,7 +310,7 @@ export default function InputRenderer({
 
     return (
       <div className="mt-4 w-full max-w-[400px]">
-        <div className="mb-2 text-[11px] leading-4 tracking-[-0.01em] text-white/32">
+        <div className="mb-2 text-micro leading-4 tracking-title text-white/32">
           Press Enter to continue or use the microphone to speak.
         </div>
 
@@ -345,9 +345,9 @@ export default function InputRenderer({
             rows={isName ? 1 : 4}
             placeholder={question.placeholder ?? ""}
             className={[
-              "w-full resize-none rounded-[22px] border border-white/9 bg-white/[0.032]",
+              "w-full resize-none rounded-panel border border-white/9 bg-white/[0.032]",
               "px-5 py-3.5 pr-16 outline-none transition",
-              "text-[16px] leading-6 text-white tracking-[-0.015em]",
+              "text-body leading-6 text-white tracking-title",
               "placeholder:text-white/25",
               "focus:border-cyan-100/22 focus:bg-white/[0.05]",
               isName ? "min-h-[52px]" : "min-h-[108px]",
@@ -362,7 +362,7 @@ export default function InputRenderer({
         </div>
 
         {isListening ? (
-          <div className="mt-2 text-[12px] text-cyan-100/56">
+          <div className="mt-2 text-meta text-cyan-100/56">
             Listening…
           </div>
         ) : null}
@@ -411,12 +411,12 @@ export default function InputRenderer({
     return (
       <div className="mt-4 w-full max-w-[400px]">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
+          <div className="text-micro uppercase tracking-eyebrow text-white/34">
             Select all that apply
           </div>
 
           {typeof maxChoices === "number" ? (
-            <div className="text-[11px] text-white/32">
+            <div className="text-micro text-white/32">
               Up to {maxChoices}
             </div>
           ) : null}
@@ -476,7 +476,7 @@ export default function InputRenderer({
               }}
               whileTap={{ scale: 0.98 }}
               className={[
-                "group relative overflow-hidden rounded-[22px] border transition",
+                "group relative overflow-hidden rounded-panel border transition",
                 isSelected
                   ? "border-cyan-100/48"
                   : "border-white/10 hover:border-white/18",
@@ -500,7 +500,7 @@ export default function InputRenderer({
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-                <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-meta font-medium text-white backdrop-blur-md">
                   {option.label}
                 </div>
               </div>

@@ -98,14 +98,14 @@ export function PasscodeStep({
             exit={{ y: 10, opacity: 0 }}
             transition={{ duration: 0.18 }}
             className={[
-              "relative w-full max-w-xs rounded-[18px] border p-4",
+              "relative w-full max-w-xs rounded-panel border p-4",
               surface,
               "shadow-[0_18px_90px_rgba(0,0,0,0.4)]",
             ].join(" ")}
           >
             <label
               htmlFor="prompt-lab-passcode"
-              className={dark ? "text-[12px] font-medium text-white/50" : "text-[12px] font-medium text-slate-500"}
+              className={dark ? "text-meta font-medium text-white/50" : "text-meta font-medium text-slate-500"}
             >
               Passcode
             </label>
@@ -116,20 +116,20 @@ export function PasscodeStep({
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               className={[
-                "mt-1 w-full rounded-[10px] border px-3 py-2 text-[14px] focus:outline-none focus:ring-2",
+                "mt-1 w-full rounded-control border px-3 py-2 text-label focus:outline-none focus:ring-2",
                 dark
                   ? "border-white/14 bg-white/5 text-white/90 focus:ring-sky-300/40"
                   : "border-black/10 bg-white text-slate-950 focus:ring-sky-500/30",
               ].join(" ")}
             />
 
-            {error ? <p className="mt-2 text-[12.5px] text-rose-400">{error}</p> : null}
+            {error ? <p className="mt-2 text-meta text-rose-400">{error}</p> : null}
 
             <button
               type="submit"
               disabled={submitting || !passcode}
               className={[
-                "mt-3 w-full rounded-full px-4 py-2 text-[13px] font-semibold transition",
+                "mt-3 w-full rounded-full px-4 py-2 text-meta font-semibold transition",
                 dark
                   ? "bg-sky-300/20 text-sky-100 ring-1 ring-sky-300/30 hover:bg-sky-300/28"
                   : "bg-sky-500/15 text-sky-700 ring-1 ring-sky-500/25 hover:bg-sky-500/22",

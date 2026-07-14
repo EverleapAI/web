@@ -117,7 +117,7 @@ export default function VoiceField({
           {listening ? 'Listening…' : '🎤'}
         </button>
       </div>
-      {err && <p className="mt-2 text-[12px] text-red-700">{err}</p>}
+      {err && <p className="mt-2 text-meta text-red-700">{err}</p>}
     </div>
   );
 }

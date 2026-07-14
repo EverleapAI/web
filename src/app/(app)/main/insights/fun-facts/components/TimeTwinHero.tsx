@@ -73,7 +73,7 @@ export function TimeTwinHero({
       />
 
       <div
-        className="relative overflow-hidden rounded-[30px] border px-5 pb-6 pt-7 sm:px-7 sm:pb-8 sm:pt-9"
+        className="relative overflow-hidden rounded-card border px-5 pb-6 pt-7 sm:px-7 sm:pb-8 sm:pt-9"
         style={{
           borderColor: rgba(accentRgb, 0.2),
           background: heroBackground(visualTheme, accentRgb),
@@ -90,13 +90,13 @@ export function TimeTwinHero({
         />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          <div className="mb-5 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/48 sm:text-[11px]">
+          <div className="mb-5 text-micro font-semibold uppercase tracking-eyebrow text-white/48 sm:text-micro">
             Your Time Twin
           </div>
 
           {/* Framed portrait — the "gallery" frame with matting */}
           <div
-            className="relative rounded-[26px] p-2.5"
+            className="relative rounded-card p-2.5"
             style={{
               border: `1.5px solid ${rgba(accentRgb, 0.4)}`,
               background: rgba(accentRgb, 0.05),
@@ -106,7 +106,7 @@ export function TimeTwinHero({
             <TimeTwinPortrait seed={name} accentRgb={accentRgb} size={156} rounded={18} imageUrl={imageUrl} />
             {/* inner matting hairline */}
             <div
-              className="pointer-events-none absolute inset-2.5 rounded-[18px]"
+              className="pointer-events-none absolute inset-2.5 rounded-panel"
               aria-hidden
               style={{ boxShadow: `inset 0 0 0 1px ${rgba(accentRgb, 0.28)}` }}
             />
@@ -120,20 +120,20 @@ export function TimeTwinHero({
               aria-hidden
             />
             <h1
-              className="text-[26px] leading-[1.08] tracking-[-0.01em] text-white sm:text-[32px]"
+              className="text-title leading-display tracking-title text-white sm:text-display"
               style={{ fontFamily: SERIF, fontWeight: 600 }}
             >
               {name}
             </h1>
             <div
-              className="mt-2.5 text-[10.5px] font-semibold uppercase tracking-[0.22em] sm:text-[11px]"
+              className="mt-2.5 text-micro font-semibold uppercase tracking-eyebrow sm:text-micro"
               style={{ color: rgba(accentRgb, 0.92) }}
             >
               {era}
             </div>
             {mindType ? (
               <div
-                className="mt-3 text-[15px] text-white/72 sm:text-[16px]"
+                className="mt-3 text-label text-white/72 sm:text-body"
                 style={{ fontFamily: SERIF, fontStyle: "italic" }}
               >
                 “{mindType}”
@@ -142,7 +142,7 @@ export function TimeTwinHero({
           </div>
 
           {tagline ? (
-            <p className="mt-4 max-w-[440px] text-[14.5px] leading-7 text-white/68 sm:text-[15px]">
+            <p className="mt-4 max-w-[440px] text-label leading-7 text-white/68 sm:text-label">
               {tagline}
             </p>
           ) : null}

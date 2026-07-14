@@ -122,7 +122,7 @@ export default function FirstQuestionPage() {
                   }}
                   onBlur={() => value.trim() && submitIfValid()}
                 />
-                <p className="mt-2 text-[11px] opacity-70 pl-1">
+                <p className="mt-2 text-micro opacity-70 pl-1">
                   Press Enter to continue, or tap the mic to speak.
                 </p>
               </div>
@@ -146,7 +146,7 @@ export default function FirstQuestionPage() {
                 </button>
               </div>
 
-              <p className="text-[11px] opacity-70">
+              <p className="text-micro opacity-70">
                 You can return and change your answer anytime.
               </p>
             </section>

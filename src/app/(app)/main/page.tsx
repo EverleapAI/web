@@ -389,7 +389,7 @@ export default function MainHomePage() {
               <button
                 type="button"
                 onClick={() => router.push("/main/ai-lab")}
-                className="text-[12px] font-medium text-white/34 transition hover:text-cyan-200"
+                className="text-meta font-medium text-white/34 transition hover:text-cyan-200"
               >
                 Open AI Lab
               </button>
@@ -399,7 +399,7 @@ export default function MainHomePage() {
               <button
                 type="button"
                 onClick={() => router.push("/main/reset-answers")}
-                className="text-[12px] font-medium text-white/30 transition hover:text-cyan-200"
+                className="text-meta font-medium text-white/30 transition hover:text-cyan-200"
               >
                 Start over
               </button>

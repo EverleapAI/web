@@ -86,18 +86,18 @@ export function OverviewStep({ step, state }: Props) {
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
       {/* Step label */}
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Dive deeper · {step.title}
       </div>
 
       {/* Hero (stronger “pop”) */}
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-sky-400/22 via-fuchsia-400/12 to-amber-300/14 p-[1px]">
+      <div className="relative overflow-hidden rounded-card border border-white/10 bg-gradient-to-br from-sky-400/22 via-fuchsia-400/12 to-amber-300/14 p-[1px]">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-16 -left-10 h-56 w-56 rounded-full bg-sky-500/20 blur-3xl opacity-70" />
           <div className="absolute -bottom-20 -right-12 h-72 w-72 rounded-full bg-fuchsia-500/16 blur-3xl opacity-60" />
         </div>
 
-        <div className="relative rounded-[27px] bg-slate-950/55 p-5 backdrop-blur-2xl">
+        <div className="relative rounded-card bg-slate-950/55 p-5 backdrop-blur-2xl">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-50">Product / UX</h1>
 
           <p className="mt-2 text-sm leading-relaxed text-slate-200/90">
@@ -241,7 +241,7 @@ export function OverviewStep({ step, state }: Props) {
           <div className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-indigo-500/14 blur-3xl" />
         </div>
 
-        <div className="relative rounded-[23px] bg-slate-950/55 p-5 backdrop-blur-2xl">
+        <div className="relative rounded-card bg-slate-950/55 p-5 backdrop-blur-2xl">
           <div className="text-sm font-semibold text-slate-50">Okay — now pick your “version” of Product/UX</div>
           <div className="mt-2 text-sm leading-relaxed text-slate-200/85">
             Different worlds feel totally different: consumer apps, healthcare, games, AI…

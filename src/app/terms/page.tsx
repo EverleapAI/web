@@ -39,10 +39,10 @@ export default function TermsPage() {
       title: "Plain-English summary",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             These Terms explain the rules for using Everleap. In short:
           </p>
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— Use Everleap respectfully and legally.</p>
             <p>— You’re responsible for your account and activity.</p>
             <p>— We may update features and these Terms over time.</p>
@@ -54,7 +54,7 @@ export default function TermsPage() {
       id: "acceptance",
       title: "1. Acceptance of Terms",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           By accessing or using Everleap, you agree to these Terms. If you don’t
           agree, do not use the service.
         </p>
@@ -64,7 +64,7 @@ export default function TermsPage() {
       id: "eligibility",
       title: "2. Eligibility & Accounts",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           You are responsible for keeping your account credentials secure and
           for all activity under your account. If local law requires it, a
           parent or guardian may need to consent to your use of Everleap.
@@ -76,10 +76,10 @@ export default function TermsPage() {
       title: "3. Use of the Service",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             Please don’t misuse the service. For example:
           </p>
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— Don’t disrupt, overload, or interfere with the service.</p>
             <p>— Don’t attempt to access data you don’t have permission to access.</p>
             <p>— Follow applicable laws and regulations.</p>
@@ -91,7 +91,7 @@ export default function TermsPage() {
       id: "content",
       title: "4. Content & Feedback",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           You retain ownership of content you submit. By submitting content or
           feedback, you grant us a non-exclusive license to use it to operate
           and improve Everleap.
@@ -102,7 +102,7 @@ export default function TermsPage() {
       id: "privacy",
       title: "5. Privacy",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           Your use of Everleap is subject to our{" "}
           <Link
             href="/privacy"
@@ -118,7 +118,7 @@ export default function TermsPage() {
       id: "thirdparty",
       title: "6. Third-Party Services",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           Everleap may integrate or link to third-party services. We aren’t
           responsible for their content, availability, or practices.
         </p>
@@ -128,7 +128,7 @@ export default function TermsPage() {
       id: "disclaimers",
       title: "7. Disclaimers",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           The service is provided “as is” without warranties of any kind, to the
           fullest extent permitted by law.
         </p>
@@ -138,7 +138,7 @@ export default function TermsPage() {
       id: "liability",
       title: "8. Limitation of Liability",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           To the fullest extent permitted by law, Everleap will not be liable
           for indirect, incidental, special, consequential, or punitive damages.
         </p>
@@ -148,7 +148,7 @@ export default function TermsPage() {
       id: "changes",
       title: "9. Changes to the Service or Terms",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           We may update the service or these Terms from time to time. Updates
           will be posted here with a revised date.
         </p>
@@ -195,15 +195,15 @@ export default function TermsPage() {
 
         {/* Header */}
         <div className="mt-10 sm:mt-14">
-          <p className="text-[11px] tracking-[0.25em] text-white/45">
+          <p className="text-micro tracking-eyebrow text-white/45">
             EVERLEAP · TERMS
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold leading-[1.08] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold leading-display sm:text-4xl">
             Terms of Service
           </h1>
 
-          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
+          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-label sm:leading-7">
             Clear, readable terms for using Everleap. For questions, visit{" "}
             <Link
               href="/contact"
@@ -259,7 +259,7 @@ export default function TermsPage() {
             </Link>
           </div>
 
-          <p className="mt-4 text-[11px] leading-5 text-white/28">
+          <p className="mt-4 text-micro leading-5 text-white/28">
             Last updated Oct 4, 2025
           </p>
 

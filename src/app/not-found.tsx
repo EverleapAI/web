@@ -38,7 +38,7 @@ export default function NotFound() {
               </Link>
             </div>
 
-            <p className="text-[11px] opacity-70">
+            <p className="text-micro opacity-70">
               If you entered a URL, check the spelling and try again.
             </p>
           </section>

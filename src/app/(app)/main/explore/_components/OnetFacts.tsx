@@ -34,7 +34,7 @@ function Chips({ items, accent }: { items: string[]; accent: Rgb }) {
       {items.map((t) => (
         <span
           key={t}
-          className="rounded-full border px-2.5 py-1 text-[12px] text-white/72"
+          className="rounded-full border px-2.5 py-1 text-meta text-white/72"
           style={{ borderColor: rgba(accent, 0.28), backgroundColor: rgba(accent, 0.08) }}
         >
           {t}
@@ -47,7 +47,7 @@ function Chips({ items, accent }: { items: string[]; accent: Rgb }) {
 function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+      <div className="mb-2 text-micro font-semibold uppercase tracking-eyebrow text-white/40">
         {label}
       </div>
       {children}
@@ -69,12 +69,12 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
   return (
     <SectionCard tone="neutral">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-white">
+        <h2 className="text-body font-semibold tracking-title text-white">
           What the data says
         </h2>
         {onet.brightOutlook ? (
           <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-micro font-semibold"
             style={{
               color: "rgb(120,220,170)",
               backgroundColor: "rgba(55,211,160,0.12)",
@@ -97,8 +97,8 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
               <GraduationCap className="h-4 w-4" />
             </span>
             <div>
-              <div className="text-[13.5px] font-medium text-white/90">{onet.jobZone.title}</div>
-              <div className="mt-0.5 text-[12.5px] leading-[1.45] text-white/55">
+              <div className="text-meta font-medium text-white/90">{onet.jobZone.title}</div>
+              <div className="mt-0.5 text-meta leading-body text-white/55">
                 {onet.jobZone.education}
               </div>
             </div>
@@ -115,7 +115,7 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
           <Block label="What they actually do">
             <ul className="space-y-1.5">
               {onet.tasks.slice(0, 6).map((t) => (
-                <li key={t} className="flex gap-2.5 text-[13px] leading-[1.5] text-white/75">
+                <li key={t} className="flex gap-2.5 text-meta leading-body text-white/75">
                   <span
                     className="mt-[8px] h-1.5 w-1.5 flex-none rounded-full"
                     style={{ backgroundColor: rgba(accent, 0.85) }}
@@ -148,7 +148,7 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
                   href={r.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[12px] text-white/65 transition hover:text-white/90"
+                  className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-meta text-white/65 transition hover:text-white/90"
                 >
                   {r.title}
                   <ExternalLink className="h-3 w-3 opacity-60" />

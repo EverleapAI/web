@@ -52,18 +52,18 @@ function PathCard({ path }: { path: ExplorePath }) {
     <SectionCard tone="neutral" compact>
       <div className="flex items-start gap-3">
         <span
-          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-control"
           style={{ backgroundColor: rgba(accent, 0.12), color: rgba(accent, 0.92) }}
         >
           <Icon className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#F7F9FC] sm:text-[22px]">
+          <h2 className="text-lede font-semibold leading-tight tracking-title text-ink-strong sm:text-read">
             {path.card.title}
           </h2>
           {path.brightOutlook ? (
             <span
-              className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+              className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-micro font-semibold"
               style={{
                 color: "rgb(120,220,170)",
                 backgroundColor: "rgba(55,211,160,0.12)",
@@ -77,13 +77,13 @@ function PathCard({ path }: { path: ExplorePath }) {
         </div>
       </div>
 
-      <p className="mt-3 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">
+      <p className="mt-3 text-label font-normal leading-read tracking-normal text-ink-quiet">
         {path.card.hook} {path.card.description}
       </p>
 
       <Link
         href={href}
-        className="group mt-4 inline-flex items-center gap-2 text-[14px] font-semibold text-white/85 transition hover:text-white"
+        className="group mt-4 inline-flex items-center gap-2 text-label font-semibold text-white/85 transition hover:text-white"
       >
         <span>Open {path.card.title}</span>
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -125,21 +125,21 @@ export function ExploreLanding({
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
         <div className="relative max-w-2xl">
           <div className="mb-2 flex items-center gap-2">
-            <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">
+            <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
               <Sparkles className="h-3.5 w-3.5" />
             </span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/44">
+            <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
               Explore
             </span>
           </div>
-          <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#F7F9FC] sm:text-[28px]">
+          <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
             {intro.title}
           </h1>
-          <p className={`mt-3 text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{intro.body}</p>
+          <p className={`mt-3 text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>{intro.body}</p>
           {intro.cta ? (
             <Link
               href={intro.cta.href}
-              className="group mt-4 inline-flex items-center gap-1.5 text-[14px] font-medium text-white/82 transition hover:text-white"
+              className="group mt-4 inline-flex items-center gap-1.5 text-label font-medium text-white/82 transition hover:text-white"
             >
               <span>{intro.cta.label}</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -155,7 +155,7 @@ export function ExploreLanding({
           ))}
           {paths.length === 0 ? (
             <SectionCard tone="neutral" compact>
-              <p className="text-[14px] text-white/64">No {lane} paths are registered yet.</p>
+              <p className="text-label text-white/64">No {lane} paths are registered yet.</p>
             </SectionCard>
           ) : null}
         </div>

@@ -76,11 +76,11 @@ export default function RegAuthEntryPage(): React.JSX.Element {
         <RegAuthVisual kind="code" />
 
         <div className="space-y-2">
-          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+          <h1 className="text-[2rem] font-semibold tracking-display text-white">
             You’re ready to join Everleap!
           </h1>
 
-          <p className="text-[15px] leading-6 text-white/64">
+          <p className="text-label leading-6 text-white/64">
             Enter your email or phone number and I’ll send you a sign-in code.
           </p>
         </div>

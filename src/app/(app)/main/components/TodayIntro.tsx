@@ -29,7 +29,7 @@ function headerRow(dark: boolean) {
 
 function headerIconWrap(dark: boolean) {
   return [
-    "flex h-4 w-4 items-center justify-center rounded-[5px]",
+    "flex h-4 w-4 items-center justify-center rounded-chip",
     dark
       ? "bg-amber-300/10 text-amber-200/70"
       : "bg-amber-500/10 text-amber-600/70",
@@ -38,14 +38,14 @@ function headerIconWrap(dark: boolean) {
 
 function headerTitle(dark: boolean) {
   return [
-    "text-[11px] font-semibold uppercase tracking-[0.28em]",
+    "text-micro font-semibold uppercase tracking-eyebrow",
     dark ? "text-white/42" : "text-slate-600",
   ].join(" ");
 }
 
 function heroTitleClass(dark: boolean) {
   return [
-    "text-[1.56rem] font-semibold leading-[1.08] tracking-[-0.024em]",
+    "text-[1.56rem] font-semibold leading-display tracking-title",
     "sm:text-[1.8rem]",
     dark ? "text-white/72" : "text-slate-950",
   ].join(" ");
@@ -53,8 +53,8 @@ function heroTitleClass(dark: boolean) {
 
 function heroBodyClass(dark: boolean) {
   return [
-    "mt-2.5 max-w-[46rem] text-[15px] leading-[1.72]",
-    "sm:text-[15.5px]",
+    "mt-2.5 max-w-[46rem] text-label leading-read",
+    "sm:text-label",
     "whitespace-normal break-words",
     dark ? "text-white/42" : "text-slate-800",
   ].join(" ");
@@ -63,7 +63,7 @@ function heroBodyClass(dark: boolean) {
 function ctaClass(dark: boolean) {
   return [
     "group inline-flex items-center gap-2",
-    "text-[14.5px] font-medium transition",
+    "text-label font-medium transition",
     "focus-visible:outline-none",
     dark
       ? "text-sky-300/60 hover:text-sky-200/68"

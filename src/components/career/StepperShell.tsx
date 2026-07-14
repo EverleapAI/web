@@ -325,11 +325,11 @@ export default function StepperShell({
       {/* Step content */}
       <div className="relative px-4 md:px-0">
         <div
-          className={`pointer-events-none absolute inset-0 -z-10 rounded-[32px] bg-gradient-to-br ${accent.halo} blur-2xl opacity-30`}
+          className={`pointer-events-none absolute inset-0 -z-10 rounded-card bg-gradient-to-br ${accent.halo} blur-2xl opacity-30`}
         />
 
-        <div className="min-h-[40vh] rounded-[28px] border border-white/10 bg-slate-950/30 p-1 backdrop-blur-2xl">
-          <div className="rounded-[24px] bg-slate-950/15 p-4 md:p-6">
+        <div className="min-h-[40vh] rounded-card border border-white/10 bg-slate-950/30 p-1 backdrop-blur-2xl">
+          <div className="rounded-card bg-slate-950/15 p-4 md:p-6">
             {step ? (
               renderStep({ step, state, progress, setProgress })
             ) : (
@@ -350,7 +350,7 @@ export default function StepperShell({
       >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/15 to-transparent" />
         <div className="relative mx-auto w-full max-w-5xl px-4 pt-3 md:px-8">
-          <div className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-slate-950/75 px-3 py-3 shadow-[0_18px_70px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+          <div className="flex items-center justify-between gap-3 rounded-panel border border-white/10 bg-slate-950/75 px-3 py-3 shadow-[0_18px_70px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
             {/* Left: Back (or step count) */}
             <div className="flex min-w-0 items-center gap-2">
               {!isFirst ? (

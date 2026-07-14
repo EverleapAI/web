@@ -63,7 +63,7 @@ function ChoicePill({
       type="button"
       onClick={onClick}
       className={`
-        w-full rounded-[22px] border px-4 py-3 text-left transition active:scale-[0.99]
+        w-full rounded-panel border px-4 py-3 text-left transition active:scale-[0.99]
         ${active ? "border-sky-300/60 bg-sky-300/10" : "border-white/10 bg-slate-950/40 hover:bg-slate-950/50"}
       `}
     >
@@ -85,7 +85,7 @@ function MiniCard({
   onCta: () => void;
 }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-slate-950/40 p-4 shadow-[0_14px_42px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+    <div className="rounded-card border border-white/10 bg-slate-950/40 p-4 shadow-[0_14px_42px_rgba(0,0,0,0.45)] backdrop-blur-xl">
       <div className="text-sm font-semibold text-slate-50">{title}</div>
       <div className="mt-1 text-xs leading-relaxed text-slate-200/80">{body}</div>
       <div className="mt-3">
@@ -202,7 +202,7 @@ export function FinishStep({ step, progress, setProgress }: Props) {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Recommendation · {step.title}
       </div>
 
@@ -214,8 +214,8 @@ export function FinishStep({ step, progress, setProgress }: Props) {
       </div>
 
       {/* Commitment selector */}
-      <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Choose your intensity</div>
+      <div className="rounded-card border border-white/10 bg-slate-950/40 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+        <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">Choose your intensity</div>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <ChoicePill active={commit === "light"} label="Light" sub="2 tiny moves" onClick={() => setCommit("light")} />
@@ -235,9 +235,9 @@ export function FinishStep({ step, progress, setProgress }: Props) {
       </div>
 
       {/* Zip capture (mobile-friendly, optional) */}
-      <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-4 backdrop-blur-xl">
+      <div className="rounded-card border border-white/10 bg-slate-950/40 p-4 backdrop-blur-xl">
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">Make it local (optional)</div>
+          <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">Make it local (optional)</div>
           <div className="mt-1 text-sm text-slate-200/85">
             Add a zip code so we can suggest nearby classes, events, and communities.
           </div>
@@ -292,7 +292,7 @@ export function FinishStep({ step, progress, setProgress }: Props) {
 
       {/* Final nudge */}
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">One question</div>
+        <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">One question</div>
         <div className="mt-2 text-sm text-slate-200/85">
           If you had to start today in <span className="text-slate-50 font-semibold">15 minutes</span>, what would you do
           first: sketch a screen, interview one person, or pick a problem?

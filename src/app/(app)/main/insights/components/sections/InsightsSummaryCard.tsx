@@ -4,29 +4,21 @@ import * as React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
-import {
-  bodyText,
-  cardBody,
-  confidenceToConstellationDensity,
-  constellationOrnament,
-  headerCopyStack,
-  headerIconWrap,
-  headerLabel,
-  headerMain,
-  headerRow,
-  sectionCard,
-} from "./summaryShared";
+import { bodyText, cardBody } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
 import {
+  HEADING_CLASS,
+  HEADING_STYLE,
   LINK_CLASS,
   LINK_SIZE,
   PROSE_CLASS,
   PROSE_SIZE,
   PROSE_STYLE,
-  TEXT_HEADING,
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
 import { ConstellationAnchor } from "../../../components/ui/ConstellationAnchor";
+import { SectionCard } from "../../../components/ui/SectionCard";
+import { AgenticHeader } from "../../../components/ui/AgenticHeader";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
   PromptLabAppliedPreview,
@@ -64,7 +56,12 @@ export default function InsightsSummaryCard({
   const [moreOpen, setMoreOpen] = React.useState(false);
   const [whyOpen, setWhyOpen] = React.useState(false);
   const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
-  const density = confidenceToConstellationDensity(confidenceLevel);
+  // NOTE — a small feature was dropped by unifying the shell: Insights' old
+  // bespoke ornament varied its star density with `confidenceLevel`, and the
+  // shared ConstellationAnchor (what Today and Explore use) has no density prop.
+  // `confidenceLevel` is still accepted and still passed by the page, so nothing
+  // breaks and it can be re-wired if we want it — but right now it is decorative
+  // signal that no longer renders. Flagged rather than deleted.
 
   const previewHeadline = preview?.result.headline as string | undefined;
   const previewBody = preview?.result.body as string | undefined;
@@ -86,24 +83,27 @@ export default function InsightsSummaryCard({
   const displayWhy = (previewWhy ?? why ?? previewDetail ?? detail ?? "").trim();
   const displayMore = ((previewMore ?? more ?? "").trim() || fullBody).trim();
 
+  // Insights now wears the same shell as Today and Explore: SectionCard tone="hero"
+  // with the constellation backdrop. It used to be the odd one out — a bespoke
+  // <section> with its own gradient wash and ornament — so the three agentic
+  // surfaces looked like three products. Ironically it was the ONLY one setting the
+  // agent's opening line correctly (same rung as the prose, one weight above), so
+  // this merge takes Insights' typography and Today's card, and every surface gets
+  // both.
+  //
+  // `dark` is hardcoded true on this page (themeId = "nightDusk"), so the light
+  // branches of sectionCard()/headerIconWrap() were unreachable anyway.
   return (
-    <section
-      className={[
-        sectionCard(dark, "neutral"),
-        "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
-        preview ? "ring-1 ring-amber-300/45" : "",
-      ].join(" ")}
+    <SectionCard
+      tone="hero"
+      className={preview ? "ring-1 ring-amber-300/45" : ""}
+      backdrop={
+        <ConstellationAnchor
+          seed="insights-summary"
+          accent={{ r: 120, g: 200, b: 255 }}
+        />
+      }
     >
-      {dark ? <ConstellationAnchor seed="insights-summary" accent={{ r: 120, g: 200, b: 255 }} /> : null}
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.14) 0%, transparent 30%), radial-gradient(circle at 92% 14%, rgba(255,210,150,0.12) 0%, transparent 18%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.06) 0%, transparent 24%)",
-        }}
-      />
-
       <div className="relative">
         {pageKey ? (
           <PromptLabTrigger
@@ -117,28 +117,22 @@ export default function InsightsSummaryCard({
           />
         ) : null}
 
-        <div className={headerRow()}>
-          <div className={headerIconWrap(dark, "neutral")}>
-            <Sparkles className="h-3.5 w-3.5" />
-          </div>
-
-          <div className={headerMain()}>
-            <div className={headerCopyStack()}>
-              <div className={headerLabel(dark)}>Insights</div>
-            </div>
-          </div>
-
-          {constellationOrnament(dark, "neutral", density)}
-        </div>
+        <AgenticHeader
+          glyph={
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-sky-300/[0.08] text-sky-200/75 ring-1 ring-sky-300/[0.18]">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
+          }
+          eyebrow="Insights"
+          accentRgb="120, 200, 255"
+        />
 
         <div className={cardBody()}>
-          {/* Today's rule: hierarchy comes from weight + spacing, not from a
-              bigger size or a brighter colour. Heading sits on the same 21px
-              rung as the prose it heads, one weight above it. */}
-          <h2
-            className={["mt-0.5", PROSE_SIZE, PROSE_CLASS].join(" ")}
-            style={{ color: TEXT_HEADING, fontWeight: 600 }}
-          >
+          {/* The rule, now shared by all three surfaces via lib/ui/prose: hierarchy
+              comes from weight + spacing, never a bigger size. The agent's opening
+              line sits on the same 21px rung as the prose it opens, one weight
+              above it. Insights was the only surface already doing this. */}
+          <h2 className={HEADING_CLASS} style={HEADING_STYLE}>
             {hasStrongSignal ? resolvedHeadline : noSignalTitle}
           </h2>
 
@@ -198,7 +192,7 @@ export default function InsightsSummaryCard({
                 className={[
                   "mt-2.5",
                   bodyText(dark),
-                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                  "text-label leading-read sm:text-label",
                 ].join(" ")}
               >
                 This page gets much more useful once Everleap has a little more
@@ -209,7 +203,7 @@ export default function InsightsSummaryCard({
                 className={[
                   "mt-1.5",
                   bodyText(dark),
-                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                  "text-label leading-read sm:text-label",
                 ].join(" ")}
               >
                 A few Motivations questions is enough to start grounding this in
@@ -221,7 +215,7 @@ export default function InsightsSummaryCard({
                 <Link
                   href={startHref}
                   className={[
-                    "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
+                    "group inline-flex items-center gap-1.5 text-label font-medium transition focus-visible:outline-none sm:text-label",
                     dark
                       ? "text-white/82 hover:text-white/94"
                       : "text-slate-900 hover:text-black",
@@ -235,6 +229,6 @@ export default function InsightsSummaryCard({
           )}
         </div>
       </div>
-    </section>
+    </SectionCard>
   );
 }

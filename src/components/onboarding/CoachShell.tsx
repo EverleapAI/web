@@ -93,7 +93,7 @@ export function CoachShell({
   const isBright = tone === "bright";
 
   const shellBorder =
-    "rounded-[32px] border border-white/10 bg-slate-950/40 shadow-[0_28px_90px_rgba(0,0,0,0.78)] backdrop-blur-xl";
+    "rounded-card border border-white/10 bg-slate-950/40 shadow-[0_28px_90px_rgba(0,0,0,0.78)] backdrop-blur-xl";
 
   // quieter gradient rail (less “neon yelling”)
   const rail =
@@ -112,7 +112,7 @@ export function CoachShell({
       <div className={`mx-auto w-full ${maxWidthClassName}`}>
         <div className="relative">
           {/* subtle gradient edge (so it feels Everleap, but calmer) */}
-          <div className={`rounded-[34px] p-[1px] ${rail}`}>
+          <div className={`rounded-card p-[1px] ${rail}`}>
             <section className={`${shellBorder} overflow-hidden`}>
               {/* Top row */}
               <div className="flex items-center justify-between px-5 pt-5 md:px-7 md:pt-6">
@@ -148,7 +148,7 @@ export function CoachShell({
                   ) : null}
 
                   {eyebrow ? (
-                    <div className="text-[0.72rem] font-semibold tracking-[0.18em] text-white/35">
+                    <div className="text-[0.72rem] font-semibold tracking-eyebrow text-white/35">
                       {eyebrow.toUpperCase()}
                     </div>
                   ) : null}
@@ -166,7 +166,7 @@ export function CoachShell({
                         inline-flex items-center rounded-full
                         border border-white/10 bg-white/5
                         px-3 py-1 text-[0.7rem] font-semibold
-                        uppercase tracking-[0.22em] text-white/55
+                        uppercase tracking-eyebrow text-white/55
                       "
                     >
                       {pill}

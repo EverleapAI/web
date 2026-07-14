@@ -410,13 +410,13 @@ function SpendTile({
 }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-      <div className="text-xs uppercase tracking-[0.18em] text-white/40">
+      <div className="text-xs uppercase tracking-eyebrow text-white/40">
         {label}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+          <div className="text-micro uppercase tracking-eyebrow text-white/30">
             Month to date
           </div>
           <div className="mt-1 text-lg font-semibold text-cyan-100">
@@ -425,7 +425,7 @@ function SpendTile({
         </div>
 
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+          <div className="text-micro uppercase tracking-eyebrow text-white/30">
             All time
           </div>
           <div className="mt-1 text-lg font-semibold text-white">
@@ -434,7 +434,7 @@ function SpendTile({
         </div>
 
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+          <div className="text-micro uppercase tracking-eyebrow text-white/30">
             Requests
           </div>
           <div className="mt-1 text-sm font-semibold text-white/75">
@@ -443,7 +443,7 @@ function SpendTile({
         </div>
 
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-white/30">
+          <div className="text-micro uppercase tracking-eyebrow text-white/30">
             Avg request
           </div>
           <div className="mt-1 text-sm font-semibold text-white/75">
@@ -473,7 +473,7 @@ function SpendSummaryCard({
     <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
+          <div className="text-sm uppercase tracking-eyebrow text-cyan-300">
             AI Spend
           </div>
           <div className="mt-2 text-sm leading-6 text-white/45">
@@ -549,16 +549,16 @@ function SpendBreakdown({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-      <div className="text-xs uppercase tracking-[0.18em] text-white/40">
+      <div className="text-xs uppercase tracking-eyebrow text-white/40">
         Where it&apos;s going
       </div>
-      <div className="mb-3 mt-1 text-[12px] leading-5 text-white/35">
+      <div className="mb-3 mt-1 text-meta leading-5 text-white/35">
         Real user generation vs. the two internal tuning tools. AI Lab and Prompt
         Lab share the models but are tracked under their own source, so they
         don&apos;t inflate the user number.
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 text-[11px] uppercase tracking-[0.14em] text-white/30">
+      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 text-micro uppercase tracking-eyebrow text-white/30">
         <div>Source</div>
         <div className="text-right">Month</div>
         <div className="text-right">All time</div>
@@ -581,7 +581,7 @@ function SpendBreakdown({
                 >
                   {row.label}
                 </div>
-                <div className="text-[11px] text-white/35">{row.note}</div>
+                <div className="text-micro text-white/35">{row.note}</div>
               </div>
               <div
                 className={`text-right text-sm font-semibold tabular-nums ${
@@ -618,7 +618,7 @@ function ResultPanel({
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
       <div className="mb-4">
-        <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
+        <div className="text-sm uppercase tracking-eyebrow text-cyan-300">
           {title}
         </div>
         <div className="mt-2 text-sm leading-6 text-white/50">{subtitle}</div>
@@ -648,7 +648,7 @@ function ResultPanel({
 
       {usageRows.length > 0 ? (
         <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
-          <div className="mb-3 text-xs uppercase tracking-[0.18em] text-white/40">
+          <div className="mb-3 text-xs uppercase tracking-eyebrow text-white/40">
             Usage
           </div>
 
@@ -658,7 +658,7 @@ function ResultPanel({
                 key={row.key}
                 className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2"
               >
-                <div className="text-[11px] uppercase tracking-[0.14em] text-white/35">
+                <div className="text-micro uppercase tracking-eyebrow text-white/35">
                   {row.key}
                 </div>
                 <div className="mt-1 text-sm text-white/80">{row.value}</div>
@@ -1132,7 +1132,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
       <div className="min-h-[100svh] bg-slate-950 px-4 py-8 text-white sm:px-5 sm:py-10">
         <div className="mx-auto max-w-7xl pb-24">
           <div className="mb-8 sm:mb-10">
-            <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-cyan-300">
+            <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-eyebrow text-cyan-300">
               Everleap AI Lab
             </div>
 
@@ -1174,13 +1174,13 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
             />
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-              <div className="mb-5 text-sm uppercase tracking-[0.2em] text-cyan-300">
+              <div className="mb-5 text-sm uppercase tracking-eyebrow text-cyan-300">
                 Prompt Construction
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
-                  <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                  <div className="mb-2 text-xs uppercase tracking-eyebrow text-white/40">
                     Psychology lens
                   </div>
 
@@ -1202,7 +1202,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
                 </label>
 
                 <div>
-                  <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                  <div className="mb-2 text-xs uppercase tracking-eyebrow text-white/40">
                     Provider
                   </div>
 
@@ -1231,7 +1231,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
               </div>
 
               <label className="mt-5 block">
-                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                <div className="mb-2 text-xs uppercase tracking-eyebrow text-white/40">
                   User View Character Limit
                 </div>
 
@@ -1259,7 +1259,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
               </label>
 
               <label className="mt-5 block">
-                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                <div className="mb-2 text-xs uppercase tracking-eyebrow text-white/40">
                   Custom lab request
                 </div>
 
@@ -1289,7 +1289,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
                       setAiError(null);
                     }}
                     className={[
-                      "rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] transition",
+                      "rounded-full border px-3 py-1 text-micro font-semibold uppercase tracking-eyebrow transition",
                       manualPromptMode
                         ? "border-cyan-300 bg-cyan-300 text-slate-950"
                         : "border-white/10 bg-black/30 text-white/60 hover:border-white/25",
@@ -1301,7 +1301,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
                   </button>
                 </div>
 
-                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/40">
+                <div className="mb-2 text-xs uppercase tracking-eyebrow text-white/40">
                   Final prompt sent to AI
                 </div>
 
@@ -1348,7 +1348,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
+                  <div className="text-sm uppercase tracking-eyebrow text-cyan-300">
                     AI Response
                   </div>
                   <div className="mt-2 text-sm text-white/45">
@@ -1403,7 +1403,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
             <div className="max-h-[88svh] w-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl">
               <div className="flex items-center justify-between gap-4 border-b border-white/10 p-5">
                 <div>
-                  <div className="text-sm uppercase tracking-[0.2em] text-cyan-300">
+                  <div className="text-sm uppercase tracking-eyebrow text-cyan-300">
                     Onboarding Context
                   </div>
                   <div className="mt-1 text-sm text-white/45">
@@ -1426,7 +1426,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
                     key={item.key}
                     className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                   >
-                    <div className="text-xs uppercase tracking-[0.15em] text-white/40">
+                    <div className="text-xs uppercase tracking-eyebrow text-white/40">
                       {item.prompt}
                     </div>
 
@@ -1449,7 +1449,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
       <main className="relative z-10 flex min-h-[100svh] flex-col justify-center px-5 pb-20 pt-16">
         <div className="mx-auto w-full max-w-[720px]">
           <div className="mb-8">
-            <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-cyan-300">
+            <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-eyebrow text-cyan-300">
               Everleap AI Lab
             </div>
           </div>
@@ -1496,7 +1496,7 @@ Output should be readable, emotionally intelligent, and useful to the Everleap p
             <button
               type="button"
               onClick={() => setCompleted(true)}
-              className="text-[11px] uppercase tracking-[0.2em] text-white/40 underline-offset-4 transition hover:text-cyan-300 hover:underline"
+              className="text-micro uppercase tracking-eyebrow text-white/40 underline-offset-4 transition hover:text-cyan-300 hover:underline"
             >
               Skip onboarding — open the Lab dashboard →
             </button>

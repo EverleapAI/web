@@ -64,11 +64,11 @@ export default function ZipPage(): React.JSX.Element {
         <RegAuthVisual kind="zip" />
 
         <div className="space-y-2">
-          <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-white">
+          <h1 className="text-[2rem] font-semibold tracking-display text-white">
             Enter your zip code
           </h1>
 
-          <p className="text-[15px] leading-6 text-white/64">
+          <p className="text-label leading-6 text-white/64">
             This allows me to show you local resources near you. You can skip
             this for now.
           </p>
@@ -81,7 +81,7 @@ export default function ZipPage(): React.JSX.Element {
             inputMode="numeric"
             autoComplete="postal-code"
             placeholder="ZIP code optional"
-            className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 text-center text-base tracking-[0.16em] text-white outline-none transition placeholder:text-white/28 focus:border-white/25 focus:bg-white/[0.09] focus:ring-2 focus:ring-white/20"
+            className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.06] px-4 text-center text-base tracking-eyebrow text-white outline-none transition placeholder:text-white/28 focus:border-white/25 focus:bg-white/[0.09] focus:ring-2 focus:ring-white/20"
           />
 
           <button

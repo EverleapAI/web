@@ -35,11 +35,11 @@ export default function PrivacyPage() {
       title: "Plain-English summary",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             We use your information to run Everleap and personalize your
             experience. We don’t sell your personal information.
           </p>
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— You choose what optional questions to answer.</p>
             <p>— You can request access, export, or deletion (subject to law).</p>
             <p>— We use trusted service providers to help operate Everleap.</p>
@@ -52,10 +52,10 @@ export default function PrivacyPage() {
       title: "Information we collect",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             We collect only what we need to provide and improve Everleap.
           </p>
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— Account details you provide (like name and email).</p>
             <p>— Usage data (like pages viewed and feature interactions).</p>
             <p>— Optional responses you choose to share (like goals or preferences).</p>
@@ -68,10 +68,10 @@ export default function PrivacyPage() {
       title: "How we use information",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             We use information to:
           </p>
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— Provide and improve Everleap.</p>
             <p>— Personalize guidance and suggestions.</p>
             <p>— Maintain safety, security, and integrity.</p>
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
       title: "Sharing",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             We don’t sell your personal information. We may share information
             with trusted service providers who help us operate Everleap (for
             example, hosting, analytics, and customer support). They’re required
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
       title: "Security",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             We use industry-standard safeguards to protect information. No
             system is perfectly secure, so please use a strong password and keep
             it confidential.
@@ -112,11 +112,11 @@ export default function PrivacyPage() {
       title: "Your choices",
       body: (
         <div className="space-y-4">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             Depending on your region and legal requirements, you may be able to:
           </p>
 
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— Access, update, export, or delete your data (subject to law).</p>
             <p>— Control optional answers and personalization settings.</p>
             <p>— Opt out of non-essential communications.</p>
@@ -183,15 +183,15 @@ export default function PrivacyPage() {
 
         {/* Header */}
         <div className="mt-10 sm:mt-14">
-          <p className="text-[11px] tracking-[0.25em] text-white/45">
+          <p className="text-micro tracking-eyebrow text-white/45">
             EVERLEAP · PRIVACY
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold leading-[1.08] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold leading-display sm:text-4xl">
             Privacy Policy
           </h1>
 
-          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
+          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-label sm:leading-7">
             Clear, readable, and consistent with Everleap. For questions, visit{" "}
             <Link
               href="/contact"
@@ -244,7 +244,7 @@ export default function PrivacyPage() {
             </Link>
           </div>
 
-          <p className="mt-4 text-[11px] leading-5 text-white/28">
+          <p className="mt-4 text-micro leading-5 text-white/28">
             Last updated Oct 4, 2025
           </p>
         </div>

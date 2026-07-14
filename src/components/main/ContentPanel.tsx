@@ -68,7 +68,7 @@ export function SpotlightPanel({ card }: { card: SpotlightCard }) {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-2">
           <div className="inline-flex items-center gap-2">
-            <span className="rounded-full border border-slate-600/70 bg-slate-950/70 px-2.5 py-1 text-[0.7rem] font-medium uppercase tracking-[0.16em] text-slate-300">
+            <span className="rounded-full border border-slate-600/70 bg-slate-950/70 px-2.5 py-1 text-[0.7rem] font-medium uppercase tracking-eyebrow text-slate-300">
               Session Guide
             </span>
             <span className="hidden text-[0.7rem] text-slate-400/90 md:inline">
@@ -88,7 +88,7 @@ export function SpotlightPanel({ card }: { card: SpotlightCard }) {
 
         <div className="mt-3 flex items-center gap-4 md:mt-0">
           <div className="flex flex-col items-start gap-1">
-            <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-300/80">
+            <span className="text-xs font-medium uppercase tracking-eyebrow text-slate-300/80">
               Session Progress
             </span>
 
@@ -122,7 +122,7 @@ export function SpotlightPanel({ card }: { card: SpotlightCard }) {
       {/* Tasks */}
       <div className="mt-6 space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.13em] text-slate-300/90">
+          <h3 className="text-sm font-semibold uppercase tracking-eyebrow text-slate-300/90">
             Today&apos;s Spotlight Tasks
           </h3>
           <span className="text-xs text-slate-400">
@@ -150,7 +150,7 @@ export function SpotlightPanel({ card }: { card: SpotlightCard }) {
           borderColor: "var(--el-border-subtle)",
         }}
       >
-        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300/80">
+        <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/80">
           Coaching Note
         </div>
         <p className="mt-2 text-sm text-slate-100">{card.coachingMessage}</p>
@@ -259,7 +259,7 @@ function SpotlightTaskRow({
         <div className="flex flex-wrap items-center gap-2 text-[0.7rem]">
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 font-medium uppercase tracking-[0.14em]",
+              "rounded-full px-2 py-0.5 font-medium uppercase tracking-eyebrow",
               "bg-slate-800/90 text-slate-200/85",
               task.type === "reflect" && "bg-purple-500/20 text-purple-100/90",
               task.type === "explore" && "bg-sky-500/20 text-sky-100/90",
@@ -496,7 +496,7 @@ function InsightContent({ card }: { card: InsightCard }) {
       {/* Header */}
       <div className="mb-3 flex flex-col gap-2 md:mb-4">
         <div className="inline-flex items-center gap-2 text-xs text-slate-300/90">
-          <span className="rounded-full border border-slate-600/70 bg-slate-950/70 px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em]">
+          <span className="rounded-full border border-slate-600/70 bg-slate-950/70 px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-eyebrow">
             {card.title}
           </span>
           <span className="hidden text-[0.68rem] text-slate-500 md:inline">
@@ -546,7 +546,7 @@ function InsightContent({ card }: { card: InsightCard }) {
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/80 text-xs">
               📘
             </span>
-            <span className="font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="font-semibold uppercase tracking-eyebrow text-slate-400">
               About this area
             </span>
           </div>
@@ -587,7 +587,7 @@ function InsightContent({ card }: { card: InsightCard }) {
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/80 text-xs">
               👤
             </span>
-            <span className="font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="font-semibold uppercase tracking-eyebrow text-slate-400">
               You in this area
             </span>
           </div>
@@ -612,7 +612,7 @@ function InsightContent({ card }: { card: InsightCard }) {
                     {block.title}
                   </h3>
                   {block.badge && (
-                    <span className="rounded-full bg-slate-900/90 px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-[0.12em] text-slate-300">
+                    <span className="rounded-full bg-slate-900/90 px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-eyebrow text-slate-300">
                       {block.badge}
                     </span>
                   )}

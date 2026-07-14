@@ -34,7 +34,7 @@ function headerRow() {
 
 function headerIconWrap(dark: boolean) {
   return [
-    "flex h-4 w-4 items-center justify-center rounded-[5px]",
+    "flex h-4 w-4 items-center justify-center rounded-chip",
     dark
       ? "bg-violet-300/10 text-violet-200/70"
       : "bg-violet-500/10 text-violet-600/70",
@@ -43,7 +43,7 @@ function headerIconWrap(dark: boolean) {
 
 function headerTitleClass(dark: boolean) {
   return [
-    "text-[11px] font-semibold uppercase tracking-[0.28em]",
+    "text-micro font-semibold uppercase tracking-eyebrow",
     dark ? "text-white/42" : "text-slate-600",
   ].join(" ");
 }
@@ -209,17 +209,17 @@ export function SignalsCard(props: SignalsCardProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`h-2 w-2 rounded-full ${accentClass(dark, it.cat)}`} />
-                    <div className={`text-[15px] font-semibold ${text}`}>
+                    <div className={`text-label font-semibold ${text}`}>
                       {label(it.cat)}
                     </div>
                   </div>
 
-                  <div className={`mt-0.5 text-[13px] ${sub}`}>
+                  <div className={`mt-0.5 text-meta ${sub}`}>
                     {desc(it.cat)}
                   </div>
                 </div>
 
-                <div className={`shrink-0 text-[12px] ${meta}`}>
+                <div className={`shrink-0 text-meta ${meta}`}>
                   {Math.round(pct * 100)}%
                 </div>
               </div>

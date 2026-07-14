@@ -41,7 +41,7 @@ export function InsightsHeader(props: {
   const pillBase = [
     "relative inline-flex items-center",
     "rounded-full border px-4 py-2.5",
-    "text-sm font-semibold tracking-[-0.01em]",
+    "text-sm font-semibold tracking-title",
     "backdrop-blur-xl",
     "transition",
     "active:scale-95",

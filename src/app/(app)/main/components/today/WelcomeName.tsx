@@ -1,11 +1,16 @@
 "use client";
 
-// The arrival masthead — the centered anchor at the top of Today in every
-// state, so the card always opens with a calm, personal focal point rather than
-// diving into content. First visit reads as a welcome; every visit after reads
-// as being greeted by name (the weekday keeps it feeling like "today").
+// The agent's opening line on Today — not a masthead.
+//
+// It was a 26px centred semibold headline, which made the product announce itself
+// rather than speak. These pages are a conversation, so the greeting is simply the
+// first sentence of it: same rung as the prose it opens, one weight above. The
+// shared rule lives in lib/ui/prose (HEADING_CLASS / HEADING_STYLE) and Today,
+// Insights and Explore all wear it.
 
-// A small rotation of warm returning greetings so the masthead doesn't say the
+import { HEADING_CLASS, HEADING_STYLE } from "@/lib/ui/prose";
+
+// A small rotation of warm returning greetings so the opening doesn't say the
 // exact same thing every visit. The name lands in different places — leading,
 // trailing, mid-sentence — the way a person actually varies it. Deterministic
 // by day (stable across refreshes, changes across days). Separate clean list for
@@ -55,14 +60,18 @@ export function WelcomeName({
       : "You're in."
     : returningGreeting(name);
 
+  // Not a masthead any more — the agent's first sentence.
+  //
+  // This is a conversation, so the greeting sits on the SAME rung as the prose it
+  // opens (21px), one weight above it, per the shared rule in lib/ui/prose. It was
+  // a 26px centred semibold headline: centred display type over left-aligned prose
+  // made the product announce itself instead of speak, and the size step made a
+  // greeting outrank the thing it was greeting you into.
   return (
-    <div className="flex flex-col items-center text-center">
-      <span
-        className="text-[26px] font-semibold tracking-[-0.02em]"
-        style={{ color: "#F7F9FC" }}
-      >
+    <div className="flex flex-col items-start text-left">
+      <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
         {title}
-      </span>
+      </h1>
     </div>
   );
 }

@@ -62,7 +62,7 @@ export default function GuidePage() {
               className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}
             >
               <div className="mx-auto max-w-xl text-center">
-                <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/60">
+                <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/60">
                   Coming soon
                 </div>
 

@@ -34,7 +34,7 @@ function QuestionProgress({ progress }: { progress: number }) {
       aria-label="Onboarding progress"
     >
       <div className="flex items-center gap-2">
-        <div className="text-[13px] font-medium tracking-[-0.01em] text-white">
+        <div className="text-meta font-medium tracking-title text-white">
           Onboarding
         </div>
 

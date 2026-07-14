@@ -251,7 +251,7 @@ export default function HomePage() {
           aria-label="Everleap home"
           className="inline-flex items-center rounded-full px-1 py-1 text-white/90 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-white/25"
         >
-          <span className="text-base font-semibold uppercase tracking-[0.22em]">
+          <span className="text-base font-semibold uppercase tracking-eyebrow">
             Everleap
           </span>
         </Link>

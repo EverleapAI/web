@@ -47,7 +47,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#020617] text-slate-50",
     pageTextMutedClass: "text-slate-300/80",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300/70",
     ambientTopLeftClass: "bg-indigo-400",
     ambientRightClass: "bg-cyan-300",
     cardBgClass: "bg-slate-950/85",
@@ -61,7 +61,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#0b0611] text-slate-50",
     pageTextMutedClass: "text-slate-300/80",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300/70",
     ambientTopLeftClass: "bg-fuchsia-300",
     ambientRightClass: "bg-violet-300",
     cardBgClass: "bg-black/55",
@@ -75,7 +75,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#03110e] text-slate-50",
     pageTextMutedClass: "text-slate-300/80",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300/70",
     ambientTopLeftClass: "bg-emerald-300",
     ambientRightClass: "bg-cyan-200",
     cardBgClass: "bg-black/45",
@@ -89,7 +89,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#0f0a03] text-slate-50",
     pageTextMutedClass: "text-slate-200/80",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-200/70",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-200/70",
     ambientTopLeftClass: "bg-orange-200",
     ambientRightClass: "bg-amber-200",
     cardBgClass: "bg-black/45",
@@ -103,7 +103,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#06101a] text-slate-50",
     pageTextMutedClass: "text-slate-200/80",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-200/70",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-200/70",
     ambientTopLeftClass: "bg-sky-200",
     ambientRightClass: "bg-slate-200",
     cardBgClass: "bg-black/45",
@@ -117,7 +117,7 @@ export const INSIGHTS_THEMES: InsightsTheme[] = [
     pageBgBaseClass: "bg-[#f9fafb] text-slate-900",
     pageTextMutedClass: "text-slate-600",
     sectionLabelClass:
-      "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500",
+      "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-500",
     ambientTopLeftClass: "bg-slate-200",
     ambientRightClass: "bg-amber-100",
     cardBgClass: "bg-white/95",

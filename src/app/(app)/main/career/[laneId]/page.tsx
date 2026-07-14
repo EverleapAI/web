@@ -58,11 +58,11 @@ export default function CareerLanePage() {
         <div className="relative flex min-h-[100svh] flex-col">
           <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-24 pt-6 md:px-8">
             <div
-              className={`rounded-[32px] border p-6 backdrop-blur-xl ${
+              className={`rounded-card border p-6 backdrop-blur-xl ${
                 dark ? "border-white/10 bg-slate-950/40" : "border-slate-200 bg-white"
               }`}
             >
-              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
+              <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
                 Career
               </div>
               <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-50">

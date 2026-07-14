@@ -30,7 +30,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+    <div className="relative overflow-hidden rounded-card border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-12 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/16 via-cyan-400/9 to-indigo-500/10 blur-3xl opacity-70" />
         <div className="absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-gradient-to-br from-violet-500/14 via-fuchsia-400/8 to-sky-500/10 blur-3xl opacity-60" />
@@ -49,7 +49,7 @@ function Panel({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+    <div className="rounded-card border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="text-sm font-semibold text-slate-50">{title}</div>
       <div className="mt-2 text-sm leading-relaxed text-slate-200/85">{children}</div>
     </div>
@@ -94,7 +94,7 @@ export function FutureAiSalaryStep({ step }: Props) {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Dive deeper · {step.title}
       </div>
 
@@ -130,10 +130,10 @@ export function FutureAiSalaryStep({ step }: Props) {
           return (
             <div
               key={x.title}
-              className="relative overflow-hidden rounded-[26px] border border-white/10 p-[1px] backdrop-blur-xl"
+              className="relative overflow-hidden rounded-card border border-white/10 p-[1px] backdrop-blur-xl"
             >
               <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${accent} opacity-60`} />
-              <div className="relative rounded-[25px] bg-slate-950/46 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
+              <div className="relative rounded-card bg-slate-950/46 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
                 <div className="text-sm font-semibold text-slate-50">{x.title}</div>
                 <div className="mt-2 text-sm text-slate-200/85">{x.vibe}</div>
                 <ul className="mt-3 ml-5 list-disc space-y-1 text-sm text-slate-200/85">
@@ -154,7 +154,7 @@ export function FutureAiSalaryStep({ step }: Props) {
         </div>
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+          <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
             Your advantage
           </div>
           <ul className="mt-3 ml-5 list-disc space-y-2 text-sm text-slate-200/85">

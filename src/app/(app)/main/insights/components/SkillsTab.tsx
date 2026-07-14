@@ -117,14 +117,14 @@ export function SkillsTab({
           ].join(" ")}
         >
           <div className={headerLabel(dark)}>Answer a few more</div>
-          <p className={["mt-1.5", bodyText(dark), "text-[13.5px] leading-[1.55]"].join(" ")}>
+          <p className={["mt-1.5", bodyText(dark), "text-meta leading-body"].join(" ")}>
             A few more Skills questions would help sharpen this.
           </p>
           <div className="mt-2">
             <Link
               href={STORY_HREF}
               className={[
-                "group inline-flex items-center gap-1.5 text-[13.5px] font-medium transition focus-visible:outline-none",
+                "group inline-flex items-center gap-1.5 text-meta font-medium transition focus-visible:outline-none",
                 dark ? "text-white/82 hover:text-white/94" : "text-slate-900 hover:text-black",
               ].join(" ")}
             >

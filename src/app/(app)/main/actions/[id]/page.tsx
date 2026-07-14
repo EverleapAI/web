@@ -212,7 +212,7 @@ export default function MissionPage() {
     <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
       <Link
         href="/main/actions"
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="mb-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Actions
@@ -228,7 +228,7 @@ export default function MissionPage() {
         </SectionCard>
       ) : missing || !action ? (
         <SectionCard tone="neutral">
-          <p className="text-[14px] text-white/64">This action couldn’t be found.</p>
+          <p className="text-label text-white/64">This action couldn’t be found.</p>
         </SectionCard>
       ) : (
         <div className="space-y-4">
@@ -237,16 +237,16 @@ export default function MissionPage() {
             <div className="max-w-2xl">
               <div className="mb-2 flex items-center gap-2">
                 <span
-                  className="flex h-4 w-4 items-center justify-center rounded-[5px]"
+                  className="flex h-4 w-4 items-center justify-center rounded-chip"
                   style={{ backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }}
                 >
                   <Sparkles className="h-3 w-3" />
                 </span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+                <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
                   {isDone ? "Mission complete" : action.status === "doing" ? "Mission in progress" : "Mission"}
                 </span>
               </div>
-              <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[26px]">
+              <h1 className="text-title font-semibold leading-display tracking-title text-white sm:text-title">
                 {action.title}
               </h1>
               {action.href ? (
@@ -254,7 +254,7 @@ export default function MissionPage() {
                   href={action.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-medium text-white/70 transition hover:text-white"
+                  className="mt-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/70 transition hover:text-white"
                 >
                   Open the resource <ExternalLink className="h-3.5 w-3.5" />
                 </a>
@@ -267,14 +267,14 @@ export default function MissionPage() {
                (e.g. marked done before the gate, or arrived here via Today's
                "reflect on this"), a way to still reflect and close the loop. */
             <SectionCard tone="neutral">
-              <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-emerald-300/85">
+              <div className="flex items-center gap-2 text-meta font-semibold uppercase tracking-eyebrow text-emerald-300/85">
                 <Check className="h-4 w-4" /> Done
               </div>
 
               {!action.felt ? (
                 <div className="mt-3">
-                  <h2 className="text-[16px] font-semibold text-white">How did it go?</h2>
-                  <p className="mt-1 text-[13.5px] leading-[1.6] text-white/64">
+                  <h2 className="text-body font-semibold text-white">How did it go?</h2>
+                  <p className="mt-1 text-meta leading-read text-white/64">
                     You finished this — one tap on how it felt is what teaches Everleap.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -283,7 +283,7 @@ export default function MissionPage() {
                         key={o.key}
                         type="button"
                         onClick={() => setFelt(o.key)}
-                        className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition ${
+                        className={`rounded-full border px-3.5 py-1.5 text-meta font-medium transition ${
                           felt === o.key
                             ? "border-transparent text-white"
                             : "border-white/14 text-white/62 hover:text-white/85"
@@ -299,14 +299,14 @@ export default function MissionPage() {
                     onChange={(e) => setReflection(e.target.value)}
                     placeholder="What did you notice? (optional)"
                     rows={3}
-                    className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-[14px] leading-[1.55] text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
+                    className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-label leading-body text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
                   />
                   <div className="mt-3">
                     <button
                       type="button"
                       onClick={finish}
                       disabled={finishing || !felt}
-                      className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
+                      className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-label font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
                       style={{ backgroundColor: rgba(accent, 0.24) }}
                     >
                       {finishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -314,34 +314,34 @@ export default function MissionPage() {
                     </button>
                   </div>
                   {!felt ? (
-                    <p className="mt-2 text-[12px] leading-[1.5] text-white/40">
+                    <p className="mt-2 text-meta leading-body text-white/40">
                       Pick how it felt — that one tap is what teaches Everleap.
                     </p>
                   ) : null}
                 </div>
               ) : (
                 <>
-                  <p className="mt-2 text-[14px] text-white/72">
+                  <p className="mt-2 text-label text-white/72">
                     Afterward you felt <span className="font-semibold text-white">{action.felt}</span>.
                   </p>
                   {action.reflection ? (
-                    <p className="mt-2 text-[14px] leading-[1.6] text-white/72">“{action.reflection}”</p>
+                    <p className="mt-2 text-label leading-read text-white/72">“{action.reflection}”</p>
                   ) : null}
                   <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
                     <div
-                      className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                      className="mb-1.5 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow"
                       style={{ color: rgba(accent, 0.9) }}
                     >
                       <Sparkles className="h-3 w-3" /> What I’m taking from this
                     </div>
                     {echoLoading ? (
-                      <div className="flex items-center gap-2 text-[13.5px] text-white/50">
+                      <div className="flex items-center gap-2 text-meta text-white/50">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading what you noticed…
                       </div>
                     ) : echo ? (
-                      <p className="text-[14px] leading-[1.6] text-white/82">{echo}</p>
+                      <p className="text-label leading-read text-white/82">{echo}</p>
                     ) : (
-                      <p className="text-[13.5px] leading-[1.6] text-white/55">
+                      <p className="text-meta leading-read text-white/55">
                         Finishing this fed back into what Everleap is learning about you.
                       </p>
                     )}
@@ -360,8 +360,8 @@ export default function MissionPage() {
                   <Wand2 className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="text-[17px] font-semibold text-white">Turn this into a mission</h2>
-                  <p className="mt-1 max-w-md text-[13.5px] leading-[1.6] text-white/64">
+                  <h2 className="text-body font-semibold text-white">Turn this into a mission</h2>
+                  <p className="mt-1 max-w-md text-meta leading-read text-white/64">
                     Everleap will build you a few concrete steps — tailored to what you’ve shared — so
                     this becomes something you can actually start this week.
                   </p>
@@ -370,7 +370,7 @@ export default function MissionPage() {
                   type="button"
                   onClick={start}
                   disabled={starting}
-                  className="mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
+                  className="mt-1 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-label font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
                   style={{ backgroundColor: rgba(accent, 0.2) }}
                 >
                   {starting ? (
@@ -390,10 +390,10 @@ export default function MissionPage() {
             <>
               {action.mission.why ? (
                 <SectionCard tone="neutral">
-                  <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                  <div className="mb-1.5 text-micro font-semibold uppercase tracking-eyebrow text-white/45">
                     Why this is worth trying
                   </div>
-                  <p className="text-[14.5px] leading-[1.66] text-white/82">{action.mission.why}</p>
+                  <p className="text-label leading-read text-white/82">{action.mission.why}</p>
                 </SectionCard>
               ) : null}
 
@@ -403,18 +403,18 @@ export default function MissionPage() {
               {action.mission.script ? (
                 <SectionCard tone="neutral">
                   <div
-                    className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                    className="mb-2 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow"
                     style={{ color: rgba(accent, 0.9) }}
                   >
                     <MessageSquare className="h-3 w-3" /> A message you could send
                   </div>
-                  <p className="rounded-2xl border border-white/8 bg-white/[0.03] p-3.5 text-[14px] leading-[1.6] text-white/88">
+                  <p className="rounded-2xl border border-white/8 bg-white/[0.03] p-3.5 text-label leading-read text-white/88">
                     “{action.mission.script}”
                   </p>
                   <button
                     type="button"
                     onClick={() => copyScript(action.mission!.script ?? "")}
-                    className="mt-2.5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold transition hover:brightness-110"
+                    className="mt-2.5 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-meta font-semibold transition hover:brightness-110"
                     style={{ backgroundColor: rgba(accent, 0.16), color: rgba(accent, 0.95) }}
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -425,8 +425,8 @@ export default function MissionPage() {
 
               <SectionCard tone="neutral">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">Your steps</h2>
-                  <span className="text-[12px] font-medium text-white/45">
+                  <h2 className="text-meta font-semibold uppercase tracking-eyebrow text-white/55">Your steps</h2>
+                  <span className="text-meta font-medium text-white/45">
                     {doneCount} of {steps.length}
                   </span>
                 </div>
@@ -449,7 +449,7 @@ export default function MissionPage() {
                         <Check className="h-[13px] w-[13px]" strokeWidth={3} />
                       </span>
                       <span
-                        className={`text-[14.5px] leading-[1.5] ${
+                        className={`text-label leading-body ${
                           s.done ? "text-white/45 line-through" : "text-white/88"
                         }`}
                       >
@@ -463,7 +463,7 @@ export default function MissionPage() {
                   <button
                     type="button"
                     onClick={() => setReflectOpen(true)}
-                    className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold transition ${
+                    className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-label font-semibold transition ${
                       allDone ? "text-white hover:brightness-110" : "text-white/85 hover:text-white"
                     }`}
                     style={
@@ -482,14 +482,14 @@ export default function MissionPage() {
               {action.mission.watchFor && action.mission.watchFor.length ? (
                 <SectionCard tone="neutral">
                   <div
-                    className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+                    className="mb-2.5 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow"
                     style={{ color: rgba(accent, 0.9) }}
                   >
                     <Eye className="h-3 w-3" /> While you’re doing it, notice
                   </div>
                   <ul className="space-y-2">
                     {action.mission.watchFor.map((w, i) => (
-                      <li key={i} className="flex gap-2.5 text-[14px] leading-[1.5] text-white/78">
+                      <li key={i} className="flex gap-2.5 text-label leading-body text-white/78">
                         <span className="mt-2 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.8) }} />
                         {w}
                       </li>
@@ -502,8 +502,8 @@ export default function MissionPage() {
               {reflectOpen ? (
                 <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`reflect:${action.id}`} accent={accent} />}>
                   <div className="max-w-2xl">
-                    <h2 className="text-[18px] font-semibold text-white">How did it go?</h2>
-                    <p className="mt-1 text-[13.5px] leading-[1.6] text-white/64">
+                    <h2 className="text-body font-semibold text-white">How did it go?</h2>
+                    <p className="mt-1 text-meta leading-read text-white/64">
                       A quick reflection helps Everleap understand what actually energizes you.
                     </p>
 
@@ -513,7 +513,7 @@ export default function MissionPage() {
                           key={o.key}
                           type="button"
                           onClick={() => setFelt(o.key)}
-                          className={`rounded-full border px-3.5 py-1.5 text-[13px] font-medium transition ${
+                          className={`rounded-full border px-3.5 py-1.5 text-meta font-medium transition ${
                             felt === o.key
                               ? "border-transparent text-white"
                               : "border-white/14 text-white/62 hover:text-white/85"
@@ -530,7 +530,7 @@ export default function MissionPage() {
                       onChange={(e) => setReflection(e.target.value)}
                       placeholder="What did you notice? (optional)"
                       rows={3}
-                      className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-[14px] leading-[1.55] text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
+                      className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-label leading-body text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
                     />
 
                     <div className="mt-3 flex items-center gap-3">
@@ -538,7 +538,7 @@ export default function MissionPage() {
                         type="button"
                         onClick={finish}
                         disabled={finishing || !felt}
-                        className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
+                        className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-label font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
                         style={{ backgroundColor: rgba(accent, 0.24) }}
                       >
                         {finishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -547,13 +547,13 @@ export default function MissionPage() {
                       <button
                         type="button"
                         onClick={() => setReflectOpen(false)}
-                        className="text-[13.5px] font-medium text-white/50 transition hover:text-white/80"
+                        className="text-meta font-medium text-white/50 transition hover:text-white/80"
                       >
                         Not yet
                       </button>
                     </div>
                     {!felt ? (
-                      <p className="mt-2 text-[12px] leading-[1.5] text-white/40">
+                      <p className="mt-2 text-meta leading-body text-white/40">
                         Pick how it felt to finish — that one tap is what teaches Everleap.
                       </p>
                     ) : null}

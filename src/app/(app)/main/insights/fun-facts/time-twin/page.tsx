@@ -128,7 +128,7 @@ function rgbString(rgb?: { r: number; g: number; b: number }) {
 
 function readingSurface() {
   return [
-    "relative overflow-hidden rounded-[28px] border",
+    "relative overflow-hidden rounded-card border",
     "border-white/10 bg-white/[0.045]",
     "backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)]",
   ].join(" ");
@@ -138,7 +138,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-center gap-2">
       <div className="h-1.5 w-1.5 rounded-full bg-white/70" />
-      <h2 className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-white/55">
+      <h2 className="text-[0.72rem] font-semibold uppercase tracking-eyebrow text-white/55">
         {children}
       </h2>
     </div>
@@ -256,7 +256,7 @@ export default function TimeTwinPage() {
             Back to Fun Facts
           </Link>
 
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
+          <div className="rounded-card border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
             Still building your Time Twin — answer a few Story questions and check back
             in a bit.
           </div>
@@ -269,7 +269,7 @@ export default function TimeTwinPage() {
     return (
       <main className="min-h-screen bg-[#070b17] text-white">
         <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6">
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
+          <div className="rounded-card border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
             Loading your Time Twin…
           </div>
         </div>
@@ -307,23 +307,23 @@ export default function TimeTwinPage() {
             Back to Fun Facts
           </Link>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[0.72rem] uppercase tracking-[0.22em] text-white/48">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[0.72rem] uppercase tracking-eyebrow text-white/48">
             <Sparkles className="h-3.5 w-3.5" />
             Time Twin
           </div>
         </div>
 
         <header className="max-w-3xl">
-          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white/45">
+          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-eyebrow text-white/45">
             Insights → Fun Facts
           </p>
           <h1
-            className="text-3xl leading-[1.05] tracking-tight text-white sm:text-4xl md:text-[2.7rem]"
+            className="text-3xl leading-display tracking-tight text-white sm:text-4xl md:text-[2.7rem]"
             style={{ fontFamily: SERIF, fontWeight: 600 }}
           >
             A mind from another era that rhymes with yours.
           </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-7 text-white/68 sm:text-[16px]">
+          <p className="mt-3 max-w-2xl text-label leading-7 text-white/68 sm:text-body">
             This is not a clone of you. It is a historical echo — someone whose way of
             seeing, making, questioning, or enduring overlaps with your own pattern.
           </p>
@@ -354,14 +354,14 @@ export default function TimeTwinPage() {
                     type="button"
                     onClick={() => handleSelectTwin(twin.id)}
                     className={cn(
-                      "group flex w-[150px] flex-shrink-0 flex-col items-center gap-2 rounded-[18px] border px-3 py-3 text-center transition",
+                      "group flex w-[150px] flex-shrink-0 flex-col items-center gap-2 rounded-panel border px-3 py-3 text-center transition",
                       "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
                     )}
                     style={{ boxShadow: `inset 0 0 0 1px rgba(${alt}, 0.06)` }}
                     aria-label={`Switch to ${twin.name}`}
                   >
                     <span
-                      className="rounded-[14px] p-1"
+                      className="rounded-control p-1"
                       style={{ border: `1px solid rgba(${alt}, 0.32)` }}
                     >
                       <TimeTwinPortrait
@@ -374,12 +374,12 @@ export default function TimeTwinPage() {
                       />
                     </span>
                     <span
-                      className="text-[13px] font-semibold leading-tight text-white/88"
+                      className="text-meta font-semibold leading-tight text-white/88"
                       style={{ fontFamily: SERIF }}
                     >
                       {twin.name}
                     </span>
-                    <span className="text-[10.5px] uppercase tracking-[0.12em] text-white/45">
+                    <span className="text-micro uppercase tracking-eyebrow text-white/45">
                       {twin.era}
                     </span>
                   </button>
@@ -395,7 +395,7 @@ export default function TimeTwinPage() {
             <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
               <SectionTitle>The story</SectionTitle>
 
-              <div className="space-y-4 text-[15px] leading-7 text-white/78 sm:text-[15.5px]">
+              <div className="space-y-4 text-label leading-7 text-white/78 sm:text-label">
                 {beats.length > 0 ? (
                   beats.map((beat, index) => (beat.body ? <p key={index}>{beat.body}</p> : null))
                 ) : (
@@ -423,7 +423,7 @@ export default function TimeTwinPage() {
                 <SectionTitle>Why this rhymes with you</SectionTitle>
                 <ul className="space-y-3">
                   {whyYou.map((line, index) => (
-                    <li key={index} className="flex gap-3 text-[15px] leading-7 text-white/78">
+                    <li key={index} className="flex gap-3 text-label leading-7 text-white/78">
                       <span
                         className="mt-[10px] h-1.5 w-1.5 flex-shrink-0 rounded-full"
                         style={{ background: `rgb(${accentRgb})` }}
@@ -443,10 +443,10 @@ export default function TimeTwinPage() {
                     key={index}
                     className={cn(readingSurface(), "px-4 py-4")}
                   >
-                    <div className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-white/44">
+                    <div className="text-[0.68rem] font-semibold uppercase tracking-eyebrow text-white/44">
                       {fact.title}
                     </div>
-                    <p className="mt-1.5 text-[14px] leading-6 text-white/76">{fact.body}</p>
+                    <p className="mt-1.5 text-label leading-6 text-white/76">{fact.body}</p>
                   </div>
                 ))}
               </div>
@@ -468,8 +468,8 @@ export default function TimeTwinPage() {
                 onChange={(event) => handleReflectionChange(event.target.value)}
                 placeholder={`Write a few thoughts about ${activeTwin.name}…`}
                 className={cn(
-                  "min-h-[160px] w-full rounded-[22px] border border-white/12 bg-black/20 px-4 py-3",
-                  "text-[15px] leading-7 text-white placeholder:text-white/28",
+                  "min-h-[160px] w-full rounded-panel border border-white/12 bg-black/20 px-4 py-3",
+                  "text-label leading-7 text-white placeholder:text-white/28",
                   "outline-none transition focus:border-white/20 focus:bg-black/26"
                 )}
               />

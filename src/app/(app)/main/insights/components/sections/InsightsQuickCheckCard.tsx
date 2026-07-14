@@ -40,7 +40,7 @@ function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad")
   return [
     "inline-flex items-center gap-1.5",
     "rounded-full border px-3 py-1.5",
-    "text-[12.5px] font-semibold",
+    "text-meta font-semibold",
     "backdrop-blur-xl transition active:scale-95",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
     dark ? "border-white/10" : "border-black/10",
@@ -54,7 +54,7 @@ function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad")
 
 function softInputShell(dark: boolean) {
   return [
-    "relative overflow-hidden rounded-[18px] border",
+    "relative overflow-hidden rounded-panel border",
     "backdrop-blur-2xl",
     dark ? "border-white/10 bg-white/[0.03]" : "border-black/10 bg-white/80",
     "shadow-[0_10px_28px_rgba(0,0,0,0.14)]",
@@ -63,7 +63,7 @@ function softInputShell(dark: boolean) {
 
 function saveButton(dark: boolean, disabled: boolean) {
   return [
-    "h-9 rounded-xl px-3 text-[12.5px] font-semibold",
+    "h-9 rounded-xl px-3 text-meta font-semibold",
     "transition active:scale-[0.99]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/30",
     disabled
@@ -191,7 +191,7 @@ export default function InsightsQuickCheckCard({
             {saved ? (
               <div
                 className={[
-                  "ml-1 flex items-center text-[11.5px]",
+                  "ml-1 flex items-center text-micro",
                   dark ? "text-white/36" : "text-slate-600",
                 ].join(" ")}
               >
@@ -220,7 +220,7 @@ export default function InsightsQuickCheckCard({
                     type="button"
                     onClick={onClose}
                     className={[
-                      "h-8 rounded-full px-2.5 text-[11.5px] font-semibold border",
+                      "h-8 rounded-full px-2.5 text-micro font-semibold border",
                       dark
                         ? "border-white/10 bg-white/[0.04] text-white/56"
                         : "border-black/10 bg-white/80 text-slate-800",
@@ -236,7 +236,7 @@ export default function InsightsQuickCheckCard({
                   rows={3}
                   placeholder="What felt off or surprisingly accurate?"
                   className={[
-                    "mt-2.5 w-full resize-none rounded-[16px] px-3 py-2.5 text-[14px]",
+                    "mt-2.5 w-full resize-none rounded-panel px-3 py-2.5 text-label",
                     "bg-transparent outline-none ring-1 ring-inset",
                     dark
                       ? "text-white/66 placeholder:text-white/28 ring-white/12"
@@ -248,7 +248,7 @@ export default function InsightsQuickCheckCard({
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="text-[12.5px] opacity-70"
+                    className="text-meta opacity-70"
                   >
                     Skip
                   </button>

@@ -34,11 +34,11 @@ export default function AccessibilityPage() {
       title: "Plain-English summary",
       body: (
         <div className="space-y-3">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             Everleap is built for a wide range of learners and devices. We aim
             for clear language, strong contrast, and predictable navigation.
           </p>
-          <p className="text-[15px] leading-7 text-white/62">
+          <p className="text-label leading-7 text-white/62">
             Our goal is to meet or exceed{" "}
             <span className="font-semibold text-white/80">WCAG 2.2 AA</span>{" "}
             over time.
@@ -50,7 +50,7 @@ export default function AccessibilityPage() {
       id: "commitment",
       title: "Our commitment",
       body: (
-        <p className="text-[15px] leading-7 text-white/70">
+        <p className="text-label leading-7 text-white/70">
           We design for keyboard operability, clear focus states, sufficient
           color contrast, reduced motion preferences, and screen reader-friendly
           labeling. We also keep the UI simple and student-friendly.
@@ -61,7 +61,7 @@ export default function AccessibilityPage() {
       id: "design",
       title: "What we design for",
       body: (
-        <div className="space-y-2 text-[15px] leading-7 text-white/62">
+        <div className="space-y-2 text-label leading-7 text-white/62">
           <p>— Full keyboard navigation and visible focus</p>
           <p>— Screen readers (VoiceOver, NVDA, TalkBack)</p>
           <p>— High contrast and reduced-motion preferences</p>
@@ -75,7 +75,7 @@ export default function AccessibilityPage() {
       title: "Quick tips",
       body: (
         <div className="space-y-3">
-          <div className="text-[15px] leading-7 text-white/70">
+          <div className="text-label leading-7 text-white/70">
             <p className="text-white/80">Keyboard</p>
             <p className="text-white/62">
               Use Tab / Shift+Tab to move through interactive elements. Focus
@@ -83,7 +83,7 @@ export default function AccessibilityPage() {
             </p>
           </div>
 
-          <div className="text-[15px] leading-7 text-white/70">
+          <div className="text-label leading-7 text-white/70">
             <p className="text-white/80">Contrast & motion</p>
             <p className="text-white/62">
               If motion feels distracting, enable “Reduce motion” in your device
@@ -98,19 +98,19 @@ export default function AccessibilityPage() {
       title: "Get help",
       body: (
         <div className="space-y-4">
-          <p className="text-[15px] leading-7 text-white/70">
+          <p className="text-label leading-7 text-white/70">
             If something isn’t working for you, tell us so we can fix it.
           </p>
 
           <a
             href="mailto:tomtully@everleap.ai"
-            className="inline-flex items-center gap-2 text-[15px] text-white/75 underline decoration-white/25 underline-offset-4 transition hover:text-white hover:decoration-white/55"
+            className="inline-flex items-center gap-2 text-label text-white/75 underline decoration-white/25 underline-offset-4 transition hover:text-white hover:decoration-white/55"
           >
             <Mail className="h-4 w-4 text-white/55" />
             tomtully@everleap.ai
           </a>
 
-          <div className="space-y-2 text-[15px] leading-7 text-white/62">
+          <div className="space-y-2 text-label leading-7 text-white/62">
             <p>— What you were trying to do</p>
             <p>— Your device + browser</p>
             <p>— Any assistive tech (VoiceOver, NVDA, etc.)</p>
@@ -160,15 +160,15 @@ export default function AccessibilityPage() {
 
         {/* Header */}
         <div className="mt-10 sm:mt-14">
-          <p className="text-[11px] tracking-[0.25em] text-white/45">
+          <p className="text-micro tracking-eyebrow text-white/45">
             EVERLEAP · ACCESSIBILITY
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold leading-[1.08] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold leading-display sm:text-4xl">
             Accessibility
           </h1>
 
-          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
+          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-label sm:leading-7">
             We’re committed to an experience that works well for as many people
             as possible.
           </p>

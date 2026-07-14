@@ -85,7 +85,7 @@ export function AiGuideOrb({
       {orb}
 
       <div className="flex flex-col gap-0.5">
-        <span className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-slate-300">
+        <span className="text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300">
           {label}
         </span>
         {subline && (

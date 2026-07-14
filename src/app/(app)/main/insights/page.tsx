@@ -152,7 +152,7 @@ function tabPillBaseClass() {
     "relative inline-flex items-center gap-2",
     "rounded-full border",
     "px-3.5 py-2",
-    "text-sm font-semibold tracking-[-0.01em]",
+    "text-sm font-semibold tracking-title",
     "backdrop-blur-xl",
     "transition-[transform,box-shadow,background-color,border-color,color] duration-200",
     "active:scale-95",

@@ -96,11 +96,11 @@ export function PulseTrace({
   return (
     <div className="mt-3">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+        <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">
           Your rhythm
         </div>
         {!rhythm.firstBeat ? (
-          <div className="text-[10.5px] text-white/50">
+          <div className="text-micro text-white/50">
             {rhythm.total7d} {rhythm.total7d === 1 ? "beat" : "beats"} this week
           </div>
         ) : null}
@@ -112,7 +112,7 @@ export function PulseTrace({
             className="h-[7px] w-[7px] rounded-full border-[1.5px]"
             style={{ borderColor: `rgb(${accentRgb})` }}
           />
-          <span className="text-[11.5px] text-white/55">
+          <span className="text-micro text-white/55">
             Begins today — this is your first beat.
           </span>
         </div>

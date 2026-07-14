@@ -75,7 +75,7 @@ export default function InsightsSummaryDetailModal({
             exit={{ y: 14, opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             className={[
-              "relative w-full max-w-xl overflow-hidden rounded-[28px] border",
+              "relative w-full max-w-xl overflow-hidden rounded-card border",
               surface,
               "backdrop-blur-xl shadow-[0_18px_90px_rgba(0,0,0,0.4)]",
               "max-h-[80vh] flex flex-col",
@@ -105,7 +105,7 @@ export default function InsightsSummaryDetailModal({
                 <h3
                   className={[
                     dark ? "text-white/92" : "text-slate-950",
-                    "text-[1.15rem] font-semibold leading-[1.25] tracking-[-0.02em]",
+                    "text-[1.15rem] font-semibold leading-title tracking-title",
                   ].join(" ")}
                 >
                   {headline}
@@ -118,7 +118,7 @@ export default function InsightsSummaryDetailModal({
                   className={[
                     index === 0 && headline ? "mt-3" : "mt-2.5",
                     bodyText(dark),
-                    "text-[14.5px] leading-[1.7]",
+                    "text-label leading-read",
                   ].join(" ")}
                 >
                   {p}

@@ -13,6 +13,7 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import {
+  EYEBROW_CLASS,
   LINK_CLASS,
   PROSE_CLASS,
   PROSE_STYLE,
@@ -23,6 +24,7 @@ import {
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
+import { AgenticHeader } from "../ui/AgenticHeader";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -175,7 +177,7 @@ function CardHeading({
   return (
     <div className="mb-3 flex items-center gap-2.5">
       <span
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-label leading-none"
         style={{
           color: `rgb(${rgb})`,
           background: `rgba(${rgb},0.08)`,
@@ -184,10 +186,13 @@ function CardHeading({
       >
         {glyph}
       </span>
-      <span
-        className="text-[14px] font-semibold tracking-[0.005em]"
-        style={{ color: TEXT_SECONDARY }}
-      >
+      {/* An eyebrow, not a heading. At 15px semibold it was SMALLER than the 19px
+          prose it introduced — a heading undersized against its own body reads as
+          broken hierarchy. It was always doing an eyebrow's job (naming the card,
+          quietly); it just wasn't dressed for it. Now it is: 11px, uppercase,
+          tracked out — so the prose below is unambiguously the loudest thing on
+          the card. */}
+      <span className={EYEBROW_CLASS} style={{ color: TEXT_SECONDARY }}>
         {children}
       </span>
     </div>
@@ -475,18 +480,15 @@ export function TodayHeart({
           </div>
         }
       >
-        <div className="relative flex items-center justify-between">
-          <DispatchGlyph type={dispatch.type} showLabel={false} />
-          <span
-            className="absolute left-1/2 -translate-x-1/2 text-[9.5px] font-bold uppercase tracking-[0.24em]"
-            style={{ color: `rgb(${rgb})`, opacity: 0.55 }}
-          >
-            {welcome.isNewUser
+        <AgenticHeader
+          glyph={<DispatchGlyph type={dispatch.type} showLabel={false} />}
+          eyebrow={
+            welcome.isNewUser
               ? "Welcome to Everleap"
-              : new Date().toLocaleDateString(undefined, { weekday: "long" })}
-          </span>
-          <span aria-hidden />
-        </div>
+              : new Date().toLocaleDateString(undefined, { weekday: "long" })
+          }
+          accentRgb={rgb}
+        />
 
         {/* The arrival masthead — the centered anchor in every state. */}
         <WelcomeName
@@ -513,7 +515,7 @@ export function TodayHeart({
             <div className="relative z-10 max-w-[640px]">
               <div className="space-y-3.5">
                 {heroParagraphs.map((para, i) => (
-                  <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                  <p key={i} className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
                     {para}
                   </p>
                 ))}
@@ -521,7 +523,7 @@ export function TodayHeart({
 
               {dispatch.meta ? (
                 <div
-                  className="mt-4 text-[13px] tabular-nums"
+                  className="mt-4 text-meta tabular-nums"
                   style={{ color: TEXT_MUTED }}
                 >
                   {dispatch.meta.duration} · {dispatch.meta.when}
@@ -535,7 +537,7 @@ export function TodayHeart({
                   type="button"
                   onClick={dispatch.save ? handleSaveAction : onPrimary}
                   disabled={saving || saved}
-                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
                   style={{
                     color: `rgb(${rgb})`,
                     background: `rgba(${rgb},0.08)`,
@@ -560,7 +562,7 @@ export function TodayHeart({
                     <button
                       type="button"
                       onClick={() => setMoreOpen(true)}
-                      className={`${LINK_CLASS} text-[15px]`}
+                      className={`${LINK_CLASS} text-label`}
                       style={{ color: TEXT_SECONDARY }}
                     >
                       See more
@@ -572,7 +574,7 @@ export function TodayHeart({
                     <button
                       type="button"
                       onClick={() => setWhyOpen(true)}
-                      className={`${LINK_CLASS} text-[15px]`}
+                      className={`${LINK_CLASS} text-label`}
                       style={{ color: TEXT_SECONDARY }}
                     >
                       Why
@@ -585,7 +587,7 @@ export function TodayHeart({
                       type="button"
                       onClick={handleHowTo}
                       disabled={howLoading}
-                      className={`${LINK_CLASS} text-[15px] disabled:opacity-70`}
+                      className={`${LINK_CLASS} text-label disabled:opacity-70`}
                       style={{ color: TEXT_SECONDARY }}
                     >
                       {howLoading ? "Opening…" : "How would I even do this?"}
@@ -622,7 +624,7 @@ export function TodayHeart({
               so, plainly, and then explain the collection instead. */}
           {storyLinkText ? (
             <p
-              className={`max-w-[640px] text-[19px] ${PROSE_CLASS}`}
+              className={`max-w-[640px] text-lede ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               {storyPrefix}
@@ -637,7 +639,7 @@ export function TodayHeart({
             </p>
           ) : (
             <p
-              className={`max-w-[640px] text-[19px] ${PROSE_CLASS}`}
+              className={`max-w-[640px] text-lede ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               You&apos;ve told me your whole story — every question answered.{" "}
@@ -669,14 +671,14 @@ export function TodayHeart({
           </CardHeading>
 
           <p
-            className="max-w-[640px] text-[17px] font-semibold leading-[1.4] tracking-[-0.01em]"
+            className="max-w-[640px] text-body font-semibold leading-body tracking-title"
             style={{ color: TEXT_HEADING }}
           >
             {data.looseThread.title}
           </p>
 
           <p
-            className={`mt-2 max-w-[640px] text-[17px] ${PROSE_CLASS}`}
+            className={`mt-2 max-w-[640px] text-body ${PROSE_CLASS}`}
             style={PROSE_STYLE}
           >
             {data.looseThread.why?.trim() ||
@@ -689,7 +691,7 @@ export function TodayHeart({
             <button
               type="button"
               onClick={() => router.push(data.looseThread!.route)}
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80"
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80"
               style={{
                 color: `rgb(${REFLECT_RGB})`,
                 background: `rgba(${REFLECT_RGB},0.08)`,
@@ -723,18 +725,18 @@ export function TodayHeart({
             className="max-h-[85vh] w-full max-w-[440px] overflow-y-auto rounded-3xl border border-white/[0.06] bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
           >
             <div
-              className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              className="mb-3 text-micro font-bold uppercase tracking-eyebrow"
               style={{ color: TEXT_SECONDARY }}
             >
               The whole picture
             </div>
-            <p className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            <p className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {heroBody}
             </p>
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#878B95] transition hover:border-white/[0.16]"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-meta font-semibold text-ink-quiet transition hover:border-white/[0.16]"
             >
               Close
             </button>
@@ -756,16 +758,16 @@ export function TodayHeart({
             className="max-h-[85vh] w-full max-w-[420px] overflow-y-auto rounded-3xl border border-white/10 bg-[linear-gradient(180deg,#0c1428,#070d1c)] p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]"
           >
             <div
-              className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              className="mb-3 text-micro font-bold uppercase tracking-eyebrow"
               style={{ color: `rgb(${rgb})` }}
             >
               Why this
             </div>
-            <p className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
+            <p className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
             <button
               type="button"
               onClick={() => setWhyOpen(false)}
-              className="mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition hover:brightness-110"
+              className="mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-meta font-semibold transition hover:brightness-110"
               style={{
                 color: `rgb(${rgb})`,
                 background: `rgba(${rgb},0.12)`,

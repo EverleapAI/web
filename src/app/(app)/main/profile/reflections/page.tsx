@@ -68,7 +68,7 @@ export default function ReflectionsPage() {
     <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
       <Link
         href="/main/profile"
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="mb-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Me
@@ -76,13 +76,13 @@ export default function ReflectionsPage() {
 
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed="reflections" accent={ACCENT} />}>
         <div className="max-w-2xl">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+          <div className="mb-2 flex items-center gap-2 text-micro font-semibold uppercase tracking-eyebrow text-white/44">
             <Sparkles className="h-3 w-3" /> Reflections
           </div>
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-white sm:text-[27px]">
+          <h1 className="text-title font-semibold tracking-title text-white sm:text-title">
             What you’ve tried, and what you noticed
           </h1>
-          <p className="mt-2 text-[14px] leading-[1.6] text-white/70">
+          <p className="mt-2 text-label leading-read text-white/70">
             Every mission you’ve finished — a growing record of the real things you’ve done and how they landed.
           </p>
         </div>
@@ -103,14 +103,14 @@ export default function ReflectionsPage() {
         <div className="mt-3">
           <SectionCard tone="neutral">
             <div className="flex flex-col items-start gap-3 py-2">
-              <h2 className="text-[17px] font-semibold text-white">No reflections yet</h2>
-              <p className="max-w-md text-[13.5px] leading-[1.6] text-white/64">
+              <h2 className="text-body font-semibold text-white">No reflections yet</h2>
+              <p className="max-w-md text-meta leading-read text-white/64">
                 When you finish a mission and jot down what you noticed, it lands here — a diary of the
                 things you’ve actually tried.
               </p>
               <Link
                 href="/main/explore"
-                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:bg-white/[0.12]"
+                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-meta font-semibold text-white transition hover:bg-white/[0.12]"
               >
                 <Compass className="h-4 w-4" /> Find something to try
               </Link>
@@ -122,10 +122,10 @@ export default function ReflectionsPage() {
           {items.map((a) => (
             <SectionCard key={a.id} tone="neutral">
               <div className="mb-1.5 flex items-center justify-between gap-3">
-                <span className="text-[11px] uppercase tracking-[0.12em] text-white/40">{when(a.completedAt)}</span>
+                <span className="text-micro uppercase tracking-eyebrow text-white/40">{when(a.completedAt)}</span>
                 {a.felt ? (
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                    className={`rounded-full px-2 py-0.5 text-micro font-medium capitalize ${
                       FELT_STYLE[a.felt] ?? "bg-white/[0.08] text-white/60"
                     }`}
                   >
@@ -136,24 +136,24 @@ export default function ReflectionsPage() {
 
               <Link
                 href={`/main/actions/${a.id}`}
-                className="text-[16px] font-semibold tracking-[-0.01em] text-white transition hover:underline"
+                className="text-body font-semibold tracking-title text-white transition hover:underline"
               >
                 {a.title}
               </Link>
 
               {a.reflection?.trim() ? (
-                <p className="mt-2 text-[14px] leading-[1.6] text-white/72">“{a.reflection.trim()}”</p>
+                <p className="mt-2 text-label leading-read text-white/72">“{a.reflection.trim()}”</p>
               ) : null}
 
               {a.mission?.echo ? (
                 <div className="mt-3 rounded-2xl border border-white/8 bg-white/[0.02] p-3">
                   <div
-                    className="mb-1 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em]"
+                    className="mb-1 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow"
                     style={{ color: rgba(0.9) }}
                   >
                     <Sparkles className="h-3 w-3" /> What Everleap took from this
                   </div>
-                  <p className="text-[13.5px] leading-[1.6] text-white/78">{a.mission.echo}</p>
+                  <p className="text-meta leading-read text-white/78">{a.mission.echo}</p>
                 </div>
               ) : null}
             </SectionCard>

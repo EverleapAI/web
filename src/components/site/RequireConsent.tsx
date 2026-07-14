@@ -221,7 +221,7 @@ export default function RequireConsent({ children }: { children: React.ReactNode
               Go to consent
             </a>
           </div>
-          <p className="text-[11px] opacity-70">
+          <p className="text-micro opacity-70">
             Tip: add <code>?consent=1</code> to the URL in dev.
           </p>
         </section>

@@ -60,7 +60,7 @@ function BackToLane({ lane }: { lane: Lane }) {
   return (
     <Link
       href={`/main/explore/${lane}`}
-      className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+      className="inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
     >
       <ArrowLeft className="h-4 w-4" />
       <span>Back to {laneLabel(lane)}</span>
@@ -93,17 +93,17 @@ function DetailLoading({ lane }: { lane: Lane }) {
       <BackToLane lane={lane} />
       <SectionCard tone="hero">
         <div className="max-w-2xl">
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">
+          <div className="flex items-center gap-2 text-micro font-semibold uppercase tracking-eyebrow text-white/45">
             <span className="inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/25 border-t-white/70" />
             Putting this together
           </div>
           <p
             key={i}
-            className="mt-4 text-[17px] font-medium leading-[1.5] text-white/85 [animation:fadeIn_.5s_ease]"
+            className="mt-4 text-body font-medium leading-body text-white/85 [animation:fadeIn_.5s_ease]"
           >
             {GENERATING_MESSAGES[i]}
           </p>
-          <p className="mt-2 text-[13px] text-white/45">
+          <p className="mt-2 text-meta text-white/45">
             This one&rsquo;s new, so it takes a few seconds. It&rsquo;ll be instant next time.
           </p>
           <div className="mt-5 space-y-2.5 animate-pulse">
@@ -124,10 +124,10 @@ function DetailMissing({ lane }: { lane: Lane }) {
       <BackToLane lane={lane} />
       <SectionCard tone="hero">
         <div className="max-w-2xl">
-          <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[27px]">
+          <h1 className="text-title font-semibold leading-display tracking-title text-white sm:text-title">
             We couldn&rsquo;t load this path.
           </h1>
-          <p className="mt-3 text-[14px] leading-[1.66] text-white/72 sm:text-[15px]">
+          <p className="mt-3 text-label leading-read text-white/72 sm:text-label">
             It may still be generating, or it isn&rsquo;t in the catalog yet. Head
             back and try another direction in {laneLabel(lane)}.
           </p>

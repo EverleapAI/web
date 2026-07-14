@@ -72,7 +72,7 @@ export function ToastHost() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto flex max-w-[92vw] items-center gap-2 rounded-full border border-emerald-400/30 bg-[#0c1226]/95 px-4 py-2.5 text-[13.5px] font-medium text-white shadow-[0_16px_44px_rgba(3,7,20,0.6)] backdrop-blur-xl"
+          className="pointer-events-auto flex max-w-[92vw] items-center gap-2 rounded-full border border-emerald-400/30 bg-[#0c1226]/95 px-4 py-2.5 text-meta font-medium text-white shadow-[0_16px_44px_rgba(3,7,20,0.6)] backdrop-blur-xl"
           style={{ animation: "elToastIn 220ms ease-out" }}
         >
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300">

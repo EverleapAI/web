@@ -153,7 +153,7 @@ function placeholderLane(laneId: StepperLaneId, title: string, subtitle: string)
     renderStep: () => (
       <section className="space-y-3">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300/70">
+          <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
             {title}
           </div>
           <h2 className="mt-2 text-lg font-semibold text-slate-50">Coming soon</h2>

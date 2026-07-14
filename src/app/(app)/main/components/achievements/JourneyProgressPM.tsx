@@ -126,7 +126,7 @@ function BadgeCell({
         ) : null}
       </div>
       <span
-        className="mt-2.5 text-[12.5px] font-bold tabular-nums"
+        className="mt-2.5 text-meta font-bold tabular-nums"
         style={{ color: earned ? "#fff" : "rgba(255,255,255,0.4)" }}
       >
         {index + 1}
@@ -161,7 +161,7 @@ function DetailPopover({
                 <Icon className="h-[18px] w-[18px] text-white/90" strokeWidth={1.6} />
               </div>
             </div>
-            <div className="text-[15px] font-semibold text-white">{badge.name}</div>
+            <div className="text-label font-semibold text-white">{badge.name}</div>
           </div>
           <button
             type="button"
@@ -185,18 +185,18 @@ function DetailPopover({
             >
               {earned ? <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} /> : null}
             </span>
-            <span className="text-[13.5px] text-white/85">Complete</span>
+            <span className="text-meta text-white/85">Complete</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="h-6 w-6 rounded-full border-2 border-[#3b82f6]" />
-            <span className="text-[13.5px] text-white/85">High Signal</span>
+            <span className="text-meta text-white/85">High Signal</span>
           </div>
         </div>
 
         {/* how you earn it */}
         <div className="mt-5">
-          <div className="text-[13px] font-semibold text-white">How You Earn It:</div>
-          <div className="mt-1 text-[13px] text-white/70">
+          <div className="text-meta font-semibold text-white">How You Earn It:</div>
+          <div className="mt-1 text-meta text-white/70">
             {badge.hint ? (
               badge.hint
             ) : (
@@ -241,14 +241,14 @@ export function JourneyProgressPM() {
   }, []);
 
   return (
-    <div className="relative mx-auto max-w-[440px] rounded-[20px] border border-white/[0.07] bg-[#141a27] p-5">
+    <div className="relative mx-auto max-w-[440px] rounded-panel border border-white/[0.07] bg-[#141a27] p-5">
       {/* header */}
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#a855f7] to-[#6366f1]">
             <Star className="h-3.5 w-3.5 text-white" strokeWidth={2} />
           </span>
-          <span className="text-[13px] font-bold uppercase tracking-[0.14em] text-white/90">
+          <span className="text-meta font-bold uppercase tracking-eyebrow text-white/90">
             Journey Progress
           </span>
         </div>
@@ -263,7 +263,7 @@ export function JourneyProgressPM() {
           ))}
         </div>
       ) : (
-        <div className="py-10 text-center text-[13px] text-white/40">Loading…</div>
+        <div className="py-10 text-center text-meta text-white/40">Loading…</div>
       )}
 
       {openIndex !== null && badges?.[openIndex] ? (
