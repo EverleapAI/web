@@ -32,15 +32,13 @@ export function emitCelebrate(x: number, y: number): void {
 /**
  * Open the global Achievements modal (from the footer, a progress rail, anywhere).
  *
- * Pass the surface you opened it FROM and Awards leads with the badges that
- * screen can actually move, under their own heading, before the rest of the
- * collection. Opened with no surface (the footer) it just shows everything.
+ * Awards is one collection however you got here. It used to open scoped to the
+ * screen you came from, which made the same badge move around and read as several
+ * different sets — so it takes no surface, and there is nothing to pass.
  */
-export function emitOpenAchievements(surface?: BadgeSurface): void {
+export function emitOpenAchievements(): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(
-    new CustomEvent(OPEN_ACHIEVEMENTS, { detail: surface ? { surface } : null })
-  );
+  window.dispatchEvent(new CustomEvent(OPEN_ACHIEVEMENTS));
 }
 
 export type BadgeSurface = "today" | "insights" | "explore" | "actions";

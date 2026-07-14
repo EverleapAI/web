@@ -47,13 +47,12 @@ export type SurfaceBlock =
   | { kind: "single"; badge: SurfaceNearest }
   | null;
 
+// Awards is one collection however you open it, so there is nothing to scope to
+// and no `nearest`/`slugs` here. `block` is what a screen renders.
 export type SurfaceProgress = {
-  nearest: SurfaceNearest | null;
   block: SurfaceBlock;
   earnedCount: number;
   totalCount: number;
-  /** Every badge this screen can move — Awards opens scoped to these. */
-  slugs: string[];
 };
 
 export type BadgeStats = {

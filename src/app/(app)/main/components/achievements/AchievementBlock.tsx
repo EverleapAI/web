@@ -195,12 +195,9 @@ function Single({
 
 export function AchievementBlock({
   block,
-  surface,
   stats,
 }: {
   block: SurfaceBlock;
-  /** The screen this block is on — Awards opens scoped to it. */
-  surface?: BadgeSurface;
   /** Feeds the awards meter without a second /api/achievements call. */
   stats?: BadgeStats | null;
 }) {
@@ -234,7 +231,7 @@ export function AchievementBlock({
       ) : null}
 
       {/* The door to the badges — labelled, so it says what it is. */}
-      <AwardsMeter stats={stats} surface={surface} />
+      <AwardsMeter stats={stats} />
     </div>
   );
 }

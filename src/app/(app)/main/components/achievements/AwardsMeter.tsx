@@ -14,7 +14,7 @@
 import * as React from "react";
 import { ChevronRight, Trophy } from "lucide-react";
 
-import { emitOpenAchievements, type BadgeSurface } from "@/lib/actionsBus";
+import { emitOpenAchievements } from "@/lib/actionsBus";
 import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
 
 const TROPHIES = 10;
@@ -48,13 +48,10 @@ function MeterTrophy({ fill }: { fill: number }) {
 
 export function AwardsMeter({
   stats,
-  surface,
   className,
 }: {
   /** Pass the page's existing stats to avoid a second /api/achievements call. */
   stats?: BadgeStats | null;
-  /** Awards opens scoped to this screen when given. */
-  surface?: BadgeSurface;
   className?: string;
 }) {
   // Only fetch when the page didn't already have the numbers (Actions, Me).
@@ -68,7 +65,7 @@ export function AwardsMeter({
   return (
     <button
       type="button"
-      onClick={() => emitOpenAchievements(surface)}
+      onClick={() => emitOpenAchievements()}
       aria-label={`Awards — ${s.earnedCount} of ${s.totalCount} badges earned. Open your badges.`}
       className={[
         "group flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 text-left transition hover:bg-white/[0.045] active:opacity-80",

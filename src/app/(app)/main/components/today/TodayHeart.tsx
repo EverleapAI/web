@@ -560,7 +560,6 @@ export function TodayHeart({
               bolted underneath it. */}
           <AchievementBlock
             block={badges?.surfaces?.today?.block ?? null}
-            surface="today"
             stats={badges}
           />
         </div>

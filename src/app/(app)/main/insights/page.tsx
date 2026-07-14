@@ -1337,7 +1337,6 @@ export default function Page() {
         <div className="mb-3">
           <AchievementBlock
             block={badges?.surfaces?.insights?.block ?? null}
-            surface="insights"
             stats={badges}
           />
         </div>

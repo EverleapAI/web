@@ -27,6 +27,8 @@ import {
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { AwardsMeter } from "../components/achievements/AwardsMeter";
+import { AchievementBlock } from "../components/achievements/AchievementBlock";
+import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
@@ -264,6 +266,8 @@ function SuggestionCardRow({
 /* ---------------- page ---------------- */
 
 export default function ActionsPage() {
+  const badges = useBadgeStats();
+
   const [actions, setActions] = React.useState<Action[] | null>(null);
   const [failed, setFailed] = React.useState(false);
   const [pendingIds, setPendingIds] = React.useState<Set<string>>(new Set());
@@ -424,9 +428,18 @@ export default function ActionsPage() {
           Real next-steps you bookmarked while exploring — plus a few ideas from your guide.
         </p>
 
-        {/* The same awards door as every other main page. Actions has no badge
-            block of its own yet, so the meter stands alone here. */}
-        <AwardsMeter surface="actions" className="mt-3.5" />
+        {/* The same awards door as every other main page. */}
+        <AwardsMeter className="mt-3.5" />
+      </div>
+
+      {/* Actions' badges turn on doing and reflecting, which is exactly what this
+          page asks for — so the block sits above the list, where it can still
+          change what the user does next, rather than under it as a receipt. */}
+      <div className="mb-3">
+        <AchievementBlock
+          block={badges?.surfaces?.actions?.block ?? null}
+          stats={badges}
+        />
       </div>
 
       <div className="space-y-4">
