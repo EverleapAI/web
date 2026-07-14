@@ -13,10 +13,7 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import {
-  CARD_BODY_CLASS,
-  CARD_TITLE_CLASS,
   EYEBROW_CLASS,
-  HEADING_STYLE,
   LINK_CLASS,
   PROSE_CLASS,
   PROSE_STYLE,
@@ -24,6 +21,7 @@ import {
   TEXT_MUTED,
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
+import { CardBody, CardTitle } from "@/lib/ui/card";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
@@ -629,10 +627,7 @@ export function TodayHeart({
               were finished and then handed a list. So when the story is done we say
               so, plainly, and then explain the collection instead. */}
           {storyLinkText ? (
-            <p
-              className={`max-w-[640px] ${CARD_BODY_CLASS}`}
-              style={PROSE_STYLE}
-            >
+            <CardBody className="max-w-[640px]">
               {storyPrefix}
               <button
                 type="button"
@@ -642,15 +637,12 @@ export function TodayHeart({
               >
                 {storyLinkText} →
               </button>
-            </p>
+            </CardBody>
           ) : (
-            <p
-              className={`max-w-[640px] ${CARD_BODY_CLASS}`}
-              style={PROSE_STYLE}
-            >
+            <CardBody className="max-w-[640px]">
               You&apos;ve told me your whole story — every question answered.{" "}
               {achievementsLead(badges)}
-            </p>
+            </CardBody>
           )}
 
           <div className="mt-4">
@@ -676,22 +668,16 @@ export function TodayHeart({
             Reflect on your actions
           </CardHeading>
 
-          <p
-            className={`max-w-[640px] ${CARD_TITLE_CLASS}`}
-            style={HEADING_STYLE}
-          >
+          <CardTitle as="p" className="max-w-[640px]">
             {data.looseThread.title}
-          </p>
+          </CardTitle>
 
-          <p
-            className={`mt-2 max-w-[640px] text-body ${PROSE_CLASS}`}
-            style={PROSE_STYLE}
-          >
+          <CardBody className="mt-2 max-w-[640px]">
             {data.looseThread.why?.trim() ||
               (data.looseThread.kind === "due"
                 ? "You started this a while back and it has gone quiet. How it is actually going is worth more than a tidy answer later."
                 : "You finished this but never said how it landed — and that part is what turns something you did into something you know.")}
-          </p>
+          </CardBody>
 
           <div className="mt-4">
             <button

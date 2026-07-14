@@ -13,6 +13,7 @@ import { TrendingUp, GraduationCap, ExternalLink } from "lucide-react";
 import { SectionCard } from "../../components/ui/SectionCard";
 import type { Rgb } from "../_data/exploreSchema";
 import { rgba } from "./exploreUi";
+import { CardTitle } from "@/lib/ui/card";
 
 export type OnetDetail = {
   code: string;
@@ -69,9 +70,7 @@ export function OnetFacts({ onet, accent }: { onet: OnetDetail; accent: Rgb }) {
   return (
     <SectionCard tone="neutral">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-body font-semibold tracking-title text-white">
-          What the data says
-        </h2>
+        <CardTitle as="h2">What the data says</CardTitle>
         {onet.brightOutlook ? (
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-micro font-semibold"

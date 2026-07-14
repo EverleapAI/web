@@ -16,6 +16,7 @@ import { ChevronRight, Trophy } from "lucide-react";
 
 import { emitOpenAchievements } from "@/lib/actionsBus";
 import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
+import { RowMeta, RowTitle } from "@/lib/ui/card";
 
 const TROPHIES = 10;
 
@@ -112,14 +113,12 @@ export function AwardsMeter({
         ))}
       </span>
 
-      <span className="mt-1.5 block text-meta leading-body">
-        <span className="font-semibold" style={{ color: LIT }}>
-          Awards
-        </span>
-        <span className="text-white/40">
+      <span className="mt-1.5 block">
+        <RowTitle style={{ color: LIT }}>Awards</RowTitle>
+        <RowMeta>
           {" · "}
           {gold} of {s.totalCount} at gold
-        </span>
+        </RowMeta>
       </span>
     </span>
   );

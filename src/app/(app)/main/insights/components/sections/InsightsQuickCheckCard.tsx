@@ -12,9 +12,9 @@ import {
   headerLabel,
   headerMain,
   headerRow,
-  mutedText,
   sectionCard,
 } from "./summaryShared";
+import { CardBody } from "@/lib/ui/card";
 
 type QuickRating = "mostly" | "somewhat" | "not_really";
 
@@ -211,9 +211,7 @@ export default function InsightsQuickCheckCard({
                 <div className="flex items-start justify-between gap-2.5">
                   <div>
                     <div className={headerLabel(dark)}>Add a note</div>
-                    <div className={["mt-0.5", mutedText(dark)].join(" ")}>
-                      One sentence is enough.
-                    </div>
+                    <CardBody className="mt-0.5">One sentence is enough.</CardBody>
                   </div>
 
                   <button

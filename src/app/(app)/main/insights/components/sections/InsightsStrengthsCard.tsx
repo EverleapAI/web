@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+import { CardBody } from "@/lib/ui/card";
 import {
   EYEBROW_CLASS,
   LINK_CLASS,
@@ -67,12 +68,9 @@ function BulletGroup({
               className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full"
               style={{ background: c.dot }}
             />
-            <span
-              className={[PROSE_CLASS, LINK_SIZE].join(" ")}
-              style={{ color: c.text, fontWeight: 500 }}
-            >
+            <CardBody as="span" style={{ color: c.text }}>
               {bullet}
-            </span>
+            </CardBody>
           </li>
         ))}
       </ul>

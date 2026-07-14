@@ -227,28 +227,10 @@ export function headerLabel(dark: boolean) {
 // soft ramp colours, weight 500, leading 1.6, tracking 0.4px. Sizes are kept so
 // existing per-site size overrides still win; hero reads are bumped to 21px at
 // their own sites. Light branches are unchanged.
-export function titleText(dark: boolean) {
-  return dark
-    ? "text-lede font-semibold tracking-tight text-ink-strong"
-    : "text-lede font-semibold tracking-tight text-slate-950";
-}
-
-export function sectionTitle(dark: boolean) {
-  return dark
-    ? "text-body font-semibold tracking-title text-ink-strong"
-    : "text-body font-semibold tracking-title text-slate-950";
-}
-
 export function bodyText(dark: boolean) {
   return dark
     ? "text-label font-normal leading-read tracking-normal text-ink"
     : "text-label leading-relaxed text-slate-700";
-}
-
-export function mutedText(dark: boolean) {
-  return dark
-    ? "text-label font-normal leading-read tracking-normal text-ink-quiet"
-    : "text-label leading-relaxed text-slate-600";
 }
 
 export function bulletText(dark: boolean) {

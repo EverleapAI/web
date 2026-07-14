@@ -47,7 +47,7 @@ export function ExplorePathSection({
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`${path.id}:${section}`} accent={accent} />}>
         <div className="max-w-2xl">
           <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">{title}</div>
-          <h1 className="mt-2 text-title font-semibold leading-display tracking-title text-white sm:text-title">
+          <h1 className="mt-2 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
             {meta.title}
           </h1>
         </div>

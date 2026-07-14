@@ -5,9 +5,14 @@
 // judge this on a real phone against the real app — but nobody else should ever
 // see it, hence the flag rather than shipping it to all nine internal users.
 //
-// It exists because the read "reads hard on mobile" and there are FOUR candidate
+// It exists because the read "reads hard on mobile" and there are FIVE candidate
 // causes, which cannot be untangled by argument on a laptop:
 //
+//   0. SIZE — and this one was missing from the first version of the tuner, which
+//      was a real hole: the complaint was "too small AND not strong", and the tool
+//      could only move "strong". The type ladder is eight fixed pixel values with
+//      no media query and no clamp, so a phone at arm's length gets the identical
+//      scale to a 27" laptop. The Size dial multiplies the whole ladder.
 //   1. WEIGHT — 400 may simply be too light. Until now the app shipped no font at
 //      all, so Segoe UI (no 500) rounded everything between 401 and 599 to
 //      thin-or-semibold, while SF Pro on iOS rendered a true 500. The two devices
@@ -69,6 +74,7 @@ function Dial<T extends string | number>({ label, value, options, onPick, fmt }:
 const TUNE_KEY = "el:tune";
 
 export function ReadTuner() {
+  const [size, setSize] = React.useState(1);
   const [weight, setWeight] = React.useState(400);
   const [heading, setHeading] = React.useState(600);
   const [track, setTrack] = React.useState(0);
@@ -94,11 +100,12 @@ export function ReadTuner() {
   React.useEffect(() => {
     if (!armed) return;
     const root = document.documentElement;
+    root.style.setProperty("--type-scale", String(size));
     root.style.setProperty("--read-weight", String(weight));
     root.style.setProperty("--heading-weight", String(heading));
     root.style.setProperty("--read-tracking", `${track}em`);
     root.setAttribute("data-smoothing", smooth);
-  }, [armed, weight, heading, track, smooth]);
+  }, [armed, size, weight, heading, track, smooth]);
 
   if (!armed) return null;
 
@@ -121,6 +128,20 @@ export function ReadTuner() {
 
   return (
     <div className="fixed right-3 top-3 z-[100] flex w-[min(19rem,calc(100vw-1.5rem))] flex-col gap-2.5 rounded-2xl border border-amber-300/30 bg-black/92 p-3 shadow-[0_16px_48px_rgba(0,0,0,0.7)] backdrop-blur-md">
+      {/* SIZE IS FIRST because it is the loudest half of the complaint, and until
+          now the tuner could not move it at all — the ladder was eight fixed px
+          values with no responsive step, so the phone got the desktop scale. This
+          dial multiplies every step at once, which keeps the scale's internal
+          relationships intact (a lede stays a notch under the read) and reduces
+          "how much bigger?" to one number. The label shows the resulting size of
+          THE read (21px × scale), because that is the number worth feeling. */}
+      <Dial
+        label="Size"
+        value={size}
+        options={[1, 1.06, 1.12, 1.18, 1.25] as const}
+        onPick={setSize}
+        fmt={(v) => `${Math.round(21 * v)}px`}
+      />
       <Dial
         label="Read"
         value={weight}
@@ -152,7 +173,7 @@ export function ReadTuner() {
           into globals.css once they are settled on a real phone. */}
       <div className="flex items-center justify-between gap-3 border-t border-white/12 pt-2">
         <code className="text-micro font-bold leading-tight text-amber-300">
-          {weight}/{heading} · {track}em · {smooth === "auto" ? "full" : "thin"}
+          ×{size} · {weight}/{heading} · {track}em · {smooth === "auto" ? "full" : "thin"}
         </code>
         <button
           type="button"

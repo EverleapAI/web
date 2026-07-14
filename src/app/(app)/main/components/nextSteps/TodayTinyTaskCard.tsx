@@ -1,6 +1,6 @@
 "use client";
 
-import { CARD_TITLE_CLASS, HEADING_STYLE } from "@/lib/ui/prose";
+import { CardTitle } from "@/lib/ui/card";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
@@ -138,18 +138,19 @@ export function TodayTinyTaskCard({
               </button>
             ) : null}
 
-            <div
-              className={`mb-4 w-full ${CARD_TITLE_CLASS}`}
-              // The question was set at `text-read` (21px) — the same size as the
-              // agent's own voice — at fontWeight 550, a weight that exists in no
-              // system font and silently rounds to 400 or 600 depending on the
-              // platform. So a card was speaking as loudly as the agent, in a
-              // weight nobody chose. It is a card title now: the same treatment as
-              // the agent's opening line, one rung down.
-              style={dark ? HEADING_STYLE : { color: "#1e293b", fontWeight: 600 }}
+            {/* The question was set at `text-read` (21px) — the same size as the
+                agent's own voice — at fontWeight 550, a weight that exists in no
+                system font and silently rounds to 400 or 600 depending on the
+                platform. So a card was speaking as loudly as the agent, in a
+                weight nobody chose. It is a card title now: the same treatment as
+                the agent's opening line, one rung down. */}
+            <CardTitle
+              as="div"
+              className="mb-4 w-full"
+              style={dark ? undefined : { color: "#1e293b" }}
             >
               {current.question}
-            </div>
+            </CardTitle>
 
             <div className="space-y-2.5">
               {current.options.map((label, index) => {

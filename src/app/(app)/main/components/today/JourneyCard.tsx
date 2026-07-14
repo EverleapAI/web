@@ -3,6 +3,8 @@
 import * as React from "react";
 import Image from "next/image";
 
+import { RowMeta, RowTitle } from "@/lib/ui/card";
+
 import { JOURNEY_BADGES, type JourneyBadgeId } from "./journeyConfig";
 
 function getBadgeStatus(index: number) {
@@ -133,15 +135,15 @@ export function JourneyCard({
       </div>
 
       <div className="mt-6 border-t border-white/8 pt-4">
-        <div className="text-label font-semibold tracking-title text-white/88">
+        <RowTitle as="div">
           {activeBadge.id === "story" ? "Story" : activeBadge.label}
-        </div>
+        </RowTitle>
 
-        <div className="mt-1.5 text-label leading-6 text-white/72">
+        <RowMeta as="div" className="mt-1.5">
           {activeBadge.id === "story"
             ? "We'll explore what motivates you, what you're good at, and what keeps showing up in your answers."
             : activeBadge.description}
-        </div>
+        </RowMeta>
       </div>
     </div>
   );

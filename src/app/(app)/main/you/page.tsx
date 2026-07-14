@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { AppChrome } from "@/components/site/AppChrome";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { CardBody, CardTitle, RowMeta } from "@/lib/ui/card";
 
 import {
   INSIGHTS_THEMES,
@@ -57,28 +58,28 @@ export default function YouIntroPage() {
           <div className="w-full max-w-3xl">
             <div className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}>
               <div className="mx-auto max-w-xl text-center">
-                <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/60">
+                <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-micro font-semibold uppercase tracking-eyebrow text-white/60">
                   Internal map
                 </div>
 
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-3xl">
+                <h1 className="text-title font-semibold tracking-title text-ink-strong">
                   You
                 </h1>
 
-                <p className="mt-3 text-sm leading-relaxed text-slate-200/85 md:text-base">
+                <CardBody className="mt-3">
                   This is the “learn about you” section — a bidirectional conversation with Everleap. It’s not a profile.
                   It’s where the app asks one question at a time, saves what you share, and builds a living thread of
                   what matters to you.
-                </p>
+                </CardBody>
 
                 <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/35 px-5 py-4 text-left">
-                  <div className="text-sm font-semibold text-slate-100">What belongs here</div>
-                  <ul className="mt-2 space-y-2 text-sm text-slate-200/80">
+                  <CardTitle>What belongs here</CardTitle>
+                  <CardBody as="ul" className="mt-2 space-y-2">
                     <li>• Q&amp;A flows (conversation style, one prompt at a time)</li>
                     <li>• Your answers + reflections (saved locally and later synced)</li>
                     <li>• Badges / “what we’ve learned” snapshots</li>
                     <li>• Gentle follow-ups that improve insights over time</li>
-                  </ul>
+                  </CardBody>
                 </div>
 
                 <div className="mt-8 flex justify-center">
@@ -88,7 +89,7 @@ export default function YouIntroPage() {
                     className="
                       inline-flex items-center gap-2 rounded-full
                       border border-sky-300/80 bg-sky-400/90 px-6 py-2.5
-                      text-sm font-semibold text-slate-950
+                      text-label font-semibold text-slate-950
                       shadow-[0_0_35px_rgba(56,189,248,0.9)]
                       transition hover:bg-sky-300 active:scale-95
                     "
@@ -97,9 +98,9 @@ export default function YouIntroPage() {
                   </button>
                 </div>
 
-                <div className="mt-4 text-xs text-slate-200/60">
+                <RowMeta as="div" className="mt-4">
                   Profile + settings will live in the “+” menu (separate from this section).
-                </div>
+                </RowMeta>
               </div>
             </div>
           </div>

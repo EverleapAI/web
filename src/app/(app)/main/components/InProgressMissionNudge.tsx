@@ -14,6 +14,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { SectionCard } from "./ui/SectionCard";
 import { ConstellationAnchor } from "./ui/ConstellationAnchor";
 import { ACTION_ADDED, ACTIONS_CHANGED } from "@/lib/actionsBus";
+import { CardTitle } from "@/lib/ui/card";
 
 type Step = { text: string; done: boolean };
 type Action = {
@@ -66,7 +67,7 @@ export function InProgressMissionNudge() {
             <div className="mb-1 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow text-cyan-200/80">
               <Sparkles className="h-3 w-3" /> Pick up where you left off
             </div>
-            <div className="truncate text-body font-semibold text-white">{mission.title}</div>
+            <CardTitle className="truncate">{mission.title}</CardTitle>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-1 w-28 overflow-hidden rounded-full bg-white/[0.1]">
                 <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${pct}%` }} />

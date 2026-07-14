@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 import {
-  bodyText,
   cardBody,
   confidenceToConstellationDensity,
   constellationOrnament,
@@ -24,6 +23,7 @@ import {
   sectionCard,
 } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { CardBody, CardTitle, RowMeta } from "@/lib/ui/card";
 import { LINK_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
@@ -166,26 +166,15 @@ export default function MotivatorCard({
         </div>
 
         <div className={cardBody()}>
-          <h3
-            className={[
-              dark ? "text-ink-strong" : "text-slate-950",
-              isPrimary
-                ? "text-[1.2rem] font-semibold leading-display tracking-title"
-                : "text-[1.05rem] font-semibold leading-display tracking-title",
-            ].join(" ")}
-          >
-            {displayName}
-          </h3>
+          <CardTitle as="h3">{displayName}</CardTitle>
 
-          <p
-            className={[
-              "mt-1.5",
-              bodyText(dark),
-              isPrimary ? "text-label leading-read" : "text-meta leading-body",
-            ].join(" ")}
-          >
-            {displayShortLine}
-          </p>
+          {isPrimary ? (
+            <CardBody className="mt-1.5">{displayShortLine}</CardBody>
+          ) : (
+            <RowMeta as="p" className="mt-1.5">
+              {displayShortLine}
+            </RowMeta>
+          )}
 
           {displayMore || displayWhy ? (
             <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">

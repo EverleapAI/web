@@ -30,6 +30,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { RowMeta, RowTitle } from "@/lib/ui/card";
+
 type Badge = {
   slug: string;
   name: string;
@@ -161,7 +163,7 @@ function DetailPopover({
                 <Icon className="h-[18px] w-[18px] text-white/90" strokeWidth={1.6} />
               </div>
             </div>
-            <div className="text-label font-semibold text-white">{badge.name}</div>
+            <RowTitle as="div">{badge.name}</RowTitle>
           </div>
           <button
             type="button"
@@ -185,18 +187,18 @@ function DetailPopover({
             >
               {earned ? <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} /> : null}
             </span>
-            <span className="text-meta text-white/85">Complete</span>
+            <RowMeta>Complete</RowMeta>
           </div>
           <div className="flex items-center gap-3">
             <span className="h-6 w-6 rounded-full border-2 border-[#3b82f6]" />
-            <span className="text-meta text-white/85">High Signal</span>
+            <RowMeta>High Signal</RowMeta>
           </div>
         </div>
 
         {/* how you earn it */}
         <div className="mt-5">
-          <div className="text-meta font-semibold text-white">How You Earn It:</div>
-          <div className="mt-1 text-meta text-white/70">
+          <RowTitle as="div">How You Earn It:</RowTitle>
+          <RowMeta as="div" className="mt-1">
             {badge.hint ? (
               badge.hint
             ) : (
@@ -204,7 +206,7 @@ function DetailPopover({
                 Answer the <span className="font-medium text-[#5b9dff]">{badge.name}</span> questions
               </>
             )}
-          </div>
+          </RowMeta>
         </div>
       </div>
     </div>

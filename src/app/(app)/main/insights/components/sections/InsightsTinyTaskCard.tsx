@@ -1,6 +1,7 @@
 "use client";
 
-import { PROSE_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { CardBody } from "@/lib/ui/card";
+import { TEXT_SECONDARY } from "@/lib/ui/prose";
 import { TodayTinyTaskCard } from "../../../components/nextSteps/TodayTinyTaskCard";
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 
@@ -46,13 +47,10 @@ export default function InsightsTinyTaskCard({
           {hasStrongSignal ? (
             <TodayTinyTaskCard dark={dark} tasks={tasks} eyebrow={eyebrow} />
           ) : (
-            <p
-              className={[PROSE_CLASS, LINK_SIZE].join(" ")}
-              style={{ color: dark ? TEXT_SECONDARY : "#475569" }}
-            >
+            <CardBody style={{ color: TEXT_SECONDARY }}>
               A Tiny Task is one small experiment. Once we have more signal, this
               turns into something simple you can actually try this week.
-            </p>
+            </CardBody>
           )}
         </div>
       </div>

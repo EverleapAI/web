@@ -21,6 +21,7 @@ import { WhyFitsSection, getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
 import { OnetFacts, type OnetDetail } from "./OnetFacts";
 import { emitActionsChanged } from "@/lib/actionsBus";
+import { CardBody, CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
 
 function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
   const items = getSectionMenu(path);
@@ -35,8 +36,8 @@ function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
         >
           <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.9) }} />
           <span className="min-w-0 flex-1">
-            <span className="block text-label font-semibold tracking-title text-white">{s.title}</span>
-            <span className="mt-0.5 block truncate text-meta leading-body text-white/55">{s.teaser}</span>
+            <RowTitle className="block">{s.title}</RowTitle>
+            <RowMeta className="mt-0.5 block truncate">{s.teaser}</RowMeta>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
         </Link>
@@ -130,9 +131,7 @@ export function ExplorePathDetail({
               <p className="mt-1 text-label font-normal leading-read tracking-normal text-ink">{whyYou}</p>
             </div>
           ) : null}
-          {ov?.hook ? (
-            <p className="mt-4 text-label font-normal leading-read tracking-normal text-ink">{ov.hook}</p>
-          ) : null}
+          {ov?.hook ? <CardBody className="mt-4">{ov.hook}</CardBody> : null}
           {ov?.traitChips?.length || payMedian ? (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {(ov?.traitChips ?? []).slice(0, 4).map((c) => (
@@ -172,10 +171,10 @@ export function ExplorePathDetail({
             <Wand2 className="h-[18px] w-[18px]" />
           </span>
           <span className="min-w-0">
-            <span className="block text-label font-semibold text-white">Try this for real</span>
-            <span className="mt-0.5 block text-meta leading-body text-white/72">
+            <RowTitle className="block">Try this for real</RowTitle>
+            <RowMeta className="mt-0.5 block">
               Turn it into a mission — a few concrete steps to actually go explore it.
-            </span>
+            </RowMeta>
           </span>
         </span>
         {creating ? (
@@ -188,7 +187,7 @@ export function ExplorePathDetail({
       {/* Why this could fit you — the essence, always open on essentials */}
       {hasWhyFits ? (
         <SectionCard tone="neutral">
-          <h2 className="text-body font-semibold tracking-title text-white">Why this could fit you</h2>
+          <CardTitle as="h2">Why this could fit you</CardTitle>
           <div className="mt-3">
             <WhyFitsSection path={path} accent={accent} />
           </div>

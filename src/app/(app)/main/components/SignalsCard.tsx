@@ -4,6 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { Activity } from "lucide-react";
 
+import { RowMeta, RowTitle } from "@/lib/ui/card";
+
 import type { RecommendedNext } from "./TodayIntro";
 
 export type SignalsProgress = {
@@ -162,9 +164,9 @@ export function SignalsCard(props: SignalsCardProps) {
     setBias(getOnboardingSignalBias());
   }, []);
 
-  const text = dark ? "text-white/78" : "text-slate-900";
-  const sub = dark ? "text-white/52" : "text-slate-600";
   const meta = dark ? "text-white/42" : "text-slate-500";
+  const lightTitleStyle = dark ? undefined : { color: "#0f172a" };
+  const lightSubStyle = dark ? undefined : { color: "#475569" };
 
   const items: Array<{ cat: Cat; answered: number; total: number }> = [
     {
@@ -209,14 +211,14 @@ export function SignalsCard(props: SignalsCardProps) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`h-2 w-2 rounded-full ${accentClass(dark, it.cat)}`} />
-                    <div className={`text-label font-semibold ${text}`}>
+                    <RowTitle as="div" style={lightTitleStyle}>
                       {label(it.cat)}
-                    </div>
+                    </RowTitle>
                   </div>
 
-                  <div className={`mt-0.5 text-meta ${sub}`}>
+                  <RowMeta as="div" className="mt-0.5" style={lightSubStyle}>
                     {desc(it.cat)}
-                  </div>
+                  </RowMeta>
                 </div>
 
                 <div className={`shrink-0 text-meta ${meta}`}>

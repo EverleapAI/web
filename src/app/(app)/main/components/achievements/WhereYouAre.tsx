@@ -27,7 +27,8 @@ import type {
   BlockItem,
   BadgeStats,
 } from "@/lib/achievements/useBadgeStats";
-import { CARD_BODY_CLASS, EYEBROW_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { CardBody, RowMeta, RowTitle } from "@/lib/ui/card";
+import { EYEBROW_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 import { SectionCard } from "../ui/SectionCard";
 import { AwardsMeter } from "./AwardsMeter";
@@ -219,12 +220,10 @@ export function AchievementBlock({
           aria-label={`Next up: ${next.name}. ${next.detail} Open this award.`}
         >
           <Medal glyph={next.glyph} tier={next.tier} />
-          <p className="min-w-0 flex-1 text-meta leading-body text-white/44">
-            <span className="font-semibold" style={{ color: GOLD }}>
-              Next up: {next.name}
-            </span>{" "}
+          <RowMeta as="p" className="min-w-0 flex-1">
+            <RowTitle style={{ color: GOLD }}>Next up: {next.name}</RowTitle>{" "}
             — {next.detail}
-          </p>
+          </RowMeta>
           <ChevronRight
             className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
             style={{ color: `rgba(${GOLD_RGB},0.55)` }}
@@ -279,12 +278,9 @@ export function WhereYouAre({
           Every screen gets the standing sentence; Today overrides it while the
           story is still worth nudging. */}
       {lead ?? achievementsLead(stats) ? (
-        <div
-          className={`mb-4 max-w-[640px] ${CARD_BODY_CLASS}`}
-          style={PROSE_STYLE}
-        >
+        <CardBody as="div" className="mb-4 max-w-[640px]">
           {lead ?? achievementsLead(stats)}
-        </div>
+        </CardBody>
       ) : null}
 
       <AchievementBlock block={block} stats={stats} />

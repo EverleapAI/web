@@ -63,7 +63,84 @@ export default [
           selector:
             "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*text-\\[[0-9.]+px\\]/]",
           message:
-            "Arbitrary font size. Use a token: text-micro/meta/label/body/read/title/display (globals.css @theme).",
+            "Arbitrary font size. Use a token: text-micro/meta/label/body/lede/read/title/display (globals.css @theme).",
+        },
+        {
+          selector:
+            "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*rounded-\\[[0-9.]+(?:px|rem)\\]/]",
+          message:
+            "Arbitrary radius. Use a token: rounded-chip/control/panel/card (globals.css @theme).",
+        },
+        {
+          selector:
+            "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*tracking-\\[/]",
+          message:
+            "Arbitrary letter-spacing. Use a token: tracking-display/title/normal/label/eyebrow (globals.css @theme).",
+        },
+        {
+          selector:
+            "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*leading-\\[[0-9.]+\\]/]",
+          message:
+            "Arbitrary line-height. Use a token: leading-display/title/body/read (globals.css @theme).",
+        },
+      ],
+    },
+  },
+
+  /* ===========================================================================
+     THE READING LANE: A STRICTER RATCHET, BECAUSE THE FIRST ONE HAD TWO HOLES
+     ===========================================================================
+     The original rule banned `text-[13.5px]` — the PIXEL form, and only that. It
+     therefore never saw:
+
+       1. `text-[1.2rem]` — the same crime in a different unit. MotivatorCard, the
+          most-rendered card on Insights, set its title at text-[1.2rem]/[1.05rem]
+          (19.2px / 16.8px), sizes that exist nowhere in the scale, and sailed
+          through every build.
+       2. `text-sm` / `text-2xl` — Tailwind's OWN scale. Perfectly legal, and
+          perfectly off OUR ladder. 523 uses across 73 files.
+
+     There is a third hole this cannot close by regex: `text-body font-semibold
+     tracking-title text-white` is a legal recipe made of legal tokens, and it was
+     how twenty-two different card titles got invented. That one is closed
+     structurally instead, by lib/ui/card.tsx — the header is now a component, so
+     there is nothing to hand-roll.
+
+     WHY THIS IS SCOPED rather than global: the 600 off-ladder call sites live
+     mostly in surfaces the design system never reached (onboarding, the public
+     pages, the unlinked career/productUx prototype). Turning this on everywhere
+     would fail the build on all of them at once, and a rule that cannot be
+     satisfied gets deleted. So it guards the lane that IS on the system, and the
+     rest is recorded as debt rather than pretended away.
+
+     A REASON THIS IS NOT MERELY TIDINESS: an off-ladder size does not multiply by
+     --type-scale, so it will not grow with the rest of the ladder on a phone. Every
+     one of these is a block that stays stubbornly small while everything around it
+     responds.
+     ========================================================================== */
+  {
+    files: [
+      "src/app/(app)/main/components/**/*.tsx",
+      "src/app/(app)/main/insights/components/**/*.tsx",
+      "src/app/(app)/main/explore/_components/**/*.tsx",
+      "src/app/(app)/main/profile/**/*.tsx",
+      "src/app/(app)/main/you/**/*.tsx",
+      "src/lib/ui/**/*.{ts,tsx}",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*text-\\[[0-9.]+(?:px|rem|em|pt)\\]/]",
+          message:
+            "Arbitrary font size (any unit). Use a token: text-micro/meta/label/body/lede/read/title/display. Inside a card, use <CardTitle>/<CardBody>/<RowTitle>/<RowMeta> from @/lib/ui/card.",
+        },
+        {
+          selector:
+            "Literal[value=/(?:^|\\s)(?:sm:|md:|lg:|xl:|hover:|focus:|active:|group-hover:|dark:)*text-(?:xs|sm|base|lg|xl|[2-9]xl)(?:\\s|$)/]",
+          message:
+            "Tailwind's built-in type scale is not our ladder. Use a token: text-micro/meta/label/body/lede/read/title/display (globals.css @theme).",
         },
         {
           selector:

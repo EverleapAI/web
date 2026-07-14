@@ -40,6 +40,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { CardBody, CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
+
 import { JourneyProgressPM } from "./JourneyProgressPM";
 
 // Placeholder badge art — a distinct line-icon per badge so the pyramid reads as
@@ -231,13 +233,15 @@ function TierRung({
         {reached ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
       </span>
       <div className="flex-1">
-        <div
-          className="text-meta font-semibold"
+        <RowTitle
+          as="div"
           style={{ color: reached ? tint : "rgba(238,241,251,.6)" }}
         >
           {TIER_LABEL[tier]}
-        </div>
-        <div className="mt-0.5 text-meta leading-body text-white/60">{sub}</div>
+        </RowTitle>
+        <RowMeta as="div" className="mt-0.5">
+          {sub}
+        </RowMeta>
       </div>
     </div>
   );
@@ -460,9 +464,9 @@ function AchievementsModal() {
                   <div className="text-micro font-bold uppercase tracking-eyebrow text-[rgb(182,160,255)]">
                     Achievements
                   </div>
-                  <div className="mt-1.5 text-read font-semibold tracking-title text-white">
+                  <CardTitle className="mt-1.5" as="h2">
                     Your constellation
-                  </div>
+                  </CardTitle>
                   <div className="mt-1 text-micro text-white/45">
                     <span className="tabular-nums text-white/75">{earnedCount}</span> of {total} stars
                     lit
@@ -557,9 +561,7 @@ function AchievementsModal() {
                       {selected.earned ? selected.glyph : "◇"}
                     </span>
                     <div>
-                      <div className="text-label font-semibold text-white">
-                        {selected.name}
-                      </div>
+                      <CardTitle>{selected.name}</CardTitle>
                       <div
                         className="text-micro font-semibold uppercase tracking-eyebrow"
                         style={{
@@ -574,9 +576,7 @@ function AchievementsModal() {
                   </div>
 
                   {/* the badge's own story — what this one means */}
-                  <p className="mt-3.5 text-meta leading-body text-white/70">
-                    {selected.description}
-                  </p>
+                  <CardBody className="mt-3.5">{selected.description}</CardBody>
 
                   {/* How you earn it: the three real rungs, each with its own path.
                       Rungs with no hint are skipped for this badge. */}

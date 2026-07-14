@@ -25,6 +25,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { RowMeta, RowTitle } from "@/lib/ui/card";
+
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { AwardsMeter } from "../components/achievements/AwardsMeter";
@@ -120,7 +122,7 @@ function MomentumSnapshot() {
       <div className="grid grid-cols-3 gap-2">
         {tiles.map((t) => (
           <div key={t.label} className="flex flex-col items-center gap-0.5 py-1">
-            <span className="text-title font-semibold tabular-nums tracking-title text-white">{t.n}</span>
+            <span className="text-title font-semibold tabular-nums tracking-title text-ink-strong">{t.n}</span>
             <span className="text-micro uppercase tracking-eyebrow text-white/45">{t.label}</span>
           </div>
         ))}
@@ -234,12 +236,12 @@ export default function ProfilePage() {
               <div className="mb-0.5 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow text-white/44">
                 <Sparkles className="h-3 w-3" /> Me
               </div>
-              <h1 className="truncate text-title font-semibold tracking-title text-white">{name}</h1>
+              <h1 className="truncate text-title font-semibold tracking-title text-ink-strong">{name}</h1>
               {user?.email ? (
-                <div className="mt-1 flex items-center gap-1.5 text-meta text-white/62">
+                <RowMeta as="div" className="mt-1 flex items-center gap-1.5">
                   <span className="truncate">{user.email}</span>
                   {user.email_verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-300/90" /> : null}
-                </div>
+                </RowMeta>
               ) : null}
             </div>
           </div>
@@ -325,7 +327,7 @@ export default function ProfilePage() {
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-label font-medium text-white">{label}</span>
+                    <RowTitle className="block">{label}</RowTitle>
                     <span className="block truncate text-meta text-white/50">{desc}</span>
                   </span>
                   <ChevronRight className="h-5 w-5 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-white/60" />

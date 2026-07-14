@@ -8,7 +8,8 @@ import InsightsSummaryCard from "./sections/InsightsSummaryCard";
 import MotivatorCard, { type MotivatorIconKey } from "./sections/MotivatorCard";
 import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
-import { sectionCard, bodyText, headerLabel } from "./sections/summaryShared";
+import { sectionCard, headerLabel } from "./sections/summaryShared";
+import { CardBody } from "@/lib/ui/card";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 
@@ -117,9 +118,9 @@ export function StrengthsTab({
           ].join(" ")}
         >
           <div className={headerLabel(dark)}>Answer a few more</div>
-          <p className={["mt-1.5", bodyText(dark), "text-meta leading-body"].join(" ")}>
+          <CardBody className="mt-1.5">
             A few more Strengths questions would help sharpen this.
-          </p>
+          </CardBody>
           <div className="mt-2">
             <Link
               href={STORY_HREF}

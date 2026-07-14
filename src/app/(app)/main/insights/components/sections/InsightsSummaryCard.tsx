@@ -4,8 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
-import { bodyText, cardBody } from "./summaryShared";
+import { cardBody } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { CardBody } from "@/lib/ui/card";
 import {
   HEADING_CLASS,
   HEADING_STYLE,
@@ -189,28 +190,16 @@ export default function InsightsSummaryCard({
             </>
           ) : (
             <>
-              <p
-                className={[
-                  "mt-2.5",
-                  bodyText(dark),
-                  "text-label leading-read sm:text-label",
-                ].join(" ")}
-              >
+              <CardBody className="mt-2.5">
                 This page gets much more useful once Everleap has a little more
                 real signal from you.
-              </p>
+              </CardBody>
 
-              <p
-                className={[
-                  "mt-1.5",
-                  bodyText(dark),
-                  "text-label leading-read sm:text-label",
-                ].join(" ")}
-              >
+              <CardBody className="mt-1.5">
                 A few Motivations questions is enough to start grounding this in
                 what gives you energy, what drains it, and which patterns keep
                 repeating.
-              </p>
+              </CardBody>
 
               <div className="mt-3">
                 <Link

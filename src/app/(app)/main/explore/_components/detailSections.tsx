@@ -29,6 +29,7 @@ import {
 } from "../_data/exploreSchema";
 import { useSavedActions } from "../_lib/exploreActions";
 import { rgba } from "./exploreUi";
+import { CardBody, CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
 
 export const TONE_COLOR: Record<TrajectoryTone, Rgb> = {
   positive: { r: 87, g: 214, b: 160 },
@@ -88,8 +89,8 @@ function BranchCard({
     <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h4 className="text-label font-semibold text-ink-strong">{preview.title}</h4>
-          <p className="mt-1 text-meta font-normal leading-read tracking-normal text-ink-quiet">{preview.oneLiner}</p>
+          <RowTitle as="h4">{preview.title}</RowTitle>
+          <RowMeta className="mt-1" as="p">{preview.oneLiner}</RowMeta>
         </div>
         {detail ? (
           <button
@@ -161,9 +162,9 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
   return (
     <>
       {genericRealityTitle(r.title) ? null : (
-        <h2 className="text-lede font-semibold tracking-title text-white">{r.title}</h2>
+        <CardTitle as="h2">{r.title}</CardTitle>
       )}
-      {r.summary ? <p className="mt-2 text-label font-normal leading-read tracking-normal text-ink">{r.summary}</p> : null}
+      {r.summary ? <CardBody className="mt-2">{r.summary}</CardBody> : null}
       {r.pulse ? (
         <p className="mt-3 border-l-2 pl-3 text-label italic leading-read text-white/78" style={{ borderColor: rgba(accent, 0.5) }}>
           {r.pulse}
@@ -176,8 +177,8 @@ export function RealitySection({ path, accent }: { path: ExplorePath; accent: Rg
               {m.timeLabel ? (
                 <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: rgba(accent, 0.85) }}>{m.timeLabel}</div>
               ) : null}
-              <div className="mt-0.5 text-label font-semibold text-white">{m.title}</div>
-              <p className="mt-1 text-meta font-normal leading-read tracking-normal text-ink">{m.body}</p>
+              <RowTitle className="mt-0.5" as="div">{m.title}</RowTitle>
+              <RowMeta className="mt-1" as="p">{m.body}</RowMeta>
             </li>
           ))}
         </ol>
@@ -192,9 +193,9 @@ export function TrajectorySection({ path, accent }: { path: ExplorePath; accent:
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-lede font-semibold tracking-title text-white">{t.outlookLabel}</h2>
+        <CardTitle as="h2">{t.outlookLabel}</CardTitle>
       </div>
-      {t.outlookSummary ? <p className="mt-2 text-label font-normal leading-read tracking-normal text-ink">{t.outlookSummary}</p> : null}
+      {t.outlookSummary ? <CardBody className="mt-2">{t.outlookSummary}</CardBody> : null}
 
       {t.metrics?.length ? (
         <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -278,8 +279,8 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                       className="group flex items-start justify-between gap-3 px-4 pb-2 pt-3 transition hover:bg-white/[0.03]"
                     >
                       <span className="min-w-0">
-                        <span className="text-label font-medium text-white/88">{it.title}</span>
-                        {it.note ? <span className="mt-0.5 block text-meta leading-body text-white/55">{it.note}</span> : null}
+                        <RowTitle>{it.title}</RowTitle>
+                        {it.note ? <RowMeta className="mt-0.5 block">{it.note}</RowMeta> : null}
                       </span>
                       <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
                     </a>

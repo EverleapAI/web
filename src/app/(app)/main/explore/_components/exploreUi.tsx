@@ -17,6 +17,7 @@ import {
 
 import type { Lane, Rgb } from "../_data/exploreSchema";
 import { signalLabel } from "../_lib/scorePath";
+import { EYEBROW_CLASS } from "@/lib/ui/prose";
 
 // Defensive: AI-generated catalog content can carry enum values (e.g. a metric
 // `tone`) outside the mock's palette, which resolve to an undefined color. A
@@ -80,9 +81,7 @@ export function SignalChip({ score, accent }: { score: number; accent: Rgb }) {
         ))}
       </span>
       <span className="text-meta font-semibold tabular-nums text-white">{score}</span>
-      <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/45">
-        {signalLabel(score)}
-      </span>
+      <span className={`${EYEBROW_CLASS} text-white/45`}>{signalLabel(score)}</span>
     </div>
   );
 }
@@ -95,7 +94,7 @@ export function SectionHeader({ children, accent }: { children: React.ReactNode;
         className="h-[7px] w-[7px] rounded-full"
         style={{ backgroundColor: rgba(accent, 0.95), boxShadow: `0 0 12px ${rgba(accent, 0.38)}` }}
       />
-      <span className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: rgba(accent, 0.9) }}>
+      <span className={EYEBROW_CLASS} style={{ color: rgba(accent, 0.9) }}>
         {children}
       </span>
       <span className="h-px w-8" style={{ background: `linear-gradient(90deg, ${rgba(accent, 0.24)} 0%, transparent 100%)` }} />

@@ -14,6 +14,7 @@ import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
+import { CardBody, CardTitle } from "@/lib/ui/card";
 import { LANE_ACCENT, laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
@@ -58,9 +59,7 @@ function PathCard({ path }: { path: ExplorePath }) {
           <Icon className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lede font-semibold leading-tight tracking-title text-ink-strong sm:text-read">
-            {path.card.title}
-          </h2>
+          <CardTitle as="h2">{path.card.title}</CardTitle>
           {path.brightOutlook ? (
             <span
               className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-micro font-semibold"
@@ -77,9 +76,9 @@ function PathCard({ path }: { path: ExplorePath }) {
         </div>
       </div>
 
-      <p className="mt-3 text-label font-normal leading-read tracking-normal text-ink-quiet">
+      <CardBody className="mt-3">
         {path.card.hook} {path.card.description}
-      </p>
+      </CardBody>
 
       <Link
         href={href}

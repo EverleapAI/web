@@ -105,7 +105,7 @@ export default function InsightsSummaryDetailModal({
                 <h3
                   className={[
                     dark ? "text-white/92" : "text-slate-950",
-                    "text-[1.15rem] font-semibold leading-title tracking-title",
+                    "text-lede font-semibold leading-title tracking-title",
                   ].join(" ")}
                 >
                   {headline}

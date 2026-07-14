@@ -45,8 +45,7 @@ function headerTitle(dark: boolean) {
 
 function heroTitleClass(dark: boolean) {
   return [
-    "text-[1.56rem] font-semibold leading-display tracking-title",
-    "sm:text-[1.8rem]",
+    "text-title font-semibold leading-display tracking-title",
     dark ? "text-white/72" : "text-slate-950",
   ].join(" ");
 }

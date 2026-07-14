@@ -51,22 +51,32 @@
   /* ---- Type scale ----------------------------------------------------------
      30 sizes → 8 steps. There is no world in which 13px, 13.5px and 14px were
      three separate decisions. Leading is baked in so the two can't drift apart
-     again. */
-  --text-micro: 11px; /* eyebrows, badge pills, tab labels */
+     again.
+
+     EVERY STEP IS MULTIPLIED BY --type-scale, and that is the fix for "it reads
+     too small on the phone". The ladder used to be eight fixed pixel values with
+     no responsive step anywhere — no media query, no clamp — so an iPhone held at
+     35cm was served the exact same 17px card body as a 27" laptop at 60cm. The
+     ladder was tuned by eye on a desktop, so of course it came out small on a
+     phone. Scaling the whole ladder by one number keeps every relationship in the
+     scale intact (a lede stays a notch under the read) and gives us exactly one
+     value to settle on the device. Line-heights are unitless, so they scale for
+     free. See the --type-scale block below the @theme for where it gets set. */
+  --text-micro: calc(11px * var(--type-scale, 1)); /* eyebrows, badge pills, tab labels */
   --text-micro--line-height: 1.35;
-  --text-meta: 13px; /* timestamps, captions, footnotes */
+  --text-meta: calc(13px * var(--type-scale, 1)); /* timestamps, captions, footnotes */
   --text-meta--line-height: 1.5;
-  --text-label: 15px; /* buttons, list items, UI labels */
+  --text-label: calc(15px * var(--type-scale, 1)); /* buttons, list items, UI labels */
   --text-label--line-height: 1.5;
-  --text-body: 17px; /* supporting prose inside cards */
+  --text-body: calc(17px * var(--type-scale, 1)); /* supporting prose inside cards */
   --text-body--line-height: 1.6;
-  --text-lede: 19px; /* the SECONDARY read + section headings — a notch under the hero */
+  --text-lede: calc(19px * var(--type-scale, 1)); /* the SECONDARY read + section headings — a notch under the hero */
   --text-lede--line-height: 1.6;
-  --text-read: 21px; /* THE agentic read — Today / Insights / Explore */
+  --text-read: calc(21px * var(--type-scale, 1)); /* THE agentic read — Today / Insights / Explore */
   --text-read--line-height: 1.65;
-  --text-title: 26px; /* card titles, the Today masthead */
+  --text-title: calc(26px * var(--type-scale, 1)); /* card titles, the Today masthead */
   --text-title--line-height: 1.2;
-  --text-display: 32px; /* page heroes */
+  --text-display: calc(32px * var(--type-scale, 1)); /* page heroes */
   --text-display--line-height: 1.1;
 
   /* ---- Letter-spacing ------------------------------------------------------
@@ -132,6 +142,23 @@
   --read-weight: 400;
   --heading-weight: 600;
   --read-tracking: 0em;
+
+  /* Structural titles — card titles, row titles, tiles. Kept SEPARATE from
+     --heading-weight, which is the agent's opening line: those are different
+     questions. "Is the agent's first sentence bolder than its second?" is a
+     question about voice; "how heavy is a card's title?" is a question about
+     furniture, and binding them together would mean answering one by accident
+     while trying to answer the other. */
+  --title-weight: 600;
+
+  /* Multiplies every step of the type ladder. 1 = the shipped desktop scale.
+     Deliberately left at 1 here, including on mobile, so that when the tuner is
+     opened on the phone it starts from the CURRENT baseline — the thing being
+     complained about — rather than from a bump I already guessed at. The answer
+     to "how much bigger" is the number that comes back from the device, and it
+     will most likely land as a mobile-only media query rather than a global
+     change: the laptop read is not the one that's broken. */
+  --type-scale: 1;
 }
 
 /* WHY SMOOTHING IS A DIAL, AND WHY IT IS A *MOBILE* PROBLEM.

@@ -6,6 +6,7 @@ import { Clock3, Sparkles } from "lucide-react";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import { CardBody, CardTitle, RowMeta } from "@/lib/ui/card";
 import { LINK_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 /* =============================================================================
@@ -72,18 +73,6 @@ function readingSurface(dark: boolean) {
 
 function sectionKicker(dark: boolean) {
   return ["text-meta font-semibold uppercase tracking-eyebrow", dark ? "text-white/50" : "text-slate-600"].join(" ");
-}
-
-function sectionTitle(dark: boolean) {
-  return dark ? "text-ink-strong" : "text-slate-900";
-}
-
-function bodyText(dark: boolean) {
-  return dark ? "font-normal leading-read tracking-normal text-ink" : "text-slate-700";
-}
-
-function mutedText(dark: boolean) {
-  return dark ? "font-normal leading-read tracking-normal text-ink-quiet" : "text-slate-600";
 }
 
 /* =============================================================================
@@ -167,14 +156,7 @@ function FunFactCard({
             </div>
           ) : null}
 
-          <p
-            className={[
-              "text-body font-semibold leading-body tracking-title",
-              sectionTitle(dark),
-            ].join(" ")}
-          >
-            {fact.observation}
-          </p>
+          <CardTitle>{fact.observation}</CardTitle>
         </div>
       </div>
 
@@ -265,10 +247,8 @@ export default function FunFactsTab(props: FunFactsTabProps) {
 
         <div className="relative">
           <div className={sectionKicker(dark)}>Fun Facts</div>
-          <div className={["mt-2 text-body font-semibold tracking-tight", sectionTitle(dark)].join(" ")}>
-            {buildOpenLine(nameFromHeadline)}
-          </div>
-          <div className={["mt-2 text-label leading-relaxed", bodyText(dark)].join(" ")}>{delightPara}</div>
+          <CardTitle className="mt-2">{buildOpenLine(nameFromHeadline)}</CardTitle>
+          <CardBody className="mt-2">{delightPara}</CardBody>
         </div>
       </div>
 
@@ -316,7 +296,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className={["text-label font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</span>
+              <CardTitle as="span">Time Twin</CardTitle>
               <span
                 className={[
                   "rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-eyebrow",
@@ -327,11 +307,13 @@ export default function FunFactsTab(props: FunFactsTabProps) {
               </span>
             </div>
 
-            <div className={["mt-1 text-meta leading-relaxed", mutedText(dark)].join(" ")}>{timeTwinTeaser}</div>
+            <RowMeta as="div" className="mt-1">
+              {timeTwinTeaser}
+            </RowMeta>
 
             <div
               className={[
-                "mt-2 inline-flex items-center gap-2 text-sm font-semibold",
+                "mt-2 inline-flex items-center gap-2 text-label font-semibold",
                 dark ? "text-white/70" : "text-slate-700",
               ].join(" ")}
             >
