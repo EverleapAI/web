@@ -106,6 +106,60 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
 }
 
 /**
+ * Where you stand across the whole collection, in a sentence.
+ *
+ * The card is called "Where you are" and it is about the BIG picture, but the
+ * only sentence in it was about the story — so a user who had answered every
+ * question in the app read "the picture's complete" directly above a nudge
+ * telling them to go do more. Both were true. Together they were nonsense.
+ *
+ * So the sentence now describes the collection, and it names the thing people
+ * actually get wrong: a badge you have STARTED is not a badge you have FINISHED.
+ * Eleven bronzes and eleven golds are not the same twenty-two.
+ */
+export function achievementsLead(stats: BadgeStats | null | undefined): string | null {
+  if (!stats || stats.totalCount <= 0) return null;
+
+  const total = stats.totalCount;
+  const gold = stats.goldCount ?? 0;
+  const started = stats.earnedCount ?? 0;
+  const partway = Math.max(0, started - gold);
+  const untouched = Math.max(0, total - started);
+
+  if (gold >= total) {
+    return "Every award, all the way to gold. There is nothing left to chase here — which is its own kind of finished.";
+  }
+
+  if (started === 0) {
+    return `No awards yet. All ${total} of them light up as you tell your story, explore a direction, and try things for real.`;
+  }
+
+  // The sentence has one job: explain why a nearly-full rack still comes with a
+  // list of things to do.
+  const parts: string[] = [
+    `${gold} of your ${total} awards ${gold === 1 ? "is" : "are"} gold`,
+  ];
+
+  if (partway > 0) {
+    parts.push(
+      `${partway} more ${partway === 1 ? "is" : "are"} part-way there`
+    );
+  }
+  if (untouched > 0) {
+    parts.push(
+      `${untouched} ${untouched === 1 ? "hasn't" : "haven't"} started`
+    );
+  }
+
+  const standing =
+    parts.length === 1
+      ? `${parts[0]}.`
+      : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}.`;
+
+  return `${standing} The rest move when you explore, try things, and tell me how they went.`;
+}
+
+/**
  * The section a route lands in: "/main/actions/abc-123" -> "/main/actions".
  * Query strings are part of the destination but not of the place.
  */
@@ -262,12 +316,15 @@ export function WhereYouAre({
         </span>
       </div>
 
-      {lead ? (
+      {/* Without a lead the card is a scoreboard with no explanation of itself.
+          Every screen gets the standing sentence; Today overrides it while the
+          story is still worth nudging. */}
+      {lead ?? achievementsLead(stats) ? (
         <div
           className={`mb-4 max-w-[560px] text-[19px] ${PROSE_CLASS}`}
           style={PROSE_STYLE}
         >
-          {lead}
+          {lead ?? achievementsLead(stats)}
         </div>
       ) : null}
 

@@ -21,7 +21,7 @@ import {
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-import { AchievementBlock } from "../achievements/WhereYouAre";
+import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
@@ -611,13 +611,21 @@ export function TodayHeart({
             Where you are
           </CardHeading>
 
-          {/* Lead + CTA on ONE line: the tail of the sentence is the link. */}
-          <p
-            className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
-            style={PROSE_STYLE}
-          >
-            {storyPrefix}
-            {storyLinkText ? (
+          {/* While the story still has questions in it, the story IS where you are,
+              and the tail of the sentence is the link that continues it.
+
+              Once it doesn't, the story stops being the subject. The old copy went
+              on saying "the picture's complete" — a claim about the story, made in
+              a card about the whole collection, directly above a nudge to go do
+              more. Someone who had answered every question in the app was told they
+              were finished and then handed a list. So when the story is done we say
+              so, plainly, and then explain the collection instead. */}
+          {storyLinkText ? (
+            <p
+              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              style={PROSE_STYLE}
+            >
+              {storyPrefix}
               <button
                 type="button"
                 onClick={() => router.push(storyRoute)}
@@ -626,8 +634,16 @@ export function TodayHeart({
               >
                 {storyLinkText} →
               </button>
-            ) : null}
-          </p>
+            </p>
+          ) : (
+            <p
+              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              style={PROSE_STYLE}
+            >
+              You&apos;ve told me your whole story — every question answered.{" "}
+              {achievementsLead(badges)}
+            </p>
+          )}
 
           <div className="mt-4">
             <AchievementBlock

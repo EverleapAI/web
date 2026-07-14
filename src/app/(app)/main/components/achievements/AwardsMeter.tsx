@@ -22,7 +22,13 @@ const TROPHIES = 10;
 const LIT = "rgba(232,199,126,0.92)";
 const UNLIT = "rgba(255,255,255,0.10)";
 
-/** Lit trophies, to the nearest half, out of ten. */
+// Lit trophies, to the nearest half, out of ten — filled by RUNGS, not badges.
+//
+// This used to fill on "badges with any tier at all", so a user holding 22 of 24
+// badges — eleven of them at bronze, with real work still in them — saw a nearly
+// full rack and was then handed a to-do list. The meter was the thing lying. A
+// rung is one tier a badge actually offers, so the fraction now moves every time
+// you climb, and only reads full when there is genuinely nothing left.
 function litCount(earned: number, total: number): number {
   if (total <= 0) return 0;
   const share = Math.max(0, Math.min(1, earned / total));
@@ -60,13 +66,19 @@ export function AwardsMeter({
 
   if (!s || s.totalCount <= 0) return null;
 
-  const lit = litCount(s.earnedCount, s.totalCount);
+  // Fill on rungs; label on gold. Older payloads have neither, so fall back to the
+  // badge count rather than rendering an empty rack.
+  const lit =
+    s.rungsTotal > 0
+      ? litCount(s.rungsEarned, s.rungsTotal)
+      : litCount(s.earnedCount, s.totalCount);
+  const gold = s.goldCount ?? 0;
 
   return (
     <button
       type="button"
       onClick={() => emitOpenAchievements()}
-      aria-label={`Awards — ${s.earnedCount} of ${s.totalCount} badges earned. Open your badges.`}
+      aria-label={`Awards — ${gold} of ${s.totalCount} awards at gold. Open your badges.`}
       className={[
         "group flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 text-left transition hover:bg-white/[0.045] active:opacity-80",
         className ?? "",
@@ -88,7 +100,7 @@ export function AwardsMeter({
           </span>
           <span className="text-white/40">
             {" · "}
-            {s.earnedCount} of {s.totalCount} badges earned
+            {gold} of {s.totalCount} at gold
           </span>
         </span>
       </span>

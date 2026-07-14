@@ -61,8 +61,18 @@ export type SurfaceProgress = {
 };
 
 export type BadgeStats = {
+  /** Badges with ANY tier. Counts a bronze the same as a gold — do not meter on it. */
   earnedCount: number;
   totalCount: number;
+  /** Badges actually finished. */
+  goldCount: number;
+  /**
+   * Rungs, not badges. "22 of 24 earned" read as 92% done while eleven badges
+   * still had work in them; the trophies were measuring what you'd touched, not
+   * what you'd finished. Rungs earned over rungs available is the honest fill.
+   */
+  rungsEarned: number;
+  rungsTotal: number;
   /** Per-screen progress, rides along on the same request. */
   surfaces: Partial<Record<Surface, SurfaceProgress>>;
 };
@@ -89,6 +99,11 @@ export function useBadgeStats(enabled = true): BadgeStats | null {
         setStats({
           earnedCount: Number(data.earnedCount ?? 0),
           totalCount: Number(data.total ?? data.badges?.length ?? 0),
+          goldCount: Number(data.goldCount ?? 0),
+          // Zero means "this payload predates rungs" — the meter falls back to the
+          // badge count rather than rendering an empty rack.
+          rungsEarned: Number(data.rungsEarned ?? 0),
+          rungsTotal: Number(data.rungsTotal ?? 0),
           surfaces: (data.surfaces ?? {}) as BadgeStats["surfaces"],
         });
       } catch {
