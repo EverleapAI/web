@@ -27,13 +27,12 @@ import type {
   BlockItem,
   BadgeStats,
 } from "@/lib/achievements/useBadgeStats";
-import { CardBody, RowMeta, RowTitle } from "@/lib/ui/card";
+import { CardBody, RowMeta } from "@/lib/ui/card";
 import { EYEBROW_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 import { SectionCard } from "../ui/SectionCard";
 import { AwardsMeter } from "./AwardsMeter";
 
-const GOLD = "rgba(232,199,126,0.92)";
 const GOLD_RGB = "232,199,126";
 
 const METAL: Record<string, { line: string; ink: string; fill: string }> = {
@@ -213,22 +212,31 @@ export function AchievementBlock({
           what the next one wants, and a button that goes and earns it. A pill here
           would only ever know the category; the badge knows the whole story. */}
       {next ? (
-        <button
-          type="button"
-          onClick={() => emitOpenAchievements(next.slug)}
-          className="group flex w-full items-center gap-2.5 rounded-xl px-1 py-1 text-left transition hover:bg-white/[0.03] active:opacity-80"
-          aria-label={`Next up: ${next.name}. ${next.detail} Open this award.`}
-        >
-          <Medal glyph={next.glyph} tier={next.tier} />
-          <RowMeta as="p" className="min-w-0 flex-1">
-            <RowTitle style={{ color: GOLD }}>Next up: {next.name}</RowTitle>{" "}
-            — {next.detail}
-          </RowMeta>
-          <ChevronRight
-            className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
-            style={{ color: `rgba(${GOLD_RGB},0.55)` }}
-          />
-        </button>
+        <div className="space-y-3 pt-0.5">
+          {/* What the next rung wants — a quiet line, the same role as the body
+              copy above a section's CTA. */}
+          <RowMeta as="p">{next.detail}</RowMeta>
+
+          {/* The door, as a pill — the same shape as every other section's CTA
+              ("Reflect on it", "See why it fits"), in the awards' gold. The medal
+              rides on the pill so it still reads as a badge, not a generic link. */}
+          <button
+            type="button"
+            onClick={() => emitOpenAchievements(next.slug)}
+            className="group inline-flex items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-5 text-label font-semibold transition hover:brightness-110 active:opacity-80"
+            style={{
+              color: `rgb(${GOLD_RGB})`,
+              background: `rgba(${GOLD_RGB},0.08)`,
+              border: `1px solid rgba(${GOLD_RGB},0.28)`,
+              boxShadow: `0 2px 10px rgba(${GOLD_RGB},0.08)`,
+            }}
+            aria-label={`Next up: ${next.name}. ${next.detail} Open this award.`}
+          >
+            <Medal glyph={next.glyph} tier={next.tier} />
+            <span>Next up: {next.name}</span>
+            <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
+          </button>
+        </div>
       ) : null}
     </div>
   );
