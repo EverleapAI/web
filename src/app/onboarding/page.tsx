@@ -139,7 +139,18 @@ function handleComplete(finalAnswers: Answers) {
     );
   } catch {}
 
-  router.push("/regauth");
+  // Both kinds of person leaving onboarding have to end up on /main/intro, which
+  // is what claims the answers we just stashed and kicks off generation.
+  //
+  //   New visitor — no session. They go through /regauth as before; the ZIP step
+  //   at the end forwards to this returnTo.
+  //   Signed-in visitor — someone who erased their account and is starting over.
+  //   The middleware bounces them off /regauth (they are already authenticated)
+  //   straight to this returnTo, skipping a registration they do not need.
+  //
+  // Without the returnTo, that second case lands on /main instead: the answers
+  // are never claimed, and the app comes back up empty.
+  router.push("/regauth?returnTo=/main/intro");
 }
   function handleNext(nextAnswers = answers) {
     if (!currentNode) return;

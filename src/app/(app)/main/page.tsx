@@ -14,7 +14,6 @@ import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
 import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
 import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
-import { ConstellationAnchor } from "./components/ui/ConstellationAnchor";
 import {
   TodayCard,
   TodayCardSkeleton,
@@ -22,13 +21,8 @@ import {
   type TodayHeartData,
 } from "./components/today";
 
-// Atmosphere accent (the ConstellationAnchor tint) follows the dispatch type.
-const HEART_ACCENT_RGB: Record<string, { r: number; g: number; b: number }> = {
-  learn: { r: 182, g: 160, b: 255 },
-  look: { r: 92, g: 180, b: 255 },
-  do: { r: 246, g: 178, b: 60 },
-  close: { r: 55, g: 211, b: 160 },
-};
+// The atmosphere accent moved into TodayHeart with the card it belongs to — the
+// read is the only section that carries the constellation now.
 
 const SIGNAL_COMPLETE_COUNT = 5;
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
@@ -391,10 +385,6 @@ export default function MainHomePage() {
     todayGuidance?.next_action_route ??
     null;
 
-  const heartAccent = heart
-    ? HEART_ACCENT_RGB[heart.dispatch.type] ?? HEART_ACCENT_RGB.learn
-    : { r: 92, g: 180, b: 255 };
-
   const storyPercent = todayGuidance?.story_progress?.percent ?? 0;
 
   function handlePrimary() {
@@ -433,45 +423,18 @@ export default function MainHomePage() {
       <div className="flex min-h-[100svh] flex-col">
         <main className={`${pagePadding()} flex-1`}>
           <div className={pageShell()}>
+            {/* Today is four cards, and TodayHeart owns the first three — the read,
+                where you are, and the action to reflect on. It renders them as peers
+                rather than as one canvas, so this section does NOT wrap them in a
+                card of its own: that would nest a card inside a card and undo the
+                separation. The legacy TodayCard fallback is still a single card, so
+                it keeps its wrapper. */}
             <section>
-              <SectionCard
-                tone="hero"
-                className="!px-5 !py-3.5"
-                backdrop={
-                  <>
-                    {/* The Oura move: the atmosphere lives up top behind the
-                        masthead as a soft, out-of-focus haze and DISSOLVES before
-                        the reading copy — so text sits on a clean field and never
-                        on sharp star points. Blurred, not just dimmed (Today only). */}
-                    <div
-                      className="pointer-events-none absolute inset-0"
-                      style={{
-                        opacity: 0.5,
-                        filter: "blur(1.2px)",
-                        // Fade the atmosphere DOWN (top note only) AND pinch both
-                        // side edges to zero, so the right-weighted star bloom
-                        // dissolves before the card edge instead of hard-clipping
-                        // there. Two mask layers intersected.
-                        WebkitMaskImage:
-                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-                        WebkitMaskComposite: "source-in",
-                        maskImage:
-                          "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-                        maskComposite: "intersect",
-                      }}
-                    >
-                      <ConstellationAnchor
-                        seed={`today:${new Date().toISOString().slice(0, 10)}`}
-                        accent={heartAccent}
-                      />
-                    </div>
-                  </>
-                }
-              >
-                {guidanceLoaded ? (
-                  heart ? (
-                    <TodayHeart data={heart} onPrimary={handlePrimary} />
-                  ) : (
+              {guidanceLoaded ? (
+                heart ? (
+                  <TodayHeart data={heart} onPrimary={handlePrimary} />
+                ) : (
+                  <SectionCard tone="hero" className="!px-5 !py-3.5">
                     <TodayCard
                       headline={todayGuidance?.headline}
                       reflection={todayGuidance?.reflection}
@@ -481,15 +444,19 @@ export default function MainHomePage() {
                       ctaLabel={ctaLabel}
                       onPrimary={handlePrimary}
                     />
-                  )
-                ) : (
+                  </SectionCard>
+                )
+              ) : (
+                <SectionCard tone="hero" className="!px-5 !py-3.5">
                   <TodayCardSkeleton />
-                )}
-              </SectionCard>
+                </SectionCard>
+              )}
             </section>
 
-            <section className="mt-5">
-              <SectionCard tone="neutral" className="px-4 py-5">
+            {/* 4 · The question it's sitting with. Already a card; now it reads as
+                the fourth of four rather than the second of two. */}
+            <section className="mt-4">
+              <SectionCard tone="neutral" className="px-5 py-5">
                 {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
                   <TodayTinyTaskCard
                     dark={dark}
@@ -521,7 +488,7 @@ export default function MainHomePage() {
                 onClick={() => router.push("/main/reset-answers")}
                 className="text-[12px] font-medium text-white/30 transition hover:text-cyan-200"
               >
-                Reset Answers
+                Start over
               </button>
             </div>
 

@@ -4,9 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 const RESET_CODE = "101010";
-// Local caches to clear so the replayed intro + Today hydrate from the fresh DB
-// state. Onboarding answers are preserved server-side (and regenerated from), so
-// clearing the local copy just stops the intro from re-claiming them.
+// The server wipe cannot reach these — they live in the browser. If the local
+// onboarding answers survived, the intro would re-claim them on the way back in
+// and quietly restore the account we just cleared.
 const LOCAL_KEYS_TO_CLEAR = [
   "everleap_onboarding_answers",
   "everleap_zip",
@@ -62,9 +62,11 @@ export default function ResetAnswersPage(): React.JSX.Element {
         for (const k of LOCAL_KEYS_TO_CLEAR) window.localStorage.removeItem(k);
       } catch {}
 
-      // Straight into the narrated intro — it polls the freshly kicked-off
-      // synthesis, reveals it, then hands to a rebuilt Today.
-      router.replace("/main/intro");
+      // Back to the very beginning. Onboarding is not session-gated, so a signed-in
+      // user can walk it again; it ends at /regauth, where the middleware sees the
+      // surviving session and forwards them to /main/intro — which claims the new
+      // answers and fires generation, exactly as it does for a brand-new account.
+      router.replace("/onboarding");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reset failed.");
       setStep("confirm");
@@ -81,7 +83,7 @@ export default function ResetAnswersPage(): React.JSX.Element {
             </div>
 
             <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Reset Answers
+              Start over
             </h1>
 
             <p className="mt-4 text-white/60">
@@ -131,17 +133,18 @@ export default function ResetAnswersPage(): React.JSX.Element {
             </div>
 
             <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Reset your account?
+              Erase everything?
             </h1>
 
             <p className="mt-5 text-white/60">
-              This wipes everything except your onboarding answers — Story,
-              actions, matches, activity, and all generated guidance.
+              Every answer you have given, every action, badge, match and piece of
+              guidance — including your onboarding answers, your name and your ZIP.
+              The account will know nothing about you.
             </p>
 
             <p className="mt-3 text-white/45">
-              You stay logged in. We replay the intro and rebuild Today from your
-              onboarding answers.
+              You stay signed in and your passkey still works. You will start again
+              from the first onboarding question. This cannot be undone.
             </p>
 
             {error ? (
@@ -162,7 +165,7 @@ export default function ResetAnswersPage(): React.JSX.Element {
                 onClick={() => void performReset()}
                 className="rounded-full bg-red-500/20 px-5 py-3 font-semibold text-red-200"
               >
-                Yes, Reset
+                Yes, erase it all
               </button>
             </div>
           </>
@@ -175,12 +178,11 @@ export default function ResetAnswersPage(): React.JSX.Element {
             </div>
 
             <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
-              Resetting your account
+              Erasing your account
             </h1>
 
             <p className="mt-5 text-white/60">
-              Clearing everything and replaying the intro from your onboarding
-              answers…
+              Clearing everything, then taking you back to the start…
             </p>
           </>
         ) : null}

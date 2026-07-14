@@ -1,24 +1,24 @@
 "use client";
 
-// The achievement block: one meter, one goal, one reward.
+// The achievement block: the trophies, and the one badge you're closest to.
 //
-// This replaces the three story bars + the trophy meter + the separate badge line
-// that used to stack up here. Those were three progress meters on three different
-// scales, two of which were secretly the same data — Motivations / Strengths /
-// Skills are now badges, so the bars ARE the badge block rather than a bespoke
-// widget sitting next to it.
+// This used to render progress bars — three for the story sections, or one for a
+// single badge — with the trophy meter underneath. That was the same fact told
+// twice. The bars said "you are 60% of the way through this screen's badges"; the
+// trophies said "you are 11 of 24 through all of them". Two meters, two scales,
+// one message, and the bars only ever meant anything to a user who hadn't finished
+// their story yet.
 //
-// It never expires. The story runs out in a week; badges don't. Once the sections
-// are all gold the block re-points at whatever is next, so the same furniture keeps
-// working long after the story is told.
+// So the bars are gone and the trophies carry it. But trophies can only ever say
+// HOW FAR — ten icons mapped onto twenty-four badges is a proportion, and a
+// proportion cannot name anything. So the sentence underneath does the naming:
+// which badge is next, and what it is waiting for. Feeling on top, fact below.
 //
-// Two objects, two jobs: the bars READ OUT this screen's progress and tap nowhere;
-// the AwardsMeter underneath is the labelled door to the badges. They were one
-// button once, which meant tapping a progress bar teleported you to Awards.
+// The meter is the door to Awards; the line beneath it is a readout and taps
+// nowhere.
 
 import * as React from "react";
 
-import { type BadgeSurface } from "@/lib/actionsBus";
 import type {
   SurfaceBlock,
   BlockItem,
@@ -27,51 +27,78 @@ import type {
 
 import { AwardsMeter } from "./AwardsMeter";
 
-// Metal lives on the MEDAL only — never on the bars.
-//
-// A first-time user has no idea what bronze means. It's a concept, and a coloured
-// bar can't teach one: they just see an orange bar and two grey ones. Metal works
-// in the Awards modal, where the badge is named and explained; it does not work as
-// an unlabelled colour on a progress meter.
-//
-// Colouring the bars by tier also meant they were filled SOLID regardless of
-// progress — one answer of seven rendered as a complete bar. The bar was showing
-// what you'd earned, not how far you'd got, which is the one thing a progress bar
-// exists to say.
+const GOLD = "rgba(232,199,126,0.92)";
+
 const METAL: Record<string, { line: string; ink: string; fill: string }> = {
   bronze: { line: "#C08457", ink: "#E8B98F", fill: "rgba(192,132,87,0.14)" },
   silver: { line: "#C6CBD6", ink: "#E3E7EF", fill: "rgba(198,203,214,0.14)" },
   gold: { line: "#E8C77E", ink: "#F4DFAE", fill: "rgba(232,199,126,0.16)" },
 };
 
-const DIM_BAR = "rgba(255,255,255,0.09)";
-const ACCENT = "rgb(182,160,255)";
-const ACCENT_GLOW = "0 0 8px rgba(182,160,255,0.5)";
+type NextUp = { name: string; detail: string; glyph: string; tier: string };
 
-/** How full this badge is, as a percentage of its next rung. Gold = done = full. */
-function pctOf(item: { tier: string; current: number; target: number }): number {
-  if (item.tier === "gold") return 100;
-  if (item.target <= 0) return 0;
-  return Math.max(0, Math.min(100, (item.current / item.target) * 100));
+/**
+ * The badge this screen is closest to, and what it's waiting for.
+ *
+ * A "single" block already IS the nearest badge — the engine picked it — and it
+ * carries the hint written for exactly this job. A "group" (the three story
+ * sections) has no hint, so the count does the work: the first section that
+ * isn't finished, and how far into it you are.
+ */
+function nextUp(block: SurfaceBlock): NextUp | null {
+  if (!block) return null;
+
+  if (block.kind === "single") {
+    const b = block.badge;
+    const left = Math.max(0, b.target - b.current);
+
+    return {
+      name: b.name,
+      // The hint is written for exactly this job, but older badges don't all
+      // carry one — fall back to the count, which is always true.
+      detail: b.hint?.trim() || `${left} to go.`,
+      glyph: b.glyph,
+      tier: b.tier,
+    };
+  }
+
+  const unfinished: BlockItem | undefined = block.items.find(
+    (i) => i.tier !== "gold"
+  );
+
+  // Every section is gold — the medal is the whole point of the group, so say so.
+  if (!unfinished) {
+    return {
+      name: block.medal.name,
+      detail: "Earned.",
+      glyph: block.medal.glyph,
+      tier: block.medal.tier,
+    };
+  }
+
+  const left = Math.max(0, unfinished.target - unfinished.current);
+
+  return {
+    name: unfinished.name,
+    detail:
+      left > 0
+        ? `${left} more ${left === 1 ? "answer" : "answers"}.`
+        : `${unfinished.current} of ${unfinished.target}.`,
+    glyph: unfinished.glyph,
+    tier: unfinished.tier,
+  };
 }
 
-/** The medal at the end of the row — the thing the whole block adds up to. */
-function Medal({ item }: { item: BlockItem }) {
-  const m = METAL[item.tier];
+function Medal({ glyph, tier }: { glyph: string; tier: string }) {
+  const m = METAL[tier];
 
   return (
     <span
       aria-hidden
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[16px] leading-none"
+      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] leading-none"
       style={
         m
-          ? {
-              border: `1.5px solid ${m.line}`,
-              background: m.fill,
-              color: m.ink,
-              boxShadow:
-                item.tier === "gold" ? "0 0 18px rgba(232,199,126,0.25)" : undefined,
-            }
+          ? { border: `1.5px solid ${m.line}`, background: m.fill, color: m.ink }
           : {
               // Not yet earned: a dashed outline, visibly waiting to be filled.
               border: "1.5px dashed rgba(255,255,255,0.13)",
@@ -79,117 +106,8 @@ function Medal({ item }: { item: BlockItem }) {
             }
       }
     >
-      {item.glyph}
+      {glyph}
     </span>
-  );
-}
-
-/** Sibling badges side by side — the three story sections, each filling as you go. */
-function Group({ items }: { items: BlockItem[] }) {
-  return (
-    <div className="min-w-0 flex-1">
-      <div className="flex gap-1.5">
-        {items.map((item) => {
-          const pct = pctOf(item);
-
-          return (
-            <span
-              key={item.slug}
-              className="h-[7px] flex-1 overflow-hidden rounded-full"
-              style={{ background: DIM_BAR }}
-            >
-              <span
-                className="block h-full rounded-full transition-[width] duration-500"
-                style={{
-                  width: `${pct}%`,
-                  background: ACCENT,
-                  boxShadow: pct > 0 ? ACCENT_GLOW : undefined,
-                }}
-              />
-            </span>
-          );
-        })}
-      </div>
-
-      <div className="mt-2 flex justify-between text-[12px] font-medium">
-        {items.map((item) => (
-          <span
-            key={item.slug}
-            className="flex-1 last:text-right [&:nth-child(2)]:text-center"
-            style={{
-              color:
-                item.tier === "nothing"
-                  ? "rgba(238,241,251,0.32)"
-                  : "rgba(182,160,255,0.95)",
-            }}
-          >
-            {item.name}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * One badge working toward its next rung. Shape follows the goal: something you
- * can count gets pips you can count; a big number gets a proportion. Never a bar
- * for five things, never five pips for fifty.
- */
-const PIP_MAX = 5;
-
-function Single({
-  badge,
-}: {
-  badge: Extract<SurfaceBlock, { kind: "single" }>["badge"];
-}) {
-  const pips = badge.target <= PIP_MAX;
-  const pct =
-    badge.target > 0
-      ? Math.max(0, Math.min(100, (badge.current / badge.target) * 100))
-      : 0;
-
-  return (
-    <div className="min-w-0 flex-1">
-      {pips ? (
-        <div className="flex gap-1.5">
-          {Array.from({ length: badge.target }).map((_, i) => (
-            <span
-              key={i}
-              className="h-[7px] flex-1 rounded-full"
-              style={
-                i < badge.current
-                  ? { background: ACCENT, boxShadow: ACCENT_GLOW }
-                  : { background: DIM_BAR }
-              }
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          className="h-[7px] w-full overflow-hidden rounded-full"
-          style={{ background: DIM_BAR }}
-        >
-          <span
-            className="block h-full rounded-full transition-[width] duration-500"
-            style={{
-              width: `${pct}%`,
-              background: ACCENT,
-              boxShadow: ACCENT_GLOW,
-            }}
-          />
-        </div>
-      )}
-
-      <div className="mt-2 flex items-baseline justify-between gap-3">
-        <span className="min-w-0 text-[12px] font-medium leading-[1.4] text-white/44">
-          {badge.hint}
-        </span>
-        <span className="shrink-0 text-[12px] font-semibold tabular-nums text-white/36">
-          {badge.current}/{badge.target}
-        </span>
-      </div>
-    </div>
   );
 }
 
@@ -201,37 +119,25 @@ export function AchievementBlock({
   /** Feeds the awards meter without a second /api/achievements call. */
   stats?: BadgeStats | null;
 }) {
-  return (
-    <div className="space-y-2">
-      {/* The readout. It shows where you stand on this screen's badges and taps
-          nowhere — a progress bar is a fact, not a link. */}
-      {block ? (
-        <div className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.03] bg-white/[0.015] px-3.5 py-3">
-          {block.kind === "group" ? (
-            <Group items={block.items} />
-          ) : (
-            <Single badge={block.badge} />
-          )}
+  const next = nextUp(block);
 
-          <Medal
-            item={
-              block.kind === "group"
-                ? block.medal
-                : {
-                    slug: block.badge.slug,
-                    name: block.badge.name,
-                    glyph: block.badge.glyph,
-                    tier: block.badge.tier,
-                    current: block.badge.current,
-                    target: block.badge.target,
-                  }
-            }
-          />
+  return (
+    <div className="space-y-2.5">
+      {/* The trophies — how far, and the labelled door to the collection. */}
+      <AwardsMeter stats={stats} />
+
+      {/* The naming. What the trophies structurally cannot say. */}
+      {next ? (
+        <div className="flex items-center gap-2.5 px-1">
+          <Medal glyph={next.glyph} tier={next.tier} />
+          <p className="min-w-0 text-[12.5px] leading-[1.45] text-white/44">
+            <span className="font-semibold" style={{ color: GOLD }}>
+              Next up: {next.name}
+            </span>{" "}
+            — {next.detail}
+          </p>
         </div>
       ) : null}
-
-      {/* The door to the badges — labelled, so it says what it is. */}
-      <AwardsMeter stats={stats} />
     </div>
   );
 }

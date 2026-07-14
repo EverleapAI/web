@@ -110,6 +110,11 @@ export type Reinforcement = {
 // than the whole hero.
 export type LooseThread = {
   title: string;
+  // The reason the agent suggested this action when it first offered it. Today's
+  // reflect section shows it under the title so the nudge argues for itself
+  // rather than just naming something you dropped. Null on older actions that
+  // were saved before missions carried a reason.
+  why?: string | null;
   route: string;
   // "reflect" = finished but not reflected on; "due" = started a while ago and
   // gone quiet ("how's it going?").

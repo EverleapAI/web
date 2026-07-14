@@ -12,9 +12,17 @@ import { ChevronRight, Check } from "lucide-react";
 
 import { emitActionAdded } from "@/lib/actionsBus";
 
-import { LINK_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_MUTED, TEXT_SECONDARY } from "@/lib/ui/prose";
+import {
+  LINK_CLASS,
+  PROSE_CLASS,
+  PROSE_STYLE,
+  TEXT_HEADING,
+  TEXT_MUTED,
+  TEXT_SECONDARY,
+} from "@/lib/ui/prose";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock } from "../achievements/AchievementBlock";
+import { SectionCard } from "../ui/SectionCard";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -147,21 +155,51 @@ function joinLabels(names: string[]): string {
 // LINK_CLASS now lives in @/lib/ui/prose (imported above) — one shared link
 // treatment: own semantic colour, brightening on hover, with a trailing chevron.
 
-// An artistic divider — a hairline that fades in from both edges to a single
-// glowing accent node at the centre, echoing the constellation. One consistent
-// piece of separation between every section.
-function SectionDivider({ rgb }: { rgb: string }) {
+// Today is four things, not one scroll: the agent's read, where you are, an
+// action to reflect on, and the question it's sitting with. They used to run
+// together on a single canvas separated by hairlines, which made them read as
+// paragraphs of one thought rather than four offers you can take or leave.
+//
+// Each is its own card now, and each card says what it is. The heading is the
+// contract: an accent glyph anchor and a plain label, sized to be found without
+// shouting.
+function CardHeading({
+  rgb,
+  glyph,
+  children,
+}: {
+  rgb: string;
+  glyph: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div aria-hidden="true" className="my-5 flex items-center gap-3">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/[0.10]" />
+    <div className="mb-3 flex items-center gap-2.5">
       <span
-        className="h-[3px] w-[3px] rounded-full"
-        style={{ background: `rgb(${rgb})`, boxShadow: `0 0 6px rgba(${rgb},0.8)` }}
-      />
-      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/[0.10]" />
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
+        style={{
+          color: `rgb(${rgb})`,
+          background: `rgba(${rgb},0.08)`,
+          border: `1px solid rgba(${rgb},0.18)`,
+        }}
+      >
+        {glyph}
+      </span>
+      <span
+        className="text-[14px] font-semibold tracking-[0.005em]"
+        style={{ color: TEXT_SECONDARY }}
+      >
+        {children}
+      </span>
     </div>
   );
 }
+
+// Awards keep their own colour. The other three cards take the accent of
+// whatever the agent is on about today; the trophies are the one thing on this
+// screen that isn't about today at all, so they stay gold and read as a
+// different kind of object.
+const AWARD_RGB = "232,199,126";
+const REFLECT_RGB = "45,170,130";
 
 export function TodayHeart({
   data,
@@ -404,80 +442,30 @@ export function TodayHeart({
         };
 
   return (
-    <div className="relative">
-      {/* top row: dispatch mark (left), the day/eyebrow centered up here to save
-          a line, and a live pulse (right). Voice over chrome — no "Do · in the
-          world", no "Today" (you're on the Today tab already). */}
-      <div className="relative flex items-center justify-between">
-        <DispatchGlyph type={dispatch.type} showLabel={false} />
-        <span
-          className="absolute left-1/2 -translate-x-1/2 text-[9.5px] font-bold uppercase tracking-[0.24em]"
-          style={{ color: `rgb(${rgb})`, opacity: 0.55 }}
-        >
-          {welcome.isNewUser
-            ? "Welcome to Everleap"
-            : new Date().toLocaleDateString(undefined, { weekday: "long" })}
-        </span>
-        {/* Awards has one door now — the labelled trophy meter under the story
-            bars, the same control on every main page. A second, unlabelled 13/24
-            chip up here was just a rival entry point saying the same thing. */}
-        <span aria-hidden />
-      </div>
-
-      {/* The arrival masthead — the centered anchor in every state. */}
-      <WelcomeName
-        firstName={welcome.firstName}
-        isNewUser={welcome.isNewUser}
-      />
-
-      {/* The agentic lead — the hero. A ≤50-word retort in every state (neutral
-          prose so the accent stays a spot), with "See more" opening a panel
-          below and "Why" opening the reasoning. */}
-      {heroRetort ? (
-        <div
-          className={`relative mt-4 ${previewRetort ? "rounded-2xl p-3 ring-1 ring-amber-300/45" : ""}`}
-        >
-          {/* Hidden, passcode-gated internal tuning dot (top-right of the read it
-              tunes). Previews are live-only and never saved. */}
-          <PromptLabTrigger
-            dark
-            pageKey="today"
-            targetField="main"
-            currentText={heroRetort}
-            onApplied={setLabPreview}
-            hasActivePreview={!!labPreview}
-            onReset={() => setLabPreview(null)}
-          />
-          {/* A soft accent glow warms the top-right at every size (diffuse, no
-              points, safe behind text). The bright point is pulled just inside
-              the edge and the layer is faded to zero along the right edge with a
-              mask, so the glow dissolves instead of hard-clipping at the box. */}
+    <div className="relative space-y-4">
+      {/* ─── 1 · THE READ ────────────────────────────────────────────────────
+          The agent's read, and the one specific move it wants from you. That move
+          used to live in a second block below this ("Worth a look") which restated
+          the read in different words — so its button came up here, where the
+          argument for it already is, and the rest of the block is gone. The pill is
+          the commit; everything else on this card is a way to interrogate it. */}
+      <SectionCard
+        tone="hero"
+        className="!px-5 !py-4"
+        backdrop={
           <div
-            aria-hidden="true"
             className="pointer-events-none absolute inset-0"
             style={{
-              background: `radial-gradient(72% 78% at 85% 2%, rgba(${rgb},0.06), transparent 62%)`,
-              WebkitMaskImage: "linear-gradient(to left, transparent 0%, #000 22%)",
-              maskImage: "linear-gradient(to left, transparent 0%, #000 22%)",
-            }}
-          />
-          {/* Corner-anchored constellation that grows with the canvas: on wider
-              screens it fills the right gutter beyond the readable text column.
-              Hidden on phones — there the retort fills the width and the hero
-              read must stay pristine. Masked to the top-right so it fades toward
-              the text, never sitting behind it. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden opacity-[0.5] sm:block"
-            style={{
-              // Directional top-right falloff (keeps it off the left text)
-              // INTERSECTED with an all-edge fade, so it never clips at a border.
+              opacity: 0.5,
+              filter: "blur(1.2px)",
+              // Atmosphere up top behind the masthead, dissolving before the
+              // reading copy — text never sits on sharp star points.
               WebkitMaskImage:
-                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-              WebkitMaskComposite: "source-in, source-in",
+                "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+              WebkitMaskComposite: "source-in",
               maskImage:
-                "radial-gradient(95% 95% at 100% 0%, #000 0%, rgba(0,0,0,0.8) 26%, rgba(0,0,0,0.3) 52%, transparent 72%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-              maskComposite: "intersect, intersect",
+                "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+              maskComposite: "intersect",
             }}
           >
             <ConstellationAnchor
@@ -485,61 +473,147 @@ export function TodayHeart({
               accent={accentObj}
             />
           </div>
-
-          <div className="relative z-10 max-w-[560px]">
-            <div className="space-y-3.5">
-              {heroParagraphs.map((para, i) => (
-                <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
-                  {para}
-                </p>
-              ))}
-            </div>
-
-            {heroBody || heroWhy ? (
-              <div className="mt-7 flex flex-wrap items-center gap-4">
-                {heroBody ? (
-                  <button
-                    type="button"
-                    onClick={() => setMoreOpen(true)}
-                    className="group inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[15px] font-semibold tracking-[0.01em] transition duration-150 hover:brightness-110 active:opacity-80"
-                    style={{
-                      color: `rgb(${rgb})`,
-                      background: `rgba(${rgb},0.055)`,
-                      border: `1px solid rgba(${rgb},0.16)`,
-                    }}
-                  >
-                    See more
-                    <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-                  </button>
-                ) : null}
-                {heroWhy ? (
-                  <button
-                    type="button"
-                    onClick={() => setWhyOpen(true)}
-                    className={`${LINK_CLASS} text-[15px]`}
-                    style={{ color: TEXT_SECONDARY }}
-                  >
-                    Why
-                    <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+        }
+      >
+        <div className="relative flex items-center justify-between">
+          <DispatchGlyph type={dispatch.type} showLabel={false} />
+          <span
+            className="absolute left-1/2 -translate-x-1/2 text-[9.5px] font-bold uppercase tracking-[0.24em]"
+            style={{ color: `rgb(${rgb})`, opacity: 0.55 }}
+          >
+            {welcome.isNewUser
+              ? "Welcome to Everleap"
+              : new Date().toLocaleDateString(undefined, { weekday: "long" })}
+          </span>
+          <span aria-hidden />
         </div>
-      ) : null}
 
-      <SectionDivider rgb={rgb} />
+        {/* The arrival masthead — the centered anchor in every state. */}
+        <WelcomeName
+          firstName={welcome.firstName}
+          isNewUser={welcome.isNewUser}
+        />
 
-      {/* PROGRESS — the story cluster, first and on its own: a conversational
-          lead ("You've done your Motivations — now let's continue your story"),
-          the progress bars (a readout; only the small Awards control taps), then
-          the "Continue your story" link deep-linked to the next area. */}
+        {heroRetort ? (
+          <div
+            className={`relative mt-4 ${previewRetort ? "rounded-2xl p-3 ring-1 ring-amber-300/45" : ""}`}
+          >
+            {/* Hidden, passcode-gated internal tuning dot. Previews are live-only
+                and never saved. */}
+            <PromptLabTrigger
+              dark
+              pageKey="today"
+              targetField="main"
+              currentText={heroRetort}
+              onApplied={setLabPreview}
+              hasActivePreview={!!labPreview}
+              onReset={() => setLabPreview(null)}
+            />
+
+            <div className="relative z-10 max-w-[560px]">
+              <div className="space-y-3.5">
+                {heroParagraphs.map((para, i) => (
+                  <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                    {para}
+                  </p>
+                ))}
+              </div>
+
+              {dispatch.meta ? (
+                <div
+                  className="mt-4 text-[13px] tabular-nums"
+                  style={{ color: TEXT_MUTED }}
+                >
+                  {dispatch.meta.duration} · {dispatch.meta.when}
+                </div>
+              ) : null}
+
+              {/* The one bright commit. There is exactly one of these on the
+                  screen, and it is the thing the read has been arguing for. */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={dispatch.save ? handleSaveAction : onPrimary}
+                  disabled={saving || saved}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
+                  style={{
+                    color: `rgb(${rgb})`,
+                    background: `rgba(${rgb},0.08)`,
+                    border: `1px solid rgba(${rgb},0.28)`,
+                    boxShadow: `0 2px 10px rgba(${rgb},0.08)`,
+                  }}
+                >
+                  <span>{primaryLabel}</span>
+                  {saved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* The ways to interrogate it — all text links, so none of them
+                  competes with the commit above. */}
+              {heroBody || heroWhy || dispatch.save ? (
+                <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2.5">
+                  {heroBody ? (
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen(true)}
+                      className={`${LINK_CLASS} text-[15px]`}
+                      style={{ color: TEXT_SECONDARY }}
+                    >
+                      See more
+                      <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                    </button>
+                  ) : null}
+
+                  {heroWhy ? (
+                    <button
+                      type="button"
+                      onClick={() => setWhyOpen(true)}
+                      className={`${LINK_CLASS} text-[15px]`}
+                      style={{ color: TEXT_SECONDARY }}
+                    >
+                      Why
+                      <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                    </button>
+                  ) : null}
+
+                  {dispatch.save ? (
+                    <button
+                      type="button"
+                      onClick={handleHowTo}
+                      disabled={howLoading}
+                      className={`${LINK_CLASS} text-[15px] disabled:opacity-70`}
+                      style={{ color: TEXT_SECONDARY }}
+                    >
+                      {howLoading ? "Opening…" : "How would I even do this?"}
+                      <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </SectionCard>
+
+      {/* ─── 2 · WHERE YOU ARE ───────────────────────────────────────────────
+          The story bars used to live here, right next to the trophies, saying the
+          same thing on a different scale. The trophies won: they never expire, and
+          the bars only ever meant anything to someone who hadn't finished their
+          story. The prose says where you are in the story; the block says where you
+          are in the collection, and names the badge you're closest to. */}
       {showMeter ? (
-        <div className="space-y-2">
+        <SectionCard tone="amber" className="!px-5 !py-4">
+          <CardHeading rgb={AWARD_RGB} glyph="◆">
+            Where you are
+          </CardHeading>
+
           {/* Lead + CTA on ONE line: the tail of the sentence is the link. */}
           <p
-            className={`max-w-[560px] text-[21px] ${PROSE_CLASS}`}
+            className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
             style={PROSE_STYLE}
           >
             {storyPrefix}
@@ -555,162 +629,68 @@ export function TodayHeart({
             ) : null}
           </p>
 
-          {/* One meter, one goal, one reward. The three story sections are badges
-              now, so this IS the badge block — not a bar widget with a badge line
-              bolted underneath it. */}
-          <AchievementBlock
-            block={badges?.surfaces?.today?.block ?? null}
-            stats={badges}
-          />
-        </div>
+          <div className="mt-4">
+            <AchievementBlock
+              block={badges?.surfaces?.today?.block ?? null}
+              stats={badges}
+            />
+          </div>
+        </SectionCard>
       ) : null}
 
-      <SectionDivider rgb={rgb} />
+      {/* ─── 3 · REFLECT ON YOUR ACTIONS ─────────────────────────────────────
+          This was one quiet link at the bottom of the action block. It is the only
+          thing on Today that asks about something the user actually DID, which makes
+          it the most earned nudge on the screen — so it gets to argue for itself:
+          what it is, why we're asking, and a real way in.
 
-      {/* ACTION — the dispatched move on its own: a balanced accent header, the
-          agentic sentence, the one bright button, and lighter links. A
-          right-weighted constellation + accent bloom give it life on wider
-          canvases; hidden on phones so the copy stays clean. */}
-      <div className="relative overflow-hidden rounded-3xl">
-        <div
-          className="pointer-events-none absolute hidden inset-0 opacity-[0.55] sm:block"
-          style={{
-            // Fade the constellation to zero before every edge so its bloom never
-            // hard-clips into a line at the card border.
-            WebkitMaskImage:
-              "linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-            WebkitMaskComposite: "source-in",
-            maskImage:
-              "linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-            maskComposite: "intersect",
-          }}
-        >
-          <ConstellationAnchor
-            seed={`today-action:${dispatch.type}`}
-            accent={accentObj}
-          />
-        </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(120% 100% at 82% 2%, rgba(${rgb},0.11), transparent 62%)`,
-            WebkitMaskImage: "linear-gradient(to left, transparent 0%, #000 20%)",
-            maskImage: "linear-gradient(to left, transparent 0%, #000 20%)",
-          }}
-        />
+          The reason is the one the agent already gave when it suggested the action
+          (mission.why). It is written, it is true, and it costs nothing to show. */}
+      {data.looseThread?.title ? (
+        <SectionCard tone="teal" className="!px-5 !py-4">
+          <CardHeading rgb={REFLECT_RGB} glyph="↺">
+            Reflect on your actions
+          </CardHeading>
 
-        <div className="relative z-10 px-1 py-2">
-          {/* Balanced header — an accent glyph anchor + a real label (not a tiny
-              eyebrow), sized to hold its own against the copy without shouting. */}
-          <div className="flex items-center gap-2.5">
-            <span
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[14px] leading-none"
-              style={{
-                color: `rgb(${rgb})`,
-                background: `rgba(${rgb},0.08)`,
-                border: `1px solid rgba(${rgb},0.18)`,
-              }}
-            >
-              {accent.glyph}
-            </span>
-            <span
-              className="text-[14px] font-semibold tracking-[0.005em]"
-              style={{ color: TEXT_SECONDARY }}
-            >
-              {NEXT_HEADER[dispatch.type] ?? "Your next move"}
-            </span>
-          </div>
+          <p
+            className="max-w-[560px] text-[17px] font-semibold leading-[1.4] tracking-[-0.01em]"
+            style={{ color: TEXT_HEADING }}
+          >
+            {data.looseThread.title}
+          </p>
 
-          {actionPitch ? (
-            <p
-              className={`mt-3 max-w-[560px] text-[21px] ${PROSE_CLASS}`}
-              style={PROSE_STYLE}
-            >
-              {actionPitch}
-            </p>
-          ) : (
-            <>
-              <h1
-                className={`mt-3 max-w-[560px] text-[21px] ${PROSE_CLASS}`}
-                style={PROSE_STYLE}
-              >
-                {dispatch.orient ? `${dispatch.orient} ` : ""}
-                {dispatch.move}
-              </h1>
-              {dispatch.return ? (
-                <p
-                  className={`mt-2 max-w-[560px] text-[21px] ${PROSE_CLASS}`}
-                  style={PROSE_STYLE}
-                >
-                  {dispatch.return}
-                </p>
-              ) : null}
-            </>
-          )}
+          <p
+            className={`mt-2 max-w-[560px] text-[17px] ${PROSE_CLASS}`}
+            style={PROSE_STYLE}
+          >
+            {data.looseThread.why?.trim() ||
+              (data.looseThread.kind === "due"
+                ? "You started this a while back and it has gone quiet. How it is actually going is worth more than a tidy answer later."
+                : "You finished this but never said how it landed — and that part is what turns something you did into something you know.")}
+          </p>
 
-          {dispatch.meta ? (
-            <div className="mt-3 text-[13px] tabular-nums" style={{ color: TEXT_MUTED }}>
-              {dispatch.meta.duration} · {dispatch.meta.when}
-            </div>
-          ) : null}
-
-          {/* The one bright commit — a real button. */}
           <div className="mt-4">
             <button
               type="button"
-              onClick={dispatch.save ? handleSaveAction : onPrimary}
-              disabled={saving || saved}
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
+              onClick={() => router.push(data.looseThread!.route)}
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80"
               style={{
-                color: `rgb(${rgb})`,
-                background: `rgba(${rgb},0.08)`,
-                border: `1px solid rgba(${rgb},0.28)`,
-                boxShadow: `0 2px 10px rgba(${rgb},0.08)`,
+                color: `rgb(${REFLECT_RGB})`,
+                background: `rgba(${REFLECT_RGB},0.08)`,
+                border: `1px solid rgba(${REFLECT_RGB},0.28)`,
+                boxShadow: `0 2px 10px rgba(${REFLECT_RGB},0.08)`,
               }}
             >
-              <span>{primaryLabel}</span>
-              {saved ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
+              <span>
+                {data.looseThread.kind === "due"
+                  ? "How's it going?"
+                  : "Reflect on it"}
+              </span>
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-
-          {/* Lighter links: the "how", plus a secondary path — a loose end to
-              reflect on, or (off the learn beat) keep building your story. */}
-          {dispatch.save ? (
-            <button
-              type="button"
-              onClick={handleHowTo}
-              disabled={howLoading}
-              className={`${LINK_CLASS} mt-3.5 text-[18px] disabled:opacity-70`}
-              style={{ color: TEXT_SECONDARY }}
-            >
-              {howLoading ? "Opening…" : "How would I even do this?"}
-              <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
-            </button>
-          ) : null}
-
-          {data.looseThread?.title ? (
-            <div className="mt-3.5">
-              <button
-                type="button"
-                onClick={() => router.push(data.looseThread!.route)}
-                className={`${LINK_CLASS} max-w-[520px] text-left text-[18px]`}
-                style={{ color: "rgb(45,170,130)" }}
-              >
-                {data.looseThread.kind === "due"
-                  ? `You started “${data.looseThread.title}” — how's it going?`
-                  : `Reflect on “${data.looseThread.title}”`}
-                <ChevronRight className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          ) : null}
-
-        </div>
-      </div>
+        </SectionCard>
+      ) : null}
 
       {/* "See more" — the fuller read, in a focused modal (not an inline
           expand), matching the Why overlay. */}
