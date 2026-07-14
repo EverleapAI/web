@@ -96,6 +96,7 @@ export default function InsightsSummaryCard({
   return (
     <SectionCard
       tone="hero"
+      voice
       className={preview ? "ring-1 ring-amber-300/45" : ""}
       backdrop={
         <ConstellationAnchor
