@@ -255,12 +255,12 @@ export function SpecialtiesStep({ step, progress, setProgress, state }: Props) {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Dive deeper · {step.title}
       </div>
 
       {/* Slim header: only ONE line after header; no picked pills */}
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/35 p-5 backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-card border border-white/10 bg-slate-950/35 p-5 backdrop-blur-2xl">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-16 -left-16 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
           <div className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-gradient-to-br from-violet-500/16 via-fuchsia-400/9 to-sky-500/10 blur-3xl opacity-55" />
@@ -289,7 +289,7 @@ export function SpecialtiesStep({ step, progress, setProgress, state }: Props) {
             <div
               key={s.id}
               className={`
-                relative overflow-hidden rounded-[28px] border p-[1px] backdrop-blur-xl
+                relative overflow-hidden rounded-card border p-[1px] backdrop-blur-xl
                 ${on ? "border-sky-300/55" : "border-white/10"}
               `}
             >
@@ -298,7 +298,7 @@ export function SpecialtiesStep({ step, progress, setProgress, state }: Props) {
               />
               <div
                 className={`
-                  relative rounded-[27px] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]
+                  relative rounded-card p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)]
                   ${on ? "bg-slate-950/62" : "bg-slate-950/42"}
                 `}
               >

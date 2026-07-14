@@ -196,7 +196,7 @@ function Medal({
         <Icon className="h-[22px] w-[22px]" strokeWidth={1.6} />
       </span>
       <span
-        className="text-center text-[9px] leading-tight"
+        className="text-center text-micro leading-tight"
         style={{ color: earned ? "rgba(238,241,251,.72)" : "rgba(238,241,251,.38)" }}
       >
         {badge.name}
@@ -232,12 +232,12 @@ function TierRung({
       </span>
       <div className="flex-1">
         <div
-          className="text-[13.5px] font-semibold"
+          className="text-meta font-semibold"
           style={{ color: reached ? tint : "rgba(238,241,251,.6)" }}
         >
           {TIER_LABEL[tier]}
         </div>
-        <div className="mt-0.5 text-[12.5px] leading-[1.45] text-white/60">{sub}</div>
+        <div className="mt-0.5 text-meta leading-body text-white/60">{sub}</div>
       </div>
     </div>
   );
@@ -457,13 +457,13 @@ function AchievementsModal() {
               {/* header */}
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[rgb(182,160,255)]">
+                  <div className="text-micro font-bold uppercase tracking-eyebrow text-[rgb(182,160,255)]">
                     Achievements
                   </div>
-                  <div className="mt-1.5 text-[22px] font-semibold tracking-[-0.02em] text-white">
+                  <div className="mt-1.5 text-read font-semibold tracking-title text-white">
                     Your constellation
                   </div>
-                  <div className="mt-1 text-[11.5px] text-white/45">
+                  <div className="mt-1 text-micro text-white/45">
                     <span className="tabular-nums text-white/75">{earnedCount}</span> of {total} stars
                     lit
                   </div>
@@ -482,7 +482,7 @@ function AchievementsModal() {
                   triangle, so it can outgrow a phone screen. */}
               <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto py-10">
                 {loading && !badges ? (
-                  <div className="text-[13px] text-white/40">Reading your sky…</div>
+                  <div className="text-meta text-white/40">Reading your sky…</div>
                 ) : (
                   <div
                     ref={gridRef}
@@ -538,7 +538,7 @@ function AchievementsModal() {
                       <X className="h-3.5 w-3.5" />
                     </button>
                     <span
-                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[16px]"
+                      className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-body"
                       style={{
                         color: selected.earned
                           ? TIER_COLOR[selected.tier]
@@ -557,11 +557,11 @@ function AchievementsModal() {
                       {selected.earned ? selected.glyph : "◇"}
                     </span>
                     <div>
-                      <div className="text-[15px] font-semibold text-white">
+                      <div className="text-label font-semibold text-white">
                         {selected.name}
                       </div>
                       <div
-                        className="text-[11px] font-semibold uppercase tracking-[0.12em]"
+                        className="text-micro font-semibold uppercase tracking-eyebrow"
                         style={{
                           color: selected.earned
                             ? TIER_COLOR[selected.tier]
@@ -574,14 +574,14 @@ function AchievementsModal() {
                   </div>
 
                   {/* the badge's own story — what this one means */}
-                  <p className="mt-3.5 text-[12.5px] leading-[1.5] text-white/70">
+                  <p className="mt-3.5 text-meta leading-body text-white/70">
                     {selected.description}
                   </p>
 
                   {/* How you earn it: the three real rungs, each with its own path.
                       Rungs with no hint are skipped for this badge. */}
                   <div className="mt-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                    <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/45">
                       How you earn it
                     </div>
                     <div className="mt-3 space-y-3.5">
@@ -622,7 +622,7 @@ function AchievementsModal() {
                       {typeof selected.nextCurrent === "number" &&
                       typeof selected.nextTarget === "number" &&
                       selected.nextTarget > 0 ? (
-                        <div className="mb-3 text-[12px] tabular-nums text-white/45">
+                        <div className="mb-3 text-meta tabular-nums text-white/45">
                           {selected.nextCurrent} of {selected.nextTarget} toward{" "}
                           <span className="font-semibold text-white/65">
                             {TIER_LABEL[selected.nextTier]}
@@ -638,7 +638,7 @@ function AchievementsModal() {
                             setSelected(null);
                             router.push(selected.nextRoute!);
                           }}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-semibold transition hover:brightness-110 active:opacity-80"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80"
                           style={{
                             color: GOLD_INK,
                             background: "rgba(232,199,126,0.10)",
@@ -655,7 +655,7 @@ function AchievementsModal() {
                         // makes a day pass. The only instruction we could give is
                         // "leave and return tomorrow", which is not advice, so we say
                         // the true thing instead of inventing a destination.
-                        <p className="text-[12.5px] leading-[1.5] text-white/45">
+                        <p className="text-meta leading-body text-white/45">
                           There&apos;s nothing to tap for this one. It moves on its
                           own when you come back another day.
                         </p>
@@ -670,7 +670,7 @@ function AchievementsModal() {
               </div>
 
               {!selected ? (
-                <div className="text-center text-[11.5px] text-white/30">
+                <div className="text-center text-micro text-white/30">
                   Tap a badge to see how it&apos;s earned.
                 </div>
               ) : null}
@@ -728,19 +728,19 @@ function BadgeEarnToast() {
             }}
           >
             <span
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[14px]"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-label"
               style={{ color: tint, background: `rgba(${c},.16)` }}
             >
               {b.glyph ?? "◆"}
             </span>
             <div className="pr-1">
               <div
-                className="text-[10px] font-bold uppercase tracking-[0.14em]"
+                className="text-micro font-bold uppercase tracking-eyebrow"
                 style={{ color: tint }}
               >
                 {TIER_LABEL[tier]} unlocked
               </div>
-              <div className="text-[13.5px] font-semibold text-white">{b.name}</div>
+              <div className="text-meta font-semibold text-white">{b.name}</div>
             </div>
           </motion.div>
         );

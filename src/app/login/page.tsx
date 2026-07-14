@@ -297,13 +297,13 @@ export default function LoginPage() {
           {/* Content */}
           <div className="mx-auto mt-12 w-full max-w-[980px]">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold tracking-[0.18em] text-white/45 uppercase">Everleap · Sign in</p>
+              <p className="text-xs font-semibold tracking-eyebrow text-white/45 uppercase">Everleap · Sign in</p>
 
               <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
                 Continue into Everleap
               </h1>
 
-              <p className={`mt-4 text-[15px] leading-7 ${mutedText}`}>Use your device.</p>
+              <p className={`mt-4 text-label leading-7 ${mutedText}`}>Use your device.</p>
 
               {/* Primary: device / passkey */}
               <div className="mt-10">
@@ -321,7 +321,7 @@ export default function LoginPage() {
                       </span>
 
                       <div className="min-w-0">
-                        <div className="text-[15px] font-semibold text-white/90">Continue</div>
+                        <div className="text-label font-semibold text-white/90">Continue</div>
                         <div className="mt-1 text-sm text-white/45">
                           {passkeyReady === null
                             ? "Checking secure sign-in…"
@@ -340,7 +340,7 @@ export default function LoginPage() {
 
                 {/* Providers (always visible, minimal icon buttons) */}
                 <div className="mt-10">
-                  <div className="text-[11px] tracking-[0.22em] text-white/35 uppercase">Or</div>
+                  <div className="text-micro tracking-eyebrow text-white/35 uppercase">Or</div>
 
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
@@ -410,7 +410,7 @@ export default function LoginPage() {
                   {showFallback ? (
                     <form onSubmit={handleSubmit} className="mt-6 max-w-2xl">
                       <label className="block">
-                        <div className="text-[11px] font-semibold tracking-[0.22em] text-white/35 uppercase">
+                        <div className="text-micro font-semibold tracking-eyebrow text-white/35 uppercase">
                           Email or phone
                         </div>
 
@@ -423,7 +423,7 @@ export default function LoginPage() {
                               placeholder="you@example.com or (555) 555-1234"
                               inputMode="email"
                               autoComplete="email"
-                              className="w-full bg-transparent py-3 text-[16px] text-white/90 placeholder:text-white/30 outline-none"
+                              className="w-full bg-transparent py-3 text-body text-white/90 placeholder:text-white/30 outline-none"
                             />
                           </div>
 
@@ -454,10 +454,10 @@ export default function LoginPage() {
                         </div>
                       </label>
 
-                      <p className="mt-6 text-[11px] text-white/35">Secure sign-in options will be wired up soon.</p>
+                      <p className="mt-6 text-micro text-white/35">Secure sign-in options will be wired up soon.</p>
                     </form>
                   ) : (
-                    <p className="mt-6 text-[11px] text-white/35">Secure sign-in options will be wired up soon.</p>
+                    <p className="mt-6 text-micro text-white/35">Secure sign-in options will be wired up soon.</p>
                   )}
                 </div>
               </div>

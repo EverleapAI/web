@@ -64,7 +64,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
   const h = "text-sm font-semibold text-slate-50";
   const pClass = "mt-1 text-sm leading-relaxed text-slate-200/85";
   const micro =
-    "text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/60";
+    "text-xs font-semibold uppercase tracking-eyebrow text-slate-300/60";
 
   const day = React.useMemo(() => buildDay(mode), [mode]);
 
@@ -88,7 +88,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
   return (
     <div className="space-y-4">
       {/* Hero (more pop) */}
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-card border border-white/10 bg-slate-950/40 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-16 -left-14 h-60 w-60 rounded-full bg-gradient-to-br from-sky-500/18 via-cyan-400/10 to-indigo-500/10 blur-3xl opacity-70" />
           <div className="absolute -bottom-20 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-amber-500/14 via-orange-400/8 to-rose-500/10 blur-3xl opacity-60" />
@@ -165,7 +165,7 @@ export function DayInLifeStep({ step, progress, setProgress }: Props) {
                 className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300/60">
+                  <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/60">
                     {b.t}
                   </div>
                   <span className="text-[0.7rem] font-semibold text-slate-300/60">

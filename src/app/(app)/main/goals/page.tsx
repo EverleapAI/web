@@ -407,8 +407,8 @@ export default function GoalsPage() {
   const surface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
 
   const sectionLabelClass = dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-300/70"
-    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500";
+    ? "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-300/70"
+    : "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-500";
 
   const pageTextMutedClass = dark ? "text-slate-300/90" : "text-slate-600";
 
@@ -495,7 +495,7 @@ export default function GoalsPage() {
       <div className="relative flex min-h-[100svh] flex-col">
         <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-24 pt-5 md:px-8 md:pt-7">
           <section
-            className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
+            className={`relative rounded-card border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerCancel}
@@ -504,7 +504,7 @@ export default function GoalsPage() {
           >
             {gradientLevel > 0 && (
               <div
-                className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
+                className="pointer-events-none absolute inset-0 rounded-card bg-gradient-to-br from-transparent via-white/10 to-transparent blur-3xl"
                 style={{ opacity: 0.18 }}
               />
             )}
@@ -636,7 +636,7 @@ export default function GoalsPage() {
           </section>
 
           <section className="mt-5">
-            <div className={`relative rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+            <div className={`relative rounded-card border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
               <div
                 className={`pointer-events-none absolute left-0 top-7 h-[78%] w-[2px] rounded-full bg-gradient-to-b ${accentBarClass(
                   rec.accent
@@ -743,7 +743,7 @@ export default function GoalsPage() {
           </section>
 
           <section className="mt-5">
-            <div className={`rounded-[32px] border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
+            <div className={`rounded-card border px-5 py-5 sm:px-7 sm:py-6 ${surface}`}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className={`${sectionLabelClass} opacity-90`}>Coach check</div>
@@ -819,7 +819,7 @@ export default function GoalsPage() {
                     })
                   }
                   className={`
-                    relative w-full overflow-hidden rounded-[28px] border px-5 py-5 text-left transition
+                    relative w-full overflow-hidden rounded-card border px-5 py-5 text-left transition
                     ${surface}
                     hover:brightness-[1.06] active:scale-[0.99]
                     before:absolute before:inset-0 before:bg-gradient-to-r before:opacity-100

@@ -220,7 +220,7 @@ function WhatYouGetList() {
             className="mt-[2px] shrink-0 opacity-90"
           />
 
-          <div className="max-w-[330px] text-[17px] font-medium leading-7 tracking-[-0.02em] text-white/90">
+          <div className="max-w-[330px] text-body font-medium leading-7 tracking-title text-white/90">
             {item.text}
           </div>
         </motion.div>
@@ -244,11 +244,11 @@ function StepList({ steps }: { steps: string[] }) {
           }}
           className="flex items-center gap-4"
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/[0.03] text-[11px] font-semibold text-white/82">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/[0.03] text-micro font-semibold text-white/82">
             {index + 1}
           </div>
 
-          <div className="text-[16px] font-medium leading-relaxed tracking-[-0.02em] text-white/88 sm:text-[17px]">
+          <div className="text-body font-medium leading-relaxed tracking-title text-white/88 sm:text-body">
             {step}
           </div>
         </motion.div>
@@ -274,7 +274,7 @@ function BulletList({ bullets }: { bullets: string[] }) {
         >
           <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.7)]" />
 
-          <div className="max-w-[340px] text-[16px] font-medium leading-7 tracking-[-0.02em] text-white/84 sm:text-[17px]">
+          <div className="max-w-[340px] text-body font-medium leading-7 tracking-title text-white/84 sm:text-body">
             {bullet}
           </div>
         </motion.div>
@@ -302,7 +302,7 @@ function BodyLines({
             ease: "easeOut",
             delay: 0.1 + index * 0.06,
           }}
-          className="text-[16px] font-medium leading-7 tracking-[-0.018em] text-white/72 sm:text-[17px]"
+          className="text-body font-medium leading-7 tracking-title text-white/72 sm:text-body"
         >
           {replaceName(line, answers)}
         </motion.p>
@@ -328,7 +328,7 @@ function PermissionApproval({
           className="mt-1 h-4 w-4 shrink-0 accent-cyan-300"
         />
 
-        <span className="max-w-[340px] text-[13px] leading-6 tracking-[-0.01em] text-white/58">
+        <span className="max-w-[340px] text-meta leading-6 tracking-title text-white/58">
           I give Everleap permission to use what I share to personalize my
           experience, as described in the{" "}
           <a
@@ -384,13 +384,13 @@ function SummaryTransition() {
           duration: 0.35,
           ease: "easeOut",
         }}
-        className="mt-6 text-[22px] font-semibold tracking-[-0.035em] text-white"
+        className="mt-6 text-read font-semibold tracking-title text-white"
       >
         Preparing your first Everleap insights
         <span className="text-white/42">...</span>
       </motion.div>
 
-      <p className="mt-4 max-w-[360px] text-[15px] leading-6 tracking-[-0.015em] text-white/46">
+      <p className="mt-4 max-w-[360px] text-label leading-6 tracking-title text-white/46">
         Your responses are helping Everleap begin understanding your
         motivations, interests, strengths, and possible directions.
       </p>
@@ -442,7 +442,7 @@ export default function IntroScreenRenderer({
       >
         <OnboardingVisual visualKey={node.key} />
 
-        <h1 className="max-w-[360px] text-[30px] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[34px]">
+        <h1 className="max-w-[360px] text-display font-semibold leading-display tracking-display text-white sm:text-display">
           {replaceName(config.title, answers)}
         </h1>
 
@@ -466,7 +466,7 @@ export default function IntroScreenRenderer({
             {config.body ? (
               <p
                 className={[
-                  "mt-6 max-w-[370px] text-[16px] leading-7 tracking-[-0.018em] text-white/70",
+                  "mt-6 max-w-[370px] text-body leading-7 tracking-title text-white/70",
                   compact ? "text-white/58" : "",
                 ].join(" ")}
               >

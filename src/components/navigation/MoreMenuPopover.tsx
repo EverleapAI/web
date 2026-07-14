@@ -102,7 +102,7 @@ export function MoreMenuPopover({
           )}
 
           <div className="relative p-2">
-            <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+            <div className="px-3 pt-2 pb-1 text-micro font-semibold uppercase tracking-eyebrow text-white/55">
               More
             </div>
 
@@ -122,7 +122,7 @@ export function MoreMenuPopover({
               ))}
             </div>
 
-            <div className="px-3 pt-2 pb-1 text-[11px] text-white/45">
+            <div className="px-3 pt-2 pb-1 text-micro text-white/45">
               Tap anywhere outside to close
             </div>
           </div>

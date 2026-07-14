@@ -59,9 +59,9 @@ export default function SiteFooter({ className, children }: SiteFooterProps) {
       />
 
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
-        <div className="text-[12px] leading-relaxed text-white/55">© {new Date().getFullYear()} Everleap</div>
+        <div className="text-meta leading-relaxed text-white/55">© {new Date().getFullYear()} Everleap</div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] font-semibold text-white/60">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-meta font-semibold text-white/60">
           <Link className="transition hover:text-white/80" href="/privacy">
             Privacy
           </Link>

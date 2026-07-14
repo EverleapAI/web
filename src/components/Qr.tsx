@@ -89,12 +89,12 @@ export default function Qr({ value, size = 180, caption, className }: Props) {
         />
       </div>
       {caption ? (
-        <figcaption className="text-[12px] opacity-80 text-center break-all px-1">
+        <figcaption className="text-meta opacity-80 text-center break-all px-1">
           {caption}
         </figcaption>
       ) : null}
       {!libOk && (
-        <p className="text-[10px] opacity-60">
+        <p className="text-micro opacity-60">
           Tip: <code className="px-1 py-0.5 rounded bg-black/5">npm i qrcode</code> for sharper local rendering
         </p>
       )}

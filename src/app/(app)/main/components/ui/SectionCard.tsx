@@ -103,7 +103,7 @@ export function SectionCard({
   return (
     <section
       className={[
-        "relative overflow-hidden rounded-[28px] backdrop-blur-xl",
+        "relative overflow-hidden rounded-card backdrop-blur-xl",
         compact
           ? "px-3.5 pt-3.5 pb-4 sm:px-5 sm:pt-4 sm:pb-5"
           : "px-3.5 pt-4 pb-5 sm:px-5 sm:pt-5 sm:pb-6",

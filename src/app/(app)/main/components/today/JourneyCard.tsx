@@ -117,7 +117,7 @@ export function JourneyCard({
 
               <div
                 className={[
-                  "text-center text-[10px] font-medium leading-tight transition",
+                  "text-center text-micro font-medium leading-tight transition",
                   earned
                     ? "text-white/78"
                     : current || displayed || selected
@@ -133,11 +133,11 @@ export function JourneyCard({
       </div>
 
       <div className="mt-6 border-t border-white/8 pt-4">
-        <div className="text-[14px] font-semibold tracking-[-0.01em] text-white/88">
+        <div className="text-label font-semibold tracking-title text-white/88">
           {activeBadge.id === "story" ? "Story" : activeBadge.label}
         </div>
 
-        <div className="mt-1.5 text-[14px] leading-6 text-white/72">
+        <div className="mt-1.5 text-label leading-6 text-white/72">
           {activeBadge.id === "story"
             ? "We'll explore what motivates you, what you're good at, and what keeps showing up in your answers."
             : activeBadge.description}

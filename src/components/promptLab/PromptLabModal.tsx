@@ -159,9 +159,9 @@ export default function PromptLabModal({
     ? "border-white/14 bg-slate-950 text-white/86"
     : "border-slate-900/10 bg-white text-slate-950";
   const inputBase = dark
-    ? "w-full rounded-[10px] border border-white/14 bg-white/5 px-3 py-2 text-[14px] text-white/90 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-300/40"
-    : "w-full rounded-[10px] border border-black/10 bg-white px-3 py-2 text-[14px] text-slate-950 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30";
-  const labelBase = dark ? "text-[12px] font-medium text-white/50" : "text-[12px] font-medium text-slate-500";
+    ? "w-full rounded-control border border-white/14 bg-white/5 px-3 py-2 text-label text-white/90 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-300/40"
+    : "w-full rounded-control border border-black/10 bg-white px-3 py-2 text-label text-slate-950 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30";
+  const labelBase = dark ? "text-meta font-medium text-white/50" : "text-meta font-medium text-slate-500";
 
   if (!mounted) return null;
 
@@ -184,7 +184,7 @@ export default function PromptLabModal({
             exit={{ y: 14, opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
             className={[
-              "relative w-full max-w-lg overflow-hidden rounded-[24px] border",
+              "relative w-full max-w-lg overflow-hidden rounded-card border",
               surface,
               "backdrop-blur-xl shadow-[0_18px_90px_rgba(0,0,0,0.4)]",
               "max-h-[85vh] flex flex-col",
@@ -212,7 +212,7 @@ export default function PromptLabModal({
               {hasActivePreview ? (
                 <div
                   className={[
-                    "flex items-center justify-between gap-3 rounded-[12px] px-3 py-2.5",
+                    "flex items-center justify-between gap-3 rounded-control px-3 py-2.5",
                     dark ? "bg-amber-300/10 ring-1 ring-amber-300/25" : "bg-amber-500/10 ring-1 ring-amber-500/20",
                   ].join(" ")}
                 >
@@ -226,7 +226,7 @@ export default function PromptLabModal({
                       onClose();
                     }}
                     className={[
-                      "shrink-0 rounded-full px-3 py-1.5 text-[12.5px] font-medium transition",
+                      "shrink-0 rounded-full px-3 py-1.5 text-meta font-medium transition",
                       dark
                         ? "bg-white/10 text-white/82 hover:bg-white/16"
                         : "bg-black/5 text-slate-800 hover:bg-black/10",
@@ -246,7 +246,7 @@ export default function PromptLabModal({
 
               <div>
                 <div className={labelBase}>Current word count</div>
-                <div className="mt-1 text-[15px] font-medium">{currentWordCount} words</div>
+                <div className="mt-1 text-label font-medium">{currentWordCount} words</div>
               </div>
 
               <div>
@@ -297,7 +297,7 @@ export default function PromptLabModal({
                 onClick={handleGenerate}
                 disabled={loading}
                 className={[
-                  "w-full rounded-full px-4 py-2.5 text-[14px] font-semibold transition",
+                  "w-full rounded-full px-4 py-2.5 text-label font-semibold transition",
                   dark
                     ? "bg-sky-300/20 text-sky-100 ring-1 ring-sky-300/30 hover:bg-sky-300/28"
                     : "bg-sky-500/15 text-sky-700 ring-1 ring-sky-500/25 hover:bg-sky-500/22",
@@ -309,7 +309,7 @@ export default function PromptLabModal({
 
               {error ? (
                 <div className="space-y-2">
-                  <p className="text-[13px] text-rose-400">{error}</p>
+                  <p className="text-meta text-rose-400">{error}</p>
                   <button
                     type="button"
                     onClick={handleGenerate}
@@ -331,7 +331,7 @@ export default function PromptLabModal({
                         <span> (clamped to {preview.applied_word_count})</span>
                       ) : null}
                     </div>
-                    <p className="mt-1.5 text-[14.5px] leading-[1.6]">
+                    <p className="mt-1.5 text-label leading-read">
                       {preview.target_text}
                     </p>
                   </div>
@@ -347,7 +347,7 @@ export default function PromptLabModal({
                   {showFullCard ? (
                     <pre
                       className={[
-                        "max-h-64 overflow-auto rounded-[10px] p-3 text-[12px] leading-[1.5]",
+                        "max-h-64 overflow-auto rounded-control p-3 text-meta leading-body",
                         dark ? "bg-white/5" : "bg-black/5",
                       ].join(" ")}
                     >
@@ -359,7 +359,7 @@ export default function PromptLabModal({
                     type="button"
                     onClick={handleCopySettings}
                     className={[
-                      "w-full rounded-full px-4 py-2 text-[13px] font-medium transition",
+                      "w-full rounded-full px-4 py-2 text-meta font-medium transition",
                       dark
                         ? "bg-white/8 text-white/78 hover:bg-white/12"
                         : "bg-black/5 text-slate-700 hover:bg-black/10",

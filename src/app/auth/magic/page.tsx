@@ -85,7 +85,7 @@ export default function MagicCatcherPage() {
               <div className="rounded-2xl card-surface p-4 text-sm">
                 <p>Hang tight — we’re finishing your sign-in.</p>
                 {consumeUrl ? (
-                  <p className="text-[12px] opacity-70 mt-2">
+                  <p className="text-meta opacity-70 mt-2">
                     If nothing happens,&nbsp;
                     <a className="link" href={consumeUrl}>
                       tap here to continue
@@ -119,7 +119,7 @@ export default function MagicCatcherPage() {
               </div>
             )}
             {process.env.NODE_ENV !== "production" && token ? (
-              <p className="text-[11px] opacity-60 text-center">
+              <p className="text-micro opacity-60 text-center">
                 token…{token.slice(-8)}
               </p>
             ) : null}

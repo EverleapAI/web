@@ -220,7 +220,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
               />
             </div>
 
-            <div className="mt-4 text-[20px] font-semibold tracking-[-0.035em] text-white">
+            <div className="mt-4 text-lede font-semibold tracking-title text-white">
               Onboard
             </div>
           </motion.div>
@@ -239,7 +239,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
               ease: "easeOut",
               delay: 0.22,
             }}
-            className="mx-auto mt-6 max-w-[620px] text-[3.15rem] font-semibold leading-[0.95] tracking-[-0.078em] text-white sm:text-[3.85rem]"
+            className="mx-auto mt-6 max-w-[620px] text-[3.15rem] font-semibold leading-display tracking-display text-white sm:text-[3.85rem]"
           >
             We&apos;re already seeing some signals.
           </motion.h1>
@@ -302,7 +302,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                   <div className="absolute right-0 top-1/2 h-11 w-11 -translate-y-1/2 rounded-full border border-white/18 bg-white/[0.02]" />
                 </div>
 
-                <div className="mt-4 min-h-[28px] text-[17px] tracking-[-0.02em] text-cyan-100/88">
+                <div className="mt-4 min-h-[28px] text-body tracking-title text-cyan-100/88">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={loadingIndex}
@@ -363,7 +363,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                   ease: "easeOut",
                   delay: 0.18,
                 }}
-                className="text-[22px] leading-9 tracking-[-0.03em] text-white/92"
+                className="text-read leading-9 tracking-title text-white/92"
               >
                 {synthesis.body}
               </motion.p>
@@ -389,7 +389,7 @@ export default function RegAuthDonePage(): React.JSX.Element {
                 ease: "easeOut",
                 delay: 1,
               }}
-              className="mx-auto mt-14 flex w-full max-w-[620px] justify-end text-[16px] font-semibold tracking-[-0.02em]"
+              className="mx-auto mt-14 flex w-full max-w-[620px] justify-end text-body font-semibold tracking-title"
             >
               <button
                 type="button"

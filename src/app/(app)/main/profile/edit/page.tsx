@@ -13,7 +13,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { SectionCard } from "../../components/ui/SectionCard";
 
 const inputClass =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-[15px] text-white placeholder-white/35 outline-none transition focus:border-white/25 focus:bg-white/[0.06]";
+  "w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-label text-white placeholder-white/35 outline-none transition focus:border-white/25 focus:bg-white/[0.06]";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -79,21 +79,21 @@ export default function EditProfilePage() {
     <div className="mx-auto w-full max-w-[640px] px-[6px] pb-28 pt-2">
       <Link
         href="/main/profile"
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="mb-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Me
       </Link>
 
       <SectionCard tone="neutral">
-        <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-white">Edit your basics</h1>
-        <p className="mt-1 text-[13.5px] leading-[1.55] text-white/60">
+        <h1 className="text-lede font-semibold tracking-title text-white">Edit your basics</h1>
+        <p className="mt-1 text-meta leading-body text-white/60">
           How Everleap greets you, and where you are. Both are optional.
         </p>
 
         <form onSubmit={save} className="mt-5 space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.1em] text-white/45">
+            <span className="mb-1.5 block text-meta font-semibold uppercase tracking-eyebrow text-white/45">
               First name
             </span>
             <input
@@ -109,7 +109,7 @@ export default function EditProfilePage() {
           </label>
 
           <label className="block">
-            <span className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.1em] text-white/45">
+            <span className="mb-1.5 block text-meta font-semibold uppercase tracking-eyebrow text-white/45">
               ZIP code
             </span>
             <input
@@ -122,13 +122,13 @@ export default function EditProfilePage() {
               disabled={!loaded}
               className={inputClass}
             />
-            <span className="mt-1.5 block text-[12px] text-white/45">
+            <span className="mt-1.5 block text-meta text-white/45">
               Helps Everleap ground suggestions near you. Leave blank to skip.
             </span>
           </label>
 
           {error ? (
-            <div className="rounded-2xl border border-rose-400/25 bg-rose-400/10 px-4 py-2.5 text-[13px] text-rose-200">
+            <div className="rounded-2xl border border-rose-400/25 bg-rose-400/10 px-4 py-2.5 text-meta text-rose-200">
               {error}
             </div>
           ) : null}
@@ -137,14 +137,14 @@ export default function EditProfilePage() {
             <button
               type="submit"
               disabled={saving || !loaded}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-[14px] font-semibold text-slate-900 transition hover:bg-white/90 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-label font-semibold text-slate-900 transition hover:bg-white/90 disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {saving ? "Saving…" : "Save changes"}
             </button>
             <Link
               href="/main/profile"
-              className="inline-flex items-center justify-center rounded-full border border-white/12 px-5 py-2.5 text-[14px] font-semibold text-white/75 transition hover:bg-white/[0.06]"
+              className="inline-flex items-center justify-center rounded-full border border-white/12 px-5 py-2.5 text-label font-semibold text-white/75 transition hover:bg-white/[0.06]"
             >
               Cancel
             </Link>

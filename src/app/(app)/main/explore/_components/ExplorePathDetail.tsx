@@ -35,8 +35,8 @@ function SectionMenu({ path, accent }: { path: ExplorePath; accent: Rgb }) {
         >
           <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.9) }} />
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold tracking-[-0.01em] text-white">{s.title}</span>
-            <span className="mt-0.5 block truncate text-[13px] leading-[1.5] text-white/55">{s.teaser}</span>
+            <span className="block text-label font-semibold tracking-title text-white">{s.title}</span>
+            <span className="mt-0.5 block truncate text-meta leading-body text-white/55">{s.teaser}</span>
           </span>
           <ChevronRight className="h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
         </Link>
@@ -101,7 +101,7 @@ export function ExplorePathDetail({
     <div className="space-y-3 pb-24">
       <Link
         href={`/main/explore/${path.lane}`}
-        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back to {laneLabel}</span>
@@ -110,10 +110,10 @@ export function ExplorePathDetail({
       {/* Hero — compact: personalized why + who it fits + one concrete fact */}
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={path.id} accent={accent} />}>
         <div className="max-w-2xl">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
             {ov?.eyebrow ?? LANE_NOUN[path.lane]}
           </div>
-          <h1 className="mt-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.035em] text-[#F7F9FC] sm:text-[32px]">
+          <h1 className="mt-2 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-display">
             {ov?.title ?? path.card.title}
           </h1>
           {whyYou ? (
@@ -122,30 +122,30 @@ export function ExplorePathDetail({
               style={{ borderColor: rgba(accent, 0.28), backgroundColor: rgba(accent, 0.08) }}
             >
               <div
-                className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+                className="text-micro font-semibold uppercase tracking-eyebrow"
                 style={{ color: rgba(accent, 0.92) }}
               >
                 Why this fits you
               </div>
-              <p className="mt-1 text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{whyYou}</p>
+              <p className="mt-1 text-label font-normal leading-read tracking-normal text-ink">{whyYou}</p>
             </div>
           ) : null}
           {ov?.hook ? (
-            <p className="mt-4 text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{ov.hook}</p>
+            <p className="mt-4 text-label font-normal leading-read tracking-normal text-ink">{ov.hook}</p>
           ) : null}
           {ov?.traitChips?.length || payMedian ? (
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {(ov?.traitChips ?? []).slice(0, 4).map((c) => (
                 <span
                   key={c.id}
-                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[12.5px] text-white/78"
+                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-meta text-white/78"
                 >
                   {c.label}
                 </span>
               ))}
               {payMedian ? (
                 <span
-                  className="rounded-full px-3 py-1 text-[12.5px] font-medium"
+                  className="rounded-full px-3 py-1 text-meta font-medium"
                   style={{ backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }}
                 >
                   Typically {payMedian}
@@ -172,8 +172,8 @@ export function ExplorePathDetail({
             <Wand2 className="h-[18px] w-[18px]" />
           </span>
           <span className="min-w-0">
-            <span className="block text-[15px] font-semibold text-white">Try this for real</span>
-            <span className="mt-0.5 block text-[13px] leading-[1.45] text-white/72">
+            <span className="block text-label font-semibold text-white">Try this for real</span>
+            <span className="mt-0.5 block text-meta leading-body text-white/72">
               Turn it into a mission — a few concrete steps to actually go explore it.
             </span>
           </span>
@@ -188,7 +188,7 @@ export function ExplorePathDetail({
       {/* Why this could fit you — the essence, always open on essentials */}
       {hasWhyFits ? (
         <SectionCard tone="neutral">
-          <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-white">Why this could fit you</h2>
+          <h2 className="text-body font-semibold tracking-title text-white">Why this could fit you</h2>
           <div className="mt-3">
             <WhyFitsSection path={path} accent={accent} />
           </div>

@@ -92,7 +92,7 @@ export function SignalWord({
           className="
             absolute left-1/2 top-[calc(100%+0.6rem)] z-50 w-[248px] -translate-x-1/2
             rounded-2xl border border-white/10 bg-[#0b1020]/94 px-3 py-2.5
-            text-left text-[11px] leading-5 text-white/68 shadow-[0_18px_50px_rgba(0,0,0,0.38)]
+            text-left text-micro leading-5 text-white/68 shadow-[0_18px_50px_rgba(0,0,0,0.38)]
             backdrop-blur-md
           "
           role="dialog"

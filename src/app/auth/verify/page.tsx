@@ -438,14 +438,14 @@ export default function VerifyPage() {
             <div className="rounded-2xl card-surface p-5 ring-1 ring-black/5 shadow-sm">
               <OtpInput value={code} setValue={setCode} onComplete={onVerify} />
               {error && (
-                <div className="mt-2 text-[12px] text-red-700" role="alert" aria-live="assertive">
+                <div className="mt-2 text-meta text-red-700" role="alert" aria-live="assertive">
                   {error}
                 </div>
               )}
 
               {/* Special handling for existing accounts */}
               {errorCode === "USER_EXISTS" && (
-                <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-[13px] text-yellow-900">
+                <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-meta text-yellow-900">
                   <p className="mb-2">
                     It looks like you already have an account with this {channel}. You can sign in, or try a different
                     contact.

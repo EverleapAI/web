@@ -226,7 +226,7 @@ export function MainCarousel({
       {/* Colorful framed carousel container (glass-ish) */}
       <section
         className={cn(
-          "relative overflow-hidden rounded-[1.8rem] border bg-slate-950/85 px-3 py-4 md:px-4 md:py-5",
+          "relative overflow-hidden rounded-card border bg-slate-950/85 px-3 py-4 md:px-4 md:py-5",
           "shadow-[0_24px_80px_rgba(0,0,0,0.85)] backdrop-blur-xl",
           accent.frame
         )}
@@ -272,7 +272,7 @@ export function MainCarousel({
                     onClick={() => onChangeActiveId(card.id)}
                     data-card-id={card.id}
                     className={cn(
-                      "shrink-0 rounded-[1.6rem] snap-center",
+                      "shrink-0 rounded-card snap-center",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                     )}
                     whileHover={{ scale: 1.03 }}

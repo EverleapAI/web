@@ -114,7 +114,7 @@ function StoryProgressLine({
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] font-semibold tracking-[-0.01em] sm:text-[12px]">
+      <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 text-micro font-semibold tracking-title sm:text-meta">
         {safeCategories.map((category, index) => (
           <React.Fragment key={category.key}>
             <span
@@ -306,15 +306,15 @@ export default function StoryPage(): React.JSX.Element {
       <div className="min-h-[100svh] bg-slate-950 text-white">
         <main className="flex min-h-[100svh] flex-col px-5">
           <section className="mx-auto flex w-full max-w-[420px] flex-1 flex-col items-center justify-center text-center">
-            <div className="mb-4 text-[10px] uppercase tracking-[0.18em] text-white/34">
+            <div className="mb-4 text-micro uppercase tracking-eyebrow text-white/34">
               My Story
             </div>
 
-            <h1 className="animate-[storyEnter_280ms_ease-out_both] text-[2rem] font-semibold leading-[1.04] tracking-[-0.05em]">
+            <h1 className="animate-[storyEnter_280ms_ease-out_both] text-[2rem] font-semibold leading-display tracking-display">
               Nice. I added that to your Story.
             </h1>
 
-            <p className="mt-5 text-[15px] leading-6 text-white/62">
+            <p className="mt-5 text-label leading-6 text-white/62">
               Everleap will use what you shared to make your guidance more
               personal.
             </p>
@@ -322,7 +322,7 @@ export default function StoryPage(): React.JSX.Element {
             <button
               type="button"
               onClick={returnNow}
-              className="mt-8 text-[14px] font-semibold tracking-[-0.02em] text-cyan-200 hover:text-cyan-100"
+              className="mt-8 text-label font-semibold tracking-title text-cyan-200 hover:text-cyan-100"
             >
               Return now
             </button>
@@ -368,18 +368,18 @@ export default function StoryPage(): React.JSX.Element {
       <div className="min-h-[100svh] bg-slate-950 text-white">
         <main className="flex min-h-[100svh] flex-col px-5">
           <section className="mx-auto flex w-full max-w-[420px] flex-1 flex-col items-center justify-center text-center">
-            <h1 className="animate-[storyEnter_280ms_ease-out_both] text-[2rem] font-semibold leading-[1.02] tracking-[-0.05em]">
+            <h1 className="animate-[storyEnter_280ms_ease-out_both] text-[2rem] font-semibold leading-display tracking-display">
               Story complete.
             </h1>
 
-            <p className="mt-5 text-[15px] leading-6 text-white/64">
+            <p className="mt-5 text-label leading-6 text-white/64">
               Nice work. You answered all available Story questions.
             </p>
 
             <button
               type="button"
               onClick={() => void finishStory()}
-              className="mt-8 text-[14px] font-semibold tracking-[-0.02em] text-cyan-200 hover:text-cyan-100"
+              className="mt-8 text-label font-semibold tracking-title text-cyan-200 hover:text-cyan-100"
             >
               Done for now
             </button>
@@ -429,12 +429,12 @@ export default function StoryPage(): React.JSX.Element {
               saving ? "pointer-events-none opacity-45" : "opacity-100",
             ].join(" ")}
           >
-            <h1 className="text-balance text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.055em] text-white sm:text-[2rem]">
+            <h1 className="text-balance text-[1.72rem] font-semibold leading-display tracking-display text-white sm:text-[2rem]">
               {parsed.title}
             </h1>
 
             {parsed.helper ? (
-              <p className="mt-3 animate-[answerEnter_220ms_ease-out_70ms_both] text-[14px] leading-5 tracking-[-0.015em] text-white/54 sm:text-[15px] sm:leading-6">
+              <p className="mt-3 animate-[answerEnter_220ms_ease-out_70ms_both] text-label leading-5 tracking-title text-white/54 sm:text-label sm:leading-6">
                 {parsed.helper}
               </p>
             ) : null}
@@ -451,7 +451,7 @@ export default function StoryPage(): React.JSX.Element {
                       onClick={() => toggleSelected(choice)}
                       style={{ animationDelay: `${90 + index * 35}ms` }}
                       className={[
-                        "block w-full animate-[answerEnter_220ms_ease-out_both] rounded-[17px] border px-3.5 py-2.5 text-left transition",
+                        "block w-full animate-[answerEnter_220ms_ease-out_both] rounded-panel border px-3.5 py-2.5 text-left transition",
                         isSelected
                           ? "border-cyan-100/36 bg-cyan-300/[0.105]"
                           : "border-white/8 bg-white/[0.026] hover:border-white/15 hover:bg-white/[0.045]",
@@ -473,7 +473,7 @@ export default function StoryPage(): React.JSX.Element {
 
                         <div
                           className={[
-                            "min-w-0 flex-1 text-[13px] leading-[1.2rem] tracking-[-0.015em] sm:text-[14px]",
+                            "min-w-0 flex-1 text-meta leading-[1.2rem] tracking-title sm:text-label",
                             isSelected
                               ? "font-semibold text-white"
                               : "font-medium text-white/80",
@@ -493,7 +493,7 @@ export default function StoryPage(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => setShowTextAnswer(true)}
-                  className="text-[13px] font-semibold tracking-[-0.02em] text-white/42 hover:text-cyan-100"
+                  className="text-meta font-semibold tracking-title text-white/42 hover:text-cyan-100"
                 >
                   + Add your own words
                 </button>
@@ -501,7 +501,7 @@ export default function StoryPage(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={toggleMic}
-                  className="text-[13px] font-semibold tracking-[-0.02em] text-white/34 hover:text-cyan-100"
+                  className="text-meta font-semibold tracking-title text-white/34 hover:text-cyan-100"
                 >
                   🎙 Speak
                 </button>
@@ -517,9 +517,9 @@ export default function StoryPage(): React.JSX.Element {
                     rows={3}
                     placeholder="Write or speak your answer..."
                     className={[
-                      "w-full resize-none rounded-[18px] border border-white/9 bg-white/[0.032]",
+                      "w-full resize-none rounded-panel border border-white/9 bg-white/[0.032]",
                       "px-4 py-3.5 pr-13 outline-none transition",
-                      "text-[15px] leading-6 tracking-[-0.015em] text-white",
+                      "text-label leading-6 tracking-title text-white",
                       "placeholder:text-white/25",
                       "focus:border-cyan-100/22 focus:bg-white/[0.05]",
                     ].join(" ")}
@@ -529,7 +529,7 @@ export default function StoryPage(): React.JSX.Element {
                     type="button"
                     onClick={toggleMic}
                     className={[
-                      "absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition",
+                      "absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-meta transition",
                       listening
                         ? "bg-cyan-200/14 text-cyan-50"
                         : "bg-white/[0.045] text-white/46 hover:text-white/76",
@@ -541,7 +541,7 @@ export default function StoryPage(): React.JSX.Element {
                 </div>
 
                 {listening ? (
-                  <div className="mt-2 text-[12px] text-cyan-100/56">
+                  <div className="mt-2 text-meta text-cyan-100/56">
                     Listening…
                   </div>
                 ) : null}
@@ -549,7 +549,7 @@ export default function StoryPage(): React.JSX.Element {
             ) : null}
 
             {error ? (
-              <div className="mt-3 text-[13px] leading-5 text-red-200/80">
+              <div className="mt-3 text-meta leading-5 text-red-200/80">
                 {error}
               </div>
             ) : null}
@@ -559,7 +559,7 @@ export default function StoryPage(): React.JSX.Element {
                 type="button"
                 onClick={() => void finishStory()}
                 disabled={saving}
-                className="text-[14px] font-semibold tracking-[-0.02em] text-white/45 hover:text-cyan-100 disabled:pointer-events-none disabled:opacity-45"
+                className="text-label font-semibold tracking-title text-white/45 hover:text-cyan-100 disabled:pointer-events-none disabled:opacity-45"
               >
                 Done for now
               </button>
@@ -569,7 +569,7 @@ export default function StoryPage(): React.JSX.Element {
                 onClick={() => void submitAnswer()}
                 disabled={!canContinue || saving}
                 className={[
-                  "rounded-full px-5 py-2.5 text-[14px] font-semibold tracking-[-0.02em] transition",
+                  "rounded-full px-5 py-2.5 text-label font-semibold tracking-title transition",
                   !canContinue || saving
                     ? "cursor-not-allowed bg-white/[0.04] text-white/24"
                     : "bg-cyan-200/14 text-cyan-100 hover:bg-cyan-200/20",

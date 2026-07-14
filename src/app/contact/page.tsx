@@ -44,7 +44,7 @@ export default function ContactPage() {
     message.trim().length > 0;
 
   const inputBase =
-    "w-full rounded-2xl border px-4 py-3 text-[14px] leading-6 outline-none transition";
+    "w-full rounded-2xl border px-4 py-3 text-label leading-6 outline-none transition";
   const inputTheme =
     "border-white/12 bg-white/5 text-white/85 placeholder:text-white/40 focus:border-white/22 focus:ring-2 focus:ring-white/10";
 
@@ -89,15 +89,15 @@ export default function ContactPage() {
 
         {/* Header */}
         <div className="mt-10 sm:mt-14">
-          <p className="text-[11px] tracking-[0.25em] text-white/45">
+          <p className="text-micro tracking-eyebrow text-white/45">
             EVERLEAP · CONTACT
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold leading-[1.08] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold leading-display sm:text-4xl">
             Contact
           </h1>
 
-          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-[15px] sm:leading-7">
+          <p className="mt-3 max-w-prose text-sm leading-6 text-white/62 sm:text-label sm:leading-7">
             Send a note to the Everleap team.
           </p>
         </div>
@@ -127,7 +127,7 @@ export default function ContactPage() {
         {/* Content */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-white">Send a message</h2>
-          <p className="mt-2 text-[15px] leading-7 text-white/62">
+          <p className="mt-2 text-label leading-7 text-white/62">
             {selected.hint}
           </p>
 
@@ -200,7 +200,7 @@ export default function ContactPage() {
               </div>
               <a
                 href="mailto:info@everleap.ai"
-                className="inline-flex items-center gap-2 text-[15px] text-white/75 underline decoration-white/25 underline-offset-4 transition hover:text-white hover:decoration-white/55"
+                className="inline-flex items-center gap-2 text-label text-white/75 underline decoration-white/25 underline-offset-4 transition hover:text-white hover:decoration-white/55"
               >
                 <Mail className="h-4 w-4 text-white/55" />
                 info@everleap.ai

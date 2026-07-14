@@ -88,7 +88,7 @@ export function OnboardingFooterNav({
             backHref ? (
               <Link
                 href={backHref}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-[13px] font-semibold text-white/75 transition hover:bg-white/[0.07]"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-meta font-semibold text-white/75 transition hover:bg-white/[0.07]"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back
@@ -97,7 +97,7 @@ export function OnboardingFooterNav({
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-[13px] font-semibold text-white/75 transition hover:bg-white/[0.07] active:scale-[0.99]"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-meta font-semibold text-white/75 transition hover:bg-white/[0.07] active:scale-[0.99]"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Back
@@ -112,12 +112,12 @@ export function OnboardingFooterNav({
           {rightHref ? (
             <Link
               href={rightHref}
-              className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-[13px] font-semibold text-white/80 transition hover:bg-white/[0.09]"
+              className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-meta font-semibold text-white/80 transition hover:bg-white/[0.09]"
             >
               {rightLabel}
             </Link>
           ) : (
-            <div className="text-[12px] font-semibold text-white/35"> </div>
+            <div className="text-meta font-semibold text-white/35"> </div>
           )}
         </div>
       </div>

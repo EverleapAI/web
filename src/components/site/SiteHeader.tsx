@@ -106,7 +106,7 @@ export default function SiteHeader({ translucent = false }: Props) {
           className="flex items-center gap-2 rounded-lg px-1 py-1 text-sm font-semibold tracking-tight hover:opacity-95"
           aria-label="Everleap Home"
         >
-          <span className="inline-flex size-7 items-center justify-center rounded-md bg-white text-[11px] font-bold text-[rgb(var(--accent-rgb))] shadow-sm ring-1 ring-white/25">
+          <span className="inline-flex size-7 items-center justify-center rounded-md bg-white text-micro font-bold text-[rgb(var(--accent-rgb))] shadow-sm ring-1 ring-white/25">
             EL
           </span>
           <span className="text-white/95">Everleap</span>

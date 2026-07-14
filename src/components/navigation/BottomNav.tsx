@@ -254,7 +254,7 @@ export function BottomNav({
                   />
                   {key === "actions" && actionsCount > 0 ? (
                     <span
-                      className="absolute -right-2.5 -top-2 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-bold leading-none text-[#06210f] shadow-[0_2px_8px_rgba(16,185,129,0.5)]"
+                      className="absolute -right-2.5 -top-2 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-emerald-400 px-1 text-micro font-bold leading-none text-[#06210f] shadow-[0_2px_8px_rgba(16,185,129,0.5)]"
                       aria-label={`${actionsCount} actions to do`}
                     >
                       {actionsCount > 99 ? "99+" : actionsCount}
@@ -264,8 +264,8 @@ export function BottomNav({
                 <span
                   className={
                     active
-                      ? "text-[11px] text-white"
-                      : "text-[11px] text-white/55"
+                      ? "text-micro text-white"
+                      : "text-micro text-white/55"
                   }
                 >
                   {label}
@@ -282,7 +282,7 @@ export function BottomNav({
             className="flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04] active:bg-white/[0.09]"
           >
             <Trophy className="h-5 w-5 text-white/55" />
-            <span className="text-[11px] text-white/55">Awards</span>
+            <span className="text-micro text-white/55">Awards</span>
           </button>
         </div>
       </div>

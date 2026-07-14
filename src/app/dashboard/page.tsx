@@ -122,7 +122,7 @@ export default function DashboardPage() {
                 <Link href="/profile" className="btn-muted flex-1">View profile</Link>
               </div>
               {userId && (
-                <p className="text-[11px] opacity-60">
+                <p className="text-micro opacity-60">
                   Signed in as <span className="font-mono">{userId}</span>
                 </p>
               )}
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                 <div className="text-xs">Loading…</div>
               )}
 
-              <p className="text-[11px] opacity-60">
+              <p className="text-micro opacity-60">
                 This page performs no client-side redirects. If you still get bounced,
                 something upstream (middleware/layout/hosting) did it.
               </p>

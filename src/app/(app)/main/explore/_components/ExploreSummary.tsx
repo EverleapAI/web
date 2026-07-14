@@ -40,7 +40,7 @@ function LaneMark({ lane }: { lane: Lane }) {
   const Icon = LANE_ICON[lane];
   return (
     <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-control"
       style={{ backgroundColor: rgba(accent, 0.12), color: rgba(accent, 0.92) }}
     >
       <Icon className="h-4 w-4" />
@@ -114,10 +114,10 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
 
       {laneTops.length > 0 ? (
         <SectionCard tone="neutral">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
+          <h2 className="text-meta font-semibold uppercase tracking-eyebrow text-white/55">
             Worth a real look
           </h2>
-          <p className="mt-1 text-[13px] leading-[1.5] text-white/50">
+          <p className="mt-1 text-meta leading-body text-white/50">
             One path to actually dig into in each of your five directions.
           </p>
           <div className="mt-3 space-y-2">
@@ -130,12 +130,12 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
                 <LaneMark lane={t.lane} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-semibold text-[#F7F9FC]">{t.path.card.title}</span>
-                    <span className="text-[11px] uppercase tracking-[0.14em] text-white/40">
+                    <span className="text-label font-semibold text-ink-strong">{t.path.card.title}</span>
+                    <span className="text-micro uppercase tracking-eyebrow text-white/40">
                       {LANE_LABEL[t.lane]}
                     </span>
                   </div>
-                  <p className="mt-0.5 line-clamp-2 text-[13px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">
+                  <p className="mt-0.5 line-clamp-2 text-meta font-normal leading-read tracking-normal text-ink-quiet">
                     {t.path.card.hook}
                   </p>
                 </div>

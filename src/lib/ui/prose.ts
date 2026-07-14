@@ -25,17 +25,17 @@ export const TEXT_MUTED = "#7E838E"; // meta / timestamps — the quietest chrom
 // 400, not 500: the system UI stack (Segoe UI / SF — there is no next/font here)
 // has no 425, so anything above 400 rounds to a semibold-looking face.
 export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 400 };
-export const PROSE_CLASS = "leading-[1.65] tracking-[0]";
+export const PROSE_CLASS = "leading-read tracking-normal";
 
 // ── Size ladder (the "full ladder", identical to Today) ──────────────────────
-export const PROSE_SIZE = "text-[21px]"; // hero / body agentic prose
-export const LINK_SIZE = "text-[18px]"; // secondary links
-export const EYEBROW_CLASS = "text-[10.5px] font-bold uppercase tracking-[0.22em]"; // modal / section eyebrow
+export const PROSE_SIZE = "text-read"; // hero / body agentic prose
+export const LINK_SIZE = "text-body"; // secondary links
+export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; // modal / section eyebrow
 
 // One shared link treatment so every tappable agentic link reads the same:
 // own semantic colour, brightening on hover, with a trailing chevron.
 export const LINK_CLASS =
-  "group inline-flex items-center gap-1.5 font-semibold tracking-[0.01em] transition duration-150 hover:brightness-125 active:opacity-70";
+  "group inline-flex items-center gap-1.5 font-semibold tracking-normal transition duration-150 hover:brightness-125 active:opacity-70";
 
 // ── Read trimming ────────────────────────────────────────────────────────────
 // The visible "read" everywhere is trimmed to Today's length so the treatment

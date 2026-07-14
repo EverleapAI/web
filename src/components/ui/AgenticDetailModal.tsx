@@ -94,8 +94,8 @@ export default function AgenticDetailModal({ open, onClose, eyebrow, body, accen
               onClick={onClose}
               className={
                 isWhy
-                  ? "mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold transition hover:brightness-110"
-                  : "mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-[13px] font-semibold text-[#878B95] transition hover:border-white/[0.16]"
+                  ? "mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-meta font-semibold transition hover:brightness-110"
+                  : "mt-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] px-4 py-2 text-meta font-semibold text-ink-quiet transition hover:border-white/[0.16]"
               }
               style={
                 isWhy

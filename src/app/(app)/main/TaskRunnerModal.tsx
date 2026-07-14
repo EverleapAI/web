@@ -209,7 +209,7 @@ function StepDots({
   return (
     <div className="flex items-center gap-3">
       {showLabel ? (
-        <div className="text-[11px] font-semibold text-white/45">
+        <div className="text-micro font-semibold text-white/45">
           Step {filled} of {total}
         </div>
       ) : null}
@@ -289,7 +289,7 @@ function MinimalLineInput({
         }}
         rows={2}
         placeholder={placeholder ?? ""}
-        className="w-full resize-none bg-transparent py-3 text-[16px] leading-7 text-white/92 placeholder:text-white/40 outline-none"
+        className="w-full resize-none bg-transparent py-3 text-body leading-7 text-white/92 placeholder:text-white/40 outline-none"
       />
     </div>
   );
@@ -365,8 +365,8 @@ export function TaskRunnerModal({
     : "text-slate-700 hover:text-slate-950";
 
   const labelClass = dark
-    ? "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/55"
-    : "text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-700/60";
+    ? "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/55"
+    : "text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-700/60";
 
   const close = () => onClose();
 
@@ -589,7 +589,7 @@ export function TaskRunnerModal({
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="mt-4"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+                  <div className="text-xs font-semibold uppercase tracking-eyebrow text-white/58">
                     What this opens
                   </div>
                   <div className="mt-2 text-sm text-white/90">{laneHelper(lane)}</div>
@@ -639,7 +639,7 @@ export function TaskRunnerModal({
             </p>
 
             <div className="mt-4 text-sm text-white/92">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+              <div className="text-xs font-semibold uppercase tracking-eyebrow text-white/58">
                 Your prompt
               </div>
               <div className="mt-2">{prompt.trim() || suggested[0] || "Find one interesting thing."}</div>
@@ -666,7 +666,7 @@ export function TaskRunnerModal({
             <p className="mt-2 text-sm text-white/82">That’s a real signal.</p>
 
             <div className="mt-4 text-sm text-white/92">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/58">
+              <div className="text-xs font-semibold uppercase tracking-eyebrow text-white/58">
                 Saved takeaway
               </div>
               <div className="mt-2">{takeaway.trim()}</div>
@@ -732,7 +732,7 @@ export function TaskRunnerModal({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 14, opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className={`relative w-full max-w-xl overflow-hidden rounded-[28px] border ${surface} backdrop-blur-xl shadow-[0_18px_90px_rgba(0,0,0,0.55)]`}
+            className={`relative w-full max-w-xl overflow-hidden rounded-card border ${surface} backdrop-blur-xl shadow-[0_18px_90px_rgba(0,0,0,0.55)]`}
           >
             {/* Accent wash (adds “pop”) + brighter top glow, keeps content readable */}
             <div

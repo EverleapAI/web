@@ -17,10 +17,10 @@ export function CoverageMeter({
   return (
     <div className="mt-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+        <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">
           The picture forming
         </div>
-        <div className="text-[11px] tabular-nums text-white/55">
+        <div className="text-micro tabular-nums text-white/55">
           {filledCount} / {total}
         </div>
       </div>
@@ -44,14 +44,14 @@ export function CoverageMeter({
       </div>
 
       {nextGapLabel ? (
-        <div className="mt-2 text-[11.5px] text-white/55">
+        <div className="mt-2 text-micro text-white/55">
           Next:{" "}
           <span style={{ color: `rgb(${accentRgb})` }} className="font-medium">
             {nextGapLabel}
           </span>
         </div>
       ) : (
-        <div className="mt-2 text-[11.5px] text-white/55">
+        <div className="mt-2 text-micro text-white/55">
           Your picture is full — nice.
         </div>
       )}

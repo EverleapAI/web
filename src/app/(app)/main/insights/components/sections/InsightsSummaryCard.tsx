@@ -198,7 +198,7 @@ export default function InsightsSummaryCard({
                 className={[
                   "mt-2.5",
                   bodyText(dark),
-                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                  "text-label leading-read sm:text-label",
                 ].join(" ")}
               >
                 This page gets much more useful once Everleap has a little more
@@ -209,7 +209,7 @@ export default function InsightsSummaryCard({
                 className={[
                   "mt-1.5",
                   bodyText(dark),
-                  "text-[14px] leading-[1.65] sm:text-[14.5px]",
+                  "text-label leading-read sm:text-label",
                 ].join(" ")}
               >
                 A few Motivations questions is enough to start grounding this in
@@ -221,7 +221,7 @@ export default function InsightsSummaryCard({
                 <Link
                   href={startHref}
                   className={[
-                    "group inline-flex items-center gap-1.5 text-[14px] font-medium transition focus-visible:outline-none sm:text-[14.5px]",
+                    "group inline-flex items-center gap-1.5 text-label font-medium transition focus-visible:outline-none sm:text-label",
                     dark
                       ? "text-white/82 hover:text-white/94"
                       : "text-slate-900 hover:text-black",

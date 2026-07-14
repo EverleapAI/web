@@ -163,7 +163,7 @@ export default function IntroPage(): React.JSX.Element {
         <button
           type="button"
           onClick={goHome}
-          className="fixed right-5 top-5 z-[210] text-[12px] font-semibold tracking-[-0.01em] text-white/35 transition hover:text-white/70"
+          className="fixed right-5 top-5 z-[210] text-meta font-semibold tracking-title text-white/35 transition hover:text-white/70"
         >
           Skip
         </button>
@@ -179,7 +179,7 @@ export default function IntroPage(): React.JSX.Element {
               animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={reduce ? { opacity: 0 } : { opacity: 0, y: -18, filter: "blur(6px)" }}
               transition={{ duration: reduce ? 0.25 : 0.7, ease: "easeOut" }}
-              className="text-[19px] font-medium leading-[1.5] tracking-[-0.02em] text-white/85 text-balance"
+              className="text-lede font-medium leading-body tracking-title text-white/85 text-balance"
             >
               {CRAWL_LINES[lineIndex]}
             </motion.p>
@@ -190,17 +190,17 @@ export default function IntroPage(): React.JSX.Element {
               animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: reduce ? 0.25 : 0.8, ease: "easeOut" }}
             >
-              <div className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[rgb(182,160,255)]">
+              <div className="mb-4 text-micro font-bold uppercase tracking-eyebrow text-[rgb(182,160,255)]">
                 What I'm noticing
               </div>
 
               {synth?.headline ? (
-                <h1 className="text-balance text-[26px] font-semibold leading-[1.14] tracking-[-0.03em]">
+                <h1 className="text-balance text-title font-semibold leading-display tracking-title">
                   {synth.headline}
                 </h1>
               ) : null}
 
-              <p className="mt-4 text-left text-[15px] leading-[1.62] text-white/78">
+              <p className="mt-4 text-left text-label leading-read text-white/78">
                 {synth?.body ?? FALLBACK_LINE}
               </p>
 
@@ -215,7 +215,7 @@ export default function IntroPage(): React.JSX.Element {
                       className="flex items-start gap-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5"
                     >
                       <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(182,160,255)]" />
-                      <span className="text-[13px] leading-snug text-white/72">{s}</span>
+                      <span className="text-meta leading-snug text-white/72">{s}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -227,7 +227,7 @@ export default function IntroPage(): React.JSX.Element {
                 initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: reduce ? 0.1 : 1.15, duration: 0.5 }}
-                className="mt-8 w-full rounded-full px-5 py-3.5 text-[15px] font-semibold transition hover:brightness-110"
+                className="mt-8 w-full rounded-full px-5 py-3.5 text-label font-semibold transition hover:brightness-110"
                 style={{
                   color: "rgb(182,160,255)",
                   background: "rgba(182,160,255,0.14)",

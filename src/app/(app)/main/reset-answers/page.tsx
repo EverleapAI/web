@@ -78,11 +78,11 @@ export default function ResetAnswersPage(): React.JSX.Element {
       <main className="mx-auto flex min-h-[100svh] w-full max-w-[520px] flex-col justify-center px-6 text-center">
         {step === "enter-code" ? (
           <>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
+            <div className="text-micro uppercase tracking-eyebrow text-white/34">
               Developer Tools
             </div>
 
-            <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
+            <h1 className="mt-4 text-[2rem] font-semibold tracking-display">
               Start over
             </h1>
 
@@ -128,11 +128,11 @@ export default function ResetAnswersPage(): React.JSX.Element {
 
         {step === "confirm" ? (
           <>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
+            <div className="text-micro uppercase tracking-eyebrow text-white/34">
               Confirm Reset
             </div>
 
-            <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
+            <h1 className="mt-4 text-[2rem] font-semibold tracking-display">
               Erase everything?
             </h1>
 
@@ -173,11 +173,11 @@ export default function ResetAnswersPage(): React.JSX.Element {
 
         {step === "processing" ? (
           <>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/34">
+            <div className="text-micro uppercase tracking-eyebrow text-white/34">
               Processing
             </div>
 
-            <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em]">
+            <h1 className="mt-4 text-[2rem] font-semibold tracking-display">
               Erasing your account
             </h1>
 

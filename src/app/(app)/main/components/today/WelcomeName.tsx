@@ -62,7 +62,7 @@ export function WelcomeName({
   // exercise that survived contact with actual eyes.
   return (
     <div className="flex flex-col items-start text-left">
-      <span className="text-title font-semibold tracking-tight text-ink-strong">
+      <span className="text-title font-semibold tracking-title text-ink-strong">
         {title}
       </span>
     </div>

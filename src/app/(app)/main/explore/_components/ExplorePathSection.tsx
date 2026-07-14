@@ -38,7 +38,7 @@ export function ExplorePathSection({
     <div className="space-y-3 pb-24">
       <Link
         href={`/main/explore/${path.lane}/${path.slug}`}
-        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         <span>Back to {title}</span>
@@ -46,8 +46,8 @@ export function ExplorePathSection({
 
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`${path.id}:${section}`} accent={accent} />}>
         <div className="max-w-2xl">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">{title}</div>
-          <h1 className="mt-2 text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:text-[28px]">
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">{title}</div>
+          <h1 className="mt-2 text-title font-semibold leading-display tracking-title text-white sm:text-title">
             {meta.title}
           </h1>
         </div>

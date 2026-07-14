@@ -62,7 +62,7 @@ function cleanOneLine(s: string) {
 
 function readingSurface(dark: boolean) {
   return [
-    "relative overflow-hidden rounded-[28px] border",
+    "relative overflow-hidden rounded-card border",
     "px-4 py-5 md:px-6 md:py-6",
     "backdrop-blur-xl",
     dark ? "border-white/10 bg-slate-950/20" : "border-black/10 bg-white/80",
@@ -71,19 +71,19 @@ function readingSurface(dark: boolean) {
 }
 
 function sectionKicker(dark: boolean) {
-  return ["text-[12px] font-semibold uppercase tracking-[0.16em]", dark ? "text-white/50" : "text-slate-600"].join(" ");
+  return ["text-meta font-semibold uppercase tracking-eyebrow", dark ? "text-white/50" : "text-slate-600"].join(" ");
 }
 
 function sectionTitle(dark: boolean) {
-  return dark ? "text-[#F7F9FC]" : "text-slate-900";
+  return dark ? "text-ink-strong" : "text-slate-900";
 }
 
 function bodyText(dark: boolean) {
-  return dark ? "font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]" : "text-slate-700";
+  return dark ? "font-normal leading-read tracking-normal text-ink" : "text-slate-700";
 }
 
 function mutedText(dark: boolean) {
-  return dark ? "font-normal leading-[1.65] tracking-[0] text-[#878B95]" : "text-slate-600";
+  return dark ? "font-normal leading-read tracking-normal text-ink-quiet" : "text-slate-600";
 }
 
 /* =============================================================================
@@ -122,7 +122,7 @@ function FunFactCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[22px] border px-4 py-4 md:px-5 md:py-5"
+      className="relative overflow-hidden rounded-panel border px-4 py-4 md:px-5 md:py-5"
       style={{
         borderColor: `rgba(${accent}, ${dark ? 0.28 : 0.3})`,
         background: dark
@@ -139,7 +139,7 @@ function FunFactCard({
 
       <div className="relative flex items-start gap-3">
         <div
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-[22px] leading-none"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-read leading-none"
           style={{
             background: `rgba(${accent}, ${dark ? 0.16 : 0.18})`,
             boxShadow: `inset 0 0 0 1px rgba(${accent}, 0.3)`,
@@ -155,7 +155,7 @@ function FunFactCard({
               {fact.domains.map((domain, i) => (
                 <span
                   key={i}
-                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  className="rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-eyebrow"
                   style={{
                     background: `rgba(${accent}, ${dark ? 0.16 : 0.14})`,
                     color: dark ? `rgba(${accent}, 1)` : `rgba(${accent}, 1)`,
@@ -169,7 +169,7 @@ function FunFactCard({
 
           <p
             className={[
-              "text-[16px] font-semibold leading-[1.4] tracking-[-0.01em]",
+              "text-body font-semibold leading-body tracking-title",
               sectionTitle(dark),
             ].join(" ")}
           >
@@ -265,10 +265,10 @@ export default function FunFactsTab(props: FunFactsTabProps) {
 
         <div className="relative">
           <div className={sectionKicker(dark)}>Fun Facts</div>
-          <div className={["mt-2 text-[18px] font-semibold tracking-tight", sectionTitle(dark)].join(" ")}>
+          <div className={["mt-2 text-body font-semibold tracking-tight", sectionTitle(dark)].join(" ")}>
             {buildOpenLine(nameFromHeadline)}
           </div>
-          <div className={["mt-2 text-[15px] leading-relaxed", bodyText(dark)].join(" ")}>{delightPara}</div>
+          <div className={["mt-2 text-label leading-relaxed", bodyText(dark)].join(" ")}>{delightPara}</div>
         </div>
       </div>
 
@@ -278,7 +278,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         onClick={() => router.push("/main/insights/fun-facts/time-twin")}
         className={[
           "w-full text-left",
-          "relative overflow-hidden rounded-[24px] border px-4 py-4 md:px-5 md:py-5",
+          "relative overflow-hidden rounded-card border px-4 py-4 md:px-5 md:py-5",
           "backdrop-blur-xl transition active:scale-[0.99]",
           dark ? "border-white/10 bg-white/5 hover:bg-white/8" : "border-black/10 bg-white/85 hover:bg-white",
         ].join(" ")}
@@ -316,10 +316,10 @@ export default function FunFactsTab(props: FunFactsTabProps) {
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className={["text-[15px] font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</span>
+              <span className={["text-label font-semibold", sectionTitle(dark)].join(" ")}>Time Twin</span>
               <span
                 className={[
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                  "rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-eyebrow",
                   dark ? "bg-violet-300/12 text-violet-100/80" : "bg-violet-500/10 text-violet-700",
                 ].join(" ")}
               >
@@ -327,7 +327,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
               </span>
             </div>
 
-            <div className={["mt-1 text-[13px] leading-relaxed", mutedText(dark)].join(" ")}>{timeTwinTeaser}</div>
+            <div className={["mt-1 text-meta leading-relaxed", mutedText(dark)].join(" ")}>{timeTwinTeaser}</div>
 
             <div
               className={[
@@ -355,7 +355,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
       ) : (
         <div
           className={[
-            "rounded-[22px] border px-4 py-4 text-[13px] leading-relaxed",
+            "rounded-panel border px-4 py-4 text-meta leading-relaxed",
             dark ? "border-white/10 bg-white/[0.02] text-white/55" : "border-black/10 bg-white/70 text-slate-600",
           ].join(" ")}
         >

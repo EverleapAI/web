@@ -63,15 +63,15 @@ export function InProgressMissionNudge() {
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`nudge:${mission.id}`} accent={accent} />}>
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80">
+            <div className="mb-1 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow text-cyan-200/80">
               <Sparkles className="h-3 w-3" /> Pick up where you left off
             </div>
-            <div className="truncate text-[16px] font-semibold text-white">{mission.title}</div>
+            <div className="truncate text-body font-semibold text-white">{mission.title}</div>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-1 w-28 overflow-hidden rounded-full bg-white/[0.1]">
                 <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${pct}%` }} />
               </div>
-              <span className="text-[11.5px] text-white/55">
+              <span className="text-micro text-white/55">
                 {done}/{steps.length} steps
               </span>
             </div>

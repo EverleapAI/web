@@ -21,7 +21,7 @@ function ActionLink({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex items-center gap-2 text-[14px] font-semibold tracking-[0.01em] transition",
+        "inline-flex items-center gap-2 text-label font-semibold tracking-normal transition",
         disabled
           ? "cursor-not-allowed text-white/26"
           : muted
@@ -30,7 +30,7 @@ function ActionLink({
       ].join(" ")}
     >
       <span>{label}</span>
-      <span aria-hidden="true" className="text-[16px]">
+      <span aria-hidden="true" className="text-body">
         →
       </span>
     </button>
@@ -96,22 +96,22 @@ export default function ConsentPage() {
             <span className="relative flex h-6 w-6 items-center justify-center">
               <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_35%_35%,rgba(255,226,168,0.95),rgba(255,178,58,0.9)_35%,rgba(255,116,24,0.85)_70%,rgba(255,91,46,0.8)_100%)] shadow-[0_0_18px_rgba(255,145,56,0.35)]" />
             </span>
-            <span className="text-[13px] font-medium tracking-[0.12em] text-white/70">
+            <span className="text-meta font-medium tracking-eyebrow text-white/70">
               EVERLEAP
             </span>
           </Link>
         </div>
 
         <div className="mt-10 sm:mt-14">
-          <p className="text-[11px] tracking-[0.25em] text-white/45">
+          <p className="text-micro tracking-eyebrow text-white/45">
             EVERLEAP · CONSENT
           </p>
 
-          <h1 className="mt-4 text-3xl font-semibold leading-[1.08] sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold leading-display sm:text-4xl">
             We need your permission.
           </h1>
 
-          <p className="mt-4 text-sm leading-6 text-white/70 sm:text-[15px] sm:leading-7">
+          <p className="mt-4 text-sm leading-6 text-white/70 sm:text-label sm:leading-7">
             Everleap uses what you share to personalize guidance, ideas, and
             next steps. We may rely on trusted service providers to help operate
             Everleap, as described in our{" "}

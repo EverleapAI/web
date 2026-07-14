@@ -62,7 +62,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+    <section className="relative overflow-hidden rounded-card border border-white/10 bg-slate-950/40 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-14 -left-12 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/16 via-cyan-400/9 to-indigo-500/10 blur-3xl opacity-70" />
         <div className="absolute -bottom-16 -right-12 h-72 w-72 rounded-full bg-gradient-to-br from-emerald-500/12 via-teal-400/7 to-sky-500/9 blur-3xl opacity-60" />
@@ -251,7 +251,7 @@ export function LocalLinksStep({ step, progress }: Props) {
 
   return (
     <section className="mx-auto w-full max-w-3xl space-y-4">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-white/70">
+      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/70">
         Dive deeper · {step.title}
       </div>
 
@@ -298,7 +298,7 @@ export function LocalLinksStep({ step, progress }: Props) {
         ))}
 
         <div className="mt-2 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+          <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
             Coach note
           </div>
           <div className="mt-2 text-sm text-slate-200/85">
@@ -329,7 +329,7 @@ export function LocalLinksStep({ step, progress }: Props) {
 
         {!zipIsReal ? (
           <div className="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-50/80">
+            <div className="text-xs font-semibold uppercase tracking-eyebrow text-amber-50/80">
               Quick fix later
             </div>
             <div className="mt-2 text-sm text-amber-50/90">
@@ -340,7 +340,7 @@ export function LocalLinksStep({ step, progress }: Props) {
           </div>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300/70">
+            <div className="text-xs font-semibold uppercase tracking-eyebrow text-slate-300/70">
               Next improvement
             </div>
             <div className="mt-2 text-sm text-slate-200/85">

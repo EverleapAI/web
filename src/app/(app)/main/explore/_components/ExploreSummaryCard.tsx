@@ -117,27 +117,27 @@ export function ExploreSummaryCard({
       ) : null}
       <div className="relative max-w-2xl">
         <div className="mb-2 flex items-center gap-2">
-          <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">
+          <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/44">
+          <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
             Explore
           </span>
         </div>
 
         {!hasSignal ? (
           <>
-            <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#F7F9FC] sm:text-[28px]">
+            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
               {firstName ? `${firstName}, let's find your directions.` : "Let's find your directions."}
             </h1>
-            <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">
+            <p className="mt-3 text-label leading-read text-white/74 sm:text-label">
               Explore turns your signal into real paths across five directions of a life — work,
               learning, world, impact, and play. Answer a few quick questions and this whole-life
               read sharpens.
             </p>
             <Link
               href="/main/questions?returnTo=/main/explore"
-              className="group mt-4 inline-flex items-center gap-1.5 text-[14px] font-medium text-white/82 transition hover:text-white"
+              className="group mt-4 inline-flex items-center gap-1.5 text-label font-medium text-white/82 transition hover:text-white"
             >
               <span>Start with a few quick questions</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -151,15 +151,15 @@ export function ExploreSummaryCard({
               <div className="h-3.5 w-[92%] rounded bg-white/[0.07]" />
               <div className="h-3.5 w-[85%] rounded bg-white/[0.07]" />
             </div>
-            <p className="mt-4 text-[12.5px] text-white/40">Reading your signals…</p>
+            <p className="mt-4 text-meta text-white/40">Reading your signals…</p>
           </div>
         ) : payload || preview ? (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-[#F7F9FC] sm:text-[27px]">
+            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
               {resolvedHeadline}
             </h1>
             {/* The read, trimmed to Today's length — the whole picture is one tap away. */}
-            <p className={`mt-3 text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            <p className={`mt-3 text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {leadBody}
             </p>
             {(hasMore || resolvedWhy) ? (
@@ -192,7 +192,7 @@ export function ExploreSummaryCard({
                 {resolvedThreads.map((t) => (
                   <span
                     key={t}
-                    className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[11.5px] font-medium text-white/70"
+                    className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-micro font-medium text-white/70"
                   >
                     {t}
                   </span>
@@ -202,10 +202,10 @@ export function ExploreSummaryCard({
           </>
         ) : (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#F7F9FC] sm:text-[27px]">
+            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
               {firstName ? `${firstName}, here's your whole-life view.` : "Your whole-life view."}
             </h1>
-            <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">
+            <p className="mt-3 text-label leading-read text-white/74 sm:text-label">
               {failed
                 ? "Here are the directions worth a look right now — your personalized read will appear here shortly."
                 : "Five directions a good life can grow in. Here's what's worth a look right now."}

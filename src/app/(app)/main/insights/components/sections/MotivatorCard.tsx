@@ -168,10 +168,10 @@ export default function MotivatorCard({
         <div className={cardBody()}>
           <h3
             className={[
-              dark ? "text-[#F7F9FC]" : "text-slate-950",
+              dark ? "text-ink-strong" : "text-slate-950",
               isPrimary
-                ? "text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.02em]"
-                : "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",
+                ? "text-[1.2rem] font-semibold leading-display tracking-title"
+                : "text-[1.05rem] font-semibold leading-display tracking-title",
             ].join(" ")}
           >
             {displayName}
@@ -181,7 +181,7 @@ export default function MotivatorCard({
             className={[
               "mt-1.5",
               bodyText(dark),
-              isPrimary ? "text-[14.5px] leading-[1.6]" : "text-[13.5px] leading-[1.55]",
+              isPrimary ? "text-label leading-read" : "text-meta leading-body",
             ].join(" ")}
           >
             {displayShortLine}
@@ -193,7 +193,7 @@ export default function MotivatorCard({
                 <button
                   type="button"
                   onClick={() => setMoreOpen(true)}
-                  className={`${LINK_CLASS} text-[13px]`}
+                  className={`${LINK_CLASS} text-meta`}
                   style={{ color: TEXT_SECONDARY }}
                 >
                   The whole picture
@@ -204,7 +204,7 @@ export default function MotivatorCard({
                 <button
                   type="button"
                   onClick={() => setWhyOpen(true)}
-                  className={`${LINK_CLASS} text-[13px]`}
+                  className={`${LINK_CLASS} text-meta`}
                   style={{ color: `rgb(${rgb})` }}
                 >
                   Why this

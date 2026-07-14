@@ -31,14 +31,14 @@ export function TodayUnavailable({
   return (
     <div className="py-2">
       <h1
-        className="text-[22px] font-semibold leading-[1.2] tracking-[-0.02em]"
+        className="text-read font-semibold leading-title tracking-title"
         style={{ color: TEXT_HEADING }}
       >
         Today didn&apos;t load
       </h1>
 
       <p
-        className={`mt-3 max-w-[460px] text-[17px] ${PROSE_CLASS}`}
+        className={`mt-3 max-w-[460px] text-body ${PROSE_CLASS}`}
         style={PROSE_STYLE}
       >
         Nothing is lost — this is just the connection. Your story, your actions and
@@ -50,7 +50,7 @@ export function TodayUnavailable({
           type="button"
           onClick={onRetry}
           disabled={retrying}
-          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
+          className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
           style={{
             color: `rgb(${rgb})`,
             background: `rgba(${rgb},0.08)`,
@@ -64,7 +64,7 @@ export function TodayUnavailable({
         </button>
       </div>
 
-      <p className="mt-4 text-[12.5px]" style={{ color: TEXT_MUTED }}>
+      <p className="mt-4 text-meta" style={{ color: TEXT_MUTED }}>
         If it keeps happening, it&apos;s us, not you.
       </p>
     </div>

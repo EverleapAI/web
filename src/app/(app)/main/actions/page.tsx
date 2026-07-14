@@ -91,7 +91,7 @@ function ActionRow({
   const missionDone = missionSteps.filter((s) => s.done).length;
 
   const menuItem =
-    "flex w-full items-center rounded-lg px-3 py-2 text-left text-[13px] transition hover:bg-white/[0.06]";
+    "flex w-full items-center rounded-lg px-3 py-2 text-left text-meta transition hover:bg-white/[0.06]";
   const circleClass = `mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50 ${
     done
       ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
@@ -121,35 +121,35 @@ function ActionRow({
       <div className="min-w-0 flex-1">
         <Link
           href={`/main/actions/${action.id}`}
-          className={`text-[14.5px] font-semibold transition hover:underline ${done ? "text-white/45 line-through" : "text-white"}`}
+          className={`text-label font-semibold transition hover:underline ${done ? "text-white/45 line-through" : "text-white"}`}
         >
           {action.title}
         </Link>
         {action.description ? (
-          <p className={`mt-0.5 line-clamp-2 text-[12.5px] leading-[1.5] ${done ? "text-white/35" : "text-white/58"}`}>
+          <p className={`mt-0.5 line-clamp-2 text-meta leading-body ${done ? "text-white/35" : "text-white/58"}`}>
             {action.description}
           </p>
         ) : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           {missionSteps.length > 0 ? (
-            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/50">
+            <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/50">
               {missionDone}/{missionSteps.length} steps
             </span>
           ) : !done ? (
             <Link
               href={`/main/actions/${action.id}`}
-              className="inline-flex items-center gap-0.5 text-[12px] font-medium text-white/55 transition hover:text-white/90"
+              className="inline-flex items-center gap-0.5 text-meta font-medium text-white/55 transition hover:text-white/90"
             >
               Open mission <ChevronRight className="h-3 w-3" />
             </Link>
           ) : null}
-          <span className="text-[11px] uppercase tracking-[0.13em] text-white/38">{sourceLabel(action)}</span>
+          <span className="text-micro uppercase tracking-eyebrow text-white/38">{sourceLabel(action)}</span>
           {action.href ? (
             <a
               href={action.href}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[12px] font-medium text-white/60 transition hover:text-white/90"
+              className="inline-flex items-center gap-1 text-meta font-medium text-white/60 transition hover:text-white/90"
             >
               Open <ExternalLink className="h-3 w-3" />
             </a>
@@ -234,18 +234,18 @@ function SuggestionCardRow({
   return (
     <div className="rounded-2xl border border-white/8 bg-white/[0.025] px-3.5 py-3">
       <div className="flex items-center gap-2">
-        <span className="text-[14.5px] font-semibold text-white">{s.title}</span>
+        <span className="text-label font-semibold text-white">{s.title}</span>
         {s.lane && LANE_LABEL[s.lane] ? (
-          <span className="text-[11px] uppercase tracking-[0.13em] text-white/40">{LANE_LABEL[s.lane]}</span>
+          <span className="text-micro uppercase tracking-eyebrow text-white/40">{LANE_LABEL[s.lane]}</span>
         ) : null}
       </div>
-      <p className="mt-1 text-[13px] leading-[1.55] text-white/62">{s.why}</p>
+      <p className="mt-1 text-meta leading-body text-white/62">{s.why}</p>
       <div className="mt-2.5 flex items-center gap-2">
         <button
           type="button"
           disabled={pending}
           onClick={() => onSave(s)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[12.5px] font-medium text-white/88 transition hover:bg-white/[0.1] disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-meta font-medium text-white/88 transition hover:bg-white/[0.1] disabled:opacity-50"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
           Add to my list
@@ -254,7 +254,7 @@ function SuggestionCardRow({
           type="button"
           disabled={pending}
           onClick={() => onDismiss(s)}
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[12.5px] text-white/45 transition hover:text-white/75 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-meta text-white/45 transition hover:text-white/75 disabled:opacity-50"
         >
           Not for me
         </button>
@@ -416,15 +416,15 @@ export default function ActionsPage() {
     <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-1">
       <div className="mb-4 px-1">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="flex h-4 w-4 items-center justify-center rounded-[5px] bg-cyan-300/12 text-cyan-200/75">
+          <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
             <ListChecks className="h-3.5 w-3.5" />
           </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/44">Actions</span>
+          <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">Actions</span>
         </div>
-        <h1 className="text-[26px] font-semibold leading-[1.05] tracking-[-0.035em] text-white sm:text-[30px]">
+        <h1 className="text-title font-semibold leading-display tracking-title text-white sm:text-display">
           Things you saved to try
         </h1>
-        <p className="mt-1.5 text-[14px] leading-[1.5] text-white/60">
+        <p className="mt-1.5 text-label leading-body text-white/60">
           Real next-steps you bookmarked while exploring — plus a few ideas from your guide.
         </p>
 
@@ -437,7 +437,7 @@ export default function ActionsPage() {
         {suggestions === null || hasSuggestions ? (
           <SectionCard tone="hero">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-white/62">
+              <h2 className="flex items-center gap-2 text-meta font-semibold uppercase tracking-eyebrow text-white/62">
                 <Sparkles className="h-3.5 w-3.5 text-cyan-200/80" />
                 Suggested for you
               </h2>
@@ -447,7 +447,7 @@ export default function ActionsPage() {
                 disabled={refreshing || suggestions === null}
                 aria-label="Refresh suggestions"
                 title="Fresh ideas"
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] text-white/50 transition hover:text-white/85 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-meta text-white/50 transition hover:text-white/85 disabled:opacity-50"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
                 Refresh
@@ -458,7 +458,7 @@ export default function ActionsPage() {
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="h-[86px] rounded-2xl bg-white/[0.04]" />
                 ))}
-                <p className="pt-1 text-[12.5px] text-white/45">Reading what you've shared…</p>
+                <p className="pt-1 text-meta text-white/45">Reading what you've shared…</p>
               </div>
             ) : (
               <div className="space-y-2.5">
@@ -496,10 +496,10 @@ export default function ActionsPage() {
                 <Compass className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-[19px] font-semibold tracking-[-0.01em] text-white">
+                <h2 className="text-lede font-semibold tracking-title text-white">
                   {failed ? "Couldn't load your actions" : "Your next moves live here"}
                 </h2>
-                <p className="mt-1.5 max-w-md text-[14px] leading-[1.6] text-white/70">
+                <p className="mt-1.5 max-w-md text-label leading-read text-white/70">
                   {failed
                     ? "Something went wrong loading your list — try refreshing."
                     : "As you explore, tap “Add to my Actions” on anything worth trying and it lands here. Then check it off and watch it light up."}
@@ -507,7 +507,7 @@ export default function ActionsPage() {
               </div>
               <Link
                 href="/main/explore"
-                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:bg-white/[0.12]"
+                className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-meta font-semibold text-white transition hover:bg-white/[0.12]"
               >
                 <Compass className="h-4 w-4" />
                 Find something to try
@@ -518,7 +518,7 @@ export default function ActionsPage() {
           <>
             {inProgress.length > 0 ? (
               <SectionCard tone="neutral">
-                <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">
+                <h2 className="mb-3 flex items-center gap-2 text-meta font-semibold uppercase tracking-eyebrow text-cyan-200/80">
                   <Sparkles className="h-3.5 w-3.5" />
                   In progress ({inProgress.length})
                 </h2>
@@ -532,7 +532,7 @@ export default function ActionsPage() {
 
             {toTry.length > 0 ? (
               <SectionCard tone="neutral">
-                <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                <h2 className="mb-3 text-meta font-semibold uppercase tracking-eyebrow text-white/55">
                   To try ({toTry.length})
                 </h2>
                 <div className="space-y-2">
@@ -545,7 +545,7 @@ export default function ActionsPage() {
 
             {done.length > 0 ? (
               <SectionCard tone="neutral">
-                <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                <h2 className="mb-3 text-meta font-semibold uppercase tracking-eyebrow text-white/45">
                   Done ({done.length})
                 </h2>
                 <div className="space-y-2">

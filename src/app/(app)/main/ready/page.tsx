@@ -74,11 +74,11 @@ export default function ReadyPage(): React.JSX.Element {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
-          className="rounded-[28px] border border-white/10 bg-white/[0.014] backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.62)] p-7 md:p-9"
+          className="rounded-card border border-white/10 bg-white/[0.014] backdrop-blur-2xl shadow-[0_30px_100px_rgba(0,0,0,0.62)] p-7 md:p-9"
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[28px]"
+            className="pointer-events-none absolute inset-0 rounded-card"
             style={{
               background:
                 "radial-gradient(900px 520px at 20% 10%, rgba(90,145,255,0.20), transparent 60%)," +
@@ -90,13 +90,13 @@ export default function ReadyPage(): React.JSX.Element {
           />
 
           <div className="relative">
-            <div className="text-[11px] tracking-[0.26em] text-white/70">EVERLEAP</div>
+            <div className="text-micro tracking-eyebrow text-white/70">EVERLEAP</div>
 
             <h1 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight text-white">
               {headline}
             </h1>
 
-            <p className="mt-4 max-w-[62ch] text-[15px] leading-7 text-white/70">
+            <p className="mt-4 max-w-[62ch] text-label leading-7 text-white/70">
               {sub}
             </p>
 

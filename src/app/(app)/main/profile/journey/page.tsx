@@ -93,7 +93,7 @@ export default function JourneyPage() {
     <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
       <Link
         href="/main/profile"
-        className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"
+        className="mb-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Me
@@ -101,11 +101,11 @@ export default function JourneyPage() {
 
       <SectionCard tone="hero" backdrop={<ConstellationAnchor seed="journey" accent={ACCENT} />}>
         <div className="max-w-2xl">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+          <div className="mb-2 flex items-center gap-2 text-micro font-semibold uppercase tracking-eyebrow text-white/44">
             <Sparkles className="h-3 w-3" /> Journey
           </div>
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-white sm:text-[27px]">Your story so far</h1>
-          <p className="mt-2 text-[14px] leading-[1.6] text-white/70">
+          <h1 className="text-title font-semibold tracking-title text-white sm:text-title">Your story so far</h1>
+          <p className="mt-2 text-label leading-read text-white/70">
             The path you’ve been walking — where you started, and everything you’ve actually tried since.
           </p>
         </div>
@@ -127,13 +127,13 @@ export default function JourneyPage() {
             </div>
           ) : events.length === 0 ? (
             <div className="flex flex-col items-start gap-3 py-2">
-              <h2 className="text-[16px] font-semibold text-white">Your journey starts now</h2>
-              <p className="max-w-md text-[13.5px] leading-[1.6] text-white/64">
+              <h2 className="text-body font-semibold text-white">Your journey starts now</h2>
+              <p className="max-w-md text-meta leading-read text-white/64">
                 As you explore and try things, they’ll gather here into a story you can look back on.
               </p>
               <Link
                 href="/main/explore"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-[13.5px] font-semibold text-white transition hover:bg-white/[0.12]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.08] px-4 py-2 text-meta font-semibold text-white transition hover:bg-white/[0.12]"
               >
                 <Compass className="h-4 w-4" /> Start exploring
               </Link>
@@ -158,9 +158,9 @@ export default function JourneyPage() {
                       <Icon className="h-[15px] w-[15px]" />
                     </span>
                     <div className="min-w-0 flex-1 pt-0.5">
-                      <div className="text-[10.5px] uppercase tracking-[0.12em] text-white/40">{longDate(e.date)}</div>
-                      <div className="mt-0.5 text-[15px] font-semibold tracking-[-0.01em] text-white">{e.title}</div>
-                      {e.detail ? <div className="mt-0.5 text-[13px] leading-[1.5] text-white/58">{e.detail}</div> : null}
+                      <div className="text-micro uppercase tracking-eyebrow text-white/40">{longDate(e.date)}</div>
+                      <div className="mt-0.5 text-label font-semibold tracking-title text-white">{e.title}</div>
+                      {e.detail ? <div className="mt-0.5 text-meta leading-body text-white/58">{e.detail}</div> : null}
                     </div>
                   </li>
                 );

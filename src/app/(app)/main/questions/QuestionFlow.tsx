@@ -45,8 +45,8 @@ const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
 
 const TYPE = {
   headline:
-    "text-[1.42rem] font-semibold leading-[1.08] tracking-tight text-white sm:text-[1.68rem]",
-  input: "text-[14px] font-medium leading-6 text-white",
+    "text-[1.42rem] font-semibold leading-display tracking-tight text-white sm:text-[1.68rem]",
+  input: "text-label font-medium leading-6 text-white",
 };
 
 /* ============================================================
@@ -244,8 +244,8 @@ function BottomLink({
       className={[
         "inline-flex items-center gap-2 transition",
         priority === "primary"
-          ? "text-[15px] font-semibold"
-          : "text-[14px] font-semibold tracking-[0.01em]",
+          ? "text-label font-semibold"
+          : "text-label font-semibold tracking-normal",
         disabled
           ? "cursor-not-allowed text-white/24"
           : muted
@@ -257,7 +257,7 @@ function BottomLink({
     >
       <span>{label}</span>
       {arrow ? (
-        <span aria-hidden="true" className="text-[17px]">
+        <span aria-hidden="true" className="text-body">
           →
         </span>
       ) : null}
@@ -294,7 +294,7 @@ function TalkAction({
         ) : null}
         <Mic className={["h-[18px] w-[18px] transition", active ? "scale-[1.08]" : ""].join(" ")} />
       </span>
-      <span className="text-[15px] font-semibold tracking-[0.01em]">
+      <span className="text-label font-semibold tracking-normal">
         {active ? "Listening" : "Talk"}
       </span>
     </button>
@@ -364,7 +364,7 @@ function QuestionTextEntry({
         placeholder={placeholder ?? ""}
         className={[
           TYPE.input,
-          "w-full resize-none rounded-[18px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))] px-4 py-2.5 outline-none placeholder:text-white/34 shadow-[0_10px_30px_rgba(4,8,18,0.22)]",
+          "w-full resize-none rounded-panel border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))] px-4 py-2.5 outline-none placeholder:text-white/34 shadow-[0_10px_30px_rgba(4,8,18,0.22)]",
         ].join(" ")}
       />
     </div>
@@ -390,7 +390,7 @@ function QuestionFlat({
     <div className="w-full max-w-[720px]">
       <div className="flex items-start justify-end gap-4">
         <div className="flex items-center gap-3">
-          <div className="text-[12px] leading-none text-white/54">{categoryLabel}</div>
+          <div className="text-meta leading-none text-white/54">{categoryLabel}</div>
           <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
         </div>
       </div>

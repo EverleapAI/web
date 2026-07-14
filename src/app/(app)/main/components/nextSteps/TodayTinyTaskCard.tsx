@@ -24,7 +24,7 @@ function accentRgb(dark: boolean) {
 
 function backButtonClass(dark: boolean) {
   return [
-    "mb-2 flex items-center gap-1 text-[12px] font-medium",
+    "mb-2 flex items-center gap-1 text-meta font-medium",
     dark
       ? "text-white/30 hover:text-white/50"
       : "text-slate-500 hover:text-slate-700",
@@ -36,7 +36,7 @@ function backButtonClass(dark: boolean) {
 // classes (inline styles can't carry a hover rule).
 function optionClass(dark: boolean, selected: boolean) {
   const base =
-    "group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium leading-5 transition-all duration-200 border hover:-translate-y-[2px] focus-visible:outline-none";
+    "group flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-label font-medium leading-5 transition-all duration-200 border hover:-translate-y-[2px] focus-visible:outline-none";
   if (dark) {
     return [
       base,
@@ -110,7 +110,7 @@ export function TodayTinyTaskCard({
           />
         </div>
         <span
-          className="text-[11px] font-bold uppercase tracking-[0.2em]"
+          className="text-micro font-bold uppercase tracking-eyebrow"
           style={{ color: `rgb(${accent})` }}
         >
           {eyebrow}
@@ -138,7 +138,7 @@ export function TodayTinyTaskCard({
             ) : null}
 
             <div
-              className="mb-4 w-full text-[21px] leading-[1.4] tracking-[-0.015em]"
+              className="mb-4 w-full text-read leading-body tracking-title"
               style={{
                 // Dark side joins the low-glare ramp (TEXT_PRIMARY). Its heavier
                 // 550 weight — not extra brightness — gives the question its
@@ -171,8 +171,8 @@ export function TodayTinyTaskCard({
                       <span
                         className={
                           dark
-                            ? "ml-auto shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgba(182,160,255,0.85)]"
-                            : "ml-auto shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700/80"
+                            ? "ml-auto shrink-0 text-micro font-semibold uppercase tracking-eyebrow text-[rgba(182,160,255,0.85)]"
+                            : "ml-auto shrink-0 text-micro font-semibold uppercase tracking-eyebrow text-emerald-700/80"
                         }
                       >
                         Helps
@@ -192,8 +192,8 @@ export function TodayTinyTaskCard({
             transition={{ duration: 0.25 }}
             className={
               dark
-                ? "text-[13px] leading-5 text-white/32"
-                : "text-[13px] leading-5 text-slate-500"
+                ? "text-meta leading-5 text-white/32"
+                : "text-meta leading-5 text-slate-500"
             }
           >
             {allAnswered ? "That's all for now." : ""}

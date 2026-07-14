@@ -17,7 +17,7 @@ export function RouteSkeleton({ lines = 3 }: { lines?: number }) {
       <span className="sr-only">Loading…</span>
 
       {/* the hero card */}
-      <div className="rounded-[28px] border border-white/[0.04] bg-white/[0.02] px-5 py-6">
+      <div className="rounded-card border border-white/[0.04] bg-white/[0.02] px-5 py-6">
         <div className="h-3 w-24 rounded-full bg-white/[0.06]" />
         <div className="mt-5 space-y-3">
           {Array.from({ length: lines }).map((_, i) => (

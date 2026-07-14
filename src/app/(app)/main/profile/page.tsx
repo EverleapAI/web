@@ -67,12 +67,12 @@ function InfoRow({
         <Icon className="h-[18px] w-[18px]" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-[11px] uppercase tracking-[0.1em] text-white/40">{label}</div>
-        <div className="truncate text-[14px] text-white/85">{value}</div>
+        <div className="text-micro uppercase tracking-eyebrow text-white/40">{label}</div>
+        <div className="truncate text-label text-white/85">{value}</div>
       </div>
       {badge ? (
         <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+          className={`shrink-0 rounded-full px-2 py-0.5 text-micro ${
             badgeGood ? "bg-emerald-400/15 text-emerald-300/90" : "bg-white/[0.06] text-white/55"
           }`}
         >
@@ -120,8 +120,8 @@ function MomentumSnapshot() {
       <div className="grid grid-cols-3 gap-2">
         {tiles.map((t) => (
           <div key={t.label} className="flex flex-col items-center gap-0.5 py-1">
-            <span className="text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-white">{t.n}</span>
-            <span className="text-[11px] uppercase tracking-[0.12em] text-white/45">{t.label}</span>
+            <span className="text-title font-semibold tabular-nums tracking-title text-white">{t.n}</span>
+            <span className="text-micro uppercase tracking-eyebrow text-white/45">{t.label}</span>
           </div>
         ))}
       </div>
@@ -152,8 +152,8 @@ function HubCard({
             <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-semibold text-white">{title}</div>
-            <div className="truncate text-[12.5px] text-white/55">{desc}</div>
+            <div className="text-label font-semibold text-white">{title}</div>
+            <div className="truncate text-meta text-white/55">{desc}</div>
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-white/35" />
         </div>
@@ -222,7 +222,7 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-4">
             <span
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-[26px] font-semibold text-white"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-title font-semibold text-white"
               style={{
                 background: `linear-gradient(140deg, ${rgba(0.5)}, ${rgba(0.16)})`,
                 border: `1px solid ${rgba(0.4)}`,
@@ -231,12 +231,12 @@ export default function ProfilePage() {
               {initial}
             </span>
             <div className="min-w-0">
-              <div className="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
+              <div className="mb-0.5 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow text-white/44">
                 <Sparkles className="h-3 w-3" /> Me
               </div>
-              <h1 className="truncate text-[24px] font-semibold tracking-[-0.02em] text-white">{name}</h1>
+              <h1 className="truncate text-title font-semibold tracking-title text-white">{name}</h1>
               {user?.email ? (
-                <div className="mt-1 flex items-center gap-1.5 text-[13px] text-white/62">
+                <div className="mt-1 flex items-center gap-1.5 text-meta text-white/62">
                   <span className="truncate">{user.email}</span>
                   {user.email_verified ? <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-300/90" /> : null}
                 </div>
@@ -258,11 +258,11 @@ export default function ProfilePage() {
       {authed === false ? (
         <div className="mt-3">
           <SectionCard tone="neutral">
-            <p className="text-[14px] text-white/64">You’re not signed in.</p>
+            <p className="text-label text-white/64">You’re not signed in.</p>
             <button
               type="button"
               onClick={() => router.push("/regauth")}
-              className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-white/[0.12]"
+              className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/[0.08] px-4 py-2 text-label font-semibold text-white transition hover:bg-white/[0.12]"
             >
               Sign in
             </button>
@@ -313,7 +313,7 @@ export default function ProfilePage() {
 
           {/* Account hub */}
           <SectionCard tone="neutral">
-            <h2 className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">Account</h2>
+            <h2 className="mb-2 px-2 text-micro font-semibold uppercase tracking-eyebrow text-white/45">Account</h2>
             <div className="space-y-1">
               {ACCOUNT_LINKS.map(({ href, label, desc, Icon }) => (
                 <Link
@@ -325,8 +325,8 @@ export default function ProfilePage() {
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14.5px] font-medium text-white">{label}</span>
-                    <span className="block truncate text-[12.5px] text-white/50">{desc}</span>
+                    <span className="block text-label font-medium text-white">{label}</span>
+                    <span className="block truncate text-meta text-white/50">{desc}</span>
                   </span>
                   <ChevronRight className="h-5 w-5 shrink-0 text-white/35 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
                 </Link>
@@ -339,7 +339,7 @@ export default function ProfilePage() {
             type="button"
             onClick={goLogout}
             disabled={loggingOut}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[14px] font-semibold text-white/80 transition hover:bg-white/[0.06] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-label font-semibold text-white/80 transition hover:bg-white/[0.06] disabled:opacity-60"
           >
             <LogOut className="h-4 w-4" /> {loggingOut ? "Logging out…" : "Log out"}
           </button>

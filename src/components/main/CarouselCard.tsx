@@ -82,7 +82,7 @@ export function CarouselCard({ card, isActive }: CarouselCardProps) {
       {/* Outer glow ring */}
       <div
         className={cn(
-          "pointer-events-none absolute inset-0 rounded-[1.4rem] opacity-0 blur-xl transition-opacity duration-300",
+          "pointer-events-none absolute inset-0 rounded-card opacity-0 blur-xl transition-opacity duration-300",
           isActive && "opacity-100"
         )}
         style={{
@@ -93,7 +93,7 @@ export function CarouselCard({ card, isActive }: CarouselCardProps) {
       {/* Card surface */}
       <div
         className={cn(
-          "relative flex w-full flex-col items-center justify-between overflow-hidden rounded-[1.25rem] border px-3 py-3 text-center shadow-[0_14px_32px_rgba(0,0,0,0.78)] backdrop-blur-2xl",
+          "relative flex w-full flex-col items-center justify-between overflow-hidden rounded-panel border px-3 py-3 text-center shadow-[0_14px_32px_rgba(0,0,0,0.78)] backdrop-blur-2xl",
           "hover:border-white/22"
         )}
         style={{
@@ -113,7 +113,7 @@ export function CarouselCard({ card, isActive }: CarouselCardProps) {
         />
 
         {/* Decorative light flecks */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[1.25rem]">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-panel">
           <div
             className="absolute -right-3 -top-5 h-12 w-12 rounded-full opacity-40 blur-xl"
             style={{ background: `${baseGlow}66` }}
@@ -136,7 +136,7 @@ export function CarouselCard({ card, isActive }: CarouselCardProps) {
 
           {/* Title only */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-200 md:text-[0.72rem]">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-eyebrow text-slate-200 md:text-[0.72rem]">
               {card.title}
             </span>
 

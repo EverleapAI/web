@@ -101,7 +101,7 @@ export function AwardsMeter({
         ))}
       </span>
 
-      <span className="mt-1.5 block text-[12.5px] leading-[1.4]">
+      <span className="mt-1.5 block text-meta leading-body">
         <span className="font-semibold" style={{ color: LIT }}>
           Awards
         </span>
