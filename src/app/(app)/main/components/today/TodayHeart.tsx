@@ -25,6 +25,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
 import { AgenticHeader } from "../ui/AgenticHeader";
+import { ReadTuner } from "../ui/ReadTuner";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -448,6 +449,7 @@ export function TodayHeart({
 
   return (
     <div className="relative space-y-4">
+      <ReadTuner />
       {/* ─── 1 · THE READ ────────────────────────────────────────────────────
           The agent's read, and the one specific move it wants from you. That move
           used to live in a second block below this ("Worth a look") which restated

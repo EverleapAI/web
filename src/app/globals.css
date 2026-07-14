@@ -94,6 +94,12 @@
   --radius-control: 10px; /* pills, small controls */
   --radius-panel: 18px; /* inner cards, inputs */
   --radius-card: 28px; /* section cards — the dominant existing value */
+
+  /* ---- The reading face ----------------------------------------------------
+     A SANS. Inter, loaded via next/font in layout.tsx. Shipped for its WEIGHTS,
+     not its style — see the note below the @theme block. */
+  --font-sans:
+    var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* NAMES ARE CHOSEN NOT TO COLLIDE WITH TAILWIND'S BUILT-INS, and that is
@@ -106,12 +112,39 @@
    panel/card is ours; sm/md/tight/snug are Tailwind's and still mean what
    Tailwind says. */
 
-/* No --font-* token here on purpose. The reading face is the SYSTEM SANS, and
-   that is now a decision rather than an accident: a serif was built, set properly
-   (Georgia at 400, bright, 1.78 leading — CNN's own arrangement of sans furniture
-   around serif prose) and rejected on the screen. Sans read as more modern and
-   cleaner for a product aimed at teenagers, which an editorial serif fights no
-   matter how well it is set. Do not re-propose one. */
+/* THE READING FACE IS A SANS, AND THAT IS SETTLED. A serif was built and given a
+   fair setting (Georgia at 400, bright, 1.78 leading, sans furniture around it —
+   CNN's own arrangement) and rejected on the screen: sans reads as more modern and
+   cleaner for a product aimed at teenagers. Do not re-propose a serif.
+
+   Inter (loaded in layout.tsx) is a sans — same family of shapes as Segoe UI and
+   SF Pro. The reason to ship a real font at all is WEIGHT, not style: the system
+   stack has no 500 on Windows (Segoe ships 300/400/600/700), so every weight
+   between 401 and 599 rounded to thin-or-semibold, and desktop and phone silently
+   disagreed because SF Pro DOES have a 500. Inter is variable — every weight is
+   real, on every device. */
+
+/* ── The read's tunable dials ──────────────────────────────────────────────────
+   Weight, tracking and smoothing are variables so they can be settled on a real
+   phone rather than argued about on a laptop. Defaults here are the shipped
+   values; the dev tuner overrides them at runtime. */
+:root {
+  --read-weight: 400;
+  --heading-weight: 600;
+  --read-tracking: 0em;
+}
+
+/* WHY SMOOTHING IS A DIAL, AND WHY IT IS A *MOBILE* PROBLEM.
+   `-webkit-font-smoothing: antialiased` swaps subpixel rendering for grayscale
+   antialiasing, which makes glyphs render visibly THINNER. It is a WebKit thing,
+   so it hits iPhone hard and barely touches Windows. Light text, weight 400, on a
+   dark ground, thinned by grayscale AA, on an OLED panel — that is prose that
+   reads fine on a laptop and hard on a phone, which is the exact complaint.
+   `auto` restores the heavier, default rendering without touching the weight. */
+html[data-smoothing="auto"] body {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
 
 /* ========== 1) Semantic Design Tokens (CSS variables) ========== */
 @layer base {
@@ -173,6 +206,11 @@
     overflow-x: hidden;
     color: var(--text);
     background-color: var(--el-bg);
+
+    /* Inter — the app had NO font-family at all until now, so it rendered in
+       whatever the OS supplied. That is why "what is our font weight" was never
+       answerable, and why the phone and the laptop disagreed. */
+    font-family: var(--font-sans);
 
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

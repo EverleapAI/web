@@ -1,8 +1,26 @@
 // app/layout.tsx
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { AiGuideHost } from "@/components/main/AiGuideHost";
+
+// Inter — a SANS. Same family of shapes as Segoe UI / SF Pro, not a serif.
+//
+// The app had no font at all, so it rendered in the system UI stack, and that is
+// the root of the weight problem: Segoe UI ships 300/400/600/700 and HAS NO 500.
+// So on Windows every weight between 401 and 599 silently rounds — you can have
+// thin or you can have semibold, and nothing in between. That is why 600 keeps
+// looking like the only way to make the read less washy: on desktop it literally
+// is. SF Pro on iOS does have a 500, so the two devices disagree, which is also
+// why the phone and the laptop have never quite matched.
+//
+// Inter is variable: every weight from 100 to 900 is real, on every device.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Everleap",
@@ -32,7 +50,12 @@ export default function RootLayout({
   `;
 
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="dark"
+      className={inter.variable}
+      suppressHydrationWarning
+    >
       <head>
         {/* viewport-fit=cover is what makes env(safe-area-inset-*) resolve to a
             real number on iPhone. Without it every inset is 0 — so the bottom nav,
