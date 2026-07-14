@@ -1,6 +1,9 @@
 "use client";
 
-// Dev-only reading tuner. Renders nothing in production.
+// The reading tuner. OPT-IN, not dev-only: `?tune=1` arms it (sticky), `?tune=0`
+// disarms it. It has to survive a production build, because the whole point is to
+// judge this on a real phone against the real app — but nobody else should ever
+// see it, hence the flag rather than shipping it to all nine internal users.
 //
 // It exists because the read "reads hard on mobile" and there are FOUR candidate
 // causes, which cannot be untangled by argument on a laptop:
@@ -36,7 +39,7 @@ type Row<T extends string | number> = {
 function Dial<T extends string | number>({ label, value, options, onPick, fmt }: Row<T>) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-14 shrink-0 text-[9px] font-bold uppercase tracking-[0.12em] text-white/40">
+      <span className="w-14 shrink-0 text-micro font-bold uppercase tracking-eyebrow text-white/40">
         {label}
       </span>
       <div className="flex flex-wrap gap-1">
@@ -47,7 +50,7 @@ function Dial<T extends string | number>({ label, value, options, onPick, fmt }:
             onClick={() => onPick(o)}
             aria-pressed={value === o}
             className={[
-              "rounded-full px-2 py-[3px] text-[11px] font-semibold tabular-nums transition",
+              "rounded-full px-2 py-[3px] text-micro font-semibold tabular-nums transition",
               value === o ? "bg-white text-black" : "text-white/55 hover:text-white/90",
             ].join(" ")}
           >
@@ -59,6 +62,8 @@ function Dial<T extends string | number>({ label, value, options, onPick, fmt }:
   );
 }
 
+const TUNE_KEY = "el:tune";
+
 export function ReadTuner() {
   const [weight, setWeight] = React.useState(400);
   const [heading, setHeading] = React.useState(600);
@@ -66,22 +71,39 @@ export function ReadTuner() {
   const [smooth, setSmooth] = React.useState<"antialiased" | "auto">("antialiased");
   const [open, setOpen] = React.useState(false);
 
+  // OPT-IN, not dev-only. The whole point is to judge this on a real phone against
+  // the real app, which means it has to survive a production build — but it must
+  // not appear for the other internal users. So: `?tune=1` turns it on (sticky),
+  // `?tune=0` turns it off. Everyone else never sees it.
+  const [armed, setArmed] = React.useState(false);
   React.useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("tune");
+      if (q === "1") window.localStorage.setItem(TUNE_KEY, "1");
+      if (q === "0") window.localStorage.removeItem(TUNE_KEY);
+      setArmed(window.localStorage.getItem(TUNE_KEY) === "1");
+    } catch {
+      /* no storage — stay off */
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!armed) return;
     const root = document.documentElement;
     root.style.setProperty("--read-weight", String(weight));
     root.style.setProperty("--heading-weight", String(heading));
     root.style.setProperty("--read-tracking", `${track}em`);
     root.setAttribute("data-smoothing", smooth);
-  }, [weight, heading, track, smooth]);
+  }, [armed, weight, heading, track, smooth]);
 
-  if (process.env.NODE_ENV === "production") return null;
+  if (!armed) return null;
 
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 left-3 z-50 rounded-full border border-white/15 bg-black/80 px-3 py-1.5 text-[11px] font-semibold text-white/70 backdrop-blur-md"
+        className="fixed bottom-24 left-3 z-50 rounded-full border border-white/15 bg-black/80 px-3 py-1.5 text-micro font-semibold text-white/70 backdrop-blur-md"
       >
         Aa
       </button>
@@ -118,13 +140,13 @@ export function ReadTuner() {
       />
 
       <div className="mt-0.5 flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
-        <code className="text-[9.5px] leading-tight text-white/45">
+        <code className="text-micro leading-tight text-white/45">
           {weight}/{heading} · {track}em · {smooth === "auto" ? "full" : "thin"}
         </code>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[10px] font-semibold text-white/45 hover:text-white/80"
+          className="text-micro font-semibold text-white/45 hover:text-white/80"
         >
           hide
         </button>
