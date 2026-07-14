@@ -6,6 +6,89 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* ============================================================================
+   0) THE DESIGN SYSTEM — single source of truth
+   ============================================================================
+   Tailwind v4 is CSS-first: this @theme block IS the config. Declaring
+   --color-ink here generates `text-ink` / `bg-ink` / `border-ink` AND leaves
+   --color-ink readable from an inline style. One declaration, one truth.
+
+   It exists because the app had drifted to 86 hex colours, 267 rgba() values,
+   30 font sizes (615 uses), 28 letter-spacings, 26 line-heights and 24 radii —
+   with four config files each claiming to define the styles and none of them
+   actually running. Anything not expressible in these tokens is a bug, not a
+   special case. Add a token; don't type a number.
+
+   NAMING: colours are `ink-*` / `surface-*`, sizes are `text-*`. They must not
+   collide — in v4, --color-read and --text-read would both try to own the
+   `text-read` utility.
+   ============================================================================ */
+@theme {
+  /* ---- Text colour ---------------------------------------------------------
+     Prose is the BRIGHTEST thing on the page; chrome steps down from it. The
+     old "low-glare" ramp (dim + semibold) set the read like a UI label, which
+     is why it read as dashboard rather than article. */
+  --color-ink: #e3e7ef; /* body prose — THE read */
+  --color-ink-strong: #f7f9fc; /* titles, masthead — reads as white */
+  --color-ink-quiet: #aeb3bf; /* secondary labels, quiet links */
+  --color-ink-faint: #7e838e; /* meta, timestamps — quietest chrome */
+
+  /* ---- Surfaces ------------------------------------------------------------
+     Replaces 21 near-identical near-black navies (#0B1220, #070B16, #070B17,
+     #0A0F1C, #040817 …) that nobody could tell apart, because they were never
+     distinguishable decisions. */
+  --color-surface: #020617; /* the page */
+  --color-surface-card: #070d1c; /* section cards */
+  --color-surface-raised: #0c1428; /* modals, popovers */
+
+  /* ---- Lines & scrims ------------------------------------------------------
+     Absorbs the long tail of the 267 rgba() values — white alphas .004→.26 and
+     black alphas .05→.9, which were all hand-tuned one at a time. */
+  --color-hairline: rgb(255 255 255 / 0.06); /* card edges, dividers */
+  --color-line: rgb(255 255 255 / 0.16); /* stronger borders, focus */
+  --color-scrim: rgb(0 0 0 / 0.55); /* modal backdrop */
+
+  /* ---- Type scale ----------------------------------------------------------
+     30 sizes → 7 steps. There is no world in which 13px, 13.5px and 14px were
+     three separate decisions. Leading is baked in so the two can't drift apart
+     again. */
+  --text-micro: 11px; /* eyebrows, badge pills, tab labels */
+  --text-micro--line-height: 1.35;
+  --text-meta: 13px; /* timestamps, captions, footnotes */
+  --text-meta--line-height: 1.5;
+  --text-label: 15px; /* buttons, list items, UI labels */
+  --text-label--line-height: 1.5;
+  --text-body: 17px; /* supporting prose inside cards */
+  --text-body--line-height: 1.6;
+  --text-read: 21px; /* THE agentic read — Today / Insights / Explore */
+  --text-read--line-height: 1.65;
+  --text-title: 26px; /* card titles, the Today masthead */
+  --text-title--line-height: 1.2;
+  --text-display: 32px; /* page heroes */
+  --text-display--line-height: 1.1;
+
+  /* ---- Letter-spacing ------------------------------------------------------
+     28 values → 4. The old set included -0.078em, -0.055em and 0.005em, which
+     are not perceptible and were not choices. Prose is 0: positive tracking on
+     body text is a UI-label tic and part of why the read looked like chrome. */
+  --tracking-tight: -0.02em; /* titles, display */
+  --tracking-normal: 0; /* prose — the default */
+  --tracking-wide: 0.02em; /* small caps-ish labels */
+  --tracking-eyebrow: 0.18em; /* uppercase eyebrows only */
+
+  /* ---- Line-height (standalone) -------------------------------------------- */
+  --leading-tight: 1.1;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-read: 1.65;
+
+  /* ---- Radius --------------------------------------------------------------
+     24 values → 3 + pill. 23px, 25px and 27px were not design decisions. */
+  --radius-sm: 10px; /* chips, small controls */
+  --radius-md: 18px; /* inner cards, inputs */
+  --radius-card: 28px; /* section cards — the dominant existing value */
+}
+
 /* ========== 1) Semantic Design Tokens (CSS variables) ========== */
 @layer base {
   :root {
