@@ -85,10 +85,21 @@ export function AwardsMeter({
       : litCount(s.earnedCount, s.totalCount);
   const gold = s.goldCount ?? 0;
 
+  // A READOUT GETS NO BOX; A BUTTON DOES.
+  //
+  // This drew its own border + tint unconditionally, which was invisible when the
+  // SectionCard around it was also invisible (1.024:1 — it was, in fact, the only
+  // boundary on the screen, so it looked like the card). Now that cards are
+  // genuinely visible, an inner bordered box inside an outer bordered box reads as
+  // clutter — a box in a box, and the cheapest-looking thing on Today.
+  //
+  // Inside "Where you are" the trophies are a readout (interactive={false}), so
+  // they are now just a row. Where the meter really IS the door (the Me page, the
+  // footer) it keeps its shell, because there it has to look pressable.
   const shell = [
-    "flex w-full items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 text-left",
+    "flex w-full items-center gap-3 text-left",
     interactive
-      ? "group transition hover:bg-white/[0.045] active:opacity-80"
+      ? "group rounded-panel border border-white/[0.05] bg-white/[0.02] px-3.5 py-2.5 transition hover:bg-white/[0.045] active:opacity-80"
       : "cursor-default",
     className ?? "",
   ].join(" ");

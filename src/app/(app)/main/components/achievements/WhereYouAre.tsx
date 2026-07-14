@@ -27,7 +27,7 @@ import type {
   BlockItem,
   BadgeStats,
 } from "@/lib/achievements/useBadgeStats";
-import { PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { CARD_BODY_CLASS, EYEBROW_CLASS, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 import { SectionCard } from "../ui/SectionCard";
 import { AwardsMeter } from "./AwardsMeter";
@@ -267,10 +267,10 @@ export function WhereYouAre({
         >
           ◆
         </span>
-        <span
-          className="text-label font-semibold tracking-normal"
-          style={{ color: TEXT_SECONDARY }}
-        >
+        {/* Today draws this same section with its own CardHeading (an eyebrow);
+            here it was a 15px semibold label. Same card, two voices, depending on
+            which page you were standing on. It is the eyebrow on both now. */}
+        <span className={EYEBROW_CLASS} style={{ color: TEXT_SECONDARY }}>
           Where you are
         </span>
       </div>
@@ -280,7 +280,7 @@ export function WhereYouAre({
           story is still worth nudging. */}
       {lead ?? achievementsLead(stats) ? (
         <div
-          className={`mb-4 max-w-[640px] text-lede ${PROSE_CLASS}`}
+          className={`mb-4 max-w-[640px] ${CARD_BODY_CLASS}`}
           style={PROSE_STYLE}
         >
           {lead ?? achievementsLead(stats)}

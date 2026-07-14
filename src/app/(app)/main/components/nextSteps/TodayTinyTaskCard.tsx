@@ -1,5 +1,6 @@
 "use client";
 
+import { CARD_TITLE_CLASS, HEADING_STYLE } from "@/lib/ui/prose";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
@@ -138,14 +139,14 @@ export function TodayTinyTaskCard({
             ) : null}
 
             <div
-              className="mb-4 w-full text-read leading-body tracking-title"
-              style={{
-                // Dark side joins the low-glare ramp (TEXT_PRIMARY). Its heavier
-                // 550 weight — not extra brightness — gives the question its
-                // "ask" presence. Light theme is unchanged.
-                color: dark ? "#E3E7EF" : "#1e293b",
-                fontWeight: 550,
-              }}
+              className={`mb-4 w-full ${CARD_TITLE_CLASS}`}
+              // The question was set at `text-read` (21px) — the same size as the
+              // agent's own voice — at fontWeight 550, a weight that exists in no
+              // system font and silently rounds to 400 or 600 depending on the
+              // platform. So a card was speaking as loudly as the agent, in a
+              // weight nobody chose. It is a card title now: the same treatment as
+              // the agent's opening line, one rung down.
+              style={dark ? HEADING_STYLE : { color: "#1e293b", fontWeight: 600 }}
             >
               {current.question}
             </div>

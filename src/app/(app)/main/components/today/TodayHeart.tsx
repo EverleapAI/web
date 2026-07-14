@@ -13,7 +13,10 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import {
+  CARD_BODY_CLASS,
+  CARD_TITLE_CLASS,
   EYEBROW_CLASS,
+  HEADING_STYLE,
   LINK_CLASS,
   PROSE_CLASS,
   PROSE_STYLE,
@@ -627,7 +630,7 @@ export function TodayHeart({
               so, plainly, and then explain the collection instead. */}
           {storyLinkText ? (
             <p
-              className={`max-w-[640px] text-lede ${PROSE_CLASS}`}
+              className={`max-w-[640px] ${CARD_BODY_CLASS}`}
               style={PROSE_STYLE}
             >
               {storyPrefix}
@@ -642,7 +645,7 @@ export function TodayHeart({
             </p>
           ) : (
             <p
-              className={`max-w-[640px] text-lede ${PROSE_CLASS}`}
+              className={`max-w-[640px] ${CARD_BODY_CLASS}`}
               style={PROSE_STYLE}
             >
               You&apos;ve told me your whole story — every question answered.{" "}
@@ -674,8 +677,8 @@ export function TodayHeart({
           </CardHeading>
 
           <p
-            className="max-w-[640px] text-body font-semibold leading-body tracking-title"
-            style={{ color: TEXT_HEADING }}
+            className={`max-w-[640px] ${CARD_TITLE_CLASS}`}
+            style={HEADING_STYLE}
           >
             {data.looseThread.title}
           </p>

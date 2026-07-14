@@ -48,6 +48,18 @@ export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; 
 // Insights already worked this way and was the only surface getting it right.
 // Today and Explore both set it as a 26px semibold headline, which made the agent
 // announce itself instead of speak. Today / Insights / Explore now share this.
+// ── A card's anatomy ─────────────────────────────────────────────────────────
+// The read looks right because it has a clear shape: eyebrow → opening line →
+// prose → one action. The cards below it each invented their own — one had a
+// 17px semibold title, one had none, one asked its question in a third size —
+// so they read as three unrelated widgets under a well-made header.
+//
+// A card is the read, one rung down: its title takes the same treatment as the
+// agent's opening line but at `lede` (19px) instead of `read` (21px), and its
+// prose sits at `body` (17px). Same shape, quieter voice.
+export const CARD_TITLE_CLASS = "text-lede leading-title";
+export const CARD_BODY_CLASS = `text-body ${PROSE_CLASS}`;
+
 export const HEADING_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
 export const HEADING_STYLE: CSSProperties = {
   color: TEXT_HEADING,
