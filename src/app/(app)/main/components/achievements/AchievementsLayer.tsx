@@ -165,6 +165,9 @@ function Medal({
   return (
     <button
       type="button"
+      // Opening by slug ("Next up: Everleaper") has no click to take a rect from,
+      // so it finds the medal in the DOM by this attribute instead.
+      data-slug={badge.slug}
       onClick={(e) => onClick(e.currentTarget)}
       className="group relative flex w-[64px] flex-col items-center gap-1.5 outline-none"
       aria-label={`${badge.name}${earned ? `, ${TIER_LABEL[badge.tier]}` : ", locked"}`}
@@ -265,6 +268,19 @@ function AchievementsModal() {
   );
   const [pos, setPos] = React.useState<{ top: number; left: number } | null>(null);
 
+  /**
+   * Where a medal sits inside the grid. The detail card is placed from this, and
+   * it stays INVISIBLE until it has one (`opacity: pos ? 1 : 0`) — so anything
+   * that opens a badge must supply an anchor or the card silently never appears.
+   */
+  const anchorTo = React.useCallback((el: HTMLElement) => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const g = grid.getBoundingClientRect();
+    const b = el.getBoundingClientRect();
+    setAnchor({ top: b.top - g.top, left: b.left - g.left + b.width / 2 });
+  }, []);
+
   const pick = React.useCallback(
     (badge: Badge, el: HTMLElement) => {
       // Same badge again closes it.
@@ -272,16 +288,11 @@ function AchievementsModal() {
         setSelected(null);
         return;
       }
-      const grid = gridRef.current;
-      if (grid) {
-        const g = grid.getBoundingClientRect();
-        const b = el.getBoundingClientRect();
-        setAnchor({ top: b.top - g.top, left: b.left - g.left + b.width / 2 });
-      }
+      anchorTo(el);
       setPos(null);
       setSelected(badge);
     },
-    [selected]
+    [selected, anchorTo]
   );
 
   // Place the card centred on the medal, then pull it back inside the grid on
@@ -346,13 +357,49 @@ function AchievementsModal() {
     return () => window.removeEventListener(OPEN_ACHIEVEMENTS, onOpen);
   }, [load]);
 
-  // The list has landed — open the badge we were asked for.
-  React.useEffect(() => {
+  // The list has landed — open the badge we were asked for, ANCHORED to its medal.
+  //
+  // This used to just setSelected() and stop. The card then rendered with no
+  // anchor, which means no `pos`, which means opacity 0 — the modal opened, the
+  // grid appeared, and the badge you asked for was mounted and fully built but
+  // invisible. It seemed to work the first time only because a stale anchor from
+  // an earlier tap happened to still be in state.
+  //
+  // Layout effect, not effect: the medals are in the DOM by the time this runs
+  // (same commit), so we can measure the real element and place the card before
+  // the browser paints, with no flash of a card in the wrong place.
+  React.useLayoutEffect(() => {
     if (!wantSlug || !badges) return;
-    const b = badges.find((x) => x.slug === wantSlug);
-    if (b) setSelected(b);
+
+    const badge = badges.find((x) => x.slug === wantSlug);
+    if (!badge) {
+      setWantSlug(null);
+      return;
+    }
+
+    const grid = gridRef.current;
+    const el = grid?.querySelector<HTMLElement>(
+      `[data-slug="${CSS.escape(wantSlug)}"]`
+    );
+    // The grid renders in the same commit that `badges` lands, so a miss here
+    // means the modal shell hasn't mounted yet. Keep the slug and try next tick
+    // rather than selecting a badge we cannot place.
+    if (!el) return;
+
+    anchorTo(el);
+    setPos(null);
+    setSelected(badge);
     setWantSlug(null);
-  }, [wantSlug, badges]);
+  }, [wantSlug, badges, anchorTo]);
+
+  // A refresh replaces every badge object, so an open card would keep rendering
+  // the numbers it was opened with — including right after you earn the rung it
+  // is telling you to go and earn. Re-point it at the new object.
+  React.useEffect(() => {
+    if (!selected || !badges) return;
+    const fresh = badges.find((b) => b.slug === selected.slug);
+    if (fresh && fresh !== selected) setSelected(fresh);
+  }, [badges, selected]);
 
   // Lock body scroll while open.
   React.useEffect(() => {
