@@ -51,8 +51,8 @@ const PRODUCT_UX_STEPS: StepperStep[] = [
   },
   {
     id: "futureAiSalary",
-    title: "AI + salary",
-    subtitle: "How AI changes the work + pay ranges",
+    title: "AI + this work",
+    subtitle: "How AI changes the work, and what stays human",
     tag: "ai_salary",
   },
   {

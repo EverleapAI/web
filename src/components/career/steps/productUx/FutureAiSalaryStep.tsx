@@ -56,73 +56,13 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function RangeRow({
-  label,
-  range,
-  note,
-}: {
-  label: string;
-  range: string;
-  note: string;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-      <div className="min-w-0">
-        <div className="text-sm font-semibold text-slate-50">{label}</div>
-        <div className="mt-1 text-xs text-slate-300/75">{note}</div>
-      </div>
-      <div className="shrink-0 text-right">
-        <div className="text-sm font-semibold text-sky-200">{range}</div>
-        <div className="mt-1 text-[0.7rem] text-slate-300/60">USD / year</div>
-      </div>
-    </div>
-  );
-}
-
-function normalizeZip(v: unknown): string {
-  const s = typeof v === "string" ? v.trim() : "";
-  if (/^\d{5}(-\d{4})?$/.test(s)) return s;
-  return "";
-}
-
-/**
- * NOTE:
- * These are intentionally "safe placeholder" ranges for now.
- * Later we can pull live ranges by region + level, and show citations.
- */
-const PLACEHOLDER_RANGES = [
-  {
-    label: "Intern / student",
-    range: "$0 – $30k",
-    note: "Often hourly / part-time. Real value = portfolio + mentorship.",
-  },
-  {
-    label: "Entry (0–2 yrs)",
-    range: "$70k – $110k",
-    note: "Depends heavily on city, company, and portfolio strength.",
-  },
-  {
-    label: "Mid (2–5 yrs)",
-    range: "$110k – $160k",
-    note: "You’re expected to own flows, ship improvements, and test with users.",
-  },
-  {
-    label: "Senior (5+ yrs)",
-    range: "$160k – $230k+",
-    note: "Own outcomes, lead strategy, partner with PM + eng, mentor others.",
-  },
-];
-
 type ImpactCard = {
   title: string;
   vibe: string;
   bullets: string[];
 };
 
-export function FutureAiSalaryStep({ step, progress }: Props) {
-  // Keep your existing behavior: zip stored under "zip" in this step.
-  const zip = normalizeZip((progress as unknown as Record<string, unknown>)["zip"]);
-
+export function FutureAiSalaryStep({ step }: Props) {
   const aiImpact: ImpactCard[] = [
     {
       title: "What AI accelerates",
@@ -160,7 +100,7 @@ export function FutureAiSalaryStep({ step, progress }: Props) {
 
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-50">
-          AI + salary (what to expect)
+          How AI changes this work
         </h1>
         <p className="text-sm leading-relaxed text-slate-200/85">
           Let’s keep this useful and honest: AI changes *how* the work happens,
@@ -169,31 +109,14 @@ export function FutureAiSalaryStep({ step, progress }: Props) {
       </div>
 
       <Panel
-        title="Salary ranges (placeholder for now)"
-        subtitle="These are “safe ranges” until we plug in live data by location + specialty."
+        title="What actually moves the needle"
+        subtitle="Not a number — the things that make someone worth hiring, whatever the pay turns out to be."
       >
-        <div className="space-y-2">
-          {PLACEHOLDER_RANGES.map((r) => (
-            <RangeRow key={r.label} label={r.label} range={r.range} note={r.note} />
-          ))}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Chip>Portfolio &gt; resume</Chip>
           <Chip>City matters</Chip>
           <Chip>Company stage matters</Chip>
           <Chip>Specialty can boost</Chip>
-        </div>
-
-        <div className="mt-3 text-xs text-slate-300/60">
-          {zip ? (
-            <>
-              Later: we’ll estimate a ZIP-adjusted range for{" "}
-              <span className="text-slate-100">{zip}</span>.
-            </>
-          ) : (
-            <>Later: we’ll estimate a ZIP-adjusted range once we have your ZIP.</>
-          )}
         </div>
       </Panel>
 
