@@ -23,6 +23,8 @@ import {
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
+import { ChromeToggle } from "../ui/ChromeToggle";
+import { useChromeMode } from "@/lib/ui/chrome";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -224,6 +226,10 @@ export function TodayHeart({
   const [whyOpen, setWhyOpen] = React.useState(false);
   // Prompt Lab (internal, passcode-gated) can preview a re-toned/re-sized retort
   // in place — live only, never saved.
+  // Card vs bare — the CNN A/B. Defaults to "card" (today's design); flip with
+  // the dev toggle or ?chrome=bare. See lib/ui/chrome.ts.
+  const [chromeMode, setChromeMode] = useChromeMode();
+
   const [labPreview, setLabPreview] =
     React.useState<PromptLabAppliedPreview | null>(null);
 
@@ -443,6 +449,8 @@ export function TodayHeart({
 
   return (
     <div className="relative space-y-4">
+      <ChromeToggle mode={chromeMode} onChange={setChromeMode} />
+
       {/* ─── 1 · THE READ ────────────────────────────────────────────────────
           The agent's read, and the one specific move it wants from you. That move
           used to live in a second block below this ("Worth a look") which restated
@@ -451,6 +459,7 @@ export function TodayHeart({
           the commit; everything else on this card is a way to interrogate it. */}
       <SectionCard
         tone="hero"
+        chrome={chromeMode}
         className="!px-5 !py-4"
         backdrop={
           <div
@@ -492,6 +501,7 @@ export function TodayHeart({
         <WelcomeName
           firstName={welcome.firstName}
           isNewUser={welcome.isNewUser}
+          align={chromeMode === "bare" ? "left" : "center"}
         />
 
         {heroRetort ? (

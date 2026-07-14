@@ -41,9 +41,14 @@ function returningGreeting(name: string | undefined): string {
 export function WelcomeName({
   firstName,
   isNewUser,
+  align = "center",
 }: {
   firstName: string | null;
   isNewUser: boolean;
+  // The masthead is a centered anchor by design. But centred over left-aligned
+  // prose with no card around it reads as half-finished rather than as CNN — so
+  // the bare chrome mode left-aligns it, and the two travel together.
+  align?: "center" | "left";
 }) {
   const name = firstName?.trim();
 
@@ -56,11 +61,14 @@ export function WelcomeName({
     : returningGreeting(name);
 
   return (
-    <div className="flex flex-col items-center text-center">
-      <span
-        className="text-[26px] font-semibold tracking-[-0.02em]"
-        style={{ color: "#F7F9FC" }}
-      >
+    <div
+      className={
+        align === "left"
+          ? "flex flex-col items-start text-left"
+          : "flex flex-col items-center text-center"
+      }
+    >
+      <span className="text-title font-semibold tracking-tight text-ink-strong">
         {title}
       </span>
     </div>

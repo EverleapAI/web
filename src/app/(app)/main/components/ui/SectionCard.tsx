@@ -13,6 +13,10 @@ type Props = {
   // card level — so it fills the whole rounded card, not the inset content box.
   // Use for background atmospherics like the ConstellationAnchor.
   backdrop?: React.ReactNode;
+  // "bare" strips every decorative layer and renders the content straight onto
+  // the page — the CNN treatment. Ignores `tone` and `backdrop` by design.
+  // Driven by useChromeMode() while we decide; see lib/ui/chrome.ts.
+  chrome?: import("@/lib/ui/chrome").ChromeMode;
 };
 
 type SectionCardHeaderProps = {
@@ -97,8 +101,28 @@ export function SectionCard({
   tone = "neutral",
   compact = false,
   backdrop,
+  chrome = "card",
 }: Props) {
   const t = toneClasses(tone);
+
+  // "bare" — the CNN read. Drops all six decorative layers (rounded edge,
+  // hairline border, backdrop blur, the three stacked gradients, drop shadow,
+  // sheen) and refuses the backdrop entirely, so no starfield sits behind the
+  // prose. Padding survives: CNN isn't edge-to-edge either, it just has no box.
+  // The page background shows through untouched.
+  if (chrome === "bare") {
+    return (
+      <section
+        className={[
+          "relative",
+          compact ? "pt-3.5 pb-4" : "pt-4 pb-5 sm:pt-5 sm:pb-6",
+          className,
+        ].join(" ")}
+      >
+        <div className="relative z-10">{children}</div>
+      </section>
+    );
+  }
 
   return (
     <section
