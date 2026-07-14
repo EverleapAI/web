@@ -22,7 +22,6 @@ import {
   type MotivationHit,
 } from "./content/motivationsTaxonomy";
 
-import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { getInsightLens } from "@/app/(app)/main/content/insightLenses";
 
 import MotivationsTab from "./components/MotivationsTab";
@@ -924,40 +923,6 @@ export default function Page() {
     [safeSuper.bullets]
   );
 
-  const nextStepsBaseSummary = React.useMemo(
-    () => getNextStepsDefinition("insights.summary"),
-    []
-  );
-
-  const nextStepsBaseMotivations = React.useMemo(
-    () => getNextStepsDefinition("insights.motivations"),
-    []
-  );
-  const nextStepsMotivations = React.useMemo(() => {
-    const base = nextStepsBaseMotivations ?? nextStepsBaseSummary ?? null;
-    if (!base) return null;
-    return { ...base, bridgeLine: "" };
-  }, [nextStepsBaseMotivations, nextStepsBaseSummary]);
-
-  const nextStepsBaseStrengths = React.useMemo(
-    () => getNextStepsDefinition("insights.strengths"),
-    []
-  );
-  const nextStepsStrengths = React.useMemo(() => {
-    const base = nextStepsBaseStrengths ?? nextStepsBaseSummary ?? null;
-    if (!base) return null;
-    return { ...base, bridgeLine: "" };
-  }, [nextStepsBaseStrengths, nextStepsBaseSummary]);
-
-  const nextStepsBaseSkills = React.useMemo(
-    () => getNextStepsDefinition("insights.skills"),
-    []
-  );
-  const nextStepsSkills = React.useMemo(() => {
-    const base = nextStepsBaseSkills ?? nextStepsBaseSummary ?? null;
-    if (!base) return null;
-    return { ...base, bridgeLine: "" };
-  }, [nextStepsBaseSkills, nextStepsBaseSummary]);
 
   function setTabAndSync(next: LocalTab) {
     setTab(next);

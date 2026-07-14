@@ -9,29 +9,21 @@ import {
   type SpotlightThemeId,
 } from "@/theme/everleapVisuals";
 
-import { buildTodayViewModel } from "./app/buildTodayViewModel";
-import { TinyTaskCard } from "./components/nextSteps/TinyTaskCard";
 import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
-import { getNextStepsDefinition } from "@/app/(app)/main/content/nextSteps";
 import { SectionCard } from "./components/ui/SectionCard";
 import {
-  TodayCard,
   TodayCardSkeleton,
   TodayHeart,
+  TodayUnavailable,
   type TodayHeartData,
 } from "./components/today";
 
 // The atmosphere accent moved into TodayHeart with the card it belongs to — the
 // read is the only section that carries the constellation now.
 
-const SIGNAL_COMPLETE_COUNT = 5;
-const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 const ONBOARDING_STORAGE_KEY = "everleap_onboarding_answers";
 const ONBOARDING_SNAPSHOT_KEY = "everleapOnboarding_v4_convo_min";
 
-type Category = "motivations" | "strengths" | "skills";
-type Saved = { answer?: string; skipped?: boolean };
-type TodayViewModel = ReturnType<typeof buildTodayViewModel>;
 
 type TodayMicroTask = {
   id: string;
@@ -68,65 +60,25 @@ function pageShell() {
   return "mx-auto w-full max-w-[720px] px-[4px]";
 }
 
-function labelForCategory(cat: Category) {
-  return cat === "motivations"
-    ? "Motivations"
-    : cat === "strengths"
-      ? "Strengths"
-      : "Skills";
-}
-
-function loadSaved(): Record<string, Saved> {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY_V3);
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-
-    return parsed as Record<string, Saved>;
-  } catch {
-    return {};
-  }
-}
-
-function isAnswered(saved: Saved | undefined): boolean {
-  if (!saved) return false;
-  if (saved.skipped) return true;
-
-  return typeof saved.answer === "string" && saved.answer.trim().length > 0;
-}
-
-function getNextUnansweredTarget(): { cat: Category; questionId: string } {
-  const saved = loadSaved();
-  const order: Category[] = ["motivations", "strengths", "skills"];
-
-  for (const cat of order) {
-    for (let i = 1; i <= SIGNAL_COMPLETE_COUNT; i += 1) {
-      const questionId = `${cat}_${i}`;
-
-      if (!isAnswered(saved[questionId])) {
-        return { cat, questionId };
-      }
-    }
-  }
-
-  return { cat: "motivations", questionId: "motivations_1" };
-}
-
 export default function MainHomePage() {
   const router = useRouter();
 
   const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
   const dark = isDarkTheme(themeId);
 
-  const [vm, setVm] = React.useState<TodayViewModel | null>(null);
   const [todayGuidance, setTodayGuidance] =
     React.useState<TodayGuidance | null>(null);
   const [heart, setHeart] = React.useState<TodayHeartData | null>(null);
   const [guidanceLoaded, setGuidanceLoaded] = React.useState(false);
+  // Bumping this re-runs the load effect — the retry on the "Today didn't load"
+  // card. Clearing guidanceLoaded first puts the skeleton back, so the retry is
+  // visibly doing something rather than sitting on a dead button.
+  const [reloadKey, setReloadKey] = React.useState(0);
+
+  const reloadToday = React.useCallback(() => {
+    setGuidanceLoaded(false);
+    setReloadKey((k) => k + 1);
+  }, []);
   const [mounted, setMounted] = React.useState(false);
   const [motionEnabled] = React.useState(true);
   const [transitioning] = React.useState(false);
@@ -332,14 +284,10 @@ export default function MainHomePage() {
           }
         }
 
-        const nextVm = buildTodayViewModel();
-        setVm(nextVm);
         setMounted(true);
       } catch {
         if (!alive) return;
 
-        const nextVm = buildTodayViewModel();
-        setVm(nextVm);
         setMounted(true);
         setGuidanceLoaded(true);
       }
@@ -350,42 +298,14 @@ export default function MainHomePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [reloadKey]);
 
-  const nextTarget = React.useMemo(
-    () =>
-      mounted
-        ? getNextUnansweredTarget()
-        : { cat: "motivations" as const, questionId: "motivations_1" },
-    [mounted]
-  );
-
-  const nextCategoryLabel = labelForCategory(nextTarget.cat);
-
-  const nextSteps = React.useMemo(
-    () => getNextStepsDefinition("main.home.need_motivations"),
-    []
-  );
-
-  const progress = vm?.progress;
-
-  const allSignalsComplete =
-    mounted &&
-    (progress?.motivationsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
-    (progress?.strengthsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT &&
-    (progress?.skillsAnswered ?? 0) >= SIGNAL_COMPLETE_COUNT;
-
-  const fallbackCtaLabel = allSignalsComplete
-    ? "Open Insights"
-    : `Continue to ${nextCategoryLabel}`;
-
-  const ctaLabel = todayGuidance?.next_action_label ?? fallbackCtaLabel;
+  // Where the card's one button goes. The dispatch decides it; the older guidance
+  // blob is kept only as a fallback for a pack written before dispatch existed.
   const ctaRoute =
     heart?.dispatch.destination.route ??
     todayGuidance?.next_action_route ??
     null;
-
-  const storyPercent = todayGuidance?.story_progress?.percent ?? 0;
 
   function handlePrimary() {
     if (!mounted) return;
@@ -395,16 +315,11 @@ export default function MainHomePage() {
       return;
     }
 
-    if (allSignalsComplete) {
-      router.push("/main/insights");
-      return;
-    }
-
-    const target = getNextUnansweredTarget();
-
-    router.push(
-      `/main/questions?cat=${target.cat}&questionId=${target.questionId}&returnTo=/main`
-    );
+    // No route at all means we have no dispatch — which now only happens when the
+    // load failed. Sending them into the story is the one move that is always safe
+    // and always useful; the local keyword engine that used to guess a specific
+    // question here has been deleted along with the fallback card it fed.
+    router.push("/main/story");
   }
 
   return (
@@ -427,22 +342,20 @@ export default function MainHomePage() {
                 where you are, and the action to reflect on. It renders them as peers
                 rather than as one canvas, so this section does NOT wrap them in a
                 card of its own: that would nest a card inside a card and undo the
-                separation. The legacy TodayCard fallback is still a single card, so
-                it keeps its wrapper. */}
+                separation. */}
             <section>
               {guidanceLoaded ? (
                 heart ? (
                   <TodayHeart data={heart} onPrimary={handlePrimary} />
                 ) : (
-                  <SectionCard tone="hero" className="!px-5 !py-3.5">
-                    <TodayCard
-                      headline={todayGuidance?.headline}
-                      reflection={todayGuidance?.reflection}
-                      observation={todayGuidance?.observation}
-                      nextStep={todayGuidance?.next_step}
-                      guidanceText={todayGuidance?.guidance_text}
-                      ctaLabel={ctaLabel}
-                      onPrimary={handlePrimary}
+                  // The heart is computed live and comes back even for an account
+                  // with no guidance row at all — so if it is missing, the request
+                  // failed. Say that, instead of rendering a stand-in that looks
+                  // like a working screen.
+                  <SectionCard tone="hero" className="!px-5 !py-5">
+                    <TodayUnavailable
+                      onRetry={reloadToday}
+                      retrying={!guidanceLoaded}
                     />
                   </SectionCard>
                 )
@@ -453,24 +366,24 @@ export default function MainHomePage() {
               )}
             </section>
 
-            {/* 4 · The question it's sitting with. Already a card; now it reads as
-                the fourth of four rather than the second of two. */}
-            <section className="mt-4">
-              <SectionCard tone="neutral" className="px-5 py-5">
-                {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
+            {/* 4 · The question it's sitting with.
+                Only ever the real one. This used to fall back to a hand-written
+                tiny task from a static registry whenever the backend had none —
+                so a brand-new account, or one whose batch hadn't generated yet,
+                got asked a canned question ("How do you get clear fastest?") as
+                though we had chosen it for them. We hadn't. Now the card simply
+                isn't there until there is something real to ask, and the sections
+                on Today are conditional by design, so nothing looks broken. */}
+            {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
+              <section className="mt-4">
+                <SectionCard tone="neutral" className="px-5 py-5">
                   <TodayTinyTaskCard
                     dark={dark}
                     tasks={todayGuidance.tiny_tasks}
                   />
-                ) : (
-                  <TinyTaskCard
-                    dark={dark}
-                    useLocal={mounted}
-                    definition={nextSteps.tinyTask}
-                  />
-                )}
-              </SectionCard>
-            </section>
+                </SectionCard>
+              </section>
+            ) : null}
 
             <div className="mt-5 flex items-center justify-center gap-4">
               <button
