@@ -25,6 +25,9 @@ export type SurfaceNearest = {
   hint: string | null;
   current: number;
   target: number;
+  /** Where to go to move this badge, and what the button says. */
+  route?: string | null;
+  cta?: string | null;
 };
 
 /** One badge inside a group, with where it currently stands. */
@@ -35,6 +38,8 @@ export type BlockItem = {
   tier: "nothing" | "bronze" | "silver" | "gold";
   current: number;
   target: number;
+  route?: string | null;
+  cta?: string | null;
 };
 
 /**

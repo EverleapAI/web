@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AchievementBlock } from "@/app/(app)/main/components/achievements/AchievementBlock";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 type Lane = {
@@ -81,16 +80,6 @@ export default function ExploreLayout({
             </Link>
           );
         })}
-      </div>
-
-      {/* The achievement block, under the lane rail — one mount for all six lanes.
-          Explore's badges (paths opened, lanes opened, actions born here) are
-          surface-wide, so it doesn't belong to any one lane. */}
-      <div className="mb-3">
-        <AchievementBlock
-          block={badges?.surfaces?.explore?.block ?? null}
-          stats={badges}
-        />
       </div>
 
       {children}

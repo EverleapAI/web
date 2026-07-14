@@ -39,7 +39,14 @@ const STORY_HREF =
   "/main/story?family=motivations&returnTo=" +
   encodeURIComponent("/main/insights?tab=motivations");
 
-export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
+export function MotivationsTab({
+  dark,
+  afterAgentic,
+}: {
+  dark: boolean;
+  /** "Where you are" — slotted BELOW the agent's read, never above it. */
+  afterAgentic?: React.ReactNode;
+}): React.JSX.Element {
   const { payload, tinyTasks } = useGeneratedInsights<GeneratedMotivationsPayload>(
     "/api/guidance/insights-motivations"
   );
@@ -99,6 +106,8 @@ export function MotivationsTab({ dark }: { dark: boolean }): React.JSX.Element {
         confidenceLevel={confidenceLevel}
         pageKey="insights_motivations"
       />
+
+      {afterAgentic}
 
       {showAssist ? (
         <div

@@ -27,7 +27,7 @@ import {
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { AwardsMeter } from "../components/achievements/AwardsMeter";
-import { AchievementBlock } from "../components/achievements/AchievementBlock";
+import { WhereYouAre } from "../components/achievements/WhereYouAre";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
@@ -432,16 +432,6 @@ export default function ActionsPage() {
         <AwardsMeter className="mt-3.5" />
       </div>
 
-      {/* Actions' badges turn on doing and reflecting, which is exactly what this
-          page asks for — so the block sits above the list, where it can still
-          change what the user does next, rather than under it as a receipt. */}
-      <div className="mb-3">
-        <AchievementBlock
-          block={badges?.surfaces?.actions?.block ?? null}
-          stats={badges}
-        />
-      </div>
-
       <div className="space-y-4">
         {/* Suggested for you (agent) */}
         {suggestions === null || hasSuggestions ? (
@@ -485,6 +475,15 @@ export default function ActionsPage() {
             )}
           </SectionCard>
         ) : null}
+
+        {/* "Where you are" — below the agent's read, never above it. Actions'
+            badges turn on doing and reflecting, which is exactly what this page
+            asks for, so it still sits above the list itself: it can change what
+            you do next, rather than sitting under it as a receipt. */}
+        <WhereYouAre
+          block={badges?.surfaces?.actions?.block ?? null}
+          stats={badges}
+        />
 
         {/* Committed actions */}
         {pageEmpty ? (

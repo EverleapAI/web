@@ -39,7 +39,14 @@ const STORY_HREF =
   "/main/story?family=strengths&returnTo=" +
   encodeURIComponent("/main/insights?tab=strengths");
 
-export function StrengthsTab({ dark }: { dark: boolean }): React.JSX.Element {
+export function StrengthsTab({
+  dark,
+  afterAgentic,
+}: {
+  dark: boolean;
+  /** "Where you are" — slotted BELOW the agent's read, never above it. */
+  afterAgentic?: React.ReactNode;
+}): React.JSX.Element {
   const { payload, tinyTasks } = useGeneratedInsights<GeneratedStrengthsPayload>(
     "/api/guidance/insights-strengths"
   );
@@ -99,6 +106,8 @@ export function StrengthsTab({ dark }: { dark: boolean }): React.JSX.Element {
         confidenceLevel={confidenceLevel}
         pageKey="insights_strengths"
       />
+
+      {afterAgentic}
 
       {showAssist ? (
         <div

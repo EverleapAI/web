@@ -18,6 +18,8 @@ import { useExploreProfile } from "../_lib/exploreProfile";
 import { rankPaths } from "../_lib/scorePath";
 import { LANE_ICON, rgba } from "./exploreUi";
 import { ExploreSummaryCard, type SummaryRequest } from "./ExploreSummaryCard";
+import { WhereYouAre } from "@/app/(app)/main/components/achievements/WhereYouAre";
+import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 const LANE_LABEL: Record<Lane, string> = {
   work: "Work",
@@ -92,6 +94,7 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
 
   if (!isReady) return null;
   const hasSignal = Boolean(profile?.hasQuestionSignal) && laneTops.length > 0;
+  const badges = useBadgeStats();
 
   return (
     <div className="space-y-4">
@@ -99,6 +102,14 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
         request={request}
         hasSignal={hasSignal}
         firstName={profile?.firstName ?? null}
+      />
+
+      {/* "Where you are" — below the agent's read, never above it. This used to
+          live in the Explore layout, above everything, so a scoreboard was the
+          first thing the page said to you. */}
+      <WhereYouAre
+        block={badges?.surfaces?.explore?.block ?? null}
+        stats={badges}
       />
 
       {laneTops.length > 0 ? (

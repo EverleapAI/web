@@ -21,7 +21,7 @@ import {
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-import { AchievementBlock } from "../achievements/AchievementBlock";
+import { AchievementBlock } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";

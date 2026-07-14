@@ -39,7 +39,14 @@ const STORY_HREF =
   "/main/story?family=skills&returnTo=" +
   encodeURIComponent("/main/insights?tab=skills");
 
-export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
+export function SkillsTab({
+  dark,
+  afterAgentic,
+}: {
+  dark: boolean;
+  /** "Where you are" — slotted BELOW the agent's read, never above it. */
+  afterAgentic?: React.ReactNode;
+}): React.JSX.Element {
   const { payload, tinyTasks } = useGeneratedInsights<GeneratedSkillsPayload>(
     "/api/guidance/insights-skills"
   );
@@ -99,6 +106,8 @@ export function SkillsTab({ dark }: { dark: boolean }): React.JSX.Element {
         confidenceLevel={confidenceLevel}
         pageKey="insights_skills"
       />
+
+      {afterAgentic}
 
       {showAssist ? (
         <div

@@ -36,7 +36,7 @@ import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard
 
 import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
 
-import { AchievementBlock } from "@/app/(app)/main/components/achievements/AchievementBlock";
+import { WhereYouAre } from "@/app/(app)/main/components/achievements/WhereYouAre";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 /* =============================================================================
@@ -870,6 +870,17 @@ export default function Page() {
 
   const badges = useBadgeStats();
 
+  // One section, handed to whichever tab is on screen so it lands directly under
+  // that tab's agentic card. The badges are earned across the whole surface, so
+  // the content is the same on every tab — only its position moves.
+  const whereYouAre = (
+    <WhereYouAre
+      block={badges?.surfaces?.insights?.block ?? null}
+      stats={badges}
+      className="mb-3"
+    />
+  );
+
   const railRef = React.useRef<HTMLDivElement | null>(null);
 
   const initialTabFromUrl = React.useMemo<LocalTab>(() => {
@@ -1295,17 +1306,12 @@ export default function Page() {
           />
         </div>
 
-        {/* The achievement block. Page-level, not per-tab: the badges it tracks
-            (feedback, notes, tiny tasks) are earned across the whole surface, and
-            it sits directly under the rail so it's seen without scrolling — at the
-            bottom of a long mobile page it would be furniture nobody meets. */}
-        <div className="mb-3">
-          <AchievementBlock
-            block={badges?.surfaces?.insights?.block ?? null}
-            stats={badges}
-          />
-        </div>
-
+        {/* "Where you are" — the same section as every other main screen, and always
+            BELOW the agent's read. It used to sit at the top of Insights, directly
+            under the tab rail, which made a scoreboard the first thing the page said
+            to you. The badges it tracks are earned across the whole surface, so it is
+            page-level rather than per-tab; it is simply slotted under whichever tab's
+            agentic card is on screen. */}
         {tab === "summary" ? (
           isSummaryReady ? (
             <section className="space-y-3">
@@ -1323,6 +1329,12 @@ export default function Page() {
                   pageKey="insights_summary"
                 />
               </div>
+
+              <WhereYouAre
+                block={badges?.surfaces?.insights?.block ?? null}
+                stats={badges}
+                className="mb-1.5"
+              />
 
               {summaryHasSignal ? (
                 <>
@@ -1348,11 +1360,11 @@ export default function Page() {
             </section>
           ) : null
         ) : tab === "motivations" ? (
-          <MotivationsTab dark={dark} />
+          <MotivationsTab dark={dark} afterAgentic={whereYouAre} />
         ) : tab === "strengths" ? (
-          <StrengthsTab dark={dark} />
+          <StrengthsTab dark={dark} afterAgentic={whereYouAre} />
         ) : tab === "skills" ? (
-          <SkillsTab dark={dark} />
+          <SkillsTab dark={dark} afterAgentic={whereYouAre} />
         ) : tab === "funFacts" ? (
           <FunFactsTab
             dark={dark}
