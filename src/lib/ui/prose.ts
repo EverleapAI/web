@@ -22,10 +22,17 @@ export const TEXT_SECONDARY = "#AEB3BF"; // quiet labels + secondary links — a
 export const TEXT_MUTED = "#7E838E"; // meta / timestamps — the quietest chrome
 
 // ── Prose recipe ─────────────────────────────────────────────────────────────
-// 400, not 500: the system UI stack (Segoe UI / SF — there is no next/font here)
-// has no 425, so anything above 400 rounds to a semibold-looking face.
-export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 400 };
-export const PROSE_CLASS = "leading-read tracking-normal";
+// Weight and tracking come from CSS variables (--read-weight / --read-tracking,
+// defaulted in globals.css) so they can be settled on a real phone with the dev
+// tuner instead of argued about on a laptop. The app now ships Inter, a variable
+// SANS, so intermediate weights (450, 500) are real on every device — previously
+// Segoe UI had no 500 at all and silently rounded them to 400.
+export const PROSE_STYLE: CSSProperties = {
+  color: TEXT_PRIMARY,
+  fontWeight: "var(--read-weight, 400)" as CSSProperties["fontWeight"],
+  letterSpacing: "var(--read-tracking, 0em)",
+};
+export const PROSE_CLASS = "leading-read";
 
 // ── Size ladder (the "full ladder", identical to Today) ──────────────────────
 export const PROSE_SIZE = "text-read"; // hero / body agentic prose
@@ -44,7 +51,13 @@ export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; 
 export const HEADING_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
 export const HEADING_STYLE: CSSProperties = {
   color: TEXT_HEADING,
-  fontWeight: 600,
+  // Tunable, because there is a real open question here: if these pages are a
+  // conversation, an agent's FIRST sentence is not bolder than its second — so
+  // the opening line arguably wants the same weight as the prose, not a step
+  // above it. --heading-weight defaults to 600 (a step above); set it equal to
+  // --read-weight to hear the agent speak in one voice.
+  fontWeight: "var(--heading-weight, 600)" as CSSProperties["fontWeight"],
+  letterSpacing: "var(--read-tracking, 0em)",
 };
 
 // One shared link treatment so every tappable agentic link reads the same:
