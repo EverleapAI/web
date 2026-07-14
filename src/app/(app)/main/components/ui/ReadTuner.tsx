@@ -38,20 +38,24 @@ type Row<T extends string | number> = {
 
 function Dial<T extends string | number>({ label, value, options, onPick, fmt }: Row<T>) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-14 shrink-0 text-micro font-bold uppercase tracking-eyebrow text-white/40">
+    <div>
+      <div className="mb-1 text-micro font-bold uppercase tracking-eyebrow text-amber-300/70">
         {label}
-      </span>
-      <div className="flex flex-wrap gap-1">
+      </div>
+      <div className="flex gap-1">
         {options.map((o) => (
           <button
             key={String(o)}
             type="button"
             onClick={() => onPick(o)}
             aria-pressed={value === o}
+            // min-h-9 so it is a real thumb target on a phone — the point of this
+            // tool is to be driven on the device, not clicked with a mouse.
             className={[
-              "rounded-full px-2 py-[3px] text-micro font-semibold tabular-nums transition",
-              value === o ? "bg-white text-black" : "text-white/55 hover:text-white/90",
+              "min-h-9 flex-1 rounded-control px-1.5 text-micro font-bold tabular-nums transition active:scale-95",
+              value === o
+                ? "bg-amber-400 text-black"
+                : "bg-white/[0.07] text-white/60 hover:bg-white/[0.14] hover:text-white",
             ].join(" ")}
           >
             {fmt ? fmt(o) : String(o)}
@@ -98,12 +102,17 @@ export function ReadTuner() {
 
   if (!armed) return null;
 
+  // Top-right, bright, and large enough to hit with a thumb. The first version was
+  // a small dark pill on a dark page, tucked behind the bottom nav — effectively
+  // invisible, which is a poor showing for a tool whose whole job is to be looked
+  // at.
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-24 left-3 z-50 rounded-full border border-white/15 bg-black/80 px-3 py-1.5 text-micro font-semibold text-white/70 backdrop-blur-md"
+        aria-label="Open reading tuner"
+        className="fixed right-3 top-3 z-[100] flex h-11 w-11 items-center justify-center rounded-full bg-amber-400 text-body font-bold text-black shadow-[0_6px_24px_rgba(251,191,36,0.5)] ring-2 ring-amber-200/60 transition active:scale-95"
       >
         Aa
       </button>
@@ -111,7 +120,7 @@ export function ReadTuner() {
   }
 
   return (
-    <div className="fixed bottom-24 left-3 z-50 flex flex-col gap-2 rounded-2xl border border-white/12 bg-black/85 p-2.5 backdrop-blur-md">
+    <div className="fixed right-3 top-3 z-[100] flex w-[min(19rem,calc(100vw-1.5rem))] flex-col gap-2.5 rounded-2xl border border-amber-300/30 bg-black/92 p-3 shadow-[0_16px_48px_rgba(0,0,0,0.7)] backdrop-blur-md">
       <Dial
         label="Read"
         value={weight}
@@ -139,16 +148,18 @@ export function ReadTuner() {
         fmt={(v) => (v === "antialiased" ? "thin" : "full")}
       />
 
-      <div className="mt-0.5 flex items-center justify-between gap-3 border-t border-white/10 pt-1.5">
-        <code className="text-micro leading-tight text-white/45">
+      {/* The read-out is the deliverable: these four numbers are what get written
+          into globals.css once they are settled on a real phone. */}
+      <div className="flex items-center justify-between gap-3 border-t border-white/12 pt-2">
+        <code className="text-micro font-bold leading-tight text-amber-300">
           {weight}/{heading} · {track}em · {smooth === "auto" ? "full" : "thin"}
         </code>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-micro font-semibold text-white/45 hover:text-white/80"
+          className="min-h-8 rounded-control bg-white/10 px-3 text-micro font-bold text-white/70 active:scale-95"
         >
-          hide
+          Hide
         </button>
       </div>
     </div>
