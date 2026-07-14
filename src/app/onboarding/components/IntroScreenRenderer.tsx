@@ -4,6 +4,9 @@ import * as React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+import { CoachLine, StepHelper, TellHero } from "@/lib/ui/coach";
+import { PROSE_STYLE, TEXT_HEADING } from "@/lib/ui/prose";
+
 import type { Answers, FlowNode } from "../engine/useOnboardingFlow";
 import { firstName } from "../utils/textFormat";
 
@@ -220,9 +223,9 @@ function WhatYouGetList() {
             className="mt-[2px] shrink-0 opacity-90"
           />
 
-          <div className="max-w-[330px] text-body font-medium leading-7 tracking-title text-white/90">
+          <CoachLine as="div" className="max-w-[330px]">
             {item.text}
-          </div>
+          </CoachLine>
         </motion.div>
       ))}
     </div>
@@ -248,9 +251,7 @@ function StepList({ steps }: { steps: string[] }) {
             {index + 1}
           </div>
 
-          <div className="text-body font-medium leading-relaxed tracking-title text-white/88 sm:text-body">
-            {step}
-          </div>
+          <CoachLine as="div">{step}</CoachLine>
         </motion.div>
       ))}
     </div>
@@ -274,9 +275,9 @@ function BulletList({ bullets }: { bullets: string[] }) {
         >
           <div className="mt-[11px] h-[5px] w-[5px] shrink-0 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.7)]" />
 
-          <div className="max-w-[340px] text-body font-medium leading-7 tracking-title text-white/84 sm:text-body">
+          <CoachLine as="div" className="max-w-[340px]">
             {bullet}
-          </div>
+          </CoachLine>
         </motion.div>
       ))}
     </div>
@@ -302,7 +303,8 @@ function BodyLines({
             ease: "easeOut",
             delay: 0.1 + index * 0.06,
           }}
-          className="text-body font-medium leading-7 tracking-title text-white/72 sm:text-body"
+          className="text-pretty text-body leading-read sm:text-lede"
+          style={PROSE_STYLE}
         >
           {replaceName(line, answers)}
         </motion.p>
@@ -328,7 +330,7 @@ function PermissionApproval({
           className="mt-1 h-4 w-4 shrink-0 accent-cyan-300"
         />
 
-        <span className="max-w-[340px] text-meta leading-6 tracking-title text-white/58">
+        <span className="max-w-[340px] text-meta leading-6 text-white/58">
           I give Everleap permission to use what I share to personalize my
           experience, as described in the{" "}
           <a
@@ -384,16 +386,21 @@ function SummaryTransition() {
           duration: 0.35,
           ease: "easeOut",
         }}
-        className="mt-6 text-read font-semibold tracking-title text-white"
+        className="mt-6 text-read leading-read"
+        style={{
+          color: TEXT_HEADING,
+          fontWeight: "var(--title-weight, 600)",
+          letterSpacing: "var(--read-tracking, 0em)",
+        }}
       >
         Preparing your first Everleap insights
         <span className="text-white/42">...</span>
       </motion.div>
 
-      <p className="mt-4 max-w-[360px] text-label leading-6 tracking-title text-white/46">
+      <StepHelper className="mt-4 max-w-[360px]">
         Your responses are helping Everleap begin understanding your
         motivations, interests, strengths, and possible directions.
-      </p>
+      </StepHelper>
     </motion.div>
   );
 }
@@ -442,9 +449,9 @@ export default function IntroScreenRenderer({
       >
         <OnboardingVisual visualKey={node.key} />
 
-        <h1 className="max-w-[360px] text-display font-semibold leading-display tracking-display text-white sm:text-display">
+        <TellHero className="max-w-[360px]">
           {replaceName(config.title, answers)}
-        </h1>
+        </TellHero>
 
         {isSummary ? (
           <SummaryTransition />
@@ -464,14 +471,9 @@ export default function IntroScreenRenderer({
             ) : null}
 
             {config.body ? (
-              <p
-                className={[
-                  "mt-6 max-w-[370px] text-body leading-7 tracking-title text-white/70",
-                  compact ? "text-white/58" : "",
-                ].join(" ")}
-              >
+              <CoachLine className="mt-6 max-w-[370px]">
                 {replaceName(config.body, answers)}
-              </p>
+              </CoachLine>
             ) : null}
 
             {config.steps ? (

@@ -4,6 +4,8 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { CoachLine, StepEyebrow, TellHero } from "@/lib/ui/coach";
+
 type Category = "motivations" | "strengths" | "skills";
 
 function normalizeCategory(raw: string | null): Category | null {
@@ -90,26 +92,23 @@ export default function ReadyPage(): React.JSX.Element {
           />
 
           <div className="relative">
-            <div className="text-micro tracking-eyebrow text-white/70">EVERLEAP</div>
+            <StepEyebrow>EVERLEAP</StepEyebrow>
 
-            <h1 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight text-white">
-              {headline}
-            </h1>
+            <TellHero className="mt-4">{headline}</TellHero>
 
-            <p className="mt-4 max-w-[62ch] text-label leading-7 text-white/70">
-              {sub}
-            </p>
+            <CoachLine className="mt-4 max-w-[62ch]">{sub}</CoachLine>
 
             <div className="mt-7 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => router.replace(next)}
-                className="h-11 rounded-2xl bg-white text-black px-5 font-semibold hover:bg-white/95 active:scale-[0.99] transition"
+                className="h-11 rounded-2xl bg-white text-black px-5 text-label hover:bg-white/95 active:scale-[0.99] transition"
+                style={{ fontWeight: "var(--title-weight, 600)" as React.CSSProperties["fontWeight"] }}
               >
                 Continue now
               </button>
 
-              <div className="text-sm text-white/55">
+              <div className="text-meta text-white/55">
                 {ready ? "Redirecting…" : "One second…"}
               </div>
             </div>

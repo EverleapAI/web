@@ -11,6 +11,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
+import { AskHero, CoachLine, StepEyebrow } from "@/lib/ui/coach";
+
 const ONBOARDING_STORAGE_KEY = "everleap_onboarding_answers";
 const MAX_WAIT_MS = 15000;
 const LINE_MS = 2300;
@@ -163,7 +165,8 @@ export default function IntroPage(): React.JSX.Element {
         <button
           type="button"
           onClick={goHome}
-          className="fixed right-5 top-5 z-[210] text-meta font-semibold tracking-title text-white/35 transition hover:text-white/70"
+          className="fixed right-5 top-5 z-[210] text-meta text-white/35 transition hover:text-white/70"
+          style={{ fontWeight: "var(--title-weight, 600)" as React.CSSProperties["fontWeight"] }}
         >
           Skip
         </button>
@@ -173,16 +176,15 @@ export default function IntroPage(): React.JSX.Element {
         <div className="w-full max-w-[420px] text-center">
         <AnimatePresence mode="wait">
           {phase !== "reveal" ? (
-            <motion.p
+            <motion.div
               key={`line-${lineIndex}`}
               initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, filter: "blur(6px)" }}
               animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
               exit={reduce ? { opacity: 0 } : { opacity: 0, y: -18, filter: "blur(6px)" }}
               transition={{ duration: reduce ? 0.25 : 0.7, ease: "easeOut" }}
-              className="text-lede font-medium leading-body tracking-title text-white/85 text-balance"
             >
-              {CRAWL_LINES[lineIndex]}
-            </motion.p>
+              <CoachLine className="text-balance">{CRAWL_LINES[lineIndex]}</CoachLine>
+            </motion.div>
           ) : (
             <motion.div
               key="reveal"
@@ -190,19 +192,13 @@ export default function IntroPage(): React.JSX.Element {
               animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: reduce ? 0.25 : 0.8, ease: "easeOut" }}
             >
-              <div className="mb-4 text-micro font-bold uppercase tracking-eyebrow text-[rgb(182,160,255)]">
-                What I'm noticing
-              </div>
+              <StepEyebrow className="mb-4" style={{ color: "rgb(182,160,255)" }}>
+                What I&apos;m noticing
+              </StepEyebrow>
 
-              {synth?.headline ? (
-                <h1 className="text-balance text-title font-semibold leading-display tracking-title">
-                  {synth.headline}
-                </h1>
-              ) : null}
+              {synth?.headline ? <AskHero>{synth.headline}</AskHero> : null}
 
-              <p className="mt-4 text-left text-label leading-read text-white/78">
-                {synth?.body ?? FALLBACK_LINE}
-              </p>
+              <CoachLine className="mt-4 text-left">{synth?.body ?? FALLBACK_LINE}</CoachLine>
 
               {synth?.signals?.length ? (
                 <div className="mt-6 flex flex-col gap-2 text-left">
@@ -227,8 +223,9 @@ export default function IntroPage(): React.JSX.Element {
                 initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: reduce ? 0.1 : 1.15, duration: 0.5 }}
-                className="mt-8 w-full rounded-full px-5 py-3.5 text-label font-semibold transition hover:brightness-110"
+                className="mt-8 w-full rounded-full px-5 py-3.5 text-label transition hover:brightness-110"
                 style={{
+                  fontWeight: "var(--title-weight, 600)" as React.CSSProperties["fontWeight"],
                   color: "rgb(182,160,255)",
                   background: "rgba(182,160,255,0.14)",
                   border: "1px solid rgba(182,160,255,0.34)",

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Mic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { AskHero, StepEyebrow } from "@/lib/ui/coach";
+
 /* ============================================================
    Types
    ============================================================ */
@@ -38,16 +40,6 @@ declare global {
 const STORAGE_KEY_V3 = "everleap.story.answers.v3";
 const ONBOARDING_KEY_PRIMARY = "everleapOnboarding_v4_convo_min";
 const ONBOARDING_KEY_FALLBACK = "everleapOnboarding_v1";
-
-/* ============================================================
-   Typography
-   ============================================================ */
-
-const TYPE = {
-  headline:
-    "text-[1.42rem] font-semibold leading-display tracking-tight text-white sm:text-[1.68rem]",
-  input: "text-label font-medium leading-6 text-white",
-};
 
 /* ============================================================
    Questions
@@ -242,10 +234,7 @@ function BottomLink({
       onClick={onClick}
       disabled={Boolean(disabled)}
       className={[
-        "inline-flex items-center gap-2 transition",
-        priority === "primary"
-          ? "text-label font-semibold"
-          : "text-label font-semibold tracking-normal",
+        "inline-flex items-center gap-2 text-label transition",
         disabled
           ? "cursor-not-allowed text-white/24"
           : muted
@@ -254,6 +243,7 @@ function BottomLink({
               ? "text-white hover:text-white"
               : "text-white/90 hover:text-white",
       ].join(" ")}
+      style={{ fontWeight: "var(--title-weight, 600)" as React.CSSProperties["fontWeight"] }}
     >
       <span>{label}</span>
       {arrow ? (
@@ -294,7 +284,10 @@ function TalkAction({
         ) : null}
         <Mic className={["h-[18px] w-[18px] transition", active ? "scale-[1.08]" : ""].join(" ")} />
       </span>
-      <span className="text-label font-semibold tracking-normal">
+      <span
+        className="text-label"
+        style={{ fontWeight: "var(--title-weight, 600)" as React.CSSProperties["fontWeight"] }}
+      >
         {active ? "Listening" : "Talk"}
       </span>
     </button>
@@ -363,9 +356,10 @@ function QuestionTextEntry({
         rows={3}
         placeholder={placeholder ?? ""}
         className={[
-          TYPE.input,
+          "text-body leading-6 text-white",
           "w-full resize-none rounded-panel border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.05))] px-4 py-2.5 outline-none placeholder:text-white/34 shadow-[0_10px_30px_rgba(4,8,18,0.22)]",
         ].join(" ")}
+        style={{ fontWeight: "var(--read-weight, 400)" as React.CSSProperties["fontWeight"] }}
       />
     </div>
   );
@@ -390,13 +384,13 @@ function QuestionFlat({
     <div className="w-full max-w-[720px]">
       <div className="flex items-start justify-end gap-4">
         <div className="flex items-center gap-3">
-          <div className="text-meta leading-none text-white/54">{categoryLabel}</div>
+          <StepEyebrow className="leading-none">{categoryLabel}</StepEyebrow>
           <ProgressDots currentIndex={currentIndex} total={total} tone={tone} />
         </div>
       </div>
 
       <div className="mt-5">
-        <h1 className={TYPE.headline}>{title}</h1>
+        <AskHero>{title}</AskHero>
       </div>
 
       <div className="mt-5">{children}</div>

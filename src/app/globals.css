@@ -79,6 +79,16 @@
   --text-display: calc(32px * var(--type-scale, 1)); /* page heroes */
   --text-display--line-height: 1.1;
 
+  /* THE ASK. The one rung the reading surfaces never needed: a single question
+     filling a phone screen. Onboarding was reaching for it with text-[2.7rem] and
+     four other arbitrary literals, because the ladder stopped at `display` (32) —
+     so this is not drift being collapsed, it is a real size the scale was missing.
+     Adding it as a token is also what puts the onboarding heroes back under
+     --type-scale: an arbitrary rem does not multiply, so before this, every hero
+     in the funnel was deaf to the size dial. */
+  --text-ask: calc(43px * var(--type-scale, 1)); /* the coach's question, at full voice */
+  --text-ask--line-height: 1.08;
+
   /* ---- Letter-spacing ------------------------------------------------------
      28 values → 5. The old set included -0.078em, -0.055em and 0.005em, which
      are not perceptible and were not choices. Prose is 0: positive tracking on

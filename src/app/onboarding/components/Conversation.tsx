@@ -1,6 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { motion } from "framer-motion";
+
+import { PROSE_STYLE, TEXT_HEADING } from "@/lib/ui/prose";
 
 import type { Answers, FlowNode } from "../engine/useOnboardingFlow";
 import {
@@ -53,6 +56,14 @@ function getPacing(section: Section) {
   };
 }
 
+// Conversation animates every line in with framer-motion, so it keeps its motion
+// elements and takes the coach voices as classes + style rather than swapping the
+// element type. Same type, same ink, same weight vars as `ui/coach`.
+const HERO_STYLE: CSSProperties = {
+  color: TEXT_HEADING,
+  fontWeight: "var(--title-weight, 600)" as CSSProperties["fontWeight"],
+};
+
 export default function Conversation({ node, answers }: Props) {
   if (!node) return null;
 
@@ -104,11 +115,12 @@ export default function Conversation({ node, answers }: Props) {
               ease: "easeOut",
             }}
             className={[
-              "text-balance font-semibold tracking-display text-white",
+              "text-balance leading-display tracking-display",
               isTransition
-                ? "mx-auto max-w-[620px] text-[2rem] leading-display sm:text-[2.7rem]"
-                : "max-w-[400px] text-[1.68rem] leading-display sm:text-[2.05rem]",
+                ? "mx-auto max-w-[620px] text-display sm:text-ask"
+                : "max-w-[400px] text-title sm:text-display",
             ].join(" ")}
+            style={HERO_STYLE}
           >
             {renderHighlightedText(title)}
           </motion.h1>
@@ -142,12 +154,8 @@ export default function Conversation({ node, answers }: Props) {
                     ? pacing.bodyBaseDelay + index * pacing.bodyStepDelay
                     : index * pacing.bodyStepDelay,
                 }}
-                className={[
-                  "text-pretty tracking-title",
-                  isTransition
-                    ? "text-body leading-read text-white/74 sm:text-lede"
-                    : "text-label leading-body text-white/70 sm:text-body",
-                ].join(" ")}
+                className="text-pretty text-body leading-read sm:text-lede"
+                style={PROSE_STYLE}
               >
                 {renderHighlightedText(line)}
               </motion.p>

@@ -30,8 +30,9 @@ function NavButton({
       whileTap={disabled ? undefined : { scale: 0.98 }}
       onClick={onClick}
       disabled={Boolean(disabled)}
+      style={{ fontWeight: "var(--title-weight, 600)" }}
       className={[
-        "inline-flex items-center text-label font-semibold tracking-title transition",
+        "inline-flex items-center text-label transition",
         disabled
           ? "cursor-not-allowed text-white/24"
           : "text-cyan-200 hover:text-cyan-100",

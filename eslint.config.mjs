@@ -120,11 +120,21 @@ export default [
      ========================================================================== */
   {
     files: [
+      // The reading lane.
       "src/app/(app)/main/components/**/*.tsx",
       "src/app/(app)/main/insights/components/**/*.tsx",
       "src/app/(app)/main/explore/_components/**/*.tsx",
       "src/app/(app)/main/profile/**/*.tsx",
       "src/app/(app)/main/you/**/*.tsx",
+      // The coach funnel — onboarding, Story, the question flows, the reveal, ready.
+      // Eleven distinct hero recipes lived here, of which ONE was on the ladder, and
+      // five of them were arbitrary rem literals — which is why not one hero in the
+      // funnel responded to --type-scale. See src/lib/ui/coach.tsx.
+      "src/app/onboarding/**/*.tsx",
+      "src/app/(app)/main/story/**/*.tsx",
+      "src/app/(app)/main/questions/**/*.tsx",
+      "src/app/(app)/main/intro/**/*.tsx",
+      "src/app/(app)/main/ready/**/*.tsx",
       "src/lib/ui/**/*.{ts,tsx}",
     ],
     rules: {

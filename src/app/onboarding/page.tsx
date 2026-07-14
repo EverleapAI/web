@@ -5,6 +5,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
+import { CoachLine } from "@/lib/ui/coach";
+
 import Conversation from "./components/Conversation";
 import InputRenderer from "./components/InputRenderer";
 import NavControls from "./components/NavControls";
@@ -34,7 +36,7 @@ function QuestionProgress({ progress }: { progress: number }) {
       aria-label="Onboarding progress"
     >
       <div className="flex items-center gap-2">
-        <div className="text-meta font-medium tracking-title text-white">
+        <div className="text-meta text-white">
           Onboarding
         </div>
 
@@ -174,16 +176,16 @@ function handleComplete(finalAnswers: Answers) {
 
   if (loading) {
     return (
-      <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
-        Loading…
+      <div className="min-h-[100svh] bg-slate-950 p-10">
+        <CoachLine>Loading…</CoachLine>
       </div>
     );
   }
 
   if (error || !flow || !currentNode) {
     return (
-      <div className="min-h-[100svh] bg-slate-950 p-10 text-white">
-        Error loading onboarding
+      <div className="min-h-[100svh] bg-slate-950 p-10">
+        <CoachLine>Error loading onboarding</CoachLine>
       </div>
     );
   }

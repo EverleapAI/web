@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Mic } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { OptionLabel, StepEyebrow } from "@/lib/ui/coach";
+
 import {
   type Answers,
   type FlowNode,
@@ -162,19 +164,9 @@ function ChoiceRowText({
           </div>
         ) : null}
 
-        <div
-          className={[
-            "min-w-0 flex-1 tracking-title",
-            compact
-              ? "text-label leading-[1.25rem]"
-              : "text-label leading-[1.35rem]",
-            selected
-              ? "font-semibold text-white"
-              : "font-medium text-white/80",
-          ].join(" ")}
-        >
+        <OptionLabel selected={selected} className="min-w-0 flex-1">
           {label}
-        </div>
+        </OptionLabel>
       </div>
     </motion.button>
   );
@@ -344,10 +336,11 @@ export default function InputRenderer({
             }}
             rows={isName ? 1 : 4}
             placeholder={question.placeholder ?? ""}
+            style={{ fontWeight: "var(--read-weight, 400)" }}
             className={[
               "w-full resize-none rounded-panel border border-white/9 bg-white/[0.032]",
               "px-5 py-3.5 pr-16 outline-none transition",
-              "text-body leading-6 text-white tracking-title",
+              "text-body leading-6 text-white",
               "placeholder:text-white/25",
               "focus:border-cyan-100/22 focus:bg-white/[0.05]",
               isName ? "min-h-[52px]" : "min-h-[108px]",
@@ -411,9 +404,7 @@ export default function InputRenderer({
     return (
       <div className="mt-4 w-full max-w-[400px]">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-micro uppercase tracking-eyebrow text-white/34">
-            Select all that apply
-          </div>
+          <StepEyebrow>Select all that apply</StepEyebrow>
 
           {typeof maxChoices === "number" ? (
             <div className="text-micro text-white/32">
@@ -500,7 +491,7 @@ export default function InputRenderer({
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-                <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-meta font-medium text-white backdrop-blur-md">
+                <div className="absolute bottom-3 left-3 rounded-full bg-black/32 px-3 py-1 text-meta text-white backdrop-blur-md">
                   {option.label}
                 </div>
               </div>
