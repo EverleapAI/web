@@ -39,38 +39,28 @@ export const PROSE_SIZE = "text-read"; // hero / body agentic prose
 export const LINK_SIZE = "text-body"; // secondary links
 export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; // modal / section eyebrow
 
-// ── The agent's opening line ─────────────────────────────────────────────────
-// These pages are a CONVERSATION, not an article, so the first sentence is not a
-// headline — it is the agent starting to talk. It therefore sits on the SAME rung
-// as the prose it opens (21px), one weight above it (600) and a touch brighter.
-// Hierarchy comes from weight and spacing, never from a bigger size.
+// ── ONE VOICE ─────────────────────────────────────────────────────────────────
+// PEOPLE DO NOT TALK IN HEADERS. These surfaces are a conversation, and a
+// conversation has no titles, no ledes, no bold openers — it is one person
+// speaking in one voice. So every piece of spoken text — the agent's opening
+// line, a card's "title", a card's body — is the SAME treatment: the read.
+// 21px, regular weight, one brightness. Nothing the agent says is bigger or
+// bolder than anything else it says.
 //
-// Insights already worked this way and was the only surface getting it right.
-// Today and Explore both set it as a 26px semibold headline, which made the agent
-// announce itself instead of speak. Today / Insights / Explore now share this.
-// ── A card's anatomy ─────────────────────────────────────────────────────────
-// The read looks right because it has a clear shape: eyebrow → opening line →
-// prose → one action. The cards below it each invented their own — one had a
-// 17px semibold title, one had none, one asked its question in a third size —
-// so they read as three unrelated widgets under a well-made header.
-//
-// A card is the read, one rung down: its title takes the same treatment as the
-// agent's opening line but at `lede` (19px) instead of `read` (21px), and its
-// prose sits at `body` (17px). Same shape, quieter voice.
-export const CARD_TITLE_CLASS = "text-lede leading-title";
-export const CARD_BODY_CLASS = `text-body ${PROSE_CLASS}`;
+// This deliberately COLLAPSES the hierarchy that used to live here (a 21px/600
+// heading over a 19px card title over a 17px body). That ladder made the agent
+// "announce itself instead of speak"; three sizes in a message nobody would ever
+// speak in three sizes. The furniture that is NOT the agent talking — eyebrows,
+// buttons, meta, option chips — keeps its own quiet treatment; only the VOICE is
+// flattened. `CARD_TITLE_CLASS` / `HEADING_CLASS` are kept as names so existing
+// call sites need no edit, but they now resolve to the read.
+export const CARD_TITLE_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
+export const CARD_BODY_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
 
 export const HEADING_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
-export const HEADING_STYLE: CSSProperties = {
-  color: TEXT_HEADING,
-  // Tunable, because there is a real open question here: if these pages are a
-  // conversation, an agent's FIRST sentence is not bolder than its second — so
-  // the opening line arguably wants the same weight as the prose, not a step
-  // above it. --heading-weight defaults to 600 (a step above); set it equal to
-  // --read-weight to hear the agent speak in one voice.
-  fontWeight: "var(--heading-weight, 600)" as CSSProperties["fontWeight"],
-  letterSpacing: "var(--read-tracking, 0em)",
-};
+// The opening line is the same voice as everything after it — same size, same
+// weight, same colour. It is not a header; it is the first thing the agent says.
+export const HEADING_STYLE: CSSProperties = { ...PROSE_STYLE };
 
 // One shared link treatment so every tappable agentic link reads the same:
 // own semantic colour, brightening on hover, with a trailing chevron.

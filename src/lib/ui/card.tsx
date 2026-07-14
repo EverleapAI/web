@@ -44,16 +44,17 @@ import { TEXT_HEADING, TEXT_PRIMARY, TEXT_SECONDARY } from "./prose";
    one rung.
    ────────────────────────────────────────────────────────────────────────────── */
 
-export const CARD_TITLE_STYLE: CSSProperties = {
-  color: TEXT_HEADING,
-  fontWeight: "var(--title-weight, 600)" as CSSProperties["fontWeight"],
-};
-
+// ONE VOICE (see prose.ts): a card's title and its body are the SAME spoken
+// treatment as the read — 21px, regular, one brightness. A card is not a titled
+// article; it is more of the agent talking. `CardTitle` and `CardBody` are kept as
+// separate names for call-site intent, but they render identically now.
 export const CARD_BODY_STYLE: CSSProperties = {
   color: TEXT_PRIMARY,
   fontWeight: "var(--read-weight, 400)" as CSSProperties["fontWeight"],
   letterSpacing: "var(--read-tracking, 0em)",
 };
+
+export const CARD_TITLE_STYLE: CSSProperties = { ...CARD_BODY_STYLE };
 
 export const ROW_TITLE_STYLE: CSSProperties = {
   color: TEXT_HEADING,
@@ -85,7 +86,7 @@ type TypeProps = {
 export function CardTitle({ children, className = "", as: Tag = "h3", style }: TypeProps) {
   return (
     <Tag
-      className={["text-lede leading-title tracking-title", className].join(" ")}
+      className={["text-read leading-read", className].join(" ")}
       style={{ ...CARD_TITLE_STYLE, ...style }}
     >
       {children}
@@ -96,7 +97,7 @@ export function CardTitle({ children, className = "", as: Tag = "h3", style }: T
 /** A card's prose. 17px, regular, bright — the read's own recipe, one rung down. */
 export function CardBody({ children, className = "", as: Tag = "p", style }: TypeProps) {
   return (
-    <Tag className={["text-body leading-read", className].join(" ")} style={{ ...CARD_BODY_STYLE, ...style }}>
+    <Tag className={["text-read leading-read", className].join(" ")} style={{ ...CARD_BODY_STYLE, ...style }}>
       {children}
     </Tag>
   );

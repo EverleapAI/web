@@ -2,7 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 
-import { CardBody, CardTitle } from "@/lib/ui/card";
+import { CardBody } from "@/lib/ui/card";
 
 type DiscoveryCardProps = {
   onPrimary: () => void;
@@ -18,7 +18,7 @@ export function DiscoveryCard({ onPrimary }: DiscoveryCardProps) {
         </div>
       </div>
 
-      <CardTitle as="h2">Start building your Story.</CardTitle>
+      <CardBody as="h2">Start building your Story.</CardBody>
 
       <CardBody className="mt-4">
         Your Story is where Everleap starts turning your answers into signals,

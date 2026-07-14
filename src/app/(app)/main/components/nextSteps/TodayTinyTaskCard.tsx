@@ -1,6 +1,6 @@
 "use client";
 
-import { CardTitle } from "@/lib/ui/card";
+import { CardBody } from "@/lib/ui/card";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
@@ -138,19 +138,18 @@ export function TodayTinyTaskCard({
               </button>
             ) : null}
 
-            {/* The question was set at `text-read` (21px) — the same size as the
-                agent's own voice — at fontWeight 550, a weight that exists in no
-                system font and silently rounds to 400 or 600 depending on the
-                platform. So a card was speaking as loudly as the agent, in a
-                weight nobody chose. It is a card title now: the same treatment as
-                the agent's opening line, one rung down. */}
-            <CardTitle
+            {/* On Today every card leads with prose, not a bold heading — the
+                "Where you are" card sets the pattern (eyebrow → body), and it is
+                the one that reads right. So the question takes the card BODY
+                treatment (17px, regular, bright), the same as the read, rather
+                than a bold title one rung under the agent. */}
+            <CardBody
               as="div"
               className="mb-4 w-full"
               style={dark ? undefined : { color: "#1e293b" }}
             >
               {current.question}
-            </CardTitle>
+            </CardBody>
 
             <div className="space-y-2.5">
               {current.options.map((label, index) => {

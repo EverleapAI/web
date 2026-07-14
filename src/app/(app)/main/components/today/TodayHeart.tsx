@@ -21,7 +21,7 @@ import {
   TEXT_MUTED,
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
-import { CardBody, CardTitle } from "@/lib/ui/card";
+import { CardBody } from "@/lib/ui/card";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
@@ -668,9 +668,9 @@ export function TodayHeart({
             Reflect on your actions
           </CardHeading>
 
-          <CardTitle as="p" className="max-w-[640px]">
+          <CardBody className="max-w-[640px]">
             {data.looseThread.title}
-          </CardTitle>
+          </CardBody>
 
           <CardBody className="mt-2 max-w-[640px]">
             {data.looseThread.why?.trim() ||

@@ -55,16 +55,23 @@ type TypeProps = {
    Both were previously five arbitrary rem literals between 1.42rem and 2.7rem.
    ────────────────────────────────────────────────────────────────────────────── */
 
+// ONE VOICE (see prose.ts). The coach ASKING and the coach TELLING are the same
+// person speaking, so they are the same treatment as everything else it says: the
+// read. This collapses the old 26→43px question/statement heroes onto the 21px
+// read — because a coach asking you something out loud does not SHOUT it in 43px;
+// it just says it, in the same voice as the sentence before. AskHero / TellHero /
+// CoachLine are kept as distinct names for call-site intent but render identically.
 const HERO_STYLE: CSSProperties = {
-  color: TEXT_HEADING,
-  fontWeight: "var(--title-weight, 600)" as CSSProperties["fontWeight"],
+  color: TEXT_PRIMARY,
+  fontWeight: "var(--read-weight, 400)" as CSSProperties["fontWeight"],
+  letterSpacing: "var(--read-tracking, 0em)",
 };
 
-/** The coach asking. 26 → 32px. */
+/** The coach asking — the read. */
 export function AskHero({ children, className = "", as: Tag = "h1", style }: TypeProps) {
   return (
     <Tag
-      className={["text-balance text-title leading-display tracking-display sm:text-display", className].join(" ")}
+      className={["text-balance text-read leading-read", className].join(" ")}
       style={{ ...HERO_STYLE, ...style }}
     >
       {children}
@@ -72,11 +79,11 @@ export function AskHero({ children, className = "", as: Tag = "h1", style }: Typ
   );
 }
 
-/** The coach telling — transitions, completions, intros. 32 → 43px, the full voice. */
+/** The coach telling — the read, same as asking. One voice. */
 export function TellHero({ children, className = "", as: Tag = "h1", style }: TypeProps) {
   return (
     <Tag
-      className={["text-balance text-display leading-display tracking-display sm:text-ask", className].join(" ")}
+      className={["text-balance text-read leading-read", className].join(" ")}
       style={{ ...HERO_STYLE, ...style }}
     >
       {children}
@@ -84,17 +91,12 @@ export function TellHero({ children, className = "", as: Tag = "h1", style }: Ty
   );
 }
 
-/** The coach's prose, under the hero. 17 → 19px, regular weight, bright. */
+/** The coach's prose — the read, same as the hero. */
 export function CoachLine({ children, className = "", as: Tag = "p", style }: TypeProps) {
   return (
     <Tag
-      className={["text-pretty text-body leading-read sm:text-lede", className].join(" ")}
-      style={{
-        color: TEXT_PRIMARY,
-        fontWeight: "var(--read-weight, 400)" as CSSProperties["fontWeight"],
-        letterSpacing: "var(--read-tracking, 0em)",
-        ...style,
-      }}
+      className={["text-pretty text-read leading-read", className].join(" ")}
+      style={{ ...HERO_STYLE, ...style }}
     >
       {children}
     </Tag>
