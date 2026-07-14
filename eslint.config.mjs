@@ -1,6 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
+import reactHooks from "eslint-plugin-react-hooks";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,6 +26,23 @@ export default [
   },
 
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+
+  // ── Rules of Hooks ─────────────────────────────────────────────────────────
+  // This SHOULD arrive with next/core-web-vitals, but it does not survive the
+  // FlatCompat shim — so it was silently off, and a conditional hook shipped:
+  // ExploreSummary called useBadgeStats() below an `if (!isReady) return null`,
+  // so on the first render the hook never ran and on the next one it did. React
+  // matches hooks by call order, so the 5th slot was `undefined` one render and a
+  // useState the next. That is the class of bug that hands one hook's state to
+  // another, and nothing in CI would have said a word.
+  {
+    files: ["src/**/*.tsx", "src/**/*.ts"],
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+    },
+  },
 
   // ── The design system's ratchet ────────────────────────────────────────────
   // Without this rule the tokens decay straight back into 86 hex colours, 30 font

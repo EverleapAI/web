@@ -92,9 +92,15 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
     [profile, laneTops]
   );
 
+  // Every hook must run on every render, so this sits ABOVE the `isReady` gate.
+  // It used to sit below it: on the first render isReady is false, the component
+  // returned early, and useBadgeStats never ran — then on the next render it did.
+  // React lines hooks up by call order, so the 5th slot was `undefined` one render
+  // and a useState the next, and state can be handed to the wrong hook.
+  const badges = useBadgeStats();
+
   if (!isReady) return null;
   const hasSignal = Boolean(profile?.hasQuestionSignal) && laneTops.length > 0;
-  const badges = useBadgeStats();
 
   return (
     <div className="space-y-4">
