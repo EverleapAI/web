@@ -459,7 +459,6 @@ export function TodayHeart({
           the commit; everything else on this card is a way to interrogate it. */}
       <SectionCard
         tone="hero"
-        chrome={chromeMode}
         className="!px-5 !py-4"
         backdrop={
           <div

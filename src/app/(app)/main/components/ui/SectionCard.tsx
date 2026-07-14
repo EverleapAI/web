@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useChromeMode, type ChromeMode } from "@/lib/ui/chrome";
 
 type SectionCardTone = "hero" | "teal" | "amber" | "plum" | "neutral";
 
@@ -13,10 +14,10 @@ type Props = {
   // card level — so it fills the whole rounded card, not the inset content box.
   // Use for background atmospherics like the ConstellationAnchor.
   backdrop?: React.ReactNode;
-  // "bare" strips every decorative layer and renders the content straight onto
-  // the page — the CNN treatment. Ignores `tone` and `backdrop` by design.
-  // Driven by useChromeMode() while we decide; see lib/ui/chrome.ts.
-  chrome?: import("@/lib/ui/chrome").ChromeMode;
+  // Override the global chrome mode for this one card. Normally omitted — the
+  // card reads useChromeMode() itself so "bare" strips the whole screen at once.
+  // "bare" ignores `tone` and `backdrop` by design. See lib/ui/chrome.ts.
+  chrome?: ChromeMode;
 };
 
 type SectionCardHeaderProps = {
@@ -101,16 +102,24 @@ export function SectionCard({
   tone = "neutral",
   compact = false,
   backdrop,
-  chrome = "card",
+  chrome,
 }: Props) {
   const t = toneClasses(tone);
+
+  // Read the mode here rather than prop-drilling it, so "bare" strips EVERY card
+  // on the screen at once. Stripping only the hero left a bare paragraph sitting
+  // above a stack of glossy cards, which reads as broken rather than as CNN — and
+  // made the A/B unanswerable. An explicit `chrome` prop still wins, for any card
+  // that must keep its shell.
+  const [mode] = useChromeMode();
+  const resolved = chrome ?? mode;
 
   // "bare" — the CNN read. Drops all six decorative layers (rounded edge,
   // hairline border, backdrop blur, the three stacked gradients, drop shadow,
   // sheen) and refuses the backdrop entirely, so no starfield sits behind the
   // prose. Padding survives: CNN isn't edge-to-edge either, it just has no box.
   // The page background shows through untouched.
-  if (chrome === "bare") {
+  if (resolved === "bare") {
     return (
       <section
         className={[
