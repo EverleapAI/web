@@ -18,7 +18,7 @@
 // first thing the app said to you was a scoreboard.
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 import type {
@@ -105,6 +105,18 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
   };
 }
 
+/**
+ * The section a route lands in: "/main/actions/abc-123" -> "/main/actions".
+ * Query strings are part of the destination but not of the place.
+ */
+function sectionOf(route: string | null | undefined): string | null {
+  if (!route) return null;
+  const path = route.split("?")[0].split("#")[0];
+  const parts = path.split("/").filter(Boolean); // ["main", "actions", "abc"]
+  if (parts.length < 2) return path || null;
+  return `/${parts[0]}/${parts[1]}`;
+}
+
 function Medal({ glyph, tier }: { glyph: string; tier: string }) {
   const m = METAL[tier];
 
@@ -134,13 +146,38 @@ function Medal({ glyph, tier }: { glyph: string; tier: string }) {
 export function AchievementBlock({
   block,
   stats,
+  doorsAlreadyOpen,
 }: {
   block: SurfaceBlock;
   /** Feeds the awards meter without a second /api/achievements call. */
   stats?: BadgeStats | null;
+  /**
+   * Routes this screen ALREADY offers a button for. The badge pill is dropped when
+   * it would land in the same place as one of them.
+   *
+   * Today showed "Reflect on an action" (from Everleaper, whose blocking metric is
+   * actions_reflected) directly above a card called "Reflect on your actions" with
+   * a button reading "Reflect on it" — two pills, one meaning, stacked. The other
+   * one wins every time: it names the actual action and says why. A badge is a
+   * reason to go somewhere, and it stops being one the moment the screen is
+   * already pointing at the door.
+   */
+  doorsAlreadyOpen?: (string | null | undefined)[];
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const next = nextUp(block);
+
+  // Don't offer a door that is already open — either because another button on
+  // this screen goes there, or because you are standing in the room.
+  const taken = new Set(
+    [...(doorsAlreadyOpen ?? []), pathname]
+      .map(sectionOf)
+      .filter((s): s is string => Boolean(s))
+  );
+  const showCta = Boolean(
+    next?.route && next.cta && !taken.has(sectionOf(next.route) ?? "")
+  );
 
   return (
     <div className="space-y-2.5">
@@ -160,8 +197,8 @@ export function AchievementBlock({
         </div>
       ) : null}
 
-      {/* The door. Without this the line above is a fact you cannot act on. */}
-      {next?.route && next.cta ? (
+      {/* The door — unless the screen is already holding it open somewhere else. */}
+      {showCta && next ? (
         <div className="pt-1.5">
           <button
             type="button"
@@ -191,12 +228,15 @@ export function WhereYouAre({
   stats,
   lead,
   className,
+  doorsAlreadyOpen,
 }: {
   block: SurfaceBlock;
   stats?: BadgeStats | null;
   /** Optional line above the trophies. Today uses this for the story sentence. */
   lead?: React.ReactNode;
   className?: string;
+  /** Routes this screen already has a button for — see AchievementBlock. */
+  doorsAlreadyOpen?: (string | null | undefined)[];
 }) {
   // Nothing earned and nothing to chase — an empty trophy rack is not a section.
   if (!stats || stats.totalCount <= 0) return null;
@@ -231,7 +271,11 @@ export function WhereYouAre({
         </div>
       ) : null}
 
-      <AchievementBlock block={block} stats={stats} />
+      <AchievementBlock
+        block={block}
+        stats={stats}
+        doorsAlreadyOpen={doorsAlreadyOpen}
+      />
     </SectionCard>
   );
 }
