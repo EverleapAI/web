@@ -103,6 +103,7 @@ export function ExploreSummaryCard({
   return (
     <SectionCard
       tone="hero"
+      voice
       backdrop={<ConstellationAnchor seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />}
     >
       {hasSignal ? (

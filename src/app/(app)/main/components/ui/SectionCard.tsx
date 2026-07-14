@@ -13,6 +13,25 @@ type Props = {
   // card level — so it fills the whole rounded card, not the inset content box.
   // Use for background atmospherics like the ConstellationAnchor.
   backdrop?: React.ReactNode;
+  /**
+   * VOICE vs OBJECT — the rule that gives Today its hierarchy.
+   *
+   * `voice` renders the content straight onto the page with no shell at all. It
+   * is for the agent's read on Today / Insights / Explore: the agent is TALKING
+   * to you, and you do not put a voice in a box. Everything else on the page is
+   * something you can act on — a status, an offer, a question — and those are
+   * objects, so they get a card.
+   *
+   * Before this, all four blocks on Today were cards, and every card measured
+   * 1.024:1 against the page (1.00 = identical; WCAG's floor for a perceivable
+   * graphical element is 3:1). So they were not four cards — they were four
+   * paragraphs in a column with 28px of rounded nothing around them, and the eye
+   * had no boundary anywhere to navigate by. Making the read a voice AND making
+   * the rest genuinely visible is what creates the contrast; doing either alone
+   * changes nothing, which is exactly what happened when we tried stripping the
+   * read's (invisible) box on its own.
+   */
+  voice?: boolean;
 };
 
 type SectionCardHeaderProps = {
@@ -24,65 +43,83 @@ type SectionCardHeaderProps = {
 };
 
 /* =============================================================================
-   Tone system (FINAL CALMED)
+   Tone system — A CARD YOU CAN ACTUALLY SEE
+   =============================================================================
+   Every tone used to bottom out on the same rgba(6,10,26) gradient over a
+   #020617 page. Measured, that is 1.024:1 — and 1.00 is *identical*. The border
+   (white at alpha 0.03) reached 1.045:1; the sheen ran at 0.012 and the shadow
+   was dark-on-dark. So the cards were not subtle, they were absent, and Today
+   read as four undifferentiated paragraphs in a column because the eye had no
+   boundary anywhere to navigate by.
+
+   The base is now rgb(22,29,54) — about 1.23:1 against the page. Still quiet
+   (WCAG wants 3:1 before it counts as a *perceivable* graphical element, and we
+   are deliberately below that: this is atmosphere, not a control), but it is now
+   an edge you can actually find. The hairline goes to white/0.07, which is a real
+   line rather than a rumour of one.
+
+   Each tone keeps its accent wash on top, so Awards still reads amber-ish and
+   Reflect still reads teal-ish; only the surface underneath them changed.
    ============================================================================= */
+
+const CARD_BASE =
+  "linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)";
+const CARD_EDGE = "border border-white/[0.07]";
+const CARD_LIFT = "shadow-[0_18px_46px_rgba(0,0,0,0.42)]";
+const CARD_SHEEN =
+  "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%)]";
 
 function toneClasses(tone: SectionCardTone) {
   switch (tone) {
     case "hero":
       return {
         shell: [
-          "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.045)_0%,rgba(90,108,255,0.02)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.02)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
+          CARD_EDGE,
+          `bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.10)_0%,rgba(90,108,255,0.04)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.05)_0%,transparent_42%),${CARD_BASE}]`,
+          CARD_LIFT,
         ].join(" "),
-        sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
+        sheen: CARD_SHEEN,
       };
 
     case "plum":
       return {
         shell: [
-          "border border-white/[0.03]",
-          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.08)_0%,rgba(120,88,255,0.03)_22%,transparent_42%),radial-gradient(72%_58%_at_82%_-8%,rgba(88,144,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_44%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
+          CARD_EDGE,
+          `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.14)_0%,rgba(120,88,255,0.05)_22%,transparent_42%),radial-gradient(72%_58%_at_82%_-8%,rgba(88,144,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
+          CARD_LIFT,
         ].join(" "),
-        sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
+        sheen: CARD_SHEEN,
       };
 
     case "teal":
       return {
         shell: [
-          "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.09)_0%,rgba(42,196,170,0.035)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
+          CARD_EDGE,
+          `bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.15)_0%,rgba(42,196,170,0.06)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
+          CARD_LIFT,
         ].join(" "),
-        sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
+        sheen: CARD_SHEEN,
       };
 
     case "amber":
       return {
         shell: [
-          "border border-white/[0.03]",
-          "bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.08)_0%,rgba(90,152,255,0.03)_22%,transparent_42%),radial-gradient(70%_56%_at_82%_-8%,rgba(96,220,255,0.035)_0%,transparent_42%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
+          CARD_EDGE,
+          `bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.14)_0%,rgba(90,152,255,0.05)_22%,transparent_42%),radial-gradient(70%_56%_at_82%_-8%,rgba(96,220,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
+          CARD_LIFT,
         ].join(" "),
-        sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
+        sheen: CARD_SHEEN,
       };
 
     case "neutral":
     default:
       return {
         shell: [
-          "border border-white/[0.03]",
-          "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.03)_0%,rgba(90,108,255,0.015)_20%,transparent_40%),linear-gradient(180deg,rgba(6,10,26,0.99)_0%,rgba(4,8,22,0.995)_42%,rgba(3,7,20,1)_100%)]",
-          "shadow-[0_16px_44px_rgba(2,6,23,0.35)]",
+          CARD_EDGE,
+          `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),${CARD_BASE}]`,
+          CARD_LIFT,
         ].join(" "),
-        sheen:
-          "bg-[linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.004)_22%,transparent_48%)]",
+        sheen: CARD_SHEEN,
       };
   }
 }
@@ -97,8 +134,21 @@ export function SectionCard({
   tone = "neutral",
   compact = false,
   backdrop,
+  voice = false,
 }: Props) {
   const t = toneClasses(tone);
+
+  // A voice, not an object — no shell, no edge, no lift. The agent's read sits on
+  // the page and speaks. The backdrop still renders: the constellation is the
+  // page's atmosphere, not the card's decoration.
+  if (voice) {
+    return (
+      <section className={["relative", className].join(" ")}>
+        {backdrop}
+        <div className="relative z-10">{children}</div>
+      </section>
+    );
+  }
 
   return (
     <section
