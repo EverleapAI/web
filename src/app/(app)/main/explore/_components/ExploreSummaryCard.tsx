@@ -11,11 +11,12 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
+import { AgenticHeader } from "../../components/ui/AgenticHeader";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
-import { LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
+import { HEADING_CLASS, HEADING_STYLE, LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
 
 export type SummaryRequest = {
   firstName?: string | null;
@@ -116,18 +117,19 @@ export function ExploreSummaryCard({
         />
       ) : null}
       <div className="relative max-w-2xl">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
-            Explore
-          </span>
-        </div>
+        <AgenticHeader
+          glyph={
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-cyan-300/[0.08] text-cyan-200/75 ring-1 ring-cyan-300/[0.18]">
+              <Sparkles className="h-3.5 w-3.5" />
+            </span>
+          }
+          eyebrow="Explore"
+          accentRgb="92, 180, 255"
+        />
 
         {!hasSignal ? (
           <>
-            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
+            <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
               {firstName ? `${firstName}, let's find your directions.` : "Let's find your directions."}
             </h1>
             <p className="mt-3 text-label leading-read text-white/74 sm:text-label">
@@ -155,7 +157,7 @@ export function ExploreSummaryCard({
           </div>
         ) : payload || preview ? (
           <>
-            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
+            <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
               {resolvedHeadline}
             </h1>
             {/* The read, trimmed to Today's length — the whole picture is one tap away. */}
@@ -202,7 +204,7 @@ export function ExploreSummaryCard({
           </>
         ) : (
           <>
-            <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
+            <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
               {firstName ? `${firstName}, here's your whole-life view.` : "Your whole-life view."}
             </h1>
             <p className="mt-3 text-label leading-read text-white/74 sm:text-label">

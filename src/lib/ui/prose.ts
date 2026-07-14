@@ -32,6 +32,21 @@ export const PROSE_SIZE = "text-read"; // hero / body agentic prose
 export const LINK_SIZE = "text-body"; // secondary links
 export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; // modal / section eyebrow
 
+// ── The agent's opening line ─────────────────────────────────────────────────
+// These pages are a CONVERSATION, not an article, so the first sentence is not a
+// headline — it is the agent starting to talk. It therefore sits on the SAME rung
+// as the prose it opens (21px), one weight above it (600) and a touch brighter.
+// Hierarchy comes from weight and spacing, never from a bigger size.
+//
+// Insights already worked this way and was the only surface getting it right.
+// Today and Explore both set it as a 26px semibold headline, which made the agent
+// announce itself instead of speak. Today / Insights / Explore now share this.
+export const HEADING_CLASS = `${PROSE_SIZE} ${PROSE_CLASS}`;
+export const HEADING_STYLE: CSSProperties = {
+  color: TEXT_HEADING,
+  fontWeight: 600,
+};
+
 // One shared link treatment so every tappable agentic link reads the same:
 // own semantic colour, brightening on hover, with a trailing chevron.
 export const LINK_CLASS =

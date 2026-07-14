@@ -13,6 +13,7 @@ import { ChevronRight, Check } from "lucide-react";
 import { emitActionAdded } from "@/lib/actionsBus";
 
 import {
+  EYEBROW_CLASS,
   LINK_CLASS,
   PROSE_CLASS,
   PROSE_STYLE,
@@ -23,6 +24,7 @@ import {
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
 import { SectionCard } from "../ui/SectionCard";
+import { AgenticHeader } from "../ui/AgenticHeader";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
 import { ConstellationAnchor } from "../ui/ConstellationAnchor";
@@ -184,10 +186,13 @@ function CardHeading({
       >
         {glyph}
       </span>
-      <span
-        className="text-label font-semibold tracking-normal"
-        style={{ color: TEXT_SECONDARY }}
-      >
+      {/* An eyebrow, not a heading. At 15px semibold it was SMALLER than the 19px
+          prose it introduced — a heading undersized against its own body reads as
+          broken hierarchy. It was always doing an eyebrow's job (naming the card,
+          quietly); it just wasn't dressed for it. Now it is: 11px, uppercase,
+          tracked out — so the prose below is unambiguously the loudest thing on
+          the card. */}
+      <span className={EYEBROW_CLASS} style={{ color: TEXT_SECONDARY }}>
         {children}
       </span>
     </div>
@@ -475,18 +480,15 @@ export function TodayHeart({
           </div>
         }
       >
-        <div className="relative flex items-center justify-between">
-          <DispatchGlyph type={dispatch.type} showLabel={false} />
-          <span
-            className="absolute left-1/2 -translate-x-1/2 text-micro font-bold uppercase tracking-eyebrow"
-            style={{ color: `rgb(${rgb})`, opacity: 0.55 }}
-          >
-            {welcome.isNewUser
+        <AgenticHeader
+          glyph={<DispatchGlyph type={dispatch.type} showLabel={false} />}
+          eyebrow={
+            welcome.isNewUser
               ? "Welcome to Everleap"
-              : new Date().toLocaleDateString(undefined, { weekday: "long" })}
-          </span>
-          <span aria-hidden />
-        </div>
+              : new Date().toLocaleDateString(undefined, { weekday: "long" })
+          }
+          accentRgb={rgb}
+        />
 
         {/* The arrival masthead — the centered anchor in every state. */}
         <WelcomeName
