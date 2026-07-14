@@ -15,6 +15,9 @@ import { emitActionAdded } from "@/lib/actionsBus";
 import {
   LINK_CLASS,
   PROSE_CLASS,
+  PROSE_GAP,
+  PROSE_MEASURE,
+  PROSE_SIZE,
   PROSE_STYLE,
   TEXT_HEADING,
   TEXT_MUTED,
@@ -129,14 +132,6 @@ function splitIntoParagraphs(text: string): string[] {
 // light-on-dark so nothing on the card shouts.
 // Text ramp + prose recipe now live in @/lib/ui/prose (shared across Today /
 // Insights / Explore). Imported above.
-
-// The eyebrow header for the merged "next" block, by dispatch type.
-const NEXT_HEADER: Record<string, string> = {
-  learn: "Keep building",
-  look: "Worth a look",
-  do: "A real step",
-  close: "Close the loop",
-};
 
 // The three story areas, in the order the BARS show them — this list decides
 // which one is "next", so if it disagrees with the block the link walks you past
@@ -331,10 +326,6 @@ export function TodayHeart({
     (leadLine && leadLine !== heroRetort ? leadLine : null);
   const heroWhy = data.why?.trim() || dispatch.why?.trim() || null;
 
-  // The action zone prefers the purpose-written agentic paragraph; older packs
-  // fall back to stitching orient + move + payoff.
-  const actionPitch = dispatch.pitch?.trim() || null;
-
   // The hero read, broken into short paragraphs for calmer mobile reading. A
   // live Prompt Lab preview (if any) stands in for the saved retort.
   const previewRetort = labPreview?.targetText?.trim() || null;
@@ -417,29 +408,6 @@ export function TodayHeart({
     storyLinkText = null;
     storyRoute = "/main/story";
   }
-  // Point the nudge at whatever actually fills the NEXT gap. Most gaps
-  // (motivations, strengths, skills, story, direction) are story-fed; the
-  // "experience" gap is only filled by doing and reflecting on an action, so
-  // sending someone to Story there would be a dead end.
-  const gapNudge =
-    coverage.nextGapKey === "experience"
-      ? {
-          lead: "You've tried a couple of things — telling me how they actually landed is what sharpens everything else.",
-          label: "Reflect on what you've tried",
-          route: "/main/actions",
-        }
-      : {
-          lead: "The picture above is still forming. A few more pieces of your story and the guidance gets a lot sharper.",
-          label: "Continue your story",
-          // Land on the section the BARS say is unfinished, not the one coverage
-          // has decided is done — coverage counts a family filled once a science
-          // memo exists, and memos generate from a single answer, so it walked
-          // people past a bar reading 1 of 7.
-          route:
-            nextStoryArea && STORY_FAMILIES.includes(nextStoryArea.key)
-              ? `/main/story?family=${nextStoryArea.key}`
-              : "/main/story",
-        };
 
   return (
     <div className="relative space-y-4">
@@ -510,10 +478,10 @@ export function TodayHeart({
               onReset={() => setLabPreview(null)}
             />
 
-            <div className="relative z-10 max-w-[560px]">
-              <div className="space-y-3.5">
+            <div className={`relative z-10 ${PROSE_MEASURE}`}>
+              <div className={PROSE_GAP}>
                 {heroParagraphs.map((para, i) => (
-                  <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                  <p key={i} className={`${PROSE_SIZE} ${PROSE_CLASS}`} style={PROSE_STYLE}>
                     {para}
                   </p>
                 ))}
@@ -622,7 +590,7 @@ export function TodayHeart({
               so, plainly, and then explain the collection instead. */}
           {storyLinkText ? (
             <p
-              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              className={`${PROSE_MEASURE} text-[19px] md:text-[20px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               {storyPrefix}
@@ -637,7 +605,7 @@ export function TodayHeart({
             </p>
           ) : (
             <p
-              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              className={`${PROSE_MEASURE} text-[19px] md:text-[20px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               You&apos;ve told me your whole story — every question answered.{" "}
@@ -669,14 +637,14 @@ export function TodayHeart({
           </CardHeading>
 
           <p
-            className="max-w-[560px] text-[17px] font-semibold leading-[1.4] tracking-[-0.01em]"
+            className={`${PROSE_MEASURE} text-[17px] md:text-[18px] font-bold leading-[1.14] tracking-[-0.03em]`}
             style={{ color: TEXT_HEADING }}
           >
             {data.looseThread.title}
           </p>
 
           <p
-            className={`mt-2 max-w-[560px] text-[17px] ${PROSE_CLASS}`}
+            className={`mt-2 ${PROSE_MEASURE} text-[17px] md:text-[18px] ${PROSE_CLASS}`}
             style={PROSE_STYLE}
           >
             {data.looseThread.why?.trim() ||
@@ -728,7 +696,7 @@ export function TodayHeart({
             >
               The whole picture
             </div>
-            <p className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            <p className={`${PROSE_SIZE} ${PROSE_CLASS}`} style={PROSE_STYLE}>
               {heroBody}
             </p>
             <button
@@ -761,7 +729,7 @@ export function TodayHeart({
             >
               Why this
             </div>
-            <p className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
+            <p className={`${PROSE_SIZE} ${PROSE_CLASS}`} style={PROSE_STYLE}>{heroWhy}</p>
             <button
               type="button"
               onClick={() => setWhyOpen(false)}
