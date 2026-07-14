@@ -168,7 +168,7 @@ export default function MotivatorCard({
         <div className={cardBody()}>
           <h3
             className={[
-              dark ? "text-[#ABAFB9]" : "text-slate-950",
+              dark ? "text-[#F7F9FC]" : "text-slate-950",
               isPrimary
                 ? "text-[1.2rem] font-semibold leading-[1.15] tracking-[-0.02em]"
                 : "text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.02em]",

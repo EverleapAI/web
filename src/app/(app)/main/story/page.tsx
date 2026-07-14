@@ -416,7 +416,7 @@ export default function StoryPage(): React.JSX.Element {
 
   return (
     <div className="min-h-[100svh] bg-slate-950 text-white">
-      <main className="mx-auto flex min-h-[100svh] w-full max-w-[560px] flex-col px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
+      <main className="mx-auto flex min-h-[100svh] w-full max-w-[640px] flex-col px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
         <header className="shrink-0 animate-[storyProgressEnter_220ms_ease-out_both]">
           <StoryProgressLine categories={data.categories} />
         </header>

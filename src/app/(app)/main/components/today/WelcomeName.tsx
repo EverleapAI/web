@@ -59,7 +59,7 @@ export function WelcomeName({
     <div className="flex flex-col items-center text-center">
       <span
         className="text-[26px] font-semibold tracking-[-0.02em]"
-        style={{ color: "#ABAFB9" }}
+        style={{ color: "#F7F9FC" }}
       >
         {title}
       </span>

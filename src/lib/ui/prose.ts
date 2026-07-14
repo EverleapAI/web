@@ -1,22 +1,31 @@
 import type { CSSProperties } from "react";
 
-// Low-glare dark-mode text treatment — the "Today" page recipe, shared so every
-// agentic surface (Today / Insights / Explore) reads the same. Hierarchy comes
-// from size + weight + spacing, NOT brightness. Reduce luminance, keep the
-// stroke weight up (500) so thin antialiased text doesn't strain the eye.
+// The reading treatment for every agentic surface (Today / Insights / Explore),
+// shared so they all read the same.
+//
+// Prose is BRIGHT and REGULAR-WEIGHT. This is the opposite of the "low-glare"
+// recipe that used to live here (dim #A2A6B0 at weight 500, +0.4px tracking),
+// and the reversal was deliberate: dim + semibold + letter-spaced is how a UI
+// *label* is set, so the read came out looking like dashboard chrome. Editorial
+// body text — the CNN/Apple News register we're after — is the inverse: high
+// luminance, weight 400, zero tracking. Hierarchy comes from size and spacing;
+// brightness is what separates "content" from "chrome", so prose gets to be the
+// brightest thing on the page and the chrome steps down from it.
 //
 // Canonical values are defined here; components import these instead of
 // re-declaring their own colours/sizes so the whole app stays in sync.
 
 // ── Colour ramp ──────────────────────────────────────────────────────────────
-export const TEXT_HEADING = "#ABAFB9"; // titles / masthead — a hair brighter than prose
-export const TEXT_PRIMARY = "#A2A6B0"; // body prose, the read, headline-as-prose
-export const TEXT_SECONDARY = "#878B95"; // quiet labels + secondary links — a notch down
-export const TEXT_MUTED = "#63666F"; // meta / timestamps — the quietest chrome
+export const TEXT_HEADING = "#F7F9FC"; // titles / masthead — reads as white
+export const TEXT_PRIMARY = "#E3E7EF"; // body prose, the read, headline-as-prose
+export const TEXT_SECONDARY = "#AEB3BF"; // quiet labels + secondary links — a notch down
+export const TEXT_MUTED = "#7E838E"; // meta / timestamps — the quietest chrome
 
 // ── Prose recipe ─────────────────────────────────────────────────────────────
-export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 500 };
-export const PROSE_CLASS = "leading-[1.6] tracking-[0.4px]";
+// 400, not 500: the system UI stack (Segoe UI / SF — there is no next/font here)
+// has no 425, so anything above 400 rounds to a semibold-looking face.
+export const PROSE_STYLE: CSSProperties = { color: TEXT_PRIMARY, fontWeight: 400 };
+export const PROSE_CLASS = "leading-[1.65] tracking-[0]";
 
 // ── Size ladder (the "full ladder", identical to Today) ──────────────────────
 export const PROSE_SIZE = "text-[21px]"; // hero / body agentic prose

@@ -510,7 +510,7 @@ export function TodayHeart({
               onReset={() => setLabPreview(null)}
             />
 
-            <div className="relative z-10 max-w-[560px]">
+            <div className="relative z-10 max-w-[640px]">
               <div className="space-y-3.5">
                 {heroParagraphs.map((para, i) => (
                   <p key={i} className={`text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>
@@ -622,7 +622,7 @@ export function TodayHeart({
               so, plainly, and then explain the collection instead. */}
           {storyLinkText ? (
             <p
-              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              className={`max-w-[640px] text-[19px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               {storyPrefix}
@@ -637,7 +637,7 @@ export function TodayHeart({
             </p>
           ) : (
             <p
-              className={`max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+              className={`max-w-[640px] text-[19px] ${PROSE_CLASS}`}
               style={PROSE_STYLE}
             >
               You&apos;ve told me your whole story — every question answered.{" "}
@@ -669,14 +669,14 @@ export function TodayHeart({
           </CardHeading>
 
           <p
-            className="max-w-[560px] text-[17px] font-semibold leading-[1.4] tracking-[-0.01em]"
+            className="max-w-[640px] text-[17px] font-semibold leading-[1.4] tracking-[-0.01em]"
             style={{ color: TEXT_HEADING }}
           >
             {data.looseThread.title}
           </p>
 
           <p
-            className={`mt-2 max-w-[560px] text-[17px] ${PROSE_CLASS}`}
+            className={`mt-2 max-w-[640px] text-[17px] ${PROSE_CLASS}`}
             style={PROSE_STYLE}
           >
             {data.looseThread.why?.trim() ||

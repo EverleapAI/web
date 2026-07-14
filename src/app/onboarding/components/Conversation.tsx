@@ -118,7 +118,7 @@ export default function Conversation({ node, answers }: Props) {
           <div
             className={[
               isTransition
-                ? "mx-auto max-w-[560px] space-y-3"
+                ? "mx-auto max-w-[640px] space-y-3"
                 : "max-w-[390px] space-y-2.5",
             ].join(" ")}
           >

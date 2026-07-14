@@ -113,7 +113,7 @@ export function ExplorePathDetail({
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/44">
             {ov?.eyebrow ?? LANE_NOUN[path.lane]}
           </div>
-          <h1 className="mt-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.035em] text-[#ABAFB9] sm:text-[32px]">
+          <h1 className="mt-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.035em] text-[#F7F9FC] sm:text-[32px]">
             {ov?.title ?? path.card.title}
           </h1>
           {whyYou ? (
@@ -127,11 +127,11 @@ export function ExplorePathDetail({
               >
                 Why this fits you
               </div>
-              <p className="mt-1 text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{whyYou}</p>
+              <p className="mt-1 text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{whyYou}</p>
             </div>
           ) : null}
           {ov?.hook ? (
-            <p className="mt-4 text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]">{ov.hook}</p>
+            <p className="mt-4 text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]">{ov.hook}</p>
           ) : null}
           {ov?.traitChips?.length || payMedian ? (
             <div className="mt-4 flex flex-wrap items-center gap-2">

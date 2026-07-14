@@ -130,12 +130,12 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
                 <LaneMark lane={t.lane} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-semibold text-[#ABAFB9]">{t.path.card.title}</span>
+                    <span className="text-[15px] font-semibold text-[#F7F9FC]">{t.path.card.title}</span>
                     <span className="text-[11px] uppercase tracking-[0.14em] text-white/40">
                       {LANE_LABEL[t.lane]}
                     </span>
                   </div>
-                  <p className="mt-0.5 line-clamp-2 text-[13px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]">
+                  <p className="mt-0.5 line-clamp-2 text-[13px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">
                     {t.path.card.hook}
                   </p>
                 </div>

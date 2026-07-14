@@ -75,15 +75,15 @@ function sectionKicker(dark: boolean) {
 }
 
 function sectionTitle(dark: boolean) {
-  return dark ? "text-[#ABAFB9]" : "text-slate-900";
+  return dark ? "text-[#F7F9FC]" : "text-slate-900";
 }
 
 function bodyText(dark: boolean) {
-  return dark ? "font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]" : "text-slate-700";
+  return dark ? "font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]" : "text-slate-700";
 }
 
 function mutedText(dark: boolean) {
-  return dark ? "font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]" : "text-slate-600";
+  return dark ? "font-normal leading-[1.65] tracking-[0] text-[#878B95]" : "text-slate-600";
 }
 
 /* =============================================================================

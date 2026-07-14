@@ -127,7 +127,7 @@ export function ExploreSummaryCard({
 
         {!hasSignal ? (
           <>
-            <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#ABAFB9] sm:text-[28px]">
+            <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#F7F9FC] sm:text-[28px]">
               {firstName ? `${firstName}, let's find your directions.` : "Let's find your directions."}
             </h1>
             <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">
@@ -155,7 +155,7 @@ export function ExploreSummaryCard({
           </div>
         ) : payload || preview ? (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-[#ABAFB9] sm:text-[27px]">
+            <h1 className="text-[23px] font-semibold leading-[1.12] tracking-[-0.03em] text-[#F7F9FC] sm:text-[27px]">
               {resolvedHeadline}
             </h1>
             {/* The read, trimmed to Today's length — the whole picture is one tap away. */}
@@ -202,7 +202,7 @@ export function ExploreSummaryCard({
           </>
         ) : (
           <>
-            <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#ABAFB9] sm:text-[27px]">
+            <h1 className="text-[23px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#F7F9FC] sm:text-[27px]">
               {firstName ? `${firstName}, here's your whole-life view.` : "Your whole-life view."}
             </h1>
             <p className="mt-3 text-[14px] leading-[1.66] text-white/74 sm:text-[15px]">

@@ -229,31 +229,31 @@ export function headerLabel(dark: boolean) {
 // their own sites. Light branches are unchanged.
 export function titleText(dark: boolean) {
   return dark
-    ? "text-[20px] font-semibold tracking-tight text-[#ABAFB9]"
+    ? "text-[20px] font-semibold tracking-tight text-[#F7F9FC]"
     : "text-[20px] font-semibold tracking-tight text-slate-950";
 }
 
 export function sectionTitle(dark: boolean) {
   return dark
-    ? "text-[16px] font-semibold tracking-[-0.02em] text-[#ABAFB9]"
+    ? "text-[16px] font-semibold tracking-[-0.02em] text-[#F7F9FC]"
     : "text-[16px] font-semibold tracking-[-0.02em] text-slate-950";
 }
 
 export function bodyText(dark: boolean) {
   return dark
-    ? "text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]"
+    ? "text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]"
     : "text-[15px] leading-relaxed text-slate-700";
 }
 
 export function mutedText(dark: boolean) {
   return dark
-    ? "text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]"
+    ? "text-[14px] font-normal leading-[1.65] tracking-[0] text-[#878B95]"
     : "text-[14px] leading-relaxed text-slate-600";
 }
 
 export function bulletText(dark: boolean) {
   return dark
-    ? "text-[15px] font-medium leading-[1.6] tracking-[0.4px] text-[#A2A6B0]"
+    ? "text-[15px] font-normal leading-[1.65] tracking-[0] text-[#E3E7EF]"
     : "text-[15px] leading-relaxed text-slate-700";
 }
 

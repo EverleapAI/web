@@ -143,7 +143,7 @@ export function TodayTinyTaskCard({
                 // Dark side joins the low-glare ramp (TEXT_PRIMARY). Its heavier
                 // 550 weight — not extra brightness — gives the question its
                 // "ask" presence. Light theme is unchanged.
-                color: dark ? "#A2A6B0" : "#1e293b",
+                color: dark ? "#E3E7EF" : "#1e293b",
                 fontWeight: 550,
               }}
             >

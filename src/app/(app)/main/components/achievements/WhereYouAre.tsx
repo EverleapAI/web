@@ -280,7 +280,7 @@ export function WhereYouAre({
           story is still worth nudging. */}
       {lead ?? achievementsLead(stats) ? (
         <div
-          className={`mb-4 max-w-[560px] text-[19px] ${PROSE_CLASS}`}
+          className={`mb-4 max-w-[640px] text-[19px] ${PROSE_CLASS}`}
           style={PROSE_STYLE}
         >
           {lead ?? achievementsLead(stats)}

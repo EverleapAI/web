@@ -76,7 +76,7 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[560px] px-[6px] pb-28 pt-2">
+    <div className="mx-auto w-full max-w-[640px] px-[6px] pb-28 pt-2">
       <Link
         href="/main/profile"
         className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-white/85"

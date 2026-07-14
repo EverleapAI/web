@@ -58,7 +58,7 @@ function PathCard({ path }: { path: ExplorePath }) {
           <Icon className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#ABAFB9] sm:text-[22px]">
+          <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-[#F7F9FC] sm:text-[22px]">
             {path.card.title}
           </h2>
           {path.brightOutlook ? (
@@ -77,7 +77,7 @@ function PathCard({ path }: { path: ExplorePath }) {
         </div>
       </div>
 
-      <p className="mt-3 text-[14px] font-medium leading-[1.6] tracking-[0.4px] text-[#878B95]">
+      <p className="mt-3 text-[14px] font-normal leading-[1.65] tracking-[0] text-[#878B95]">
         {path.card.hook} {path.card.description}
       </p>
 
@@ -132,7 +132,7 @@ export function ExploreLanding({
               Explore
             </span>
           </div>
-          <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#ABAFB9] sm:text-[28px]">
+          <h1 className="text-[24px] font-semibold leading-[1.08] tracking-[-0.03em] text-[#F7F9FC] sm:text-[28px]">
             {intro.title}
           </h1>
           <p className={`mt-3 text-[21px] ${PROSE_CLASS}`} style={PROSE_STYLE}>{intro.body}</p>
