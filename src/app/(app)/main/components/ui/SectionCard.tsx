@@ -64,25 +64,26 @@ type SectionCardHeaderProps = {
 
 const CARD_BASE =
   "linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)";
-const CARD_EDGE = "border border-white/[0.07]";
+// A NEUTRAL top-lift (white, no colour) baked over the base — a soft sheen plus a
+// gentle top-centre glow. This is what gives the card presence on the near-black
+// page so its text is clearly contained, without any accent hue: the earlier blue
+// radial read as "light blue", and removing it entirely left the card so flat the
+// text bled into the page. White at low alpha lifts without tinting.
+const CARD_GLOW =
+  "linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%),radial-gradient(120%_92%_at_50%_0%,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_22%,transparent_46%)";
+const CARD_EDGE = "border border-white/[0.09]";
 const CARD_LIFT = "shadow-[0_18px_46px_rgba(0,0,0,0.42)]";
-const CARD_SHEEN =
-  "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%)]";
 
-// ONE background for every card: the plain dark navy CARD_BASE, nothing tinting
-// it. The tones used to each bake an accent radial into the *background* — amber
-// on Awards, teal on Reflect, and a center-top BLUE glow on neutral — so the page
-// read as a patchwork, and once everything flattened to that neutral tone every
-// card wore the same light-blue glow (Tom: "you made all the cards a light blue
-// background, it's supposed to be that dark background"). No radial now — a card's
+// ONE background for every card: the dark navy CARD_BASE with a NEUTRAL white
+// lift (CARD_GLOW) so it reads as a distinct panel that contains its text — no
+// accent hue. `tone` is accepted but no longer changes the surface; a card's
 // identity lives entirely in its glyph, eyebrow and CTA (Today's "Reflect on your
-// actions": teal chip + eyebrow + pill over a plain navy card). `tone` is still
-// accepted so callers don't churn, but it no longer changes the surface.
+// actions": teal chip + eyebrow + pill over this same plain navy card).
 function toneClasses(_tone: SectionCardTone) {
   void _tone;
   return {
-    shell: [CARD_EDGE, `bg-[${CARD_BASE}]`, CARD_LIFT].join(" "),
-    sheen: CARD_SHEEN,
+    shell: [CARD_EDGE, `bg-[${CARD_GLOW},${CARD_BASE}]`, CARD_LIFT].join(" "),
+    sheen: "",
   };
 }
 
