@@ -13,6 +13,7 @@ import {
 import { TimeTwinHero } from "../components/TimeTwinHero";
 import { TimeTwinPortrait } from "../components/TimeTwinPortrait";
 import { useGeneratedInsights } from "../../hooks/useGeneratedInsights";
+import { sectionCard } from "../../components/sections/summaryShared";
 
 /* =============================================================================
    Types
@@ -126,12 +127,9 @@ function rgbString(rgb?: { r: number; g: number; b: number }) {
   return `${rgb.r}, ${rgb.g}, ${rgb.b}`;
 }
 
+// Same near-black card surface as every other card in the app.
 function readingSurface() {
-  return [
-    "relative overflow-hidden rounded-card border",
-    "border-white/10 bg-white/[0.045]",
-    "backdrop-blur-xl shadow-[0_20px_80px_rgba(0,0,0,0.35)]",
-  ].join(" ");
+  return sectionCard(true);
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -256,7 +254,7 @@ export default function TimeTwinPage() {
             Back to Fun Facts
           </Link>
 
-          <div className="rounded-card border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
+          <div className={[sectionCard(true), "px-5 py-4 text-sm text-white/56"].join(" ")}>
             Still building your Time Twin — answer a few Story questions and check back
             in a bit.
           </div>
@@ -269,7 +267,7 @@ export default function TimeTwinPage() {
     return (
       <main className="min-h-screen bg-[#070b17] text-white">
         <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6">
-          <div className="rounded-card border border-white/10 bg-white/[0.04] px-5 py-4 text-sm text-white/56">
+          <div className={[sectionCard(true), "px-5 py-4 text-sm text-white/56"].join(" ")}>
             Loading your Time Twin…
           </div>
         </div>

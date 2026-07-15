@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { TimeTwinPortrait } from "./TimeTwinPortrait";
+import { sectionCard } from "../../components/sections/summaryShared";
 
 type RGB = {
   r: number;
@@ -45,50 +46,19 @@ function rgba(rgb: RGB, alpha: number) {
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
 }
 
-function heroBackground(theme: TimeTwinVisualTheme | undefined, accentRgb: RGB) {
-  // A quiet, accent-biased ground behind the frame. Kept subtle so the framed
-  // portrait stays the focal point.
-  const soft = rgba(accentRgb, 0.14);
-  const softer = rgba(accentRgb, 0.06);
-  void theme;
-  return `radial-gradient(circle at 50% 12%, ${soft}, transparent 42%), radial-gradient(circle at 50% 40%, ${softer}, transparent 60%), linear-gradient(180deg, rgba(10,12,24,0.9), rgba(5,6,14,0.98))`;
-}
-
 export function TimeTwinHero({
   name,
   era,
   tagline,
   mindType,
-  visualTheme,
   accentRgb,
   imageUrl,
 }: TimeTwinHeroProps) {
   return (
     <section className="relative w-full">
-      {/* Ambient bloom above the frame */}
-      <div
-        className="pointer-events-none absolute left-1/2 -top-8 h-[180px] w-[80%] -translate-x-1/2 rounded-full blur-[80px]"
-        aria-hidden
-        style={{ background: `radial-gradient(circle, ${rgba(accentRgb, 0.22)}, transparent 70%)` }}
-      />
-
-      <div
-        className="relative overflow-hidden rounded-card border px-5 pb-6 pt-7 sm:px-7 sm:pb-8 sm:pt-9"
-        style={{
-          borderColor: rgba(accentRgb, 0.2),
-          background: heroBackground(visualTheme, accentRgb),
-          boxShadow: `0 28px 72px rgba(0,0,0,0.4), 0 0 0 1px ${rgba(accentRgb, 0.08)}, inset 0 1px 0 rgba(255,255,255,0.05)`,
-        }}
-      >
-        {/* Top light seam */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          aria-hidden
-          style={{
-            background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.5) 20%, ${rgba(accentRgb, 0.6)} 50%, rgba(255,255,255,0.35) 80%, transparent)`,
-          }}
-        />
-
+      {/* The plate is the same near-black card surface as every other card; the
+          accent lives only in the framed portrait and the museum plate below. */}
+      <div className={[sectionCard(true), "px-5 pb-6 pt-7 sm:px-7 sm:pb-8 sm:pt-9"].join(" ")}>
         <div className="relative z-10 flex flex-col items-center text-center">
           <div className="mb-5 text-micro font-semibold uppercase tracking-eyebrow text-white/48 sm:text-micro">
             Your Time Twin
