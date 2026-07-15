@@ -69,34 +69,19 @@ const CARD_LIFT = "shadow-[0_18px_46px_rgba(0,0,0,0.42)]";
 const CARD_SHEEN =
   "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%)]";
 
-// ONE background for every card. The tones used to each carry their own accent
-// wash — amber on Awards, teal on Reflect, plum elsewhere — so no two cards shared
-// a surface and the page read as a patchwork. They now ALL render the same quiet
-// neutral shell; a card's identity lives entirely in its glyph, eyebrow and CTA
-// (see Today's "Reflect on your actions": teal chip + eyebrow + pill over a plain
-// navy card). `tone` is still accepted so callers don't churn, but it no longer
-// changes the background. `hero` keeps a slightly stronger top glow — it is the
-// page's opening moment, not one card in a list — but note the agentic openers
-// pass `voice`, which drops the shell entirely, so this only affects the rare
-// non-voice hero (skeleton / unavailable states).
-function toneClasses(tone: SectionCardTone) {
-  if (tone === "hero") {
-    return {
-      shell: [
-        CARD_EDGE,
-        `bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.10)_0%,rgba(90,108,255,0.04)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.05)_0%,transparent_42%),${CARD_BASE}]`,
-        CARD_LIFT,
-      ].join(" "),
-      sheen: CARD_SHEEN,
-    };
-  }
-
+// ONE background for every card: the plain dark navy CARD_BASE, nothing tinting
+// it. The tones used to each bake an accent radial into the *background* — amber
+// on Awards, teal on Reflect, and a center-top BLUE glow on neutral — so the page
+// read as a patchwork, and once everything flattened to that neutral tone every
+// card wore the same light-blue glow (Tom: "you made all the cards a light blue
+// background, it's supposed to be that dark background"). No radial now — a card's
+// identity lives entirely in its glyph, eyebrow and CTA (Today's "Reflect on your
+// actions": teal chip + eyebrow + pill over a plain navy card). `tone` is still
+// accepted so callers don't churn, but it no longer changes the surface.
+function toneClasses(_tone: SectionCardTone) {
+  void _tone;
   return {
-    shell: [
-      CARD_EDGE,
-      `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),${CARD_BASE}]`,
-      CARD_LIFT,
-    ].join(" "),
+    shell: [CARD_EDGE, `bg-[${CARD_BASE}]`, CARD_LIFT].join(" "),
     sheen: CARD_SHEEN,
   };
 }

@@ -257,7 +257,7 @@ export function sectionCard(dark: boolean, _tone: CardTone = "neutral") {
   return dark
     ? [
         "relative overflow-hidden rounded-card border border-white/[0.07] backdrop-blur-xl",
-        "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
+        "bg-[linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
         "shadow-[0_18px_46px_rgba(0,0,0,0.42)]",
       ].join(" ")
     : [
