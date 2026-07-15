@@ -256,8 +256,8 @@ export function sectionCard(dark: boolean, _tone: CardTone = "neutral") {
   // the component's string verbatim is the only thing that guarantees they agree.
   return dark
     ? [
-        "relative overflow-hidden rounded-card border border-white/[0.09] backdrop-blur-xl",
-        "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%),radial-gradient(120%_92%_at_50%_0%,rgba(255,255,255,0.05)_0%,rgba(255,255,255,0.02)_22%,transparent_46%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
+        "relative overflow-hidden rounded-card border border-white/[0.07] backdrop-blur-xl",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%),radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.15)_0%,rgba(42,196,170,0.06)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.06)_0%,transparent_42%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
         "shadow-[0_18px_46px_rgba(0,0,0,0.42)]",
       ].join(" ")
     : [
