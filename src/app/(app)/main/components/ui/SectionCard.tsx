@@ -43,23 +43,17 @@ type SectionCardHeaderProps = {
 };
 
 /* =============================================================================
-   Tone system — A CARD YOU CAN ACTUALLY SEE
+   Card surface — ONE near-black background for every card
    =============================================================================
-   Every tone used to bottom out on the same rgba(6,10,26) gradient over a
-   #020617 page. Measured, that is 1.024:1 — and 1.00 is *identical*. The border
-   (white at alpha 0.03) reached 1.045:1; the sheen ran at 0.012 and the shadow
-   was dark-on-dark. So the cards were not subtle, they were absent, and Today
-   read as four undifferentiated paragraphs in a column because the eye had no
-   boundary anywhere to navigate by.
+   Sampled from the reference card the design settled on: the fill is NEAR-BLACK,
+   only just above the #020617 page (~rgb 4-8,8-11,20-28), with a faint navy lift
+   at the very top (~rgb 14,18,31) and a white/0.07 hairline. Deliberately quiet —
+   the card is defined by its edge + top lift, not by a bright fill.
 
-   The base is now rgb(22,29,54) — about 1.23:1 against the page. Still quiet
-   (WCAG wants 3:1 before it counts as a *perceivable* graphical element, and we
-   are deliberately below that: this is atmosphere, not a control), but it is now
-   an edge you can actually find. The hairline goes to white/0.07, which is a real
-   line rather than a rumour of one.
-
-   Each tone keeps its accent wash on top, so Awards still reads amber-ish and
-   Reflect still reads teal-ish; only the surface underneath them changed.
+   An earlier iteration used rgb(22,29,54) with per-tone accent washes (amber on
+   Awards, teal on Reflect); that read as a lighter, tinted card and was wrong.
+   There is no accent wash now, and `tone` no longer changes the surface — a
+   card's colour lives only in its glyph, eyebrow and CTA.
    ============================================================================= */
 
 // Sampled straight from the reference card: the background is NEAR-BLACK, barely

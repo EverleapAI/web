@@ -239,16 +239,14 @@ export function bulletText(dark: boolean) {
     : "text-label leading-relaxed text-slate-700";
 }
 
-// Every Insights sub-card now wears Today's EXACT card chrome — the same surface
-// SectionCard paints for Where-you-are / Reflect on Today: a quiet rgb(22,29,54)
-// base you can actually find an edge on (~1.23:1 against the page), a neutral
-// white/0.07 hairline, the same lift, and the sheen baked into the background
-// stack. `tone` is deliberately ignored: accent now lives ONLY in each card's
-// glyph + eyebrow, never in a colored border or wash, so Insights and Today read
-// as one system instead of two. (Kept in the signature so callers don't churn.)
+// Every Insights sub-card wears SectionCard's EXACT surface — the near-black
+// gradient (~rgb 14,18,31 top → 4,8,20 bottom), a white/0.07 hairline and the
+// same lift, no accent wash. `tone` is deliberately ignored: accent lives ONLY in
+// each card's glyph + eyebrow, never in the background, so Insights and Today read
+// as one system. Keep this in sync with CARD_BASE in SectionCard.tsx.
 export function sectionCard(dark: boolean, _tone: CardTone = "neutral") {
   void _tone;
-  // EXACTLY SectionCard's neutral shell (SectionCard.tsx: CARD_EDGE + the neutral
+  // EXACTLY SectionCard's shell (SectionCard.tsx: CARD_EDGE + the near-black
   // radial over CARD_BASE + CARD_LIFT). An earlier version baked SectionCard's
   // sheen in as an extra white gradient layer, which rendered the whole card a
   // step LIGHTER than the real component — so these cards read heavier than
