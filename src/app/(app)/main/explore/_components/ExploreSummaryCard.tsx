@@ -12,7 +12,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { AgenticHeader } from "../../components/ui/AgenticHeader";
-import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
+import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
@@ -104,7 +104,7 @@ export function ExploreSummaryCard({
     <SectionCard
       tone="hero"
       voice
-      backdrop={<ConstellationAnchor seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />}
+      backdrop={<ReadAtmosphere seed={firstName ?? "explore-summary"} accent={{ r: 92, g: 180, b: 255 }} />}
     >
       {hasSignal ? (
         <PromptLabTrigger

@@ -19,7 +19,7 @@ import {
 } from "@/lib/ui/prose";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { AgenticHeader } from "../../components/ui/AgenticHeader";
-import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
+import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { sectionCard } from "./sections/summaryShared";
 
 /* =============================================================================
@@ -229,7 +229,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         tone="hero"
         voice
         className="!px-5 !py-4"
-        backdrop={<ConstellationAnchor seed="fun-facts" accent={{ r: 232, g: 121, b: 249 }} />}
+        backdrop={<ReadAtmosphere seed="fun-facts" accent={{ r: 232, g: 121, b: 249 }} />}
       >
         <div className="relative">
           <AgenticHeader

@@ -13,7 +13,7 @@ import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { AgenticHeader } from "../../components/ui/AgenticHeader";
-import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
+import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { HEADING_CLASS, HEADING_STYLE, PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
 import { CardBody, CardTitle } from "@/lib/ui/card";
 import { LANE_ACCENT, laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
@@ -122,7 +122,7 @@ export function ExploreLanding({
 
   return (
     <div className="space-y-4">
-      <SectionCard tone="hero" voice backdrop={<ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
+      <SectionCard tone="hero" voice backdrop={<ReadAtmosphere seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
         <div className="relative max-w-2xl">
           <AgenticHeader
             glyph={

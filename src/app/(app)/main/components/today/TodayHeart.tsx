@@ -29,7 +29,7 @@ import { AgenticHeader } from "../ui/AgenticHeader";
 import { ReadTuner } from "../ui/ReadTuner";
 import { DispatchGlyph } from "./DispatchGlyph";
 import { WelcomeName } from "./WelcomeName";
-import { ConstellationAnchor } from "../ui/ConstellationAnchor";
+import { ReadAtmosphere } from "../ui/ReadAtmosphere";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 import {
@@ -462,26 +462,7 @@ export function TodayHeart({
         voice
         className="!px-5 !py-4"
         backdrop={
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              opacity: 0.5,
-              filter: "blur(1.2px)",
-              // Atmosphere up top behind the masthead, dissolving before the
-              // reading copy — text never sits on sharp star points.
-              WebkitMaskImage:
-                "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-              WebkitMaskComposite: "source-in",
-              maskImage:
-                "linear-gradient(180deg, #000 0%, #000 14%, transparent 40%), linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%)",
-              maskComposite: "intersect",
-            }}
-          >
-            <ConstellationAnchor
-              seed={`today-read:${dispatch.type}`}
-              accent={accentObj}
-            />
-          </div>
+          <ReadAtmosphere seed={`today-read:${dispatch.type}`} accent={accentObj} />
         }
       >
         <AgenticHeader

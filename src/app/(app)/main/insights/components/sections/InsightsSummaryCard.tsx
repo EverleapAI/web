@@ -17,7 +17,7 @@ import {
   PROSE_STYLE,
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
-import { ConstellationAnchor } from "../../../components/ui/ConstellationAnchor";
+import { ReadAtmosphere } from "../../../components/ui/ReadAtmosphere";
 import { SectionCard } from "../../../components/ui/SectionCard";
 import { AgenticHeader } from "../../../components/ui/AgenticHeader";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
@@ -100,10 +100,7 @@ export default function InsightsSummaryCard({
       voice
       className={["!px-5 !py-4", preview ? "ring-1 ring-amber-300/45" : ""].join(" ")}
       backdrop={
-        <ConstellationAnchor
-          seed="insights-summary"
-          accent={{ r: 120, g: 200, b: 255 }}
-        />
+        <ReadAtmosphere seed="insights-summary" accent={{ r: 120, g: 200, b: 255 }} />
       }
     >
       <div className="relative">
