@@ -185,7 +185,7 @@ export default function MotivatorCard({
                   className={`${LINK_CLASS} text-meta`}
                   style={{ color: TEXT_SECONDARY }}
                 >
-                  The whole picture
+                  See more
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </button>
               ) : null}
@@ -194,9 +194,9 @@ export default function MotivatorCard({
                   type="button"
                   onClick={() => setWhyOpen(true)}
                   className={`${LINK_CLASS} text-meta`}
-                  style={{ color: `rgb(${rgb})` }}
+                  style={{ color: TEXT_SECONDARY }}
                 >
-                  Why this
+                  Why
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </button>
               ) : null}

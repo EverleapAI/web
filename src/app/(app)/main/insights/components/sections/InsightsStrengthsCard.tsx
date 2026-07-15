@@ -9,7 +9,6 @@ import {
   EYEBROW_CLASS,
   LINK_CLASS,
   LINK_SIZE,
-  PROSE_CLASS,
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
 
@@ -28,12 +27,14 @@ type Props = {
 const TONES = {
   superpowers: {
     label: "Superpowers",
-    dark: { text: "#86D9B4", dot: "rgba(134,217,180,0.55)" },
+    glyph: "✦", // one anchor per subhead (matches the app's ◆ ↺ ✦ glyph language)
+    dark: { text: "#6FE3AE", dot: "rgba(111,227,174,0.6)" }, // bright mint — alive, legible on the dark ground
     light: { text: "#0F766E", dot: "rgba(15,118,110,0.6)" },
   },
   watchouts: {
     label: "Watchouts",
-    dark: { text: "#E2B979", dot: "rgba(226,185,121,0.55)" },
+    glyph: "◈",
+    dark: { text: "#F0C878", dot: "rgba(240,200,120,0.6)" }, // warm honey — "worth noticing", never red
     light: { text: "#B45309", dot: "rgba(180,83,9,0.6)" },
   },
 } as const;
@@ -56,7 +57,8 @@ function BulletGroup({
 
   return (
     <div>
-      <div className={EYEBROW_CLASS} style={{ color: c.text }}>
+      <div className={`flex items-center gap-2 ${EYEBROW_CLASS}`} style={{ color: c.text }}>
+        <span aria-hidden className="leading-none" style={{ fontSize: "1.15em" }}>{t.glyph}</span>
         {t.label}
       </div>
 
@@ -121,13 +123,10 @@ export default function InsightsStrengthsCard({
             </div>
           ) : (
             <>
-              <p
-                className={[PROSE_CLASS, LINK_SIZE].join(" ")}
-                style={{ color: dark ? TEXT_SECONDARY : "#475569", fontWeight: 500 }}
-              >
+              <CardBody style={dark ? undefined : { color: "#475569" }}>
                 This fills in once there’s a real pattern to work with — the
                 strengths that help you, and where they can cost you.
-              </p>
+              </CardBody>
 
               <div className="mt-4">
                 <Link

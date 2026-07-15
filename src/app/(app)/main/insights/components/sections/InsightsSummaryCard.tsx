@@ -98,7 +98,7 @@ export default function InsightsSummaryCard({
     <SectionCard
       tone="hero"
       voice
-      className={preview ? "ring-1 ring-amber-300/45" : ""}
+      className={["!px-5 !py-4", preview ? "ring-1 ring-amber-300/45" : ""].join(" ")}
       backdrop={
         <ConstellationAnchor
           seed="insights-summary"
@@ -156,7 +156,7 @@ export default function InsightsSummaryCard({
                       className={[LINK_CLASS, LINK_SIZE].join(" ")}
                       style={{ color: dark ? TEXT_SECONDARY : "#475569" }}
                     >
-                      The whole picture
+                      See more
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </button>
                   ) : null}
@@ -165,9 +165,9 @@ export default function InsightsSummaryCard({
                       type="button"
                       onClick={() => setWhyOpen(true)}
                       className={[LINK_CLASS, LINK_SIZE].join(" ")}
-                      style={{ color: dark ? "rgb(120,200,255)" : "#2563eb" }}
+                      style={{ color: dark ? TEXT_SECONDARY : "#475569" }}
                     >
-                      Why this
+                      Why
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </button>
                   ) : null}

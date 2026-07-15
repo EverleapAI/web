@@ -185,7 +185,7 @@ export function ExploreSummaryCard({
                     className={`${LINK_CLASS} ${LINK_SIZE}`}
                     style={{ color: TEXT_SECONDARY }}
                   >
-                    Why this
+                    Why
                   </button>
                 ) : null}
               </div>

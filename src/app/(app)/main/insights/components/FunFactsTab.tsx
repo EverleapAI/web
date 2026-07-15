@@ -6,8 +6,20 @@ import { Clock3, Sparkles } from "lucide-react";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
-import { CardBody, CardTitle, RowMeta } from "@/lib/ui/card";
-import { LINK_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { CardTitle, RowMeta } from "@/lib/ui/card";
+import {
+  HEADING_CLASS,
+  HEADING_STYLE,
+  LINK_CLASS,
+  LINK_SIZE,
+  PROSE_CLASS,
+  PROSE_SIZE,
+  PROSE_STYLE,
+  TEXT_SECONDARY,
+} from "@/lib/ui/prose";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { AgenticHeader } from "../../components/ui/AgenticHeader";
+import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 
 /* =============================================================================
    Types
@@ -59,16 +71,6 @@ type FunFactsFeedPayload = {
 
 function cleanOneLine(s: string) {
   return (s ?? "").replace(/\s+/g, " ").trim();
-}
-
-function readingSurface(dark: boolean) {
-  return [
-    "relative overflow-hidden rounded-card border",
-    "px-4 py-5 md:px-6 md:py-6",
-    "backdrop-blur-xl",
-    dark ? "border-white/10 bg-slate-950/20" : "border-black/10 bg-white/80",
-    "shadow-[0_18px_55px_rgba(0,0,0,0.22)]",
-  ].join(" ");
 }
 
 function sectionKicker(dark: boolean) {
@@ -180,7 +182,7 @@ function FunFactCard({
             className={`${LINK_CLASS} ${LINK_SIZE}`}
             style={{ color: TEXT_SECONDARY }}
           >
-            Why this
+            Why
           </button>
         ) : null}
       </div>
@@ -234,23 +236,35 @@ export default function FunFactsTab(props: FunFactsTabProps) {
 
   return (
     <section className="mb-6 space-y-4">
-      {/* Intro */}
-      <div className={readingSurface(dark)}>
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div
-            className={[
-              "absolute -top-24 left-1/2 h-[260px] w-[680px] -translate-x-1/2 rounded-full blur-3xl",
-              dark ? "bg-fuchsia-300/10" : "bg-fuchsia-400/10",
-            ].join(" ")}
-          />
-        </div>
-
+      {/* Intro — the same shell-less agentic opening every tab wears
+          (SectionCard voice: no border, no background — spoken text, not a card),
+          keeping Fun Facts' fuchsia identity in the glyph + eyebrow accent. */}
+      <SectionCard
+        tone="hero"
+        voice
+        className="!px-5 !py-4"
+        backdrop={<ConstellationAnchor seed="fun-facts" accent={{ r: 232, g: 121, b: 249 }} />}
+      >
         <div className="relative">
-          <div className={sectionKicker(dark)}>Fun Facts</div>
-          <CardTitle className="mt-2">{buildOpenLine(nameFromHeadline)}</CardTitle>
-          <CardBody className="mt-2">{delightPara}</CardBody>
+          <AgenticHeader
+            glyph={
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-fuchsia-300/[0.08] text-fuchsia-200/75 ring-1 ring-fuchsia-300/[0.18]">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+            }
+            eyebrow="Fun facts"
+            accentRgb="232, 121, 249"
+          />
+
+          <h2 className={HEADING_CLASS} style={HEADING_STYLE}>
+            {buildOpenLine(nameFromHeadline)}
+          </h2>
+
+          <p className={["mt-3", PROSE_SIZE, PROSE_CLASS].join(" ")} style={PROSE_STYLE}>
+            {delightPara}
+          </p>
         </div>
-      </div>
+      </SectionCard>
 
       {/* Time Twin — hero card */}
       <button
@@ -328,7 +342,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         <div className="space-y-3">
           <div className={[sectionKicker(dark), "flex items-center gap-2 px-1"].join(" ")}>
             <Sparkles className="h-3.5 w-3.5" />
-            Things I noticed
+            Fun things to know about yourself
           </div>
           {facts.map((fact, index) => (
             <FunFactCard key={index} fact={fact} dark={dark} index={index} />

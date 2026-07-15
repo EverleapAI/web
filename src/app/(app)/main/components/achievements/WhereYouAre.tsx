@@ -27,7 +27,7 @@ import type {
   BlockItem,
   BadgeStats,
 } from "@/lib/achievements/useBadgeStats";
-import { CardBody, RowMeta } from "@/lib/ui/card";
+import { CardBody } from "@/lib/ui/card";
 import { EYEBROW_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 
 import { SectionCard } from "../ui/SectionCard";
@@ -212,11 +212,7 @@ export function AchievementBlock({
           what the next one wants, and a button that goes and earns it. A pill here
           would only ever know the category; the badge knows the whole story. */}
       {next ? (
-        <div className="space-y-3 pt-0.5">
-          {/* What the next rung wants — a quiet line, the same role as the body
-              copy above a section's CTA. */}
-          <RowMeta as="p">{next.detail}</RowMeta>
-
+        <div className="pt-0.5">
           {/* The door, as a pill — the same shape as every other section's CTA
               ("Reflect on it", "See why it fits"), in the awards' gold. The medal
               rides on the pill so it still reads as a badge, not a generic link. */}
