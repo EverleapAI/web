@@ -6,7 +6,6 @@ import { Shield } from "lucide-react";
 
 import {
   cardBody,
-  constellationOrnament,
   headerCopyStack,
   headerIconWrap,
   headerLabel,
@@ -135,15 +134,6 @@ export default function InsightsQuickCheckCard({
         "overflow-hidden px-3 py-3.5 sm:px-4 sm:py-4.5",
       ].join(" ")}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(circle at 12% 0%, rgba(255,180,120,0.10) 0%, transparent 30%), radial-gradient(circle at 88% 100%, rgba(120,200,255,0.06) 0%, transparent 24%)",
-        }}
-      />
-
       <div className="relative">
         <div className={headerRow()}>
           <div className={headerIconWrap(dark, "neutral")}>
@@ -155,8 +145,6 @@ export default function InsightsQuickCheckCard({
               <div className={headerLabel(dark)}>Quick Check</div>
             </div>
           </div>
-
-          {constellationOrnament(dark, "neutral")}
         </div>
 
         <div className={cardBody()}>

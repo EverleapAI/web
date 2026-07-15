@@ -20,6 +20,7 @@ import {
 import { SectionCard } from "../../components/ui/SectionCard";
 import { AgenticHeader } from "../../components/ui/AgenticHeader";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
+import { sectionCard } from "./sections/summaryShared";
 
 /* =============================================================================
    Types
@@ -112,22 +113,7 @@ function FunFactCard({
   const [whyOpen, setWhyOpen] = React.useState(false);
 
   return (
-    <div
-      className="relative overflow-hidden rounded-panel border px-4 py-4 md:px-5 md:py-5"
-      style={{
-        borderColor: `rgba(${accent}, ${dark ? 0.28 : 0.3})`,
-        background: dark
-          ? `linear-gradient(150deg, rgba(${accent}, 0.12), rgba(${accent}, 0.03) 55%, rgba(255,255,255,0.015))`
-          : `linear-gradient(150deg, rgba(${accent}, 0.14), rgba(255,255,255,0.9) 60%)`,
-      }}
-    >
-      {/* soft corner glow in the card's accent */}
-      <div
-        className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full blur-2xl"
-        aria-hidden
-        style={{ background: `rgba(${accent}, ${dark ? 0.22 : 0.18})` }}
-      />
-
+    <div className={[sectionCard(dark), "px-4 py-4 md:px-5 md:py-5"].join(" ")}>
       <div className="relative flex items-start gap-3">
         <div
           className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-read leading-none"
@@ -266,26 +252,17 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         </div>
       </SectionCard>
 
-      {/* Time Twin — hero card */}
+      {/* Time Twin — hero card, on Today's card surface (accent lives only in the
+          portrait ring + the "Featured" pill, never on the shell). */}
       <button
         type="button"
         onClick={() => router.push("/main/insights/fun-facts/time-twin")}
         className={[
-          "w-full text-left",
-          "relative overflow-hidden rounded-card border px-4 py-4 md:px-5 md:py-5",
-          "backdrop-blur-xl transition active:scale-[0.99]",
-          dark ? "border-white/10 bg-white/5 hover:bg-white/8" : "border-black/10 bg-white/85 hover:bg-white",
+          sectionCard(dark),
+          "w-full text-left px-4 py-4 md:px-5 md:py-5",
+          "transition hover:brightness-110 active:scale-[0.99]",
         ].join(" ")}
       >
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div
-            className={[
-              "absolute -top-12 -right-16 h-56 w-56 rounded-full blur-3xl",
-              dark ? "bg-violet-300/12" : "bg-violet-400/10",
-            ].join(" ")}
-          />
-        </div>
-
         <div className="relative flex items-start gap-3">
           {twinImageUrl ? (
             <img
@@ -351,8 +328,9 @@ export default function FunFactsTab(props: FunFactsTabProps) {
       ) : (
         <div
           className={[
-            "rounded-panel border px-4 py-4 text-meta leading-relaxed",
-            dark ? "border-white/10 bg-white/[0.02] text-white/55" : "border-black/10 bg-white/70 text-slate-600",
+            sectionCard(dark),
+            "px-4 py-4 text-meta leading-relaxed",
+            dark ? "text-white/55" : "text-slate-600",
           ].join(" ")}
         >
           {funFactsDone

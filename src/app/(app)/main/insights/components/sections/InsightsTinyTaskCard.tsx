@@ -23,25 +23,12 @@ export default function InsightsTinyTaskCard({
   tasks,
   hasStrongSignal,
 }: Props) {
-  // Shell tone is "action" (violet) rather than "task" (sky): the border has to
-  // agree with Today's accent, which is what now lives inside it.
+  // Today's card chrome now, no colored wash: the accent lives inside the card
+  // (the Tiny Task's own glyph + eyebrow), never on the shell.
   return (
     <section
       className={[sectionCard(dark, "action"), "overflow-hidden px-5 py-4"].join(" ")}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(circle at 10% 0%, rgba(182,160,255,0.12) 0%, transparent 30%), radial-gradient(circle at 88% 100%, rgba(182,160,255,0.06) 0%, transparent 24%)",
-          maskImage:
-            "linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%)",
-        }}
-      />
-
       <div className="relative">
         <div className={cardBody()}>
           {hasStrongSignal ? (

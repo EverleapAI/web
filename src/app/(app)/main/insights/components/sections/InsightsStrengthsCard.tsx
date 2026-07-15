@@ -12,7 +12,14 @@ import {
   TEXT_SECONDARY,
 } from "@/lib/ui/prose";
 
-import { cardBody, sectionCard } from "./summaryShared";
+import {
+  cardBody,
+  headerCopyStack,
+  headerIconWrap,
+  headerMain,
+  headerRow,
+  sectionCard,
+} from "./summaryShared";
 
 type Props = {
   dark: boolean;
@@ -22,26 +29,27 @@ type Props = {
   startHref?: string;
 };
 
-// Two tones carry the whole card: the heading and its bullets share one colour,
-// so the eye groups them without needing a sub-header to say what they are.
+// One card, one header — "Superpowers & Watchouts" — with each word tinted to its
+// own bullets (mint / honey). The bullets then flow under that single header and
+// the colour alone tells the two groups apart, so we drop the two sub-eyebrows the
+// card used to stack. Same one-header shape as every other Insights card, and a
+// good chunk of vertical space back.
 const TONES = {
   superpowers: {
     label: "Superpowers",
-    glyph: "✦", // one anchor per subhead (matches the app's ◆ ↺ ✦ glyph language)
-    dark: { text: "#6FE3AE", dot: "rgba(111,227,174,0.6)" }, // bright mint — alive, legible on the dark ground
+    dark: { text: "#6FE3AE", dot: "rgba(111,227,174,0.6)" }, // bright mint
     light: { text: "#0F766E", dot: "rgba(15,118,110,0.6)" },
   },
   watchouts: {
     label: "Watchouts",
-    glyph: "◈",
-    dark: { text: "#F0C878", dot: "rgba(240,200,120,0.6)" }, // warm honey — "worth noticing", never red
+    dark: { text: "#F0C878", dot: "rgba(240,200,120,0.6)" }, // warm honey — never red
     light: { text: "#B45309", dot: "rgba(180,83,9,0.6)" },
   },
 } as const;
 
 type ToneKey = keyof typeof TONES;
 
-function BulletGroup({
+function Bullets({
   tone,
   dark,
   bullets,
@@ -52,31 +60,23 @@ function BulletGroup({
 }) {
   if (!bullets.length) return null;
 
-  const t = TONES[tone];
-  const c = dark ? t.dark : t.light;
+  const c = dark ? TONES[tone].dark : TONES[tone].light;
 
   return (
-    <div>
-      <div className={`flex items-center gap-2 ${EYEBROW_CLASS}`} style={{ color: c.text }}>
-        <span aria-hidden className="leading-none" style={{ fontSize: "1.15em" }}>{t.glyph}</span>
-        {t.label}
-      </div>
-
-      <ul className="mt-2 space-y-1.5">
-        {bullets.map((bullet, index) => (
-          <li key={`${tone}_${index}`} className="flex gap-2.5">
-            <span
-              aria-hidden
-              className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ background: c.dot }}
-            />
-            <CardBody as="span" style={{ color: c.text }}>
-              {bullet}
-            </CardBody>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <>
+      {bullets.map((bullet, index) => (
+        <li key={`${tone}_${index}`} className="flex gap-2.5">
+          <span
+            aria-hidden
+            className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: c.dot }}
+          />
+          <CardBody as="span" style={{ color: c.text }}>
+            {bullet}
+          </CardBody>
+        </li>
+      ))}
+    </>
   );
 }
 
@@ -97,30 +97,42 @@ export default function InsightsStrengthsCard({
     [watchoutsBullets]
   );
 
-  return (
-    <section
-      className={[sectionCard(dark, "strengths"), "overflow-hidden px-5 py-3.5"].join(" ")}
-    >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(circle at 10% 0%, rgba(120,255,190,0.12) 0%, transparent 28%), radial-gradient(circle at 82% -8%, rgba(255,200,120,0.05) 0%, transparent 22%)",
-          maskImage:
-            "linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%)",
-        }}
-      />
+  const sp = dark ? TONES.superpowers.dark : TONES.superpowers.light;
+  const wo = dark ? TONES.watchouts.dark : TONES.watchouts.light;
 
+  return (
+    <section className={[sectionCard(dark, "strengths"), "px-5 py-3.5"].join(" ")}>
       <div className="relative">
         <div className={cardBody()}>
           {hasStrongSignal ? (
-            <div className="space-y-4">
-              <BulletGroup tone="superpowers" dark={dark} bullets={safeSuperpowersBullets} />
-              <BulletGroup tone="watchouts" dark={dark} bullets={safeWatchoutsBullets} />
-            </div>
+            <>
+              <div className={headerRow()}>
+                <div className={headerIconWrap(dark, "teal")}>
+                  <span
+                    aria-hidden
+                    className="leading-none"
+                    style={{ fontSize: "0.8rem", color: sp.text }}
+                  >
+                    ✦
+                  </span>
+                </div>
+
+                <div className={headerMain()}>
+                  <div className={headerCopyStack()}>
+                    <div className={EYEBROW_CLASS} style={{ color: TEXT_SECONDARY }}>
+                      <span style={{ color: sp.text }}>Superpowers</span>
+                      <span className="opacity-50"> &amp; </span>
+                      <span style={{ color: wo.text }}>Watchouts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <ul className="space-y-1.5">
+                <Bullets tone="superpowers" dark={dark} bullets={safeSuperpowersBullets} />
+                <Bullets tone="watchouts" dark={dark} bullets={safeWatchoutsBullets} />
+              </ul>
+            </>
           ) : (
             <>
               <CardBody style={dark ? undefined : { color: "#475569" }}>

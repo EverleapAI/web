@@ -55,7 +55,7 @@ function toneRgb(
 }
 
 export function headerRow() {
-  return "relative mb-3 flex items-start gap-2.5 pr-12";
+  return "relative mb-3 flex items-start gap-2.5";
 }
 
 export function headerMain() {
@@ -239,41 +239,26 @@ export function bulletText(dark: boolean) {
     : "text-label leading-relaxed text-slate-700";
 }
 
-export function sectionCard(dark: boolean, tone: CardTone = "neutral") {
-  const toneMap = {
-    neutral: dark
-      ? "border-amber-300/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02))]"
-      : "border-amber-500/14 bg-white/88",
-
-    themes: dark
-      ? "border-amber-300/16 bg-[linear-gradient(180deg,rgba(245,158,11,0.035),rgba(255,255,255,0.02))]"
-      : "border-amber-500/14 bg-white/88",
-
-    strengths: dark
-      ? "border-teal-300/16 bg-[linear-gradient(180deg,rgba(45,212,191,0.04),rgba(255,255,255,0.02))]"
-      : "border-teal-500/14 bg-white/88",
-
-    watchouts: dark
-      ? "border-orange-300/16 bg-[linear-gradient(180deg,rgba(251,146,60,0.04),rgba(255,255,255,0.02))]"
-      : "border-orange-500/14 bg-white/88",
-
-    task: dark
-      ? "border-sky-300/16 bg-[linear-gradient(180deg,rgba(56,189,248,0.04),rgba(255,255,255,0.02))]"
-      : "border-sky-500/14 bg-white/88",
-
-    action: dark
-      ? "border-violet-300/16 bg-[linear-gradient(180deg,rgba(167,139,250,0.045),rgba(255,255,255,0.02))]"
-      : "border-violet-500/14 bg-white/88",
-  } as const;
-
-  return [
-    "relative overflow-hidden rounded-card border",
-    "backdrop-blur-xl",
-    dark
-      ? "shadow-[0_14px_40px_rgba(0,0,0,0.24)]"
-      : "shadow-[0_14px_40px_rgba(15,23,42,0.08)]",
-    toneMap[tone],
-  ].join(" ");
+// Every Insights sub-card now wears Today's EXACT card chrome — the same surface
+// SectionCard paints for Where-you-are / Reflect on Today: a quiet rgb(22,29,54)
+// base you can actually find an edge on (~1.23:1 against the page), a neutral
+// white/0.07 hairline, the same lift, and the sheen baked into the background
+// stack. `tone` is deliberately ignored: accent now lives ONLY in each card's
+// glyph + eyebrow, never in a colored border or wash, so Insights and Today read
+// as one system instead of two. (Kept in the signature so callers don't churn.)
+export function sectionCard(dark: boolean, _tone: CardTone = "neutral") {
+  void _tone;
+  return dark
+    ? [
+        "relative overflow-hidden rounded-card border border-white/[0.07] backdrop-blur-xl",
+        "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
+        "shadow-[0_18px_46px_rgba(0,0,0,0.42)]",
+      ].join(" ")
+    : [
+        "relative overflow-hidden rounded-card border border-black/[0.08] backdrop-blur-xl",
+        "bg-white/90",
+        "shadow-[0_14px_40px_rgba(15,23,42,0.08)]",
+      ].join(" ");
 }
 
 export function subDivider(dark: boolean) {

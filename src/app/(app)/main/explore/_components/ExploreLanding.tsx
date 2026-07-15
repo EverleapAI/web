@@ -12,8 +12,9 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
+import { AgenticHeader } from "../../components/ui/AgenticHeader";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
-import { PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
+import { HEADING_CLASS, HEADING_STYLE, PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
 import { CardBody, CardTitle } from "@/lib/ui/card";
 import { LANE_ACCENT, laneAccent, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile, type UserProfileSignals } from "../_lib/exploreProfile";
@@ -121,17 +122,18 @@ export function ExploreLanding({
 
   return (
     <div className="space-y-4">
-      <SectionCard tone="hero" backdrop={<ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
+      <SectionCard tone="hero" voice backdrop={<ConstellationAnchor seed={`lane:${lane}`} accent={LANE_ACCENT[lane]} />}>
         <div className="relative max-w-2xl">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
-              <Sparkles className="h-3.5 w-3.5" />
-            </span>
-            <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
-              Explore
-            </span>
-          </div>
-          <h1 className="text-title font-semibold leading-display tracking-title text-ink-strong sm:text-title">
+          <AgenticHeader
+            glyph={
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-cyan-300/[0.08] text-cyan-200/75 ring-1 ring-cyan-300/[0.18]">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+            }
+            eyebrow="Explore"
+            accentRgb="92, 180, 255"
+          />
+          <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
             {intro.title}
           </h1>
           <p className={`mt-3 text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>{intro.body}</p>

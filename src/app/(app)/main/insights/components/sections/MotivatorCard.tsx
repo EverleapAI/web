@@ -13,8 +13,6 @@ import {
 
 import {
   cardBody,
-  confidenceToConstellationDensity,
-  constellationOrnament,
   headerCopyStack,
   headerIconWrap,
   headerLabel,
@@ -83,7 +81,6 @@ export default function MotivatorCard({
   detail,
   iconKey,
   emphasis = "secondary",
-  confidenceLevel,
   eyebrow = "Motivator",
   pageKey,
   itemIndex,
@@ -124,7 +121,6 @@ export default function MotivatorCard({
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
   const { Icon, cardTone, headerTone, rgb } = config;
   const isPrimary = emphasis === "primary";
-  const density = confidenceToConstellationDensity(confidenceLevel);
 
   return (
     <section
@@ -135,16 +131,6 @@ export default function MotivatorCard({
         preview ? "ring-1 ring-amber-300/45" : "",
       ].join(" ")}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{
-          background: `radial-gradient(circle at 15% 0%, rgba(${rgb}, ${
-            dark ? (isPrimary ? 0.26 : 0.18) : isPrimary ? 0.18 : 0.12
-          }) 0%, transparent 55%)`,
-        }}
-      />
-
       <div className="relative w-full text-left">
         <div className={headerRow()}>
           <div
@@ -161,8 +147,6 @@ export default function MotivatorCard({
               <div className={headerLabel(dark)}>{eyebrow}</div>
             </div>
           </div>
-
-          {constellationOrnament(dark, cardTone, density)}
         </div>
 
         <div className={cardBody()}>
