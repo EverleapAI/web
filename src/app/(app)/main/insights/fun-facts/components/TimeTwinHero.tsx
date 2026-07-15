@@ -90,7 +90,7 @@ export function TimeTwinHero({
               aria-hidden
             />
             <h1
-              className="text-title leading-display tracking-title text-white sm:text-display"
+              className="text-read leading-read tracking-title text-white"
               style={{ fontFamily: SERIF, fontWeight: 600 }}
             >
               {name}
@@ -103,7 +103,7 @@ export function TimeTwinHero({
             </div>
             {mindType ? (
               <div
-                className="mt-3 text-label text-white/72 sm:text-body"
+                className="mt-3 text-read leading-read text-white/72"
                 style={{ fontFamily: SERIF, fontStyle: "italic" }}
               >
                 “{mindType}”
@@ -112,7 +112,7 @@ export function TimeTwinHero({
           </div>
 
           {tagline ? (
-            <p className="mt-4 max-w-[440px] text-label leading-7 text-white/68 sm:text-label">
+            <p className="mt-4 max-w-[460px] text-read leading-read text-white/68">
               {tagline}
             </p>
           ) : null}

@@ -310,12 +310,12 @@ export default function TimeTwinPage() {
             Insights → Fun Facts
           </p>
           <h1
-            className="text-3xl leading-display tracking-tight text-white sm:text-4xl md:text-[2.7rem]"
+            className="text-read leading-read tracking-tight text-white"
             style={{ fontFamily: SERIF, fontWeight: 600 }}
           >
             A mind from another era that rhymes with yours.
           </h1>
-          <p className="mt-3 max-w-2xl text-label leading-7 text-white/68 sm:text-body">
+          <p className="mt-3 max-w-2xl text-read leading-read text-white/68">
             This is not a clone of you. It is a historical echo — someone whose way of
             seeing, making, questioning, or enduring overlaps with your own pattern.
           </p>
@@ -387,7 +387,7 @@ export default function TimeTwinPage() {
             <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
               <SectionTitle>The story</SectionTitle>
 
-              <div className="space-y-4 text-label leading-7 text-white/78 sm:text-label">
+              <div className="space-y-4 text-read leading-read text-white/78">
                 {beats.length > 0 ? (
                   beats.map((beat, index) => (beat.body ? <p key={index}>{beat.body}</p> : null))
                 ) : (
@@ -415,9 +415,9 @@ export default function TimeTwinPage() {
                 <SectionTitle>Why this rhymes with you</SectionTitle>
                 <ul className="space-y-3">
                   {whyYou.map((line, index) => (
-                    <li key={index} className="flex gap-3 text-label leading-7 text-white/78">
+                    <li key={index} className="flex gap-3 text-read leading-read text-white/78">
                       <span
-                        className="mt-[10px] h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                        className="mt-[14px] h-1.5 w-1.5 flex-shrink-0 rounded-full"
                         style={{ background: `rgb(${accentRgb})` }}
                         aria-hidden
                       />
@@ -438,7 +438,7 @@ export default function TimeTwinPage() {
                     <div className="text-[0.68rem] font-semibold uppercase tracking-eyebrow text-white/44">
                       {fact.title}
                     </div>
-                    <p className="mt-1.5 text-label leading-6 text-white/76">{fact.body}</p>
+                    <p className="mt-1.5 text-read leading-read text-white/76">{fact.body}</p>
                   </div>
                 ))}
               </div>
@@ -450,7 +450,7 @@ export default function TimeTwinPage() {
             <section className={cn(readingSurface(), "px-5 py-5 sm:px-6 sm:py-6")}>
               <SectionTitle>Your reflection</SectionTitle>
 
-              <p className="mb-3 text-sm leading-6 text-white/63">
+              <p className="mb-3 text-read leading-read text-white/63">
                 What feels familiar here? What feels surprising? You do not have to be the
                 same person to recognize a shared pattern.
               </p>
@@ -461,7 +461,7 @@ export default function TimeTwinPage() {
                 placeholder={`Write a few thoughts about ${activeTwin.name}…`}
                 className={cn(
                   "min-h-[160px] w-full rounded-panel border border-white/12 bg-black/20 px-4 py-3",
-                  "text-label leading-7 text-white placeholder:text-white/28",
+                  "text-read leading-read text-white placeholder:text-white/28",
                   "outline-none transition focus:border-white/20 focus:bg-black/26"
                 )}
               />
