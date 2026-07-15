@@ -248,10 +248,16 @@ export function bulletText(dark: boolean) {
 // as one system instead of two. (Kept in the signature so callers don't churn.)
 export function sectionCard(dark: boolean, _tone: CardTone = "neutral") {
   void _tone;
+  // EXACTLY SectionCard's neutral shell (SectionCard.tsx: CARD_EDGE + the neutral
+  // radial over CARD_BASE + CARD_LIFT). An earlier version baked SectionCard's
+  // sheen in as an extra white gradient layer, which rendered the whole card a
+  // step LIGHTER than the real component — so these cards read heavier than
+  // Today's while Where-you-are (a true SectionCard) sat correctly dark. Matching
+  // the component's string verbatim is the only thing that guarantees they agree.
   return dark
     ? [
         "relative overflow-hidden rounded-card border border-white/[0.07] backdrop-blur-xl",
-        "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
+        "bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)]",
         "shadow-[0_18px_46px_rgba(0,0,0,0.42)]",
       ].join(" ")
     : [
