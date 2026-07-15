@@ -14,6 +14,7 @@ import { TimeTwinHero } from "../components/TimeTwinHero";
 import { TimeTwinPortrait } from "../components/TimeTwinPortrait";
 import { useGeneratedInsights } from "../../hooks/useGeneratedInsights";
 import { sectionCard } from "../../components/sections/summaryShared";
+import { ReadAtmosphere } from "../../../components/ui/ReadAtmosphere";
 
 /* =============================================================================
    Types
@@ -244,7 +245,7 @@ export default function TimeTwinPage() {
 
   if (fetchDone && !activeTwin) {
     return (
-      <main className="min-h-screen bg-[#070b17] text-white">
+      <main className="relative min-h-screen text-white">
         <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6">
           <Link
             href="/main/insights?tab=funFacts"
@@ -265,7 +266,7 @@ export default function TimeTwinPage() {
 
   if (!activeTwin) {
     return (
-      <main className="min-h-screen bg-[#070b17] text-white">
+      <main className="relative min-h-screen text-white">
         <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6">
           <div className={[sectionCard(true), "px-5 py-4 text-sm text-white/56"].join(" ")}>
             Loading your Time Twin…
@@ -281,21 +282,14 @@ export default function TimeTwinPage() {
   const facts = activeTwin.tiles ?? [];
 
   return (
-    <main className="min-h-screen bg-[#070b17] text-white">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-90"
-        aria-hidden="true"
-        style={{
-          background: `
-            radial-gradient(circle at 18% 20%, rgba(${accentRgb}, 0.18), transparent 24%),
-            radial-gradient(circle at 78% 24%, rgba(120, 119, 255, 0.12), transparent 22%),
-            radial-gradient(circle at 52% 76%, rgba(${accentRgb}, 0.12), transparent 30%),
-            linear-gradient(180deg, #07101f 0%, #0a1020 38%, #070b17 100%)
-          `,
-        }}
-      />
+    <main className="relative min-h-screen text-white">
+      {/* Same background as Today: the app's very dark ground (AppChrome shows
+          through) with a muted constellation, not a colored wash. */}
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+        <ReadAtmosphere seed="time-twin" accent={{ r: 120, g: 150, b: 220 }} />
+      </div>
 
-      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-12 pt-5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/main/insights?tab=funFacts"
