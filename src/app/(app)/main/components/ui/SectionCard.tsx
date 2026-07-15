@@ -62,28 +62,26 @@ type SectionCardHeaderProps = {
    Reflect still reads teal-ish; only the surface underneath them changed.
    ============================================================================= */
 
+// Sampled straight from the reference card: the background is NEAR-BLACK, barely
+// above the #020617 page (~rgb 4-8,8-11,20-28), with just a faint navy lift at the
+// very top (~rgb 14,18,31) and a hairline edge. Every prior version used
+// rgb(22,29,54) — ~10x too light — which is why the cards kept reading as a wrong,
+// lighter colour. No accent wash: dark navy, almost black.
 const CARD_BASE =
-  "linear-gradient(180deg,rgb(22,29,54)_0%,rgb(18,24,46)_55%,rgb(15,20,40)_100%)";
+  "linear-gradient(180deg,rgb(14,18,31)_0%,rgb(8,12,26)_45%,rgb(4,8,20)_100%)";
 const CARD_EDGE = "border border-white/[0.07]";
 const CARD_LIFT = "shadow-[0_18px_46px_rgba(0,0,0,0.42)]";
-const CARD_SHEEN =
-  "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%)]";
 
-// ONE central card style for every card — the "Reflect on your actions" surface
-// (what was the `teal` tone): CARD_BASE navy under a soft teal accent wash. `tone`
-// is still accepted so callers don't churn, but every card now renders this same
-// shell, so Today / Insights / Explore read as one system. THE INSIGHTS
-// `sectionCard()` HELPER IN summaryShared.tsx MIRRORS THIS EXACT RECIPE — keep the
-// two in sync.
+// ONE central card style for every card — the near-black CARD_BASE, no accent
+// wash of any kind. `tone` is still accepted so callers don't churn, but every
+// card renders this same dark shell, so Today / Insights / Explore read as one
+// system. THE INSIGHTS `sectionCard()` HELPER IN summaryShared.tsx MIRRORS THIS
+// EXACT RECIPE — keep the two in sync.
 function toneClasses(_tone: SectionCardTone) {
   void _tone;
   return {
-    shell: [
-      CARD_EDGE,
-      `bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.15)_0%,rgba(42,196,170,0.06)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
-      CARD_LIFT,
-    ].join(" "),
-    sheen: CARD_SHEEN,
+    shell: [CARD_EDGE, `bg-[${CARD_BASE}]`, CARD_LIFT].join(" "),
+    sheen: "",
   };
 }
 
