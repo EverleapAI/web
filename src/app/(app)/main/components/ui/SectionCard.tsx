@@ -69,59 +69,36 @@ const CARD_LIFT = "shadow-[0_18px_46px_rgba(0,0,0,0.42)]";
 const CARD_SHEEN =
   "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018)_26%,transparent_52%)]";
 
+// ONE background for every card. The tones used to each carry their own accent
+// wash — amber on Awards, teal on Reflect, plum elsewhere — so no two cards shared
+// a surface and the page read as a patchwork. They now ALL render the same quiet
+// neutral shell; a card's identity lives entirely in its glyph, eyebrow and CTA
+// (see Today's "Reflect on your actions": teal chip + eyebrow + pill over a plain
+// navy card). `tone` is still accepted so callers don't churn, but it no longer
+// changes the background. `hero` keeps a slightly stronger top glow — it is the
+// page's opening moment, not one card in a list — but note the agentic openers
+// pass `voice`, which drops the shell entirely, so this only affects the rare
+// non-voice hero (skeleton / unavailable states).
 function toneClasses(tone: SectionCardTone) {
-  switch (tone) {
-    case "hero":
-      return {
-        shell: [
-          CARD_EDGE,
-          `bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.10)_0%,rgba(90,108,255,0.04)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.05)_0%,transparent_42%),${CARD_BASE}]`,
-          CARD_LIFT,
-        ].join(" "),
-        sheen: CARD_SHEEN,
-      };
-
-    case "plum":
-      return {
-        shell: [
-          CARD_EDGE,
-          `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(120,88,255,0.14)_0%,rgba(120,88,255,0.05)_22%,transparent_42%),radial-gradient(72%_58%_at_82%_-8%,rgba(88,144,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
-          CARD_LIFT,
-        ].join(" "),
-        sheen: CARD_SHEEN,
-      };
-
-    case "teal":
-      return {
-        shell: [
-          CARD_EDGE,
-          `bg-[radial-gradient(120%_92%_at_34%_0%,rgba(42,196,170,0.15)_0%,rgba(42,196,170,0.06)_20%,transparent_40%),radial-gradient(72%_58%_at_82%_-8%,rgba(90,188,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
-          CARD_LIFT,
-        ].join(" "),
-        sheen: CARD_SHEEN,
-      };
-
-    case "amber":
-      return {
-        shell: [
-          CARD_EDGE,
-          `bg-[radial-gradient(120%_92%_at_38%_0%,rgba(90,152,255,0.14)_0%,rgba(90,152,255,0.05)_22%,transparent_42%),radial-gradient(70%_56%_at_82%_-8%,rgba(96,220,255,0.06)_0%,transparent_42%),${CARD_BASE}]`,
-          CARD_LIFT,
-        ].join(" "),
-        sheen: CARD_SHEEN,
-      };
-
-    case "neutral":
-    default:
-      return {
-        shell: [
-          CARD_EDGE,
-          `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),${CARD_BASE}]`,
-          CARD_LIFT,
-        ].join(" "),
-        sheen: CARD_SHEEN,
-      };
+  if (tone === "hero") {
+    return {
+      shell: [
+        CARD_EDGE,
+        `bg-[radial-gradient(120%_90%_at_50%_0%,rgba(90,108,255,0.10)_0%,rgba(90,108,255,0.04)_22%,transparent_42%),radial-gradient(70%_60%_at_82%_-8%,rgba(76,201,255,0.05)_0%,transparent_42%),${CARD_BASE}]`,
+        CARD_LIFT,
+      ].join(" "),
+      sheen: CARD_SHEEN,
+    };
   }
+
+  return {
+    shell: [
+      CARD_EDGE,
+      `bg-[radial-gradient(115%_88%_at_48%_0%,rgba(90,108,255,0.06)_0%,rgba(90,108,255,0.025)_20%,transparent_40%),${CARD_BASE}]`,
+      CARD_LIFT,
+    ].join(" "),
+    sheen: CARD_SHEEN,
+  };
 }
 
 /* =============================================================================
