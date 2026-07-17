@@ -73,6 +73,11 @@ export function ExplorePathDetail({
   const startMission = async () => {
     if (creating) return;
     setCreating(true);
+    // Send the mission's "Back" to wherever we started, not the Actions list.
+    const returnTo =
+      typeof window !== "undefined"
+        ? window.location.pathname + window.location.search
+        : "";
     try {
       const res = await fetch("/api/guidance/actions", {
         method: "POST",
@@ -89,7 +94,11 @@ export function ExplorePathDetail({
       const d = await res.json().catch(() => null);
       if (d?.ok && d.action?.id) {
         emitActionsChanged();
-        router.push(`/main/actions/${d.action.id}`);
+        router.push(
+          `/main/actions/${d.action.id}${
+            returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""
+          }`
+        );
       } else {
         setCreating(false);
       }

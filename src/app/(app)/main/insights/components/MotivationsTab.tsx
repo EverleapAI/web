@@ -1,16 +1,11 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { Sparkles, ArrowRight } from "lucide-react";
-
 import InsightsSummaryCard from "./sections/InsightsSummaryCard";
 import InsightsBackLink from "./sections/InsightsBackLink";
+import InsightsUnlockCTA from "./sections/InsightsUnlockCTA";
 import MotivatorCard, { type MotivatorIconKey } from "./sections/MotivatorCard";
 import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
-import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
-import { sectionCard, headerLabel } from "./sections/summaryShared";
-import { CardBody } from "@/lib/ui/card";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 
@@ -56,17 +51,34 @@ export function MotivationsTab({
   const [questionsRemain, setQuestionsRemain] = React.useState<boolean | null>(
     null
   );
+  // Percent of THIS category's Story questions answered (from story/next's
+  // per-category breakdown) — drives the low-signal gate below.
+  const [categoryPercent, setCategoryPercent] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
 
     fetch("/api/story/next?family=motivations")
       .then((res) => res.json())
-      .then((data: { ok?: boolean; done?: boolean }) => {
-        if (!cancelled) setQuestionsRemain(data?.ok ? !data.done : null);
-      })
+      .then(
+        (data: {
+          ok?: boolean;
+          done?: boolean;
+          categories?: { key?: string; percent?: number }[];
+        }) => {
+          if (cancelled) return;
+          setQuestionsRemain(data?.ok ? !data.done : null);
+          const cat = Array.isArray(data?.categories)
+            ? data.categories.find((c) => c.key === "motivations")
+            : null;
+          setCategoryPercent(typeof cat?.percent === "number" ? cat.percent : null);
+        }
+      )
       .catch(() => {
-        if (!cancelled) setQuestionsRemain(null);
+        if (!cancelled) {
+          setQuestionsRemain(null);
+          setCategoryPercent(null);
+        }
       });
 
     return () => {
@@ -89,9 +101,14 @@ export function MotivationsTab({
     .slice(0, 3);
 
   const confidenceLevel = payload?.confidence?.level;
+  // Low signal = under 20% of this category's questions answered. In that state
+  // we show almost nothing beyond the agentic intro (which acknowledges the thin
+  // signal), the trophies, and the "answer more" CTA — no thin item cards.
+  const lowSignal = categoryPercent != null && categoryPercent < 20;
   const showAssist =
-    hasGeneratedPayload &&
-    (confidenceLevel === "very_early" || confidenceLevel === "emerging") &&
+    (lowSignal ||
+      (hasGeneratedPayload &&
+        (confidenceLevel === "very_early" || confidenceLevel === "emerging"))) &&
     questionsRemain !== false;
 
   return (
@@ -114,64 +131,39 @@ export function MotivationsTab({
       {afterAgentic}
 
       {showAssist ? (
-        <div
-          className={[
-            sectionCard(dark, "neutral"),
-            "overflow-hidden px-3 py-3 sm:px-3.5 sm:py-3.5",
-          ].join(" ")}
-        >
-          <div className={headerLabel(dark)}>Answer a few more</div>
-          <CardBody className="mt-1.5">
-            A few more Motivations questions would help sharpen this.
-          </CardBody>
-          <div className="mt-2">
-            <Link
-              href={STORY_HREF}
-              className={[
-                "group inline-flex items-center gap-1.5 text-meta font-medium transition focus-visible:outline-none",
-                dark ? "text-white/82 hover:text-white/94" : "text-slate-900 hover:text-black",
-              ].join(" ")}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Answer more questions</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </div>
-        </div>
+        <InsightsUnlockCTA dark={dark} category="Motivations" href={STORY_HREF} />
       ) : null}
 
-      {motivators.length === 3 ? (
-        <div className="space-y-3">
-          {motivators.map((motivator, index) => (
-            <MotivatorCard
-              key={motivator.name}
-              dark={dark}
-              name={motivator.name}
-              shortLine={motivator.shortLine}
-              why={motivator.why}
-              more={motivator.more}
-              detail={motivator.detail}
-              iconKey={motivator.iconKey ?? "growth"}
-              emphasis={index === 0 ? "primary" : "secondary"}
-              confidenceLevel={confidenceLevel}
-              pageKey="insights_motivations"
-              itemIndex={index as 0 | 1 | 2}
-            />
-          ))}
-        </div>
+      {!lowSignal ? (
+        <>
+          {motivators.length === 3 ? (
+            <div className="space-y-3">
+              {motivators.map((motivator, index) => (
+                <MotivatorCard
+                  key={motivator.name}
+                  dark={dark}
+                  name={motivator.name}
+                  shortLine={motivator.shortLine}
+                  why={motivator.why}
+                  more={motivator.more}
+                  detail={motivator.detail}
+                  iconKey={motivator.iconKey ?? "growth"}
+                  emphasis={index === 0 ? "primary" : "secondary"}
+                  confidenceLevel={confidenceLevel}
+                  pageKey="insights_motivations"
+                  itemIndex={index as 0 | 1 | 2}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          <InsightsTinyTaskCard
+            dark={dark}
+            tasks={tinyTasks}
+            hasStrongSignal={tinyTasks.length > 0}
+          />
+        </>
       ) : null}
-
-      <InsightsTinyTaskCard
-        dark={dark}
-        tasks={tinyTasks}
-        hasStrongSignal={tinyTasks.length > 0}
-      />
-
-      <InsightsQuickCheckCard
-        dark={dark}
-        contextTag="insights:motivations"
-        pageKey="insights_motivations"
-      />
     </section>
   );
 }

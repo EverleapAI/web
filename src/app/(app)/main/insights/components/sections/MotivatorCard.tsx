@@ -15,6 +15,7 @@ import { headerLabel, sectionCard } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
 import { CardBody } from "@/lib/ui/card";
 import { LINK_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { CardReaction } from "./CardReaction";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
   PromptLabAppliedPreview,
@@ -155,6 +156,12 @@ export default function MotivatorCard({
           {" — "}
           {displayShortLine}
         </CardBody>
+
+        {/* One-tap reaction — a direct confirm/deny on this hypothesis. Keyed by
+            the item's name, so it stays attached to this specific claim. */}
+        {pageKey && displayName ? (
+          <CardReaction pageKey={pageKey} itemKey={displayName} />
+        ) : null}
 
         {displayMore || displayWhy ? (
           <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">

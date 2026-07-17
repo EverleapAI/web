@@ -32,7 +32,6 @@ import FunFactsTab from "./components/FunFactsTab";
 import InsightsSummaryCard from "./components/sections/InsightsSummaryCard";
 import InsightsStrengthsCard from "./components/sections/InsightsStrengthsCard";
 import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
-import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
 import InsightsAreas from "./components/sections/InsightsAreas";
 
 import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
@@ -1360,11 +1359,6 @@ export default function Page() {
                     dark={dark}
                     tasks={tinyTasks}
                     hasStrongSignal={tinyTasks.length > 0}
-                  />
-
-                  <InsightsQuickCheckCard
-                    dark={dark}
-                    contextTag={`insights:${tab}`}
                   />
                 </>
               ) : null}

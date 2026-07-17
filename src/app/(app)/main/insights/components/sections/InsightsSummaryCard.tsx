@@ -207,8 +207,8 @@ export default function InsightsSummaryCard({
               </CardBody>
 
               <CardBody className="mt-1.5">
-                A few Motivations questions is enough to start grounding this in
-                what gives you energy, what drains it, and which patterns keep
+                A few questions is enough to start grounding this in what actually
+                gives you energy, what drains it, and which patterns keep
                 repeating.
               </CardBody>
 
@@ -222,7 +222,7 @@ export default function InsightsSummaryCard({
                       : "text-slate-900 hover:text-black",
                   ].join(" ")}
                 >
-                  <span>Start with Motivations</span>
+                  <span>Answer a few questions</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </div>

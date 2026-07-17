@@ -49,7 +49,29 @@ type MissionAction = {
   completedAt: string | null;
   reflection: string | null;
   felt: string | null;
+  reflections?: ReflectionEntry[];
 };
+
+type ReflectionEntry = {
+  id: string;
+  text: string;
+  felt: string | null;
+  createdAt: string;
+};
+
+function timeAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "";
+  const s = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return `${Math.floor(d / 30)}mo ago`;
+}
 
 type Rgb = { r: number; g: number; b: number };
 const LANE_ACCENT: Record<string, Rgb> = {
@@ -60,6 +82,64 @@ const LANE_ACCENT: Record<string, Rgb> = {
   play: { r: 255, g: 144, b: 192 },
 };
 const rgba = (c: Rgb, a: number) => `rgba(${c.r},${c.g},${c.b},${a})`;
+
+// The mission screen can be reached from anywhere — Insights, Explore, Actions,
+// Today. A `returnTo` query param (a safe internal path) sends "Back" to wherever
+// they came from; without it we fall back to the Actions list.
+function backTarget(returnTo: string | null): { href: string; label: string } {
+  const href = returnTo && returnTo.startsWith("/main/") ? returnTo : "/main/actions";
+  const base = href.split("?")[0];
+  const label = base.startsWith("/main/insights")
+    ? "Back to Insights"
+    : base.startsWith("/main/explore")
+      ? "Back to Explore"
+      : base.startsWith("/main/today")
+        ? "Back to Today"
+        : base.startsWith("/main/me")
+          ? "Back to Me"
+          : "Back to Actions";
+  return { href, label };
+}
+
+// A few short, guided prompts so there's room to reflect on more than one thing
+// — all optional; non-empty answers combine into the single reflection field.
+type ReflectFields = { noticed: string; surprised: string; next: string };
+
+const REFLECT_PROMPTS: { key: keyof ReflectFields; placeholder: string }[] = [
+  { key: "noticed", placeholder: "What did you notice while doing it?" },
+  { key: "surprised", placeholder: "What surprised you, if anything? (optional)" },
+  { key: "next", placeholder: "What might you try next? (optional)" },
+];
+
+function combineReflection(f: ReflectFields): string {
+  return [f.noticed, f.surprised, f.next]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function ReflectionPrompts({
+  fields,
+  onChange,
+}: {
+  fields: ReflectFields;
+  onChange: (key: keyof ReflectFields, value: string) => void;
+}) {
+  return (
+    <div className="mt-3 space-y-2">
+      {REFLECT_PROMPTS.map((p, i) => (
+        <textarea
+          key={p.key}
+          value={fields[p.key]}
+          onChange={(e) => onChange(p.key, e.target.value)}
+          placeholder={p.placeholder}
+          rows={i === 0 ? 3 : 2}
+          className="w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-label leading-body text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
+        />
+      ))}
+    </div>
+  );
+}
 
 const FELT_OPTIONS: { key: "energized" | "neutral" | "drained"; label: string }[] = [
   { key: "energized", label: "Energized" },
@@ -89,13 +169,22 @@ export default function MissionPage() {
   const id = String(params?.id ?? "");
   const autoStart = searchParams?.get("start") === "1";
   const autoStarted = React.useRef(false);
+  const back = backTarget(searchParams?.get("returnTo") ?? null);
 
   const [action, setAction] = React.useState<MissionAction | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [missing, setMissing] = React.useState(false);
   const [starting, setStarting] = React.useState(false);
   const [reflectOpen, setReflectOpen] = React.useState(false);
-  const [reflection, setReflection] = React.useState("");
+  const [reflectFields, setReflectFields] = React.useState<ReflectFields>({
+    noticed: "",
+    surprised: "",
+    next: "",
+  });
+  const updateReflect = (key: keyof ReflectFields, value: string) =>
+    setReflectFields((f) => ({ ...f, [key]: value }));
+  // Lets a completed mission's reflection be re-opened and added to.
+  const [editing, setEditing] = React.useState(false);
   const [felt, setFelt] = React.useState<"energized" | "neutral" | "drained" | null>(null);
   const [finishing, setFinishing] = React.useState(false);
   const [echo, setEcho] = React.useState<string | null>(null);
@@ -184,10 +273,16 @@ export default function MissionPage() {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     setFinishing(true);
-    const a = await missionOp({ id, op: "complete", reflection: reflection.trim(), felt });
+    const a = await missionOp({
+      id,
+      op: "complete",
+      reflection: combineReflection(reflectFields),
+      felt,
+    });
     if (a) {
       setAction(a);
       setReflectOpen(false);
+      setEditing(false);
       emitActionsChanged();
       emitCelebrate(cx, cy);
       // There's now a feeling to respond to — (re)generate the echo. Own it here
@@ -208,14 +303,33 @@ export default function MissionPage() {
     setFinishing(false);
   };
 
+  // Append another reflection to an already-completed mission's journal.
+  const addMore = async () => {
+    const text = combineReflection(reflectFields);
+    if (!text) return;
+    setFinishing(true);
+    const a = await missionOp({ id, op: "addReflection", reflection: text, felt });
+    if (a) {
+      setAction(a);
+      setEditing(false);
+      setReflectFields({ noticed: "", surprised: "", next: "" });
+      setFelt(null);
+      emitActionsChanged();
+    }
+    setFinishing(false);
+  };
+
+  const reflectionEntries = [...(action?.reflections ?? [])].reverse(); // newest first
+  const hasReflectionText = combineReflection(reflectFields).length > 0;
+
   return (
     <div className="mx-auto w-full max-w-[680px] px-[6px] pb-28 pt-2">
       <Link
-        href="/main/actions"
+        href={back.href}
         className="mb-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Actions
+        {back.label}
       </Link>
 
       {loading ? (
@@ -271,11 +385,15 @@ export default function MissionPage() {
                 <Check className="h-4 w-4" /> Done
               </div>
 
-              {!action.felt ? (
+              {!action.felt || editing ? (
                 <div className="mt-3">
-                  <h2 className="text-body font-semibold text-white">How did it go?</h2>
+                  <h2 className="text-body font-semibold text-white">
+                    {editing ? "Add a reflection" : "How did it go?"}
+                  </h2>
                   <p className="mt-1 text-meta leading-read text-white/64">
-                    You finished this — one tap on how it felt is what teaches Everleap.
+                    {editing
+                      ? "Anything you want to add, coming back to this?"
+                      : "You finished this — one tap on how it felt is what teaches Everleap."}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {FELT_OPTIONS.map((o) => (
@@ -294,26 +412,29 @@ export default function MissionPage() {
                       </button>
                     ))}
                   </div>
-                  <textarea
-                    value={reflection}
-                    onChange={(e) => setReflection(e.target.value)}
-                    placeholder="What did you notice? (optional)"
-                    rows={3}
-                    className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-label leading-body text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
-                  />
-                  <div className="mt-3">
+                  <ReflectionPrompts fields={reflectFields} onChange={updateReflect} />
+                  <div className="mt-3 flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={finish}
-                      disabled={finishing || !felt}
+                      onClick={editing ? addMore : finish}
+                      disabled={finishing || (editing ? !hasReflectionText : !felt)}
                       className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-label font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
                       style={{ backgroundColor: rgba(accent, 0.24) }}
                     >
                       {finishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      Save reflection
+                      {editing ? "Add reflection" : "Save reflection"}
                     </button>
+                    {editing ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(false)}
+                        className="text-meta font-medium text-white/50 transition hover:text-white/80"
+                      >
+                        Cancel
+                      </button>
+                    ) : null}
                   </div>
-                  {!felt ? (
+                  {!editing && !felt ? (
                     <p className="mt-2 text-meta leading-body text-white/40">
                       Pick how it felt — that one tap is what teaches Everleap.
                     </p>
@@ -321,12 +442,53 @@ export default function MissionPage() {
                 </div>
               ) : (
                 <>
-                  <p className="mt-2 text-label text-white/72">
-                    Afterward you felt <span className="font-semibold text-white">{action.felt}</span>.
-                  </p>
-                  {action.reflection ? (
-                    <p className="mt-2 text-label leading-read text-white/72">“{action.reflection}”</p>
+                  {action.felt ? (
+                    <p className="mt-2 text-label text-white/72">
+                      Afterward you felt{" "}
+                      <span className="font-semibold text-white">{action.felt}</span>.
+                    </p>
                   ) : null}
+
+                  {/* The reflection journal — every entry you've added, newest first. */}
+                  {reflectionEntries.length > 0 ? (
+                    <div className="mt-3 space-y-2.5">
+                      {reflectionEntries.map((r) => (
+                        <div
+                          key={r.id}
+                          className="rounded-2xl border border-white/8 bg-white/[0.03] p-3.5"
+                        >
+                          <div className="mb-1 flex items-center gap-1.5 text-micro text-white/42">
+                            {r.felt ? (
+                              <>
+                                <span className="capitalize">{r.felt}</span>
+                                <span aria-hidden>·</span>
+                              </>
+                            ) : null}
+                            <span>{timeAgo(r.createdAt)}</span>
+                          </div>
+                          <p className="whitespace-pre-line text-label leading-read text-white/82">
+                            {r.text}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : action.reflection ? (
+                    <p className="mt-2 whitespace-pre-line text-label leading-read text-white/72">
+                      {action.reflection}
+                    </p>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReflectFields({ noticed: "", surprised: "", next: "" });
+                      setFelt(null);
+                      setEditing(true);
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" /> Add a reflection
+                  </button>
                   <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
                     <div
                       className="mb-1.5 flex items-center gap-1.5 text-micro font-semibold uppercase tracking-eyebrow"
@@ -525,13 +687,7 @@ export default function MissionPage() {
                       ))}
                     </div>
 
-                    <textarea
-                      value={reflection}
-                      onChange={(e) => setReflection(e.target.value)}
-                      placeholder="What did you notice? (optional)"
-                      rows={3}
-                      className="mt-3 w-full resize-none rounded-2xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-label leading-body text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
-                    />
+                    <ReflectionPrompts fields={reflectFields} onChange={updateReflect} />
 
                     <div className="mt-3 flex items-center gap-3">
                       <button
@@ -562,6 +718,18 @@ export default function MissionPage() {
               ) : null}
             </>
           )}
+
+          {/* Bottom "back" pill — same destination as the top link, so you can
+              return to where you came from without scrolling back up. */}
+          <div className="pt-1">
+            <Link
+              href={back.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/14 px-4 py-2 text-meta font-medium text-white/60 transition hover:border-white/25 hover:text-white/90"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {back.label}
+            </Link>
+          </div>
         </div>
       )}
     </div>
