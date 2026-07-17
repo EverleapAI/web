@@ -48,11 +48,8 @@ export function SkillsTab({
     "/api/guidance/insights-skills"
   );
 
-  const [questionsRemain, setQuestionsRemain] = React.useState<boolean | null>(
-    null
-  );
   // Percent of THIS category's Story questions answered (from story/next's
-  // per-category breakdown) — drives the low-signal gate below.
+  // per-category breakdown) — drives the signal-level gate below.
   const [categoryPercent, setCategoryPercent] = React.useState<number | null>(null);
 
   React.useEffect(() => {
@@ -60,25 +57,15 @@ export function SkillsTab({
 
     fetch("/api/story/next?family=skills")
       .then((res) => res.json())
-      .then(
-        (data: {
-          ok?: boolean;
-          done?: boolean;
-          categories?: { key?: string; percent?: number }[];
-        }) => {
-          if (cancelled) return;
-          setQuestionsRemain(data?.ok ? !data.done : null);
-          const cat = Array.isArray(data?.categories)
-            ? data.categories.find((c) => c.key === "skills")
-            : null;
-          setCategoryPercent(typeof cat?.percent === "number" ? cat.percent : null);
-        }
-      )
+      .then((data: { categories?: { key?: string; percent?: number }[] }) => {
+        if (cancelled) return;
+        const cat = Array.isArray(data?.categories)
+          ? data.categories.find((c) => c.key === "skills")
+          : null;
+        setCategoryPercent(typeof cat?.percent === "number" ? cat.percent : null);
+      })
       .catch(() => {
-        if (!cancelled) {
-          setQuestionsRemain(null);
-          setCategoryPercent(null);
-        }
+        if (!cancelled) setCategoryPercent(null);
       });
 
     return () => {
@@ -101,15 +88,13 @@ export function SkillsTab({
     .slice(0, 3);
 
   const confidenceLevel = payload?.confidence?.level;
-  // Low signal = under 20% of this category's questions answered. In that state
-  // we show almost nothing beyond the agentic intro (which acknowledges the thin
-  // signal), the trophies, and the "answer more" CTA — no thin item cards.
+  // Three signal levels for this category, by % of its Story questions answered:
+  //  <20%   → low: just the read, trophies, and the amber "unlock" CTA — no items.
+  //  20-99% → partial: full content PLUS a sky "finish to sharpen" card.
+  //  100%   → complete: full content, no card.
   const lowSignal = categoryPercent != null && categoryPercent < 20;
-  const showAssist =
-    (lowSignal ||
-      (hasGeneratedPayload &&
-        (confidenceLevel === "very_early" || confidenceLevel === "emerging"))) &&
-    questionsRemain !== false;
+  const partialSignal =
+    categoryPercent != null && categoryPercent >= 20 && categoryPercent < 100;
 
   return (
     <section className="mb-6 space-y-3">
@@ -130,8 +115,10 @@ export function SkillsTab({
 
       {afterAgentic}
 
-      {showAssist ? (
-        <InsightsUnlockCTA dark={dark} category="Skills" href={STORY_HREF} />
+      {lowSignal ? (
+        <InsightsUnlockCTA variant="low" dark={dark} category="Skills" href={STORY_HREF} />
+      ) : partialSignal ? (
+        <InsightsUnlockCTA variant="partial" dark={dark} category="Skills" href={STORY_HREF} />
       ) : null}
 
       {!lowSignal ? (
