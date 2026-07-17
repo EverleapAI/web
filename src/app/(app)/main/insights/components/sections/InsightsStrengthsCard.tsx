@@ -68,12 +68,14 @@ function Bullets({
         <li key={`${tone}_${index}`} className="flex gap-2.5">
           <span
             aria-hidden
-            className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full"
+            className="mt-[8px] h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ background: c.dot }}
           />
-          <CardBody as="span" style={{ color: c.text }}>
+          {/* A step down from the card body (17px → 15px); the
+              "Superpowers & Watchouts" header keeps its size. */}
+          <span className="text-label leading-snug" style={{ color: c.text }}>
             {bullet}
-          </CardBody>
+          </span>
         </li>
       ))}
     </>

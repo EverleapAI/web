@@ -11,17 +11,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import {
-  cardBody,
-  headerCopyStack,
-  headerIconWrap,
-  headerLabel,
-  headerMain,
-  headerRow,
-  sectionCard,
-} from "./summaryShared";
+import { headerLabel, sectionCard } from "./summaryShared";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
-import { CardBody, CardTitle, RowMeta } from "@/lib/ui/card";
+import { CardBody } from "@/lib/ui/card";
 import { LINK_CLASS, TEXT_SECONDARY } from "@/lib/ui/prose";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type {
@@ -119,7 +111,7 @@ export default function MotivatorCard({
   const displayMore = (previewItem?.more ?? more ?? "").trim();
 
   const config = ICON_CONFIG[iconKey] ?? ICON_CONFIG.growth;
-  const { Icon, cardTone, headerTone, rgb } = config;
+  const { Icon, cardTone, rgb } = config;
   const isPrimary = emphasis === "primary";
 
   return (
@@ -127,66 +119,69 @@ export default function MotivatorCard({
       className={[
         sectionCard(dark, cardTone),
         "relative overflow-hidden",
-        isPrimary ? "px-3.5 py-4 sm:px-4 sm:py-4.5" : "px-3 py-3 sm:px-3.5 sm:py-3.5",
+        isPrimary ? "px-4 py-4 sm:px-4.5 sm:py-4.5" : "px-3.5 py-3.5",
         preview ? "ring-1 ring-amber-300/45" : "",
       ].join(" ")}
     >
+      {/* More color + a creative anchor on the deeper item cards, matching the
+          summary area cards: a subtle corner halo in the item's accent plus an
+          accent icon chip. A deliberate, requested departure from the accent-
+          only-in-glyph rule for these cards — but NOT a full-card colour wash
+          (that lighter look was rejected); the dark shell stays. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `radial-gradient(150px 104px at 90% 0%, rgba(${rgb}, 0.16), transparent 70%)` }}
+      />
       <div className="relative w-full text-left">
-        <div className={headerRow()}>
-          <div
+        <div className="mb-2 flex items-center gap-2.5">
+          <span
             className={[
-              headerIconWrap(dark, headerTone),
-              isPrimary ? "h-5 w-5" : "",
+              "flex shrink-0 items-center justify-center rounded-control",
+              isPrimary ? "h-8 w-8" : "h-7 w-7",
             ].join(" ")}
+            style={{ backgroundColor: `rgba(${rgb}, 0.14)`, color: `rgba(${rgb}, 0.95)` }}
           >
             <Icon className={isPrimary ? "h-4 w-4" : "h-3.5 w-3.5"} />
-          </div>
-
-          <div className={headerMain()}>
-            <div className={headerCopyStack()}>
-              <div className={headerLabel(dark)}>{eyebrow}</div>
-            </div>
-          </div>
+          </span>
+          <div className={headerLabel(dark)}>{eyebrow}</div>
         </div>
 
-        <div className={cardBody()}>
-          <CardTitle as="h3">{displayName}</CardTitle>
+        {/* One paragraph — the name (bold anchor) and the read flow as a single
+            line, no title-over-body split. Text stays one uniform colour; the
+            card's colour lives in the chip + halo, like the summary cards. */}
+        <CardBody as="p">
+          <span className="font-semibold">{displayName}</span>
+          {" — "}
+          {displayShortLine}
+        </CardBody>
 
-          {isPrimary ? (
-            <CardBody className="mt-1.5">{displayShortLine}</CardBody>
-          ) : (
-            <RowMeta as="p" className="mt-1.5">
-              {displayShortLine}
-            </RowMeta>
-          )}
-
-          {displayMore || displayWhy ? (
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              {displayMore ? (
-                <button
-                  type="button"
-                  onClick={() => setMoreOpen(true)}
-                  className={`${LINK_CLASS} text-meta`}
-                  style={{ color: TEXT_SECONDARY }}
-                >
-                  See more
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </button>
-              ) : null}
-              {displayWhy ? (
-                <button
-                  type="button"
-                  onClick={() => setWhyOpen(true)}
-                  className={`${LINK_CLASS} text-meta`}
-                  style={{ color: TEXT_SECONDARY }}
-                >
-                  Why
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        {displayMore || displayWhy ? (
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            {displayMore ? (
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className={`${LINK_CLASS} text-meta`}
+                style={{ color: TEXT_SECONDARY }}
+              >
+                See more
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            ) : null}
+            {displayWhy ? (
+              <button
+                type="button"
+                onClick={() => setWhyOpen(true)}
+                className={`${LINK_CLASS} text-meta`}
+                style={{ color: TEXT_SECONDARY }}
+              >
+                Why
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <AgenticDetailModal

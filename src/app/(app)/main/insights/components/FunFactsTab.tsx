@@ -85,6 +85,13 @@ function FunFactCard({
 
   return (
     <div className={[sectionCard(dark), "px-4 py-4 md:px-5 md:py-5"].join(" ")}>
+      {/* Corner accent halo — same treatment as the motivator cards, so the
+          deeper cards read as one colorful family. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `radial-gradient(150px 104px at 90% 0%, rgba(${accent}, 0.16), transparent 70%)` }}
+      />
       <div className="relative flex items-start gap-3">
         <div
           className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-read leading-none"
