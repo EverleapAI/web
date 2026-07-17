@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 import InsightsSummaryCard from "./sections/InsightsSummaryCard";
+import InsightsBackLink from "./sections/InsightsBackLink";
 import MotivatorCard, { type MotivatorIconKey } from "./sections/MotivatorCard";
 import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
@@ -95,6 +96,8 @@ export function MotivationsTab({
 
   return (
     <section className="mb-6 space-y-3">
+      <InsightsBackLink />
+
       <InsightsSummaryCard
         dark={dark}
         headline={payload?.insight?.headline}

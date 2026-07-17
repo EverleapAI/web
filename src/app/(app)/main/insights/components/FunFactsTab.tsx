@@ -7,20 +7,11 @@ import { Clock3, Sparkles } from "lucide-react";
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
 import { CardTitle, RowMeta } from "@/lib/ui/card";
-import {
-  HEADING_CLASS,
-  HEADING_STYLE,
-  LINK_CLASS,
-  LINK_SIZE,
-  PROSE_CLASS,
-  PROSE_SIZE,
-  PROSE_STYLE,
-  TEXT_SECONDARY,
-} from "@/lib/ui/prose";
-import { SectionCard } from "../../components/ui/SectionCard";
-import { AgenticHeader } from "../../components/ui/AgenticHeader";
-import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
+import { LINK_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
 import { sectionCard } from "./sections/summaryShared";
+import InsightsBackLink from "./sections/InsightsBackLink";
+import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
+import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
 
 /* =============================================================================
    Types
@@ -70,28 +61,8 @@ type FunFactsFeedPayload = {
    Style helpers
    ============================================================================= */
 
-function cleanOneLine(s: string) {
-  return (s ?? "").replace(/\s+/g, " ").trim();
-}
-
 function sectionKicker(dark: boolean) {
   return ["text-meta font-semibold uppercase tracking-eyebrow", dark ? "text-white/50" : "text-slate-600"].join(" ");
-}
-
-/* =============================================================================
-   Intro copy
-   ============================================================================= */
-
-function pickTopTerms(items: WordCloudItem[] | undefined, max = 3) {
-  const list = Array.isArray(items) ? items : [];
-  const sorted = [...list].sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
-  return sorted.map((x) => cleanOneLine(x.term)).filter(Boolean).slice(0, max);
-}
-
-function buildOpenLine(nameFromHeadline?: string) {
-  const who = cleanOneLine(nameFromHeadline ?? "");
-  if (!who) return "A lighter mirror — still grounded in how you move through the world.";
-  return `A lighter mirror for ${who} — still grounded in how you move through the world.`;
 }
 
 /* =============================================================================
@@ -195,18 +166,20 @@ function FunFactCard({
    ============================================================================= */
 
 export default function FunFactsTab(props: FunFactsTabProps) {
-  const { dark, wordCloudDisplay, nameFromHeadline } = props;
+  const { dark } = props;
   const router = useRouter();
-
-  const topTerms = React.useMemo(() => pickTopTerms(wordCloudDisplay, 3), [wordCloudDisplay]);
 
   const { payload: timeTwinPayload } = useGeneratedInsights<TimeTwinTeaserPayload>(
     "/api/guidance/insights-time-twin"
   );
-  const { payload: funFactsPayload, fetchDone: funFactsDone } =
-    useGeneratedInsights<FunFactsFeedPayload>("/api/guidance/insights-fun-facts");
+  const {
+    payload: funFactsPayload,
+    tinyTasks,
+    fetchDone: funFactsDone,
+  } = useGeneratedInsights<FunFactsFeedPayload>("/api/guidance/insights-fun-facts");
 
   const facts = React.useMemo(() => funFactsPayload?.facts ?? [], [funFactsPayload]);
+  const wonderTasks = tinyTasks ?? [];
 
   const twinImageUrl = figureImageUrl(timeTwinPayload?.primary?.imageSlug);
 
@@ -215,42 +188,9 @@ export default function FunFactsTab(props: FunFactsTabProps) {
       ? `Right now: ${timeTwinPayload.primary.name} — ${timeTwinPayload.primary.tagline}`
       : "A biography-style mirror — a mind from another era that rhymes with yours.";
 
-  const delightPara =
-    topTerms.length >= 2
-      ? `Small things I've noticed — like why ${topTerms[0]} keeps surfacing, or how it sits next to ${topTerms[1]}. Low stakes, just interesting.`
-      : "Small things I've noticed about how you think — low stakes, just interesting.";
-
   return (
     <section className="mb-6 space-y-4">
-      {/* Intro — the same shell-less agentic opening every tab wears
-          (SectionCard voice: no border, no background — spoken text, not a card),
-          keeping Fun Facts' fuchsia identity in the glyph + eyebrow accent. */}
-      <SectionCard
-        tone="hero"
-        voice
-        className="!px-5 !py-4"
-        backdrop={<ReadAtmosphere seed="fun-facts" accent={{ r: 232, g: 121, b: 249 }} />}
-      >
-        <div className="relative">
-          <AgenticHeader
-            glyph={
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-fuchsia-300/[0.08] text-fuchsia-200/75 ring-1 ring-fuchsia-300/[0.18]">
-                <Sparkles className="h-3.5 w-3.5" />
-              </span>
-            }
-            eyebrow="Fun facts"
-            accentRgb="232, 121, 249"
-          />
-
-          <h2 className={HEADING_CLASS} style={HEADING_STYLE}>
-            {buildOpenLine(nameFromHeadline)}
-          </h2>
-
-          <p className={["mt-3", PROSE_SIZE, PROSE_CLASS].join(" ")} style={PROSE_STYLE}>
-            {delightPara}
-          </p>
-        </div>
-      </SectionCard>
+      <InsightsBackLink />
 
       {/* Time Twin — hero card, on Today's card surface (accent lives only in the
           portrait ring + the "Featured" pill, never on the shell). */}
@@ -314,7 +254,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         </div>
       </button>
 
-      {/* Fun fact feed */}
+      {/* Fun things to know */}
       {facts.length > 0 ? (
         <div className="space-y-3">
           <div className={[sectionKicker(dark), "flex items-center gap-2 px-1"].join(" ")}>
@@ -338,6 +278,18 @@ export default function FunFactsTab(props: FunFactsTabProps) {
             : "Looking for interesting patterns…"}
         </div>
       )}
+
+      {/* What I was wondering — the same Tiny Task card the other tabs carry.
+          Populates once Fun Facts starts generating its own tiny tasks; until
+          then it shows the shared teaser, like every other tab with thin signal. */}
+      <InsightsTinyTaskCard
+        dark={dark}
+        tasks={wonderTasks}
+        hasStrongSignal={wonderTasks.length > 0}
+      />
+
+      {/* Quick check */}
+      <InsightsQuickCheckCard dark={dark} contextTag="insights:funFacts" pageKey="insights_fun_facts" />
     </section>
   );
 }

@@ -20,7 +20,12 @@ type QuickRating = "mostly" | "somewhat" | "not_really";
 type Props = {
   dark: boolean;
   contextTag: string;
-  pageKey?: "insights_summary" | "insights_motivations" | "insights_strengths" | "insights_skills";
+  pageKey?:
+    | "insights_summary"
+    | "insights_motivations"
+    | "insights_strengths"
+    | "insights_skills"
+    | "insights_fun_facts";
 };
 
 function quickChip(dark: boolean, active: boolean, tone: "good" | "mid" | "bad") {

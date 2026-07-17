@@ -33,10 +33,11 @@ import InsightsSummaryCard from "./components/sections/InsightsSummaryCard";
 import InsightsStrengthsCard from "./components/sections/InsightsStrengthsCard";
 import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
 import InsightsQuickCheckCard from "./components/sections/InsightsQuickCheckCard";
+import InsightsAreas from "./components/sections/InsightsAreas";
 
 import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
 
-import { WhereYouAre } from "@/app/(app)/main/components/achievements/WhereYouAre";
+import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 /* =============================================================================
@@ -870,16 +871,12 @@ export default function Page() {
 
   const badges = useBadgeStats();
 
-  // One section, handed to whichever tab is on screen so it lands directly under
-  // that tab's agentic card. The badges are earned across the whole surface, so
-  // the content is the same on every tab — only its position moves.
-  const whereYouAre = (
-    <WhereYouAre
-      block={badges?.surfaces?.insights?.block ?? null}
-      stats={badges}
-      className="mb-3"
-    />
-  );
+  // The progress meter, handed to whichever sub-tab is on screen so it lands
+  // directly under that tab's agentic read. Now the same compact AwardsMeter the
+  // Explore home and the Insights summary use — one trophy component everywhere,
+  // replacing the old bespoke "Where you are" block. Badges are earned across the
+  // whole surface, so it's page-level; only its position moves.
+  const whereYouAre = <AwardsMeter stats={badges} className="mb-3" />;
 
   const railRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -1236,7 +1233,12 @@ export default function Page() {
       `}</style>
 
       <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col px-[4px] pb-4 pt-1">
-        <div className="relative mb-2">
+        {/* The old horizontal tab rail ("carousel") is retired as a navigation
+            surface: you enter an area from the summary's area cards and leave via
+            the "Back to Insights" link at the top of each sub-tab. Kept hidden
+            (not deleted) for now; the rail markup + its arrow helpers can be
+            removed in a cleanup pass. */}
+        <div className="relative mb-2 hidden">
           {mounted && showLeft ? (
             <button
               type="button"
@@ -1330,10 +1332,19 @@ export default function Page() {
                 />
               </div>
 
-              <WhereYouAre
-                block={badges?.surfaces?.insights?.block ?? null}
-                stats={badges}
-                className="mb-1.5"
+              {/* Progress — the same AwardsMeter the Explore home uses, so the two
+                  summary surfaces share one template. */}
+              <AwardsMeter stats={badges} className="mb-1.5" />
+
+              {/* The science-area cards — Insights' answer to Explore's "worlds".
+                  Always shown on the summary (they're the navigation in); whispers
+                  fill in as signal arrives. */}
+              <InsightsAreas
+                onOpen={setTabAndSync}
+                whispers={{
+                  motivations: motivationProfile?.top?.def?.label ?? null,
+                  strengths: summarySuperpowersBullets?.[0] ?? null,
+                }}
               />
 
               {summaryHasSignal ? (

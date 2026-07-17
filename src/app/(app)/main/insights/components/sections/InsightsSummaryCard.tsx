@@ -26,6 +26,18 @@ import type {
   PromptLabPageKey,
 } from "@/components/promptLab/PromptLabModal";
 
+// One voice, ONE paragraph — the shape (headline) and the read (body) are
+// stitched into a single flowing paragraph so the agent speaks in one breath,
+// never a header line over a body line. Same helper Explore's summary card uses.
+function joinRead(headline?: string | null, lead?: string | null): string {
+  const h = (headline ?? "").trim();
+  const l = (lead ?? "").trim();
+  if (!h) return l;
+  if (!l) return h;
+  const sep = /[.!?…]$/.test(h) ? " " : ". ";
+  return `${h}${sep}${l}`;
+}
+
 type Props = {
   dark: boolean;
   headline?: string;
@@ -131,17 +143,15 @@ export default function InsightsSummaryCard({
               comes from weight + spacing, never a bigger size. The agent's opening
               line sits on the same 21px rung as the prose it opens, one weight
               above it. Insights was the only surface already doing this. */}
-          <h2 className={HEADING_CLASS} style={HEADING_STYLE}>
-            {hasStrongSignal ? resolvedHeadline : noSignalTitle}
-          </h2>
-
           {hasStrongSignal ? (
             <>
+              {/* One voice, one paragraph — headline and read spoken as a single
+                  flowing line; the whole picture is one tap away in "See more". */}
               <p
-                className={["mt-3", PROSE_SIZE, PROSE_CLASS].join(" ")}
+                className={[PROSE_SIZE, PROSE_CLASS].join(" ")}
                 style={PROSE_STYLE}
               >
-                {readText}
+                {joinRead(resolvedHeadline, readText)}
               </p>
 
               {displayMore || displayWhy ? (
@@ -187,6 +197,10 @@ export default function InsightsSummaryCard({
             </>
           ) : (
             <>
+              <h2 className={HEADING_CLASS} style={HEADING_STYLE}>
+                {noSignalTitle}
+              </h2>
+
               <CardBody className="mt-2.5">
                 This page gets much more useful once Everleap has a little more
                 real signal from you.
