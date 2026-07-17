@@ -39,7 +39,7 @@ const WORLD_SUB: Record<Lane, string> = {
 
 export type WorldsLane = { lane: Lane; count: number; top: ExplorePath | null };
 
-function WorldCard({ lane, count, top, wide = false }: WorldsLane & { wide?: boolean }) {
+function WorldCard({ lane, count, top, span2 = false }: WorldsLane & { span2?: boolean }) {
   const accent = LANE_ACCENT[lane];
   const Icon = LANE_ICON[lane];
 
@@ -59,49 +59,31 @@ function WorldCard({ lane, count, top, wide = false }: WorldsLane & { wide?: boo
     </span>
   );
   const countRow = (
-    <span className="inline-flex items-center gap-0.5 text-meta font-semibold" style={{ color: rgba(accent, 0.95) }}>
+    <span className="inline-flex items-center gap-0.5 text-label font-semibold" style={{ color: rgba(accent, 0.95) }}>
       {count} {count === 1 ? "path" : "paths"}
-      <ChevronRight className="h-3.5 w-3.5" />
+      <ChevronRight className="h-4 w-4" />
     </span>
   );
-
-  if (wide) {
-    return (
-      <Link
-        href={`/main/explore/${lane}`}
-        className="group relative col-span-2 flex items-center gap-3.5 overflow-hidden rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3.5 transition hover:bg-white/[0.04]"
-      >
-        {halo}
-        <span className="relative">{iconChip}</span>
-        <span className="relative min-w-0 flex-1">
-          <span className="text-label font-semibold text-ink-strong">{WORLD_LABEL[lane]}</span>
-          <span className="mt-0.5 block truncate text-meta leading-body text-white/56">
-            {WORLD_SUB[lane]}
-            {top ? <span style={{ color: rgba(accent, 0.9) }}> · {top.card.title}</span> : null}
-          </span>
-        </span>
-        <span className="relative">{countRow}</span>
-      </Link>
-    );
-  }
 
   return (
     <Link
       href={`/main/explore/${lane}`}
-      className="group relative block overflow-hidden rounded-2xl border border-white/6 bg-white/[0.02] p-4 transition hover:bg-white/[0.04]"
+      className={`group relative block overflow-hidden rounded-2xl border border-white/6 bg-white/[0.02] p-4 transition hover:bg-white/[0.04]${
+        span2 ? " sm:col-span-2" : ""
+      }`}
     >
       {halo}
       <div className="relative flex items-start justify-between gap-2">
-        <span className="text-label font-semibold text-ink-strong">{WORLD_LABEL[lane]}</span>
+        <span className="text-body font-semibold text-ink-strong">{WORLD_LABEL[lane]}</span>
         {iconChip}
       </div>
-      <p className="relative mt-1.5 text-meta leading-body text-white/56">{WORLD_SUB[lane]}</p>
+      <p className="relative mt-1.5 text-label leading-body text-white/60">{WORLD_SUB[lane]}</p>
       {top ? (
         <p
-          className="relative mt-2 flex items-start gap-1.5 text-micro leading-snug"
+          className="relative mt-2 flex items-start gap-1.5 text-meta leading-snug"
           style={{ color: rgba(accent, 0.9) }}
         >
-          <ArrowRight className="mt-0.5 h-3 w-3 shrink-0" />
+          <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span className="line-clamp-2">{top.card.title}</span>
         </p>
       ) : null}
@@ -119,13 +101,13 @@ export function ExploreWorlds({ lanes }: { lanes: WorldsLane[] }) {
       <h2 className="mb-3 px-1 text-meta font-semibold uppercase tracking-eyebrow text-white/55">
         Where do you want to wander?
       </h2>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {WORLD_ORDER.map((lane) => {
           const entry = byLane.get(lane);
           if (!entry) return null;
           return <WorldCard key={lane} {...entry} />;
         })}
-        {play ? <WorldCard {...play} wide /> : null}
+        {play ? <WorldCard {...play} span2 /> : null}
       </div>
     </section>
   );
