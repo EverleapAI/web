@@ -16,6 +16,7 @@ import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import PromptLabTrigger from "@/components/promptLab/PromptLabTrigger";
 import type { PromptLabAppliedPreview } from "@/components/promptLab/PromptLabModal";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
+import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 import { HEADING_CLASS, HEADING_STYLE, LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_STYLE, TEXT_SECONDARY, leadRead } from "@/lib/ui/prose";
 
 export type SummaryRequest = {
@@ -31,14 +32,29 @@ type Payload = { headline: string; body: string; threads: string[]; why?: string
 
 const SUMMARY_ACCENT = "92,180,255";
 
+// The read is ONE voice, ONE paragraph — no header line over a body line. The
+// headline (the shape) and the lead (the read) are stitched into a single
+// flowing paragraph so the agent speaks in one continuous breath.
+function joinRead(headline?: string | null, lead?: string | null): string {
+  const h = (headline ?? "").trim();
+  const l = (lead ?? "").trim();
+  if (!h) return l;
+  if (!l) return h;
+  const sep = /[.!?…]$/.test(h) ? " " : ". ";
+  return `${h}${sep}${l}`;
+}
+
 export function ExploreSummaryCard({
   request,
   hasSignal,
   firstName,
+  onTinyTasks,
 }: {
   request: SummaryRequest;
   hasSignal: boolean;
   firstName: string | null;
+  /** Lifts the "Something I'm wondering" batch (with DB ids) up to the parent. */
+  onTinyTasks?: (tasks: MicroTaskBatchItem[]) => void;
 }) {
   const [payload, setPayload] = React.useState<Payload | null>(null);
   const [loading, setLoading] = React.useState(hasSignal);
@@ -46,6 +62,12 @@ export function ExploreSummaryCard({
   const [preview, setPreview] = React.useState<PromptLabAppliedPreview | null>(null);
   const [moreOpen, setMoreOpen] = React.useState(false);
   const [whyOpen, setWhyOpen] = React.useState(false);
+
+  // Kept in a ref so lifting the tiny-tasks never re-triggers the summary fetch.
+  const onTinyTasksRef = React.useRef(onTinyTasks);
+  React.useEffect(() => {
+    onTinyTasksRef.current = onTinyTasks;
+  });
 
   // Prompt Lab preview (founder-only) overrides the generated narrative live.
   const resolvedHeadline = (preview?.result.headline as string | undefined) ?? payload?.headline;
@@ -87,9 +109,15 @@ export function ExploreSummaryCard({
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as { ok?: boolean; payload?: Payload };
-        if (data?.ok && data.payload) setPayload(data.payload);
-        else throw new Error("no payload");
+        const data = (await res.json()) as {
+          ok?: boolean;
+          payload?: Payload;
+          tinyTasks?: MicroTaskBatchItem[];
+        };
+        if (data?.ok && data.payload) {
+          setPayload(data.payload);
+          onTinyTasksRef.current?.(data.tinyTasks ?? []);
+        } else throw new Error("no payload");
       })
       .catch(() => {
         if (!controller.signal.aborted) setFailed(true);
@@ -158,12 +186,10 @@ export function ExploreSummaryCard({
           </div>
         ) : payload || preview ? (
           <>
-            <h1 className={HEADING_CLASS} style={HEADING_STYLE}>
-              {resolvedHeadline}
-            </h1>
-            {/* The read, trimmed to Today's length — the whole picture is one tap away. */}
-            <p className={`mt-3 text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
-              {leadBody}
+            {/* One voice, one paragraph — the shape (headline) and the read (lead)
+                spoken as a single flowing line; the whole picture is one tap away. */}
+            <p className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
+              {joinRead(resolvedHeadline, leadBody)}
             </p>
             {(hasMore || resolvedWhy) ? (
               <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">

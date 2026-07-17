@@ -15,11 +15,11 @@ type Props = {
   detail?: string;
 };
 
-function splitParagraphs(text?: string): string[] {
-  return (text ?? "")
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+// Every agentic response reads as a single flowing paragraph — no separate lines.
+// Legacy content generated with paragraph breaks is collapsed here so it renders
+// the new way immediately, before its cache is regenerated.
+function toOneParagraph(text?: string): string {
+  return (text ?? "").replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export default function InsightsSummaryDetailModal({
@@ -29,7 +29,7 @@ export default function InsightsSummaryDetailModal({
   headline,
   detail,
 }: Props) {
-  const paragraphs = React.useMemo(() => splitParagraphs(detail), [detail]);
+  const oneParagraph = React.useMemo(() => toOneParagraph(detail), [detail]);
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -112,18 +112,17 @@ export default function InsightsSummaryDetailModal({
                 </h3>
               ) : null}
 
-              {paragraphs.map((p, index) => (
+              {oneParagraph ? (
                 <p
-                  key={index}
                   className={[
-                    index === 0 && headline ? "mt-3" : "mt-2.5",
+                    headline ? "mt-3" : "mt-2.5",
                     bodyText(dark),
                     "text-label leading-read",
                   ].join(" ")}
                 >
-                  {p}
+                  {oneParagraph}
                 </p>
-              ))}
+              ) : null}
             </div>
           </motion.div>
         </motion.div>

@@ -4,8 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-
 type Lane = {
   href: string;
   label: string;
@@ -57,30 +55,36 @@ export default function ExploreLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const badges = useBadgeStats();
+
+  // The home (Summary) leads with the five "worlds" grid, which is itself the lane
+  // picker — so the rail is redundant there ("travelling between worlds, not
+  // clicking tabs"). Keep the rail on interior lane pages for lateral hops.
+  const onHome = (pathname ?? "") === "/main/explore";
 
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-0.5">
-      <div className="mb-2 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {LANES.map((lane) => {
-          const active = isActive(pathname ?? "", lane.href, lane.exact);
+      {!onHome ? (
+        <div className="mb-2 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {LANES.map((lane) => {
+            const active = isActive(pathname ?? "", lane.href, lane.exact);
 
-          return (
-            <Link
-              key={lane.href}
-              href={lane.href}
-              className={railPillClass(active, lane.dotClass)}
-              aria-current={active ? "page" : undefined}
-            >
-              <span
-                aria-hidden
-                className={`h-1.5 w-1.5 rounded-full ${lane.dotClass}`}
-              />
-              <span>{lane.label}</span>
-            </Link>
-          );
-        })}
-      </div>
+            return (
+              <Link
+                key={lane.href}
+                href={lane.href}
+                className={railPillClass(active, lane.dotClass)}
+                aria-current={active ? "page" : undefined}
+              >
+                <span
+                  aria-hidden
+                  className={`h-1.5 w-1.5 rounded-full ${lane.dotClass}`}
+                />
+                <span>{lane.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
 
       {children}
     </div>

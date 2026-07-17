@@ -110,17 +110,11 @@ function establishingRead(input: {
   return capRead(options[dayIndex % options.length], 220);
 }
 
-// Break the retort into 2-3 short paragraphs (by sentence) so the hero read
-// breathes instead of landing as one dense block — far easier on the eyes on a
-// phone. Caps at 3: extra sentences fold into the last paragraph.
-function splitIntoParagraphs(text: string): string[] {
-  const sentences = text
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (sentences.length <= 1) return [text.trim()];
-  if (sentences.length <= 3) return sentences;
-  return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+// Every agentic read renders as ONE flowing paragraph — no separate lines. Any
+// line breaks in stored/legacy content are collapsed to a single space so the
+// hero read lands as one paragraph, matching every other agentic surface.
+function toOneParagraph(text: string): string {
+  return text.replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
 // The calm reading treatment shared by the hero retort, the More/Why modals,
@@ -342,11 +336,11 @@ export function TodayHeart({
   // fall back to stitching orient + move + payoff.
   const actionPitch = dispatch.pitch?.trim() || null;
 
-  // The hero read, broken into short paragraphs for calmer mobile reading. A
-  // live Prompt Lab preview (if any) stands in for the saved retort.
+  // The hero read, rendered as one flowing paragraph. A live Prompt Lab preview
+  // (if any) stands in for the saved retort.
   const previewRetort = labPreview?.targetText?.trim() || null;
   const displayRetort = previewRetort ?? heroRetort;
-  const heroParagraphs = displayRetort ? splitIntoParagraphs(displayRetort) : [];
+  const heroParagraph = displayRetort ? toOneParagraph(displayRetort) : "";
 
   // Empty progress art says nothing — the meter only earns its space once
   // there's real coverage to carry.
@@ -499,11 +493,11 @@ export function TodayHeart({
 
             <div className="relative z-10 max-w-[640px]">
               <div className="space-y-3.5">
-                {heroParagraphs.map((para, i) => (
-                  <p key={i} className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
-                    {para}
+                {heroParagraph ? (
+                  <p className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
+                    {heroParagraph}
                   </p>
-                ))}
+                ) : null}
               </div>
 
               {dispatch.meta ? (

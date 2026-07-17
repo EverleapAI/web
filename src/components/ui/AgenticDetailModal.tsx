@@ -19,7 +19,7 @@ type Props = {
   onClose: () => void;
   /** Small uppercase label above the body, e.g. "The whole picture" / "Why this". */
   eyebrow: string;
-  /** Body prose. Blank-line-separated paragraphs render as separate <p>s. */
+  /** Body prose. Rendered as ONE paragraph — any line breaks are collapsed. */
   body: string;
   /** When set (e.g. "182,160,255"), renders the accent-tinted "Why" styling. */
   accentRgb?: string;
@@ -27,11 +27,11 @@ type Props = {
   closeLabel?: string;
 };
 
-function splitParagraphs(text: string): string[] {
-  return text
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+// Every agentic response reads as a single flowing paragraph — no separate lines.
+// Legacy content generated with paragraph breaks is collapsed here so it renders
+// the new way immediately, before its cache is regenerated.
+function toOneParagraph(text: string): string {
+  return (text ?? "").replace(/\s*\n\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export default function AgenticDetailModal({ open, onClose, eyebrow, body, accentRgb, closeLabel }: Props) {
@@ -47,7 +47,7 @@ export default function AgenticDetailModal({ open, onClose, eyebrow, body, accen
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const paragraphs = React.useMemo(() => splitParagraphs(body), [body]);
+  const oneParagraph = React.useMemo(() => toOneParagraph(body), [body]);
   if (!mounted) return null;
 
   const isWhy = Boolean(accentRgb);
@@ -83,11 +83,9 @@ export default function AgenticDetailModal({ open, onClose, eyebrow, body, accen
               {eyebrow}
             </div>
 
-            {paragraphs.map((p, i) => (
-              <p key={i} className={`${i === 0 ? "" : "mt-3"} ${PROSE_SIZE} ${PROSE_CLASS}`} style={PROSE_STYLE}>
-                {p}
-              </p>
-            ))}
+            <p className={`${PROSE_SIZE} ${PROSE_CLASS}`} style={PROSE_STYLE}>
+              {oneParagraph}
+            </p>
 
             <button
               type="button"
