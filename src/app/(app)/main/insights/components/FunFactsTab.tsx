@@ -244,9 +244,29 @@ export default function FunFactsTab(props: FunFactsTabProps) {
   }, []);
 
   const twinImageUrl = figureImageUrl(timeTwinPayload?.primary?.imageSlug);
-  // Own portrait once the twin is built; otherwise a sample so the premium
-  // callout always shows a real face.
-  const portraitUrl = twinImageUrl || figureImageUrl(SAMPLE_TWIN_SLUG);
+
+  // The figure the user locked in with "That's me!" (if any) — that's the twin
+  // they chose, which wins over our top match as the callout portrait.
+  const [chosenSlug, setChosenSlug] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/guidance/time-twin-reaction?chosen=1", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; chosenSlug?: string | null }) => {
+        if (!cancelled && d?.ok) setChosenSlug(d.chosenSlug ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Priority: the figure the user claimed > our top match > a sample face, so the
+  // premium callout always shows a real portrait.
+  const portraitUrl =
+    figureImageUrl(chosenSlug || undefined) ||
+    twinImageUrl ||
+    figureImageUrl(SAMPLE_TWIN_SLUG);
   const [portraitFailed, setPortraitFailed] = React.useState(false);
   React.useEffect(() => setPortraitFailed(false), [portraitUrl]);
 
