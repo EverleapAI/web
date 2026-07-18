@@ -22,28 +22,35 @@ export function InsightsUnlockCTA({
   variant = "low",
 }: {
   dark: boolean;
-  /** Display label for the category, e.g. "Motivations". */
-  category: string;
+  /** Display label for the category, e.g. "Motivations". Unused for "funfacts". */
+  category?: string;
   href: string;
-  variant?: "low" | "partial";
+  variant?: "low" | "partial" | "funfacts";
 }) {
   void dark; // this page is always dark (nightDusk); kept for a consistent API
-  const categoryLower = category.toLowerCase();
+  const categoryLower = (category ?? "").toLowerCase();
 
   const cfg =
-    variant === "partial"
+    variant === "funfacts"
       ? {
-          accent: "96, 176, 255", // sky — "you're on your way"
-          Icon: TrendingUp,
-          eyebrow: "You're on your way",
-          cta: `Finish ${category} questions`,
-        }
-      : {
-          accent: "251, 191, 36", // amber — "there's more to unlock"
+          accent: "232, 121, 249", // fuchsia — Fun Facts' own colour
           Icon: Sparkles,
-          eyebrow: "There's a lot more here",
-          cta: `Answer ${category} questions`,
-        };
+          eyebrow: "More to notice",
+          cta: "Answer more questions",
+        }
+      : variant === "partial"
+        ? {
+            accent: "96, 176, 255", // sky — "you're on your way"
+            Icon: TrendingUp,
+            eyebrow: "You're on your way",
+            cta: `Finish ${category} questions`,
+          }
+        : {
+            accent: "251, 191, 36", // amber — "there's more to unlock"
+            Icon: Sparkles,
+            eyebrow: "There's a lot more here",
+            cta: `Answer ${category} questions`,
+          };
   const { accent, Icon } = cfg;
 
   return (
@@ -77,7 +84,13 @@ export function InsightsUnlockCTA({
           </div>
         </div>
 
-        {variant === "partial" ? (
+        {variant === "funfacts" ? (
+          <p className="text-body leading-body text-ink">
+            Fun facts come from the surprising crossovers in everything you’ve
+            shared — the more questions you answer, the more of them (and the
+            stranger ones) we can surface.
+          </p>
+        ) : variant === "partial" ? (
           <p className="text-body leading-body text-ink">
             We’ve got enough here to show you some early thinking about your{" "}
             {categoryLower} — but there’s more to this category, and finishing it

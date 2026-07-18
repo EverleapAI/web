@@ -7,11 +7,16 @@ import { Clock3, Sparkles } from "lucide-react";
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
 import { CardTitle, RowMeta } from "@/lib/ui/card";
-import { LINK_CLASS, LINK_SIZE, TEXT_SECONDARY } from "@/lib/ui/prose";
+import { LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_SIZE, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
 import { sectionCard } from "./sections/summaryShared";
+import { SectionCard } from "../../components/ui/SectionCard";
+import { AgenticHeader } from "../../components/ui/AgenticHeader";
+import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
+import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
+import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import InsightsBackLink from "./sections/InsightsBackLink";
+import InsightsUnlockCTA from "./sections/InsightsUnlockCTA";
 import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
-import InsightsQuickCheckCard from "./sections/InsightsQuickCheckCard";
 
 /* =============================================================================
    Types
@@ -57,12 +62,39 @@ type FunFactsFeedPayload = {
   facts?: FunFactPayload[];
 };
 
+// Any open Story question (Fun Facts draws from every category, so it isn't
+// category-specific) — the Story page serves the next unanswered one.
+const STORY_HREF =
+  "/main/story?returnTo=" + encodeURIComponent("/main/insights?tab=funFacts");
+
 /* =============================================================================
-   Style helpers
+   Helpers
    ============================================================================= */
 
 function sectionKicker(dark: boolean) {
   return ["text-meta font-semibold uppercase tracking-eyebrow", dark ? "text-white/50" : "text-slate-600"].join(" ");
+}
+
+function cleanOneLine(s: string) {
+  return (s ?? "").replace(/\s+/g, " ").trim();
+}
+
+function pickTopTerms(items: WordCloudItem[] | undefined, max = 3) {
+  const list = Array.isArray(items) ? items : [];
+  return [...list]
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    .map((x) => cleanOneLine(x.term))
+    .filter(Boolean)
+    .slice(0, max);
+}
+
+// One voice, one paragraph — the opener and the read spoken as a single line.
+function joinRead(a: string, b: string) {
+  const h = a.trim();
+  const l = b.trim();
+  if (!h) return l;
+  if (!l) return h;
+  return `${h}${/[.!?…]$/.test(h) ? " " : ". "}${l}`;
 }
 
 /* =============================================================================
@@ -113,7 +145,7 @@ function FunFactCard({
                   className="rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-eyebrow"
                   style={{
                     background: `rgba(${accent}, ${dark ? 0.16 : 0.14})`,
-                    color: dark ? `rgba(${accent}, 1)` : `rgba(${accent}, 1)`,
+                    color: `rgba(${accent}, 1)`,
                   }}
                 >
                   {domain}
@@ -173,8 +205,9 @@ function FunFactCard({
    ============================================================================= */
 
 export default function FunFactsTab(props: FunFactsTabProps) {
-  const { dark } = props;
+  const { dark, nameFromHeadline, wordCloudDisplay } = props;
   const router = useRouter();
+  const badges = useBadgeStats();
 
   const { payload: timeTwinPayload } = useGeneratedInsights<TimeTwinTeaserPayload>(
     "/api/guidance/insights-time-twin"
@@ -188,6 +221,24 @@ export default function FunFactsTab(props: FunFactsTabProps) {
   const facts = React.useMemo(() => funFactsPayload?.facts ?? [], [funFactsPayload]);
   const wonderTasks = tinyTasks ?? [];
 
+  // Are there any open Story questions left (in any category)? Drives the
+  // "answer more" tentative card.
+  const [storyOpen, setStoryOpen] = React.useState<boolean | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/story/next")
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; done?: boolean }) => {
+        if (!cancelled) setStoryOpen(d?.ok ? d.done === false : null);
+      })
+      .catch(() => {
+        if (!cancelled) setStoryOpen(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const twinImageUrl = figureImageUrl(timeTwinPayload?.primary?.imageSlug);
 
   const timeTwinTeaser =
@@ -195,9 +246,52 @@ export default function FunFactsTab(props: FunFactsTabProps) {
       ? `Right now: ${timeTwinPayload.primary.name} — ${timeTwinPayload.primary.tagline}`
       : "A biography-style mirror — a mind from another era that rhymes with yours.";
 
+  // Agentic entry (one paragraph), in Fun Facts' fuchsia voice.
+  const who = cleanOneLine(nameFromHeadline ?? "");
+  const openLine = who
+    ? `A lighter mirror for ${who} — still grounded in how you move through the world.`
+    : "A lighter mirror — still grounded in how you move through the world.";
+  const topTerms = pickTopTerms(wordCloudDisplay, 3);
+  const delightPara =
+    topTerms.length >= 2
+      ? `Small things I've noticed — like why ${topTerms[0]} keeps surfacing, or how it sits next to ${topTerms[1]}. Low stakes, just interesting.`
+      : "Small things I've noticed about how you think — low stakes, just interesting.";
+
   return (
     <section className="mb-6 space-y-4">
       <InsightsBackLink />
+
+      {/* Agentic entry — one flowing paragraph, matching the other tabs. */}
+      <SectionCard
+        tone="hero"
+        voice
+        className="!px-5 !py-4"
+        backdrop={<ReadAtmosphere seed="fun-facts" accent={{ r: 232, g: 121, b: 249 }} />}
+      >
+        <div className="relative">
+          <AgenticHeader
+            glyph={
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-fuchsia-300/[0.08] text-fuchsia-200/75 ring-1 ring-fuchsia-300/[0.18]">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+            }
+            eyebrow="Fun facts"
+            accentRgb="232, 121, 249"
+          />
+          <p className={[PROSE_SIZE, PROSE_CLASS].join(" ")} style={PROSE_STYLE}>
+            {joinRead(openLine, delightPara)}
+          </p>
+        </div>
+      </SectionCard>
+
+      {/* Trophies — the same AwardsMeter, a door to achievements. */}
+      <AwardsMeter stats={badges} />
+
+      {/* Tentative "answer more" card — Fun Facts sharpen as you answer more of
+          any category; only shown while there are open Story questions. */}
+      {storyOpen === true ? (
+        <InsightsUnlockCTA variant="funfacts" dark={dark} href={STORY_HREF} />
+      ) : null}
 
       {/* Time Twin — hero card, on Today's card surface (accent lives only in the
           portrait ring + the "Featured" pill, never on the shell). */}
@@ -286,17 +380,12 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         </div>
       )}
 
-      {/* What I was wondering — the same Tiny Task card the other tabs carry.
-          Populates once Fun Facts starts generating its own tiny tasks; until
-          then it shows the shared teaser, like every other tab with thin signal. */}
+      {/* What I was wondering — the same Tiny Task card the other tabs carry. */}
       <InsightsTinyTaskCard
         dark={dark}
         tasks={wonderTasks}
         hasStrongSignal={wonderTasks.length > 0}
       />
-
-      {/* Quick check */}
-      <InsightsQuickCheckCard dark={dark} contextTag="insights:funFacts" pageKey="insights_fun_facts" />
     </section>
   );
 }
