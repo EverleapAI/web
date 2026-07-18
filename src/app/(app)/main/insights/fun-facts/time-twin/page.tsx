@@ -226,12 +226,49 @@ export default function TimeTwinPage() {
     return dedupeTwins([primary, ...alternates]);
   }, [payload]);
 
+  // The figure the user locked in with "That's me!" — so a refresh reopens the
+  // page on THEIR twin, not our top match. Fetched once; only used to position
+  // the page on first load (in-session navigation takes over after that).
+  const [chosenSlug, setChosenSlug] = React.useState<string | null>(null);
+  const [chosenLoaded, setChosenLoaded] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch(`${REACTION_ENDPOINT}?chosen=1`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; chosenSlug?: string | null }) => {
+        if (cancelled) return;
+        if (d?.ok) setChosenSlug(d.chosenSlug ?? null);
+        setChosenLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setChosenLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const didPosition = React.useRef(false);
   React.useEffect(() => {
     if (scoredTwins.length === 0) return;
+
+    if (!didPosition.current) {
+      // Wait for the chosen lookup so the first paint lands on the right figure.
+      if (!chosenLoaded) return;
+      didPosition.current = true;
+      const chosenTwin = chosenSlug
+        ? scoredTwins.find((t) => t.figureSlug === chosenSlug || t.id === chosenSlug)
+        : undefined;
+      setActiveTwinId(chosenTwin ? chosenTwin.id : scoredTwins[0].id);
+      return;
+    }
+
+    // After the first positioning: if the active twin fell out of the pool
+    // (e.g. the match regenerated), snap back to the primary.
     setActiveTwinId((current) =>
       scoredTwins.some((twin) => twin.id === current) ? current : scoredTwins[0].id
     );
-  }, [scoredTwins]);
+  }, [scoredTwins, chosenLoaded, chosenSlug]);
 
   const { activeTwin } = React.useMemo(() => {
     return buildDisplayPool(scoredTwins, activeTwinId);
