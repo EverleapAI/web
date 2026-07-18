@@ -1,0 +1,144 @@
+// apps/web/src/app/(app)/main/explore/_components/NearDescent.tsx
+//
+// "Try it near you" gone deep — the real-world landing (the prime directive: the
+// whole point is getting out and doing it). A full-screen browser of real ways to
+// try this specialty: near you, online, or virtual — plus the honey door to
+// design your own mission. Every row is a door OUT of the app.
+
+"use client";
+
+import * as React from "react";
+import { createPortal } from "react-dom";
+import { ArrowRight, ArrowUp, ExternalLink, Globe, Loader2, MapPin, Video, Wand2 } from "lucide-react";
+
+import type { Opportunity } from "../_data/exploreSchema";
+
+const HONEY = "244, 192, 103";
+
+const MODE = {
+  local: { label: "Near you", Icon: MapPin, rgb: "52, 211, 153" },
+  virtual: { label: "Virtual", Icon: Video, rgb: "167, 139, 250" },
+  remote: { label: "Online", Icon: Globe, rgb: "96, 176, 255" },
+  hybrid: { label: "Hybrid", Icon: Globe, rgb: "96, 176, 255" },
+  travel: { label: "Travel", Icon: MapPin, rgb: "245, 176, 90" },
+} as const;
+
+function bucket(mode?: string): keyof typeof MODE {
+  return mode && mode in MODE ? (mode as keyof typeof MODE) : "remote";
+}
+
+export function NearDescent({
+  opps,
+  specialtyTitle,
+  accent,
+  creating,
+  onClose,
+  onStartMission,
+}: {
+  opps: Opportunity[];
+  specialtyTitle: string;
+  accent: string;
+  creating: boolean;
+  onClose: () => void;
+  onStartMission: () => void;
+}) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Group into Near you / Online / Virtual in a sensible order.
+  const order: (keyof typeof MODE)[] = ["local", "remote", "virtual", "hybrid", "travel"];
+  const groups = order
+    .map((k) => ({ k, items: opps.filter((o) => bucket(o.mode) === k) }))
+    .filter((g) => g.items.length);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
+      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
+        <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]">
+          <ArrowUp className="h-3.5 w-3.5" /> Step back up
+        </button>
+        <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/45">Try it for real</div>
+      </div>
+
+      <div className="mx-auto w-full max-w-lg flex-1 overflow-y-auto px-6 py-5">
+        <h1 className="text-title font-semibold leading-display tracking-title">Ways to actually try it.</h1>
+        <p className="mt-2 text-read leading-read text-white/72">
+          Real ways to get a taste of {specialtyTitle} — near you, online, or from your couch. The
+          only way to really know is to go do one.
+        </p>
+
+        {/* The honey door — design your own real-world mission. */}
+        <button
+          type="button"
+          onClick={onStartMission}
+          disabled={creating}
+          className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 font-semibold transition hover:brightness-105 disabled:opacity-70"
+          style={{ background: `linear-gradient(180deg,#ffdf9e,rgb(${HONEY}))`, color: "#1a1204" }}
+        >
+          <span className="inline-flex items-center gap-2.5"><Wand2 className="h-5 w-5" /> Design your own — a mission you go try</span>
+          {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+        </button>
+
+        {groups.length ? (
+          groups.map((g) => {
+            const meta = MODE[g.k];
+            return (
+              <div key={g.k} className="mt-6">
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span className="grid h-6 w-6 place-items-center rounded-control" style={{ background: `rgba(${meta.rgb},0.14)`, color: `rgb(${meta.rgb})` }}>
+                    <meta.Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${meta.rgb},0.9)` }}>
+                    {meta.label}
+                    {g.k === "local" ? " · add your zip for real local spots" : ""}
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {g.items.map((o) => (
+                    <a
+                      key={o.id}
+                      href={o.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
+                      style={{ borderColor: `rgba(${meta.rgb},0.2)`, background: `rgba(${meta.rgb},0.05)` }}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="text-label font-semibold text-white">{o.title}</span>
+                        {o.note ? (
+                          <span className="mt-0.5 block text-meta leading-read text-white/62">
+                            {o.note}
+                            {o.provider ? ` · ${o.provider}` : ""}
+                          </span>
+                        ) : null}
+                      </span>
+                      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="mt-6 text-label leading-read text-white/60">
+            No listed spots yet — start with the mission above and find one real thing to try this week.
+          </p>
+        )}
+
+        <p className="mt-8 text-center text-meta text-white/40" style={{ color: `rgba(${accent},0.6)` }}>
+          Going and doing beats reading, every time.
+        </p>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+export default NearDescent;

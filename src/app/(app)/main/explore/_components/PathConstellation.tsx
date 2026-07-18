@@ -27,6 +27,7 @@ import {
 import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { DayDescent } from "./DayDescent";
 import { LeadsDescent } from "./LeadsDescent";
+import { NearDescent } from "./NearDescent";
 import {
   laneAccent,
   type AiImpact,
@@ -105,6 +106,7 @@ export function PathConstellation({
   const [creating, setCreating] = React.useState(false);
   const [showDay, setShowDay] = React.useState(false);
   const [showLeads, setShowLeads] = React.useState(false);
+  const [showNear, setShowNear] = React.useState(false);
 
   const open = (id: StarId) => {
     setActive(id);
@@ -262,6 +264,7 @@ export function PathConstellation({
             onStart={startMission}
             onOpenDay={() => setShowDay(true)}
             onOpenLeads={() => setShowLeads(true)}
+            onOpenNear={() => setShowNear(true)}
           />
         </div>
       </div>
@@ -291,6 +294,17 @@ export function PathConstellation({
           accent={a}
           creating={creating}
           onClose={() => setShowLeads(false)}
+          onStartMission={startMission}
+        />
+      ) : null}
+
+      {showNear ? (
+        <NearDescent
+          opps={opps}
+          specialtyTitle={specialtyTitle}
+          accent={a}
+          creating={creating}
+          onClose={() => setShowNear(false)}
           onStartMission={startMission}
         />
       ) : null}
@@ -340,6 +354,7 @@ function StarPanel(props: {
   onStart: () => void;
   onOpenDay: () => void;
   onOpenLeads: () => void;
+  onOpenNear: () => void;
 }) {
   const { active, a } = props;
 
@@ -502,6 +517,18 @@ function StarPanel(props: {
             );
           })}
         </div>
+        <button
+          type="button"
+          onClick={props.onOpenNear}
+          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
+          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
+        >
+          <span className="min-w-0">
+            <span className="block text-label font-semibold text-white">Go deeper — all the ways to try it</span>
+            <span className="mt-0.5 block text-meta text-white/60">Near you, online, or virtual — every real door out.</span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
+        </button>
       </div>
     );
   }
