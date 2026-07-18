@@ -108,9 +108,31 @@ export function PathConstellation({
   const [showLeads, setShowLeads] = React.useState(false);
   const [showNear, setShowNear] = React.useState(false);
 
+  // Remember which stars were lit in past visits (Concept 02: depth you carry back).
+  React.useEffect(() => {
+    fetch(
+      `/api/guidance/constellation-lit?path=${encodeURIComponent(path.slug)}&branch=${encodeURIComponent(branchSlug)}`,
+      { credentials: "include", cache: "no-store" }
+    )
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; lit?: string[] }) => {
+        if (d?.ok && Array.isArray(d.lit) && d.lit.length) {
+          setLit((prev) => new Set([...prev, ...(d.lit as StarId[])]));
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const open = (id: StarId) => {
     setActive(id);
     setLit((prev) => (prev.has(id) ? prev : new Set([...prev, id])));
+    fetch("/api/guidance/constellation-lit", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ path: path.slug, branch: branchSlug, star: id }),
+    }).catch(() => {});
   };
 
   const startMission = async () => {
