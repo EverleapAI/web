@@ -1,0 +1,479 @@
+// apps/web/src/app/(app)/main/explore/_components/PathConstellation.tsx
+//
+// The specialty deep-dive as a constellation you light up (design-doc Concept 02).
+// The star map IS the navigation — tap a star and its content renders as OBJECTS
+// (a day-in-life swipe, a pay band, AI-as-weather, near-you/online opportunities),
+// never a wall. The honey star is the deep end: a real-world thing to actually go
+// do. Option B: the deep content is the career's (shared across its specialties)
+// plus the specialty's own intro; per-specialty generation is a later layer.
+
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  ArrowUp,
+  Check,
+  Globe,
+  Loader2,
+  MapPin,
+  Sparkles,
+  Video,
+  Wand2,
+} from "lucide-react";
+
+import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
+import {
+  laneAccent,
+  type AiImpact,
+  type ExplorePath,
+  type Opportunity,
+  type PathBranch,
+  type RealityMoment,
+  type Rgb,
+  type SalaryBand,
+} from "../_data/exploreSchema";
+import { emitActionsChanged } from "@/lib/actionsBus";
+import type { OnetDetail } from "./OnetFacts";
+
+const HONEY = "244, 192, 103";
+const rgbStr = (c: Rgb) => `${c.r}, ${c.g}, ${c.b}`;
+
+type StarId = "why" | "day" | "leads" | "near" | "real";
+type Star = { id: StarId; label: string; x: number; y: number; accent: string; honey?: boolean };
+const POS: Record<StarId, { x: number; y: number }> = {
+  why: { x: 70, y: 64 },
+  day: { x: 186, y: 112 },
+  leads: { x: 330, y: 70 },
+  near: { x: 116, y: 196 },
+  real: { x: 300, y: 200 },
+};
+const EDGES: [StarId, StarId][] = [
+  ["why", "day"],
+  ["day", "leads"],
+  ["day", "near"],
+  ["near", "real"],
+  ["leads", "real"],
+];
+
+export function PathConstellation({
+  path,
+  branchSlug,
+  whyYou = null,
+}: {
+  path: ExplorePath;
+  branchSlug: string;
+  whyYou?: string | null;
+  onet?: OnetDetail | null;
+}) {
+  const router = useRouter();
+  const branch = path.branches?.detail?.find((b) => b.slug === branchSlug) ?? null;
+  const preview = path.branches?.previews?.find((b) => b.slug === branchSlug) ?? null;
+  const accentRgb = branch?.accent ?? laneAccent(path);
+  const a = rgbStr(accentRgb);
+
+  const careerTitle = path.overview?.title ?? path.card.title;
+  const specialtyTitle = branch?.title ?? preview?.title ?? careerTitle;
+  const rawLead = branch?.summary || preview?.whyItCouldFit || preview?.oneLiner || "";
+  const lead = rawLead.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2).join(" ");
+
+  const moments = path.reality?.moments ?? [];
+  const salary = path.trajectory?.salaryBand;
+  const ai = path.trajectory?.aiImpact;
+  const growing = path.trajectory?.whatIsGrowing ?? [];
+  const pressure = path.trajectory?.whatIsUnderPressure ?? [];
+  const opps = (path.nextSteps?.sections ?? []).flatMap((s) => s.items);
+  const hasLeads = Boolean(salary || ai || growing.length || pressure.length);
+
+  // Which stars have content to show.
+  const stars: Star[] = [
+    { id: "why", label: branch ? "Why this path" : "Why you", ...POS.why, accent: a },
+    ...(moments.length ? [{ id: "day" as const, label: "A real day", ...POS.day, accent: a }] : []),
+    ...(hasLeads ? [{ id: "leads" as const, label: "Where it leads", ...POS.leads, accent: a }] : []),
+    ...(opps.length ? [{ id: "near" as const, label: "Try it near you", ...POS.near, accent: a }] : []),
+    { id: "real", label: "Try it for real", ...POS.real, accent: HONEY, honey: true },
+  ];
+  const ids = new Set(stars.map((s) => s.id));
+  const edges = EDGES.filter(([x, y]) => ids.has(x) && ids.has(y));
+
+  const [active, setActive] = React.useState<StarId>("why");
+  const [lit, setLit] = React.useState<Set<StarId>>(new Set(["why"]));
+  const [creating, setCreating] = React.useState(false);
+
+  const open = (id: StarId) => {
+    setActive(id);
+    setLit((prev) => (prev.has(id) ? prev : new Set([...prev, id])));
+  };
+
+  const startMission = async () => {
+    if (creating) return;
+    setCreating(true);
+    const returnTo =
+      typeof window !== "undefined" ? window.location.pathname + window.location.search : "";
+    try {
+      const res = await fetch("/api/guidance/actions", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sourceType: "explore_path",
+          sourceRef: `${path.lane}:${path.slug}:${branchSlug}`,
+          lane: path.lane,
+          title: `Try it: ${specialtyTitle}`,
+          description: `Get a first-hand feel for ${specialtyTitle} — find one small, real thing to try this week and notice how it lands.`,
+        }),
+      });
+      const d = await res.json().catch(() => null);
+      if (d?.ok && d.action?.id) {
+        emitActionsChanged();
+        router.push(`/main/actions/${d.action.id}?returnTo=${encodeURIComponent(returnTo)}`);
+      } else setCreating(false);
+    } catch {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <main className="relative min-h-screen pb-24 text-white">
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        <ReadAtmosphere seed={`${path.id}:${branchSlug}`} accent={{ r: accentRgb.r, g: accentRgb.g, b: accentRgb.b }} />
+      </div>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 sm:px-6">
+        {/* Depth rail — step back up + how many stars lit. */}
+        <div className="flex items-center justify-between">
+          <Link
+            href={`/main/explore/${path.lane}/${path.slug}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-meta text-white/75 transition hover:border-white/20 hover:text-white"
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+            Step back up
+          </Link>
+          <span className="inline-flex items-center gap-2 text-micro font-semibold uppercase tracking-eyebrow text-white/45">
+            <span style={{ color: `rgb(${a})` }}>{lit.size}</span> of {stars.length} lit
+          </span>
+        </div>
+
+        <header>
+          <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">
+            {careerTitle} · path
+          </div>
+          <h1 className="mt-1 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-display">
+            {specialtyTitle}
+          </h1>
+          {lead ? <p className="mt-2.5 text-read leading-read text-white/80">{lead}</p> : null}
+        </header>
+
+        {/* The constellation — the navigation. */}
+        <div className="rounded-card border border-white/8 bg-white/[0.015] px-1 py-2">
+          <svg viewBox="0 0 400 260" className="w-full">
+            <g>
+              {edges.map(([x, y], i) => {
+                const A = POS[x],
+                  B = POS[y];
+                const on = lit.has(x) && lit.has(y);
+                return (
+                  <line
+                    key={i}
+                    x1={A.x}
+                    y1={A.y}
+                    x2={B.x}
+                    y2={B.y}
+                    stroke={on ? `rgba(${a},0.5)` : "rgba(255,255,255,0.09)"}
+                    strokeWidth={on ? 1.6 : 1.2}
+                  />
+                );
+              })}
+            </g>
+            {stars.map((s) => {
+              const on = lit.has(s.id);
+              const isActive = active === s.id;
+              return (
+                <g
+                  key={s.id}
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer"
+                  onClick={() => open(s.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      open(s.id);
+                    }
+                  }}
+                >
+                  {on ? (
+                    <circle cx={s.x} cy={s.y} r={s.honey ? 18 : 14} fill={`rgb(${s.accent})`} opacity={0.16} />
+                  ) : null}
+                  <circle
+                    cx={s.x}
+                    cy={s.y}
+                    r={s.honey ? 6.5 : 5}
+                    fill={on ? `rgb(${s.accent})` : "#2a3550"}
+                    stroke={`rgb(${s.accent})`}
+                    strokeWidth={on ? 0 : 1.4}
+                    style={s.honey ? { filter: `drop-shadow(0 0 8px rgb(${s.accent}))` } : undefined}
+                  />
+                  {isActive ? (
+                    <circle cx={s.x} cy={s.y} r={s.honey ? 11 : 9} fill="none" stroke={`rgba(${s.accent},0.55)`} strokeWidth={1} />
+                  ) : null}
+                  <text
+                    x={s.x}
+                    y={s.y + (s.y > 150 ? 24 : -14)}
+                    textAnchor="middle"
+                    className="font-sans font-semibold"
+                    fontSize={11}
+                    fill={s.honey ? `rgb(${s.accent})` : on ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)"}
+                    style={s.honey ? { textTransform: "uppercase", letterSpacing: "0.08em" } : undefined}
+                  >
+                    {s.label}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+          <p className="px-3 pb-1 text-center text-micro text-white/40">
+            Tap a star to go there — an unlit one is an invitation, never a to‑do.
+          </p>
+        </div>
+
+        {/* The active star's content — drawn as objects, not a wall. */}
+        <div key={active} className="rounded-card border border-white/10 bg-[rgba(10,14,26,0.72)] px-5 py-5 [animation:cRise_.4s_ease]">
+          <StarPanel
+            active={active}
+            a={a}
+            branch={branch}
+            whyYou={whyYou}
+            lead={lead}
+            moments={moments}
+            salary={salary}
+            ai={ai}
+            growing={growing}
+            pressure={pressure}
+            opps={opps}
+            specialtyTitle={specialtyTitle}
+            creating={creating}
+            onStart={startMission}
+          />
+        </div>
+      </div>
+      <style>{`@keyframes cRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
+    </main>
+  );
+}
+
+/* ---------------- object renderers ---------------- */
+
+function Eyebrow({ children, a }: { children: React.ReactNode; a: string }) {
+  return (
+    <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.85)` }}>
+      {children}
+    </div>
+  );
+}
+
+function List({ items, a }: { items: string[]; a: string }) {
+  return (
+    <ul className="mt-2 space-y-1.5">
+      {items.slice(0, 4).map((it, i) => (
+        <li key={i} className="flex gap-2.5 text-label leading-read text-white/80">
+          <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgba(${a},0.85)` }} />
+          <span>{it}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function StarPanel(props: {
+  active: StarId;
+  a: string;
+  branch: PathBranch | null;
+  whyYou: string | null;
+  lead: string;
+  moments: RealityMoment[];
+  salary?: SalaryBand;
+  ai?: AiImpact;
+  growing: string[];
+  pressure: string[];
+  opps: Opportunity[];
+  specialtyTitle: string;
+  creating: boolean;
+  onStart: () => void;
+}) {
+  const { active, a } = props;
+
+  if (active === "why") {
+    return (
+      <div>
+        <div className="mb-2.5 flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-control" style={{ background: `rgba(${a},0.14)`, color: `rgb(${a})` }}>
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
+          <h2 className="text-read font-semibold leading-read text-white">Why this rhymes with you</h2>
+        </div>
+        <p className="text-read leading-read text-white/82">{props.whyYou || props.lead}</p>
+        {props.branch?.whatYouActuallyDo?.length ? (
+          <div className="mt-4">
+            <Eyebrow a={a}>What you&rsquo;d actually do</Eyebrow>
+            <List items={props.branch.whatYouActuallyDo} a={a} />
+          </div>
+        ) : null}
+        {props.branch?.skillsThatGrowHere?.length ? (
+          <div className="mt-4">
+            <Eyebrow a={a}>Skills that grow here</Eyebrow>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {props.branch.skillsThatGrowHere.slice(0, 6).map((s, i) => (
+                <span key={i} className="rounded-full border px-3 py-1 text-meta text-white/80" style={{ borderColor: `rgba(${a},0.28)`, background: `rgba(${a},0.07)` }}>
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (active === "day") {
+    return (
+      <div>
+        <div className="mb-1 flex items-center gap-2">
+          <h2 className="text-read font-semibold leading-read text-white">A real day, from the inside</h2>
+        </div>
+        <p className="mb-3 text-meta text-white/55">Swipe through it — a scene, a time, one line.</p>
+        <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {props.moments.map((m) => (
+            <div
+              key={m.id}
+              className="w-[74%] shrink-0 snap-start rounded-2xl border px-4 py-4"
+              style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}
+            >
+              {m.timeLabel ? <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.9)` }}>{m.timeLabel}</div> : null}
+              <div className="mt-1.5 text-label font-semibold text-white">{m.title}</div>
+              <p className="mt-1.5 text-meta leading-read text-white/68">{m.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (active === "leads") {
+    return (
+      <div>
+        <h2 className="mb-3 text-read font-semibold leading-read text-white">Where it leads</h2>
+        {props.salary ? (
+          <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
+            <Eyebrow a={a}>What it pays</Eyebrow>
+            <div className="mt-1 text-title font-semibold leading-display">{props.salary.median}</div>
+            <div className="relative mt-3 h-2 rounded-full bg-white/[0.09]">
+              <div className="absolute inset-y-0 rounded-full" style={{ left: "12%", right: "12%", background: `linear-gradient(90deg, rgba(${a},0.6), rgb(${a}))` }} />
+              <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" style={{ left: "48%", boxShadow: `0 0 0 4px rgba(${a},0.25)` }} />
+            </div>
+            <div className="mt-2 flex justify-between text-meta tabular-nums text-white/55">
+              <span>{props.salary.low}</span>
+              <span>{props.salary.high}</span>
+            </div>
+            {props.salary.note ? <p className="mt-2 text-meta leading-read text-white/60">{props.salary.note}</p> : null}
+          </div>
+        ) : null}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {props.ai ? (
+            <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
+              <Eyebrow a={a}>Future‑proof?</Eyebrow>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="h-9 w-9 shrink-0 rounded-full" style={{ background: `radial-gradient(circle at 40% 35%, #ffe6a8, ${`rgb(${HONEY})`})`, boxShadow: `0 0 20px rgba(${HONEY},0.45)` }} />
+                <div>
+                  <div className="text-label font-semibold text-white">{props.ai.level || "Mostly sunny"}</div>
+                  <div className="text-meta leading-read text-white/62">{props.ai.summary}</div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {props.growing.length ? (
+            <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
+              <Eyebrow a={a}>What&rsquo;s growing</Eyebrow>
+              <List items={props.growing} a={a} />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (active === "near") {
+    const modeMeta = (mode?: string) =>
+      mode === "local"
+        ? { label: "Near you", Icon: MapPin }
+        : mode === "virtual"
+          ? { label: "Virtual", Icon: Video }
+          : { label: "Online", Icon: Globe };
+    return (
+      <div>
+        <h2 className="mb-1 text-read font-semibold leading-read text-white">Try it near you — or online</h2>
+        <p className="mb-3 text-meta text-white/55">Real ways to go do it. (Near‑you gets sharper once we have your zip.)</p>
+        <div className="space-y-2.5">
+          {props.opps.slice(0, 5).map((o) => {
+            const m = modeMeta(o.mode);
+            return (
+              <a
+                key={o.id}
+                href={o.href}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
+                style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ background: `rgba(${a},0.14)`, color: `rgb(${a})` }}>
+                  <m.Icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.9)` }}>{m.label}</span>
+                  <div className="text-label font-semibold text-white">{o.title}</div>
+                  {o.note ? <div className="text-meta leading-read text-white/62">{o.note}{o.provider ? ` · ${o.provider}` : ""}</div> : null}
+                </span>
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-white/45" />
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // honey — try it for real
+  return (
+    <div className="overflow-hidden rounded-2xl border" style={{ borderColor: `rgba(${HONEY},0.5)`, background: `linear-gradient(180deg, rgba(${HONEY},0.16), rgba(${HONEY},0.05))` }}>
+      <div className="px-5 py-5">
+        <h2 className="text-read font-semibold leading-read text-white">The deep end is a taste, not a paragraph.</h2>
+        <p className="mt-1.5 text-meta leading-read text-white/68">
+          One small, real thing to actually do this week — proof you didn&rsquo;t just read about {props.specialtyTitle}, you went.
+        </p>
+        <button
+          type="button"
+          onClick={props.onStart}
+          disabled={props.creating}
+          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-left font-semibold transition hover:brightness-105 disabled:opacity-70"
+          style={{ background: `linear-gradient(180deg, #ffdf9e, rgb(${HONEY}))`, color: "#1a1204" }}
+        >
+          <span className="inline-flex items-center gap-2.5">
+            <Wand2 className="h-5 w-5" />
+            Turn it into a mission — go try it
+          </span>
+          {props.creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+        </button>
+        <div className="mt-3 flex items-center gap-2 text-meta" style={{ color: `rgb(${HONEY})` }}>
+          <span className="grid h-5 w-5 place-items-center rounded border border-dashed" style={{ borderColor: `rgba(${HONEY},0.6)` }}>
+            <Check className="h-3 w-3" />
+          </span>
+          Doing it drops a moment you keep — and a Direction starts forming.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default PathConstellation;

@@ -133,7 +133,13 @@ function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
       />
       <div className="space-y-3">
         {previews.slice(0, 6).map((b, i) =>
-          worldCard(specialtiesHref, b.title, b.oneLiner ?? "", b.id, SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length])
+          worldCard(
+            `${specialtiesHref}/${b.slug}`,
+            b.title,
+            b.oneLiner ?? "",
+            b.id,
+            SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length]
+          )
         )}
       </div>
     </SectionCard>

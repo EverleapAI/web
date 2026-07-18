@@ -17,6 +17,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ExplorePathDetail } from "./ExplorePathDetail";
 import { ExplorePathSection } from "./ExplorePathSection";
+import { PathConstellation } from "./PathConstellation";
 import { SectionCard } from "../../components/ui/SectionCard";
 import type { SectionKey } from "./detailSections";
 import type { OnetDetail } from "./OnetFacts";
@@ -142,12 +143,15 @@ export function ExplorePathDetailLoader({
   slug,
   fallback,
   section,
+  branchSlug,
 }: {
   lane: Lane;
   slug: string;
   fallback: ExplorePath | null;
   // When set, render that deep section as its own screen instead of essentials.
   section?: SectionKey;
+  // When set (under the specialties section), render that specialty's constellation.
+  branchSlug?: string;
 }) {
   const [path, setPath] = React.useState<ExplorePath | null>(fallback);
   const [whyYou, setWhyYou] = React.useState<string | null>(null);
@@ -171,6 +175,9 @@ export function ExplorePathDetailLoader({
   }, [lane, slug, fallback]);
 
   if (path) {
+    if (branchSlug) {
+      return <PathConstellation path={path} branchSlug={branchSlug} whyYou={whyYou} onet={onet} />;
+    }
     return section ? (
       <ExplorePathSection path={path} section={section} onet={onet} />
     ) : (
