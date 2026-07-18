@@ -1,13 +1,11 @@
 "use client";
 
-import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
-import { workPathsToExplorePaths } from "./_data/workAdapter";
-import { WORK_PATHS } from "./_data/workPaths";
+import { WorkLandingLoader } from "../_components/WorkLandingLoader";
 
-// Existing mock content, adapted to the unified ExplorePath shape once at load.
-// Phase B swaps the source (mock -> DB) behind this same boundary.
-const WORK_EXPLORE_PATHS = workPathsToExplorePaths(WORK_PATHS);
-
+// Careers is the first lane on the new recommendations experience: agentic entry,
+// trophies, signal gate, creative career cards with feedback + missions, and a
+// "wondering" tiny task. The other lanes stay on the shared ExploreLanding until
+// their own phase. The personalized deck is fetched inside the loader.
 export default function WorkExplorePage() {
-  return <ExploreLandingLoader lane="work" fallback={WORK_EXPLORE_PATHS} />;
+  return <WorkLandingLoader />;
 }

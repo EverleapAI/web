@@ -58,12 +58,17 @@ export default function ExploreLayout({
 
   // The home (Summary) leads with the five "worlds" grid, which is itself the lane
   // picker — so the rail is redundant there ("travelling between worlds, not
-  // clicking tabs"). Keep the rail on interior lane pages for lateral hops.
-  const onHome = (pathname ?? "") === "/main/explore";
+  // clicking tabs"). The careers (work) experience owns its own "back to Explore"
+  // link, like the Insights sub-pages, so it hides the rail too. Other interior
+  // lane pages keep the rail for lateral hops.
+  const path = pathname ?? "";
+  const onHome = path === "/main/explore";
+  const onWork = path === "/main/explore/work";
+  const hideRail = onHome || onWork;
 
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-0.5">
-      {!onHome ? (
+      {!hideRail ? (
         <div className="mb-2 flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {LANES.map((lane) => {
             const active = isActive(pathname ?? "", lane.href, lane.exact);
