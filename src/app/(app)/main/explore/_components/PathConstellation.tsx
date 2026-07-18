@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
+import { DayDescent } from "./DayDescent";
 import {
   laneAccent,
   type AiImpact,
@@ -101,6 +102,7 @@ export function PathConstellation({
   const [active, setActive] = React.useState<StarId>("why");
   const [lit, setLit] = React.useState<Set<StarId>>(new Set(["why"]));
   const [creating, setCreating] = React.useState(false);
+  const [showDay, setShowDay] = React.useState(false);
 
   const open = (id: StarId) => {
     setActive(id);
@@ -256,9 +258,23 @@ export function PathConstellation({
             specialtyTitle={specialtyTitle}
             creating={creating}
             onStart={startMission}
+            onOpenDay={() => setShowDay(true)}
           />
         </div>
       </div>
+
+      {showDay ? (
+        <DayDescent
+          moments={moments}
+          specialtyTitle={specialtyTitle}
+          careerTitle={careerTitle}
+          accent={a}
+          creating={creating}
+          onClose={() => setShowDay(false)}
+          onStartMission={startMission}
+        />
+      ) : null}
+
       <style>{`@keyframes cRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
     </main>
   );
@@ -302,6 +318,7 @@ function StarPanel(props: {
   specialtyTitle: string;
   creating: boolean;
   onStart: () => void;
+  onOpenDay: () => void;
 }) {
   const { active, a } = props;
 
@@ -357,6 +374,18 @@ function StarPanel(props: {
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={props.onOpenDay}
+          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
+          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
+        >
+          <span className="min-w-0">
+            <span className="block text-label font-semibold text-white">Go deeper — walk the whole day</span>
+            <span className="mt-0.5 block text-meta text-white/60">Dawn to dusk, one moment at a time — then watch a real one.</span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
+        </button>
       </div>
     );
   }

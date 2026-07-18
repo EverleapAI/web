@@ -1,0 +1,216 @@
+// apps/web/src/app/(app)/main/explore/_components/DayDescent.tsx
+//
+// "A real day" gone deep (design-doc Concept 05 + the Concept 03 descent). A
+// full-screen, one-moment-at-a-time walk through a real day — each moment its own
+// VISUAL scene (a time-of-day atmosphere, not a text card), swiped like a story.
+// It ends on the honey doors: watch a real one, or turn it into a mission you go
+// do. "Step back up" always returns to the constellation — never bottomless.
+
+"use client";
+
+import * as React from "react";
+import { createPortal } from "react-dom";
+import { ArrowLeft, ArrowRight, ArrowUp, Loader2, Play, Wand2 } from "lucide-react";
+
+import type { RealityMoment } from "../_data/exploreSchema";
+
+const HONEY = "244, 192, 103";
+
+// Map a moment's time label to a scene: a sky gradient, a sun/moon disc position,
+// and whether it's day or night — so the descent feels like moving through hours.
+function scene(label: string | undefined): { sky: string; discTop: string; discColor: string; night: boolean; glow: string } {
+  const m = (label ?? "").match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  let hour = 12;
+  if (m) {
+    hour = parseInt(m[1], 10) % 12;
+    if (/pm/i.test(m[3])) hour += 12;
+  } else if (/night/i.test(label ?? "")) hour = 22;
+  else if (/evening|dusk/i.test(label ?? "")) hour = 19;
+  else if (/dawn|sunrise|early/i.test(label ?? "")) hour = 6;
+
+  if (hour < 5 || hour >= 21)
+    return { night: true, sky: "linear-gradient(180deg,#0a1030,#0a0f22 60%,#05070f)", discTop: "22%", discColor: "#cfd8ff", glow: "rgba(180,200,255,0.45)" };
+  if (hour < 8)
+    return { night: false, sky: "linear-gradient(180deg,#2a2140,#5a3a4e 45%,#c9764f 100%)", discTop: "58%", discColor: "#ffd9a0", glow: "rgba(255,180,120,0.6)" };
+  if (hour < 11)
+    return { night: false, sky: "linear-gradient(180deg,#173a5e,#2f6f9e 60%,#7fb0cf)", discTop: "30%", discColor: "#fff1c4", glow: "rgba(255,235,170,0.7)" };
+  if (hour < 15)
+    return { night: false, sky: "linear-gradient(180deg,#1d5a8a,#3a86c0 60%,#8fc0e0)", discTop: "20%", discColor: "#fff7d6", glow: "rgba(255,245,200,0.8)" };
+  if (hour < 18)
+    return { night: false, sky: "linear-gradient(180deg,#26466e,#8a6a4e 60%,#e0a05a)", discTop: "42%", discColor: "#ffe6a8", glow: "rgba(255,210,140,0.7)" };
+  return { night: false, sky: "linear-gradient(180deg,#241a3a,#6a3a54 50%,#d1704f)", discTop: "62%", discColor: "#ffcaa0", glow: "rgba(255,160,110,0.6)" };
+}
+
+export function DayDescent({
+  moments,
+  specialtyTitle,
+  careerTitle,
+  accent,
+  creating,
+  onClose,
+  onStartMission,
+}: {
+  moments: RealityMoment[];
+  specialtyTitle: string;
+  careerTitle: string;
+  accent: string;
+  creating: boolean;
+  onClose: () => void;
+  onStartMission: () => void;
+}) {
+  const total = moments.length + 1; // + the outro
+  const [i, setI] = React.useState(0);
+  const atOutro = i >= moments.length;
+  const m = atOutro ? null : moments[i];
+  const sc = scene(m?.timeLabel);
+
+  const go = React.useCallback(
+    (d: 1 | -1) => setI((n) => Math.max(0, Math.min(total - 1, n + d))),
+    [total]
+  );
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") go(1);
+      else if (e.key === "ArrowLeft") go(-1);
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go, onClose]);
+
+  const videoHref = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+    `day in the life ${careerTitle}`
+  )}`;
+
+  // Portal to <body> so the full-screen scene escapes the page's stacking context
+  // and covers the app's bottom nav (z-50) for true immersion.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
+      {/* Progress + step back up */}
+      <div className="relative z-10 flex items-center gap-3 px-4 pt-4 sm:px-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+          Step back up
+        </button>
+        <div className="flex flex-1 items-center gap-1.5">
+          {Array.from({ length: total }).map((_, k) => (
+            <span
+              key={k}
+              className="h-1 flex-1 rounded-full transition-colors"
+              style={{ background: k <= i ? `rgb(${accent})` : "rgba(255,255,255,0.14)" }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {atOutro ? (
+        /* Outro — the honey doors: watch a real one, or go do it. */
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-6">
+          <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${HONEY})` }}>
+            That&rsquo;s the day
+          </div>
+          <h2 className="text-title font-semibold leading-display tracking-title">
+            Now see it, or go do it.
+          </h2>
+          <p className="text-read leading-read text-white/72">
+            Reading about {specialtyTitle} isn&rsquo;t the same as being there. Watch a real one, or
+            turn it into a small thing you actually try this week.
+          </p>
+          <a
+            href={videoHref}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
+            style={{ borderColor: `rgba(${accent},0.5)`, background: `rgba(${accent},0.12)` }}
+          >
+            <span className="inline-flex items-center gap-2.5 font-semibold">
+              <Play className="h-5 w-5" /> See a real day on the job
+            </span>
+            <ArrowRight className="h-5 w-5 text-white/70" />
+          </a>
+          <button
+            type="button"
+            onClick={onStartMission}
+            disabled={creating}
+            className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3.5 font-semibold transition hover:brightness-105 disabled:opacity-70"
+            style={{ background: `linear-gradient(180deg,#ffdf9e,rgb(${HONEY}))`, color: "#1a1204" }}
+          >
+            <span className="inline-flex items-center gap-2.5">
+              <Wand2 className="h-5 w-5" /> Turn it into a mission — go try it
+            </span>
+            {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+          </button>
+          <button type="button" onClick={() => go(-1)} className="mt-1 text-meta text-white/45 transition hover:text-white/75">
+            ← back to the day
+          </button>
+        </div>
+      ) : (
+        /* A moment — a full visual scene. */
+        <div className="relative flex flex-1 flex-col overflow-hidden">
+          {/* Scene (image slot; falls back to a time-of-day atmosphere). */}
+          <div className="relative h-[44vh] shrink-0 overflow-hidden" style={{ background: sc.sky }}>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
+              style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
+            />
+            {sc.night ? (
+              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
+            ) : null}
+            {/* horizon */}
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
+            {/* tap zones */}
+            <button aria-label="Previous" type="button" onClick={() => go(-1)} className="absolute inset-y-0 left-0 w-1/3" />
+            <button aria-label="Next" type="button" onClick={() => go(1)} className="absolute inset-y-0 right-0 w-2/3" />
+            {m?.timeLabel ? (
+              <div className="pointer-events-none absolute left-6 top-6 text-label font-semibold tracking-title text-white/90 drop-shadow">
+                {m.timeLabel}
+              </div>
+            ) : null}
+          </div>
+
+          {/* The line */}
+          <div className="relative z-10 flex-1 overflow-y-auto bg-[#05070f] px-6 pb-6 pt-5">
+            <div className="mx-auto max-w-md">
+              <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${accent})` }}>
+                A day in {specialtyTitle} · {i + 1} of {moments.length}
+              </div>
+              <h2 className="mt-2 text-read font-semibold leading-read text-white">{m?.title}</h2>
+              <p className="mt-1.5 text-read leading-read text-white/78">{m?.body}</p>
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => go(-1)}
+                  disabled={i === 0}
+                  className="inline-flex items-center gap-1.5 text-meta text-white/55 transition hover:text-white disabled:opacity-30"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(1)}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-label font-semibold transition hover:brightness-110"
+                  style={{ borderColor: `rgba(${accent},0.5)`, background: `rgba(${accent},0.12)`, color: `rgb(${accent})` }}
+                >
+                  {i === moments.length - 1 ? "See the day out" : "Next moment"}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>,
+    document.body
+  );
+}
+
+export default DayDescent;
