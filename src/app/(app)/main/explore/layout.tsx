@@ -63,7 +63,9 @@ export default function ExploreLayout({
   // lane pages keep the rail for lateral hops.
   const path = pathname ?? "";
   const onHome = path === "/main/explore";
-  const onWork = path === "/main/explore/work";
+  // The whole careers experience (list, career page, deep sections) owns its own
+  // "back" navigation, so the rail is hidden across it.
+  const onWork = path === "/main/explore/work" || path.startsWith("/main/explore/work/");
   const hideRail = onHome || onWork;
 
   return (

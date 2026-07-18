@@ -17,14 +17,19 @@ import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
 import { laneAccent, type ExplorePath } from "../_data/exploreSchema";
 import { ExplorePathDetail } from "./ExplorePathDetail";
 import { ExploreAttribution } from "./ExploreAttribution";
+import { OnetFacts, type OnetDetail } from "./OnetFacts";
 import { SectionBody, getSectionMenu, type SectionKey } from "./detailSections";
 
 export function ExplorePathSection({
   path,
   section,
+  onet = null,
 }: {
   path: ExplorePath;
   section: SectionKey;
+  // Real O*NET occupation data — shown on the "Where it leads" section (it was
+  // moved off the small landing page).
+  onet?: OnetDetail | null;
 }) {
   const accent = laneAccent(path);
   const meta = getSectionMenu(path).find((m) => m.key === section);
@@ -55,8 +60,12 @@ export function ExplorePathSection({
 
       <SectionCard tone="neutral">
         <SectionBody path={path} section={section} accent={accent} />
-        <ExploreAttribution path={path} />
       </SectionCard>
+
+      {/* Real, source-grounded O*NET occupation data lives on "Where it leads". */}
+      {section === "outlook" && onet ? <OnetFacts onet={onet} accent={accent} /> : null}
+
+      <ExploreAttribution path={path} />
     </div>
   );
 }

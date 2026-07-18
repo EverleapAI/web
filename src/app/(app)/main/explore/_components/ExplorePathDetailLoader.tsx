@@ -172,7 +172,7 @@ export function ExplorePathDetailLoader({
 
   if (path) {
     return section ? (
-      <ExplorePathSection path={path} section={section} />
+      <ExplorePathSection path={path} section={section} onet={onet} />
     ) : (
       <ExplorePathDetail path={path} whyYou={whyYou} onet={onet} />
     );
