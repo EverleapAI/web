@@ -269,6 +269,7 @@ export function PathConstellation({
       {showDay ? (
         <DayDescent
           moments={moments}
+          pathSlug={path.slug}
           specialtyTitle={specialtyTitle}
           careerTitle={careerTitle}
           accent={a}

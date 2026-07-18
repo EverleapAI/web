@@ -43,6 +43,7 @@ function scene(label: string | undefined): { sky: string; discTop: string; discC
 
 export function DayDescent({
   moments,
+  pathSlug,
   specialtyTitle,
   careerTitle,
   accent,
@@ -51,6 +52,7 @@ export function DayDescent({
   onStartMission,
 }: {
   moments: RealityMoment[];
+  pathSlug: string;
   specialtyTitle: string;
   careerTitle: string;
   accent: string;
@@ -63,6 +65,10 @@ export function DayDescent({
   const atOutro = i >= moments.length;
   const m = atOutro ? null : moments[i];
   const sc = scene(m?.timeLabel);
+  const imgUrl = m
+    ? m.image ||
+      `/api/guidance/day-scene-image?path=${encodeURIComponent(pathSlug)}&moment=${encodeURIComponent(m.id)}`
+    : null;
 
   const go = React.useCallback(
     (d: 1 | -1) => setI((n) => Math.max(0, Math.min(total - 1, n + d))),
@@ -155,31 +161,32 @@ export function DayDescent({
       ) : (
         /* A moment — a full visual scene. */
         <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Scene: a real photo when the moment carries one, else a generated
-              time-of-day atmosphere. */}
+          {/* Scene: a real photo layered OVER a time-of-day atmosphere — the
+              atmosphere shows while the photo generates/loads, or if there's none. */}
           <div className="relative h-[44vh] shrink-0 overflow-hidden" style={{ background: sc.sky }}>
-            {m?.image ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
+              style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
+            />
+            {sc.night ? (
+              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
+            ) : null}
+            {imgUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={m.image}
+                key={imgUrl}
+                src={imgUrl}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700"
+                onLoad={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.opacity = "1";
+                }}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}
               />
-            ) : (
-              <>
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
-                  style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
-                />
-                {sc.night ? (
-                  <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
-                ) : null}
-              </>
-            )}
+            ) : null}
             {/* horizon */}
             <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
             {/* tap zones */}
