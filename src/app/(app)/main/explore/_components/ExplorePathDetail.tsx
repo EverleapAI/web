@@ -1,19 +1,18 @@
 // apps/web/src/app/(app)/main/explore/_components/ExplorePathDetail.tsx
 //
-// The SMALL career page (every lane's path landing). Deliberately compact and
-// readable — it answers one question, "is this me?", and then points DOWN. Three
-// things only: an agentic entry (why THIS path, for YOU), the achievements strip,
-// and the "why it's good for you" read. Then two doors: try it for real (a real-
-// world mission — the whole point) and "go deeper" into the path's constellation
-// of sections. The old wall (O*NET data dump, every section expanded) is gone —
-// that content now lives one level down, where the user has opted in.
+// The SMALL career page. Deliberately spare — it answers "is this me?" in a
+// breath, then hands off. Four things only: a SHORT agentic lead, the
+// achievements strip, a readable "why it's good for you" (fit signals, no wall of
+// bullets), and ONE door down — the specialties (each its own future
+// constellation of the real deep dives). No paragraph dumps, no O*NET wall (that
+// lives a level down), no duplicate CTAs. The real-world action lives inside the
+// path you choose, not here.
 
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronRight, Compass, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Compass, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
@@ -22,47 +21,75 @@ import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMete
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, rgba } from "./exploreUi";
-import { WhyFitsSection, getSectionMenu } from "./detailSections";
+import { getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
 import type { OnetDetail } from "./OnetFacts";
-import { emitActionsChanged } from "@/lib/actionsBus";
 import { CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
 
-function GoDeeper({ path, accent }: { path: ExplorePath; accent: Rgb }) {
-  const items = getSectionMenu(path);
-  if (!items.length) return null;
+// First sentence only — the sharpest line, not the whole read. Keeps the agentic
+// card a breath, not a wall.
+function leadLine(text: string): string {
+  const first = text.trim().split(/(?<=[.!?])\s+/)[0] ?? text.trim();
+  return first.length > 180 ? first.slice(0, 177).trimEnd() + "…" : first;
+}
+
+// The one door down: the path's specialties, each a future constellation of the
+// real deep dives. Falls back to the deepest single section for paths with no
+// specialties (so the door always leads somewhere real).
+function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
   const accentStr = `${accent.r}, ${accent.g}, ${accent.b}`;
+  const previews = path.branches?.previews ?? [];
+  const label = path.branches?.label
+    ? path.branches.label[0].toUpperCase() + path.branches.label.slice(1)
+    : "Paths";
+  const specialtiesHref = `/main/explore/${path.lane}/${path.slug}/specialties`;
+
+  const card = (href: string, title: string, sub: string, key: string) => (
+    <Link
+      key={key}
+      href={href}
+      className="group flex items-center gap-3 rounded-2xl border px-4 py-4 transition hover:brightness-110"
+      style={{ borderColor: `rgba(${accentStr},0.24)`, background: `rgba(${accentStr},0.06)` }}
+    >
+      <span className="min-w-0 flex-1">
+        <RowTitle className="block text-body">{title}</RowTitle>
+        {sub ? <RowMeta className="mt-1 block text-label leading-snug text-white/60">{sub}</RowMeta> : null}
+      </span>
+      <ChevronRight className="h-5 w-5 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:text-white/80" />
+    </Link>
+  );
+
+  let doors: React.ReactNode;
+  if (previews.length) {
+    doors = previews.slice(0, 5).map((b) => card(specialtiesHref, b.title, b.oneLiner ?? "", b.id));
+  } else {
+    const menu = getSectionMenu(path);
+    if (!menu.length) return null;
+    doors = card(
+      `/main/explore/${path.lane}/${path.slug}/${menu[0].key}`,
+      `Go deeper into ${path.overview?.title ?? path.card.title}`,
+      "The real day, where it leads, and ways to actually try it.",
+      "deeper"
+    );
+  }
+
   return (
     <SectionCard tone="neutral">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-1.5 flex items-center gap-2.5">
         <span
-          className="flex h-7 w-7 items-center justify-center rounded-control"
+          className="flex h-8 w-8 items-center justify-center rounded-control"
           style={{ background: rgba(accent, 0.14), color: rgba(accent, 0.98) }}
         >
-          <Compass className="h-4 w-4" />
+          <Compass className="h-[18px] w-[18px]" />
         </span>
-        <CardTitle as="h2">Go deeper</CardTitle>
+        <CardTitle as="h2">{previews.length ? `Explore the ${label.toLowerCase()}` : "Go deeper"}</CardTitle>
       </div>
-      <p className="mb-3 text-meta leading-read text-white/55">
-        The real day, where it leads, and ways to actually try it — each its own place to explore.
+      <p className="mb-3.5 text-label leading-read text-white/64">
+        {previews.length
+          ? "Pick a direction to go deep — a real day, where it leads, and real ways to try it."
+          : "Go deeper — the real day, where it leads, and real ways to try it."}
       </p>
-      <div className="space-y-2">
-        {items.map((s) => (
-          <Link
-            key={s.key}
-            href={`/main/explore/${path.lane}/${path.slug}/${s.key}`}
-            className="group flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
-            style={{ borderColor: `rgba(${accentStr},0.2)`, background: `rgba(${accentStr},0.06)` }}
-          >
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: rgba(accent, 0.9) }} />
-            <span className="min-w-0 flex-1">
-              <RowTitle className="block">{s.title}</RowTitle>
-              <RowMeta className="mt-0.5 block truncate">{s.teaser}</RowMeta>
-            </span>
-            <ChevronRight className="h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
-          </Link>
-        ))}
-      </div>
+      <div className="space-y-2.5">{doors}</div>
     </SectionCard>
   );
 }
@@ -73,59 +100,19 @@ export function ExplorePathDetail({
   onet = null,
 }: {
   path: ExplorePath;
-  // The user's personalized "why this fits you" from the Work match layer, if
-  // any — the heart of this page's read. Catalog content fills the rest.
   whyYou?: string | null;
-  // O*NET facts now render one level down (the "Where it leads" section), not on
-  // this landing — kept in the signature for the loader's call shape.
   onet?: OnetDetail | null;
 }) {
-  void onet;
+  void onet; // O*NET facts render one level down (the "Where it leads" section).
   const accent = laneAccent(path);
   const accentStr = `${accent.r}, ${accent.g}, ${accent.b}`;
   const ov = path.overview;
   const payMedian = path.trajectory?.salaryBand?.median;
   const laneLabel = path.lane[0].toUpperCase() + path.lane.slice(1);
-  const hasWhyFits = Boolean(ov?.fitSignals?.length || ov?.whyItPullsYouIn?.length);
   const title = ov?.title ?? path.card.title;
+  const lead = leadLine(whyYou || ov?.hook || "");
+  const fitSignals = (ov?.fitSignals ?? []).slice(0, 3);
   const badges = useBadgeStats();
-
-  const router = useRouter();
-  const [creating, setCreating] = React.useState(false);
-
-  // Turn a path you're curious about straight into a runnable mission — the
-  // real-world action this whole page exists to drive.
-  const startMission = async () => {
-    if (creating) return;
-    setCreating(true);
-    const returnTo =
-      typeof window !== "undefined" ? window.location.pathname + window.location.search : "";
-    try {
-      const res = await fetch("/api/guidance/actions", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          sourceType: "explore_path",
-          sourceRef: `${path.lane}:${path.slug}`,
-          lane: path.lane,
-          title: `Explore ${title}`,
-          description: `Get a first-hand feel for what ${title} is really like — from the inside.`,
-        }),
-      });
-      const d = await res.json().catch(() => null);
-      if (d?.ok && d.action?.id) {
-        emitActionsChanged();
-        router.push(
-          `/main/actions/${d.action.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`
-        );
-      } else {
-        setCreating(false);
-      }
-    } catch {
-      setCreating(false);
-    }
-  };
 
   return (
     <div className="space-y-4 pb-24">
@@ -137,7 +124,7 @@ export function ExplorePathDetail({
         <span>Back to {laneLabel}</span>
       </Link>
 
-      {/* Agentic entry — why THIS path, for YOU, in one read. */}
+      {/* Agentic entry — one sharp line, not a paragraph. */}
       <SectionCard tone="hero" voice backdrop={<ConstellationAnchor seed={path.id} accent={accent} />}>
         <div className="relative max-w-2xl">
           <AgenticHeader
@@ -155,25 +142,21 @@ export function ExplorePathDetail({
           <h1 className="mt-1 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-display">
             {title}
           </h1>
-          {whyYou ? (
-            <p className="mt-3 text-read leading-read text-white/82">{whyYou}</p>
-          ) : ov?.hook ? (
-            <p className="mt-3 text-read leading-read text-white/82">{ov.hook}</p>
-          ) : null}
+          {lead ? <p className="mt-3 text-read leading-read text-white/82">{lead}</p> : null}
 
           {ov?.traitChips?.length || payMedian ? (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              {(ov?.traitChips ?? []).slice(0, 4).map((c) => (
+              {(ov?.traitChips ?? []).slice(0, 3).map((c) => (
                 <span
                   key={c.id}
-                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-meta text-white/78"
+                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-label text-white/80"
                 >
                   {c.label}
                 </span>
               ))}
               {payMedian ? (
                 <span
-                  className="rounded-full px-3 py-1 text-meta font-medium"
+                  className="rounded-full px-3 py-1 text-label font-medium"
                   style={{ backgroundColor: `rgba(${accentStr},0.14)`, color: `rgba(${accentStr},0.95)` }}
                 >
                   Typically {payMedian}
@@ -187,47 +170,31 @@ export function ExplorePathDetail({
       {/* Achievements — the trophies strip into Awards. */}
       <AwardsMeter stats={badges} />
 
-      {/* Why it's good for you — the fit read (signals + what pulls people in). */}
-      {hasWhyFits ? (
+      {/* Why it's good for you — the fit, readable, no wall of bullets. */}
+      {fitSignals.length ? (
         <SectionCard tone="neutral">
           <CardTitle as="h2">Why it&rsquo;s good for you</CardTitle>
-          <div className="mt-3">
-            <WhyFitsSection path={path} accent={accent} />
+          <div className="mt-4 space-y-4">
+            {fitSignals.map((s) => (
+              <div key={s.id}>
+                <div className="text-read leading-snug text-white/88">{s.label}</div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.max(8, Math.min(100, s.score))}%`,
+                      background: `linear-gradient(90deg, rgba(${accentStr},0.95), rgba(${accentStr},0.5))`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </SectionCard>
       ) : null}
 
-      {/* The real-world door — turn it into a mission you actually go do. */}
-      <button
-        type="button"
-        onClick={startMission}
-        disabled={creating}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110 disabled:opacity-70"
-        style={{ borderColor: `rgba(${accentStr},0.5)`, background: `linear-gradient(180deg, rgba(${accentStr},0.20), rgba(${accentStr},0.10))` }}
-      >
-        <span className="flex min-w-0 items-center gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `rgba(${accentStr},0.24)`, color: "#fff" }}
-          >
-            <Wand2 className="h-[18px] w-[18px]" />
-          </span>
-          <span className="min-w-0">
-            <RowTitle className="block">Try this for real</RowTitle>
-            <RowMeta className="mt-0.5 block">
-              Turn it into a mission — a few concrete steps to actually go explore it.
-            </RowMeta>
-          </span>
-        </span>
-        {creating ? (
-          <Loader2 className="h-5 w-5 shrink-0 animate-spin text-white/85" />
-        ) : (
-          <ArrowRight className="h-5 w-5 shrink-0 text-white/85" />
-        )}
-      </button>
-
-      {/* The door down — into the path's deeper sections (the constellation). */}
-      <GoDeeper path={path} accent={accent} />
+      {/* The one door down — the specialties (each a future constellation). */}
+      <PathsDown path={path} accent={accent} />
 
       {/* Source citations + required O*NET/DOL attribution */}
       <ExploreAttribution path={path} />
