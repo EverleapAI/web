@@ -26,6 +26,36 @@ import { ExploreAttribution } from "./ExploreAttribution";
 import type { OnetDetail } from "./OnetFacts";
 import { CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
 
+// A small night-sky palette so each specialty reads as its own world, not a row
+// in a list.
+const SPECIALTY_ACCENTS = ["96, 176, 255", "167, 139, 250", "52, 211, 153", "245, 176, 90", "244, 132, 176"];
+
+// The universal spine every specialty's constellation opens into — previewed on
+// the card as the anticipatory "what's inside".
+const INSIDE_STARS = ["A real day", "Where it leads", "Try it near you"];
+
+function accentCard(a: string): React.CSSProperties {
+  return {
+    borderColor: `rgba(${a},0.30)`,
+    background: `radial-gradient(220px 130px at 92% -10%, rgba(${a},0.18), transparent 70%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), rgba(9,13,24,0.72)`,
+    boxShadow: `inset 0 0 0 1px rgba(${a},0.06), 0 14px 34px rgba(0,0,0,0.35)`,
+  };
+}
+
+// A tiny constellation glyph — the hint that a whole world of exploration waits
+// inside each specialty (not a dead bullet).
+function MiniConstellation({ a }: { a: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className="h-full w-full" aria-hidden>
+      <line x1="9" y1="11" x2="20" y2="17" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
+      <line x1="20" y1="17" x2="27" y2="27" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
+      <circle cx="9" cy="11" r="2.2" fill={`rgba(${a},0.9)`} />
+      <circle cx="20" cy="17" r="1.6" fill={`rgba(${a},0.8)`} />
+      <circle cx="27" cy="27" r="2.9" fill={`rgb(${a})`} style={{ filter: `drop-shadow(0 0 4px rgb(${a}))` }} />
+    </svg>
+  );
+}
+
 // First sentence only — the sharpest line, not the whole read. Keeps the agentic
 // card a breath, not a wall.
 function leadLine(text: string): string {
@@ -37,44 +67,80 @@ function leadLine(text: string): string {
 // real deep dives. Falls back to the deepest single section for paths with no
 // specialties (so the door always leads somewhere real).
 function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
-  const accentStr = `${accent.r}, ${accent.g}, ${accent.b}`;
+  const laneAccentStr = `${accent.r}, ${accent.g}, ${accent.b}`;
   const previews = path.branches?.previews ?? [];
   const label = path.branches?.label
     ? path.branches.label[0].toUpperCase() + path.branches.label.slice(1)
     : "Paths";
   const specialtiesHref = `/main/explore/${path.lane}/${path.slug}/specialties`;
 
-  const card = (href: string, title: string, sub: string, key: string) => (
+  // A specialty "world" — its own accent, a mini-constellation, and a preview of
+  // the stars you'll get to light up inside.
+  const worldCard = (href: string, title: string, sub: string, key: string, a: string) => (
     <Link
       key={key}
       href={href}
-      className="group flex items-center gap-3 rounded-2xl border px-4 py-4 transition hover:brightness-110"
-      style={{ borderColor: `rgba(${accentStr},0.24)`, background: `rgba(${accentStr},0.06)` }}
+      className="group relative block overflow-hidden rounded-2xl border px-4 py-4 transition duration-200 hover:-translate-y-0.5 hover:brightness-110"
+      style={accentCard(a)}
     >
-      <span className="min-w-0 flex-1">
-        <RowTitle className="block text-body">{title}</RowTitle>
-        {sub ? <RowMeta className="mt-1 block text-label leading-snug text-white/60">{sub}</RowMeta> : null}
-      </span>
-      <ChevronRight className="h-5 w-5 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:text-white/80" />
+      <div className="flex items-start gap-3.5">
+        <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: `rgba(${a},0.14)` }}>
+          <span className="h-6 w-6"><MiniConstellation a={a} /></span>
+        </span>
+        <span className="min-w-0 flex-1">
+          <RowTitle className="block text-body">{title}</RowTitle>
+          {sub ? <RowMeta className="mt-1 block text-label leading-snug text-white/62">{sub}</RowMeta> : null}
+          <span className="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/35">Inside</span>
+            {INSIDE_STARS.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1 text-micro font-medium" style={{ color: `rgba(${a},0.92)` }}>
+                <span aria-hidden>✦</span>
+                {s}
+              </span>
+            ))}
+          </span>
+        </span>
+        <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-white/45 transition group-hover:translate-x-0.5 group-hover:text-white/85" />
+      </div>
     </Link>
   );
 
-  let doors: React.ReactNode;
-  if (previews.length) {
-    doors = previews.slice(0, 5).map((b) => card(specialtiesHref, b.title, b.oneLiner ?? "", b.id));
-  } else {
+  if (!previews.length) {
     const menu = getSectionMenu(path);
     if (!menu.length) return null;
-    doors = card(
-      `/main/explore/${path.lane}/${path.slug}/${menu[0].key}`,
-      `Go deeper into ${path.overview?.title ?? path.card.title}`,
-      "The real day, where it leads, and ways to actually try it.",
-      "deeper"
+    return (
+      <SectionCard tone="neutral">
+        <SpecialtiesHeader accent={accent} label="Go deeper" subtitle="The real day, where it leads, and real ways to try it — each its own place to explore." />
+        {worldCard(
+          `/main/explore/${path.lane}/${path.slug}/${menu[0].key}`,
+          `Go deeper into ${path.overview?.title ?? path.card.title}`,
+          "",
+          "deeper",
+          laneAccentStr
+        )}
+      </SectionCard>
     );
   }
 
   return (
     <SectionCard tone="neutral">
+      <SpecialtiesHeader
+        accent={accent}
+        label={`Explore the ${label.toLowerCase()}`}
+        subtitle={`${previews.length} directions inside — tap one and it opens into its own constellation to explore.`}
+      />
+      <div className="space-y-3">
+        {previews.slice(0, 6).map((b, i) =>
+          worldCard(specialtiesHref, b.title, b.oneLiner ?? "", b.id, SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length])
+        )}
+      </div>
+    </SectionCard>
+  );
+}
+
+function SpecialtiesHeader({ accent, label, subtitle }: { accent: Rgb; label: string; subtitle: string }) {
+  return (
+    <>
       <div className="mb-1.5 flex items-center gap-2.5">
         <span
           className="flex h-8 w-8 items-center justify-center rounded-control"
@@ -82,15 +148,10 @@ function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
         >
           <Compass className="h-[18px] w-[18px]" />
         </span>
-        <CardTitle as="h2">{previews.length ? `Explore the ${label.toLowerCase()}` : "Go deeper"}</CardTitle>
+        <CardTitle as="h2">{label}</CardTitle>
       </div>
-      <p className="mb-3.5 text-label leading-read text-white/64">
-        {previews.length
-          ? "Pick a direction to go deep — a real day, where it leads, and real ways to try it."
-          : "Go deeper — the real day, where it leads, and real ways to try it."}
-      </p>
-      <div className="space-y-2.5">{doors}</div>
-    </SectionCard>
+      <p className="mb-3.5 text-label leading-read text-white/64">{subtitle}</p>
+    </>
   );
 }
 
