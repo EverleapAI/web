@@ -27,6 +27,30 @@ function bucket(mode?: string): keyof typeof MODE {
   return mode && mode in MODE ? (mode as keyof typeof MODE) : "remote";
 }
 
+function renderOpp(o: Opportunity, rgb: string) {
+  return (
+    <a
+      key={o.id}
+      href={o.href}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
+      style={{ borderColor: `rgba(${rgb},0.2)`, background: `rgba(${rgb},0.05)` }}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="text-label font-semibold text-white">{o.title}</span>
+        {o.note ? (
+          <span className="mt-0.5 block text-meta leading-read text-white/62">
+            {o.note}
+            {o.provider ? ` · ${o.provider}` : ""}
+          </span>
+        ) : null}
+      </span>
+      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
+    </a>
+  );
+}
+
 export function NearDescent({
   opps,
   specialtyTitle,
@@ -50,8 +74,27 @@ export function NearDescent({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Group into Near you / Online / Virtual in a sensible order.
-  const order: (keyof typeof MODE)[] = ["local", "remote", "virtual", "hybrid", "travel"];
+  // The user's zip makes "near you" real — location-scoped searches for actual
+  // local firms, programs, and meetups.
+  const [zip, setZip] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    fetch("/api/me", { credentials: "include", cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { user?: { zip_code?: string | null } }) => setZip(d?.user?.zip_code ?? null))
+      .catch(() => {});
+  }, []);
+  const search = (q: string) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+  const localDoors: Opportunity[] = zip
+    ? [
+        { id: "z1", title: `${specialtyTitle} firms & employers near you`, note: "See who does this work in your area — a real place to email or visit", href: search(`${specialtyTitle} firm OR employer near ${zip}`), mode: "local" },
+        { id: "z2", title: "Programs, camps & classes near you", note: "Hands-on ways to try it close to home", href: search(`${specialtyTitle} summer program OR camp OR class near ${zip}`), mode: "local" },
+        { id: "z3", title: "Meetups & events near you", note: "Find people who do this, gathering nearby", href: `https://www.meetup.com/find/?keywords=${encodeURIComponent(specialtyTitle)}&location=us--${encodeURIComponent(zip)}`, mode: "local" },
+      ]
+    : [];
+
+  // "Near you" gets its own treatment (zip-aware); the rest group normally.
+  const nearItems = [...localDoors, ...opps.filter((o) => bucket(o.mode) === "local")];
+  const order: (keyof typeof MODE)[] = ["remote", "virtual", "hybrid", "travel"];
   const groups = order
     .map((k) => ({ k, items: opps.filter((o) => bucket(o.mode) === k) }))
     .filter((g) => g.items.length);
@@ -86,51 +129,43 @@ export function NearDescent({
           {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
         </button>
 
-        {groups.length ? (
-          groups.map((g) => {
-            const meta = MODE[g.k];
-            return (
-              <div key={g.k} className="mt-6">
-                <div className="mb-2.5 flex items-center gap-2">
-                  <span className="grid h-6 w-6 place-items-center rounded-control" style={{ background: `rgba(${meta.rgb},0.14)`, color: `rgb(${meta.rgb})` }}>
-                    <meta.Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${meta.rgb},0.9)` }}>
-                    {meta.label}
-                    {g.k === "local" ? " · add your zip for real local spots" : ""}
-                  </div>
-                </div>
-                <div className="space-y-2.5">
-                  {g.items.map((o) => (
-                    <a
-                      key={o.id}
-                      href={o.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
-                      style={{ borderColor: `rgba(${meta.rgb},0.2)`, background: `rgba(${meta.rgb},0.05)` }}
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="text-label font-semibold text-white">{o.title}</span>
-                        {o.note ? (
-                          <span className="mt-0.5 block text-meta leading-read text-white/62">
-                            {o.note}
-                            {o.provider ? ` · ${o.provider}` : ""}
-                          </span>
-                        ) : null}
-                      </span>
-                      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
-                    </a>
-                  ))}
-                </div>
+        {/* Near you — the prime-directive group, made real by the user's zip. */}
+        <div className="mt-6">
+          <div className="mb-2.5 flex items-center gap-2">
+            <span className="grid h-6 w-6 place-items-center rounded-control" style={{ background: `rgba(${MODE.local.rgb},0.14)`, color: `rgb(${MODE.local.rgb})` }}>
+              <MapPin className="h-3.5 w-3.5" />
+            </span>
+            <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${MODE.local.rgb},0.9)` }}>
+              Near you{zip ? ` · ${zip}` : ""}
+            </div>
+          </div>
+          {!zip ? (
+            <a href="/main/profile/edit" className="mb-2.5 flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110" style={{ borderColor: `rgba(${MODE.local.rgb},0.35)`, background: `rgba(${MODE.local.rgb},0.08)` }}>
+              <span className="text-label font-semibold" style={{ color: `rgb(${MODE.local.rgb})` }}>Add your zip → see real local firms, programs & meetups</span>
+              <ArrowRight className="h-4 w-4 shrink-0" style={{ color: `rgb(${MODE.local.rgb})` }} />
+            </a>
+          ) : null}
+          {nearItems.length ? (
+            <div className="space-y-2.5">
+              {nearItems.map((o) => renderOpp(o, MODE.local.rgb))}
+            </div>
+          ) : null}
+        </div>
+
+        {groups.map((g) => {
+          const meta = MODE[g.k];
+          return (
+            <div key={g.k} className="mt-6">
+              <div className="mb-2.5 flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded-control" style={{ background: `rgba(${meta.rgb},0.14)`, color: `rgb(${meta.rgb})` }}>
+                  <meta.Icon className="h-3.5 w-3.5" />
+                </span>
+                <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${meta.rgb},0.9)` }}>{meta.label}</div>
               </div>
-            );
-          })
-        ) : (
-          <p className="mt-6 text-label leading-read text-white/60">
-            No listed spots yet — start with the mission above and find one real thing to try this week.
-          </p>
-        )}
+              <div className="space-y-2.5">{g.items.map((o) => renderOpp(o, meta.rgb))}</div>
+            </div>
+          );
+        })}
 
         <p className="mt-8 text-center text-meta text-white/40" style={{ color: `rgba(${accent},0.6)` }}>
           Going and doing beats reading, every time.
