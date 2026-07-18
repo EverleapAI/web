@@ -75,6 +75,9 @@ export type RealityMoment = {
   timeLabel?: string;
   title: string;
   body: string;
+  /** Optional scene photo for the immersive day descent. When absent, the descent
+   *  falls back to a generated time-of-day atmosphere. */
+  image?: string;
 };
 
 export type PathReality = {

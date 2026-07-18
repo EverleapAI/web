@@ -26,6 +26,7 @@ import {
 
 import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { DayDescent } from "./DayDescent";
+import { LeadsDescent } from "./LeadsDescent";
 import {
   laneAccent,
   type AiImpact,
@@ -103,6 +104,7 @@ export function PathConstellation({
   const [lit, setLit] = React.useState<Set<StarId>>(new Set(["why"]));
   const [creating, setCreating] = React.useState(false);
   const [showDay, setShowDay] = React.useState(false);
+  const [showLeads, setShowLeads] = React.useState(false);
 
   const open = (id: StarId) => {
     setActive(id);
@@ -259,6 +261,7 @@ export function PathConstellation({
             creating={creating}
             onStart={startMission}
             onOpenDay={() => setShowDay(true)}
+            onOpenLeads={() => setShowLeads(true)}
           />
         </div>
       </div>
@@ -271,6 +274,22 @@ export function PathConstellation({
           accent={a}
           creating={creating}
           onClose={() => setShowDay(false)}
+          onStartMission={startMission}
+        />
+      ) : null}
+
+      {showLeads ? (
+        <LeadsDescent
+          salary={salary}
+          outlookLabel={path.trajectory?.outlookLabel}
+          outlookSummary={path.trajectory?.outlookSummary}
+          growing={growing}
+          pressure={pressure}
+          ai={ai}
+          specialtyTitle={specialtyTitle}
+          accent={a}
+          creating={creating}
+          onClose={() => setShowLeads(false)}
           onStartMission={startMission}
         />
       ) : null}
@@ -319,6 +338,7 @@ function StarPanel(props: {
   creating: boolean;
   onStart: () => void;
   onOpenDay: () => void;
+  onOpenLeads: () => void;
 }) {
   const { active, a } = props;
 
@@ -429,6 +449,18 @@ function StarPanel(props: {
             </div>
           ) : null}
         </div>
+        <button
+          type="button"
+          onClick={props.onOpenLeads}
+          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
+          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
+        >
+          <span className="min-w-0">
+            <span className="block text-label font-semibold text-white">Go deeper — the whole picture</span>
+            <span className="mt-0.5 block text-meta text-white/60">Pay, the outlook, and whether AI takes it — one question at a time.</span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
+        </button>
       </div>
     );
   }

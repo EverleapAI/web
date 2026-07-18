@@ -155,16 +155,31 @@ export function DayDescent({
       ) : (
         /* A moment — a full visual scene. */
         <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Scene (image slot; falls back to a time-of-day atmosphere). */}
+          {/* Scene: a real photo when the moment carries one, else a generated
+              time-of-day atmosphere. */}
           <div className="relative h-[44vh] shrink-0 overflow-hidden" style={{ background: sc.sky }}>
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
-              style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
-            />
-            {sc.night ? (
-              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
-            ) : null}
+            {m?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={m.image}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
+                  style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
+                />
+                {sc.night ? (
+                  <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
+                ) : null}
+              </>
+            )}
             {/* horizon */}
             <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
             {/* tap zones */}
