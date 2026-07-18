@@ -12,7 +12,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, Compass, Sparkles } from "lucide-react";
+import { ArrowLeft, ChevronRight, Compass, Fingerprint, Sparkles } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { ConstellationAnchor } from "../../components/ui/ConstellationAnchor";
@@ -56,11 +56,13 @@ function MiniConstellation({ a }: { a: string }) {
   );
 }
 
-// First sentence only — the sharpest line, not the whole read. Keeps the agentic
-// card a breath, not a wall.
+// The first two sentences — enough to feel warm and personal, still far short of
+// the full paragraph wall.
 function leadLine(text: string): string {
-  const first = text.trim().split(/(?<=[.!?])\s+/)[0] ?? text.trim();
-  return first.length > 180 ? first.slice(0, 177).trimEnd() + "…" : first;
+  const parts = text.trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+  let out = parts.slice(0, 2).join(" ").trim() || text.trim();
+  if (out.length > 260) out = out.slice(0, 257).trimEnd() + "…";
+  return out;
 }
 
 // The one door down: the path's specialties, each a future constellation of the
@@ -109,7 +111,7 @@ function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
     const menu = getSectionMenu(path);
     if (!menu.length) return null;
     return (
-      <SectionCard tone="neutral">
+      <SectionCard tone="neutral" backdrop={<ConstellationAnchor seed={`${path.id}:paths`} accent={accent} />}>
         <SpecialtiesHeader accent={accent} label="Go deeper" subtitle="The real day, where it leads, and real ways to try it — each its own place to explore." />
         {worldCard(
           `/main/explore/${path.lane}/${path.slug}/${menu[0].key}`,
@@ -123,7 +125,7 @@ function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
   }
 
   return (
-    <SectionCard tone="neutral">
+    <SectionCard tone="neutral" backdrop={<ConstellationAnchor seed={`${path.id}:paths`} accent={accent} />}>
       <SpecialtiesHeader
         accent={accent}
         label={`Explore the ${label.toLowerCase()}`}
@@ -185,8 +187,9 @@ export function ExplorePathDetail({
         <span>Back to {laneLabel}</span>
       </Link>
 
-      {/* Agentic entry — one sharp line, not a paragraph. */}
-      <SectionCard tone="hero" voice backdrop={<ConstellationAnchor seed={path.id} accent={accent} />}>
+      {/* Agentic entry — clean and very readable: no constellation noise behind
+          the text (that motif lives on the specialties, below). */}
+      <SectionCard tone="hero" voice>
         <div className="relative max-w-2xl">
           <AgenticHeader
             glyph={
@@ -231,25 +234,55 @@ export function ExplorePathDetail({
       {/* Achievements — the trophies strip into Awards. */}
       <AwardsMeter stats={badges} />
 
-      {/* Why it's good for you — the fit, readable, no wall of bullets. */}
+      {/* Why it's good for you — a titled section with a creative anchor, and each
+          fit signal a living card with a glowing "match strength" meter. */}
       {fitSignals.length ? (
         <SectionCard tone="neutral">
-          <CardTitle as="h2">Why it&rsquo;s good for you</CardTitle>
-          <div className="mt-4 space-y-4">
-            {fitSignals.map((s) => (
-              <div key={s.id}>
-                <div className="text-read leading-snug text-white/88">{s.label}</div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.08]">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-control"
+              style={{ background: `rgba(${accentStr},0.14)`, color: `rgba(${accentStr},0.98)` }}
+            >
+              <Fingerprint className="h-[18px] w-[18px]" />
+            </span>
+            <CardTitle as="h2">Why it&rsquo;s good for you</CardTitle>
+          </div>
+          <div className="space-y-3">
+            {fitSignals.map((s) => {
+              const filled = Math.max(1, Math.min(5, Math.round(s.score / 20)));
+              return (
+                <div
+                  key={s.id}
+                  className="rounded-2xl border px-4 py-3.5"
+                  style={{ borderColor: `rgba(${accentStr},0.18)`, background: `rgba(${accentStr},0.05)` }}
+                >
+                  <RowTitle className="block text-white/90">{s.label}</RowTitle>
                   <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.max(8, Math.min(100, s.score))}%`,
-                      background: `linear-gradient(90deg, rgba(${accentStr},0.95), rgba(${accentStr},0.5))`,
-                    }}
-                  />
+                    className="mt-2.5 flex items-center gap-1"
+                    aria-label={`How strongly this fits you: ${filled} of 5`}
+                  >
+                    {[0, 1, 2, 3, 4].map((i) => {
+                      const on = i < filled;
+                      return (
+                        <svg
+                          key={i}
+                          viewBox="0 0 24 24"
+                          className="h-[15px] w-[15px]"
+                          fill="currentColor"
+                          aria-hidden
+                          style={{
+                            color: on ? `rgb(${accentStr})` : "rgba(255,255,255,0.13)",
+                            filter: on ? `drop-shadow(0 0 3px rgba(${accentStr},0.65))` : "none",
+                          }}
+                        >
+                          <path d="M12 2l2.4 6.9L21.5 9l-5.5 4.7L17.8 21 12 16.9 6.2 21l1.8-7.3L2.5 9l7.1-.1z" />
+                        </svg>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </SectionCard>
       ) : null}
