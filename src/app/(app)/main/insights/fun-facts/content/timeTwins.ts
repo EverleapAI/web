@@ -62,6 +62,10 @@ export type TimeTwinHeroPattern =
 export type TimeTwin = {
   id: string;
 
+  /** Stable library slug (time_twin_figures.slug), when this twin came from the
+   *  generated library — used to key reactions the same way the matcher reasons. */
+  figureSlug?: string;
+
   name: string;
   era: string;
   tagline: string;

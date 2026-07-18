@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Clock3, Sparkles } from "lucide-react";
+import { Clock3, Sparkles, ArrowRight } from "lucide-react";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 import AgenticDetailModal from "@/components/ui/AgenticDetailModal";
-import { CardTitle, RowMeta } from "@/lib/ui/card";
+import { CardTitle } from "@/lib/ui/card";
 import { LINK_CLASS, LINK_SIZE, PROSE_CLASS, PROSE_SIZE, PROSE_STYLE, TEXT_SECONDARY } from "@/lib/ui/prose";
 import { sectionCard } from "./sections/summaryShared";
 import { SectionCard } from "../../components/ui/SectionCard";
@@ -66,6 +66,10 @@ type FunFactsFeedPayload = {
 // category-specific) — the Story page serves the next unanswered one.
 const STORY_HREF =
   "/main/story?returnTo=" + encodeURIComponent("/main/insights?tab=funFacts");
+
+// A real library portrait used as the callout's TEASER image (unnamed) when the
+// user's own Time Twin isn't built yet — so the premium card always shows a face.
+const SAMPLE_TWIN_SLUG = "ada-lovelace";
 
 /* =============================================================================
    Helpers
@@ -240,11 +244,11 @@ export default function FunFactsTab(props: FunFactsTabProps) {
   }, []);
 
   const twinImageUrl = figureImageUrl(timeTwinPayload?.primary?.imageSlug);
-
-  const timeTwinTeaser =
-    timeTwinPayload?.primary?.name && timeTwinPayload?.primary?.tagline
-      ? `Right now: ${timeTwinPayload.primary.name} — ${timeTwinPayload.primary.tagline}`
-      : "A biography-style mirror — a mind from another era that rhymes with yours.";
+  // Own portrait once the twin is built; otherwise a sample so the premium
+  // callout always shows a real face.
+  const portraitUrl = twinImageUrl || figureImageUrl(SAMPLE_TWIN_SLUG);
+  const [portraitFailed, setPortraitFailed] = React.useState(false);
+  React.useEffect(() => setPortraitFailed(false), [portraitUrl]);
 
   // Agentic entry (one paragraph), in Fun Facts' fuchsia voice.
   const who = cleanOneLine(nameFromHeadline ?? "");
@@ -293,64 +297,68 @@ export default function FunFactsTab(props: FunFactsTabProps) {
         <InsightsUnlockCTA variant="funfacts" dark={dark} href={STORY_HREF} />
       ) : null}
 
-      {/* Time Twin — hero card, on Today's card surface (accent lives only in the
-          portrait ring + the "Featured" pill, never on the shell). */}
+      {/* Time Twin — the premium feature, given a bigger, colourful callout: a
+          framed REAL portrait (deliberately unnamed — the reveal is inside), with
+          a violet accent border, halo and gradient, matching the updated card
+          family. It should read as the standout on the page. */}
       <button
         type="button"
         onClick={() => router.push("/main/insights/fun-facts/time-twin")}
-        className={[
-          sectionCard(dark),
-          "w-full text-left px-4 py-4 md:px-5 md:py-5",
-          "transition hover:brightness-110 active:scale-[0.99]",
-        ].join(" ")}
+        className="group relative w-full overflow-hidden rounded-card border p-5 text-left transition hover:brightness-110 active:scale-[0.99]"
+        style={{
+          borderColor: "rgba(167,139,250,0.45)",
+          background:
+            "linear-gradient(180deg, rgba(167,139,250,0.14), rgba(255,255,255,0.02)), linear-gradient(180deg, rgb(14,18,31) 0%, rgb(8,12,26) 60%, rgb(4,8,20) 100%)",
+          boxShadow: "inset 0 0 0 1px rgba(167,139,250,0.10), 0 18px 46px rgba(0,0,0,0.42)",
+        }}
       >
-        <div className="relative flex items-start gap-3">
-          {twinImageUrl ? (
-            <img
-              src={twinImageUrl}
-              alt={timeTwinPayload?.primary?.name ? `Portrait of ${timeTwinPayload.primary.name}` : "Time Twin portrait"}
-              className={[
-                "mt-0.5 h-11 w-11 flex-shrink-0 rounded-full border object-cover",
-                dark ? "border-white/12" : "border-black/10",
-              ].join(" ")}
-            />
-          ) : (
-            <div
-              className={[
-                "mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border",
-                dark ? "border-white/10 bg-white/6" : "border-black/10 bg-white",
-              ].join(" ")}
-              aria-hidden
-            >
-              <Clock3 className={["h-5 w-5", dark ? "text-violet-200/85" : "text-violet-700/80"].join(" ")} />
-            </div>
-          )}
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <CardTitle as="span">Time Twin</CardTitle>
-              <span
-                className={[
-                  "rounded-full px-2 py-0.5 text-micro font-semibold uppercase tracking-eyebrow",
-                  dark ? "bg-violet-300/12 text-violet-100/80" : "bg-violet-500/10 text-violet-700",
-                ].join(" ")}
-              >
-                Featured
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(240px 160px at 92% 0%, rgba(167,139,250,0.30), transparent 70%)" }}
+        />
+        <div className="relative flex items-center gap-4">
+          {/* A real Time Twin portrait — shown, but not named. */}
+          <span
+            className="relative shrink-0 rounded-2xl p-1.5"
+            style={{
+              border: "1.5px solid rgba(167,139,250,0.5)",
+              background: "rgba(167,139,250,0.08)",
+              boxShadow: "0 0 30px rgba(167,139,250,0.25)",
+            }}
+          >
+            {portraitUrl && !portraitFailed ? (
+              <img
+                src={portraitUrl}
+                alt="A Time Twin portrait"
+                onError={() => setPortraitFailed(true)}
+                className="h-20 w-20 rounded-xl object-cover"
+              />
+            ) : (
+              <span className="flex h-20 w-20 items-center justify-center rounded-xl bg-white/5">
+                <Clock3 className="h-7 w-7 text-violet-200/85" />
               </span>
-            </div>
+            )}
+          </span>
 
-            <RowMeta as="div" className="mt-1">
-              {timeTwinTeaser}
-            </RowMeta>
-
+          <div className="min-w-0">
             <div
-              className={[
-                "mt-2 inline-flex items-center gap-2 text-label font-semibold",
-                dark ? "text-white/70" : "text-slate-700",
-              ].join(" ")}
+              className="mb-1 text-micro font-semibold uppercase tracking-eyebrow"
+              style={{ color: "rgba(167,139,250,0.95)" }}
             >
-              Open story <span aria-hidden className="opacity-80">↗</span>
+              Featured · Time Twin
             </div>
+            <CardTitle as="h3">A mind from history that rhymes with yours.</CardTitle>
+            <p className="mt-1 text-meta leading-body text-white/60">
+              A real historical figure whose way of seeing overlaps with yours — meet them.
+            </p>
+            <span
+              className="mt-2.5 inline-flex items-center gap-1.5 text-label font-semibold"
+              style={{ color: "rgba(167,139,250,0.98)" }}
+            >
+              Meet your Time Twin
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
           </div>
         </div>
       </button>
