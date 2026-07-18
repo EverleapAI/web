@@ -137,12 +137,13 @@ export function CareerReaction({
     setReaction(reaction === "energized" ? null : "energized");
   };
 
-  // Mission button, colour-coded by state.
+  // Mission button, colour-coded by state — always names the mission (the career)
+  // so the button says WHAT it is, not just "this mission".
   const variant = !mission
-    ? { label: "Try it — start a mission", sub: "Turn it into a few concrete steps to actually go try it.", rgb: "96, 176, 255", Icon: Wand2 }
+    ? { label: `Try it: ${title}`, sub: "Start a mission — a few concrete steps to actually go try it.", rgb: "96, 176, 255", Icon: Wand2 }
     : mission.status === "done"
-      ? { label: "Reflect on this mission", sub: "Look back on how trying it went.", rgb: "52, 211, 153", Icon: Sparkles }
-      : { label: "Continue this mission", sub: "Pick up the mission you started for this.", rgb: "245, 176, 90", Icon: Wand2 };
+      ? { label: `Reflect on: ${title}`, sub: "Look back on how trying it went.", rgb: "52, 211, 153", Icon: Sparkles }
+      : { label: `Continue: ${title}`, sub: "Pick up the mission you started for this.", rgb: "245, 176, 90", Icon: Wand2 };
   const VariantIcon = variant.Icon;
 
   return (

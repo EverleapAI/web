@@ -550,7 +550,7 @@ function StarPanel(props: {
         >
           <span className="inline-flex items-center gap-2.5">
             <Wand2 className="h-5 w-5" />
-            Turn it into a mission — go try it
+            Try {props.specialtyTitle} for real — start a mission
           </span>
           {props.creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
         </button>

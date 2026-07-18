@@ -82,7 +82,7 @@ export function NearDescent({
           className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3.5 font-semibold transition hover:brightness-105 disabled:opacity-70"
           style={{ background: `linear-gradient(180deg,#ffdf9e,rgb(${HONEY}))`, color: "#1a1204" }}
         >
-          <span className="inline-flex items-center gap-2.5"><Wand2 className="h-5 w-5" /> Design your own — a mission you go try</span>
+          <span className="inline-flex items-center gap-2.5"><Wand2 className="h-5 w-5" /> Try {specialtyTitle} — design your own mission</span>
           {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
         </button>
 

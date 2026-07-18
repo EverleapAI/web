@@ -138,23 +138,24 @@ export function CardReaction({
     );
   };
 
-  // Mission button, colour-coded by state.
+  // Mission button, colour-coded by state — always names the mission (the item)
+  // so the button says WHAT it is, not just "this mission".
   const variant = !mission
     ? {
-        label: "Start this mission",
+        label: `Start: ${itemKey}`,
         sub: "Turn it into a mission — a few concrete steps to actually go explore it.",
         rgb: "96, 176, 255",
         Icon: Wand2,
       }
     : mission.status === "done"
       ? {
-          label: "Reflect on this mission",
+          label: `Reflect on: ${itemKey}`,
           sub: "Look back on how it went and what you noticed.",
           rgb: "52, 211, 153",
           Icon: Sparkles,
         }
       : {
-          label: "Continue this mission",
+          label: `Continue: ${itemKey}`,
           sub: "Pick up the mission you started for this.",
           rgb: "245, 176, 90",
           Icon: Wand2,

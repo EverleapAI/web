@@ -159,7 +159,7 @@ export function LeadsDescent({
             <h2 className="text-title font-semibold leading-display tracking-title">Reading it is one thing. Doing it is another.</h2>
             <p className="text-read leading-read text-white/72">Turn {specialtyTitle} into one small, real thing you try this week — the fastest way to know if the numbers are worth it for you.</p>
             <button type="button" onClick={onStartMission} disabled={creating} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3.5 font-semibold transition hover:brightness-105 disabled:opacity-70" style={{ background: `linear-gradient(180deg,#ffdf9e,rgb(${HONEY}))`, color: "#1a1204" }}>
-              <span className="inline-flex items-center gap-2.5"><Wand2 className="h-5 w-5" /> Turn it into a mission — go try it</span>
+              <span className="inline-flex items-center gap-2.5"><Wand2 className="h-5 w-5" /> Try {specialtyTitle} for real — start a mission</span>
               {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
             </button>
             <button type="button" onClick={() => go(-1)} className="text-meta text-white/45 transition hover:text-white/75">← back</button>

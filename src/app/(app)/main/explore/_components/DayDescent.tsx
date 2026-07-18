@@ -150,7 +150,7 @@ export function DayDescent({
             style={{ background: `linear-gradient(180deg,#ffdf9e,rgb(${HONEY}))`, color: "#1a1204" }}
           >
             <span className="inline-flex items-center gap-2.5">
-              <Wand2 className="h-5 w-5" /> Turn it into a mission — go try it
+              <Wand2 className="h-5 w-5" /> Try {specialtyTitle} for real — start a mission
             </span>
             {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
           </button>
