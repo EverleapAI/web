@@ -44,6 +44,18 @@ import type { OnetDetail } from "./OnetFacts";
 const HONEY = "244, 192, 103";
 const rgbStr = (c: Rgb) => `${c.r}, ${c.g}, ${c.b}`;
 
+type SpecialtyContent = {
+  reality: { moments: RealityMoment[] };
+  trajectory: {
+    outlookLabel?: string;
+    outlookSummary?: string;
+    salaryBand?: SalaryBand;
+    aiImpact?: AiImpact;
+    whatIsGrowing: string[];
+    whatIsUnderPressure: string[];
+  };
+};
+
 type StarId = "why" | "day" | "leads" | "near" | "real";
 type Star = { id: StarId; label: string; x: number; y: number; accent: string; honey?: boolean };
 const POS: Record<StarId, { x: number; y: number }> = {
@@ -82,11 +94,37 @@ export function PathConstellation({
   const rawLead = branch?.summary || preview?.whyItCouldFit || preview?.oneLiner || "";
   const lead = rawLead.split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2).join(" ");
 
-  const moments = path.reality?.moments ?? [];
-  const salary = path.trajectory?.salaryBand;
-  const ai = path.trajectory?.aiImpact;
-  const growing = path.trajectory?.whatIsGrowing ?? [];
-  const pressure = path.trajectory?.whatIsUnderPressure ?? [];
+  // Per-specialty deep content (day + outlook), generated the first time this
+  // specialty is opened — so the dive is about THIS path, not the general career.
+  // Falls back to career-level content until it loads / if unavailable.
+  const [sc, setSc] = React.useState<SpecialtyContent | null>(null);
+  React.useEffect(() => {
+    if (!branchSlug) return;
+    let cancelled = false;
+    fetch(
+      `/api/guidance/specialty-content?path=${encodeURIComponent(path.slug)}&branch=${encodeURIComponent(branchSlug)}`,
+      { credentials: "include", cache: "no-store" }
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { ok?: boolean; content?: SpecialtyContent } | null) => {
+        if (!cancelled && d?.ok && d.content) setSc(d.content);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [path.slug, branchSlug]);
+
+  // The day beats are the specialty's own; the PHOTOS stay career-level (keyed by
+  // moment id, which lines up m0..m3) — a setting-and-tools shot of the career
+  // reads true for any of its specialties, and one set per career is affordable.
+  const moments = sc?.reality?.moments ?? path.reality?.moments ?? [];
+  const salary = sc?.trajectory?.salaryBand ?? path.trajectory?.salaryBand;
+  const ai = sc?.trajectory?.aiImpact ?? path.trajectory?.aiImpact;
+  const growing = sc?.trajectory?.whatIsGrowing?.length ? sc.trajectory.whatIsGrowing : path.trajectory?.whatIsGrowing ?? [];
+  const pressure = sc?.trajectory?.whatIsUnderPressure?.length ? sc.trajectory.whatIsUnderPressure : path.trajectory?.whatIsUnderPressure ?? [];
+  const outlookLabel = sc?.trajectory?.outlookLabel ?? path.trajectory?.outlookLabel;
+  const outlookSummary = sc?.trajectory?.outlookSummary ?? path.trajectory?.outlookSummary;
   const opps = (path.nextSteps?.sections ?? []).flatMap((s) => s.items);
   const hasLeads = Boolean(salary || ai || growing.length || pressure.length);
 
@@ -307,8 +345,8 @@ export function PathConstellation({
       {showLeads ? (
         <LeadsDescent
           salary={salary}
-          outlookLabel={path.trajectory?.outlookLabel}
-          outlookSummary={path.trajectory?.outlookSummary}
+          outlookLabel={outlookLabel}
+          outlookSummary={outlookSummary}
           growing={growing}
           pressure={pressure}
           ai={ai}
