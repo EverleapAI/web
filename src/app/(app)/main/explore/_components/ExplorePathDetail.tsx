@@ -48,9 +48,12 @@ function leadLine(text: string): string {
 function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
   const laneAccentStr = `${accent.r}, ${accent.g}, ${accent.b}`;
   const previews = path.branches?.previews ?? [];
-  const label = path.branches?.label
-    ? path.branches.label[0].toUpperCase() + path.branches.label.slice(1)
-    : "Paths";
+  // A one-word label is a category ("specialties", "styles") and reads well
+  // after "Explore the". A longer one is already a phrase ("Ways into
+  // Bangladesh") and must not be lowercased — it carries proper nouns.
+  const rawLabel = path.branches?.label?.trim() || "Paths";
+  const label = rawLabel[0].toUpperCase() + rawLabel.slice(1);
+  const isPhrase = /\s/.test(rawLabel);
   const specialtiesHref = `/main/explore/${path.lane}/${path.slug}/specialties`;
 
   // A specialty "world" — its own accent, a mini-constellation, and a preview of
@@ -105,7 +108,7 @@ function PathsDown({ path, accent }: { path: ExplorePath; accent: Rgb }) {
     <SectionCard tone="neutral" backdrop={<ConstellationAnchor seed={`${path.id}:paths`} accent={accent} />}>
       <SpecialtiesHeader
         accent={accent}
-        label={`Explore the ${label.toLowerCase()}`}
+        label={isPhrase ? label : `Explore the ${label.toLowerCase()}`}
         subtitle={`${previews.length} directions inside — tap one and it opens into its own constellation to explore.`}
       />
       <div className="space-y-3">
@@ -155,6 +158,13 @@ export function ExplorePathDetail({
   const ov = path.overview;
   const payMedian = path.trajectory?.salaryBand?.median;
   const laneLabel = path.lane[0].toUpperCase() + path.lane.slice(1);
+  // The generated eyebrow is often just the lane's own name, which rendered as
+  // "IMPACT · IMPACT". Only add it when it says something the lane doesn't.
+  const rawEyebrow = ov?.eyebrow ?? LANE_NOUN[path.lane];
+  const eyebrow =
+    rawEyebrow.trim().toLowerCase() === path.lane
+      ? laneLabel
+      : `${laneLabel} · ${rawEyebrow}`;
   const title = ov?.title ?? path.card.title;
   const lead = leadLine(whyYou || ov?.hook || "");
   const fitSignals = (ov?.fitSignals ?? []).slice(0, 3);
@@ -183,7 +193,7 @@ export function ExplorePathDetail({
                 <Sparkles className="h-3.5 w-3.5" />
               </span>
             }
-            eyebrow={`${laneLabel} · ${ov?.eyebrow ?? LANE_NOUN[path.lane]}`}
+            eyebrow={eyebrow}
             accentRgb={accentStr}
           />
           <h1 className="mt-1 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-display">
