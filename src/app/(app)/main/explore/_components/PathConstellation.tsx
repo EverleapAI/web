@@ -102,7 +102,7 @@ export function PathConstellation({
     if (!branchSlug) return;
     let cancelled = false;
     fetch(
-      `/api/guidance/specialty-content?path=${encodeURIComponent(path.slug)}&branch=${encodeURIComponent(branchSlug)}`,
+      `/api/guidance/specialty-content?lane=${encodeURIComponent(path.lane)}&path=${encodeURIComponent(path.slug)}&branch=${encodeURIComponent(branchSlug)}`,
       { credentials: "include", cache: "no-store" }
     )
       .then((r) => (r.ok ? r.json() : null))
