@@ -14,7 +14,11 @@ const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${API_BASE}/guidance/explore-path`;
 
 function noStore(res: NextResponse) {
-  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  // A path's content is catalog data that changes only when it is regenerated,
+// which is rare. The only per-user part is the short "why this fits you"
+// overlay, so it caches privately rather than not at all. Without this, opening
+// five specialties of one career refetched the identical path five times.
+  res.headers.set("Cache-Control", "private, max-age=300");
   res.headers.set("Pragma", "no-cache");
   res.headers.set("Vary", "Cookie");
   return res;

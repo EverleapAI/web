@@ -14,7 +14,10 @@ const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
 const TARGET_URL = `${API_BASE}/guidance/explore-paths`;
 
 function noStore(res: NextResponse) {
-  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  // A lane deck is per-user (its picks and their reasons) and changes only when
+// the person's signal moves, so a short private cache is safe and saves a
+// round trip every time they come back to the lane.
+  res.headers.set("Cache-Control", "private, max-age=120");
   res.headers.set("Pragma", "no-cache");
   res.headers.set("Vary", "Cookie");
   return res;
