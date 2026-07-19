@@ -21,6 +21,7 @@ import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMete
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
 import { LANE_NOUN, MiniConstellation, SPECIALTY_ACCENTS, accentCard, rgba } from "./exploreUi";
+import { LiveDoors } from "./LiveDoors";
 import { getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
 import type { OnetDetail } from "./OnetFacts";
@@ -271,6 +272,11 @@ export function ExplorePathDetail({
 
       {/* The one door down — the specialties (each a future constellation). */}
       <PathsDown path={path} accent={accent} />
+
+      {/* The live layer: real venues or registered organisations, fetched now
+          rather than written in advance. Renders nothing when there's nothing
+          genuinely nearby. */}
+      <LiveDoors lane={path.lane} slug={path.slug} accent={accent} />
 
       {/* Source citations + required O*NET/DOL attribution */}
       <ExploreAttribution path={path} />
