@@ -20,6 +20,20 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { ArrowUp } from "lucide-react";
 
+/**
+ * The measure for everything in a descent — header and content both.
+ *
+ * The rest of Explore runs in a 720px column (see explore/layout.tsx); the
+ * descent is the only screen that escapes it, because it portals to the body to
+ * cover the app nav. Escaping the stacking context shouldn't have meant escaping
+ * the layout too, so it takes a column of its own at close to the same width —
+ * wide enough to sit in the same family as every other Explore screen, narrow
+ * enough to keep the prose at a readable measure.
+ *
+ * One constant, used twice, because the whole point is that the two agree.
+ */
+const COLUMN = "max-w-2xl";
+
 export function DescentShell({
   accent,
   step,
@@ -72,8 +86,19 @@ export function DescentShell({
     // app nav — a plain fixed overlay inside the page cannot.
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
       {/* The way out is always the first thing, in the same place on every step
-          of every descent. */}
-      <div className="relative z-10 flex shrink-0 items-center gap-3 px-4 pt-4 sm:px-6">
+          of every descent — and, critically, in the same COLUMN as the words.
+
+          This bar used to span the viewport while the text sat in a narrow
+          centred column, so on a desktop window "Step back up" ended up hundreds
+          of pixels from anything you were reading: the one control that leaves a
+          screen with no app nav, parked where your eye never goes. The rail had
+          the same problem — stretched across the whole window, the gaps between
+          its markers stopped meaning time and started meaning empty browser. */}
+      <div className="relative z-10 shrink-0">
+        {/* Same box as the content below — same max width, same padding — so the
+            exit sits on the text's left edge rather than merely near it. */}
+        <div className={`mx-auto w-full px-6 pt-4 ${COLUMN}`}>
+          <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onClose}
@@ -82,9 +107,7 @@ export function DescentShell({
           <ArrowUp className="h-3.5 w-3.5" />
           Step back up
         </button>
-        {rail ? (
-          <div className="min-w-0 flex-1">{rail}</div>
-        ) : total > 1 ? (
+        {rail ? null : total > 1 ? (
           <div className="flex flex-1 items-center gap-1.5" aria-hidden>
             {Array.from({ length: total }).map((_, k) => {
               const tint = railTints?.[k];
@@ -106,8 +129,16 @@ export function DescentShell({
                 />
               );
             })}
+            </div>
+          ) : null}
           </div>
-        ) : null}
+          {/* A rail that IS the content — the day — gets its own row, spanning
+              the full measure of the read it describes. Sharing the row with the
+              exit pill left it about 190px on a phone, which squeezed its markers
+              back into each other: the collision the layout works to avoid,
+              reintroduced by the container rather than the maths. */}
+          {rail ? <div className="mt-2.5">{rail}</div> : null}
+        </div>
       </div>
 
       {/* One scroll container for the whole descent. Media and text scroll
@@ -115,7 +146,7 @@ export function DescentShell({
           in the same column, so a step reads as one object rather than a
           full-bleed image with a narrow page underneath it. */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto w-full max-w-lg px-6 pb-10 pt-4">
+        <div className={`mx-auto w-full px-6 pb-10 pt-4 ${COLUMN}`}>
           {media}
           <div className={media ? "pt-5" : "pt-1"}>{children}</div>
         </div>

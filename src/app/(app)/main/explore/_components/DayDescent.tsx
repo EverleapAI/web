@@ -257,7 +257,13 @@ export function DayDescent({
                   disabled={i === 0}
                   className="inline-flex items-center gap-1.5 text-meta text-white/55 transition hover:text-white disabled:opacity-30"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Back
+                  {/* "Back" opposite "Next moment" read as an exit rather than
+                      half of a pair — the wrong impression on a screen whose
+                      real exit is elsewhere and whose app nav is covered.
+                      Naming both ends the same thing makes them obviously two
+                      directions through the day, leaving "Step back up" as the
+                      only control here that means leave. */}
+                  <ArrowLeft className="h-4 w-4" /> Previous moment
                 </button>
                 <button
                   type="button"
