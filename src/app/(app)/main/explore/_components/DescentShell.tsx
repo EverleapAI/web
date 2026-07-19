@@ -27,6 +27,7 @@ export function DescentShell({
   onClose,
   children,
   media = null,
+  railTints,
 }: {
   /** "r, g, b" */
   accent: string;
@@ -37,6 +38,16 @@ export function DescentShell({
   children: React.ReactNode;
   /** Optional visual above the content — sized here, not by the caller. */
   media?: React.ReactNode;
+  /**
+   * One colour per step, dawn to dusk. When given, the progress rail becomes the
+   * day itself rather than a row of identical grey bars.
+   *
+   * The design brief's own test for an object is that it carries a fact — remove
+   * it and you lose information, not decoration. Equal bars told you "4 of 5",
+   * which the header already says. A rail tinted by each moment's hour tells you
+   * the SHAPE of the day at a glance, from the timeLabels we already have.
+   */
+  railTints?: string[];
 }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -66,13 +77,26 @@ export function DescentShell({
         </button>
         {total > 1 ? (
           <div className="flex flex-1 items-center gap-1.5" aria-hidden>
-            {Array.from({ length: total }).map((_, k) => (
-              <span
-                key={k}
-                className="h-1 flex-1 rounded-full transition-colors"
-                style={{ background: k <= step ? `rgb(${accent})` : "rgba(255,255,255,0.14)" }}
-              />
-            ))}
+            {Array.from({ length: total }).map((_, k) => {
+              const tint = railTints?.[k];
+              const reached = k <= step;
+              return (
+                <span
+                  key={k}
+                  className="relative h-1.5 flex-1 rounded-full transition-all"
+                  style={{
+                    // Steps you've reached show their own hour; ahead of you the
+                    // day is still dim, so the rail fills with daylight as you go.
+                    background: reached
+                      ? tint ?? `rgb(${accent})`
+                      : tint
+                        ? `color-mix(in srgb, ${tint} 30%, rgba(255,255,255,0.10))`
+                        : "rgba(255,255,255,0.14)",
+                    boxShadow: k === step && tint ? `0 0 10px 1px ${tint}` : undefined,
+                  }}
+                />
+              );
+            })}
           </div>
         ) : null}
       </div>

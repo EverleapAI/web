@@ -16,11 +16,8 @@ import {
   ArrowRight,
   ArrowUp,
   Check,
-  Globe,
   Loader2,
-  MapPin,
   Sparkles,
-  Video,
   Wand2,
 } from "lucide-react";
 
@@ -198,12 +195,14 @@ export function PathConstellation({
   // Reveal AFTER the panel has rendered. It carries key={active}, so it remounts
   // on every star change — scrolling from inside the click handler measured the
   // node that was on its way out.
-  const skipFirstReveal = React.useRef(true);
+  // Compare against the previous star rather than counting invocations: React
+  // StrictMode runs effects twice in development, which defeated a "skip the
+  // first one" flag and left the page auto-scrolled 740px down on arrival — you
+  // landed below the map you'd come to look at.
+  const prevActive = React.useRef<StarId>(active);
   React.useEffect(() => {
-    if (skipFirstReveal.current) {
-      skipFirstReveal.current = false; // landing on "why" shouldn't move the page
-      return;
-    }
+    if (prevActive.current === active) return;
+    prevActive.current = active;
     const el = panelRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
@@ -215,8 +214,19 @@ export function PathConstellation({
     el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   }, [active]);
 
+  // A star opens its own screen. There used to be a peek panel between the map
+  // and the descent showing much the same content, so the common path was: tap a
+  // star, scroll to find the panel, read it, then tap "go deeper" for the screen
+  // that showed it again. Four moves for one idea, and on a phone the panel
+  // pushed the map off anyway, so nothing was gained by staying put.
+  //
+  // "why" is the exception: it's the landing state, it's short, and it's what the
+  // map should say about itself before you go anywhere.
   const open = (id: StarId) => {
     setActive(id);
+    if (id === "day") setShowDay(true);
+    else if (id === "leads") setShowLeads(true);
+    else if (id === "near") setShowNear(true);
     setLit((prev) => (prev.has(id) ? prev : new Set([...prev, id])));
     fetch("/api/guidance/constellation-lit", {
       method: "POST",
@@ -400,7 +410,7 @@ export function PathConstellation({
           careerTitle={careerTitle}
           accent={a}
           creating={creating}
-          onClose={() => setShowDay(false)}
+          onClose={() => { setShowDay(false); setActive("why"); }}
           onStartMission={startMission}
         />
       ) : null}
@@ -416,7 +426,7 @@ export function PathConstellation({
           specialtyTitle={specialtyTitle}
           accent={a}
           creating={creating}
-          onClose={() => setShowLeads(false)}
+          onClose={() => { setShowLeads(false); setActive("why"); }}
           onStartMission={startMission}
         />
       ) : null}
@@ -429,7 +439,7 @@ export function PathConstellation({
           specialtyTitle={specialtyTitle}
           accent={a}
           creating={creating}
-          onClose={() => setShowNear(false)}
+          onClose={() => { setShowNear(false); setActive("why"); }}
           onStartMission={startMission}
         />
       ) : null}
@@ -522,156 +532,10 @@ function StarPanel(props: {
     );
   }
 
-  if (active === "day") {
-    return (
-      <div>
-        <div className="mb-1 flex items-center gap-2">
-          <h2 className="text-read font-semibold leading-read text-white">A real day, from the inside</h2>
-        </div>
-        <p className="mb-3 text-meta text-white/55">
-          <span className="sm:hidden">Swipe through it — a scene, a time, one line.</span>
-          <span className="hidden sm:inline">A scene, a time, one line.</span>
-        </p>
-        {/* Below sm this is a swipe rail; at sm and up it becomes a grid. It used
-            to be a rail everywhere with hidden scrollbars, so on a wide screen the
-            second card was simply sliced off at the edge with nothing to say it
-            continued. Cards are near-full-width on mobile so the cut edge reads as
-            "there's more", not as broken. */}
-        <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
-          {props.moments.map((m) => (
-            <div
-              key={m.id}
-              className="w-[86%] shrink-0 snap-start rounded-2xl border px-4 py-4 sm:w-auto"
-              style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}
-            >
-              {m.timeLabel ? <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.9)` }}>{m.timeLabel}</div> : null}
-              <div className="mt-1.5 text-label font-semibold text-white">{m.title}</div>
-              <p className="mt-1.5 text-meta leading-read text-white/68">{m.body}</p>
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={props.onOpenDay}
-          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
-          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
-        >
-          <span className="min-w-0">
-            <span className="block text-label font-semibold text-white">Go deeper — walk the whole day</span>
-            <span className="mt-0.5 block text-meta text-white/60">Dawn to dusk, one moment at a time — then watch a real one.</span>
-          </span>
-          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
-        </button>
-      </div>
-    );
-  }
-
-  if (active === "leads") {
-    return (
-      <div>
-        <h2 className="mb-3 text-read font-semibold leading-read text-white">Where it leads</h2>
-        {props.salary ? (
-          <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
-            <Eyebrow a={a}>What it pays</Eyebrow>
-            <div className="mt-1 text-title font-semibold leading-display">{props.salary.median}</div>
-            <div className="relative mt-3 h-2 rounded-full bg-white/[0.09]">
-              <div className="absolute inset-y-0 rounded-full" style={{ left: "12%", right: "12%", background: `linear-gradient(90deg, rgba(${a},0.6), rgb(${a}))` }} />
-              <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" style={{ left: "48%", boxShadow: `0 0 0 4px rgba(${a},0.25)` }} />
-            </div>
-            <div className="mt-2 flex justify-between text-meta tabular-nums text-white/55">
-              <span>{props.salary.low}</span>
-              <span>{props.salary.high}</span>
-            </div>
-            {props.salary.note ? <p className="mt-2 text-meta leading-read text-white/60">{props.salary.note}</p> : null}
-          </div>
-        ) : null}
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {props.ai ? (
-            <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
-              <Eyebrow a={a}>Future‑proof?</Eyebrow>
-              <div className="mt-2 flex items-center gap-3">
-                <span className="h-9 w-9 shrink-0 rounded-full" style={{ background: `radial-gradient(circle at 40% 35%, #ffe6a8, ${`rgb(${HONEY})`})`, boxShadow: `0 0 20px rgba(${HONEY},0.45)` }} />
-                <div>
-                  <div className="text-label font-semibold text-white">{props.ai.level || "Mostly sunny"}</div>
-                  <div className="text-meta leading-read text-white/62">{props.ai.summary}</div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-          {props.growing.length ? (
-            <div className="rounded-2xl border px-4 py-4" style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}>
-              <Eyebrow a={a}>What&rsquo;s growing</Eyebrow>
-              <List items={props.growing} a={a} />
-            </div>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={props.onOpenLeads}
-          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
-          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
-        >
-          <span className="min-w-0">
-            <span className="block text-label font-semibold text-white">Go deeper — the whole picture</span>
-            <span className="mt-0.5 block text-meta text-white/60">Pay, the outlook, and whether AI takes it — one question at a time.</span>
-          </span>
-          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
-        </button>
-      </div>
-    );
-  }
-
-  if (active === "near") {
-    const modeMeta = (mode?: string) =>
-      mode === "local"
-        ? { label: "Near you", Icon: MapPin }
-        : mode === "virtual"
-          ? { label: "Virtual", Icon: Video }
-          : { label: "Online", Icon: Globe };
-    return (
-      <div>
-        <h2 className="mb-1 text-read font-semibold leading-read text-white">Try it near you — or online</h2>
-        <p className="mb-3 text-meta text-white/55">Real ways to go do it. (Near‑you gets sharper once we have your zip.)</p>
-        <div className="space-y-2.5">
-          {props.opps.slice(0, 5).map((o) => {
-            const m = modeMeta(o.mode);
-            return (
-              <a
-                key={o.id}
-                href={o.href}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
-                style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ background: `rgba(${a},0.14)`, color: `rgb(${a})` }}>
-                  <m.Icon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.9)` }}>{m.label}</span>
-                  <div className="text-label font-semibold text-white">{o.title}</div>
-                  {o.note ? <div className="text-meta leading-read text-white/62">{o.note}{o.provider ? ` · ${o.provider}` : ""}</div> : null}
-                </span>
-                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-white/45" />
-              </a>
-            );
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={props.onOpenNear}
-          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition hover:brightness-110"
-          style={{ borderColor: `rgba(${a},0.5)`, background: `rgba(${a},0.12)` }}
-        >
-          <span className="min-w-0">
-            <span className="block text-label font-semibold text-white">Go deeper — all the ways to try it</span>
-            <span className="mt-0.5 block text-meta text-white/60">Near you, online, or virtual — every real door out.</span>
-          </span>
-          <ArrowRight className="h-5 w-5 shrink-0" style={{ color: `rgb(${a})` }} />
-        </button>
-      </div>
-    );
-  }
+  // day / leads / near each open their own screen (DayDescent, LeadsDescent,
+  // NearDescent) rather than rendering a peek here. There used to be a panel
+  // for each showing much what the screen showed, which is the redundancy that
+  // made the deep dives feel like they had no template.
 
   // honey — try it for real
   return (

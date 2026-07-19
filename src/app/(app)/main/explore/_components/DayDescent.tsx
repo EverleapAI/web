@@ -18,6 +18,35 @@ const HONEY = "244, 192, 103";
 
 // Map a moment's time label to a scene: a sky gradient, a sun/moon disc position,
 // and whether it's day or night — so the descent feels like moving through hours.
+/** The hour a moment's label implies. Shared by the scene and the day rail. */
+export function hourOf(label: string | undefined): number {
+  const m = (label ?? "").match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if (m) {
+    let h = parseInt(m[1], 10) % 12;
+    if (/pm/i.test(m[3])) h += 12;
+    return h;
+  }
+  const l = (label ?? "").toLowerCase();
+  if (/night|late evening/.test(l)) return 22;
+  if (/evening|dusk|end of day/.test(l)) return 19;
+  if (/late afternoon/.test(l)) return 16;
+  if (/afternoon|midday|lunch/.test(l)) return 14;
+  if (/late morning/.test(l)) return 11;
+  if (/dawn|sunrise|early/.test(l)) return 6;
+  if (/morning/.test(l)) return 9;
+  return 12;
+}
+
+/** The sky colour at that hour — the day rail is drawn from these. */
+export function skyTintAt(hour: number): string {
+  if (hour < 5 || hour >= 21) return "#0a1030";
+  if (hour < 8) return "#c9764f";
+  if (hour < 11) return "#2f6f9e";
+  if (hour < 15) return "#3a86c0";
+  if (hour < 18) return "#8a6a4e";
+  return "#6a3a54";
+}
+
 function scene(label: string | undefined): { sky: string; discTop: string; discColor: string; night: boolean; glow: string } {
   const m = (label ?? "").match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
   let hour = 12;
@@ -100,6 +129,13 @@ export function DayDescent({
       step={i}
       total={total}
       onClose={onClose}
+      // The rail is the day: each segment takes the sky colour of its own hour,
+      // so you can see dawn-to-dusk before reading a word. The outro sits at the
+      // end and takes the last hour's tint.
+      railTints={[
+        ...moments.map((mm) => skyTintAt(hourOf(mm.timeLabel))),
+        skyTintAt(hourOf(moments[moments.length - 1]?.timeLabel)),
+      ]}
       media={
         atOutro ? null : (
           <DescentMedia style={{ background: sc.sky }}>
@@ -188,7 +224,24 @@ export function DayDescent({
                 A day in {specialtyTitle} · {i + 1} of {moments.length}
               </div>
               <h2 className="mt-2 text-read font-semibold leading-read text-white">{m?.title}</h2>
-              <p className="mt-1.5 text-read leading-read text-white/78">{m?.body}</p>
+              {/* The scene-setting sentence reads at full size; the rest sits a
+                  rung down. Sixty words of even prose under a photo is still a
+                  wall — this gives the eye somewhere to land first, without
+                  losing the detail for anyone who wants it. */}
+              {(() => {
+                const body = m?.body ?? "";
+                const parts = body.split(/(?<=[.!?])\s+/);
+                const lead = parts[0] ?? body;
+                const rest = parts.slice(1).join(" ").trim();
+                return (
+                  <>
+                    <p className="mt-2 text-read leading-read text-white/88">{lead}</p>
+                    {rest ? (
+                      <p className="mt-2 text-label leading-read text-white/66">{rest}</p>
+                    ) : null}
+                  </>
+                );
+              })()}
               <div className="mt-4 flex items-center justify-between">
                 <button
                   type="button"

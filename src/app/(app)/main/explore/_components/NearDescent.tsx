@@ -11,6 +11,7 @@ import * as React from "react";
 import { ArrowRight, ExternalLink, Globe, Loader2, MapPin, Video, Wand2 } from "lucide-react";
 
 import { DescentShell } from "./DescentShell";
+import { OpportunityCard } from "./OpportunityCard";
 import type { Lane, Opportunity } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
@@ -27,27 +28,19 @@ function bucket(mode?: string): keyof typeof MODE {
   return mode && mode in MODE ? (mode as keyof typeof MODE) : "remote";
 }
 
-function renderOpp(o: Opportunity, rgb: string) {
+// One card treatment for every door, here and in the constellation. The old one
+// here used text-label over text-meta on a flat fill — a rung below the card
+// ladder, which is why these read as small and grey on a phone.
+function renderOpp(o: Opportunity) {
   return (
-    <a
+    <OpportunityCard
       key={o.id}
+      title={o.title}
+      note={o.note}
       href={o.href}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 transition hover:brightness-110"
-      style={{ borderColor: `rgba(${rgb},0.2)`, background: `rgba(${rgb},0.05)` }}
-    >
-      <span className="min-w-0 flex-1">
-        <span className="text-label font-semibold text-white">{o.title}</span>
-        {o.note ? (
-          <span className="mt-0.5 block text-meta leading-read text-white/62">
-            {o.note}
-            {o.provider ? ` · ${o.provider}` : ""}
-          </span>
-        ) : null}
-      </span>
-      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/45" />
-    </a>
+      mode={o.mode}
+      provider={o.provider}
+    />
   );
 }
 
@@ -165,7 +158,7 @@ export function NearDescent({
           ) : null}
           {nearItems.length ? (
             <div className="space-y-2.5">
-              {nearItems.map((o) => renderOpp(o, MODE.local.rgb))}
+              {nearItems.map((o) => renderOpp(o))}
             </div>
           ) : null}
         </div>
@@ -180,7 +173,7 @@ export function NearDescent({
                 </span>
                 <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${meta.rgb},0.9)` }}>{meta.label}</div>
               </div>
-              <div className="space-y-2.5">{g.items.map((o) => renderOpp(o, meta.rgb))}</div>
+              <div className="space-y-2.5">{g.items.map((o) => renderOpp(o))}</div>
             </div>
           );
         })}
