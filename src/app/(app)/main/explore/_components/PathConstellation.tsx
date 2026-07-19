@@ -113,7 +113,7 @@ export function PathConstellation({
     return () => {
       cancelled = true;
     };
-  }, [path.slug, branchSlug]);
+  }, [path.lane, path.slug, branchSlug]);
 
   // The day beats are the specialty's own; the PHOTOS stay career-level (keyed by
   // moment id, which lines up m0..m3) — a setting-and-tools shot of the career

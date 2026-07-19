@@ -32,7 +32,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 import { LANE_ACCENT, type ExplorePath, type Lane, type Rgb } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
-import { LANE_ICON, rgba } from "./exploreUi";
+import { BackToExplore, LANE_ICON, rgba } from "./exploreUi";
 
 const MAX_DOORS = 8;
 
@@ -142,6 +142,8 @@ export function DoorsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[]
 
   return (
     <div className="space-y-4">
+      <BackToExplore />
+
       {/* 1) Agentic entry */}
       <SectionCard tone="hero" voice backdrop={<ReadAtmosphere seed={`lane:${lane}`} accent={accent} />}>
         <div className="relative max-w-2xl">

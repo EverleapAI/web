@@ -6,7 +6,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
+  ArrowLeft,
   BriefcaseBusiness,
   GraduationCap,
   Globe2,
@@ -51,6 +53,47 @@ export const LANE_NOUN: Record<Lane, string> = {
 };
 
 /** Small monochrome corner constellation — matches the Insights ornament. */
+// A card that reads as its own world — used for specialties on a path, and for
+// the paths themselves on the Learning and Impact landings.
+export const SPECIALTY_ACCENTS = ["96, 176, 255", "167, 139, 250", "52, 211, 153", "245, 176, 90", "244, 132, 176"];
+
+export function accentCard(a: string): React.CSSProperties {
+  return {
+    borderColor: `rgba(${a},0.30)`,
+    background: `radial-gradient(220px 130px at 92% -10%, rgba(${a},0.18), transparent 70%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), rgba(9,13,24,0.72)`,
+    boxShadow: `inset 0 0 0 1px rgba(${a},0.06), 0 14px 34px rgba(0,0,0,0.35)`,
+  };
+}
+
+// A tiny constellation glyph — the hint that a whole world of exploration waits
+// inside (not a dead bullet).
+export function MiniConstellation({ a }: { a: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className="h-full w-full" aria-hidden>
+      <line x1="9" y1="11" x2="20" y2="17" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
+      <line x1="20" y1="17" x2="27" y2="27" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
+      <circle cx="9" cy="11" r="2.2" fill={`rgba(${a},0.9)`} />
+      <circle cx="20" cy="17" r="1.6" fill={`rgba(${a},0.8)`} />
+      <circle cx="27" cy="27" r="2.9" fill={`rgb(${a})`} style={{ filter: `drop-shadow(0 0 4px rgb(${a}))` }} />
+    </svg>
+  );
+}
+
+// Replaces the lane rail: every Explore lane page owns its own way back, the way
+// the Insights sub-pages do.
+export function BackToExplore() {
+  return (
+    <Link
+      href="/main/explore"
+      replace
+      className="group -mb-1 inline-flex items-center gap-1.5 text-label font-medium text-white/55 transition hover:text-white/85"
+    >
+      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+      <span>Back to Explore</span>
+    </Link>
+  );
+}
+
 export function CornerConstellation() {
   return (
     <div aria-hidden className="pointer-events-none absolute right-3 top-3 h-10 w-10 opacity-70 sm:h-12 sm:w-12">

@@ -20,7 +20,7 @@ import { AgenticHeader } from "../../components/ui/AgenticHeader";
 import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { laneAccent, type ExplorePath, type Rgb } from "../_data/exploreSchema";
-import { LANE_NOUN, rgba } from "./exploreUi";
+import { LANE_NOUN, MiniConstellation, SPECIALTY_ACCENTS, accentCard, rgba } from "./exploreUi";
 import { getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
 import type { OnetDetail } from "./OnetFacts";
@@ -28,33 +28,9 @@ import { CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
 
 // A small night-sky palette so each specialty reads as its own world, not a row
 // in a list.
-const SPECIALTY_ACCENTS = ["96, 176, 255", "167, 139, 250", "52, 211, 153", "245, 176, 90", "244, 132, 176"];
-
 // The universal spine every specialty's constellation opens into — previewed on
 // the card as the anticipatory "what's inside".
 const INSIDE_STARS = ["A real day", "Where it leads", "Try it near you"];
-
-function accentCard(a: string): React.CSSProperties {
-  return {
-    borderColor: `rgba(${a},0.30)`,
-    background: `radial-gradient(220px 130px at 92% -10%, rgba(${a},0.18), transparent 70%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), rgba(9,13,24,0.72)`,
-    boxShadow: `inset 0 0 0 1px rgba(${a},0.06), 0 14px 34px rgba(0,0,0,0.35)`,
-  };
-}
-
-// A tiny constellation glyph — the hint that a whole world of exploration waits
-// inside each specialty (not a dead bullet).
-function MiniConstellation({ a }: { a: string }) {
-  return (
-    <svg viewBox="0 0 36 36" className="h-full w-full" aria-hidden>
-      <line x1="9" y1="11" x2="20" y2="17" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
-      <line x1="20" y1="17" x2="27" y2="27" stroke={`rgba(${a},0.55)`} strokeWidth="1" />
-      <circle cx="9" cy="11" r="2.2" fill={`rgba(${a},0.9)`} />
-      <circle cx="20" cy="17" r="1.6" fill={`rgba(${a},0.8)`} />
-      <circle cx="27" cy="27" r="2.9" fill={`rgb(${a})`} style={{ filter: `drop-shadow(0 0 4px rgb(${a}))` }} />
-    </svg>
-  );
-}
 
 // The first two sentences — enough to feel warm and personal, still far short of
 // the full paragraph wall.

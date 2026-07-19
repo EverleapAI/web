@@ -11,6 +11,7 @@ import * as React from "react";
 
 import { ExploreLanding } from "./ExploreLanding";
 import { DoorsLanding } from "./DoorsLanding";
+import { WorldsLanding } from "./WorldsLanding";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 
 type Deck = { paths: ExplorePath[]; serverRanked: boolean };
@@ -44,8 +45,8 @@ export function ExploreLandingLoader({
 }: {
   lane: Lane;
   fallback: ExplorePath[];
-  /** "doors" leads with real-world opportunities instead of path depth (World, Play). */
-  variant?: "default" | "doors";
+  /** "doors" leads with opportunities (World, Play); "worlds" with the paths themselves (Learning, Impact). */
+  variant?: "default" | "doors" | "worlds";
 }) {
   const [paths, setPaths] = React.useState<ExplorePath[]>(fallback);
   const [serverRanked, setServerRanked] = React.useState(false);
@@ -61,5 +62,6 @@ export function ExploreLandingLoader({
   }, [lane]);
 
   if (variant === "doors") return <DoorsLanding lane={lane} paths={paths} />;
+  if (variant === "worlds") return <WorldsLanding lane={lane} paths={paths} />;
   return <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />;
 }

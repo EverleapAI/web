@@ -9,5 +9,5 @@ import { LEARNING_PATHS } from "./_data/learningPaths";
 const LEARNING_EXPLORE_PATHS = learningPathsToExplorePaths(LEARNING_PATHS);
 
 export default function LearningExplorePage() {
-  return <ExploreLandingLoader lane="learning" fallback={LEARNING_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="learning" fallback={LEARNING_EXPLORE_PATHS} variant="worlds" />;
 }

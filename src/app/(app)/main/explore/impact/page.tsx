@@ -9,5 +9,5 @@ import { IMPACT_PATHS } from "./_data/impactPaths";
 const IMPACT_EXPLORE_PATHS = impactPathsToExplorePaths(IMPACT_PATHS);
 
 export default function ImpactExplorePage() {
-  return <ExploreLandingLoader lane="impact" fallback={IMPACT_EXPLORE_PATHS} />;
+  return <ExploreLandingLoader lane="impact" fallback={IMPACT_EXPLORE_PATHS} variant="worlds" />;
 }
