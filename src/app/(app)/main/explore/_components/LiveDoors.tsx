@@ -15,7 +15,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, MapPin } from "lucide-react";
+import { Compass, ExternalLink, Globe, MapPin } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
@@ -58,10 +58,10 @@ export function LiveDoors({
   slug: string;
   accent: Rgb;
 }) {
-  const [doors, setDoors] = React.useState<LiveDoor[]>([]);
+  const [nearby, setNearby] = React.useState<LiveDoor[]>([]);
+  const [online, setOnline] = React.useState<LiveDoor[]>([]);
   const [needsZip, setNeedsZip] = React.useState(false);
   const [scope, setScope] = React.useState<"local" | "national">("local");
-  const [source, setSource] = React.useState("");
 
   React.useEffect(() => {
     let cancelled = false;
@@ -70,68 +70,31 @@ export function LiveDoors({
       cache: "no-store",
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { ok?: boolean; needsZip?: boolean; scope?: string; doors?: LiveDoor[] } | null) => {
-        if (cancelled || !d?.ok) return;
-        setNeedsZip(Boolean(d.needsZip));
-        setScope(d.scope === "national" ? "national" : "local");
-        setDoors(d.doors ?? []);
-        setSource(d.doors?.[0]?.source ?? "");
-      })
+      .then(
+        (
+          d: {
+            ok?: boolean;
+            needsZip?: boolean;
+            nearbyScope?: string;
+            nearby?: LiveDoor[];
+            online?: LiveDoor[];
+          } | null
+        ) => {
+          if (cancelled || !d?.ok) return;
+          setNeedsZip(Boolean(d.needsZip));
+          setScope(d.nearbyScope === "national" ? "national" : "local");
+          setNearby(d.nearby ?? []);
+          setOnline(d.online ?? []);
+        }
+      )
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [lane, slug]);
 
-  // No zip yet: say what it would actually get them and leave it at that. It's
-  // an offer, not a gate — and whatever works without a location is still shown
-  // underneath, so declining costs them nothing.
-  if (needsZip) {
-    return (
-      <SectionCard tone="neutral">
-        <div className="flex items-start gap-3">
-          <span
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-control"
-            style={{ backgroundColor: rgba(accent, 0.12), color: rgba(accent, 0.92) }}
-          >
-            <MapPin className="h-[18px] w-[18px]" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <CardTitle as="h2">Want the version near you?</CardTitle>
-            <RowMeta className="mt-1 block">
-              With your zip, this turns into actual places you could turn up to — the
-              clubs, classes and groups that exist where you live, not just links. It’s
-              only used to look up what’s nearby, and you can skip it.
-            </RowMeta>
-          </div>
-        </div>
-
-        <Link
-          href="/main/profile/edit"
-          className="mt-3.5 inline-flex items-center gap-1.5 rounded-control px-3.5 py-2 text-label font-medium transition hover:brightness-110"
-          style={{ backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }}
-        >
-          <MapPin className="h-3.5 w-3.5" />
-          Add your zip
-        </Link>
-
-        {doors.length > 0 ? (
-          <div className="mt-5 border-t border-white/10 pt-4">
-            <RowMeta className="mb-2.5 block">
-              In the meantime — open to anyone, wherever you are
-            </RowMeta>
-            <div className="space-y-2.5">
-              {doors.map((d) => (
-                <DoorRow key={d.id} door={d} accent={accent} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </SectionCard>
-    );
-  }
-
-  if (doors.length === 0) return null;
+  // Nothing to show at all — stay silent rather than render an empty shell.
+  if (nearby.length === 0 && online.length === 0 && !needsZip) return null;
 
   return (
     <SectionCard tone="neutral">
@@ -140,22 +103,65 @@ export function LiveDoors({
           className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-control"
           style={{ backgroundColor: rgba(accent, 0.12), color: rgba(accent, 0.92) }}
         >
-          <MapPin className="h-[18px] w-[18px]" />
+          <Compass className="h-[18px] w-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          {/* Never call it "near you" when it isn't. */}
-          <CardTitle as="h2">{scope === "local" ? "Real places near you" : "Real places to start"}</CardTitle>
-          <RowMeta className="mt-1 block">
-            Looked up just now{source ? ` · ${source}` : ""}
-          </RowMeta>
+          <CardTitle as="h2">Ways in, right now</CardTitle>
+          <RowMeta className="mt-1 block">Looked up as this page loaded</RowMeta>
         </div>
       </div>
 
-      <div className="mt-4 space-y-2.5">
-        {doors.map((d) => (
-          <DoorRow key={d.id} door={d} accent={accent} />
-        ))}
-      </div>
+      {/* Nearby, when we know where "near" is. Never labelled "near you" unless
+          the results genuinely are. */}
+      {nearby.length > 0 ? (
+        <div className="mt-4">
+          <RowMeta className="mb-2.5 flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5" />
+            {scope === "local" ? "Places near you" : "Places to start"}
+          </RowMeta>
+          <div className="space-y-2.5">
+            {nearby.map((d) => (
+              <DoorRow key={d.id} door={d} accent={accent} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Online is not the leftovers. For plenty of this it's where a person
+          actually starts, and for someone without transport it may be the only
+          route — so it always shows, with or without a zip. */}
+      {online.length > 0 ? (
+        <div className="mt-4">
+          <RowMeta className="mb-2.5 flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5" />
+            Online and virtual — open to anyone
+          </RowMeta>
+          <div className="space-y-2.5">
+            {online.map((d) => (
+              <DoorRow key={d.id} door={d} accent={accent} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* The offer sits at the bottom: an addition, not a gate. */}
+      {needsZip ? (
+        <div className="mt-5 border-t border-white/10 pt-4">
+          <RowMeta className="block">
+            Add your zip and this also fills with real places near you — the clubs,
+            classes and groups where you live. It’s only used to look up what’s
+            nearby, and you can skip it.
+          </RowMeta>
+          <Link
+            href="/main/profile/edit"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-control px-3.5 py-2 text-label font-medium transition hover:brightness-110"
+            style={{ backgroundColor: rgba(accent, 0.14), color: rgba(accent, 0.95) }}
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            Add your zip
+          </Link>
+        </div>
+      ) : null}
     </SectionCard>
   );
 }
