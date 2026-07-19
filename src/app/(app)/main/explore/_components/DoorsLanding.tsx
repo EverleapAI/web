@@ -32,6 +32,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 import { LANE_ACCENT, type ExplorePath, type Lane, type Rgb } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
+import { rankPaths } from "../_lib/scorePath";
 import { BackToExplore, LANE_ICON, rgba } from "./exploreUi";
 
 const MAX_DOORS = 8;
@@ -134,7 +135,14 @@ export function DoorsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[]
   const copy = COPY[lane] ?? COPY.play;
   const Icon = LANE_ICON[lane];
 
-  const doors = React.useMemo(() => collectDoors(paths), [paths]);
+  // Order by fit first, so the doors come from the activities most likely to
+  // land with this reader rather than whichever path happens to sort first.
+  // Nothing is dropped; the browse list below shows every path in the same order.
+  const ordered = React.useMemo(
+    () => (profile ? rankPaths(paths, profile, paths.length).map((r) => r.path) : paths),
+    [paths, profile]
+  );
+  const doors = React.useMemo(() => collectDoors(ordered), [ordered]);
   const near = doors.filter((d) => d.local).length;
 
   if (!isReady) return null;
@@ -203,7 +211,7 @@ export function DoorsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[]
         <SectionCard tone="neutral" compact>
           <CardTitle as="h2">{copy.browse}</CardTitle>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {paths.map((p) => (
+            {ordered.map((p) => (
               <Link
                 key={p.id}
                 href={`/main/explore/${p.lane}/${p.slug}`}

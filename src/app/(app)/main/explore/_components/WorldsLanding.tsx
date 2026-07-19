@@ -28,6 +28,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 
 import { LANE_ACCENT, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
+import { rankPaths } from "../_lib/scorePath";
 import { BackToExplore, MiniConstellation, SPECIALTY_ACCENTS, accentCard } from "./exploreUi";
 import { WORLD_REGION_BY_SLUG, WORLD_REGION_ORDER } from "../_data/worldRegions";
 
@@ -108,24 +109,34 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
   const accentRgb = `${accent.r}, ${accent.g}, ${accent.b}`;
   const copy = COPY[lane] ?? COPY.learning;
 
+  // Order by fit rather than by alphabet. Nothing is dropped — every path stays
+  // on the page — but the ones that match this reader lead, so Learning doesn't
+  // open on "Agriculture + Animal Science" for everyone purely because A sorts
+  // first. Without a profile we keep the catalog's own order.
+  const ordered = React.useMemo(() => {
+    if (!profile) return paths;
+    return rankPaths(paths, profile, paths.length).map((r) => r.path);
+  }, [paths, profile]);
+
   // World groups by region; the other lanes are small enough to read straight
   // through. A place with no region, or one shared across two, falls into a
-  // final bucket rather than being dropped.
+  // final bucket rather than being dropped. Fit-order is preserved inside each
+  // region.
   const grouped = React.useMemo(() => {
-    if (lane !== "world" || paths.length < 20) return null;
+    if (lane !== "world" || ordered.length < 20) return null;
     const buckets = new Map<string, ExplorePath[]>();
-    for (const p of paths) {
+    for (const p of ordered) {
       const raw = WORLD_REGION_BY_SLUG[p.slug] ?? "";
       const region = raw.split(",")[0].trim() || "Elsewhere in the world";
       if (!buckets.has(region)) buckets.set(region, []);
       buckets.get(region)!.push(p);
     }
-    const ordered = [
+    const regionOrder = [
       ...WORLD_REGION_ORDER.filter((r) => buckets.has(r)),
       ...[...buckets.keys()].filter((r) => !WORLD_REGION_ORDER.includes(r)),
     ];
-    return ordered.map((region) => ({ region, items: buckets.get(region) ?? [] }));
-  }, [lane, paths]);
+    return regionOrder.map((region) => ({ region, items: buckets.get(region) ?? [] }));
+  }, [lane, ordered]);
 
   if (!isReady) return null;
   const name = profile?.firstName;
@@ -181,9 +192,9 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
             </div>
           ))}
         </div>
-      ) : paths.length > 0 ? (
+      ) : ordered.length > 0 ? (
         <div className="space-y-3">
-          {paths.map((p, i) => (
+          {ordered.map((p, i) => (
             <WorldCard key={p.id} path={p} accent={SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length]} />
           ))}
         </div>
