@@ -179,6 +179,42 @@ export function PathConstellation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A branch slug that matches nothing renders a hollow constellation: the title
+  // falls back to the career, the lead is empty, and the why panel has nothing to
+  // put in it. That's what a stale or mistyped link looks like, so send them to
+  // the list of real ones instead. Only once the real path has loaded — the
+  // fallback deck arrives first and has no branches yet.
+  const branchMissing =
+    Boolean(path.branches?.previews?.length) && !branch && !preview && Boolean(branchSlug);
+  React.useEffect(() => {
+    if (!branchMissing) return;
+    router.replace(`/main/explore/${path.lane}/${path.slug}/specialties`);
+  }, [branchMissing, router, path.lane, path.slug]);
+
+  // Tapping a star swapped the panel below the map, which on most screens sits
+  // under the fold — so it looked like nothing had happened. Bring it into view,
+  // but only when it isn't already, so a tap on desktop doesn't yank the page.
+  const panelRef = React.useRef<HTMLDivElement | null>(null);
+  // Reveal AFTER the panel has rendered. It carries key={active}, so it remounts
+  // on every star change — scrolling from inside the click handler measured the
+  // node that was on its way out.
+  const skipFirstReveal = React.useRef(true);
+  React.useEffect(() => {
+    if (skipFirstReveal.current) {
+      skipFirstReveal.current = false; // landing on "why" shouldn't move the page
+      return;
+    }
+    const el = panelRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    // Only skip when it's already near the TOP. Sitting halfway down counts as
+    // visible to a rectangle and not to a person — you'd see the heading and
+    // none of what's under it.
+    if (r.top >= 0 && r.top < window.innerHeight * 0.25) return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  }, [active]);
+
   const open = (id: StarId) => {
     setActive(id);
     setLit((prev) => (prev.has(id) ? prev : new Set([...prev, id])));
@@ -253,7 +289,11 @@ export function PathConstellation({
 
         {/* The constellation — the navigation. */}
         <div className="rounded-card border border-white/8 bg-white/[0.015] px-1 py-2">
-          <svg viewBox="0 0 400 260" className="w-full">
+          {/* Capped: the map scales with width, so on a wide screen it grew tall
+              enough to push the panel entirely under the fold. Constraining it
+              lets the content below peek, which is half the "where did it go"
+              problem. */}
+          <svg viewBox="0 0 400 260" className="mx-auto w-full max-w-[540px]">
             <g>
               {edges.map(([x, y], i) => {
                 const A = POS[x],
@@ -325,7 +365,11 @@ export function PathConstellation({
         </div>
 
         {/* The active star's content — drawn as objects, not a wall. */}
-        <div key={active} className="rounded-card border border-white/10 bg-[rgba(10,14,26,0.72)] px-5 py-5 [animation:cRise_.4s_ease]">
+        <div
+          ref={panelRef}
+          key={active}
+          className="scroll-mt-4 rounded-card border border-white/10 bg-[rgba(10,14,26,0.72)] px-5 py-5 [animation:cRise_.4s_ease]"
+        >
           <StarPanel
             active={active}
             a={a}
