@@ -73,11 +73,58 @@ export function DescentShell({
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  // Back should close the descent, not leave the page.
+  //
+  // A descent is React state rather than a route, so the phone's back gesture
+  // used to sail straight past the overlay and exit the constellation — from
+  // five levels deep, with no app nav on screen to land on, since this thing
+  // deliberately covers it. Back is the gesture people trust most on a phone and
+  // it was the one that punished them hardest.
+  //
+  // One history entry on open fixes that: back pops the entry, we hear it, we
+  // close. The URL never changes, so the router has nothing to navigate.
+  const onCloseRef = React.useRef(onClose);
   React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  React.useEffect(() => {
+    // Only if we haven't already. React double-invokes this effect in dev, which
+    // pushed two entries for one descent and left a spare behind after closing —
+    // a back press that appeared to do nothing. Checking for our own marker
+    // makes one open mean one entry however many times the effect runs.
+    if (!window.history.state?.everleapDescent) {
+      window.history.pushState({ everleapDescent: true }, "", window.location.href);
+    }
+    const onPop = () => onCloseRef.current();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // The pill and Escape leave through the same door as the back gesture, rather
+  // than closing directly and then tidying up the entry they left behind.
+  //
+  // Tidying up in effect cleanup was the obvious version and it was wrong: the
+  // history.back() it fired raced React's double-invoked mount, and the pending
+  // pop landed in the SECOND mount's listener — so the descent opened and shut
+  // itself in the same breath. One exit, taken the same way every time, has no
+  // race to lose.
+  const close = React.useCallback(() => {
+    if (window.history.state?.everleapDescent) {
+      window.history.back();
+      // If that pop never arrives — an entry something else replaced, a browser
+      // that swallows it — close anyway rather than leave a dead button. Closing
+      // twice costs nothing; a descent with no way out costs everything.
+      window.setTimeout(() => onCloseRef.current(), 220);
+      return;
+    }
+    onCloseRef.current();
+  }, []);
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [close]);
 
   if (!mounted) return null;
 
@@ -101,7 +148,7 @@ export function DescentShell({
           <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={onClose}
+          onClick={close}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]"
         >
           <ArrowUp className="h-3.5 w-3.5" />
