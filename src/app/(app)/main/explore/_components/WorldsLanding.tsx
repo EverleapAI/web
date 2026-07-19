@@ -16,7 +16,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Search, Sparkles, X } from "lucide-react";
 
 import { SectionCard } from "../../components/ui/SectionCard";
 import { AgenticHeader } from "../../components/ui/AgenticHeader";
@@ -109,14 +109,33 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
   const accentRgb = `${accent.r}, ${accent.g}, ${accent.b}`;
   const copy = COPY[lane] ?? COPY.learning;
 
+  // At 153 places, region grouping keeps the page navigable but Europe alone is
+  // 46 cards — someone looking for one thing shouldn't have to scroll for it.
+  // Matches on the title and on what's inside, so "temple" finds Japan and
+  // "coral" finds the countries with reefs.
+  const [query, setQuery] = React.useState("");
+  const searchable = paths.length >= 20;
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return paths;
+    return paths.filter((p) => {
+      const inTitle = p.card.title.toLowerCase().includes(q) || p.title.toLowerCase().includes(q);
+      const inHook = (p.card.hook ?? "").toLowerCase().includes(q);
+      const inBranches = (p.branches?.previews ?? []).some(
+        (b) => b.title.toLowerCase().includes(q) || (b.oneLiner ?? "").toLowerCase().includes(q)
+      );
+      return inTitle || inHook || inBranches;
+    });
+  }, [paths, query]);
+
   // Order by fit rather than by alphabet. Nothing is dropped — every path stays
   // on the page — but the ones that match this reader lead, so Learning doesn't
   // open on "Agriculture + Animal Science" for everyone purely because A sorts
   // first. Without a profile we keep the catalog's own order.
   const ordered = React.useMemo(() => {
-    if (!profile) return paths;
-    return rankPaths(paths, profile, paths.length).map((r) => r.path);
-  }, [paths, profile]);
+    if (!profile) return filtered;
+    return rankPaths(filtered, profile, filtered.length).map((r) => r.path);
+  }, [filtered, profile]);
 
   // World groups by region; the other lanes are small enough to read straight
   // through. A place with no region, or one shared across two, falls into a
@@ -171,6 +190,36 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
 
       {/* 2) Trophies */}
       <AwardsMeter stats={badges} />
+
+      {searchable ? (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={lane === "world" ? "Search places, sites, traditions…" : "Search…"}
+            aria-label="Search this lane"
+            className="w-full rounded-control border border-white/10 bg-white/[0.04] py-2.5 pl-10 pr-9 text-label text-white placeholder:text-white/35 focus:border-white/25 focus:outline-none"
+          />
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 transition hover:text-white/80"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {query && ordered.length === 0 ? (
+        <RowMeta className="block px-1">
+          Nothing here matches “{query}”. Try a place, a craft, or something you’d want to see.
+        </RowMeta>
+      ) : null}
 
       {/* 3) The paths. World carries 150+ places and the deck arrives unranked,
              so it groups by UNESCO's own regions — pick a part of the world,
