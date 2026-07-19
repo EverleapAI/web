@@ -9,6 +9,7 @@ import { WORLD_PATHS } from "./_data/worldPaths";
 const WORLD_EXPLORE_PATHS = worldPathsToExplorePaths(WORLD_PATHS);
 
 export default function WorldExplorePage() {
-  // Doors-first: World's content is already action-shaped, so the ways in lead.
-  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} variant="doors" />;
+  // World now has real places and traditions inside each country, so it reads
+  // like Learning and Impact: each path is a world you open, grouped by region.
+  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} variant="worlds" />;
 }

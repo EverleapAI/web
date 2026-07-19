@@ -29,6 +29,7 @@ import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { LANE_ACCENT, type ExplorePath, type Lane } from "../_data/exploreSchema";
 import { useExploreProfile } from "../_lib/exploreProfile";
 import { BackToExplore, MiniConstellation, SPECIALTY_ACCENTS, accentCard } from "./exploreUi";
+import { WORLD_REGION_BY_SLUG, WORLD_REGION_ORDER } from "../_data/worldRegions";
 
 const COPY: Record<string, { eyebrow: string; title: (n?: string) => string; body: string }> = {
   learning: {
@@ -36,6 +37,12 @@ const COPY: Record<string, { eyebrow: string; title: (n?: string) => string; bod
     title: (n) => (n ? `${n}, subjects are bigger on the inside.` : "Subjects are bigger on the inside."),
     body:
       "A subject at school is a list of things to be tested on, which tells you almost nothing about what it's like to actually do — architecture is standing in someone's kitchen with a tape measure, not a chapter on floor plans. Each of these opens into the branches inside it and what a real day in them feels like, so you can find out whether the thing itself grabs you before you commit years to it.",
+  },
+  world: {
+    eyebrow: "Explore · World",
+    title: (n) => (n ? `${n}, the world is a set of places you can actually meet.` : "The world is a set of places you can actually meet."),
+    body:
+      "A country is easy to reduce to a flag and a couple of facts, which tells you nothing about what it's like to stand somewhere in it or take part in something people there still do. Each of these opens into real places and living traditions — the ones UNESCO keeps track of — and every way in works whether or not you'll ever get on a plane, because a language exchange or cooking a dish properly is a real way to meet a place too.",
   },
   impact: {
     eyebrow: "Explore · Impact",
@@ -101,6 +108,25 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
   const accentRgb = `${accent.r}, ${accent.g}, ${accent.b}`;
   const copy = COPY[lane] ?? COPY.learning;
 
+  // World groups by region; the other lanes are small enough to read straight
+  // through. A place with no region, or one shared across two, falls into a
+  // final bucket rather than being dropped.
+  const grouped = React.useMemo(() => {
+    if (lane !== "world" || paths.length < 20) return null;
+    const buckets = new Map<string, ExplorePath[]>();
+    for (const p of paths) {
+      const raw = WORLD_REGION_BY_SLUG[p.slug] ?? "";
+      const region = raw.split(",")[0].trim() || "Elsewhere in the world";
+      if (!buckets.has(region)) buckets.set(region, []);
+      buckets.get(region)!.push(p);
+    }
+    const ordered = [
+      ...WORLD_REGION_ORDER.filter((r) => buckets.has(r)),
+      ...[...buckets.keys()].filter((r) => !WORLD_REGION_ORDER.includes(r)),
+    ];
+    return ordered.map((region) => ({ region, items: buckets.get(region) ?? [] }));
+  }, [lane, paths]);
+
   if (!isReady) return null;
   const name = profile?.firstName;
 
@@ -135,8 +161,27 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
       {/* 2) Trophies */}
       <AwardsMeter stats={badges} />
 
-      {/* 3) The paths, each its own world */}
-      {paths.length > 0 ? (
+      {/* 3) The paths. World carries 150+ places and the deck arrives unranked,
+             so it groups by UNESCO's own regions — pick a part of the world,
+             then a place in it — rather than becoming one long alphabetical
+             wall. Every other lane is small enough to read straight through. */}
+      {grouped ? (
+        <div className="space-y-6">
+          {grouped.map(({ region, items }) => (
+            <div key={region}>
+              <h2 className="mb-2.5 text-micro font-semibold uppercase tracking-eyebrow text-white/45">
+                {region}
+                <span className="ml-2 font-normal text-white/30">{items.length}</span>
+              </h2>
+              <div className="space-y-3">
+                {items.map((p, i) => (
+                  <WorldCard key={p.id} path={p} accent={SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length]} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : paths.length > 0 ? (
         <div className="space-y-3">
           {paths.map((p, i) => (
             <WorldCard key={p.id} path={p} accent={SPECIALTY_ACCENTS[i % SPECIALTY_ACCENTS.length]} />
