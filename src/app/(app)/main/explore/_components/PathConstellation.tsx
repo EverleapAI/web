@@ -126,6 +126,14 @@ export function PathConstellation({
   const outlookLabel = sc?.trajectory?.outlookLabel ?? path.trajectory?.outlookLabel;
   const outlookSummary = sc?.trajectory?.outlookSummary ?? path.trajectory?.outlookSummary;
   const opps = (path.nextSteps?.sections ?? []).flatMap((s) => s.items);
+
+  // The "why" panel has its own material only when there's a personal whyYou or
+  // the branch carries lists. Without either, the lead IS its content — so the
+  // header steps aside rather than printing the same paragraph twice.
+  const whyHasOwnMaterial =
+    Boolean(whyYou && whyYou.trim() !== lead.trim()) ||
+    Boolean(branch?.whatYouActuallyDo?.length) ||
+    Boolean(branch?.skillsThatGrowHere?.length);
   const hasLeads = Boolean(salary || ai || growing.length || pressure.length);
 
   // Which stars have content to show.
@@ -238,7 +246,9 @@ export function PathConstellation({
           <h1 className="mt-1 text-title font-semibold leading-display tracking-title text-ink-strong sm:text-display">
             {specialtyTitle}
           </h1>
-          {lead ? <p className="mt-2.5 text-read leading-read text-white/80">{lead}</p> : null}
+          {lead && whyHasOwnMaterial ? (
+            <p className="mt-2.5 text-read leading-read text-white/80">{lead}</p>
+          ) : null}
         </header>
 
         {/* The constellation — the navigation. */}
@@ -438,7 +448,14 @@ function StarPanel(props: {
           </span>
           <h2 className="text-read font-semibold leading-read text-white">Why this rhymes with you</h2>
         </div>
-        <p className="text-read leading-read text-white/82">{props.whyYou || props.lead}</p>
+        {/* Never print what's already on screen. whyYou is a Work-match field, so
+            on most branches it's empty and this fell back to the lead — repeating
+            the paragraph from the top of the page fifteen lines further down. */}
+        {props.whyYou && props.whyYou.trim() !== props.lead.trim() ? (
+          <p className="text-read leading-read text-white/82">{props.whyYou}</p>
+        ) : !props.branch?.whatYouActuallyDo?.length && !props.branch?.skillsThatGrowHere?.length ? (
+          <p className="text-read leading-read text-white/82">{props.lead}</p>
+        ) : null}
         {props.branch?.whatYouActuallyDo?.length ? (
           <div className="mt-4">
             <Eyebrow a={a}>What you&rsquo;d actually do</Eyebrow>
