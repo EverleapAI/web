@@ -28,6 +28,7 @@ export function DescentShell({
   children,
   media = null,
   railTints,
+  rail,
 }: {
   /** "r, g, b" */
   accent: string;
@@ -48,6 +49,12 @@ export function DescentShell({
    * the SHAPE of the day at a glance, from the timeLabels we already have.
    */
   railTints?: string[];
+  /**
+   * Replaces the default segments entirely — for a descent whose progress IS the
+   * content, like the day, where the rail becomes a dawn-to-dusk band you can
+   * navigate rather than a read-out of how far you've got.
+   */
+  rail?: React.ReactNode;
 }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -75,7 +82,9 @@ export function DescentShell({
           <ArrowUp className="h-3.5 w-3.5" />
           Step back up
         </button>
-        {total > 1 ? (
+        {rail ? (
+          <div className="min-w-0 flex-1">{rail}</div>
+        ) : total > 1 ? (
           <div className="flex flex-1 items-center gap-1.5" aria-hidden>
             {Array.from({ length: total }).map((_, k) => {
               const tint = railTints?.[k];

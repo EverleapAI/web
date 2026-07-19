@@ -162,6 +162,13 @@ export function ExplorePathDetailLoader({
     const controller = new AbortController();
     setMissing(false);
     fetchCatalogPath(lane, slug, controller.signal).then((catalog) => {
+      // A cancelled request is not a missing path. fetchCatalogPath catches
+      // everything and returns null, so an AbortError — from an effect cleanup,
+      // a re-render, or navigating away — looked identical to "the catalog has
+      // nothing". That rendered "We couldn't load this path" for a moment before
+      // the retry succeeded and replaced it: an error message for a request that
+      // was never allowed to finish.
+      if (controller.signal.aborted) return;
       if (catalog) {
         setPath(catalog.path);
         setWhyYou(catalog.whyYou);

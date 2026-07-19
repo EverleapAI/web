@@ -12,6 +12,7 @@ import * as React from "react";
 import { ArrowLeft, ArrowRight, Loader2, Play, Wand2 } from "lucide-react";
 
 import { DescentMedia, DescentShell } from "./DescentShell";
+import { DayRibbon } from "./DayRibbon";
 import type { RealityMoment } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
@@ -30,7 +31,10 @@ export function hourOf(label: string | undefined): number {
   if (/night|late evening/.test(l)) return 22;
   if (/evening|dusk|end of day/.test(l)) return 19;
   if (/late afternoon/.test(l)) return 16;
-  if (/afternoon|midday|lunch/.test(l)) return 14;
+  // Midday sits before the afternoon rather than on top of it — they used to
+  // share hour 14, which stacked two markers on the same pixel of the ribbon.
+  if (/midday|lunch|noon/.test(l)) return 12;
+  if (/afternoon/.test(l)) return 14;
   if (/late morning/.test(l)) return 11;
   if (/dawn|sunrise|early/.test(l)) return 6;
   if (/morning/.test(l)) return 9;
@@ -129,13 +133,16 @@ export function DayDescent({
       step={i}
       total={total}
       onClose={onClose}
-      // The rail is the day: each segment takes the sky colour of its own hour,
-      // so you can see dawn-to-dusk before reading a word. The outro sits at the
-      // end and takes the last hour's tint.
-      railTints={[
-        ...moments.map((mm) => skyTintAt(hourOf(mm.timeLabel))),
-        skyTintAt(hourOf(moments[moments.length - 1]?.timeLabel)),
-      ]}
+      // The rail IS the day — a dawn-to-dusk band with a marker per moment that
+      // you can tap to jump, rather than a read-out of how far you've got.
+      rail={
+        <DayRibbon
+          moments={moments}
+          active={Math.min(i, moments.length - 1)}
+          outroActive={atOutro}
+          onJump={(k) => setI(k)}
+        />
+      }
       media={
         atOutro ? null : (
           <DescentMedia style={{ background: sc.sky }}>
@@ -165,11 +172,10 @@ export function DayDescent({
             <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
             <button aria-label="Previous" type="button" onClick={() => go(-1)} className="absolute inset-y-0 left-0 w-1/3" />
             <button aria-label="Next" type="button" onClick={() => go(1)} className="absolute inset-y-0 right-0 w-2/3" />
-            {m?.timeLabel ? (
-              <div className="pointer-events-none absolute left-6 top-6 text-label font-semibold tracking-title text-white/90 drop-shadow">
-                {m.timeLabel}
-              </div>
-            ) : null}
+            {/* The time of day used to be stamped on the photo. The ribbon in
+                the header now names the period AND places it in the day, so the
+                stamp was the same word twice on one screen — and the picture is
+                better without something written across it. */}
           </DescentMedia>
         )
       }
@@ -221,7 +227,9 @@ export function DayDescent({
         <div>
 
               <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${accent})` }}>
-                A day in {specialtyTitle} · {i + 1} of {moments.length}
+                {/* "3 of 4" lives in the ribbon now, next to the dot showing
+                    which moment that is. Repeating it here said nothing new. */}
+                A day in {specialtyTitle}
               </div>
               <h2 className="mt-2 text-read font-semibold leading-read text-white">{m?.title}</h2>
               {/* The scene-setting sentence reads at full size; the rest sits a
