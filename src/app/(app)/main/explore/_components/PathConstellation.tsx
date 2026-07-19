@@ -417,6 +417,8 @@ export function PathConstellation({
 
       {showLeads ? (
         <LeadsDescent
+          lane={path.lane}
+          pathSlug={path.slug}
           salary={salary}
           outlookLabel={outlookLabel}
           outlookSummary={outlookSummary}

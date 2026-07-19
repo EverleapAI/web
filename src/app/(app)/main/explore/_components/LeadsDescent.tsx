@@ -28,11 +28,15 @@ export function LeadsDescent({
   pressure,
   ai,
   specialtyTitle,
+  lane,
+  pathSlug,
   accent,
   creating,
   onClose,
   onStartMission,
 }: {
+  lane: string;
+  pathSlug: string;
   salary?: SalaryBand;
   outlookLabel?: string;
   outlookSummary?: string;
@@ -48,6 +52,26 @@ export function LeadsDescent({
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  // "The climb" — the fourth object from the depth brief. Fetched rather than
+  // stored on the path, so adding it didn't mean regenerating 807 careers.
+  const [rungs, setRungs] = React.useState<LadderRung[]>([]);
+  React.useEffect(() => {
+    if (lane !== "work" || !pathSlug) return;
+    let cancelled = false;
+    fetch(`/api/guidance/ladder?lane=work&path=${encodeURIComponent(pathSlug)}`, {
+      credentials: "include",
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { ok?: boolean; rungs?: LadderRung[] } | null) => {
+        if (!cancelled && d?.ok && Array.isArray(d.rungs)) setRungs(d.rungs);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [lane, pathSlug]);
+
   const beats: Beat[] = [];
 
   if (salary) {
@@ -61,10 +85,12 @@ export function LeadsDescent({
             <div className="absolute inset-y-0 rounded-full" style={{ left: "12%", right: "12%", background: `linear-gradient(90deg, rgba(${accent},0.6), rgb(${accent}))` }} />
             <div className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" style={{ left: "48%", boxShadow: `0 0 0 5px rgba(${accent},0.25)` }} />
           </div>
-          <div className="mt-2 flex justify-between text-meta tabular-nums text-white/60">
-            <span>Starting · {salary.low}</span>
-            <span>Experienced · {salary.high}</span>
-          </div>
+          {salary.low || salary.high ? (
+            <div className="mt-2 flex justify-between text-meta tabular-nums text-white/60">
+              <span>{salary.low ? `Starting · ${salary.low}` : ""}</span>
+              <span>{salary.high ? `Experienced · ${salary.high}` : ""}</span>
+            </div>
+          ) : null}
           {salary.note ? <p className="mt-3 text-label leading-read text-white/70">{salary.note}</p> : null}
         </div>
       ),
@@ -101,6 +127,14 @@ export function LeadsDescent({
     });
   }
 
+  // Appended, never prepended: it arrives from a fetch, and inserting a beat
+  // ahead of the reader would renumber the step they're on mid-read. It also
+  // reads best last — pay, then outlook, then "and where does it go".
+  const climbBeat: Beat | null =
+    rungs.length > 1
+      ? { q: "So — where does this actually go?", render: () => <Climb rungs={rungs} accent={accent} /> }
+      : null;
+
   if (ai) {
     beats.push({
       q: "Could a robot take this job?",
@@ -122,6 +156,8 @@ export function LeadsDescent({
       ),
     });
   }
+
+  if (climbBeat) beats.push(climbBeat);
 
   const total = beats.length + 1;
   const [i, setI] = React.useState(0);
@@ -201,3 +237,65 @@ function AiCol({ title, items, rgb }: { title: string; items: string[]; rgb: str
 }
 
 export default LeadsDescent;
+
+
+export type LadderRung = { title: string; when: string; shift: string };
+
+/**
+ * The climb.
+ *
+ * Drawn rather than narrated: rungs stack upward, the line brightens as it rises,
+ * and each stage says what actually CHANGES about the work. Read bottom to top,
+ * because that's the direction of travel.
+ *
+ * Deliberately doesn't celebrate the top. Most people stop partway and that's a
+ * whole career — the copy the model writes says so, and the object shouldn't
+ * argue with it by making the last rung look like the prize.
+ */
+function Climb({ rungs, accent }: { rungs: LadderRung[]; accent: string }) {
+  const ordered = [...rungs].reverse(); // highest first, so it reads as a climb
+  const top = ordered.length - 1;
+  return (
+    <div className="rounded-card border px-5 py-5" style={{ borderColor: `rgba(${accent},0.24)`, background: `rgba(${accent},0.06)` }}>
+      <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${accent},0.9)` }}>
+        The climb · roughly
+      </div>
+      <ol className="mt-4 space-y-0">
+        {ordered.map((r, i) => {
+          // Brighter higher up: the eye reads the shape before the words.
+          const strength = 0.35 + (0.6 * (top - i)) / Math.max(1, top);
+          const isLast = i === ordered.length - 1;
+          return (
+            <li key={`${r.title}-${i}`} className="relative flex gap-3.5 pb-5 last:pb-0">
+              {!isLast ? (
+                <span
+                  aria-hidden
+                  className="absolute left-[7px] top-4 bottom-0 w-px"
+                  style={{ background: `linear-gradient(180deg, rgba(${accent},${strength}), rgba(${accent},0.18))` }}
+                />
+              ) : null}
+              <span
+                aria-hidden
+                className="relative mt-1 h-3.5 w-3.5 shrink-0 rounded-full"
+                style={{
+                  background: `rgba(${accent},${strength})`,
+                  boxShadow: i === 0 ? `0 0 12px 2px rgba(${accent},0.5)` : undefined,
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-body font-semibold text-white">{r.title}</span>
+                  <span className="text-meta text-white/50">{r.when}</span>
+                </div>
+                <p className="mt-1 text-label leading-read text-white/70">{r.shift}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-1 text-meta leading-read text-white/45">
+        Plenty of people stop partway up, and that&rsquo;s a whole career too.
+      </p>
+    </div>
+  );
+}
