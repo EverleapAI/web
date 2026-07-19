@@ -15,16 +15,16 @@ import type { ExplorePath, Lane } from "../_data/exploreSchema";
 async function fetchDeck(
   lane: Lane,
   signal: AbortSignal
-): Promise<ExplorePath[] | null> {
+): Promise<{ paths: ExplorePath[]; total?: number } | null> {
   try {
     const res = await fetch(`/api/explore/paths?lane=${encodeURIComponent(lane)}`, {
       credentials: "include",
       signal,
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { ok?: boolean; paths?: ExplorePath[] };
+    const data = (await res.json()) as { ok?: boolean; total?: number; paths?: ExplorePath[] };
     return data?.ok && Array.isArray(data.paths) && data.paths.length > 0
-      ? data.paths
+      ? { paths: data.paths, total: data.total }
       : null;
   } catch {
     return null;
@@ -43,7 +43,13 @@ export function ExploreSummaryLoader({
     Promise.all(
       fallbackLanes.map(async (l) => {
         const deck = await fetchDeck(l.lane, controller.signal);
-        return { lane: l.lane, paths: deck ?? l.paths } as SummaryLane;
+        return {
+          lane: l.lane,
+          paths: deck?.paths ?? l.paths,
+          // How big the lane really is. Work serves a deck of matches, so its
+          // returned length is not its size.
+          total: deck?.total ?? (deck?.paths ?? l.paths).length,
+        } as SummaryLane;
       })
     ).then((next) => {
       if (!controller.signal.aborted) setLanes(next);

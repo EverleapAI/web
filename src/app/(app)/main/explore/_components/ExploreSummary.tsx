@@ -24,7 +24,7 @@ import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 
 const LANE_ORDER: Lane[] = ["work", "learning", "world", "impact", "play"];
 
-export type SummaryLane = { lane: Lane; paths: ExplorePath[] };
+export type SummaryLane = { lane: Lane; paths: ExplorePath[]; total?: number };
 
 type LaneTop = { lane: Lane; path: ExplorePath; score: number };
 
@@ -80,7 +80,10 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
   // signal; whispers appear once we have a top pick to point at.
   const worlds = React.useMemo<WorldsLane[]>(() => {
     const topByLane = new Map(laneTops.map((t) => [t.lane, t.path]));
-    const countByLane = new Map(lanes.map((l) => [l.lane, l.paths.length]));
+    // The lane's real size, not the size of the deck we happened to serve —
+    // Work returns 12 matches out of 807 careers, and counting the deck made
+    // Career read as the smallest lane when it is the largest.
+    const countByLane = new Map(lanes.map((l) => [l.lane, l.total ?? l.paths.length]));
     return LANE_ORDER.map((lane) => ({
       lane,
       count: countByLane.get(lane) ?? 0,
