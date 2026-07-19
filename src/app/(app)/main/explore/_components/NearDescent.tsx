@@ -11,7 +11,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, ArrowUp, ExternalLink, Globe, Loader2, MapPin, Video, Wand2 } from "lucide-react";
 
-import type { Opportunity } from "../_data/exploreSchema";
+import type { Lane, Opportunity } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
 
@@ -54,6 +54,8 @@ function renderOpp(o: Opportunity, rgb: string) {
 export function NearDescent({
   opps,
   specialtyTitle,
+  lane,
+  parentTitle,
   accent,
   creating,
   onClose,
@@ -61,6 +63,9 @@ export function NearDescent({
 }: {
   opps: Opportunity[];
   specialtyTitle: string;
+  lane: Lane;
+  /** The path this branch belongs to — for World, the place itself. */
+  parentTitle: string;
   accent: string;
   creating: boolean;
   onClose: () => void;
@@ -84,13 +89,32 @@ export function NearDescent({
       .catch(() => {});
   }, []);
   const search = (q: string) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
-  const localDoors: Opportunity[] = zip
-    ? [
-        { id: "z1", title: `${specialtyTitle} firms & employers near you`, note: "See who does this work in your area — a real place to email or visit", href: search(`${specialtyTitle} firm OR employer near ${zip}`), mode: "local" },
-        { id: "z2", title: "Programs, camps & classes near you", note: "Hands-on ways to try it close to home", href: search(`${specialtyTitle} summer program OR camp OR class near ${zip}`), mode: "local" },
-        { id: "z3", title: "Meetups & events near you", note: "Find people who do this, gathering nearby", href: `https://www.meetup.com/find/?keywords=${encodeURIComponent(specialtyTitle)}&location=us--${encodeURIComponent(zip)}`, mode: "local" },
-      ]
-    : [];
+
+  // What "near you" can honestly mean differs by lane. Employers make sense for
+  // a career; they are nonsense for a place. A World path is somewhere else in
+  // the world, so "near you" has to mean the ways that culture reaches where you
+  // already are — its food, its language, its diaspora community — never a
+  // search for Ghanaian forts down the road from San Rafael.
+  const localDoors: Opportunity[] = !zip
+    ? []
+    : lane === "world"
+      ? [
+          { id: "z1", title: `${parentTitle} food near you`, note: "The most direct way to meet a culture without leaving home", href: search(`${parentTitle} restaurant OR grocery near ${zip}`), mode: "local" },
+          { id: "z2", title: `${parentTitle} cultural events near you`, note: "Festivals, exhibitions and community events where you live", href: search(`${parentTitle} cultural event OR festival OR community near ${zip}`), mode: "local" },
+          { id: "z3", title: `People who speak the language, near you`, note: "Language groups and conversation meetups nearby", href: `https://www.meetup.com/find/?keywords=${encodeURIComponent(parentTitle + " language")}&location=us--${encodeURIComponent(zip)}`, mode: "local" },
+        ]
+      : lane === "work"
+        ? [
+            { id: "z1", title: `${specialtyTitle} firms & employers near you`, note: "See who does this work in your area — a real place to email or visit", href: search(`${specialtyTitle} firm OR employer near ${zip}`), mode: "local" },
+            { id: "z2", title: "Programs, camps & classes near you", note: "Hands-on ways to try it close to home", href: search(`${specialtyTitle} summer program OR camp OR class near ${zip}`), mode: "local" },
+            { id: "z3", title: "Meetups & events near you", note: "Find people who do this, gathering nearby", href: `https://www.meetup.com/find/?keywords=${encodeURIComponent(specialtyTitle)}&location=us--${encodeURIComponent(zip)}`, mode: "local" },
+          ]
+        : [
+            // Learning, Impact and Play: places you could turn up and do it.
+            { id: "z1", title: `${specialtyTitle} classes & groups near you`, note: "Somewhere local that already does this", href: search(`${specialtyTitle} class OR group OR club near ${zip}`), mode: "local" },
+            { id: "z2", title: `Places to try ${specialtyTitle.toLowerCase()} nearby`, note: "Community centres, libraries and clubs close to home", href: search(`where to try ${specialtyTitle} near ${zip}`), mode: "local" },
+            { id: "z3", title: "Meetups & events near you", note: "Find people who do this, gathering nearby", href: `https://www.meetup.com/find/?keywords=${encodeURIComponent(specialtyTitle)}&location=us--${encodeURIComponent(zip)}`, mode: "local" },
+          ];
 
   // "Near you" gets its own treatment (zip-aware); the rest group normally.
   const nearItems = [...localDoors, ...opps.filter((o) => bucket(o.mode) === "local")];

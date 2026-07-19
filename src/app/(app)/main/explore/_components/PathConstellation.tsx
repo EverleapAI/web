@@ -133,7 +133,16 @@ export function PathConstellation({
     { id: "why", label: branch ? "Why this path" : "Why you", ...POS.why, accent: a },
     ...(moments.length ? [{ id: "day" as const, label: "A real day", ...POS.day, accent: a }] : []),
     ...(hasLeads ? [{ id: "leads" as const, label: "Where it leads", ...POS.leads, accent: a }] : []),
-    ...(opps.length ? [{ id: "near" as const, label: "Try it near you", ...POS.near, accent: a }] : []),
+    ...(opps.length
+      ? [{
+          id: "near" as const,
+          // A World path is somewhere else — "near you" would be a promise it
+          // can't keep, so it offers ways in instead.
+          label: path.lane === "world" ? "Ways in from here" : "Try it near you",
+          ...POS.near,
+          accent: a,
+        }]
+      : []),
     { id: "real", label: "Try it for real", ...POS.real, accent: HONEY, honey: true },
   ];
   const ids = new Set(stars.map((s) => s.id));
@@ -361,6 +370,8 @@ export function PathConstellation({
       {showNear ? (
         <NearDescent
           opps={opps}
+          lane={path.lane}
+          parentTitle={careerTitle}
           specialtyTitle={specialtyTitle}
           accent={a}
           creating={creating}
