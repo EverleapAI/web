@@ -10,6 +10,7 @@
 import * as React from "react";
 
 import { ExploreLanding } from "./ExploreLanding";
+import { DoorsLanding } from "./DoorsLanding";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 
 type Deck = { paths: ExplorePath[]; serverRanked: boolean };
@@ -39,9 +40,12 @@ async function fetchCatalogDeck(
 export function ExploreLandingLoader({
   lane,
   fallback,
+  variant = "default",
 }: {
   lane: Lane;
   fallback: ExplorePath[];
+  /** "doors" leads with real-world opportunities instead of path depth (World, Play). */
+  variant?: "default" | "doors";
 }) {
   const [paths, setPaths] = React.useState<ExplorePath[]>(fallback);
   const [serverRanked, setServerRanked] = React.useState(false);
@@ -56,5 +60,6 @@ export function ExploreLandingLoader({
     return () => controller.abort();
   }, [lane]);
 
+  if (variant === "doors") return <DoorsLanding lane={lane} paths={paths} />;
   return <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />;
 }

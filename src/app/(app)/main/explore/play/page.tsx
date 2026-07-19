@@ -7,5 +7,6 @@ import { PLAY_ACTIVITIES } from "./_data/playPaths";
 const PLAY_PATHS = playActivitiesToExplorePaths(PLAY_ACTIVITIES);
 
 export default function PlayExplorePage() {
-  return <ExploreLandingLoader lane="play" fallback={PLAY_PATHS} />;
+  // Doors-first: you can't research your way into liking climbing — go once.
+  return <ExploreLandingLoader lane="play" fallback={PLAY_PATHS} variant="doors" />;
 }

@@ -9,5 +9,6 @@ import { WORLD_PATHS } from "./_data/worldPaths";
 const WORLD_EXPLORE_PATHS = worldPathsToExplorePaths(WORLD_PATHS);
 
 export default function WorldExplorePage() {
-  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} />;
+  // Doors-first: World's content is already action-shaped, so the ways in lead.
+  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} variant="doors" />;
 }
