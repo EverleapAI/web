@@ -484,12 +484,20 @@ function StarPanel(props: {
         <div className="mb-1 flex items-center gap-2">
           <h2 className="text-read font-semibold leading-read text-white">A real day, from the inside</h2>
         </div>
-        <p className="mb-3 text-meta text-white/55">Swipe through it — a scene, a time, one line.</p>
-        <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <p className="mb-3 text-meta text-white/55">
+          <span className="sm:hidden">Swipe through it — a scene, a time, one line.</span>
+          <span className="hidden sm:inline">A scene, a time, one line.</span>
+        </p>
+        {/* Below sm this is a swipe rail; at sm and up it becomes a grid. It used
+            to be a rail everywhere with hidden scrollbars, so on a wide screen the
+            second card was simply sliced off at the edge with nothing to say it
+            continued. Cards are near-full-width on mobile so the cut edge reads as
+            "there's more", not as broken. */}
+        <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0">
           {props.moments.map((m) => (
             <div
               key={m.id}
-              className="w-[74%] shrink-0 snap-start rounded-2xl border px-4 py-4"
+              className="w-[86%] shrink-0 snap-start rounded-2xl border px-4 py-4 sm:w-auto"
               style={{ borderColor: `rgba(${a},0.2)`, background: `rgba(${a},0.05)` }}
             >
               {m.timeLabel ? <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.9)` }}>{m.timeLabel}</div> : null}

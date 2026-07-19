@@ -9,9 +9,9 @@
 "use client";
 
 import * as React from "react";
-import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, ArrowUp, Loader2, Play, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Play, Wand2 } from "lucide-react";
 
+import { DescentMedia, DescentShell } from "./DescentShell";
 import type { RealityMoment } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
@@ -94,32 +94,53 @@ export function DayDescent({
   React.useEffect(() => setMounted(true), []);
   if (!mounted) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
-      {/* Progress + step back up */}
-      <div className="relative z-10 flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]"
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-          Step back up
-        </button>
-        <div className="flex flex-1 items-center gap-1.5">
-          {Array.from({ length: total }).map((_, k) => (
+  return (
+    <DescentShell
+      accent={accent}
+      step={i}
+      total={total}
+      onClose={onClose}
+      media={
+        atOutro ? null : (
+          <DescentMedia style={{ background: sc.sky }}>
             <span
-              key={k}
-              className="h-1 flex-1 rounded-full transition-colors"
-              style={{ background: k <= i ? `rgb(${accent})` : "rgba(255,255,255,0.14)" }}
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
+              style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
             />
-          ))}
-        </div>
-      </div>
-
+            {sc.night ? (
+              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
+            ) : null}
+            {imgUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={imgUrl}
+                src={imgUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700"
+                onLoad={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.opacity = "1";
+                }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : null}
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
+            <button aria-label="Previous" type="button" onClick={() => go(-1)} className="absolute inset-y-0 left-0 w-1/3" />
+            <button aria-label="Next" type="button" onClick={() => go(1)} className="absolute inset-y-0 right-0 w-2/3" />
+            {m?.timeLabel ? (
+              <div className="pointer-events-none absolute left-6 top-6 text-label font-semibold tracking-title text-white/90 drop-shadow">
+                {m.timeLabel}
+              </div>
+            ) : null}
+          </DescentMedia>
+        )
+      }
+    >
       {atOutro ? (
         /* Outro — the honey doors: watch a real one, or go do it. */
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-6">
+        <div className="flex flex-col gap-4 pt-6">
           <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${HONEY})` }}>
             That&rsquo;s the day
           </div>
@@ -159,49 +180,10 @@ export function DayDescent({
           </button>
         </div>
       ) : (
-        /* A moment — a full visual scene. */
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Scene: a real photo layered OVER a time-of-day atmosphere — the
-              atmosphere shows while the photo generates/loads, or if there's none. */}
-          <div className="relative h-[44vh] shrink-0 overflow-hidden" style={{ background: sc.sky }}>
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 h-28 w-28 -translate-x-1/2 rounded-full"
-              style={{ top: sc.discTop, background: sc.discColor, boxShadow: `0 0 90px 30px ${sc.glow}` }}
-            />
-            {sc.night ? (
-              <span aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 45% 40%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent)", opacity: 0.7 }} />
-            ) : null}
-            {imgUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={imgUrl}
-                src={imgUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700"
-                onLoad={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.opacity = "1";
-                }}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : null}
-            {/* horizon */}
-            <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.55))" }} />
-            {/* tap zones */}
-            <button aria-label="Previous" type="button" onClick={() => go(-1)} className="absolute inset-y-0 left-0 w-1/3" />
-            <button aria-label="Next" type="button" onClick={() => go(1)} className="absolute inset-y-0 right-0 w-2/3" />
-            {m?.timeLabel ? (
-              <div className="pointer-events-none absolute left-6 top-6 text-label font-semibold tracking-title text-white/90 drop-shadow">
-                {m.timeLabel}
-              </div>
-            ) : null}
-          </div>
+        /* The moment's words. The scene above is supplied to the shell as media,
+           so it scrolls with the text instead of pinning a third of the screen. */
+        <div>
 
-          {/* The line */}
-          <div className="relative z-10 flex-1 overflow-y-auto bg-[#05070f] px-6 pb-6 pt-5">
-            <div className="mx-auto max-w-md">
               <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${accent})` }}>
                 A day in {specialtyTitle} · {i + 1} of {moments.length}
               </div>
@@ -226,12 +208,9 @@ export function DayDescent({
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </div>
-          </div>
         </div>
       )}
-    </div>,
-    document.body
+    </DescentShell>
   );
 }
 

@@ -9,9 +9,9 @@
 "use client";
 
 import * as React from "react";
-import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, ArrowUp, Loader2, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Wand2 } from "lucide-react";
 
+import { DescentShell } from "./DescentShell";
 import type { AiImpact, SalaryBand } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
@@ -139,22 +139,11 @@ export function LeadsDescent({
 
   if (!mounted) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
-      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]">
-          <ArrowUp className="h-3.5 w-3.5" /> Step back up
-        </button>
-        <div className="flex flex-1 items-center gap-1.5">
-          {Array.from({ length: total }).map((_, k) => (
-            <span key={k} className="h-1 flex-1 rounded-full" style={{ background: k <= i ? `rgb(${accent})` : "rgba(255,255,255,0.14)" }} />
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-y-auto px-6 py-6">
+  return (
+    <DescentShell accent={accent} step={i} total={total} onClose={onClose}>
+      <>
         {atOutro ? (
-          <div className="flex flex-1 flex-col justify-center gap-4">
+          <div className="flex flex-col gap-4 pt-6">
             <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${HONEY})` }}>That&rsquo;s where it leads</div>
             <h2 className="text-title font-semibold leading-display tracking-title">Reading it is one thing. Doing it is another.</h2>
             <p className="text-read leading-read text-white/72">Turn {specialtyTitle} into one small, real thing you try this week — the fastest way to know if the numbers are worth it for you.</p>
@@ -165,10 +154,10 @@ export function LeadsDescent({
             <button type="button" onClick={() => go(-1)} className="text-meta text-white/45 transition hover:text-white/75">← back</button>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-col">
             <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgb(${accent})` }}>Where it leads · {i + 1} of {beats.length}</div>
             <h2 className="mb-4 mt-2 text-read font-semibold leading-read text-white">{beats[i].q}</h2>
-            <div className="flex-1">{beats[i].render()}</div>
+            <div>{beats[i].render()}</div>
             <div className="mt-5 flex items-center justify-between">
               <button type="button" onClick={() => go(-1)} disabled={i === 0} className="inline-flex items-center gap-1.5 text-meta text-white/55 transition hover:text-white disabled:opacity-30">
                 <ArrowLeft className="h-4 w-4" /> Back
@@ -179,9 +168,8 @@ export function LeadsDescent({
             </div>
           </div>
         )}
-      </div>
-    </div>,
-    document.body
+      </>
+    </DescentShell>
   );
 }
 

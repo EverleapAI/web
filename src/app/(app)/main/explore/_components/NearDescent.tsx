@@ -8,9 +8,9 @@
 "use client";
 
 import * as React from "react";
-import { createPortal } from "react-dom";
-import { ArrowRight, ArrowUp, ExternalLink, Globe, Loader2, MapPin, Video, Wand2 } from "lucide-react";
+import { ArrowRight, ExternalLink, Globe, Loader2, MapPin, Video, Wand2 } from "lucide-react";
 
+import { DescentShell } from "./DescentShell";
 import type { Lane, Opportunity } from "../_data/exploreSchema";
 
 const HONEY = "244, 192, 103";
@@ -125,16 +125,10 @@ export function NearDescent({
 
   if (!mounted) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#05070f] text-white">
-      <div className="flex items-center gap-3 px-4 pt-4 sm:px-6">
-        <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]">
-          <ArrowUp className="h-3.5 w-3.5" /> Step back up
-        </button>
-        <div className="text-micro font-semibold uppercase tracking-eyebrow text-white/45">Try it for real</div>
-      </div>
-
-      <div className="mx-auto w-full max-w-lg flex-1 overflow-y-auto px-6 py-5">
+  return (
+    // A single screen rather than a sequence, so the shell shows no progress rail.
+    <DescentShell accent={accent} step={0} total={1} onClose={onClose}>
+      <>
         <h1 className="text-title font-semibold leading-display tracking-title">Ways to actually try it.</h1>
         <p className="mt-2 text-read leading-read text-white/72">
           Real ways to get a taste of {specialtyTitle} — near you, online, or from your couch. The
@@ -194,9 +188,8 @@ export function NearDescent({
         <p className="mt-8 text-center text-meta text-white/40" style={{ color: `rgba(${accent},0.6)` }}>
           Going and doing beats reading, every time.
         </p>
-      </div>
-    </div>,
-    document.body
+      </>
+    </DescentShell>
   );
 }
 
