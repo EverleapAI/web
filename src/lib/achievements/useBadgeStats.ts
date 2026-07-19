@@ -111,11 +111,28 @@ export function useBadgeStats(enabled = true): BadgeStats | null {
       }
     }
 
-    load();
+    // Deliberately NOT cached: this call re-evaluates and awards badges server
+    // side, so a cached response would quietly stop people earning them. What it
+    // can do is get out of the way — it took ~1.2s on every path page, competing
+    // with the fetch that actually puts content on screen. The trophy meter is
+    // ambient, so it waits for the browser to be idle before asking.
+    const idle =
+      typeof window !== "undefined" && "requestIdleCallback" in window
+        ? (cb: () => void) =>
+            (window as unknown as { requestIdleCallback: (c: () => void, o?: { timeout: number }) => number })
+              .requestIdleCallback(cb, { timeout: 2000 })
+        : (cb: () => void) => window.setTimeout(cb, 400);
+    const handle = idle(() => {
+      if (alive) load();
+    });
+
     const onEarned = () => load();
     window.addEventListener(BADGE_EARNED, onEarned);
     return () => {
       alive = false;
+      const w = window as unknown as { cancelIdleCallback?: (h: number) => void };
+      if (typeof w.cancelIdleCallback === "function") w.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
       window.removeEventListener(BADGE_EARNED, onEarned);
     };
   }, [enabled]);
