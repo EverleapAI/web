@@ -273,9 +273,13 @@ export default function MainHomePage() {
               put("answers", serverProfile.answers);
             }
 
-            // Last-resort fallbacks only if the DB genuinely has nothing.
-            if (merged.name == null)
-              merged.name = data.user?.email?.split("@")[0] ?? null;
+            // The email's local part is a handle, not a name. One account here
+            // is "epeedog" — épée plus dog, chosen by a fencer — who told us to
+            // call them "timmy" when onboarding asked. Falling back to the
+            // address overrode an explicit answer to that exact question, and
+            // for anyone who genuinely hasn't given a name it invents one out of
+            // whatever is left of their email. No name is better than a wrong
+            // one; the copy already reads fine without it.
             if (merged.zip_code == null) merged.zip_code = data.user?.zip_code ?? null;
 
             localStorage.setItem(ONBOARDING_SNAPSHOT_KEY, JSON.stringify(merged));
