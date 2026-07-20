@@ -384,6 +384,10 @@ export function PathConstellation({
         <DayDescent
           moments={moments}
           pathSlug={path.slug}
+          // Work's moments live on the path; every other lane keeps them per
+          // specialty, and all of them number m0..m3 — so the branch is what
+          // stops four specialties sharing one set of photos.
+          branchSlug={path.lane === "work" ? undefined : branchSlug}
           specialtyTitle={specialtyTitle}
           careerTitle={careerTitle}
           accent={a}

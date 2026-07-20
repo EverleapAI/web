@@ -77,6 +77,7 @@ function scene(label: string | undefined): { sky: string; discTop: string; discC
 export function DayDescent({
   moments,
   pathSlug,
+  branchSlug,
   specialtyTitle,
   careerTitle,
   accent,
@@ -86,6 +87,8 @@ export function DayDescent({
 }: {
   moments: RealityMoment[];
   pathSlug: string;
+  /** The specialty whose moments these are — empty for Work's path-level days. */
+  branchSlug?: string;
   specialtyTitle: string;
   careerTitle: string;
   accent: string;
@@ -100,7 +103,12 @@ export function DayDescent({
   const sc = scene(m?.timeLabel);
   const imgUrl = m
     ? m.image ||
-      `/api/guidance/day-scene-image?path=${encodeURIComponent(pathSlug)}&moment=${encodeURIComponent(m.id)}`
+      // The branch matters: every specialty numbers its moments m0..m3, so
+      // without it Ghana's four specialties would all request — and share — the
+      // same four photos.
+      `/api/guidance/day-scene-image?path=${encodeURIComponent(pathSlug)}&moment=${encodeURIComponent(m.id)}${
+        branchSlug ? `&branch=${encodeURIComponent(branchSlug)}` : ""
+      }`
     : null;
 
   const go = React.useCallback(
