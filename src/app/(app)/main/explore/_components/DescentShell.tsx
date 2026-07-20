@@ -43,6 +43,7 @@ export function DescentShell({
   media = null,
   railTints,
   rail,
+  backTo,
 }: {
   /** "r, g, b" */
   accent: string;
@@ -69,6 +70,16 @@ export function DescentShell({
    * navigate rather than a read-out of how far you've got.
    */
   rail?: React.ReactNode;
+  /**
+   * Where "back" goes — the specialty or path this descent hangs off.
+   *
+   * "Step back up" named the gesture and not the destination, so from four
+   * levels down it answered "how do I leave" without answering "leave to
+   * where". Naming the place is also what lets the control carry the lane's
+   * colour instead of being one more grey pill: it reads as the way out because
+   * it looks like where you came from.
+   */
+  backTo?: string;
 }) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -149,10 +160,16 @@ export function DescentShell({
         <button
           type="button"
           onClick={close}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-meta text-white/85 transition hover:bg-white/[0.12]"
+          title={backTo ? `Back to ${backTo}` : "Step back up"}
+          className="inline-flex min-w-0 shrink items-center gap-1.5 rounded-full border px-3 py-1.5 text-meta font-semibold transition hover:brightness-125"
+          style={{
+            borderColor: `rgba(${accent}, 0.45)`,
+            background: `rgba(${accent}, 0.14)`,
+            color: `rgb(${accent})`,
+          }}
         >
-          <ArrowUp className="h-3.5 w-3.5" />
-          Step back up
+          <ArrowUp className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{backTo ? `Back to ${backTo}` : "Step back up"}</span>
         </button>
         {rail ? null : total > 1 ? (
           <div className="flex flex-1 items-center gap-1.5" aria-hidden>

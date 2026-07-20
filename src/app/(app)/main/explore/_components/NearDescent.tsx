@@ -120,7 +120,7 @@ export function NearDescent({
 
   return (
     // A single screen rather than a sequence, so the shell shows no progress rail.
-    <DescentShell accent={accent} step={0} total={1} onClose={onClose}>
+    <DescentShell accent={accent} step={0} total={1} onClose={onClose} backTo={specialtyTitle}>
       <>
         <h1 className="text-title font-semibold leading-display tracking-title">Ways to actually try it.</h1>
         <p className="mt-2 text-read leading-read text-white/72">

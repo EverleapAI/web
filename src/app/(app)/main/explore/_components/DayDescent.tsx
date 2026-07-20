@@ -129,6 +129,7 @@ export function DayDescent({
 
   return (
     <DescentShell
+      backTo={specialtyTitle}
       accent={accent}
       step={i}
       total={total}
@@ -239,13 +240,26 @@ export function DayDescent({
               {(() => {
                 const body = m?.body ?? "";
                 const parts = body.split(/(?<=[.!?])\s+/);
-                const lead = parts[0] ?? body;
-                const rest = parts.slice(1).join(" ").trim();
+                // A full stop is not always the end of a sentence. "You're
+                // listening to E.T. Mensah's 'All For You'" split at the
+                // initials, leaving a four-word lead and dropping sixty words
+                // into the small, dim style — which is what "the text is tiny
+                // down here" turned out to be. Rather than keep a list of
+                // abbreviations, keep absorbing fragments until the lead is long
+                // enough to actually be a sentence; E.T., U.S. and Dr. all fall
+                // out of that for free.
+                let lead = "";
+                let i = 0;
+                while (i < parts.length && lead.length < 45) {
+                  lead = lead ? `${lead} ${parts[i]}` : parts[i];
+                  i++;
+                }
+                const rest = parts.slice(i).join(" ").trim();
                 return (
                   <>
-                    <p className="mt-2 text-read leading-read text-white/88">{lead}</p>
+                    <p className="mt-2 text-read leading-read text-white/88">{lead || body}</p>
                     {rest ? (
-                      <p className="mt-2 text-label leading-read text-white/66">{rest}</p>
+                      <p className="mt-2 text-label leading-read text-white/78">{rest}</p>
                     ) : null}
                   </>
                 );

@@ -176,7 +176,7 @@ export function LeadsDescent({
   if (!mounted) return null;
 
   return (
-    <DescentShell accent={accent} step={i} total={total} onClose={onClose}>
+    <DescentShell accent={accent} step={i} total={total} onClose={onClose} backTo={specialtyTitle}>
       <>
         {atOutro ? (
           <div className="flex flex-col gap-4 pt-6">
