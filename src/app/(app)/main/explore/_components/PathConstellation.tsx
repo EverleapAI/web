@@ -13,24 +13,19 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   ArrowUp,
-  Check,
-  Loader2,
-  Sparkles,
-  Wand2,
 } from "lucide-react";
 
 import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { DayDescent } from "./DayDescent";
+import { WhyDescent } from "./WhyDescent";
+import { RealDescent } from "./RealDescent";
 import { LeadsDescent } from "./LeadsDescent";
 import { NearDescent } from "./NearDescent";
 import {
   laneAccent,
   type AiImpact,
   type ExplorePath,
-  type Opportunity,
-  type PathBranch,
   type RealityMoment,
   type Rgb,
   type SalaryBand,
@@ -159,6 +154,8 @@ export function PathConstellation({
   const [showDay, setShowDay] = React.useState(false);
   const [showLeads, setShowLeads] = React.useState(false);
   const [showNear, setShowNear] = React.useState(false);
+  const [showWhy, setShowWhy] = React.useState(false);
+  const [showReal, setShowReal] = React.useState(false);
 
   // Remember which stars were lit in past visits (Concept 02: depth you carry back).
   React.useEffect(() => {
@@ -227,6 +224,8 @@ export function PathConstellation({
     if (id === "day") setShowDay(true);
     else if (id === "leads") setShowLeads(true);
     else if (id === "near") setShowNear(true);
+    else if (id === "why") setShowWhy(true);
+    else if (id === "real") setShowReal(true);
     setLit((prev) => (prev.has(id) ? prev : new Set([...prev, id])));
     fetch("/api/guidance/constellation-lit", {
       method: "POST",
@@ -374,32 +373,11 @@ export function PathConstellation({
           </p>
         </div>
 
-        {/* The active star's content — drawn as objects, not a wall. */}
-        <div
-          ref={panelRef}
-          key={active}
-          className="scroll-mt-4 rounded-card border border-white/10 bg-[rgba(10,14,26,0.72)] px-5 py-5 [animation:cRise_.4s_ease]"
-        >
-          <StarPanel
-            active={active}
-            a={a}
-            branch={branch}
-            whyYou={whyYou}
-            lead={lead}
-            moments={moments}
-            salary={salary}
-            ai={ai}
-            growing={growing}
-            pressure={pressure}
-            opps={opps}
-            specialtyTitle={specialtyTitle}
-            creating={creating}
-            onStart={startMission}
-            onOpenDay={() => setShowDay(true)}
-            onOpenLeads={() => setShowLeads(true)}
-            onOpenNear={() => setShowNear(true)}
-          />
-        </div>
+        {/* No panel. Every star opens its own screen now, so the map is
+            navigation and nothing else — which is what it always looked like.
+            "Why this path" and "Try it for real" used to render here while the
+            other three opened screens, so tapping a star did one of two
+            different things depending which star you tapped. */}
       </div>
 
       {showDay ? (
@@ -446,6 +424,27 @@ export function PathConstellation({
         />
       ) : null}
 
+      {showWhy ? (
+        <WhyDescent
+          specialtyTitle={specialtyTitle}
+          whyYou={whyYou}
+          lead={lead}
+          whatYouActuallyDo={branch?.whatYouActuallyDo}
+          skillsThatGrowHere={branch?.skillsThatGrowHere}
+          accent={a}
+          onClose={() => { setShowWhy(false); setActive("why"); }}
+        />
+      ) : null}
+
+      {showReal ? (
+        <RealDescent
+          specialtyTitle={specialtyTitle}
+          creating={creating}
+          onStart={startMission}
+          onClose={() => { setShowReal(false); setActive("why"); }}
+        />
+      ) : null}
+
       <style>{`@keyframes cRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}`}</style>
     </main>
   );
@@ -453,122 +452,6 @@ export function PathConstellation({
 
 /* ---------------- object renderers ---------------- */
 
-function Eyebrow({ children, a }: { children: React.ReactNode; a: string }) {
-  return (
-    <div className="text-micro font-semibold uppercase tracking-eyebrow" style={{ color: `rgba(${a},0.85)` }}>
-      {children}
-    </div>
-  );
-}
 
-function List({ items, a }: { items: string[]; a: string }) {
-  return (
-    <ul className="mt-2 space-y-1.5">
-      {items.slice(0, 4).map((it, i) => (
-        <li key={i} className="flex gap-2.5 text-label leading-read text-white/80">
-          <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgba(${a},0.85)` }} />
-          <span>{it}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function StarPanel(props: {
-  active: StarId;
-  a: string;
-  branch: PathBranch | null;
-  whyYou: string | null;
-  lead: string;
-  moments: RealityMoment[];
-  salary?: SalaryBand;
-  ai?: AiImpact;
-  growing: string[];
-  pressure: string[];
-  opps: Opportunity[];
-  specialtyTitle: string;
-  creating: boolean;
-  onStart: () => void;
-  onOpenDay: () => void;
-  onOpenLeads: () => void;
-  onOpenNear: () => void;
-}) {
-  const { active, a } = props;
-
-  if (active === "why") {
-    return (
-      <div>
-        <div className="mb-2.5 flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-control" style={{ background: `rgba(${a},0.14)`, color: `rgb(${a})` }}>
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <h2 className="text-read font-semibold leading-read text-white">Why this rhymes with you</h2>
-        </div>
-        {/* Never print what's already on screen. whyYou is a Work-match field, so
-            on most branches it's empty and this fell back to the lead — repeating
-            the paragraph from the top of the page fifteen lines further down. */}
-        {props.whyYou && props.whyYou.trim() !== props.lead.trim() ? (
-          <p className="text-read leading-read text-white/82">{props.whyYou}</p>
-        ) : !props.branch?.whatYouActuallyDo?.length && !props.branch?.skillsThatGrowHere?.length ? (
-          <p className="text-read leading-read text-white/82">{props.lead}</p>
-        ) : null}
-        {props.branch?.whatYouActuallyDo?.length ? (
-          <div className="mt-4">
-            <Eyebrow a={a}>What you&rsquo;d actually do</Eyebrow>
-            <List items={props.branch.whatYouActuallyDo} a={a} />
-          </div>
-        ) : null}
-        {props.branch?.skillsThatGrowHere?.length ? (
-          <div className="mt-4">
-            <Eyebrow a={a}>Skills that grow here</Eyebrow>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {props.branch.skillsThatGrowHere.slice(0, 6).map((s, i) => (
-                <span key={i} className="rounded-full border px-3 py-1 text-meta text-white/80" style={{ borderColor: `rgba(${a},0.28)`, background: `rgba(${a},0.07)` }}>
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  // day / leads / near each open their own screen (DayDescent, LeadsDescent,
-  // NearDescent) rather than rendering a peek here. There used to be a panel
-  // for each showing much what the screen showed, which is the redundancy that
-  // made the deep dives feel like they had no template.
-
-  // honey — try it for real
-  return (
-    <div className="overflow-hidden rounded-2xl border" style={{ borderColor: `rgba(${HONEY},0.5)`, background: `linear-gradient(180deg, rgba(${HONEY},0.16), rgba(${HONEY},0.05))` }}>
-      <div className="px-5 py-5">
-        <h2 className="text-read font-semibold leading-read text-white">The deep end is a taste, not a paragraph.</h2>
-        <p className="mt-1.5 text-meta leading-read text-white/68">
-          One small, real thing to actually do this week — proof you didn&rsquo;t just read about {props.specialtyTitle}, you went.
-        </p>
-        <button
-          type="button"
-          onClick={props.onStart}
-          disabled={props.creating}
-          className="mt-3.5 flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3.5 text-left font-semibold transition hover:brightness-105 disabled:opacity-70"
-          style={{ background: `linear-gradient(180deg, #ffdf9e, rgb(${HONEY}))`, color: "#1a1204" }}
-        >
-          <span className="inline-flex items-center gap-2.5">
-            <Wand2 className="h-5 w-5" />
-            Try {props.specialtyTitle} for real — start a mission
-          </span>
-          {props.creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-        </button>
-        <div className="mt-3 flex items-center gap-2 text-meta" style={{ color: `rgb(${HONEY})` }}>
-          <span className="grid h-5 w-5 place-items-center rounded border border-dashed" style={{ borderColor: `rgba(${HONEY},0.6)` }}>
-            <Check className="h-3 w-3" />
-          </span>
-          Doing it drops a moment you keep — and a Direction starts forming.
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default PathConstellation;
