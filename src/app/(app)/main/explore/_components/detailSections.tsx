@@ -18,6 +18,7 @@ import {
   MapPin,
   Monitor,
   Plus,
+  Search,
 } from "lucide-react";
 
 import {
@@ -281,8 +282,19 @@ export function NextStepsSection({ path, accent }: { path: ExplorePath; accent: 
                       <span className="min-w-0">
                         <RowTitle>{it.title}</RowTitle>
                         {it.note ? <RowMeta className="mt-0.5 block">{it.note}</RowMeta> : null}
+                        {/* Say when a link is a search. A title that reads like a
+                            curated page makes a results list feel like a broken
+                            promise; the same list, announced, is just what it
+                            said it was. */}
+                        {it.searchLabel ? (
+                          <span className="mt-1 block text-micro text-white/45">{it.searchLabel}</span>
+                        ) : null}
                       </span>
-                      <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
+                      {it.searchLabel ? (
+                        <Search className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
+                      ) : (
+                        <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-white/40 transition group-hover:text-white/70" />
+                      )}
                     </a>
                     <div className="border-t border-white/[0.06] px-3 py-2">
                       <button

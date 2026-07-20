@@ -143,6 +143,17 @@ export type Opportunity = {
   badge?: string;
   provider?: string;
   mode?: OpportunityMode;
+  /**
+   * Set by the API when this link goes to a search rather than the thing itself
+   * — "Search edX for this", "Find this on aacp.org".
+   *
+   * Half the disappointment in a door is the mismatch, not the destination: a
+   * title that reads like a curated page makes a results list feel like a lie,
+   * while the same list under "Search edX for this" is exactly what it said it
+   * was. Only the resolver knows which kind of link it produced, so only it can
+   * say so honestly — this carries that word through to the reader.
+   */
+  searchLabel?: string;
 };
 
 export type OpportunitySection = {
