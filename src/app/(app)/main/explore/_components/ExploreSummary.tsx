@@ -17,7 +17,7 @@ import { rankPaths } from "../_lib/scorePath";
 import { ExploreSummaryCard, type SummaryRequest } from "./ExploreSummaryCard";
 import { ExploreWorlds, type WorldsLane } from "./ExploreWorlds";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { TodayTinyTaskCard } from "../../components/nextSteps/TodayTinyTaskCard";
+import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
@@ -33,6 +33,14 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
 
   // The Explore "Something I'm wondering" batch, lifted from the summary fetch.
   const [wonderTasks, setWonderTasks] = React.useState<MicroTaskBatchItem[]>([]);
+  // Resolved, not merely 'profile ready'. The card reports its tasks after its
+  // own fetch, so gating on isReady decided there were no questions before any
+  // had arrived — and the interstitial never showed here.
+  const [wonderResolved, setWonderResolved] = React.useState(false);
+  const handleTinyTasks = React.useCallback((tasks: MicroTaskBatchItem[]) => {
+    setWonderTasks(tasks);
+    setWonderResolved(true);
+  }, []);
 
   // One strongest pick per lane, kept in a stable direction order (not ranked by
   // the saturated score — just a real path to start with in each direction).
@@ -98,13 +106,18 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
   // page while the profile loads and the read generates. Only the read itself
   // waits, showing a skeleton, so navigating to Explore always shows content fast.
   return (
+    <ArrivalGate
+      pageKey="explore_summary"
+      tasks={wonderTasks}
+      ready={wonderResolved}
+    >
     <div className="space-y-4">
       {isReady ? (
         <ExploreSummaryCard
           request={request}
           hasSignal={hasSignal}
           firstName={profile?.firstName ?? null}
-          onTinyTasks={setWonderTasks}
+          onTinyTasks={handleTinyTasks}
         />
       ) : (
         <SectionCard tone="hero" voice>
@@ -122,15 +135,8 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
 
       {/* The five worlds — the agent's read points into them. */}
       <ExploreWorlds lanes={worlds} />
-
-      {/* "Something I'm wondering" — a couple of one-tap questions Explore generates
-          about what pulls you across the worlds. Same card as Today/Insights. */}
-      {wonderTasks.length > 0 ? (
-        <SectionCard tone="neutral">
-          <TodayTinyTaskCard dark tasks={wonderTasks} />
-        </SectionCard>
-      ) : null}
     </div>
+    </ArrivalGate>
   );
 }
 

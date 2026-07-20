@@ -9,6 +9,11 @@ export type MicroTaskBatchItem = {
   signal_key: string;
   selected_option: string | null;
   selected_option_index: number | null;
+  /**
+   * The line introducing this batch, written in the same call as the questions.
+   * Same on every row. Null on batches generated before it existed.
+   */
+  batch_intro?: string | null;
 };
 
 export function useMicroTaskBatch(tasks: MicroTaskBatchItem[]) {

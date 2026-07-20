@@ -4,12 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
-import {
-  isDarkTheme,
-  type SpotlightThemeId,
-} from "@/theme/everleapVisuals";
-
-import { TodayTinyTaskCard } from "./components/nextSteps/TodayTinyTaskCard";
+import { ArrivalGate } from "./components/interstitial/ArrivalGate";
 import { SectionCard } from "./components/ui/SectionCard";
 import {
   TodayCardSkeleton,
@@ -62,9 +57,6 @@ function pageShell() {
 
 export default function MainHomePage() {
   const router = useRouter();
-
-  const [themeId] = React.useState<SpotlightThemeId>("nightDusk");
-  const dark = isDarkTheme(themeId);
 
   const [todayGuidance, setTodayGuidance] =
     React.useState<TodayGuidance | null>(null);
@@ -327,7 +319,13 @@ export default function MainHomePage() {
   }
 
   return (
-    <>
+    // The question that used to sit in a card partway down this page now plays
+    // in front of it. Three appearances, then it retires here.
+    <ArrivalGate
+      pageKey="today"
+      tasks={todayGuidance?.tiny_tasks}
+      ready={guidanceLoaded}
+    >
       <AnimatePresence>
         {transitioning && motionEnabled ? (
           <motion.div
@@ -370,24 +368,10 @@ export default function MainHomePage() {
               )}
             </section>
 
-            {/* 4 · The question it's sitting with.
-                Only ever the real one. This used to fall back to a hand-written
-                tiny task from a static registry whenever the backend had none —
-                so a brand-new account, or one whose batch hadn't generated yet,
-                got asked a canned question ("How do you get clear fastest?") as
-                though we had chosen it for them. We hadn't. Now the card simply
-                isn't there until there is something real to ask, and the sections
-                on Today are conditional by design, so nothing looks broken. */}
-            {guidanceLoaded && todayGuidance?.tiny_tasks?.length ? (
-              <section className="mt-4">
-                <SectionCard tone="neutral" className="px-5 py-5">
-                  <TodayTinyTaskCard
-                    dark={dark}
-                    tasks={todayGuidance.tiny_tasks}
-                  />
-                </SectionCard>
-              </section>
-            ) : null}
+            {/* 4 · The question used to sit here, in a card.
+                It now plays in front of this page as the arrival interstitial
+                (see ArrivalInterstitial) — because as a card it was skimmed
+                past, and on some screens answered literally never. */}
 
             <div className="mt-5 flex items-center justify-center gap-4">
               <button
@@ -413,6 +397,6 @@ export default function MainHomePage() {
           </div>
         </main>
       </div>
-    </>
+    </ArrivalGate>
   );
 }

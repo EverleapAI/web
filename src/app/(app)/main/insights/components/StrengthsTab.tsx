@@ -5,7 +5,7 @@ import InsightsSummaryCard from "./sections/InsightsSummaryCard";
 import InsightsBackLink from "./sections/InsightsBackLink";
 import InsightsUnlockCTA from "./sections/InsightsUnlockCTA";
 import MotivatorCard, { type MotivatorIconKey } from "./sections/MotivatorCard";
-import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
+import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 
 import { useGeneratedInsights } from "../hooks/useGeneratedInsights";
 
@@ -44,7 +44,7 @@ export function StrengthsTab({
   /** "Where you are" — slotted BELOW the agent's read, never above it. */
   afterAgentic?: React.ReactNode;
 }): React.JSX.Element {
-  const { payload, tinyTasks } = useGeneratedInsights<GeneratedStrengthsPayload>(
+  const { payload, tinyTasks, fetchDone } = useGeneratedInsights<GeneratedStrengthsPayload>(
     "/api/guidance/insights-strengths"
   );
 
@@ -97,6 +97,15 @@ export function StrengthsTab({
     categoryPercent != null && categoryPercent >= 20 && categoryPercent < 100;
 
   return (
+    <ArrivalGate
+      pageKey="insights_strengths"
+      tasks={tinyTasks}
+      // categoryPercent starts null and loads separately. Deciding before it
+      // arrives would treat 'unknown' as 'enough signal' and show the
+      // interstitial to exactly the people it should skip.
+      ready={fetchDone && categoryPercent !== null}
+      enabled={!lowSignal}
+    >
     <section className="mb-6 space-y-3">
       <InsightsBackLink />
 
@@ -144,15 +153,10 @@ export function StrengthsTab({
               ))}
             </div>
           ) : null}
-
-          <InsightsTinyTaskCard
-            dark={dark}
-            tasks={tinyTasks}
-            hasStrongSignal={tinyTasks.length > 0}
-          />
         </>
       ) : null}
     </section>
+    </ArrivalGate>
   );
 }
 

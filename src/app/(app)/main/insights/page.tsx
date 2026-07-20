@@ -31,7 +31,7 @@ import FunFactsTab from "./components/FunFactsTab";
 
 import InsightsSummaryCard from "./components/sections/InsightsSummaryCard";
 import InsightsStrengthsCard from "./components/sections/InsightsStrengthsCard";
-import InsightsTinyTaskCard from "./components/sections/InsightsTinyTaskCard";
+import { ArrivalGate } from "../components/interstitial/ArrivalGate";
 import InsightsAreas from "./components/sections/InsightsAreas";
 
 import { useGeneratedInsights } from "./hooks/useGeneratedInsights";
@@ -1314,6 +1314,11 @@ export default function Page() {
             page-level rather than per-tab; it is simply slotted under whichever tab's
             agentic card is on screen. */}
         {tab === "summary" ? (
+          <ArrivalGate
+            pageKey="insights_summary"
+            tasks={tinyTasks}
+            ready={summaryFetchDone}
+          >
           isSummaryReady ? (
             <section className="space-y-3">
               <div className="mb-1.5">
@@ -1354,16 +1359,11 @@ export default function Page() {
                     watchoutsBullets={summaryWatchoutsBullets}
                     hasStrongSignal={strengthsHasRealContent}
                   />
-
-                  <InsightsTinyTaskCard
-                    dark={dark}
-                    tasks={tinyTasks}
-                    hasStrongSignal={tinyTasks.length > 0}
-                  />
                 </>
               ) : null}
             </section>
           ) : null
+          </ArrivalGate>
         ) : tab === "motivations" ? (
           <MotivationsTab dark={dark} afterAgentic={whereYouAre} />
         ) : tab === "strengths" ? (

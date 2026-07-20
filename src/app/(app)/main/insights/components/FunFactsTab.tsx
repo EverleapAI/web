@@ -16,7 +16,7 @@ import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMete
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import InsightsBackLink from "./sections/InsightsBackLink";
 import InsightsUnlockCTA from "./sections/InsightsUnlockCTA";
-import InsightsTinyTaskCard from "./sections/InsightsTinyTaskCard";
+import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 
 /* =============================================================================
    Types
@@ -282,6 +282,11 @@ export default function FunFactsTab(props: FunFactsTabProps) {
       : "Small things I've noticed about how you think — low stakes, just interesting.";
 
   return (
+    <ArrivalGate
+      pageKey="insights_fun_facts"
+      tasks={wonderTasks}
+      ready={funFactsDone}
+    >
     <section className="mb-6 space-y-4">
       <InsightsBackLink />
 
@@ -407,13 +412,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
             : "Looking for interesting patterns…"}
         </div>
       )}
-
-      {/* What I was wondering — the same Tiny Task card the other tabs carry. */}
-      <InsightsTinyTaskCard
-        dark={dark}
-        tasks={wonderTasks}
-        hasStrongSignal={wonderTasks.length > 0}
-      />
     </section>
+    </ArrivalGate>
   );
 }

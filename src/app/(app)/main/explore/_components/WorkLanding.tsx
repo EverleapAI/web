@@ -24,7 +24,7 @@ import { ReadAtmosphere } from "../../components/ui/ReadAtmosphere";
 import { HEADING_CLASS, HEADING_STYLE, PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
 import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-import { TodayTinyTaskCard } from "../../components/nextSteps/TodayTinyTaskCard";
+import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 
 import { LANE_ACCENT, type ExplorePath } from "../_data/exploreSchema";
@@ -97,8 +97,14 @@ function useDismissedCareers(): {
 function useWonderTasks(
   ready: boolean,
   request: Record<string, unknown> | null
-): MicroTaskBatchItem[] {
+): { tasks: MicroTaskBatchItem[]; done: boolean } {
   const [tasks, setTasks] = React.useState<MicroTaskBatchItem[]>([]);
+  // The arrival interstitial needs to know when this fetch has RESOLVED, not
+  // just when the profile is ready. Those are different moments, and deciding
+  // on the earlier one means deciding there are no questions before they've
+  // arrived — which is why the interstitial never appeared here.
+  const [done, setDone] = React.useState(false);
+
   React.useEffect(() => {
     if (!ready || !request) return;
     let cancelled = false;
@@ -112,12 +118,16 @@ function useWonderTasks(
       .then((d: { ok?: boolean; tinyTasks?: MicroTaskBatchItem[] } | null) => {
         if (!cancelled && d?.ok) setTasks(d.tinyTasks ?? []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDone(true);
+      });
     return () => {
       cancelled = true;
     };
   }, [ready, request]);
-  return tasks;
+
+  return { tasks, done };
 }
 
 export function WorkLanding({
@@ -168,7 +178,7 @@ export function WorkLanding({
         : null,
     [profile, paths]
   );
-  const wonderTasks = useWonderTasks(
+  const { tasks: wonderTasks, done: wonderTasksDone } = useWonderTasks(
     Boolean(isReady && profile?.hasQuestionSignal),
     wonderRequest
   );
@@ -176,6 +186,13 @@ export function WorkLanding({
   if (!isReady) return null;
 
   return (
+    // Work borrows Explore's question batch, but keeps its OWN appearance
+    // budget: it is a different screen to the person looking at it.
+    <ArrivalGate
+      pageKey="explore_work"
+      tasks={wonderTasks}
+      ready={wonderTasksDone}
+    >
     <div className="space-y-4">
       {/* Back to Explore — replaces the lane rail, like the Insights sub-pages. */}
       <Link
@@ -252,16 +269,10 @@ export function WorkLanding({
         )
       ) : null}
 
-      {/* 5) Something I'm wondering */}
-      {wonderTasks.length > 0 ? (
-        <SectionCard tone="neutral">
-          <TodayTinyTaskCard dark tasks={wonderTasks} />
-        </SectionCard>
-      ) : null}
-
       {/* Career data grounded in U.S. Dept. of Labor sources. */}
       <OnetNotice className="px-1 pt-2" />
     </div>
+    </ArrivalGate>
   );
 }
 
