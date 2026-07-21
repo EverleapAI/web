@@ -12,6 +12,11 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 import { AskHero, CoachLine, StepEyebrow } from "@/lib/ui/coach";
+import { Fireworks } from "../components/interstitial/Fireworks";
+import {
+  JourneyConstellation,
+  type JourneyStar,
+} from "../components/interstitial/JourneyConstellation";
 
 const ONBOARDING_STORAGE_KEY = "everleap_onboarding_answers";
 const MAX_WAIT_MS = 15000;
@@ -35,7 +40,18 @@ type Synthesis = {
   bridge: string;
 };
 
-type Phase = "init" | "crawl" | "reveal";
+/**
+ * "map" is the journey constellation — the five places of Everleap, opened one
+ * star at a time.
+ *
+ * It used to live in the arrival interstitial as a first-run state, which meant
+ * a brand-new user met TWO welcomes: this narrated crawl, and then a separate
+ * "Welcome to Everleap" the moment they reached Today. Merged here because this
+ * screen already owns the post-onboarding moment AND uses it to mask the
+ * synthesis generating in the background — moving that timing somewhere else
+ * would have cost more than it bought.
+ */
+type Phase = "init" | "crawl" | "reveal" | "map";
 
 export default function IntroPage(): React.JSX.Element {
   const router = useRouter();
@@ -44,9 +60,20 @@ export default function IntroPage(): React.JSX.Element {
   const [phase, setPhase] = React.useState<Phase>("init");
   const [lineIndex, setLineIndex] = React.useState(0);
   const [synth, setSynth] = React.useState<Synthesis | null>(null);
+  const [stars, setStars] = React.useState<JourneyStar[]>([]);
   const readyRef = React.useRef(false);
 
-  const goHome = React.useCallback(() => router.replace("/main"), [router]);
+  // Claim the journey as seen, then leave. Claiming on the way OUT — including
+  // on Skip — means the welcome is offered exactly once, whether or not they
+  // took the tour. Fire and forget: a failed claim costs a repeat, not the exit.
+  const goHome = React.useCallback(() => {
+    void fetch("/api/guidance/journey", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    }).catch(() => {});
+    router.replace("/main");
+  }, [router]);
 
   // 1) First-run gate + fire the onboarding claim (which kicks off the synthesis
   //    + Today generation). Non-first-time visitors skip straight to Today.
@@ -131,6 +158,22 @@ export default function IntroPage(): React.JSX.Element {
     };
   }, [phase]);
 
+  // Load the five stars when the tour opens. Unlit for a brand-new account,
+  // which is exactly right: this is the map before you have been anywhere.
+  React.useEffect(() => {
+    if (phase !== "map") return;
+    let alive = true;
+    fetch("/api/guidance/journey", { credentials: "include", cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && Array.isArray(d?.stars)) setStars(d.stars as JourneyStar[]);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [phase]);
+
   // 3) Advance the crawl; hold on the last line until the synthesis is ready.
   React.useEffect(() => {
     if (phase !== "crawl") return;
@@ -175,7 +218,38 @@ export default function IntroPage(): React.JSX.Element {
       <div className="relative z-[1] flex min-h-full flex-col items-center justify-center px-6 py-14">
         <div className="w-full max-w-[420px] text-center">
         <AnimatePresence mode="wait">
-          {phase !== "reveal" ? (
+          {phase === "map" ? (
+            <motion.div
+              key="map"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduce ? 0.25 : 0.6 }}
+              className="relative"
+            >
+              {/* Confined to the top band and dimmed. Full-bleed, they burst
+                  straight through the constellation and turn the five stars
+                  into noise — the map is the thing being read here, the
+                  celebration is the frame around it. */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-36 opacity-50">
+                <Fireworks reduce={Boolean(reduce)} />
+              </div>
+              <div className="relative">
+                <StepEyebrow className="mb-3" style={{ color: "rgb(182,160,255)" }}>
+                  Welcome to Everleap
+                </StepEyebrow>
+                <CoachLine className="mb-6 text-balance">
+                  Everleap is five places. Tap each star to see what&apos;s there —
+                  then I&apos;ll let you in.
+                </CoachLine>
+                <JourneyConstellation
+                  stars={stars}
+                  requireAll
+                  onComplete={goHome}
+                  reduce={Boolean(reduce)}
+                />
+              </div>
+            </motion.div>
+          ) : phase !== "reveal" ? (
             <motion.div
               key={`line-${lineIndex}`}
               initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, filter: "blur(6px)" }}
@@ -219,7 +293,7 @@ export default function IntroPage(): React.JSX.Element {
 
               <motion.button
                 type="button"
-                onClick={goHome}
+                onClick={() => setPhase("map")}
                 initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: reduce ? 0.1 : 1.15, duration: 0.5 }}
@@ -231,7 +305,7 @@ export default function IntroPage(): React.JSX.Element {
                   border: "1px solid rgba(182,160,255,0.34)",
                 }}
               >
-                Enter Everleap →
+                Show me around →
               </motion.button>
             </motion.div>
           )}

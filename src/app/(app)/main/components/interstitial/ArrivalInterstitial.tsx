@@ -21,7 +21,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 import { TodayTinyTaskCard } from "../nextSteps/TodayTinyTaskCard";
 import { pickRetort, type Retort } from "./retorts";
-import { Fireworks } from "./Fireworks";
 import {
   JourneyConstellation,
   type JourneyStar,
@@ -40,12 +39,14 @@ type Props = {
 /**
  * The acts of an arrival.
  *
- * "welcome"  — first run only: fireworks and a hello, before anything is asked.
- * "asking"   — the questions. Every arrival has this.
- * "map"      — the five-star journey. First run (gated on opening all five) and
- *              after Story (already lit by what they've used).
+ * "asking"  — the questions. Every arrival has this.
+ * "map"     — the five-star journey, lit by how much of each section they have
+ *             used. Shown after a Story trip that produced an answer.
+ *
+ * The first-run welcome used to be an act here, which meant a new user met two
+ * welcomes. It now lives in /main/intro, the screen already built for it.
  */
-type Act = "welcome" | "asking" | "map";
+type Act = "asking" | "map";
 
 /**
  * A short beat so the last answer registers as chosen before the panel goes.
@@ -148,16 +149,10 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
   const kind = journey?.kind ?? "plain";
   const stars = journey?.stars ?? [];
 
-  // First run opens on the welcome; everyone else opens on the question. Set
-  // once the map arrives, and only if we haven't already moved past it — a slow
-  // response must never yank someone back to a welcome mid-question.
+  // Every arrival opens on the question. The map, when it is earned, comes
+  // after — never before, because the question is the point and the map is the
+  // reward for answering it.
   const [act, setAct] = React.useState<Act>("asking");
-  const actSettled = React.useRef(false);
-  React.useEffect(() => {
-    if (!journey || actSettled.current) return;
-    actSettled.current = true;
-    if (journey.kind === "first") setAct("welcome");
-  }, [journey]);
 
   // Chosen once, in a lazy initializer rather than an effect, so it's ready on
   // the first render. pickRetort touches window, so this must never run on the
@@ -178,9 +173,9 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
   }, [onDone]);
 
   const handleAllAnswered = React.useCallback(() => {
-    // First run and a Story exit both earn the map. Everyone else has done
-    // what was asked and should be let through.
-    if (kind === "first" || kind === "story") {
+    // A Story exit earns the map. Everyone else has done what was asked and
+    // should be let through.
+    if (kind === "story") {
       setAct("map");
       return;
     }
@@ -223,45 +218,7 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
 
       <div className="relative w-full max-w-md">
         <AnimatePresence mode="wait">
-          {closing ? null : act === "welcome" ? (
-            <motion.div
-              key="welcome"
-              initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="relative py-10 text-center"
-            >
-              <Fireworks reduce={Boolean(reduce)} />
-              <div className="relative">
-                <p
-                  className="mb-3 text-micro font-bold uppercase tracking-eyebrow"
-                  style={{ color: `rgb(${a})` }}
-                >
-                  You&rsquo;re in
-                </p>
-                <h1 className="mb-4 text-title font-semibold text-white">
-                  Welcome to Everleap
-                </h1>
-                <p className="mx-auto mb-8 max-w-sm text-body leading-7 text-white/76">
-                  You told me a few true things about yourself to get here. I&rsquo;ve
-                  been reading them. Before I show you around, one thing I&rsquo;m
-                  curious about.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setAct("asking")}
-                  className="rounded-control border px-6 py-3 text-label font-medium text-white transition"
-                  style={{
-                    borderColor: `rgba(${a},0.5)`,
-                    background: `rgba(${a},0.16)`,
-                  }}
-                >
-                  Go on then
-                </button>
-              </div>
-            </motion.div>
-          ) : act === "map" ? (
+          {closing ? null : act === "map" ? (
             <motion.div
               key="map"
               initial={reduce ? false : { opacity: 0, y: 12 }}
@@ -277,17 +234,16 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
                   className="mb-2 text-micro font-bold uppercase tracking-eyebrow"
                   style={{ color: `rgb(${a})` }}
                 >
-                  {kind === "first" ? "The whole thing" : "How far you've come"}
+                  How far you&rsquo;ve come
                 </p>
                 <p className="mb-5 text-body leading-7 text-white/78">
-                  {kind === "first"
-                    ? "Everleap is five places. Tap each star to see what's there — then I'll let you in."
-                    : "Every part of Everleap you've spent time in burns a little brighter. This is yours right now."}
+                  Every part of Everleap you&rsquo;ve spent time in burns a little
+                  brighter. This is yours right now.
                 </p>
 
                 <JourneyConstellation
                   stars={stars}
-                  requireAll={kind === "first"}
+                  requireAll={false}
                   onComplete={finish}
                   reduce={Boolean(reduce)}
                 />

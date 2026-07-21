@@ -11,13 +11,16 @@ type Phase = "checking" | "showing" | "done";
 /**
  * Which of the three arrivals this is.
  *
- * "first"  — never seen the app. Fireworks, a welcome, and the map, gated on
- *            opening all five stars.
  * "story"  — just came out of Story having actually answered something. A
  *            celebration and the map, already lit by how much they've used.
  * "plain"  — everything else. The question, and nothing ceremonial.
+ *
+ * There is no first-run state here any more. It lived here and produced TWO
+ * welcomes for a new user — the narrated intro at /main/intro, then a separate
+ * "Welcome to Everleap" on reaching Today. The tour now belongs to the intro,
+ * which already owned that moment.
  */
-export type ArrivalKind = "first" | "story" | "plain";
+export type ArrivalKind = "story" | "plain";
 
 type JourneyState = { kind: ArrivalKind; stars: JourneyStar[] };
 
@@ -152,19 +155,15 @@ export function useArrivalInterstitial(
     const cameFromStory = takeStoryFlag();
     void (async () => {
       try {
-        // POST claims the first run atomically, so the welcome happens exactly
-        // once even across two tabs opening together.
+        // GET, not POST: this only needs the star brightness. Claiming the
+        // first run belongs to the intro, which is the one place that shows it.
         const res = await fetch("/api/guidance/journey", {
-          method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
         });
         const data = await res.json();
         const stars: JourneyStar[] = Array.isArray(data?.stars) ? data.stars : [];
-        setJourney({
-          kind: data?.firstTime ? "first" : cameFromStory ? "story" : "plain",
-          stars,
-        });
+        setJourney({ kind: cameFromStory ? "story" : "plain", stars });
       } catch {
         // A failed map means a plain arrival, never a broken one.
         setJourney({ kind: cameFromStory ? "story" : "plain", stars: [] });
