@@ -302,6 +302,16 @@ export default function StoryPage(): React.JSX.Element {
         }),
       });
 
+      // Mark that this trip through Story actually produced something. The
+      // arrival interstitial reads it on the next screen and greets them
+      // properly instead of asking another question as if nothing happened.
+      // Session-scoped, so it cannot leak into tomorrow.
+      try {
+        window.sessionStorage.setItem("everleap_story_answered", "1");
+      } catch {
+        // Private mode or a full store costs the celebration, nothing else.
+      }
+
       await loadNext();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save answer.");

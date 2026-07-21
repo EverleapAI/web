@@ -83,6 +83,7 @@ export function ArrivalGate({
         <ArrivalInterstitial
           tasks={arrival.tasks}
           accent={arrival.accent}
+          journey={arrival.journey}
           onDone={arrival.dismiss}
         />
       ) : null}

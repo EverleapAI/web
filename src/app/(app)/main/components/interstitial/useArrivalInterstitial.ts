@@ -4,8 +4,35 @@ import * as React from "react";
 
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 import { accentForPage } from "./arrivalContext";
+import type { JourneyStar } from "./JourneyConstellation";
 
 type Phase = "checking" | "showing" | "done";
+
+/**
+ * Which of the three arrivals this is.
+ *
+ * "first"  — never seen the app. Fireworks, a welcome, and the map, gated on
+ *            opening all five stars.
+ * "story"  — just came out of Story having actually answered something. A
+ *            celebration and the map, already lit by how much they've used.
+ * "plain"  — everything else. The question, and nothing ceremonial.
+ */
+export type ArrivalKind = "first" | "story" | "plain";
+
+type JourneyState = { kind: ArrivalKind; stars: JourneyStar[] };
+
+const STORY_FLAG = "everleap_story_answered";
+
+/** Did this trip through Story produce an answer? Reading it consumes it. */
+function takeStoryFlag(): boolean {
+  try {
+    if (window.sessionStorage.getItem(STORY_FLAG) !== "1") return false;
+    window.sessionStorage.removeItem(STORY_FLAG);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Decides whether the arrival interstitial plays on this screen, and spends one
@@ -37,6 +64,7 @@ export function useArrivalInterstitial(
 ) {
   const [phase, setPhase] = React.useState<Phase>("checking");
   const [eligible, setEligible] = React.useState<boolean | null>(null);
+  const [journey, setJourney] = React.useState<JourneyState | null>(null);
   const accent = React.useMemo(() => accentForPage(pageKey), [pageKey]);
 
   // React mounts effects twice in development. Claiming is a write, so without
@@ -125,6 +153,31 @@ export function useArrivalInterstitial(
     claimed.current = true;
     setPhase("showing");
 
+    // Which arrival is this? Read the Story flag straight away — it is
+    // consumed on read, so a slow request can't let a second screen claim the
+    // same celebration.
+    const cameFromStory = takeStoryFlag();
+    void (async () => {
+      try {
+        // POST claims the first run atomically, so the welcome happens exactly
+        // once even across two tabs opening together.
+        const res = await fetch("/api/guidance/journey", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        const stars: JourneyStar[] = Array.isArray(data?.stars) ? data.stars : [];
+        setJourney({
+          kind: data?.firstTime ? "first" : cameFromStory ? "story" : "plain",
+          stars,
+        });
+      } catch {
+        // A failed map means a plain arrival, never a broken one.
+        setJourney({ kind: cameFromStory ? "story" : "plain", stars: [] });
+      }
+    })();
+
     let alive = true;
     (async () => {
       try {
@@ -166,5 +219,11 @@ export function useArrivalInterstitial(
     dismiss,
     tasks: unanswered,
     accent,
+    /**
+     * Null until the map comes back. The interstitial opens on the question
+     * either way — waiting for this before showing anything would put a
+     * request back on the critical path and reintroduce the flicker.
+     */
+    journey,
   };
 }
