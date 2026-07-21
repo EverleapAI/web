@@ -21,6 +21,10 @@ export type JourneyStar = {
   section: string;
   visits: number;
   level: StarLevel;
+  /** What this place is, written for this person by the server. */
+  blurb?: string;
+  label?: string;
+  personalized?: boolean;
 };
 
 type Section = {
@@ -29,8 +33,6 @@ type Section = {
   accent: string;
   x: number;
   y: number;
-  /** What this place is, in the app's voice. Shown when the star is tapped. */
-  blurb: string;
 };
 
 // Irregular on purpose. Evenly spaced points read as a menu; a sky reads as
@@ -42,8 +44,6 @@ const SECTIONS: Section[] = [
     accent: "96, 176, 255",
     x: 62,
     y: 74,
-    blurb:
-      "Where you land. One read on where you are right now, and one thing worth doing about it. It changes as you do.",
   },
   {
     id: "insights",
@@ -51,8 +51,6 @@ const SECTIONS: Section[] = [
     accent: "167, 139, 250",
     x: 196,
     y: 42,
-    blurb:
-      "What I've noticed about you, and why I think it. Your motivations, strengths and skills — with the evidence attached, so you can disagree.",
   },
   {
     id: "explore",
@@ -60,8 +58,6 @@ const SECTIONS: Section[] = [
     accent: "52, 211, 153",
     x: 322,
     y: 96,
-    blurb:
-      "Careers, places, causes and things to try. You can go a long way in here — down to what a real day looks like, and who near you is already doing it.",
   },
   {
     id: "actions",
@@ -69,8 +65,6 @@ const SECTIONS: Section[] = [
     accent: "245, 176, 90",
     x: 116,
     y: 196,
-    blurb:
-      "Small real-world missions. Not homework — things you go and do, then tell me how they went.",
   },
   {
     id: "me",
@@ -78,8 +72,6 @@ const SECTIONS: Section[] = [
     accent: "244, 132, 176",
     x: 284,
     y: 212,
-    blurb:
-      "Your account, and what you've earned. Also where you change what I know about you, whenever it stops being true.",
   },
 ];
 
@@ -129,6 +121,15 @@ export function JourneyConstellation({
   const [active, setActive] = React.useState<string | null>(null);
 
   const activeSection = active ? BY_ID.get(active) : null;
+
+  // The copy comes from the server: authored for a brand-new account, written
+  // for this person once their stars have been generated. The component holds
+  // the geometry and the colour, never the words.
+  const copyFor = React.useCallback(
+    (sectionId: string) =>
+      stars.find((s) => s.section === sectionId)?.blurb ?? "",
+    [stars]
+  );
   const allOpened = opened.size >= SECTIONS.length;
 
   function tap(id: string) {
@@ -260,7 +261,7 @@ export function JourneyConstellation({
               {activeSection.label}
             </p>
             <p className="text-body leading-6 text-white/78">
-              {activeSection.blurb}
+              {copyFor(activeSection.id)}
             </p>
           </div>
         ) : (
