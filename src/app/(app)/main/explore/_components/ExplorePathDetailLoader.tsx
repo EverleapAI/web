@@ -19,7 +19,6 @@ import { ExplorePathDetail } from "./ExplorePathDetail";
 import { ExplorePathSection } from "./ExplorePathSection";
 import { PathConstellation } from "./PathConstellation";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 import type { SectionKey } from "./detailSections";
 import type { OnetDetail } from "./OnetFacts";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
@@ -190,26 +189,12 @@ export function ExplorePathDetailLoader({
       return <ExplorePathSection path={path} section={section} onet={onet} />;
     }
 
-    // The interstitial belongs on ARRIVING at a path, not inside it.
-    //
-    // Every path route comes through this loader, including the constellation
-    // and its descents — and those are the deep end, where someone has clicked
-    // three times to reach one specific thing. Putting a question between them
-    // and that is the opposite of what the descents were built for. Only the
-    // path's own landing gets it, which is why this sits below the branchSlug
-    // and section branches rather than wrapping all of them.
-    //
-    // ONE key for all ~1,036 paths, deliberately. A key per path would mean
-    // three appearances EACH — browse ten careers and meet thirty questions.
-    // Shared, the whole of Explore's depth costs the same three per session as
-    // any other screen. Questions come from Explore's pool, as on the Work
-    // landing: no path-specific generator exists, and inventing one for a
-    // thousand paths is not the cheap part of this.
-    return (
-      <ArrivalGate pageKey="explore_path" taskSource="explore_summary">
-        <ExplorePathDetail path={path} whyYou={whyYou} onet={onet} />
-      </ArrivalGate>
-    );
+
+    // No interstitial here. A path is two levels below its section, and the
+    // rule is a section's summary and its direct children only — by the time
+    // someone has clicked Explore, then World, then Ghana, they are after one
+    // specific thing and a question is an obstacle rather than a doorway.
+    return <ExplorePathDetail path={path} whyYou={whyYou} onet={onet} />;
   }
   if (missing) return <DetailMissing lane={lane} />;
   return <DetailLoading lane={lane} />;

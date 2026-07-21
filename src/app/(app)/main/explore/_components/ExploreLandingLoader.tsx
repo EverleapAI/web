@@ -13,6 +13,7 @@ import { ExploreLanding } from "./ExploreLanding";
 import { DoorsLanding } from "./DoorsLanding";
 import { WorldsLanding } from "./WorldsLanding";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
+import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 
 type Deck = { paths: ExplorePath[]; serverRanked: boolean };
 
@@ -61,7 +62,29 @@ export function ExploreLandingLoader({
     return () => controller.abort();
   }, [lane]);
 
-  if (variant === "doors") return <DoorsLanding lane={lane} paths={paths} />;
-  if (variant === "worlds") return <WorldsLanding lane={lane} paths={paths} />;
-  return <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />;
+  // A lane is a first-level screen under Explore, so it gets the interstitial
+  // and its own budget — the same standing as an Insights tab.
+  //
+  // The rule across the app: a section's summary and its direct children, and
+  // nothing deeper. A path (Ghana) is two levels down and a constellation is
+  // three, so neither asks anything; by then someone has clicked through to one
+  // specific thing and a question is in the way rather than at the door.
+  //
+  // Questions come from Explore's pool: no lane-specific generator exists yet,
+  // so a World question is really an Explore question. Same section, so it is
+  // relevant — but writing per-lane questions would make it more so.
+  const inner =
+    variant === "doors" ? (
+      <DoorsLanding lane={lane} paths={paths} />
+    ) : variant === "worlds" ? (
+      <WorldsLanding lane={lane} paths={paths} />
+    ) : (
+      <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />
+    );
+
+  return (
+    <ArrivalGate pageKey={`explore_${lane}`} taskSource="explore_summary">
+      {inner}
+    </ArrivalGate>
+  );
 }

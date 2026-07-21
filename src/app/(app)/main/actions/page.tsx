@@ -29,6 +29,7 @@ import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { AwardsMeter } from "../components/achievements/AwardsMeter";
 import { WhereYouAre } from "../components/achievements/WhereYouAre";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
+import { ArrivalGate } from "../components/interstitial/ArrivalGate";
 import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
@@ -413,6 +414,13 @@ export default function ActionsPage() {
     actions !== null && active.length === 0 && done.length === 0 && suggestions !== null && !hasSuggestions;
 
   return (
+    // Actions is a section summary, so it asks — but NOTHING generates questions
+    // under this key yet, so today it is silent and renders straight through.
+    // Wired now rather than later so that the moment an Actions generator
+    // exists, this works without anyone remembering this file. Deliberately not
+    // borrowing Today's questions: they are about Today, and a question that
+    // isn't about the screen you're on is the thing we set out to avoid.
+    <ArrivalGate pageKey="actions">
     <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-1">
       <div className="mb-4 px-1">
         <div className="mb-1.5 flex items-center gap-2">
@@ -559,5 +567,6 @@ export default function ActionsPage() {
         )}
       </div>
     </div>
+    </ArrivalGate>
   );
 }
