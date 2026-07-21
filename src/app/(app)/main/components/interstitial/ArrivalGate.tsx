@@ -92,6 +92,7 @@ export function ArrivalGate({
           tasks={arrival.tasks}
           accent={arrival.accent}
           journey={arrival.journey}
+          pageKey={pageKey}
           onDone={arrival.dismiss}
         />
       ) : null}

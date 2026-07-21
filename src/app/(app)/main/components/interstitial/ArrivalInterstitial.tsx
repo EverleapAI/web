@@ -33,6 +33,8 @@ type Props = {
   accent: string;
   /** The map, once it arrives. Null means a plain arrival. */
   journey?: { kind: ArrivalKind; stars: JourneyStar[] } | null;
+  /** Which screen this is, for measurement. */
+  pageKey: string;
   onDone: () => void;
 };
 
@@ -142,7 +144,30 @@ export function ArrivalCurtain() {
   );
 }
 
-export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props) {
+/**
+ * Record what happened, so "is three per screen too noisy" has an answer.
+ *
+ * We could already see when a question was asked and when it was answered, but
+ * never when someone dismissed one — so the appearance limit could only ever be
+ * argued about. Shown-versus-skipped is the number that settles it.
+ *
+ * Fire and forget: telemetry must never delay or break the thing it measures.
+ */
+function track(pageKey: string, eventType: "interstitial_shown" | "interstitial_skipped") {
+  try {
+    void fetch("/api/track/event", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page_key: pageKey, event_type: eventType }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    // never let measurement break the screen
+  }
+}
+
+export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone }: Props) {
   const reduce = useReducedMotion();
   const [closing, setClosing] = React.useState(false);
 
@@ -163,14 +188,28 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  // Once per opening, not per render.
+  const recorded = React.useRef(false);
+  React.useEffect(() => {
+    if (recorded.current) return;
+    recorded.current = true;
+    track(pageKey, "interstitial_shown");
+  }, [pageKey]);
+
+  /** Left without answering — Skip, Escape, or backing out. */
+  const abandon = React.useCallback(() => {
+    track(pageKey, "interstitial_skipped");
+    onDone();
+  }, [pageKey, onDone]);
+
   // Never trap. Even if the questions fail to render, this gets them out.
   React.useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onDone();
+      if (event.key === "Escape") abandon();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onDone]);
+  }, [abandon]);
 
   const handleAllAnswered = React.useCallback(() => {
     // A Story exit earns the map. Everyone else has done what was asked and
@@ -187,6 +226,7 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
     setClosing(true);
     window.setTimeout(onDone, CLOSING_MS);
   }, [onDone]);
+
 
   if (!mounted) return null;
 
@@ -279,7 +319,7 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, onDone }: Props
               <div className="mt-7 flex justify-center">
                 <button
                   type="button"
-                  onClick={onDone}
+                  onClick={abandon}
                   className="text-meta font-medium text-white/30 transition hover:text-white/55"
                 >
                   Skip for now
