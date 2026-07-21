@@ -23,19 +23,13 @@ function forwardHeaders(req: NextRequest): Record<string, string> {
 }
 
 export async function GET(req: NextRequest) {
-  const path = req.nextUrl.searchParams.get("path") || "";
-  const moment = req.nextUrl.searchParams.get("moment") || "";
-  // The specialty. Every branch numbers its moments m0..m3, so without this the
-  // API cannot tell which of a country's specialties is being asked about.
+  // Forward the whole query string rather than naming each parameter.
   //
-  // This proxy rebuilds the query string by hand rather than forwarding it, so a
-  // parameter added upstream silently vanishes here: `branch` was dropped, the
-  // API saw none, and every non-work scene photo 404'd while the API itself was
-  // correct and serving. Anything added to this endpoint must be added here too.
-  const branch = req.nextUrl.searchParams.get("branch") || "";
-  const url =
-    `${TARGET_URL}?path=${encodeURIComponent(path)}&moment=${encodeURIComponent(moment)}` +
-    (branch ? `&branch=${encodeURIComponent(branch)}` : "");
+  // This handler used to rebuild it by hand, and that is exactly how `branch`
+  // went missing: every non-work scene photo 404'd for hours while the API was
+  // correct and serving, because the parameter never arrived. Naming keys here
+  // makes every future parameter a silent outage waiting to happen.
+  const url = TARGET_URL + (req.nextUrl.search || "");
 
   const upstream = await fetch(url, {
     method: "GET",

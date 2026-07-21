@@ -81,6 +81,90 @@ export type BadgeStats = {
  * @param enabled pass false when the caller already has stats from a parent —
  * this endpoint re-evaluates badges server-side, so a second call is real work.
  */
+/**
+ * One request per page load, however many components ask.
+ *
+ * Ten components call this hook, and a screen commonly renders two of them —
+ * Today fetched /api/achievements twice on every load, 18KB and a full badge
+ * re-evaluation each time. Passing stats down as props fixes one screen at a
+ * time and leaves the next one to rediscover it.
+ *
+ * This is a SHARE, not a cache. Calls that overlap or land within a moment of
+ * each other get the same response; anything later re-asks. Badges are awarded
+ * server-side by this endpoint, so a real cache would quietly stop people
+ * earning them — that is why the window is seconds, not minutes.
+ */
+const SHARE_MS = 5000;
+let inFlight: Promise<AchievementsPayload | null> | null = null;
+let sharedAt = 0;
+let shared: AchievementsPayload | null = null;
+
+/** The raw endpoint response, shared between every consumer on a page. */
+export type AchievementsPayload = {
+  ok?: boolean;
+  badges?: unknown[];
+  newlyEarned?: { slug: string; name: string; tier: string }[];
+  earnedCount?: number;
+  total?: number;
+  goldCount?: number;
+  rungsEarned?: number;
+  rungsTotal?: number;
+  surfaces?: unknown;
+};
+
+async function fetchAchievements(): Promise<AchievementsPayload | null> {
+  const res = await fetch("/api/achievements", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  const data = (await res.json()) as AchievementsPayload;
+  return data?.ok ? data : null;
+}
+
+function toStats(data: AchievementsPayload): BadgeStats {
+  return {
+    earnedCount: Number(data.earnedCount ?? 0),
+    totalCount: Number(data.total ?? data.badges?.length ?? 0),
+    goldCount: Number(data.goldCount ?? 0),
+    // Zero means "this payload predates rungs" — the meter falls back to the
+    // badge count rather than rendering an empty rack.
+    rungsEarned: Number(data.rungsEarned ?? 0),
+    rungsTotal: Number(data.rungsTotal ?? 0),
+    surfaces: (data.surfaces ?? {}) as BadgeStats["surfaces"],
+  };
+}
+
+/**
+ * One request, shared by everyone who asks within a moment of each other.
+ *
+ * BadgeSync (the silent earn detector, mounted app-wide) and the trophy meter
+ * both hit this endpoint on every page load, so every screen evaluated badges
+ * twice. Sharing is safe precisely because awarding is idempotent and only the
+ * call that inserts reports newlyEarned — so the single shared call carries the
+ * toast, rather than two calls racing over who gets to announce it.
+ */
+export function loadAchievementsShared(): Promise<AchievementsPayload | null> {
+  if (inFlight) return inFlight;
+  if (shared && Date.now() - sharedAt < SHARE_MS) return Promise.resolve(shared);
+  inFlight = fetchAchievements()
+    .then((value) => {
+      shared = value;
+      sharedAt = Date.now();
+      return value;
+    })
+    .catch(() => shared)
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
+}
+
+/** Drop the shared copy so the next ask re-evaluates. */
+export function invalidateBadgeStats() {
+  shared = null;
+  sharedAt = 0;
+}
+
 export function useBadgeStats(enabled = true): BadgeStats | null {
   const [stats, setStats] = React.useState<BadgeStats | null>(null);
 
@@ -90,22 +174,9 @@ export function useBadgeStats(enabled = true): BadgeStats | null {
 
     async function load() {
       try {
-        const res = await fetch("/api/achievements", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const data = await res.json();
-        if (!alive || !data?.ok) return;
-        setStats({
-          earnedCount: Number(data.earnedCount ?? 0),
-          totalCount: Number(data.total ?? data.badges?.length ?? 0),
-          goldCount: Number(data.goldCount ?? 0),
-          // Zero means "this payload predates rungs" — the meter falls back to the
-          // badge count rather than rendering an empty rack.
-          rungsEarned: Number(data.rungsEarned ?? 0),
-          rungsTotal: Number(data.rungsTotal ?? 0),
-          surfaces: (data.surfaces ?? {}) as BadgeStats["surfaces"],
-        });
+        const value = await loadAchievementsShared();
+        if (!alive || !value) return;
+        setStats(toStats(value));
       } catch {
         // Keep whatever we last had.
       }
@@ -126,7 +197,13 @@ export function useBadgeStats(enabled = true): BadgeStats | null {
       if (alive) load();
     });
 
-    const onEarned = () => load();
+    // A badge was just earned, so the shared copy is stale by definition.
+    // Without dropping it, every listener would be handed the pre-award numbers
+    // and the meter would not move until the share expired.
+    const onEarned = () => {
+      invalidateBadgeStats();
+      load();
+    };
     window.addEventListener(BADGE_EARNED, onEarned);
     return () => {
       alive = false;

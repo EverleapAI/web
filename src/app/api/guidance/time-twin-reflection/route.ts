@@ -46,8 +46,8 @@ async function relay(upstream: Response): Promise<NextResponse> {
 }
 
 export async function GET(req: NextRequest) {
-  const twinId = req.nextUrl.searchParams.get("twinId") || "";
-  const url = `${TARGET_URL}?twinId=${encodeURIComponent(twinId)}`;
+  // Whole query string: a named-key copy drops anything added upstream later.
+  const url = TARGET_URL + (req.nextUrl.search || "");
 
   const upstream = await fetch(url, {
     method: "GET",

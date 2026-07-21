@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 
 import { CardBody, CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
+import { loadAchievementsShared } from "@/lib/achievements/useBadgeStats";
 
 import { JourneyProgressPM } from "./JourneyProgressPM";
 
@@ -758,11 +759,12 @@ function BadgeSync() {
     let alive = true;
     const check = async () => {
       try {
-        const r = await fetch("/api/achievements", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const d = await r.json();
+        // Shares the trophy meter's request rather than making its own. Both ran
+        // on every page load, so every screen evaluated badges twice — and that
+        // evaluation is the slowest thing on the page. Safe to share because
+        // awarding is idempotent: only the call that inserts reports
+        // newlyEarned, so there is still exactly one toast.
+        const d = await loadAchievementsShared();
         if (!alive || !d?.ok || !Array.isArray(d.newlyEarned)) return;
         for (const b of d.newlyEarned as {
           slug: string;

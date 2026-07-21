@@ -20,7 +20,6 @@ import { SectionCard } from "../../components/ui/SectionCard";
 import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 import { AwardsMeter } from "@/app/(app)/main/components/achievements/AwardsMeter";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 
 const LANE_ORDER: Lane[] = ["work", "learning", "world", "impact", "play"];
 
@@ -32,15 +31,6 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
   const { profile, isReady } = useExploreProfile();
 
   // The Explore "Something I'm wondering" batch, lifted from the summary fetch.
-  const [wonderTasks, setWonderTasks] = React.useState<MicroTaskBatchItem[]>([]);
-  // Resolved, not merely 'profile ready'. The card reports its tasks after its
-  // own fetch, so gating on isReady decided there were no questions before any
-  // had arrived — and the interstitial never showed here.
-  const [wonderResolved, setWonderResolved] = React.useState(false);
-  const handleTinyTasks = React.useCallback((tasks: MicroTaskBatchItem[]) => {
-    setWonderTasks(tasks);
-    setWonderResolved(true);
-  }, []);
 
   // One strongest pick per lane, kept in a stable direction order (not ranked by
   // the saturated score — just a real path to start with in each direction).
@@ -115,7 +105,6 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
           request={request}
           hasSignal={hasSignal}
           firstName={profile?.firstName ?? null}
-          onTinyTasks={handleTinyTasks}
         />
       ) : (
         <SectionCard tone="hero" voice>

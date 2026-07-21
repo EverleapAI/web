@@ -42,12 +42,22 @@ export function CareerReaction({
   slug,
   title,
   onDismiss,
+  missions,
 }: {
   slug: string;
   title: string;
   /** Called when the user taps "Not for me" — the parent removes this card and
    *  reveals the next career in the queue. */
   onDismiss: (slug: string) => void;
+  /**
+   * Every mission on this screen, looked up once by the parent.
+   *
+   * Each card used to ask the actions endpoint about itself, so a deck of four
+   * meant four round trips on a page that already fires nineteen requests. When
+   * the parent provides them, this asks for nothing. Left optional so the card
+   * still works on its own wherever it is used without a deck around it.
+   */
+  missions?: Map<string, ExistingMission>;
 }) {
   const { reaction, setReaction } = useCardReaction(PAGE_KEY, slug);
   const router = useRouter();
@@ -61,6 +71,11 @@ export function CareerReaction({
   // Start vs Continue vs Reflect AND freezes the row — once you've committed to
   // trying a career, you can't then dismiss it out from under the mission.
   React.useEffect(() => {
+    // The deck already fetched every mission for this screen.
+    if (missions) {
+      setMission(missions.get(slug) ?? null);
+      return;
+    }
     let cancelled = false;
     fetch(`/api/guidance/actions?source_ref=${encodeURIComponent(sourceRef)}`, {
       credentials: "include",
@@ -78,7 +93,7 @@ export function CareerReaction({
     return () => {
       cancelled = true;
     };
-  }, [sourceRef]);
+  }, [sourceRef, missions, slug]);
 
   // Committed to a mission → the reaction row freezes; "I'd try this" reads lit.
   const locked = mission !== null;

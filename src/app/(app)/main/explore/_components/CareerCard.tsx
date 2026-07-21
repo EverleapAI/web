@@ -36,10 +36,13 @@ export function CareerCard({
   path,
   accent,
   onDismiss,
+  missions,
 }: {
   path: ExplorePath;
   accent: string;
   onDismiss: (slug: string) => void;
+  /** Every mission on this screen, fetched once by the deck. */
+  missions?: Map<string, { id: string; status: string }>;
 }) {
   const href = `/main/explore/work/${path.slug}`;
 
@@ -87,7 +90,8 @@ export function CareerCard({
       </Link>
 
       {/* Feedback — inside the card, self-contained. */}
-      <CareerReaction slug={path.slug} title={path.card.title} onDismiss={onDismiss} />
+      <CareerReaction
+        missions={missions} slug={path.slug} title={path.card.title} onDismiss={onDismiss} />
 
       {/* The big, primary CTA into the full career screen — the most important
           action on the card. */}

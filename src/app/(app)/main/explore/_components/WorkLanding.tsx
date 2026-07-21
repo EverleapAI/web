@@ -92,42 +92,37 @@ function useDismissedCareers(): {
   return { dismissed, dismiss };
 }
 
-// Careers-scoped "wondering" tasks. Reuses the cached Explore cross-lane batch
-// for now (a careers-specific generator is a fast follow); best-effort.
-function useWonderTasks(
-  ready: boolean,
-  request: Record<string, unknown> | null
-): { tasks: MicroTaskBatchItem[]; done: boolean } {
-  const [tasks, setTasks] = React.useState<MicroTaskBatchItem[]>([]);
-  // The arrival interstitial needs to know when this fetch has RESOLVED, not
-  // just when the profile is ready. Those are different moments, and deciding
-  // on the earlier one means deciding there are no questions before they've
-  // arrived — which is why the interstitial never appeared here.
-  const [done, setDone] = React.useState(false);
-
+// Every mission on this screen in one request. Each CareerCard used to ask the
+// actions endpoint about itself; with four visible cards that is four round
+// trips for data one query answers.
+function useDeckMissions(ready: boolean): Map<string, { id: string; status: string }> {
+  const [missions, setMissions] = React.useState<Map<string, { id: string; status: string }>>(
+    new Map()
+  );
   React.useEffect(() => {
-    if (!ready || !request) return;
+    if (!ready) return;
     let cancelled = false;
-    fetch("/api/guidance/explore-summary", {
-      method: "POST",
+    fetch("/api/guidance/actions?source_ref_prefix=explore_work%3A", {
       credentials: "include",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
+      cache: "no-store",
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { ok?: boolean; tinyTasks?: MicroTaskBatchItem[] } | null) => {
-        if (!cancelled && d?.ok) setTasks(d.tinyTasks ?? []);
+      .then((d: { ok?: boolean; actions?: { id: string; status: string; sourceRef?: string }[] } | null) => {
+        if (cancelled || !d?.ok || !Array.isArray(d.actions)) return;
+        const map = new Map<string, { id: string; status: string }>();
+        for (const a of d.actions) {
+          const slug = (a.sourceRef ?? "").split(":")[1];
+          // Newest first from the API, so only keep the first per career.
+          if (slug && !map.has(slug)) map.set(slug, { id: a.id, status: a.status });
+        }
+        setMissions(map);
       })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setDone(true);
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [ready, request]);
-
-  return { tasks, done };
+  }, [ready]);
+  return missions;
 }
 
 export function WorkLanding({
@@ -158,30 +153,7 @@ export function WorkLanding({
     progress == null ? "none" : progress.done ? "none" : pct < 20 ? "low" : "partial";
   const showCards = gate !== "low" && paths.length > 0;
 
-  // Minimal request to lift the cached cross-lane "wondering" tasks.
-  const wonderRequest = React.useMemo(
-    () =>
-      profile
-        ? {
-            firstName: profile.firstName,
-            motivations: profile.motivations,
-            strengths: profile.strengths,
-            skills: profile.skills,
-            freeText: profile.fullText,
-            topPicks: paths.slice(0, 5).map((p) => ({
-              lane: "work",
-              title: p.card.title,
-              hook: p.card.hook,
-              score: 0,
-            })),
-          }
-        : null,
-    [profile, paths]
-  );
-  const { tasks: wonderTasks, done: wonderTasksDone } = useWonderTasks(
-    Boolean(isReady && profile?.hasQuestionSignal),
-    wonderRequest
-  );
+  const deckMissions = useDeckMissions(Boolean(isReady));
 
   if (!isReady) return null;
 
@@ -242,6 +214,7 @@ export function WorkLanding({
                 path={path}
                 accent={CAREER_ACCENTS[i % CAREER_ACCENTS.length]}
                 onDismiss={dismiss}
+                missions={deckMissions}
               />
             ))}
           </div>

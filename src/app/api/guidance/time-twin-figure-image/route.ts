@@ -25,8 +25,8 @@ function forwardHeaders(req: NextRequest): Record<string, string> {
 }
 
 export async function GET(req: NextRequest) {
-  const slug = req.nextUrl.searchParams.get("slug") || "";
-  const url = `${TARGET_URL}?slug=${encodeURIComponent(slug)}`;
+  // Whole query string: a named-key copy drops anything added upstream later.
+  const url = TARGET_URL + (req.nextUrl.search || "");
 
   const upstream = await fetch(url, {
     method: "GET",

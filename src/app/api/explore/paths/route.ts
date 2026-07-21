@@ -27,9 +27,12 @@ export async function GET(req: NextRequest) {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const proto = req.headers.get("x-forwarded-proto") || "https";
 
-  const target = new URL(TARGET_URL);
-  const lane = req.nextUrl.searchParams.get("lane");
-  if (lane) target.searchParams.set("lane", lane);
+  // Forward the WHOLE query string. This handler used to copy `lane` across by
+  // hand and drop everything else, so `view=summary` — the thing that takes this
+  // screen from 3.6MB to a few hundred KB — arrived upstream as nothing, and the
+  // payload would have been unchanged with no error anywhere. It is the same
+  // silent-parameter-loss that hid `branch` for hours behind green deploys.
+  const target = new URL(TARGET_URL + (req.nextUrl.search || ""));
 
   const upstream = await fetch(target.toString(), {
     method: "GET",

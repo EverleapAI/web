@@ -17,10 +17,16 @@ async function fetchDeck(
   signal: AbortSignal
 ): Promise<{ paths: ExplorePath[]; total?: number } | null> {
   try {
-    const res = await fetch(`/api/explore/paths?lane=${encodeURIComponent(lane)}`, {
-      credentials: "include",
-      signal,
-    });
+    // view=summary: the home needs a card and enough text to score, not every
+    // path's whole content. Asking for the lot shipped 3.6MB on this screen —
+    // 2.5MB of it the World lane alone.
+    const res = await fetch(
+      `/api/explore/paths?lane=${encodeURIComponent(lane)}&view=summary`,
+      {
+        credentials: "include",
+        signal,
+      }
+    );
     if (!res.ok) return null;
     const data = (await res.json()) as { ok?: boolean; total?: number; paths?: ExplorePath[] };
     return data?.ok && Array.isArray(data.paths) && data.paths.length > 0

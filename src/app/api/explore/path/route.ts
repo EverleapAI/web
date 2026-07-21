@@ -28,12 +28,11 @@ export async function GET(req: NextRequest) {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const proto = req.headers.get("x-forwarded-proto") || "https";
 
-  // forward lane / slug / title through to the read-through endpoint
-  const target = new URL(TARGET_URL);
-  for (const key of ["lane", "slug", "title"]) {
-    const value = req.nextUrl.searchParams.get(key);
-    if (value) target.searchParams.set(key, value);
-  }
+  // Forward the WHOLE query string. Copying a fixed list of keys means any
+  // parameter added upstream later silently vanishes here, with no error on
+  // either side — the failure mode that hid `branch` on the scene-image
+  // endpoint for hours behind green deploys.
+  const target = new URL(TARGET_URL + (req.nextUrl.search || ""));
 
   const upstream = await fetch(target.toString(), {
     method: "GET",
