@@ -190,8 +190,7 @@ export function WorkLanding({
     // budget: it is a different screen to the person looking at it.
     <ArrivalGate
       pageKey="explore_work"
-      tasks={wonderTasks}
-      ready={wonderTasksDone}
+      taskSource="explore_summary"
     >
     <div className="space-y-4">
       {/* Back to Explore — replaces the lane rail, like the Insights sub-pages. */}

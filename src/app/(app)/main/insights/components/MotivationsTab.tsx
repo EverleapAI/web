@@ -99,12 +99,11 @@ export function MotivationsTab({
   return (
     <ArrivalGate
       pageKey="insights_motivations"
-      tasks={tinyTasks}
-      // categoryPercent starts null and loads separately. Deciding before it
-      // arrives would treat 'unknown' as 'enough signal' and show the
-      // interstitial to exactly the people it should skip.
-      ready={fetchDone && categoryPercent !== null}
-      enabled={!lowSignal}
+      // categoryPercent starts null and loads separately, so "not known yet"
+      // is passed through as null rather than collapsing to true — otherwise
+      // unknown reads as "enough signal" and the interstitial appears for
+      // exactly the people it should skip.
+      enabled={categoryPercent === null ? null : !lowSignal}
     >
     <section className="mb-6 space-y-3">
       <InsightsBackLink />

@@ -22,19 +22,22 @@
 // They are hidden with `visibility`, not unmounted: unmounting would reset each
 // screen's state and refire its loads for a decision that resolves in a few
 // hundred milliseconds.
+//
+// The gate fetches its OWN questions rather than being handed them by the
+// screen. Taking them from each screen's pipeline meant the interstitial could
+// only appear once that pipeline finished — about ten seconds on Explore, whose
+// tasks come from a generation endpoint. The page rendered, the user started
+// reading, and the interstitial arrived on top: it looked like the screen
+// rendered twice, because from the outside it did.
 
 import * as React from "react";
 
-import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 import { ArrivalCurtain, ArrivalInterstitial } from "./ArrivalInterstitial";
 import { useArrivalInterstitial } from "./useArrivalInterstitial";
 
 type Props = {
   /** Same key the screen uses everywhere else: micro-tasks, guidance, events. */
   pageKey: string;
-  tasks: MicroTaskBatchItem[] | null | undefined;
-  /** True once the screen's own data has loaded and `tasks` is meaningful. */
-  ready: boolean;
   /**
    * Set false when this screen has nothing to stand in front of.
    *
@@ -44,7 +47,13 @@ type Props = {
    * order — and the interstitial arrives without the context that makes it make
    * sense. Let the page do its job.
    */
-  enabled?: boolean;
+  enabled?: boolean | null;
+  /**
+   * Where this screen's questions come from, when they aren't generated under
+   * its own key. The Work landing keeps its own appearance budget but borrows
+   * Explore's questions.
+   */
+  taskSource?: string;
   children: React.ReactNode;
 };
 
@@ -63,12 +72,11 @@ const HIDE_CSS = `
 
 export function ArrivalGate({
   pageKey,
-  tasks,
-  ready,
   enabled = true,
+  taskSource,
   children,
 }: Props) {
-  const arrival = useArrivalInterstitial(pageKey, tasks, ready, enabled);
+  const arrival = useArrivalInterstitial(pageKey, enabled, taskSource);
 
   return (
     <>

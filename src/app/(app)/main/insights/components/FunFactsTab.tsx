@@ -284,8 +284,6 @@ export default function FunFactsTab(props: FunFactsTabProps) {
   return (
     <ArrivalGate
       pageKey="insights_fun_facts"
-      tasks={wonderTasks}
-      ready={funFactsDone}
     >
     <section className="mb-6 space-y-4">
       <InsightsBackLink />

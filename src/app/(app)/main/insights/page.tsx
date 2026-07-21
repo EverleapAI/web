@@ -1316,10 +1316,8 @@ export default function Page() {
         {tab === "summary" ? (
           <ArrivalGate
             pageKey="insights_summary"
-            tasks={tinyTasks}
-            ready={summaryFetchDone}
           >
-          isSummaryReady ? (
+          {isSummaryReady ? (
             <section className="space-y-3">
               <div className="mb-1.5">
                 <InsightsSummaryCard
@@ -1362,7 +1360,7 @@ export default function Page() {
                 </>
               ) : null}
             </section>
-          ) : null
+          ) : null}
           </ArrivalGate>
         ) : tab === "motivations" ? (
           <MotivationsTab dark={dark} afterAgentic={whereYouAre} />

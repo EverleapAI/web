@@ -108,8 +108,6 @@ export function ExploreSummary({ lanes }: { lanes: SummaryLane[] }) {
   return (
     <ArrivalGate
       pageKey="explore_summary"
-      tasks={wonderTasks}
-      ready={wonderResolved}
     >
     <div className="space-y-4">
       {isReady ? (

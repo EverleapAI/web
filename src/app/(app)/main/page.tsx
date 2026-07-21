@@ -323,8 +323,6 @@ export default function MainHomePage() {
     // in front of it. Three appearances, then it retires here.
     <ArrivalGate
       pageKey="today"
-      tasks={todayGuidance?.tiny_tasks}
-      ready={guidanceLoaded}
     >
       <AnimatePresence>
         {transitioning && motionEnabled ? (
