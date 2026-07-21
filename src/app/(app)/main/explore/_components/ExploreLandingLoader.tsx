@@ -75,9 +75,9 @@ export function ExploreLandingLoader({
   // relevant — but writing per-lane questions would make it more so.
   const inner =
     variant === "doors" ? (
-      <DoorsLanding lane={lane} paths={paths} />
+      <DoorsLanding lane={lane} paths={paths} serverRanked={serverRanked} />
     ) : variant === "worlds" ? (
-      <WorldsLanding lane={lane} paths={paths} />
+      <WorldsLanding lane={lane} paths={paths} serverRanked={serverRanked} />
     ) : (
       <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />
     );

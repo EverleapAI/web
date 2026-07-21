@@ -127,7 +127,15 @@ function DoorRow({ door, accent }: { door: Door; accent: Rgb }) {
   );
 }
 
-export function DoorsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[] }) {
+export function DoorsLanding({
+  lane,
+  paths,
+  serverRanked,
+}: {
+  lane: Lane;
+  paths: ExplorePath[];
+  serverRanked?: boolean;
+}) {
   const { profile, isReady } = useExploreProfile();
   const badges = useBadgeStats();
   const accent = LANE_ACCENT[lane];
@@ -138,9 +146,16 @@ export function DoorsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[]
   // Order by fit first, so the doors come from the activities most likely to
   // land with this reader rather than whichever path happens to sort first.
   // Nothing is dropped; the browse list below shows every path in the same order.
+  //
+  // A server ranking wins: the lane matcher picked these for this person. That
+  // matters more here than anywhere, because collectDoors takes them one per
+  // path in order — so the order decides which real opportunities surface at all.
   const ordered = React.useMemo(
-    () => (profile ? rankPaths(paths, profile, paths.length).map((r) => r.path) : paths),
-    [paths, profile]
+    () =>
+      serverRanked || !profile
+        ? paths
+        : rankPaths(paths, profile, paths.length).map((r) => r.path),
+    [paths, profile, serverRanked]
   );
   const doors = React.useMemo(() => collectDoors(ordered), [ordered]);
   const near = doors.filter((d) => d.local).length;

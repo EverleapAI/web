@@ -102,7 +102,15 @@ function WorldCard({ path, accent }: { path: ExplorePath; accent: string }) {
   );
 }
 
-export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[] }) {
+export function WorldsLanding({
+  lane,
+  paths,
+  serverRanked,
+}: {
+  lane: Lane;
+  paths: ExplorePath[];
+  serverRanked?: boolean;
+}) {
   const { profile, isReady } = useExploreProfile();
   const badges = useBadgeStats();
   const accent = LANE_ACCENT[lane];
@@ -132,10 +140,16 @@ export function WorldsLanding({ lane, paths }: { lane: Lane; paths: ExplorePath[
   // on the page — but the ones that match this reader lead, so Learning doesn't
   // open on "Agriculture + Animal Science" for everyone purely because A sorts
   // first. Without a profile we keep the catalog's own order.
+  //
+  // When the server ranked them, leave them alone. The lane matcher chose these
+  // for this person and put its picks first, each carrying its own reason in the
+  // hook. Re-sorting by keyword overlap would scatter those picks back through
+  // the catalog — and it scrambles hardest for the readers with the most signal,
+  // since those are the ones whose profile text makes the keyword scores diverge.
   const ordered = React.useMemo(() => {
-    if (!profile) return filtered;
+    if (serverRanked || !profile) return filtered;
     return rankPaths(filtered, profile, filtered.length).map((r) => r.path);
-  }, [filtered, profile]);
+  }, [filtered, profile, serverRanked]);
 
   // World groups by region; the other lanes are small enough to read straight
   // through. A place with no region, or one shared across two, falls into a
