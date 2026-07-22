@@ -9,7 +9,7 @@
 
 const ONBOARDING_SNAPSHOT_KEY = "everleapOnboarding_v4_convo_min";
 
-type ServerProfile = {
+export type ServerProfile = {
   name?: string | null;
   zip?: string | null;
   situation?: string | null;
@@ -27,9 +27,14 @@ type ServerProfile = {
  * Fetch guidance/profile and merge it into the local snapshot (server wins for
  * fields it has; existing local fields are preserved). Never writes an email
  * prefix as a name. No-ops safely if unauthenticated / offline.
+ *
+ * Returns the server profile so a caller can build a view model straight from
+ * it rather than reading the snapshot blob back out of localStorage. Returns
+ * null when the server had nothing to say — callers should treat that as
+ * "not known yet", never as "zero".
  */
-export async function hydrateProfileSnapshotFromServer(): Promise<void> {
-  if (typeof window === "undefined") return;
+export async function hydrateProfileSnapshotFromServer(): Promise<ServerProfile | null> {
+  if (typeof window === "undefined") return null;
   try {
     let serverProfile: ServerProfile | null = null;
     try {
@@ -39,9 +44,9 @@ export async function hydrateProfileSnapshotFromServer(): Promise<void> {
         if (json?.ok && json.profile) serverProfile = json.profile as ServerProfile;
       }
     } catch {
-      return;
+      return null;
     }
-    if (!serverProfile) return;
+    if (!serverProfile) return null;
 
     const existingRaw = window.localStorage.getItem(ONBOARDING_SNAPSHOT_KEY);
     const merged: Record<string, unknown> = existingRaw ? JSON.parse(existingRaw) || {} : {};
@@ -64,7 +69,9 @@ export async function hydrateProfileSnapshotFromServer(): Promise<void> {
     put("answers", serverProfile.answers);
 
     window.localStorage.setItem(ONBOARDING_SNAPSHOT_KEY, JSON.stringify(merged));
+    return serverProfile;
   } catch {
     // ignore — screen falls back to whatever is already local
+    return null;
   }
 }

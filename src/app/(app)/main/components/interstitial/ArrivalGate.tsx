@@ -3,25 +3,25 @@
 // One wrapper that puts the arrival interstitial in front of a screen.
 //
 // There are eight places the "Something I'm wondering" card used to live, and
-// wiring each by hand would mean eight chances to get the curtain, the ordering
-// or the flicker wrong. They all do the same thing, so they all use this.
+// wiring each by hand would mean eight chances to get the ordering wrong. They
+// all do the same thing, so they all use this.
 //
-// WHY THE CONTENT IS HIDDEN RATHER THAN COVERED.
+// THE PAGE IS NO LONGER HIDDEN WHILE WE DECIDE (2026-07-22).
 //
-// The first version covered the page with a portalled curtain. That works for
-// screens which render a skeleton first (Today, the Work landing) and fails for
-// every screen that server-renders real content — Insights and Explore both
-// leaked visible frames at 3-500ms. A portal cannot beat server-rendered HTML,
-// because a portal needs a DOM to attach to and the HTML has already painted by
-// then. Measured, not assumed.
+// It used to be. The interstitial was an opaque full-screen panel, so a page
+// that painted and was then covered looked like a mistake — and preventing that
+// took a curtain, a hidden-children trick and a CSS failsafe, four separate
+// causes deep. All of that existed to hide a handover that no longer happens.
 //
-// So the children arrive HIDDEN, in the server output, and are revealed once we
-// know whether a question is coming. Nothing paints and then gets covered,
-// because nothing paints at all.
+// The interstitial is a bottom sheet now, and the page being visible behind it
+// is the entire point: it is what makes the sheet feel like something on top of
+// your screen rather than somewhere you have been sent. A sheet arriving over a
+// rendered page reads as a sheet. So the page renders immediately, always, and
+// the sheet arrives when it is ready.
 //
-// They are hidden with `visibility`, not unmounted: unmounting would reset each
-// screen's state and refire its loads for a decision that resolves in a few
-// hundred milliseconds.
+// `ArrivalCurtain` and the hide CSS are gone with it. If a full-screen act ever
+// comes back, they are in git history — but do not reach for them to solve a
+// flicker the sheet does not have.
 //
 // The gate fetches its OWN questions rather than being handed them by the
 // screen. Taking them from each screen's pipeline meant the interstitial could
@@ -32,7 +32,7 @@
 
 import * as React from "react";
 
-import { ArrivalCurtain, ArrivalInterstitial } from "./ArrivalInterstitial";
+import { ArrivalInterstitial } from "./ArrivalInterstitial";
 import { useArrivalInterstitial } from "./useArrivalInterstitial";
 
 type Props = {
@@ -57,19 +57,6 @@ type Props = {
   children: React.ReactNode;
 };
 
-// The failsafe matters more than it looks. If JavaScript dies before the gate
-// resolves — a chunk fails to load, an error boundary catches something — the
-// content would stay hidden forever and the app would look broken. This reveals
-// it from CSS alone, with no JS involved, so the worst case is a slow screen
-// rather than a blank one.
-const HIDE_CSS = `
-@keyframes elArrivalFailsafe { to { visibility: visible; } }
-.el-arrival-hold {
-  visibility: hidden;
-  animation: elArrivalFailsafe 0s linear 6s forwards;
-}
-`;
-
 export function ArrivalGate({
   pageKey,
   enabled = true,
@@ -80,13 +67,6 @@ export function ArrivalGate({
 
   return (
     <>
-      <style>{HIDE_CSS}</style>
-
-      {/* Covers the app nav too, which the hidden wrapper cannot reach — it
-          lives inside MAIN's stacking context. Only once mounted; the hidden
-          children are what prevent the pre-hydration flash. */}
-      {arrival.holdCurtain || arrival.showing ? <ArrivalCurtain /> : null}
-
       {arrival.showing ? (
         <ArrivalInterstitial
           tasks={arrival.tasks}
@@ -97,9 +77,7 @@ export function ArrivalGate({
         />
       ) : null}
 
-      <div className={arrival.holdCurtain ? "el-arrival-hold" : undefined}>
-        {children}
-      </div>
+      {children}
     </>
   );
 }

@@ -16,7 +16,7 @@ import {
 } from "@/theme/everleapVisuals";
 import { useActionsCount } from "@/app/(app)/main/components/ActionsFeedback";
 
-type NavKey = "home" | "insights" | "explore" | "actions" | "profile";
+type NavKey = "home" | "insights" | "explore" | "actions" | "profile" | "guide";
 
 type BottomNavProps = {
   activeKey?: NavKey | string;
@@ -42,7 +42,12 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/profile")) return "profile";
 
   if (pathname.startsWith("/main/story")) return "insights";
-  if (pathname.startsWith("/main/guide")) return "explore";
+  // The guide is its own place now. Both of these mappings date from when it was
+  // a "coming soon" stub whose key was pointed at Explore — so standing on the
+  // guide lit the Explore tab, and the tab you were actually on never lit at
+  // all. On a screen whose entire job is telling someone where they are, the nav
+  // saying they were somewhere else is the worst place for it.
+  if (pathname.startsWith("/main/guide")) return "guide";
 
   return undefined;
 }
@@ -62,7 +67,7 @@ function normalizeActiveKey(key?: string): NavKey | undefined {
   if (key === "carousel") return "insights";
 
   if (key === "explore") return "explore";
-  if (key === "guide") return "explore";
+  if (key === "guide") return "guide";
 
   if (key === "actions") return "actions";
   if (key === "takeoff") return "actions";
@@ -278,10 +283,29 @@ export function BottomNav({
           <Link
             href="/main/guide"
             aria-label="Guide"
-            className="flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04] active:bg-white/[0.09]"
+            aria-current={resolvedActiveKey === "guide" ? "page" : undefined}
+            className={[
+              "flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2",
+              "transition hover:bg-white/[0.04] active:bg-white/[0.09]",
+              resolvedActiveKey === "guide" ? "bg-white/[0.06]" : "",
+            ].join(" ")}
           >
-            <LifeBuoy className="h-5 w-5 text-white/55" />
-            <span className="text-micro text-white/55">Guide</span>
+            <LifeBuoy
+              className={
+                resolvedActiveKey === "guide"
+                  ? "h-5 w-5 text-white"
+                  : "h-5 w-5 text-white/55"
+              }
+            />
+            <span
+              className={
+                resolvedActiveKey === "guide"
+                  ? "text-micro text-white"
+                  : "text-micro text-white/55"
+              }
+            >
+              Guide
+            </span>
           </Link>
         </div>
       </div>

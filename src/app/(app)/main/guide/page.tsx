@@ -24,8 +24,8 @@ export default function GuidePage() {
         Everleap is one thing you feed, and four things it feeds.
       </h1>
       <p className={`mt-3 max-w-[52ch] text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
-        Tap a star to see what lives there, and tap it again to drop inside. A ring means
-        there&rsquo;s another sky in it.
+        Tap a star to see what it does. A ring around one means there&rsquo;s another sky
+        inside it, and tapping takes you in.
       </p>
 
       <div className="mt-6">

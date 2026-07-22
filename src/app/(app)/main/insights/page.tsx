@@ -13,6 +13,7 @@ import {
 import {
   buildInsightsViewModel,
   type InsightsTab,
+  type StoryProfile,
   type WordCloudItem,
 } from "./app/buildInsightsViewModel";
 import { hydrateProfileSnapshotFromServer } from "../app/hydrateProfileSnapshot";
@@ -891,14 +892,25 @@ export default function Page() {
   }, [initialTabFromUrl]);
 
   const [mounted, setMounted] = React.useState(false);
+  const [storyProfile, setStoryProfile] = React.useState<StoryProfile | null>(null);
   React.useEffect(() => {
     let alive = true;
-    // Refresh the local snapshot from the DB before building the view model, so
-    // Insights shows the real name + signals even on a cold deep-link (without
-    // having hit Today first).
+    // The DB is the source of truth for the view model. This used to only
+    // refresh the localStorage snapshot, while the view model read a different
+    // (and by then dead) key — so every count came back zero. Now the profile
+    // it returns IS what the view model is built from.
     (async () => {
-      await hydrateProfileSnapshotFromServer();
-      if (alive) setMounted(true);
+      const profile = await hydrateProfileSnapshotFromServer();
+      if (!alive) return;
+      if (profile) {
+        setStoryProfile({
+          firstName: profile.name ?? null,
+          motivations: profile.motivations ?? [],
+          strengths: profile.strengths ?? [],
+          skills: profile.skills ?? [],
+        });
+      }
+      setMounted(true);
     })();
     return () => {
       alive = false;
@@ -916,8 +928,8 @@ export default function Page() {
 
   const vmTab: InsightsTab = tab === "funFacts" ? "summary" : tab;
   const vm = React.useMemo(
-    () => buildInsightsViewModel(vmTab, { useLocal: mounted }),
-    [vmTab, mounted]
+    () => buildInsightsViewModel(vmTab, { profile: storyProfile }),
+    [vmTab, storyProfile]
   );
 
   const safeSuper = React.useMemo<LensLike>(() => {
@@ -1008,9 +1020,14 @@ export default function Page() {
     [watchouts]
   );
 
+  // The server knows the name outright; parsing it back out of a sentence was
+  // only ever a workaround for not having it. Keep the extraction as a fallback
+  // for the pre-hydration frame.
   const nameFromHeadline = React.useMemo(
-    () => extractNameFromHeadline(vm.summary.headline || ""),
-    [vm.summary.headline]
+    () =>
+      storyProfile?.firstName?.trim() ||
+      extractNameFromHeadline(vm.summary.headline || ""),
+    [storyProfile?.firstName, vm.summary.headline]
   );
 
   const motivationsTop = React.useMemo(

@@ -16,7 +16,13 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useDragControls,
+  useReducedMotion,
+} from "framer-motion";
+import { X } from "lucide-react";
 
 import type { MicroTaskBatchItem } from "@/lib/microTasks/useMicroTaskBatch";
 import { TodayTinyTaskCard } from "../nextSteps/TodayTinyTaskCard";
@@ -111,40 +117,6 @@ function Starfield({ accent, still }: { accent: string; still: boolean }) {
 }
 
 /**
- * A plain cover held over everything while we work out whether an interstitial
- * is coming.
- *
- * Gating one section of Today wasn't enough — the nav, and every other section,
- * still painted underneath and then got covered a moment later. This sits at
- * the same z-index and in the same colour as the interstitial itself, so the
- * handover is invisible: cover, then content, then the page.
- *
- * The hook gives up after a short deadline, so this can never become a blank
- * screen someone is stuck behind.
- */
-// useEffect runs AFTER the browser paints, so a curtain that mounts in one
-// gets a visible frame of the page first — which is the flicker, again. A
-// layout effect runs after render but BEFORE paint, so the second render lands
-// without anything reaching the screen. Falls back to useEffect on the server,
-// where useLayoutEffect warns and does nothing useful.
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
-
-export function ArrivalCurtain() {
-  // Must render nothing on the server AND on the first client render, or the
-  // markup differs and React throws a hydration mismatch — which regenerates
-  // the tree and reintroduces exactly the flicker this exists to prevent.
-  const [mounted, setMounted] = React.useState(false);
-  useIsomorphicLayoutEffect(() => setMounted(true), []);
-
-  if (!mounted) return null;
-  return createPortal(
-    <div className="fixed inset-0 z-[100] bg-[#070b18]" aria-hidden />,
-    document.body
-  );
-}
-
-/**
  * Record what happened, so "is three per screen too noisy" has an answer.
  *
  * We could already see when a question was asked and when it was answered, but
@@ -170,6 +142,7 @@ function track(pageKey: string, eventType: "interstitial_shown" | "interstitial_
 export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone }: Props) {
   const reduce = useReducedMotion();
   const [closing, setClosing] = React.useState(false);
+  const dragControls = useDragControls();
 
   const kind = journey?.kind ?? "plain";
   const stars = journey?.stars ?? [];
@@ -196,11 +169,52 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone
     track(pageKey, "interstitial_shown");
   }, [pageKey]);
 
-  /** Left without answering — Skip, Escape, or backing out. */
+  // THE BACK GESTURE, which this had no answer to.
+  //
+  // On a phone, back is the gesture people trust most for "get me out of this",
+  // and it used to sail straight past — the interstitial is React state, not a
+  // route, so back navigated the page underneath instead of closing the thing
+  // on top of it. Escape covered this on a laptop and phones have no Escape.
+  //
+  // Same one-entry-per-open pattern as DescentShell, including the marker guard:
+  // React double-invokes effects in development, and without the guard one
+  // opening pushed two entries and left a spare behind, so a back press looked
+  // like it did nothing.
+  const onDoneRef = React.useRef(onDone);
+  React.useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
+  React.useEffect(() => {
+    if (!window.history.state?.everleapArrival) {
+      window.history.pushState({ everleapArrival: true }, "", window.location.href);
+    }
+    const onPop = () => onDoneRef.current();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  /**
+   * The single exit. Every way out goes through here — the ✕, the backdrop, a
+   * swipe, Skip, Escape, and answering — so there is one path to get right and
+   * no spare history entry left behind by any of them.
+   */
+  const leave = React.useCallback(() => {
+    if (window.history.state?.everleapArrival) {
+      window.history.back();
+      // If that pop never arrives, close anyway rather than leave a dead
+      // control. Closing twice costs nothing; no way out costs everything.
+      window.setTimeout(() => onDoneRef.current(), 220);
+      return;
+    }
+    onDoneRef.current();
+  }, []);
+
+  /** Left without answering — ✕, backdrop, swipe, Skip, Escape, or back. */
   const abandon = React.useCallback(() => {
     track(pageKey, "interstitial_skipped");
-    onDone();
-  }, [pageKey, onDone]);
+    leave();
+  }, [pageKey, leave]);
 
   // Never trap. Even if the questions fail to render, this gets them out.
   React.useEffect(() => {
@@ -219,28 +233,39 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone
       return;
     }
     setClosing(true);
-    window.setTimeout(onDone, CLOSING_MS);
-  }, [kind, onDone]);
+    window.setTimeout(leave, CLOSING_MS);
+  }, [kind, leave]);
 
   const finish = React.useCallback(() => {
     setClosing(true);
-    window.setTimeout(onDone, CLOSING_MS);
-  }, [onDone]);
+    window.setTimeout(leave, CLOSING_MS);
+  }, [leave]);
 
 
   if (!mounted) return null;
 
-  // Portalled to body so it covers the app nav — a fixed overlay inside MAIN
-  // cannot, because MAIN establishes its own stacking context.
+  // A SHEET, NOT A TAKEOVER (2026-07-22).
+  //
+  // This used to be an opaque full-screen panel: the page vanished, and the only
+  // way back was a 13px "Skip for now" at 30% white, sitting OUTSIDE the panel
+  // and below it — so on a phone, whenever the card ran past the fold, the
+  // visible screen was a question with no exit on it at all. Tom, on a phone:
+  // "you cannot see how to get out of it."
+  //
+  // Now the page stays where it is, dimmed, behind. That single change is what
+  // makes it feel escapable — you can SEE the thing you asked for the whole
+  // time, so the sheet reads as something on top of your screen rather than
+  // somewhere you have been sent. Five ways out, all going through `leave`:
+  // the ✕, the backdrop, a swipe down, Skip, Escape, and the back gesture.
+  //
+  // Still portalled to body: MAIN establishes its own stacking context, so a
+  // fixed overlay inside it cannot sit above the app nav.
   return createPortal(
-    <motion.div
-      initial={reduce ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.35 }}
-      className="fixed inset-0 z-[101] flex items-center justify-center overflow-y-auto bg-[#070b18] px-5 py-10"
+    <div
+      className="fixed inset-0 z-[101] flex items-end justify-center sm:items-center sm:px-5 sm:py-10"
       role="dialog"
       aria-modal="true"
-      aria-label="A few questions before you continue"
+      aria-label="One question before you continue"
     >
       <style>{`
         @keyframes everleapTwinkle {
@@ -249,61 +274,135 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone
         }
       `}</style>
 
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(65% 45% at 50% 32%, rgba(${a},0.18), transparent 72%)`,
-        }}
+      {/* The page, dimmed but present. Tapping it is the most instinctive
+          dismissal there is, so it is wired to the same exit as everything
+          else rather than being inert decoration. */}
+      <motion.button
+        type="button"
+        aria-label="Close"
+        onClick={abandon}
+        initial={reduce ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="absolute inset-0 h-full w-full cursor-default bg-[#050912]/75 backdrop-blur-[2px]"
       />
 
-      <div className="relative w-full max-w-md">
-        <AnimatePresence mode="wait">
-          {closing ? null : act === "map" ? (
-            <motion.div
-              key="map"
-              initial={reduce ? false : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div
-                className="overflow-hidden rounded-card border px-5 py-6 sm:px-6"
-                style={accentPanel(a)}
+      <motion.div
+        drag={reduce ? false : "y"}
+        dragControls={dragControls}
+        // Only the header starts a drag. With the whole sheet draggable, a
+        // scroll inside it fights the dismissal and one of the two always
+        // loses — usually the scroll, which strands longer questions.
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.5 }}
+        onDragEnd={(_, info) => {
+          // Distance OR speed — a flick is as clear an intention as a haul.
+          if (info.offset.y > 110 || info.velocity.y > 550) abandon();
+        }}
+        initial={reduce ? false : { opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        // Capped to the viewport, and a flex column so the scroller below can
+        // take the leftover. Without the cap the sheet grew to fit its content
+        // and ran off the bottom of the screen — the answer options and Skip
+        // were below the fold on a 390px phone, which is the exact failure this
+        // whole change exists to end. Caught by looking at a screenshot; the
+        // hit-test alone reported the ✕ as fine and said nothing about it.
+        className="relative flex max-h-[92vh] w-full max-w-md flex-col sm:max-h-[85vh]"
+      >
+        {/* The sheet chrome wraps BOTH acts, so the way out is in the same
+            place whichever one you are looking at. It used to be attached to
+            the question act only, which meant the map had no exit but Escape. */}
+        <div
+          className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-card border border-b-0 sm:rounded-card sm:border-b"
+          style={accentPanel(a)}
+        >
+          <Starfield accent={a} still={Boolean(reduce)} />
+
+          {/* Header: the grab handle and the ✕, and the only place a drag can
+              start. `touch-none` stops the browser claiming the gesture for a
+              scroll before framer-motion sees it. */}
+          <div
+            onPointerDown={(event) => {
+              if (!reduce) dragControls.start(event);
+            }}
+            // A REAL ROW, not an overlay. The ✕ was `absolute` over the top of
+            // the content, and the task card's own eyebrow carries an 84px
+            // constellation svg that lands in exactly that corner — later in
+            // the DOM, same stacking level, so it covered the button. The ✕
+            // rendered perfectly and swallowed every click. Giving the header
+            // its own height fixes the collision and the overlap at once.
+            className="relative z-10 flex shrink-0 touch-none items-center px-5 pb-2 pt-3 sm:px-6"
+          >
+            <div className="flex-1" />
+
+            {/* Reads as "this thing slides" without a word of instruction.
+                Pointless on desktop, where there is no swipe. */}
+            <div className="h-1 w-9 rounded-chip bg-white/25 sm:hidden" aria-hidden />
+
+            <div className="flex flex-1 justify-end">
+              <button
+                type="button"
+                onClick={abandon}
+                // The header starts a drag on pointerdown and framer-motion
+                // captures the pointer when it does, which would swallow the
+                // click on its way to this button.
+                onPointerDown={(event) => event.stopPropagation()}
+                aria-label="Close"
+                // 44px of tap target. The old exit was a 13px text link at 30%
+                // white BELOW the panel — off-screen on a phone whenever the
+                // card ran past the fold, which is what "you cannot see how to
+                // get out of it" was.
+                className="-my-2 -mr-2 flex h-11 w-11 items-center justify-center rounded-control text-white/55 transition hover:bg-white/[0.07] hover:text-white/90"
               >
-                <p
-                  className="mb-2 text-micro font-bold uppercase tracking-eyebrow"
-                  style={{ color: `rgb(${a})` }}
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Scrolls INSIDE the sheet, so the sheet itself never grows past the
+              viewport and pushes its own controls off-screen. */}
+          <div
+            className="relative min-h-0 flex-1 overflow-y-auto px-5 pb-5 sm:px-6"
+            style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
+          >
+            <AnimatePresence mode="wait">
+              {closing ? null : act === "map" ? (
+                <motion.div
+                  key="map"
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  How far you&rsquo;ve come
-                </p>
-                <p className="mb-5 text-body leading-7 text-white/78">
-                  Every part of Everleap you&rsquo;ve spent time in burns a little
-                  brighter. This is yours right now.
-                </p>
+                  <p
+                    className="mb-2 text-micro font-bold uppercase tracking-eyebrow"
+                    style={{ color: `rgb(${a})` }}
+                  >
+                    How far you&rsquo;ve come
+                  </p>
+                  <p className="mb-5 text-body leading-7 text-white/78">
+                    Every part of Everleap you&rsquo;ve spent time in burns a
+                    little brighter. This is yours right now.
+                  </p>
 
-                <JourneyConstellation
-                  stars={stars}
-                  requireAll={false}
-                  onComplete={finish}
-                  reduce={Boolean(reduce)}
-                />
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="asking"
-              initial={reduce ? false : { opacity: 0, y: 14, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.45 }}
-            >
-              <div
-                className="relative overflow-hidden rounded-card border px-5 py-6 sm:px-6"
-                style={accentPanel(a)}
-              >
-                <Starfield accent={a} still={Boolean(reduce)} />
-
-                <div className="relative">
+                  <JourneyConstellation
+                    stars={stars}
+                    requireAll={false}
+                    onComplete={finish}
+                    reduce={Boolean(reduce)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="asking"
+                  initial={reduce ? false : { opacity: 0, y: 14, scale: 0.985 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.45 }}
+                >
                   <TodayTinyTaskCard
                     dark
                     tasks={tasks}
@@ -313,23 +412,26 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone
                     showProgress
                     onAllAnswered={handleAllAnswered}
                   />
-                </div>
-              </div>
 
-              <div className="mt-7 flex justify-center">
-                <button
-                  type="button"
-                  onClick={abandon}
-                  className="text-meta font-medium text-white/30 transition hover:text-white/55"
-                >
-                  Skip for now
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>,
+                  {/* Kept alongside the ✕ because it says something the icon
+                      cannot: that not answering is allowed. Legible now — it
+                      was white/30, which is not an offer anyone can read. */}
+                  <div className="mt-5 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={abandon}
+                      className="rounded-control px-3 py-2 text-meta font-medium text-white/55 transition hover:text-white/85"
+                    >
+                      Skip for now
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+    </div>,
     document.body
   );
 }

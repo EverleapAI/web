@@ -10,7 +10,11 @@ export type InsightsTab =
   | "skills"
   | "doppelganger";
 
-type UseLocalOpts = { useLocal: boolean };
+/**
+ * `profile` is null until the server profile has arrived (or if it fails) —
+ * that is the honest "I don't know you yet" state, and it renders the fallback.
+ */
+type BuildOpts = { profile: StoryProfile | null };
 
 type Tone = "neutral" | "good" | "watch";
 
@@ -74,30 +78,67 @@ export type InsightsViewModel = {
   funFacts: FunFactsVM;
 };
 
-type Saved = { answer?: string; skipped?: boolean };
-
-type OnboardingV4 = {
-  name?: string;
-  situation?: "high_school" | "young_adult" | null;
-  certainty?: "strong" | "kinda" | "no_clue" | null;
-  zip?: string;
-  postPlans?: string[];
-  activities?: string[];
-  activitiesOther?: string;
-  funChoice?: string | null;
-  stepIndex?: number;
+/**
+ * The user's story answers, as the server knows them.
+ *
+ * This used to be read out of the browser under `everleap.story.answers.v3`,
+ * keyed `motivations_1..5` / `strengths_1..5` / `skills_1..5` — the ids of the
+ * 15-question prototype flow at `/main/questions`, which was deleted because it
+ * never saved anything to the DB. Nothing has written that key since, so every
+ * count below came back 0 and every derived thing (signal bar, word cloud,
+ * motivation drivers, the Fun Facts opener) was empty for every user, forever.
+ *
+ * It now comes from `guidance/profile` — the same `loadUserProfileSnapshot` the
+ * page already hydrates from — so the counts are the real 51-question pool.
+ */
+export type StoryProfile = {
+  firstName: string | null;
+  motivations: string[];
+  strengths: string[];
+  skills: string[];
 };
 
-const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-const STORY_STORAGE_KEY_V3 = "everleap.story.answers.v3";
+export const EMPTY_STORY_PROFILE: StoryProfile = {
+  firstName: null,
+  motivations: [],
+  strengths: [],
+  skills: [],
+};
 
-function safeJsonParse<T>(raw: string | null): T | null {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
+type Family = "motivations" | "strengths" | "skills";
+
+/**
+ * How many answers before the evidence half of a signal bar reads "full".
+ * The real pool is 51 (motivations 19 · strengths 12 · skills 19), but the bar
+ * is measuring "do I have enough to say something", not completion — fifteen
+ * real answers is plenty for that, and tying it to 51 would leave the bar
+ * looking thin for someone who has told us a great deal.
+ */
+const SIGNAL_SATURATION_ANSWERS = 15;
+
+/**
+ * The floor at which a family stops being nudged. Deliberately below the
+ * smallest family (strengths, 12) so every nudge is reachable — the badge-target
+ * rule applied to copy.
+ */
+const FAMILY_NUDGE_FLOOR = 5;
+
+function answersOf(profile: StoryProfile, family: Family): string[] {
+  const raw =
+    family === "motivations"
+      ? profile.motivations
+      : family === "strengths"
+        ? profile.strengths
+        : profile.skills;
+  return (raw ?? []).map((a) => cleanOneLine(a)).filter(Boolean);
+}
+
+function allAnswersOf(profile: StoryProfile): string[] {
+  return [
+    ...answersOf(profile, "motivations"),
+    ...answersOf(profile, "strengths"),
+    ...answersOf(profile, "skills"),
+  ];
 }
 
 function cleanOneLine(s: string) {
@@ -115,28 +156,6 @@ function niceName(raw: string) {
   const n = firstName(raw);
   if (!n) return "";
   return n.length === 1 ? n.toUpperCase() : `${n[0]!.toUpperCase()}${n.slice(1)}`;
-}
-
-function readOnboardingV4(): OnboardingV4 {
-  if (typeof window === "undefined") return {};
-  const parsed = safeJsonParse<OnboardingV4>(window.localStorage.getItem(ONBOARDING_STORAGE_KEY));
-  return parsed ?? {};
-}
-
-function loadStorySaved(): Record<string, Saved> {
-  if (typeof window === "undefined") return {};
-  const parsed = safeJsonParse<Record<string, Saved>>(window.localStorage.getItem(STORY_STORAGE_KEY_V3));
-  return parsed ?? {};
-}
-
-function countAnswered(prefix: "motivations" | "strengths" | "skills", saved: Record<string, Saved>) {
-  let n = 0;
-  for (let i = 1; i <= 5; i += 1) {
-    const id = `${prefix}_${i}`;
-    const a = cleanOneLine(saved[id]?.answer ?? "");
-    if (a) n += 1;
-  }
-  return n;
 }
 
 function clamp01(n: number) {
@@ -162,17 +181,10 @@ function collectMatches(joined: string, rx: RegExp) {
   return uniqLower(matches.map((m) => cleanOneLine(m))).slice(0, 3);
 }
 
-function buildSignalBar(saved: Record<string, Saved>) {
-  const allAnswers: string[] = [];
-  Object.values(saved).forEach((v) => {
-    const a = cleanOneLine(v?.answer ?? "");
-    if (a) allAnswers.push(a);
-  });
-
+function buildSignalBar(allAnswers: string[]) {
   const joined = allAnswers.join("  ");
 
-  const answeredTotal =
-    countAnswered("motivations", saved) + countAnswered("strengths", saved) + countAnswered("skills", saved);
+  const answeredTotal = allAnswers.length;
 
   const actionRx = /\b(build|make|ship|try|practice|train|create|prototype|start|finish)\b/gi;
   const peopleRx = /\b(feedback|coach|mentor|team|friends?|critique|review|someone|together|group)\b/gi;
@@ -184,7 +196,7 @@ function buildSignalBar(saved: Record<string, Saved>) {
   const curiousHits = (joined.match(curiousRx) ?? []).length;
   const clarityHits = (joined.match(clarityRx) ?? []).length;
 
-  const base = clamp01(answeredTotal / 15);
+  const base = clamp01(answeredTotal / SIGNAL_SATURATION_ANSWERS);
 
   const action = clamp01(base * 0.55 + Math.min(1, actionHits / 6) * 0.45);
   const people = clamp01(base * 0.55 + Math.min(1, peopleHits / 5) * 0.45);
@@ -234,20 +246,14 @@ function buildSignalBar(saved: Record<string, Saved>) {
   return items;
 }
 
-function pickRepresentativeAnswers(saved: Record<string, Saved>, max: number) {
-  const ids: string[] = [];
-  for (let i = 1; i <= 5; i += 1) ids.push(`motivations_${i}`);
-  for (let i = 1; i <= 5; i += 1) ids.push(`strengths_${i}`);
-  for (let i = 1; i <= 5; i += 1) ids.push(`skills_${i}`);
-
+function pickRepresentativeAnswers(allAnswers: string[], max: number) {
   const prefer =
     /\b(friends?|coffee|team|coach|school|class|club|practice|project|building|making|sunshine|outside|music|art|happy)\b/i;
 
   const picks: string[] = [];
   let firstLong: string | null = null;
 
-  for (const id of ids) {
-    const a = cleanOneLine(saved[id]?.answer ?? "");
+  for (const a of allAnswers) {
     if (!a) continue;
 
     if (!firstLong && a.length > 14) firstLong = a;
@@ -382,11 +388,10 @@ function tokenize(text: string): string[] {
   return out;
 }
 
-function buildWordCloud(saved: Record<string, Saved>): WordCloudItem[] {
+function buildWordCloud(allAnswers: string[]): WordCloudItem[] {
   const counts = new Map<string, number>();
 
-  for (const v of Object.values(saved)) {
-    const a = cleanOneLine(v?.answer ?? "");
+  for (const a of allAnswers) {
     if (!a) continue;
     for (const t of tokenize(a)) {
       counts.set(t, (counts.get(t) ?? 0) + 1);
@@ -458,7 +463,7 @@ function catHref(cat: "motivations" | "strengths" | "skills") {
   return `/main/story?family=${cat}&returnTo=/main/insights`;
 }
 
-function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
+function buildSummaryVM(opts: BuildOpts): InsightsViewModel["summary"] {
   const fallback: InsightsViewModel["summary"] = {
     headline: "Let’s build signal — then I’ll reflect it back with precision.",
     receipts: [],
@@ -533,17 +538,20 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
     },
   };
 
-  if (!opts.useLocal || typeof window === "undefined") return fallback;
+  const profile = opts.profile;
+  if (!profile) return fallback;
 
-  const onboarding = readOnboardingV4();
-  const saved = loadStorySaved();
+  const name = niceName(profile.firstName ?? "");
 
-  const name = niceName(onboarding.name ?? "");
+  const motAnswers = answersOf(profile, "motivations");
+  const strAnswers = answersOf(profile, "strengths");
+  const sklAnswers = answersOf(profile, "skills");
+  const allAnswers = [...motAnswers, ...strAnswers, ...sklAnswers];
 
-  const mot = countAnswered("motivations", saved);
-  const str = countAnswered("strengths", saved);
-  const skl = countAnswered("skills", saved);
-  const answeredTotal = mot + str + skl;
+  const mot = motAnswers.length;
+  const str = strAnswers.length;
+  const skl = sklAnswers.length;
+  const answeredTotal = allAnswers.length;
 
   const brandNew = answeredTotal === 0;
   const startedMot = mot >= 1;
@@ -551,8 +559,8 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   const startedSkl = skl >= 1;
   const startedAllThree = startedMot && startedStr && startedSkl;
 
-  const signalBar = buildSignalBar(saved);
-  const cloud = buildWordCloud(saved);
+  const signalBar = buildSignalBar(allAnswers);
+  const cloud = buildWordCloud(allAnswers);
   const { top, second } = pickTopSignals(signalBar);
   const funRead = funReadFromSignals(top, second);
 
@@ -596,19 +604,19 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
     : undefined;
 
   const unlockItems: UnlockItem[] = [];
-  if (mot < 5)
+  if (mot < FAMILY_NUDGE_FLOOR)
     unlockItems.push({
       id: "u_mot",
       label: mot === 0 ? "Answer Motivations" : "Add a couple more Motivations answers",
       href: catHref("motivations"),
     });
-  if (str < 5)
+  if (str < FAMILY_NUDGE_FLOOR)
     unlockItems.push({
       id: "u_str",
       label: str === 0 ? "Answer Strengths" : "Add a couple more Strengths answers",
       href: catHref("strengths"),
     });
-  if (skl < 5)
+  if (skl < FAMILY_NUDGE_FLOOR)
     unlockItems.push({
       id: "u_skl",
       label: skl === 0 ? "Answer Skills" : "Add a couple more Skills answers",
@@ -629,7 +637,7 @@ function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {
   } else {
     storySoFarRaw.push(`Top read: ${funRead}`);
 
-    const clues = pickRepresentativeAnswers(saved, 1);
+    const clues = pickRepresentativeAnswers(allAnswers, 1);
     if (clues[0]) storySoFarRaw.push(`One clue you gave me: “${quoteSnippet(clues[0])}.”`);
 
     if (!startedAllThree && missingCats.length) {
@@ -691,7 +699,7 @@ function pickTimeTwinId(signalBar: SignalBarItem[], answeredTotal: number): stri
   }
 }
 
-function buildFunFactsVM(opts: UseLocalOpts): FunFactsVM {
+function buildFunFactsVM(opts: BuildOpts): FunFactsVM {
   const fallback: FunFactsVM = {
     headline: FUN_FACTS_CONTENT.headline,
     storySoFar: FUN_FACTS_CONTENT.storySoFar,
@@ -700,15 +708,13 @@ function buildFunFactsVM(opts: UseLocalOpts): FunFactsVM {
     },
   };
 
-  if (!opts.useLocal || typeof window === "undefined") return fallback;
+  const profile = opts.profile;
+  if (!profile) return fallback;
 
-  const saved = loadStorySaved();
-  const mot = countAnswered("motivations", saved);
-  const str = countAnswered("strengths", saved);
-  const skl = countAnswered("skills", saved);
-  const answeredTotal = mot + str + skl;
+  const allAnswers = allAnswersOf(profile);
+  const answeredTotal = allAnswers.length;
 
-  const signalBar = buildSignalBar(saved);
+  const signalBar = buildSignalBar(allAnswers);
   const twinId = pickTimeTwinId(signalBar, answeredTotal);
 
   const top = [...signalBar].sort((a, b) => b.strength - a.strength)[0]?.id;
@@ -736,7 +742,7 @@ function buildFunFactsVM(opts: UseLocalOpts): FunFactsVM {
   };
 }
 
-export function buildInsightsViewModel(tab: InsightsTab, opts: UseLocalOpts): InsightsViewModel {
+export function buildInsightsViewModel(tab: InsightsTab, opts: BuildOpts): InsightsViewModel {
   const summary = buildSummaryVM(opts);
   const funFacts = buildFunFactsVM(opts);
   return { tab, summary, funFacts };

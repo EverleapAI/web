@@ -197,18 +197,6 @@ export function useArrivalInterstitial(
   return {
     showing: phase === "showing",
     decided: phase !== "checking",
-    /**
-     * Whether to cover the page while we decide.
-     *
-     * Only users who are actually ELIGIBLE wait behind the curtain. Everyone
-     * else — most people, most of the time, since this retires after three
-     * appearances per screen — sees their page immediately and never knows this
-     * exists. Holding a blank cover in front of someone who was never going to
-     * be asked anything is pure cost.
-     */
-    holdCurtain:
-      !timedOut &&
-      (eligible === null || (eligible === true && phase === "checking")),
     dismiss,
     tasks,
     accent,
