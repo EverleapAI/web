@@ -2,16 +2,19 @@
 //
 // The two moments that break up fifty-one questions.
 //
-// THE BEAT — every five answers. Light on purpose. Its whole job is "I'm still
-// here, and you're moving", so it carries no model output: after five answers
-// there isn't enough evidence to say anything about somebody that isn't a
-// horoscope, and a generic "you seem curious!" would be worse than silence from
-// a product whose premise is that it doesn't tell you who you are.
+// THE BEAT — every five answers. Small, but it says something real: one or two
+// sentences on what just came through in the last handful of answers. It shipped
+// bare at first, on the reasoning that five answers can't support anything that
+// isn't a horoscope — true of somebody's FIRST five, and wrong by answer
+// twenty-five, where "4 more to go" is counting screens at a person rather than
+// telling them anything.
 //
-// THE MILESTONE — a family finished. Twelve to nineteen answers is enough to
-// notice something real, so this is where the generated read belongs. It is
-// written ahead of the boundary and simply read here; if it isn't ready, the
-// authored line stands in and nothing waits.
+// THE MILESTONE — a family finished. Wider: what recurred across the whole set.
+//
+// Both reads are written AHEAD by the queue and simply displayed here. If one
+// isn't ready the authored line stands in, and nothing ever waits on the model —
+// a spinner at the moment somebody finishes nineteen questions would undo the
+// moment it exists to mark.
 //
 // Both offer the same two ways out. "I'll come back" is a real offer, not a
 // trap — someone who stops after twenty questions has still given the product
@@ -21,6 +24,7 @@
 
 import * as React from "react";
 import { Constellation } from "./StorySky";
+import { emitCelebrate } from "@/lib/actionsBus";
 
 export type Celebration =
   | {
@@ -66,13 +70,25 @@ export function StoryCelebration({
   const isMilestone = celebration.kind === "milestone";
   const [read, setRead] = React.useState<string | null>(null);
 
+  // CelebrationBurst has been mounted app-wide this whole time listening for
+  // this event, and nothing in the app had ever emitted it. Fired from the
+  // centre-top so the particles fall through the constellation.
   React.useEffect(() => {
-    if (!isMilestone) return;
+    if (typeof window === "undefined") return;
+    const t = window.setTimeout(
+      () => emitCelebrate(window.innerWidth / 2, window.innerHeight * 0.34),
+      160
+    );
+    return () => window.clearTimeout(t);
+  }, []);
+
+  React.useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/guidance/story-milestone?family=${encodeURIComponent(celebration.family)}`, {
-      credentials: "include",
-      signal: controller.signal,
-    })
+    const kind = isMilestone ? "milestone" : "beat";
+    fetch(
+      `/api/guidance/story-milestone?family=${encodeURIComponent(celebration.family)}&kind=${kind}`,
+      { credentials: "include", signal: controller.signal }
+    )
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.ok && d.read?.body) setRead(d.read.body);
@@ -120,10 +136,21 @@ export function StoryCelebration({
               accent={ACCENT}
               className="mx-auto h-16 w-full"
             />
-            <p className="mt-4 text-read leading-read text-white/88">
-              Five more.{" "}
+            <div
+              className="mt-4 text-micro font-semibold uppercase tracking-eyebrow"
+              style={{ color: `rgba(${ACCENT},0.95)` }}
+            >
+              <span aria-hidden>✦</span> Something I noticed
+            </div>
+            {/* The read leads. The count is furniture underneath it — a screen
+                whose headline is "4 more to go" is counting at somebody rather
+                than telling them anything. */}
+            <p className="mt-2 text-read leading-read text-white/88">
+              {read ?? "A few more of your answers are in, and the picture is filling out."}
+            </p>
+            <p className="mt-3 text-label text-white/45">
               {celebration.left > 0
-                ? `${celebration.left} left in ${celebration.familyLabel}.`
+                ? `${celebration.left} more in ${celebration.familyLabel}.`
                 : `${celebration.familyLabel} is nearly done.`}
             </p>
           </>
