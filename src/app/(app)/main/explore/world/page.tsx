@@ -1,15 +1,13 @@
 "use client";
 
-import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
-import { worldPathsToExplorePaths } from "./_data/worldAdapter";
-import { WORLD_PATHS } from "./_data/worldPaths";
+import { WorldWaysLanding } from "../_components/WorldWaysLanding";
 
-// Existing mock content, adapted to the unified ExplorePath shape once at load.
-// Phase B swaps the source (mock -> DB) behind this same boundary.
-const WORLD_EXPLORE_PATHS = worldPathsToExplorePaths(WORLD_PATHS);
-
+// World opens on the six ways of going, not on 153 countries.
+//
+// The catalog was the front door and it was the wrong altitude: a country is our
+// deepest content, and leading with it asked someone to care about Nepal before
+// anything underneath could matter. Browsing places now lives at
+// /main/explore/world/places, one tap away rather than unavoidable.
 export default function WorldExplorePage() {
-  // World now has real places and traditions inside each country, so it reads
-  // like Learning and Impact: each path is a world you open, grouped by region.
-  return <ExploreLandingLoader lane="world" fallback={WORLD_EXPLORE_PATHS} variant="worlds" />;
+  return <WorldWaysLanding />;
 }

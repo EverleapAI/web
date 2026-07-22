@@ -225,6 +225,12 @@ export type ExplorePath = {
   lane: Lane;
   slug: string;
   title: string;
+  /**
+   * Why this path was chosen for this reader, when it was chosen at all.
+   * "mirror" matches what they've told us; "stretch" deliberately doesn't.
+   * Absent on catalog paths — only the matcher's picks carry it.
+   */
+  matchKind?: "mirror" | "stretch";
   /** O*NET / cause / activity code used for dedup + canonicalization. */
   taxonomyCode?: string;
   /** O*NET Bright Outlook (rapid growth / many openings) — Work deck cards. */

@@ -15,7 +15,7 @@ import { WorldsLanding } from "./WorldsLanding";
 import type { ExplorePath, Lane } from "../_data/exploreSchema";
 import { ArrivalGate } from "../../components/interstitial/ArrivalGate";
 
-type Deck = { paths: ExplorePath[]; serverRanked: boolean };
+type Deck = { paths: ExplorePath[]; serverRanked: boolean; pickedCount: number };
 
 async function fetchCatalogDeck(
   lane: Lane,
@@ -30,10 +30,16 @@ async function fetchCatalogDeck(
     const data = (await res.json()) as {
       ok?: boolean;
       personalized?: boolean;
+      picked?: number;
       paths?: ExplorePath[];
     };
     if (!data?.ok || !Array.isArray(data.paths) || data.paths.length === 0) return null;
-    return { paths: data.paths, serverRanked: Boolean(data.personalized) };
+    return {
+      paths: data.paths,
+      serverRanked: Boolean(data.personalized),
+      // How many leading paths were chosen for this reader, not merely sorted well.
+      pickedCount: Number(data.picked) || 0,
+    };
   } catch {
     return null;
   }
@@ -51,6 +57,7 @@ export function ExploreLandingLoader({
 }) {
   const [paths, setPaths] = React.useState<ExplorePath[]>(fallback);
   const [serverRanked, setServerRanked] = React.useState(false);
+  const [pickedCount, setPickedCount] = React.useState(0);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -58,6 +65,7 @@ export function ExploreLandingLoader({
       if (!deck) return;
       setPaths(deck.paths);
       setServerRanked(deck.serverRanked);
+      setPickedCount(deck.pickedCount);
     });
     return () => controller.abort();
   }, [lane]);
@@ -77,7 +85,12 @@ export function ExploreLandingLoader({
     variant === "doors" ? (
       <DoorsLanding lane={lane} paths={paths} serverRanked={serverRanked} />
     ) : variant === "worlds" ? (
-      <WorldsLanding lane={lane} paths={paths} serverRanked={serverRanked} />
+      <WorldsLanding
+        lane={lane}
+        paths={paths}
+        serverRanked={serverRanked}
+        pickedCount={pickedCount}
+      />
     ) : (
       <ExploreLanding lane={lane} paths={paths} serverRanked={serverRanked} />
     );
