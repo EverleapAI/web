@@ -7,11 +7,8 @@
    ============================================================================= */
 
 import type {
-  StoryAnswers,
   OnboardingSnapshot,
   SessionTinyState,
-  WeeklyFocusState,
-  CuriositySprintState,
   RetortViewModel,
 } from "../domain/types";
 
@@ -20,7 +17,6 @@ import type {
    ============================================================================= */
 
 export const ONBOARDING_STORAGE_KEY = "everleapOnboarding_v4_convo_min";
-export const STORY_STORAGE_KEY = "everleap.story.answers.v3";
 
 // Main page caches
 export const RETORT_CACHE_KEY = "everleap.main.retort.cache.v1"; // { fp, paragraphs, updatedAt }
@@ -31,8 +27,6 @@ export const ZIP_PLACE_SESSION_PREFIX = "everleap.zipPlace.v1:";
 
 // Tiny task state (session) + persisted “tiny” sources
 export const TINY_TASKS_SESSION_KEY = "everleap.main.tiny.session.v1";
-export const WEEKLY_FOCUS_KEY = "everleap.focus.week.v1";
-export const CURIOSITY_SPRINTS_KEY = "everleap.sprints.v1";
 
 /* =============================================================================
    Safe JSON helpers
@@ -103,9 +97,6 @@ export function readOnboardingSnapshot(): OnboardingSnapshot | null {
   return safeJsonParse<OnboardingSnapshot>(safeGetLocal(ONBOARDING_STORAGE_KEY));
 }
 
-export function readStoryAnswers(): StoryAnswers | null {
-  return safeJsonParse<StoryAnswers>(safeGetLocal(STORY_STORAGE_KEY));
-}
 
 /* =============================================================================
    Zip cache (state label) - session
@@ -150,14 +141,7 @@ export function writeSessionTinyState(next: SessionTinyState) {
   safeSetSession(TINY_TASKS_SESSION_KEY, safeJsonStringify(next));
 }
 
-export function readWeeklyFocus(): WeeklyFocusState | null {
-  return safeJsonParse<WeeklyFocusState>(safeGetLocal(WEEKLY_FOCUS_KEY));
-}
 
-export function readSprints(): CuriositySprintState[] {
-  const parsed = safeJsonParse<CuriositySprintState[]>(safeGetLocal(CURIOSITY_SPRINTS_KEY));
-  return Array.isArray(parsed) ? parsed : [];
-}
 
 /* =============================================================================
    Retort cache (fingerprint-based)

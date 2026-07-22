@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { StorySky } from "./StorySky";
+import { StoryCelebration, type Celebration } from "./StoryCelebration";
 
 import {
   AskHero,
@@ -137,6 +138,7 @@ export default function StoryPage(): React.JSX.Element {
   const [showTextAnswer, setShowTextAnswer] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [celebration, setCelebration] = React.useState<Celebration | null>(null);
   const [finishing, setFinishing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [listening, setListening] = React.useState(false);
@@ -264,13 +266,16 @@ export default function StoryPage(): React.JSX.Element {
     setError(null);
 
     try {
-      await apiFetch<{ ok: boolean }>("/story/answer", {
-        method: "POST",
-        body: JSON.stringify({
-          question_id: data.question.id,
-          answer_text: finalAnswer,
-        }),
-      });
+      const saved = await apiFetch<{ ok: boolean; celebration?: Celebration | null }>(
+        "/story/answer",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            question_id: data.question.id,
+            answer_text: finalAnswer,
+          }),
+        }
+      );
 
       // Mark that this trip through Story actually produced something. The
       // arrival interstitial reads it on the next screen and greets them
@@ -282,12 +287,30 @@ export default function StoryPage(): React.JSX.Element {
         // Private mode or a full store costs the celebration, nothing else.
       }
 
+      // The next question is loaded BEFORE the celebration shows, so "Keep
+      // going" is instant rather than starting a round-trip the reader waits
+      // through. The moment should hand straight back to the work.
       await loadNext();
+      if (saved?.celebration) setCelebration(saved.celebration);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save answer.");
     } finally {
       setSaving(false);
     }
+  }
+
+  // Shown over the flow rather than beside it: the question underneath is
+  // already the next one, so this is a pause in front of it, not a detour.
+  if (celebration) {
+    return (
+      <div className="min-h-[100svh] bg-slate-950 text-white">
+        <StoryCelebration
+          celebration={celebration}
+          onContinue={() => setCelebration(null)}
+          onBreak={() => router.push(returnTo)}
+        />
+      </div>
+    );
   }
 
   if (finishing) {
