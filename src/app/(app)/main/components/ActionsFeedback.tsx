@@ -8,6 +8,8 @@
 "use client";
 
 import * as React from "react";
+
+import { dedupedGet } from "@/lib/net/dedupedGet";
 import { Check } from "lucide-react";
 
 import { ACTION_ADDED, ACTIONS_CHANGED } from "@/lib/actionsBus";
@@ -21,9 +23,9 @@ export function useActionsCount(): number {
     let alive = true;
     const load = async () => {
       try {
-        const r = await fetch("/api/guidance/actions", { credentials: "include" });
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await dedupedGet<{ ok?: boolean; actions?: unknown[] }>(
+          "/api/guidance/actions"
+        );
         if (!alive || !d?.ok || !Array.isArray(d.actions)) return;
         setCount(
           (d.actions as ActionLike[]).filter((a) => a.status === "saved" || a.status === "doing").length

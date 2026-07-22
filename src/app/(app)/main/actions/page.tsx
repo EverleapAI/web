@@ -9,6 +9,8 @@
 "use client";
 
 import * as React from "react";
+
+import { dedupedGet, invalidateGet } from "@/lib/net/dedupedGet";
 import Link from "next/link";
 import {
   Check,
@@ -277,12 +279,16 @@ export default function ActionsPage() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [pendingSug, setPendingSug] = React.useState<Set<string>>(new Set());
 
-  const loadActions = React.useCallback(async () => {
+  // `force` after a write: the mount load may share a request with
+  // ActionsFeedback, but a refresh that follows a PATCH must never be answered
+  // from the copy taken before it.
+  const loadActions = React.useCallback(async (force = false) => {
     try {
-      const r = await fetch("/api/guidance/actions", { credentials: "include" });
-      if (!r.ok) throw new Error();
-      const d = await r.json();
-      if (d?.ok && Array.isArray(d.actions)) setActions(d.actions);
+      if (force) invalidateGet("/api/guidance/actions");
+      const d = await dedupedGet<{ ok?: boolean; actions?: unknown[] }>(
+        "/api/guidance/actions"
+      );
+      if (d?.ok && Array.isArray(d.actions)) setActions(d.actions as typeof actions);
       else setFailed(true);
     } catch {
       setFailed(true);
@@ -383,7 +389,7 @@ export default function ActionsPage() {
         setSuggestions((cur) => (cur ? cur.filter((x) => x.id !== s.id) : cur));
         if (status === "saved") {
           emitActionAdded(s.title);
-          await loadActions();
+          await loadActions(true);
         }
       } catch {
         // leave the suggestion in place so the user can retry

@@ -6,6 +6,8 @@
 "use client";
 
 import * as React from "react";
+
+import { fetchMe } from "@/lib/session/me";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -25,8 +27,7 @@ export default function EditProfilePage() {
 
   React.useEffect(() => {
     let alive = true;
-    fetch("/api/regauth/me", { credentials: "include", cache: "no-store" })
-      .then((r) => r.json())
+    fetchMe()
       .then((d) => {
         if (!alive) return;
         if (d?.authed && d.user) {

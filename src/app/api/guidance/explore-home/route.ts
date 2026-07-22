@@ -1,0 +1,60 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+import { NextRequest, NextResponse } from "next/server";
+
+const RAW_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+
+if (!RAW_BASE) {
+  throw new Error("Missing NEXT_PUBLIC_API_BASE_URL for /api/guidance/explore-home proxy.");
+}
+
+const API_BASE = /\/api$/i.test(RAW_BASE) ? RAW_BASE : `${RAW_BASE}/api`;
+const TARGET_URL = `${API_BASE}/guidance/explore-home`;
+
+function noStore(res: NextResponse) {
+  // A lane deck is per-user (its picks and their reasons) and changes only when
+// the person's signal moves, so a short private cache is safe and saves a
+// round trip every time they come back to the lane.
+  res.headers.set("Cache-Control", "private, max-age=120");
+  res.headers.set("Pragma", "no-cache");
+  res.headers.set("Vary", "Cookie");
+  return res;
+}
+
+export async function GET(req: NextRequest) {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const proto = req.headers.get("x-forwarded-proto") || "https";
+
+  // Forward the WHOLE query string. This handler used to copy `lane` across by
+  // hand and drop everything else, so `view=summary` — the thing that takes this
+  // screen from 3.6MB to a few hundred KB — arrived upstream as nothing, and the
+  // payload would have been unchanged with no error anywhere. It is the same
+  // silent-parameter-loss that hid `branch` for hours behind green deploys.
+  const target = new URL(TARGET_URL + (req.nextUrl.search || ""));
+
+  const upstream = await fetch(target.toString(), {
+    method: "GET",
+    headers: {
+      cookie: req.headers.get("cookie") || "",
+      "x-forwarded-host": host,
+      "x-forwarded-proto": proto,
+      "user-agent": req.headers.get("user-agent") || "",
+      "cache-control": "no-cache",
+    },
+    redirect: "manual",
+  });
+
+  const contentType =
+    upstream.headers.get("content-type") || "application/json; charset=utf-8";
+  const isJson = contentType.includes("application/json");
+  const body = isJson ? await upstream.json().catch(() => ({})) : await upstream.text();
+
+  const res = new NextResponse(
+    typeof body === "string" ? body : JSON.stringify(body ?? {}),
+    { status: upstream.status, headers: { "content-type": contentType } }
+  );
+
+  return noStore(res);
+}

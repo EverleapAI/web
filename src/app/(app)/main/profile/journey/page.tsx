@@ -7,6 +7,8 @@
 "use client";
 
 import * as React from "react";
+
+import { fetchMe } from "@/lib/session/me";
 import Link from "next/link";
 import { ArrowLeft, Bookmark, CheckCircle2, Compass, Sparkles } from "lucide-react";
 
@@ -47,7 +49,7 @@ export default function JourneyPage() {
   React.useEffect(() => {
     let alive = true;
     Promise.all([
-      fetch("/api/regauth/me", { credentials: "include", cache: "no-store" }).then((r) => r.json()).catch(() => null),
+      fetchMe(),
       fetch("/api/guidance/actions", { credentials: "include" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]).then(([me, act]) => {
       if (!alive) return;

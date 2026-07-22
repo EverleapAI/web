@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+
+import { fetchMe } from "@/lib/session/me";
 import { usePathname, useSearchParams } from "next/navigation";
 import AppChrome from "@/components/site/AppChrome";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -66,8 +68,7 @@ export default function MainLayout({
     let alive = true;
 
     async function probeAuthed(): Promise<boolean> {
-      const res = await fetch("/api/regauth/me", { cache: "no-store" });
-      const data = await res.json().catch(() => null);
+      const data = await fetchMe();
       return data?.authed === true;
     }
 

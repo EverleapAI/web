@@ -7,6 +7,10 @@
 "use client";
 
 import * as React from "react";
+
+import { dedupedGet } from "@/lib/net/dedupedGet";
+
+import { fetchMe } from "@/lib/session/me";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -92,8 +96,7 @@ function MomentumSnapshot() {
 
   React.useEffect(() => {
     let alive = true;
-    fetch("/api/guidance/actions", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
+    dedupedGet<{ actions?: { status?: string; reflection?: string | null }[] }>("/api/guidance/actions")
       .then((d) => {
         if (!alive) return;
         const list: { status?: string; reflection?: string | null }[] = Array.isArray(d?.actions) ? d.actions : [];
@@ -178,8 +181,7 @@ export default function ProfilePage() {
 
   React.useEffect(() => {
     let alive = true;
-    fetch("/api/regauth/me", { credentials: "include", cache: "no-store" })
-      .then((r) => r.json())
+    fetchMe()
       .then((d) => {
         if (!alive) return;
         if (d?.authed && d.user) {

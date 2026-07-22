@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+
+import { fetchMe } from "@/lib/session/me";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -153,11 +155,7 @@ export default function MainHomePage() {
 
     async function load() {
       try {
-        const res = await fetch("/api/regauth/me", {
-          cache: "no-store",
-        });
-
-        const data = await res.json();
+        const data = await fetchMe();
 
         try {
           const guidanceRes = await fetch("/api/guidance/today", {
