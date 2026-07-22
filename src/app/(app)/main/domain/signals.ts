@@ -81,7 +81,7 @@ export function signalLabel(k: SignalKey) {
  * Completed ≠ locked.
  */
 export function hrefForSignal(k: SignalKey, returnTo: string = "/main") {
-  return `/main/questions?cat=${k}&returnTo=${encodeURIComponent(returnTo)}`;
+  return `/main/story?family=${k}&returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 export function continueButtonText(k: SignalKey) {

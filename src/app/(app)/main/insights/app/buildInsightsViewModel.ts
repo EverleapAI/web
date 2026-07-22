@@ -455,7 +455,7 @@ function funReadFromSignals(top?: SignalBarItem, second?: SignalBarItem) {
 }
 
 function catHref(cat: "motivations" | "strengths" | "skills") {
-  return `/main/questions?cat=${cat}&returnTo=/main/insights`;
+  return `/main/story?family=${cat}&returnTo=/main/insights`;
 }
 
 function buildSummaryVM(opts: UseLocalOpts): InsightsViewModel["summary"] {

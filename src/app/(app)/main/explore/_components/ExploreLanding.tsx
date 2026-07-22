@@ -32,7 +32,7 @@ function getIntro(
       title: "This is where your signal becomes real paths.",
       body: `Explore turns what Everleap is picking up about you into ${laneWord} you can test and compare — but there isn't enough signal yet to make this page sharp. Answer a few quick questions and it changes immediately.`,
       cta: {
-        href: `/main/questions?returnTo=/main/explore/${lane}`,
+        href: `/main/story?returnTo=/main/explore/${lane}`,
         label: "Start with a few quick questions",
       },
     };

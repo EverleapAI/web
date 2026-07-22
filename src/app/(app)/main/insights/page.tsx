@@ -1328,7 +1328,7 @@ export default function Page() {
                   more={summaryMore}
                   detail={summaryDetail}
                   hasStrongSignal={summaryHasSignal}
-                  startHref="/main/questions?cat=motivations&returnTo=/main/insights?tab=summary"
+                  startHref="/main/story?family=motivations&returnTo=/main/insights?tab=summary"
                   confidenceLevel={summaryPayload?.confidence?.level}
                   pageKey="insights_summary"
                 />

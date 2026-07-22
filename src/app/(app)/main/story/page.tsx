@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { StorySky } from "./StorySky";
+
 import {
   AskHero,
   CoachLine,
@@ -111,38 +113,6 @@ function parseQuestion(question: StoryQuestion): {
     helper: null,
     choices: [],
   };
-}
-
-function StoryProgressLine({
-  categories,
-}: {
-  categories?: StoryCategoryProgress[];
-}) {
-  const safeCategories = categories ?? [];
-  if (safeCategories.length === 0) return null;
-
-  return (
-    <div className="w-full overflow-hidden">
-      <div className="flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 text-micro font-semibold sm:text-meta">
-        {safeCategories.map((category, index) => (
-          <React.Fragment key={category.key}>
-            <span
-              className={[
-                "whitespace-nowrap",
-                category.isCurrent ? "text-cyan-200" : "text-white/36",
-              ].join(" ")}
-            >
-              {category.label} {category.percent}%
-            </span>
-
-            {index < safeCategories.length - 1 ? (
-              <span className="text-white/16">•</span>
-            ) : null}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function StoryPage(): React.JSX.Element {
@@ -437,7 +407,7 @@ export default function StoryPage(): React.JSX.Element {
     <div className="min-h-[100svh] bg-slate-950 text-white">
       <main className="mx-auto flex min-h-[100svh] w-full max-w-[640px] flex-col px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pt-4">
         <header className="shrink-0 animate-[storyProgressEnter_220ms_ease-out_both]">
-          <StoryProgressLine categories={data.categories} />
+          <StorySky categories={data.categories ?? []} />
         </header>
 
         <section className="flex flex-1 flex-col pt-8 sm:pt-10">

@@ -122,12 +122,14 @@ function firstUnansweredQuestionId(cat: Cat, saved?: Record<string, Saved>) {
   return `${cat}_1`;
 }
 
-function buildHref(cat: Cat, questionId: string) {
+function buildHref(cat: Cat, _questionId: string) {
+  // The story flow serves the next unanswered question in the family from the
+  // real pool, so there is no question id to hand it. Dropping the id loses
+  // nothing: it addressed one of fifteen hardcoded prototype questions.
   const params = new URLSearchParams();
-  params.set("cat", cat);
-  params.set("questionId", questionId);
+  params.set("family", cat);
   params.set("returnTo", "/main");
-  return `/main/questions?${params.toString()}`;
+  return `/main/story?${params.toString()}`;
 }
 
 function accentClass(dark: boolean, cat: Cat) {

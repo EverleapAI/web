@@ -34,7 +34,7 @@ import { WorkSignalGate } from "./WorkSignalGate";
 import { OnetNotice } from "./ExploreAttribution";
 
 const VISIBLE = 4;
-const QUESTIONS_HREF = "/main/questions?returnTo=/main/explore/work";
+const QUESTIONS_HREF = "/main/story?returnTo=/main/explore/work";
 
 type StoryProgress = { percent: number; done: boolean } | null;
 

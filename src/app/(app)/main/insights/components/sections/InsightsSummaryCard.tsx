@@ -62,7 +62,7 @@ export default function InsightsSummaryCard({
   more,
   detail,
   hasStrongSignal,
-  startHref = "/main/questions?cat=motivations&returnTo=/main/insights?tab=summary",
+  startHref = "/main/story?family=motivations&returnTo=/main/insights?tab=summary",
   confidenceLevel,
   pageKey,
 }: Props) {

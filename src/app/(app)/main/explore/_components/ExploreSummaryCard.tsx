@@ -167,7 +167,7 @@ export function ExploreSummaryCard({
               read sharpens.
             </p>
             <Link
-              href="/main/questions?returnTo=/main/explore"
+              href="/main/story?returnTo=/main/explore"
               className="group mt-4 inline-flex items-center gap-1.5 text-label font-medium text-white/82 transition hover:text-white"
             >
               <span>Start with a few quick questions</span>
