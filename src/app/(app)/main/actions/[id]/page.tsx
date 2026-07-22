@@ -478,6 +478,12 @@ export default function MissionPage() {
                     </p>
                   ) : null}
 
+                  {/* A REAL BUTTON, not a footnote.
+                      This was 13px at 55% white — quieter than the body text it
+                      sat under, on the one screen whose whole job is to collect
+                      the thing it opens. Reflection is what turns something you
+                      did into something the app knows, so it gets the same pill
+                      every other primary action on this screen gets. */}
                   <button
                     type="button"
                     onClick={() => {
@@ -485,9 +491,16 @@ export default function MissionPage() {
                       setFelt(null);
                       setEditing(true);
                     }}
-                    className="mt-3 inline-flex items-center gap-1.5 text-meta font-medium text-white/55 transition hover:text-white/85"
+                    className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80"
+                    style={{
+                      color: rgba(accent, 0.98),
+                      background: rgba(accent, 0.1),
+                      border: `1px solid ${rgba(accent, 0.32)}`,
+                      boxShadow: `0 2px 12px ${rgba(accent, 0.1)}`,
+                    }}
                   >
-                    <MessageSquare className="h-3.5 w-3.5" /> Add a reflection
+                    <MessageSquare className="h-4 w-4" />
+                    {reflectionEntries.length > 0 ? "Add another reflection" : "Add a reflection"}
                   </button>
                   <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3.5">
                     <div
