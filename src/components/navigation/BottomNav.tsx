@@ -3,9 +3,8 @@
 import * as React from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Lightbulb, Compass, ListTodo, User, Trophy } from "lucide-react";
+import { Home, Lightbulb, Compass, ListTodo, User, LifeBuoy } from "lucide-react";
 
-import { emitOpenAchievements } from "@/lib/actionsBus";
 
 import {
   DEFAULT_THEME_ID,
@@ -273,16 +272,17 @@ export function BottomNav({
             );
           })}
 
-          {/* Achievements — opens the global pyramid modal, not a route. */}
-          <button
-            type="button"
-            onClick={() => emitOpenAchievements()}
-            aria-label="Achievements"
+          {/* The guide — the only permanent way into the explanation of the app.
+              Awards used to sit here, but AwardsMeter opens the same modal from
+              every main screen, so it kept its door; the guide had none. */}
+          <Link
+            href="/main/guide"
+            aria-label="Guide"
             className="flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 transition hover:bg-white/[0.04] active:bg-white/[0.09]"
           >
-            <Trophy className="h-5 w-5 text-white/55" />
-            <span className="text-micro text-white/55">Awards</span>
-          </button>
+            <LifeBuoy className="h-5 w-5 text-white/55" />
+            <span className="text-micro text-white/55">Guide</span>
+          </Link>
         </div>
       </div>
     </nav>

@@ -1,104 +1,36 @@
-// src/app/main/guide/page.tsx
 "use client";
 
-import * as React from "react";
+// The Guide: a user's manual for the app, as a sky you fly through.
+//
+// Everleap's biggest complaint is that people arrive and don't know what they're
+// meant to do. The one screen that explained the five places ran exactly once,
+// at the end of the welcome, and claimed its flag on the way out — including on
+// Skip — so anybody who tapped past it never saw it again and had no route back.
+//
+// This is that explanation made permanent and reachable. Nothing here is
+// personalised: it is the same for everybody, authored once, with no API call
+// and no per-user state.
 
-import { AppChrome } from "@/components/site/AppChrome";
-import { BottomNav } from "@/components/navigation/BottomNav";
-
-import {
-  INSIGHTS_THEMES,
-  GRADIENT_CONFIGS,
-  getPageBackgroundImage,
-  isDarkTheme,
-  type SpotlightThemeId,
-  type GradientLevel,
-} from "@/theme/everleapVisuals";
+import { GuideSky } from "./GuideSky";
+import { PROSE_CLASS, PROSE_STYLE, HEADING_CLASS, HEADING_STYLE } from "@/lib/ui/prose";
 
 export default function GuidePage() {
-  const themeId: SpotlightThemeId = "nightDusk";
-  const gradientLevel: GradientLevel = 3;
-
-  const theme =
-    INSIGHTS_THEMES.find((t) => t.id === themeId) ?? INSIGHTS_THEMES[0];
-  const gradient =
-    GRADIENT_CONFIGS.find((g) => g.level === gradientLevel) ??
-    GRADIENT_CONFIGS[3];
-
-  const pageBgImage = getPageBackgroundImage(themeId);
-  const pageBgStyle = pageBgImage
-    ? ({ backgroundImage: pageBgImage } as React.CSSProperties)
-    : {};
-  const dark = isDarkTheme(themeId);
-
-  const cardShadow = dark
-    ? "shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-    : "shadow-[0_20px_60px_rgba(0,0,0,0.18)]";
-  const cardSurface = `${theme.cardBgClass} ${theme.cardBorderClass} ${cardShadow} backdrop-blur-xl`;
-
   return (
-    <AppChrome>
-      <div
-        className={`relative flex min-h-[100svh] flex-col ${theme.pageBgBaseClass}`}
-        style={pageBgStyle}
-      >
-        {gradientLevel > 0 && (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{ opacity: gradient.ambientOpacity }}
-          >
-            <div
-              className={`absolute -top-24 -left-16 h-64 w-64 rounded-full blur-3xl ${theme.ambientTopLeftClass}`}
-            />
-            <div
-              className={`absolute top-40 right-[-32px] h-72 w-72 rounded-full blur-3xl ${theme.ambientRightClass}`}
-            />
-          </div>
-        )}
+    <div className="mx-auto w-full max-w-[1120px] px-5 pb-24 pt-4 sm:px-6">
+      <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/40">
+        The guide
+      </span>
+      <h1 className={`mt-2 ${HEADING_CLASS}`} style={HEADING_STYLE}>
+        Everleap is one thing you feed, and four things it feeds.
+      </h1>
+      <p className={`mt-3 max-w-[52ch] text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
+        Tap a star to see what lives there, and tap it again to drop inside. A ring means
+        there&rsquo;s another sky in it.
+      </p>
 
-        <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-24 pt-10">
-          <div className="w-full max-w-3xl">
-            <div
-              className={`w-full rounded-3xl border px-6 py-7 md:px-8 md:py-8 ${cardSurface}`}
-            >
-              <div className="mx-auto max-w-xl text-center">
-                <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-eyebrow text-white/60">
-                  Coming soon
-                </div>
-
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-50 md:text-3xl">
-                  Guide
-                </h1>
-
-                <p className="mt-3 text-sm leading-relaxed text-slate-200/85 md:text-base">
-                  This is your Everleap Guide — the place where the app talks
-                  back. It will help you reflect, connect the dots across your
-                  answers, and suggest next steps you can actually do this week.
-                </p>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/35 px-5 py-4 text-left">
-                  <div className="text-sm font-semibold text-slate-100">
-                    What the Guide will do
-                  </div>
-                  <ul className="mt-2 space-y-2 text-sm text-slate-200/80">
-                    <li>• Explain *why* an insight or recommendation showed up</li>
-                    <li>• Ask short follow-up questions (one at a time)</li>
-                    <li>• Turn big goals into tiny, doable actions</li>
-                    <li>• Keep a simple “what we’ve learned about you” thread</li>
-                  </ul>
-                </div>
-
-                <div className="mt-6 text-xs text-slate-200/60">
-                  (Profile + settings will live in the “+” menu — separate from
-                  this space.)
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-
-        <BottomNav activeKey="guide" />
+      <div className="mt-6">
+        <GuideSky />
       </div>
-    </AppChrome>
+    </div>
   );
 }
