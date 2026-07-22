@@ -125,44 +125,24 @@ export function nextUp(block: SurfaceBlock): NextUp | null {
 export function achievementsLead(stats: BadgeStats | null | undefined): string | null {
   if (!stats || stats.totalCount <= 0) return null;
 
-  const total = stats.totalCount;
-  const gold = stats.goldCount ?? 0;
-  const started = stats.earnedCount ?? 0;
-  const partway = Math.max(0, started - gold);
-  const untouched = Math.max(0, total - started);
-
-  if (gold >= total) {
-    return "Every award, all the way to gold. There is nothing left to chase here — which is its own kind of finished.";
-  }
-
-  if (started === 0) {
-    return `No awards yet. All ${total} of them light up as you tell your story, explore a direction, and try things for real.`;
-  }
-
-  // The sentence has one job: explain why a nearly-full rack still comes with a
-  // list of things to do.
-  const parts: string[] = [
-    `${gold} of your ${total} awards ${gold === 1 ? "is" : "are"} gold`,
-  ];
-
-  if (partway > 0) {
-    parts.push(
-      `${partway} more ${partway === 1 ? "is" : "are"} part-way there`
-    );
-  }
-  if (untouched > 0) {
-    parts.push(
-      `${untouched} ${untouched === 1 ? "hasn't" : "haven't"} started`
-    );
-  }
-
-  const standing =
-    parts.length === 1
-      ? `${parts[0]}.`
-      : `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}.`;
-
-  return `${standing} The rest move when you explore, try things, and tell me how they went.`;
+  // ONE SHORT GENERIC LINE — no tiers, no counts, no branching.
+  //
+  // This used to read an inventory: "8 of your 24 awards are gold, 13 more are
+  // part-way there, and 3 haven't started." Tom: it "makes no sense to someone
+  // that doesn't know what these tiers mean." He was right — gold, part-way and
+  // started are internal vocabulary, and the sentence spent its whole length on
+  // a breakdown nobody had asked for while never saying what an award IS.
+  //
+  // So it answers the newcomer's question instead, in one sentence, the same for
+  // everybody. The specifics are already on the screen directly beneath it: the
+  // meter shows the standing and "Next up" names the one to go after.
+  // Deliberately does NOT mention telling your story: the one place this line
+  // renders most is directly after "You've told me your whole story — every
+  // question answered", and "awards fill in as you tell your story" right after
+  // that is a circle. What's left for that reader is the doing.
+  return "Awards fill in as you explore, try things, and tell me how they went.";
 }
+
 
 function Medal({ glyph, tier }: { glyph: string; tier: string }) {
   const m = METAL[tier];
@@ -258,7 +238,7 @@ export function WhereYouAre({
   if (!stats || stats.totalCount <= 0) return null;
 
   return (
-    <SectionCard tone="amber" className={`!px-5 !py-4 ${className ?? ""}`}>
+    <SectionCard tone="amber" accentRgb="232,199,126" className={`!px-5 !py-4 ${className ?? ""}`}>
       <div className="mb-3 flex items-center gap-2.5">
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-label leading-none"

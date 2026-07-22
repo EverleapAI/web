@@ -32,6 +32,17 @@ type Props = {
    * read's (invisible) box on its own.
    */
   voice?: boolean;
+  /**
+   * `"r, g, b"` — give this card the accent treatment: a corner glow and a
+   * tinted edge, the same recipe the Insights area cards use.
+   *
+   * Opt-in, because the rule has two halves. A card you READ shares one surface
+   * with every other card and carries its accent only in glyph, eyebrow and CTA.
+   * A card you CHOOSE BETWEEN is a navigation surface and the accent carries it.
+   * Today's sections end in an action, so they earn it; the agent's read above
+   * them does not, and stays a voice.
+   */
+  accentRgb?: string;
 };
 
 type SectionCardHeaderProps = {
@@ -90,6 +101,7 @@ export function SectionCard({
   compact = false,
   backdrop,
   voice = false,
+  accentRgb,
 }: Props) {
   const t = toneClasses(tone);
 
@@ -115,11 +127,38 @@ export function SectionCard({
         t.shell,
         className,
       ].join(" ")}
+      style={
+        // The accent EDGE, when a caller asks for one. Kept out of toneClasses
+        // so the default card is untouched and this can only ever be opt-in.
+        accentRgb ? { borderColor: `rgba(${accentRgb},0.30)` } : undefined
+      }
     >
       <div
         aria-hidden="true"
         className={["pointer-events-none absolute inset-0", t.sheen].join(" ")}
       />
+      {/* THE CORNER GLOW — opt-in, and NOT the thing that was stripped in July.
+          What went then was a full-card accent WASH per tone, which on the
+          near-black page made cards read light-blue and turned a stacked column
+          into a patchwork. This is a glow anchored to one corner that fades out
+          well before the far side, so the body of the card stays the same
+          near-black as every other card.
+
+          SIZED IN PERCENT, NOT PIXELS. Copied literally from the Insights area
+          cards it was meant to match, it used 150x110px — which covers a large
+          share of a half-width card in a 2-up grid and almost nothing of one of
+          Today's full-width, much taller ones. Same recipe, a quarter of the
+          effect, which is why Today still looked flat. Percentages make the glow
+          the same FRACTION of the card at any size. */}
+      {accentRgb ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(78% 128% at 97% -12%, rgba(${accentRgb},0.20), rgba(${accentRgb},0.06) 45%, transparent 74%)`,
+          }}
+        />
+      ) : null}
       {backdrop}
       <div className="relative z-10">{children}</div>
     </section>

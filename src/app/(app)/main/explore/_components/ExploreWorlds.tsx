@@ -97,7 +97,13 @@ export function ExploreWorlds({ lanes }: { lanes: WorldsLane[] }) {
   const play = byLane.get("play");
 
   return (
-    <section aria-label="Explore the five worlds">
+    <section
+      // Padding for the same reason as the Insights areas: a new section needs
+      // more air above its heading than the heading has below it, and the parent
+      // is a space-y stack that would swallow a margin.
+      aria-label="Explore the five worlds"
+      className="pt-5"
+    >
       <h2 className="mb-3 px-1 text-meta font-semibold uppercase tracking-eyebrow text-white/55">
         Where do you want to wander?
       </h2>

@@ -9,14 +9,16 @@
 // is what this component exists to fix. The bars are a readout; this is the door.
 //
 // The caption carries the real number, because a half-lit trophy is a feeling,
-// not a fact — nobody should have to count icons to learn they have 13 of 24.
+// not a fact — nobody should have to count icons to learn where they are. Row and
+// caption measure the SAME thing (rungs climbed); they used to disagree, showing
+// five and a half trophies beside "8 of 24 at gold".
 
 import * as React from "react";
 import { ChevronRight, Trophy } from "lucide-react";
 
 import { emitOpenAchievements } from "@/lib/actionsBus";
 import { useBadgeStats, type BadgeStats } from "@/lib/achievements/useBadgeStats";
-import { RowMeta, RowTitle } from "@/lib/ui/card";
+import { RowTitle } from "@/lib/ui/card";
 
 const TROPHIES = 10;
 
@@ -78,13 +80,22 @@ export function AwardsMeter({
 
   if (!s || s.totalCount <= 0) return null;
 
-  // Fill on rungs; label on gold. Older payloads have neither, so fall back to the
-  // badge count rather than rendering an empty rack.
-  const lit =
-    s.rungsTotal > 0
-      ? litCount(s.rungsEarned, s.rungsTotal)
-      : litCount(s.earnedCount, s.totalCount);
-  const gold = s.goldCount ?? 0;
+  // THE ROW AND THE CAPTION NOW MEASURE THE SAME THING.
+  //
+  // The trophies filled on RUNGS while the caption counted GOLD, so the screen
+  // showed five and a half of ten lit beside "8 of 24 at gold" — two different
+  // measures side by side, and a reader who tried to reconcile them couldn't.
+  // Rungs is the honest one: it moves every time you climb a tier, where gold
+  // stays still through all the work that leads up to it.
+  const onRungs = s.rungsTotal > 0;
+  const lit = onRungs
+    ? litCount(s.rungsEarned, s.rungsTotal)
+    : litCount(s.earnedCount, s.totalCount);
+  const caption = onRungs
+    ? `${s.rungsEarned} of ${s.rungsTotal} rungs climbed`
+    : // Older payloads carry no rung counts; say what they can actually support
+      // rather than a number the row isn't drawing.
+      `${s.earnedCount} of ${s.totalCount} started`;
 
   // A READOUT GETS NO BOX; A BUTTON DOES.
   //
@@ -107,6 +118,29 @@ export function AwardsMeter({
 
   const body = (
     <span className="min-w-0 flex-1">
+      {/* AN EYEBROW AND A CHIP, like every other card on these screens.
+          This was the one element with neither — the system's whole identity
+          mechanism (glyph + eyebrow + CTA) was switched off for it, so it read
+          as something that had drifted in from another page. Tom: does it "need
+          some form of header or separator to make it less lost looking". A
+          separator would have treated the symptom; a rule above it divides the
+          page further. What it needed was to speak the page's language. */}
+      <span className="mb-2 flex items-center gap-2">
+        <span
+          aria-hidden
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-control"
+          style={{ background: "rgba(232,199,126,0.13)", color: LIT }}
+        >
+          <Trophy className="h-3.5 w-3.5" />
+        </span>
+        <span
+          className="text-micro font-bold uppercase tracking-eyebrow"
+          style={{ color: "rgba(232,199,126,0.92)" }}
+        >
+          Awards
+        </span>
+      </span>
+
       <span aria-hidden className="flex items-center gap-[5px]">
         {Array.from({ length: TROPHIES }).map((_, i) => (
           <MeterTrophy key={i} fill={Math.max(0, Math.min(1, lit - i))} />
@@ -114,11 +148,7 @@ export function AwardsMeter({
       </span>
 
       <span className="mt-1.5 block">
-        <RowTitle style={{ color: LIT }}>Awards</RowTitle>
-        <RowMeta>
-          {" · "}
-          {gold} of {s.totalCount} at gold
-        </RowMeta>
+        <RowTitle style={{ color: LIT }}>{caption}</RowTitle>
       </span>
     </span>
   );
@@ -126,7 +156,7 @@ export function AwardsMeter({
   // A readout. No chevron, because there is nothing to tap.
   if (!interactive) {
     return (
-      <div className={shell} aria-label={`${gold} of ${s.totalCount} awards at gold.`}>
+      <div className={shell} aria-label={`Awards — ${caption}.`}>
         {body}
       </div>
     );
@@ -136,7 +166,7 @@ export function AwardsMeter({
     <button
       type="button"
       onClick={() => emitOpenAchievements()}
-      aria-label={`Awards — ${gold} of ${s.totalCount} awards at gold. Open your badges.`}
+      aria-label={`Awards — ${caption}. Open your badges.`}
       className={shell}
     >
       {body}

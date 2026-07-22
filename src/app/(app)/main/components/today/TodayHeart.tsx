@@ -23,7 +23,8 @@ import {
 } from "@/lib/ui/prose";
 import { CardBody } from "@/lib/ui/card";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
-import { AchievementBlock, achievementsLead } from "../achievements/WhereYouAre";
+import { AwardsMeter } from "../achievements/AwardsMeter";
+import { StoryNudge } from "../story/StoryNudge";
 import { SectionCard } from "../ui/SectionCard";
 import { AgenticHeader } from "../ui/AgenticHeader";
 import { ReadTuner } from "../ui/ReadTuner";
@@ -143,12 +144,6 @@ const NEXT_HEADER: Record<string, string> = {
 // got skipped for Skills.
 const STORY_ORDER: CoverageKey[] = ["motivations", "strengths", "skills"];
 
-// "Motivations", "Motivations and Skills", "Motivations, Skills, and Strengths".
-function joinLabels(names: string[]): string {
-  if (names.length <= 1) return names[0] ?? "";
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
-}
 
 // LINK_CLASS now lives in @/lib/ui/prose (imported above) — one shared link
 // treatment: own semantic colour, brightening on hover, with a trailing chevron.
@@ -176,8 +171,11 @@ function CardHeading({
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-label leading-none"
         style={{
           color: `rgb(${rgb})`,
-          background: `rgba(${rgb},0.08)`,
-          border: `1px solid rgba(${rgb},0.18)`,
+          // Matched to the Insights area chips (0.13), which is where the "why
+          // do those cards pop and these don't" comparison came from. At 0.08
+          // the chip was nearly the same value as the card it sat on.
+          background: `rgba(${rgb},0.13)`,
+          border: `1px solid rgba(${rgb},0.22)`,
         }}
       >
         {glyph}
@@ -188,18 +186,25 @@ function CardHeading({
           quietly); it just wasn't dressed for it. Now it is: 11px, uppercase,
           tracked out — so the prose below is unambiguously the loudest thing on
           the card. */}
-      <span className={EYEBROW_CLASS} style={{ color: TEXT_SECONDARY }}>
+      {/* THE EYEBROW TAKES THE CARD'S ACCENT (2026-07-22).
+          It was TEXT_SECONDARY — grey — beside an accented chip, so each card
+          announced itself in a colour and then said its name in the same grey as
+          every other card. Today read flat next to Insights, whose area cards
+          carry their accent through title, chip and CTA. Tom: "the dullness of
+          the sections… see the other pages and how their cards light up."
+
+          Only the FURNITURE is accented; the card surface stays identical
+          everywhere. That was Tom's ruling in July, when per-card accent washes
+          made the page a patchwork, and it still stands — the accent-carries-the
+          -card treatment belongs to navigation surfaces (the Insights areas, the
+          Explore worlds), not to cards you read. */}
+      <span className={EYEBROW_CLASS} style={{ color: `rgba(${rgb},0.92)` }}>
         {children}
       </span>
     </div>
   );
 }
 
-// Awards keep their own colour. The other three cards take the accent of
-// whatever the agent is on about today; the trophies are the one thing on this
-// screen that isn't about today at all, so they stay gold and read as a
-// different kind of object.
-const AWARD_RGB = "232,199,126";
 const REFLECT_RGB = "45,170,130";
 
 export function TodayHeart({
@@ -393,7 +398,6 @@ export function TodayHeart({
   // then drop you on Actions, or skip you past a section whose bar was still
   // half empty. A link that doesn't go where the sentence says is worse than no
   // link.
-  let storyPrefix: string;
   let storyLinkText: string | null;
   let storyRoute: string;
   if (nextStoryArea) {
@@ -401,20 +405,16 @@ export function TodayHeart({
       ? `/main/story?family=${nextStoryArea.key}`
       : "/main/story";
     if (filledStoryLabels.length === 0) {
-      storyPrefix = "Let's ";
       storyLinkText = storyStarted
         ? "keep telling your story"
         : "start telling your story";
     } else {
-      storyPrefix = `You've done your ${joinLabels(filledStoryLabels)} — now let's `;
       storyLinkText = "continue your story";
     }
   } else if (coverage.nextGapKey === "experience") {
-    storyPrefix = "You've told me your whole story — now ";
     storyLinkText = "reflect on what you've tried";
     storyRoute = "/main/actions";
   } else {
-    storyPrefix = "You've told me your whole story — the picture's complete.";
     storyLinkText = null;
     storyRoute = "/main/story";
   }
@@ -580,54 +580,27 @@ export function TodayHeart({
         ) : null}
       </SectionCard>
 
-      {/* ─── 2 · WHERE YOU ARE ───────────────────────────────────────────────
-          The story bars used to live here, right next to the trophies, saying the
-          same thing on a different scale. The trophies won: they never expire, and
-          the bars only ever meant anything to someone who hadn't finished their
-          story. The prose says where you are in the story; the block says where you
-          are in the collection, and names the badge you're closest to. */}
-      {showMeter ? (
-        <SectionCard tone="amber" className="!px-5 !py-4">
-          <CardHeading rgb={AWARD_RGB} glyph="◆">
-            Where you are
-          </CardHeading>
+      {/* ─── 2 · THE STORY NUDGE, then the awards meter ─────────────────────
+          These used to be one "Where you are" card: an eyebrow, a sentence about
+          story progress with the link on its tail, and the trophies underneath.
+          Two unrelated jobs sharing a box, and the trophies were the only place
+          in the app the awards didn't open Awards.
 
-          {/* While the story still has questions in it, the story IS where you are,
-              and the tail of the sentence is the link that continues it.
-
-              Once it doesn't, the story stops being the subject. The old copy went
-              on saying "the picture's complete" — a claim about the story, made in
-              a card about the whole collection, directly above a nudge to go do
-              more. Someone who had answered every question in the app was told they
-              were finished and then handed a list. So when the story is done we say
-              so, plainly, and then explain the collection instead. */}
-          {storyLinkText ? (
-            <CardBody className="max-w-[640px]">
-              {storyPrefix}
-              <button
-                type="button"
-                onClick={() => router.push(storyRoute)}
-                className="font-semibold transition hover:brightness-110 active:opacity-70"
-                style={{ color: `rgb(${rgb})` }}
-              >
-                {storyLinkText} →
-              </button>
-            </CardBody>
-          ) : (
-            <CardBody className="max-w-[640px]">
-              You&apos;ve told me your whole story — every question answered.{" "}
-              {achievementsLead(badges)}
-            </CardBody>
-          )}
-
-          <div className="mt-4">
-            <AchievementBlock
-              block={badges?.surfaces?.today?.block ?? null}
-              stats={badges}
-            />
-          </div>
-        </SectionCard>
+          Now they are what they are. The nudge is its own loud card, because it
+          is the one thing on this screen that feeds everything else — and it
+          disappears for good once the story is answered, so nobody lives with
+          it. The meter is the same component as the other thirteen surfaces,
+          with its own door. Neither explains the other, so neither needs the
+          other's wrapper. */}
+      {storyLinkText && storyRoute.startsWith("/main/story") ? (
+        <StoryNudge
+          nextLabel={nextStoryArea?.label ?? null}
+          href={storyRoute}
+          started={storyStarted}
+        />
       ) : null}
+
+      {showMeter ? <AwardsMeter stats={badges} /> : null}
 
       {/* ─── 3 · REFLECT ON YOUR ACTIONS ─────────────────────────────────────
           This was one quiet link at the bottom of the action block. It is the only
@@ -638,7 +611,7 @@ export function TodayHeart({
           The reason is the one the agent already gave when it suggested the action
           (mission.why). It is written, it is true, and it costs nothing to show. */}
       {data.looseThread?.title ? (
-        <SectionCard tone="teal" className="!px-5 !py-4">
+        <SectionCard tone="teal" accentRgb={REFLECT_RGB} className="!px-5 !py-4">
           <CardHeading rgb={REFLECT_RGB} glyph="↺">
             Reflect on your actions
           </CardHeading>

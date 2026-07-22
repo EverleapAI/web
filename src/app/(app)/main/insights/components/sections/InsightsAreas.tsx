@@ -111,8 +111,15 @@ export function InsightsAreas({
   onOpen: (id: InsightsAreaId) => void;
   whispers?: AreaWhispers;
 }) {
+  // PADDING, not margin. This heading opens a new section and was sitting the
+  // same distance below the awards meter as its own cards sit below it, so the
+  // meter read as the first item UNDER "Where do you want to look closer?"
+  // rather than as the thing before it. Space is what says a heading belongs to
+  // what follows.
+  // It has to be padding: the parent is a `space-y-*` stack, and Tailwind's
+  // `space-y` rule outranks a child's `mt-*`, so the margin version was a no-op.
   return (
-    <section aria-label="Look closer at the parts of you">
+    <section aria-label="Look closer at the parts of you" className="pt-7">
       <h2 className="mb-3 px-1 text-meta font-semibold uppercase tracking-eyebrow text-white/55">
         Where do you want to look closer?
       </h2>

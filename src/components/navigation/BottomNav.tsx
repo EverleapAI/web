@@ -282,6 +282,12 @@ export function BottomNav({
               every main screen, so it kept its door; the guide had none. */}
           <Link
             href="/main/guide"
+            // The other five tabs are prefetched and this one wasn't, so it was
+            // the one nav item that fetched its route chunk only once you'd
+            // already tapped it — the delay lands entirely after the press,
+            // which is exactly where it's felt. Worst on mobile, where the chunk
+            // is slower to fetch AND slower to parse.
+            prefetch
             aria-label="Guide"
             aria-current={resolvedActiveKey === "guide" ? "page" : undefined}
             className={[
