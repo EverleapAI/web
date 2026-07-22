@@ -1,12 +1,12 @@
 "use client";
 
-import { ExploreLandingLoader } from "../_components/ExploreLandingLoader";
-import { playActivitiesToExplorePaths } from "./_data/playAdapter";
-import { PLAY_ACTIVITIES } from "./_data/playPaths";
+import { PlayKindsLanding } from "../_components/PlayKindsLanding";
 
-const PLAY_PATHS = playActivitiesToExplorePaths(PLAY_ACTIVITIES);
-
+// Play opens on five kinds of playing, not twenty activities in a heap.
+//
+// All twenty on one screen was too much to choose between, and every row left
+// the app. The activity page underneath holds the real places and the outbound
+// links, two internal steps in rather than the first thing anyone meets.
 export default function PlayExplorePage() {
-  // Doors-first: you can't research your way into liking climbing — go once.
-  return <ExploreLandingLoader lane="play" fallback={PLAY_PATHS} variant="doors" />;
+  return <PlayKindsLanding />;
 }
