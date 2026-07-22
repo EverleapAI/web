@@ -42,7 +42,6 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/actions")) return "actions";
   if (pathname.startsWith("/main/profile")) return "profile";
 
-  if (pathname.startsWith("/main/questions")) return "insights";
   if (pathname.startsWith("/main/story")) return "insights";
   if (pathname.startsWith("/main/guide")) return "explore";
 

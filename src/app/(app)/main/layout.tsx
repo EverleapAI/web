@@ -40,7 +40,6 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isQuestions = pathname?.startsWith("/main/questions");
 
   const searchParamsKey = searchParams?.toString() ?? "";
 
@@ -95,13 +94,13 @@ export default function MainLayout({
   }, []);
 
   return (
-    <AppChrome flushContent={isQuestions}>
+    <AppChrome>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className={`min-h-0 flex-1 ${isQuestions ? "" : "pb-[92px]"}`}>
+        <div className="min-h-0 flex-1 pb-[92px]">
           {children}
         </div>
 
-        {!isQuestions ? <BottomNav /> : null}
+        <BottomNav />
         <ToastHost />
         <CelebrationBurst />
         <AchievementsLayer />
