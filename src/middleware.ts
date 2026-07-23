@@ -10,6 +10,13 @@ function isMainPath(pathname: string): boolean {
   return pathname === "/main" || pathname.startsWith("/main/");
 }
 
+// /admin needs a session before it can even ask "are you an admin?". Middleware
+// only enforces "signed in" (it can't see is_admin); the admin check itself is
+// server-side in requireAdmin and echoed by the page via /api/admin/status.
+function isAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
 function isAuthPath(pathname: string): boolean {
   return PUBLIC_AUTH_PATHS.has(pathname);
 }
@@ -34,7 +41,7 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
 
-  if (isMainPath(pathname) && !hasSession) {
+  if ((isMainPath(pathname) || isAdminPath(pathname)) && !hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/regauth";
     url.search = "";
@@ -54,5 +61,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/main/:path*", "/regauth", "/regauth/verify"],
+  matcher: ["/main/:path*", "/admin/:path*", "/regauth", "/regauth/verify"],
 };
