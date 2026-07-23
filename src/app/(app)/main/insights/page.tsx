@@ -1248,7 +1248,7 @@ export default function Page() {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[640px] flex-1 flex-col px-[4px] pb-4 pt-1">
+      <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-4 pt-2">
         {/* The old horizontal tab rail ("carousel") is retired as a navigation
             surface: you enter an area from the summary's area cards and leave via
             the "Back to Insights" link at the top of each sub-tab. Kept hidden

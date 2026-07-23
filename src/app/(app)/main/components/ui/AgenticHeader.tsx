@@ -9,13 +9,19 @@
 // it read as a bug, because it was one.
 //
 // The eyebrow names WHERE (or WHEN) you are: Today says the weekday, because the
-// day is Today's whole context; Insights and Explore say their own name. It is
-// deliberately the quietest thing on the card — the agent's opening sentence, one
-// line below, is what should land first.
+// day is Today's whole context; Insights and Explore say their own name.
+//
+// It is the section MASTHEAD, and it is meant to be seen. A voice screen has no
+// headline over its prose (the one-voice rule — "people do not talk in headers"),
+// so without this the screen had no anchor at all and read as starting mid-sentence
+// under a faint label. The masthead is furniture, not the agent talking — an
+// all-caps tracked signpost — so making it prominent does not reintroduce a headline
+// over the read: it just tells you what screen you are on, the way Actions' title
+// does. See SECTION_MASTHEAD_CLASS in lib/ui/prose.
 
 import * as React from "react";
 
-import { EYEBROW_CLASS } from "@/lib/ui/prose";
+import { SECTION_MASTHEAD_CLASS } from "@/lib/ui/prose";
 
 export function AgenticHeader({
   glyph,
@@ -37,8 +43,8 @@ export function AgenticHeader({
       {glyph}
 
       <span
-        className={EYEBROW_CLASS}
-        style={{ color: `rgb(${accentRgb})`, opacity: 0.55 }}
+        className={SECTION_MASTHEAD_CLASS}
+        style={{ color: `rgb(${accentRgb})`, opacity: 0.92 }}
       >
         {eyebrow}
       </span>

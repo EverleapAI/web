@@ -119,6 +119,7 @@ export function MotivationsTab({
         startHref={STORY_HREF}
         confidenceLevel={confidenceLevel}
         pageKey="insights_motivations"
+        eyebrow="Insights · Motivations"
       />
 
       {afterAgentic}

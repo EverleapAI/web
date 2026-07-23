@@ -108,9 +108,20 @@ export function SectionCard({
   // A voice, not an object — no shell, no edge, no lift. The agent's read sits on
   // the page and speaks. The backdrop still renders: the constellation is the
   // page's atmosphere, not the card's decoration.
+  //
+  // It DOES carry the same horizontal padding as an object card, though — the read's
+  // left edge has to line up with the cards below it on the same screen. Without this
+  // the voice hung flush-left of every Awards/lane card beneath it (Explore read
+  // "crunched" while Today's, which hand-added !px-5, looked right). One recipe here,
+  // matching the object branch, so no caller has to remember to inset its own read.
   if (voice) {
     return (
-      <section className={["relative", className].join(" ")}>
+      <section
+        className={[
+          "relative px-3.5 pt-4 pb-5 sm:px-5 sm:pt-5 sm:pb-6",
+          className,
+        ].join(" ")}
+      >
         {backdrop}
         <div className="relative z-10">{children}</div>
       </section>

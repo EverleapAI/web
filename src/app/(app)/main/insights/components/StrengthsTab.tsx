@@ -119,6 +119,7 @@ export function StrengthsTab({
         startHref={STORY_HREF}
         confidenceLevel={confidenceLevel}
         pageKey="insights_strengths"
+        eyebrow="Insights · Strengths"
       />
 
       {afterAgentic}

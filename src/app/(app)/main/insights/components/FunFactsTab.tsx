@@ -302,7 +302,7 @@ export default function FunFactsTab(props: FunFactsTabProps) {
                 <Sparkles className="h-3.5 w-3.5" />
               </span>
             }
-            eyebrow="Fun facts"
+            eyebrow="Insights · Fun facts"
             accentRgb="232, 121, 249"
           />
           <p className={[PROSE_SIZE, PROSE_CLASS].join(" ")} style={PROSE_STYLE}>

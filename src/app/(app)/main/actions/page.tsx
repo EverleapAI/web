@@ -29,10 +29,12 @@ import {
 import { SectionCard } from "../components/ui/SectionCard";
 import { ConstellationAnchor } from "../components/ui/ConstellationAnchor";
 import { AwardsMeter } from "../components/achievements/AwardsMeter";
-import { WhereYouAre } from "../components/achievements/WhereYouAre";
 import { useBadgeStats } from "@/lib/achievements/useBadgeStats";
 import { ArrivalGate } from "../components/interstitial/ArrivalGate";
 import { emitActionAdded, emitActionsChanged } from "@/lib/actionsBus";
+import { AgenticHeader } from "../components/ui/AgenticHeader";
+import { ReadAtmosphere } from "../components/ui/ReadAtmosphere";
+import { PROSE_CLASS, PROSE_STYLE } from "@/lib/ui/prose";
 
 type ActionStatus = "saved" | "doing" | "done" | "dismissed";
 
@@ -427,24 +429,36 @@ export default function ActionsPage() {
     // borrowing Today's questions: they are about Today, and a question that
     // isn't about the screen you're on is the thing we set out to avoid.
     <ArrivalGate pageKey="actions">
-    <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-1">
-      <div className="mb-4 px-1">
-        <div className="mb-1.5 flex items-center gap-2">
-          <span className="flex h-4 w-4 items-center justify-center rounded-chip bg-cyan-300/12 text-cyan-200/75">
-            <ListChecks className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-micro font-semibold uppercase tracking-eyebrow text-white/44">Actions</span>
+    <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-2">
+      {/* The header wears the SAME shape as every other main screen: masthead → read.
+          Actions is a list, not a generated voice, so the read is authored copy — but
+          it renders in the read treatment (21px/400) inside a voice SectionCard, so it
+          lines up with Today / Insights / Explore instead of shouting a 32px title. */}
+      <SectionCard
+        tone="hero"
+        voice
+        backdrop={<ReadAtmosphere seed="actions-read" accent={{ r: 103, g: 232, b: 249 }} />}
+      >
+        <div className="relative max-w-2xl">
+          <AgenticHeader
+            glyph={
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-cyan-300/[0.08] text-cyan-200/75 ring-1 ring-cyan-300/[0.18]">
+                <ListChecks className="h-3.5 w-3.5" />
+              </span>
+            }
+            eyebrow="Actions"
+            accentRgb="103, 232, 249"
+          />
+          <p className={`text-read ${PROSE_CLASS}`} style={PROSE_STYLE}>
+            Things you saved to try — real next-steps you bookmarked while exploring,
+            plus a few ideas from your guide.
+          </p>
         </div>
-        <h1 className="text-title font-semibold leading-display tracking-title text-white sm:text-display">
-          Things you saved to try
-        </h1>
-        <p className="mt-1.5 text-label leading-body text-white/60">
-          Real next-steps you bookmarked while exploring — plus a few ideas from your guide.
-        </p>
+      </SectionCard>
 
-        {/* The same awards door as every other main page. */}
-        <AwardsMeter className="mt-3.5" />
-      </div>
+      {/* The same awards door as every other main page — the standard meter,
+          fed the shared stats so it doesn't fire its own /api/achievements. */}
+      <AwardsMeter stats={badges} className="mt-4 mb-4" />
 
       <div className="space-y-4">
         {/* Suggested for you (agent) */}
@@ -489,15 +503,6 @@ export default function ActionsPage() {
             )}
           </SectionCard>
         ) : null}
-
-        {/* "Where you are" — below the agent's read, never above it. Actions'
-            badges turn on doing and reflecting, which is exactly what this page
-            asks for, so it still sits above the list itself: it can change what
-            you do next, rather than sitting under it as a receipt. */}
-        <WhereYouAre
-          block={badges?.surfaces?.actions?.block ?? null}
-          stats={badges}
-        />
 
         {/* Committed actions */}
         {pageEmpty ? (

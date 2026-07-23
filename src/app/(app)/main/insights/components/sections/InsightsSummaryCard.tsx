@@ -52,6 +52,10 @@ type Props = {
   startHref?: string;
   confidenceLevel?: string | null;
   pageKey?: PromptLabPageKey;
+  /** The masthead label. "Insights" on the summary; a breadcrumb ("Insights ·
+   *  Motivations") when this card heads a deep area, so the deep page names where
+   *  you are the way Explore's "Explore · Careers" does — not a bare "Insights". */
+  eyebrow?: string;
 };
 
 export default function InsightsSummaryCard({
@@ -65,6 +69,7 @@ export default function InsightsSummaryCard({
   startHref = "/main/story?family=motivations&returnTo=/main/insights?tab=summary",
   confidenceLevel,
   pageKey,
+  eyebrow = "Insights",
 }: Props) {
   const [moreOpen, setMoreOpen] = React.useState(false);
   const [whyOpen, setWhyOpen] = React.useState(false);
@@ -134,7 +139,7 @@ export default function InsightsSummaryCard({
               <Sparkles className="h-3.5 w-3.5" />
             </span>
           }
-          eyebrow="Insights"
+          eyebrow={eyebrow}
           accentRgb="120, 200, 255"
         />
 

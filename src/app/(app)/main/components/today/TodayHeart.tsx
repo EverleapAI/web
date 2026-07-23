@@ -454,7 +454,6 @@ export function TodayHeart({
       <SectionCard
         tone="hero"
         voice
-        className="!px-5 !py-4"
         backdrop={
           <ReadAtmosphere seed={`today-read:${dispatch.type}`} accent={accentObj} />
         }
@@ -509,29 +508,49 @@ export function TodayHeart({
                 </div>
               ) : null}
 
-              {/* The one bright commit. There is exactly one of these on the
-                  screen, and it is the thing the read has been arguing for. */}
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={dispatch.save ? handleSaveAction : onPrimary}
-                  disabled={saving || saved}
-                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
-                  style={{
-                    color: `rgb(${rgb})`,
-                    background: `rgba(${rgb},0.08)`,
-                    border: `1px solid rgba(${rgb},0.28)`,
-                    boxShadow: `0 2px 10px rgba(${rgb},0.08)`,
-                  }}
-                >
-                  <span>{primaryLabel}</span>
-                  {saved ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+              {/* The commit. A real SAVE keeps the bright pill — it is the thing
+                  the read has been arguing for, and committing deserves a button.
+                  A soft NAVIGATION ("see why it fits") is not a commit: as a pill it
+                  stacked on top of "See more / Why" and read as three competing
+                  actions, so it becomes an inline onward link — accent + semibold, so
+                  it still leads, but it sits in the same row rhythm as the read's
+                  other links instead of fighting them. Aligns Today's soft case with
+                  Insights / Explore, which have no pill. */}
+              {dispatch.save ? (
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleSaveAction}
+                    disabled={saving || saved}
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-label font-semibold transition hover:brightness-110 active:opacity-80 disabled:opacity-70"
+                    style={{
+                      color: `rgb(${rgb})`,
+                      background: `rgba(${rgb},0.08)`,
+                      border: `1px solid rgba(${rgb},0.28)`,
+                      boxShadow: `0 2px 10px rgba(${rgb},0.08)`,
+                    }}
+                  >
+                    <span>{primaryLabel}</span>
+                    {saved ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={onPrimary}
+                    className="group inline-flex items-center gap-1.5 text-label font-semibold transition hover:brightness-110"
+                    style={{ color: `rgb(${rgb})` }}
+                  >
+                    <span>{primaryLabel}</span>
+                    <ChevronRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                  </button>
+                </div>
+              )}
 
               {/* The ways to interrogate it — all text links, so none of them
                   competes with the commit above. */}

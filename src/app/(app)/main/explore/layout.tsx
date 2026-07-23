@@ -12,7 +12,7 @@ export default function ExploreLayout({
   // Insights sub-pages do — so you travel between worlds rather than clicking
   // tabs above them.
   return (
-    <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-0.5">
+    <div className="relative z-10 mx-auto flex w-full max-w-[720px] flex-1 flex-col px-[4px] pb-24 pt-2">
       {children}
     </div>
   );

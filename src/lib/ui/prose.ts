@@ -38,6 +38,13 @@ export const PROSE_CLASS = "leading-read";
 export const PROSE_SIZE = "text-read"; // hero / body agentic prose
 export const LINK_SIZE = "text-body"; // secondary links
 export const EYEBROW_CLASS = "text-micro font-bold uppercase tracking-eyebrow"; // modal / section eyebrow
+// The SECTION MASTHEAD — the name of the screen you are on (INSIGHTS, EXPLORE,
+// the weekday on Today, ACTIONS). It is furniture, not the voice, so it is allowed
+// to be prominent without breaking the one-voice rule below: an all-caps tracked
+// label reads as a signpost, never as the agent "talking in a header". It is the
+// anchor a voice screen otherwise lacks — every screen wears it, so every screen
+// says where you are with the same weight. Bigger + brighter than EYEBROW_CLASS.
+export const SECTION_MASTHEAD_CLASS = "text-label font-bold uppercase tracking-eyebrow";
 
 // ── ONE VOICE ─────────────────────────────────────────────────────────────────
 // PEOPLE DO NOT TALK IN HEADERS. These surfaces are a conversation, and a
