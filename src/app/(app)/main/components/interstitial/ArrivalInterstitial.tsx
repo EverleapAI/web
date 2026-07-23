@@ -265,7 +265,7 @@ export function ArrivalInterstitial({ tasks, accent: a, journey, pageKey, onDone
       className="fixed inset-0 z-[101] flex items-end justify-center sm:items-center sm:px-5 sm:py-10"
       role="dialog"
       aria-modal="true"
-      aria-label="One question before you continue"
+      aria-label="Before you continue"
     >
       <style>{`
         @keyframes everleapTwinkle {

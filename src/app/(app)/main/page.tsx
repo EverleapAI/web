@@ -318,7 +318,9 @@ export default function MainHomePage() {
 
   return (
     // The question that used to sit in a card partway down this page now plays
-    // in front of it. Three appearances, then it retires here.
+    // in front of it — up to three, in sequence, once per login session and then
+    // quiet for an hour (see interstitialViews.ts). Today is the only screen it
+    // plays on now.
     <ArrivalGate
       pageKey="today"
     >

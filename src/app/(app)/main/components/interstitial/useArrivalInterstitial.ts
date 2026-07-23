@@ -26,6 +26,16 @@ type JourneyState = { kind: ArrivalKind; stars: JourneyStar[] };
 
 const STORY_FLAG = "everleap_story_answered";
 
+/**
+ * Where the arrival sheet is allowed to play. Today, and only Today (2026-07-23,
+ * Tom's call). The server enforces the same allowlist — that is the real
+ * boundary; this one only spares the other ~11 surfaces a pointless round-trip
+ * (and the pool-fill it would trigger), since they still mount `ArrivalGate`.
+ * Reopening a surface means adding it here AND to ARRIVAL_SURFACES in the API's
+ * interstitialViews.ts.
+ */
+const ARRIVAL_PAGES = new Set<string>(["today"]);
+
 /** Did this trip through Story produce an answer? Reading it consumes it. */
 function takeStoryFlag(): boolean {
   try {
@@ -84,7 +94,7 @@ export function useArrivalInterstitial(
     // has enough signal must not have that read as "go ahead" — that would show
     // the interstitial to exactly the people it is meant to skip.
     if (enabled === null) return;
-    if (!enabled) {
+    if (!enabled || !ARRIVAL_PAGES.has(pageKey)) {
       setEligible(false);
       return;
     }
