@@ -60,7 +60,41 @@ export type SurfaceProgress = {
   totalCount: number;
 };
 
+// ── v7 staged model ──────────────────────────────────────────────────────────
+export type BadgeV7 = {
+  slug: string;
+  name: string;
+  description: string;
+  earn_hint: string;
+  stage_key: string;
+  sort_order: number;
+  class: "required" | "optional";
+  is_stage_award: boolean;
+  accent: string;
+  glyph: string;
+  earned: boolean;
+  earnedAt: string | null;
+  locked: boolean; // prerequisites not yet met
+  comingSoon: boolean; // criteria references a metric not built yet
+  prerequisites: string[];
+};
+
+export type StageV7 = {
+  key: string;
+  name: string;
+  sortOrder: number;
+  journeyNode: string | null;
+  badges: BadgeV7[];
+  earnedCount: number;
+  totalCount: number;
+  requiredEarned: number;
+  requiredTotal: number;
+  complete: boolean;
+};
+
 export type BadgeStats = {
+  /** v7: the six stages, each with its badges + earned/locked/coming-soon state. */
+  stages: StageV7[];
   /** Badges with ANY tier. Counts a bronze the same as a gold — do not meter on it. */
   earnedCount: number;
   totalCount: number;
@@ -102,10 +136,12 @@ let shared: AchievementsPayload | null = null;
 /** The raw endpoint response, shared between every consumer on a page. */
 export type AchievementsPayload = {
   ok?: boolean;
-  badges?: unknown[];
-  newlyEarned?: { slug: string; name: string; tier: string }[];
+  stages?: StageV7[];
+  newlyEarned?: { slug: string; name: string; tier?: string }[];
   earnedCount?: number;
   total?: number;
+  // Legacy fields — v7 payloads omit these; the meter falls back to badge counts.
+  badges?: unknown[];
   goldCount?: number;
   rungsEarned?: number;
   rungsTotal?: number;
@@ -123,6 +159,7 @@ async function fetchAchievements(): Promise<AchievementsPayload | null> {
 
 function toStats(data: AchievementsPayload): BadgeStats {
   return {
+    stages: (data.stages ?? []) as StageV7[],
     earnedCount: Number(data.earnedCount ?? 0),
     totalCount: Number(data.total ?? data.badges?.length ?? 0),
     goldCount: Number(data.goldCount ?? 0),

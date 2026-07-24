@@ -93,9 +93,8 @@ export function AwardsMeter({
     : litCount(s.earnedCount, s.totalCount);
   const caption = onRungs
     ? `${s.rungsEarned} of ${s.rungsTotal} rungs climbed`
-    : // Older payloads carry no rung counts; say what they can actually support
-      // rather than a number the row isn't drawing.
-      `${s.earnedCount} of ${s.totalCount} started`;
+    : // v7: binary badges — earned over total.
+      `${s.earnedCount} of ${s.totalCount} earned`;
 
   // A READOUT GETS NO BOX; A BUTTON DOES.
   //
