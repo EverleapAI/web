@@ -26,6 +26,7 @@ import { getSectionMenu } from "./detailSections";
 import { ExploreAttribution } from "./ExploreAttribution";
 import type { OnetDetail } from "./OnetFacts";
 import { CardTitle, RowMeta, RowTitle } from "@/lib/ui/card";
+import { CardReaction } from "../../insights/components/sections/CardReaction";
 
 // A small night-sky palette so each specialty reads as its own world, not a row
 // in a list.
@@ -223,6 +224,19 @@ export function ExplorePathDetail({
           ) : null}
         </div>
       </SectionCard>
+
+      {/* A one-tap read on this path — the Explore feedback the lane badges
+          (Learning / World / Impact / Fun, and Cartographer) are earned from.
+          Careers collect this on the recommendation deck, so the path-detail row
+          is for the other lanes. */}
+      {path.lane !== "work" ? (
+        <SectionCard tone="neutral">
+          <RowTitle as="p" className="mb-3 block text-white/85">
+            Is this one for you?
+          </RowTitle>
+          <CardReaction pageKey={`explore_${path.lane}`} itemKey={path.slug} />
+        </SectionCard>
+      ) : null}
 
       {/* Achievements — the trophies strip into Awards. */}
       <AwardsMeter stats={badges} />
