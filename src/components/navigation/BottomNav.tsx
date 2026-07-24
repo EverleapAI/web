@@ -3,7 +3,9 @@
 import * as React from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Lightbulb, Compass, ListTodo, User, LifeBuoy } from "lucide-react";
+import { Home, Lightbulb, Compass, ListTodo, User, Sparkles } from "lucide-react";
+
+import { JourneyMenuPopover } from "./JourneyMenuPopover";
 
 
 import {
@@ -16,7 +18,7 @@ import {
 } from "@/theme/everleapVisuals";
 import { useActionsCount } from "@/app/(app)/main/components/ActionsFeedback";
 
-type NavKey = "home" | "insights" | "explore" | "actions" | "profile" | "guide";
+type NavKey = "home" | "insights" | "explore" | "actions" | "profile" | "journey";
 
 type BottomNavProps = {
   activeKey?: NavKey | string;
@@ -42,12 +44,10 @@ function deriveActiveKey(pathname: string): NavKey | undefined {
   if (pathname.startsWith("/main/profile")) return "profile";
 
   if (pathname.startsWith("/main/story")) return "insights";
-  // The guide is its own place now. Both of these mappings date from when it was
-  // a "coming soon" stub whose key was pointed at Explore — so standing on the
-  // guide lit the Explore tab, and the tab you were actually on never lit at
-  // all. On a screen whose entire job is telling someone where they are, the nav
-  // saying they were somewhere else is the worst place for it.
-  if (pathname.startsWith("/main/guide")) return "guide";
+  // Journey now owns the guide and achievements too, so both light the Journey
+  // tab. (The guide used to be its own tab; it moved into the Journey menu.)
+  if (pathname.startsWith("/main/journey")) return "journey";
+  if (pathname.startsWith("/main/guide")) return "journey";
 
   return undefined;
 }
@@ -67,7 +67,8 @@ function normalizeActiveKey(key?: string): NavKey | undefined {
   if (key === "carousel") return "insights";
 
   if (key === "explore") return "explore";
-  if (key === "guide") return "guide";
+  if (key === "journey") return "journey";
+  if (key === "guide") return "journey";
 
   if (key === "actions") return "actions";
   if (key === "takeoff") return "actions";
@@ -154,6 +155,7 @@ export function BottomNav({
   ];
 
   const [mounted, setMounted] = React.useState(false);
+  const [journeyMenuOpen, setJourneyMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -277,44 +279,49 @@ export function BottomNav({
             );
           })}
 
-          {/* The guide — the only permanent way into the explanation of the app.
-              Awards used to sit here, but AwardsMeter opens the same modal from
-              every main screen, so it kept its door; the guide had none. */}
-          <Link
-            href="/main/guide"
-            // The other five tabs are prefetched and this one wasn't, so it was
-            // the one nav item that fetched its route chunk only once you'd
-            // already tapped it — the delay lands entirely after the press,
-            // which is exactly where it's felt. Worst on mobile, where the chunk
-            // is slower to fetch AND slower to parse.
-            prefetch
-            aria-label="Guide"
-            aria-current={resolvedActiveKey === "guide" ? "page" : undefined}
+          {/* Journey — a menu that gathers the three related surfaces: your
+              journey (new), your achievements (a modal), and the Lunorica Guide.
+              Awards used to sit here; the guide replaced it, and now both live
+              inside this menu. Tapping toggles the popover above it. */}
+          <button
+            type="button"
+            onClick={() => setJourneyMenuOpen((v) => !v)}
+            aria-label="Journey"
+            aria-haspopup="menu"
+            aria-expanded={journeyMenuOpen}
+            aria-current={resolvedActiveKey === "journey" ? "page" : undefined}
             className={[
               "flex w-full touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2",
               "transition hover:bg-white/[0.04] active:bg-white/[0.09]",
-              resolvedActiveKey === "guide" ? "bg-white/[0.06]" : "",
+              resolvedActiveKey === "journey" || journeyMenuOpen ? "bg-white/[0.06]" : "",
             ].join(" ")}
           >
-            <LifeBuoy
+            <Sparkles
               className={
-                resolvedActiveKey === "guide"
+                resolvedActiveKey === "journey" || journeyMenuOpen
                   ? "h-5 w-5 text-white"
                   : "h-5 w-5 text-white/55"
               }
             />
             <span
               className={
-                resolvedActiveKey === "guide"
+                resolvedActiveKey === "journey" || journeyMenuOpen
                   ? "text-micro text-white"
                   : "text-micro text-white/55"
               }
             >
-              Guide
+              Journey
             </span>
-          </Link>
+          </button>
         </div>
       </div>
+
+      <JourneyMenuPopover
+        open={journeyMenuOpen}
+        onClose={() => setJourneyMenuOpen(false)}
+        themeId={themeId}
+        gradientLevel={gradientLevel}
+      />
     </nav>
   );
 }
