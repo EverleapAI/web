@@ -355,6 +355,13 @@ export default function AchievementsLayer() {
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
                 {selected ? (
                   <BadgeDetail badge={selected} onBack={() => setSelected(null)} />
+                ) : stages.length === 0 ? (
+                  // Never blank: the fetch is in flight (or briefly failed and will
+                  // retry) — say so rather than reading as "you have no badges".
+                  <div className="flex flex-col items-center gap-3 py-10 text-center">
+                    <span className="h-6 w-6 animate-spin rounded-full border-2 border-white/15 border-t-white/60" />
+                    <RowMeta>Loading your badges…</RowMeta>
+                  </div>
                 ) : (
                   <div className="space-y-7">
                     {stages.map((stage) => (
